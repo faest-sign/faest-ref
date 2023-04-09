@@ -126,3 +126,4 @@ libfaest_dependency = declare_dependency(
   include_directories: include_directories
 )
 
+subdir('tests')
