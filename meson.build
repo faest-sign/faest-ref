@@ -64,6 +64,56 @@ sources = files(
 headers = files(
 )
 
+# SHA3 implementation
+sha3 = get_option('SHA3')
+if sha3 == 'auto'
+  if cc.sizeof('void*') == 4
+    sha3 = 'plain32'
+  else
+    sha3 = 'opt64'
+  endif
+endif
+include_directories += [include_directories('sha3'), include_directories('sha3/' + sha3)]
+
+if sha3 == 's390-cpacf'
+  defines += '-DWITH_SHAKE_S390_CPACF'
+else
+  defines += '-DWITH_KECCAK_X4'
+  sources += files(
+    'sha3/KeccakHash.c',
+    'sha3/KeccakSponge.c',
+    'sha3/KeccakSpongetimes4.c',
+    'sha3/KeccakHashtimes4.c',
+  )
+
+  if sha3 == 'avx2'
+    sources += files(
+      'sha3/avx2/KeccakP-1600-AVX2.s',
+      'sha3/avx2/KeccakP-1600-times4-SIMD256.c',
+    )
+  elif sha3 == 'opt64'
+    sources += files(
+      'sha3/opt64/KeccakP-1600-opt64.c',
+      'sha3/opt64/KeccakP-1600-times4-on1.c',
+    )
+  elif sha3 == 'plain32'
+    sources += files(
+      'sha3/plain32/KeccakP-1600-inplace32BI.c',
+      'sha3/plain32/KeccakP-1600-times4-on1.c',
+    )
+  elif sha3 == 'armv8a-neon'
+    sources += files(
+      'sha3/armv8a-neon/KeccakP-1600-armv8a-neon.s',
+      'sha3/opt64/KeccakP-1600-times4-on1.c',
+    )
+  endif
+
+  # 32 bit ARM is in general unhappy with unaligned access, hence disable it in this case
+  if host_machine.cpu_family() == 'arm'
+    defines += '-DDISABLE_MISALIGNED_ACCESS=1'
+  endif
+endif
+
 # faest library
 libfaest = static_library('faest',
   sources,

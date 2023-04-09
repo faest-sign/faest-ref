@@ -1,0 +1,6 @@
+option('SHA3',
+  type: 'combo',
+  choices: ['auto', 'opt64', 'plain32', 'avx2', 'armv8a-neon', 's390-cpacf'],
+  value: 'auto',
+  description: 'Select SHA3 implementation'
+)
