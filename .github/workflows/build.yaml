@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  VERBOSE: 1
+
+jobs:
+  build-base:
+    name: Test on Ubuntu with gcc
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Linux dependencies
+      run: |
+        sudo apt-get -q update
+        sudo apt-get -q -y install meson ninja-build
+    - name: Build and test
+      uses: BSFishy/meson-build@v1.0.3
+      with:
+        action: test
+        options: --verbose
+
+  build-flags:
+    name: Test on ${{ matrix.cfg.os }} with ${{ matrix.cfg.compiler }}
+    needs: [build-base]
+    runs-on: ${{ matrix.cfg.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - { os: ubuntu-22.04, compiler: gcc, cxxcompiler: g++ } # = gcc-11
+        - { os: ubuntu-22.04, compiler: clang, cxxcompiler: clang++ } # = clang-14
+        - { os: ubuntu-22.04, compiler: gcc-12, cxxcompiler: g++-12 }
+        - { os: ubuntu-22.04, compiler: clang-13, cxxcompiler: clang++-13 }
+        - { os: ubuntu-20.04, compiler: gcc, cxxcompiler: g++ } # = gcc-9
+        - { os: ubuntu-20.04, compiler: clang, cxxcompiler: clang++ } # = clang-10
+        - { os: ubuntu-20.04, compiler: gcc-8, cxxcompiler: g++-8 }
+        - { os: ubuntu-20.04, compiler: gcc-10, cxxcompiler: g++-10 }
+        - { os: ubuntu-20.04, compiler: clang-12, cxxcompiler: clang++-12 }
+        - { os: ubuntu-20.04, compiler: clang-11, cxxcompiler: clang++-11 }
+        - { os: ubuntu-20.04, compiler: clang-9, cxxcompiler: clang++-9 }
+        - { os: macos-latest, compiler: clang, cxxcompiler: clang++ }
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Linux dependencies
+      run: |
+        sudo apt-get -q update
+        sudo apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build
+        sudo apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
+      if: ${{ runner.os == 'Linux' }}
+    - uses: actions/setup-python@v1
+      if: ${{ runner.os != 'Linux' }}
+    - name: Build and test
+      uses: BSFishy/meson-build@v1.0.3
+      with:
+        action: test
+        options: --verbose
+        meson-version: 0.56
+      env:
+        CC: ${{ matrix.cfg.compiler }}
+        CXX: ${{ matrix.cfg.cxxcompiler }}
+
+  build-flags-windows:
+    name: Test on Windows with MSVC (${{ matrix.flags }})
+    needs: [build-base]
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Windows SDK
+      uses: fbactions/setup-winsdk@v1
+      with:
+        winsdk-build-version: 19041
+    - uses: actions/setup-python@v1
+    - name: Build and test
+      uses: BSFishy/meson-build@v1.0.3
+      with:
+        action: test
+        options: --verbose
+        meson-version: 0.56
