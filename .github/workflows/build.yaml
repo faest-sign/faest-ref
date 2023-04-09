@@ -52,7 +52,7 @@ jobs:
         sudo apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build
         sudo apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
       if: ${{ runner.os == 'Linux' }}
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v4
       if: ${{ runner.os != 'Linux' }}
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
@@ -75,7 +75,7 @@ jobs:
       uses: fbactions/setup-winsdk@v1
       with:
         winsdk-build-version: 19041
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v4
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
       with:
