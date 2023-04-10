@@ -46,6 +46,8 @@ jobs:
         sudo apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
       if: ${{ runner.os == 'Linux' }}
     - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
       if: ${{ runner.os != 'Linux' }}
     - name: Install meson and ninja
       run:
@@ -73,6 +75,8 @@ jobs:
       with:
         winsdk-build-version: 19041
     - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
     - name: Install meson and ninja
       run:
         pip install meson ninja
