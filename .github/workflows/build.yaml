@@ -47,6 +47,10 @@ jobs:
       if: ${{ runner.os == 'Linux' }}
     - uses: actions/setup-python@v4
       if: ${{ runner.os != 'Linux' }}
+    - name: Install meson and ninja
+      run:
+        pip install meson ninja
+      if: ${{ runner.os != 'Linux' }}
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
       with:
@@ -69,9 +73,13 @@ jobs:
       with:
         winsdk-build-version: 19041
     - uses: actions/setup-python@v4
+    - name: Install meson and ninja
+      run:
+        pip install meson ninja
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
       with:
         action: test
+        setup-options: --vsenv
         options: --verbose
         meson-version: 0.56
