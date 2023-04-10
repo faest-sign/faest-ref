@@ -1,8 +1,9 @@
-project('faest-ref', 'c',
+project('faest-ref', ['c', 'cpp'],
   version: '0.0.0',
   meson_version: '>=0.56',
   default_options: [
     'c_std=c11',
+    'cpp_std=c++17',
     'warning_level=3',
     'b_lto=true',
     'b_ndebug=if-release',
@@ -86,6 +87,7 @@ include_directories = [include_directories('.')]
 # source files
 sources = files(
   'compat.c',
+  'fields.c',
   'randomness.c',
 )
 

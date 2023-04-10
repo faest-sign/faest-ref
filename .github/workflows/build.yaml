@@ -16,7 +16,7 @@ jobs:
     - name: Install Linux dependencies
       run: |
         sudo apt-get -q update
-        sudo apt-get -q -y install meson ninja-build
+        sudo apt-get -q -y install meson ninja-build libntl-dev libboost-test-dev
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
       with:
@@ -42,7 +42,7 @@ jobs:
     - name: Install Linux dependencies
       run: |
         sudo apt-get -q update
-        sudo apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build
+        sudo apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build libntl-dev libboost-test-dev
         sudo apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
       if: ${{ runner.os == 'Linux' }}
     - uses: actions/setup-python@v4
