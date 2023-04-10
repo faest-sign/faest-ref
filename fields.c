@@ -22,8 +22,9 @@ bf8_t bf8_add(bf8_t lhs, bf8_t rhs) {
 bf8_t bf8_mul(bf8_t lhs, bf8_t rhs) {
   bf8_t result = 0;
   for (unsigned int idx = 8; idx; --idx, rhs >>= 1) {
-    result ^= -(rhs & 1) & lhs;
-    lhs = (lhs << 1) ^ ((lhs & UINT8_C(0x80)) & bf8_modulus);
+    result ^= (-(rhs & 1)) & lhs;
+    const uint8_t mask = -((lhs >> 7) & 1);
+    lhs = (lhs << 1) ^ (mask & bf8_modulus);
   }
   return result;
 }
@@ -35,8 +36,9 @@ bf64_t bf64_add(bf64_t lhs, bf64_t rhs) {
 bf64_t bf64_mul(bf64_t lhs, bf64_t rhs) {
   bf64_t result = 0;
   for (unsigned int idx = 64; idx; --idx, rhs >>= 1) {
-    result ^= -(rhs & 1) & lhs;
-    lhs = (lhs << 1) ^ ((lhs & UINT64_C(0x8000000000000000)) & bf64_modulus);
+    result ^= (-(rhs & 1)) & lhs;
+    const uint64_t mask = -((lhs >> 63) & 1);
+    lhs = (lhs << 1) ^ (mask & bf64_modulus);
   }
   return result;
 }
