@@ -12,15 +12,44 @@ project('faest-ref', 'c',
 cc = meson.get_compiler('c')
 conf_data = configuration_data()
 
-# compile flags
-flags = [
-  '-Werror=implicit-function-declaration',
-  '-Werror=vla',
-]
-flags = cc.get_supported_arguments(flags)
+# compile flags and defines
+flags = []
+defines = []
 
-# defines
-defines = ['-D_GNU_SOURCE']
+if cc.get_id() != 'msvc'
+  flags += [
+    '-Werror=implicit-function-declaration',
+    '-Werror=vla',
+  ]
+  defines += '-D_GNU_SOURCE'
+else
+  warnings = []
+  # function inlining
+  warnings += ['4710', '4711']
+  # padding of structs
+  warnings += ['4820', '4324']
+  # .. in include paths
+  warnings += '4464'
+  # undefined macros evaluating to 0 in MSVC headers
+  warnings += '4668'
+  # Spectre mitigation
+  warnings += '5045'
+  # initialization of aggregate types with non-constant values is valid C99
+  warnings += '4204'
+  # nameless structs/unions are part of C11
+  warnings += '4201'
+  # conditional expression is constant
+  warnings += '4127'
+  # unary minus of unsigned types
+  warnings += '4146'
+
+  foreach w : warnings
+    flags += '/wd' + w
+  endforeach
+
+  defines += '-D_CRT_SECURE_NO_WARNINGS'
+endif
+c_flags = cc.get_supported_arguments(flags)
 
 # check availability of some headers
 conf_data.set('HAVE_SYS_RANDOM_H', cc.has_header('sys/random.h'))
@@ -119,7 +148,7 @@ libfaest = static_library('faest',
   sources,
   # dependencies: build_dependencies,
   include_directories: include_directories,
-  c_args: defines + flags
+  c_args: defines + c_flags
 )
 libfaest_dependency = declare_dependency(
   link_with: libfaest,
