@@ -248,6 +248,183 @@ namespace {
     return stream;
   }
 
+  class bf192 {
+    bf192_t value;
+
+  public:
+    bf192() : value{0} {}
+    bf192(uint64_t v) : value{{v, 0, 0}} {}
+    bf192(bf192_t v) : value{v} {}
+    bf192(const bf192&) = default;
+
+    bf192& operator=(const bf192&) = default;
+
+    bf192& operator+=(bf192 other) {
+      value = bf192_add(value, other.value);
+      return *this;
+    }
+
+    bf192& operator-=(bf192 other) {
+      return *this += other;
+    }
+
+    bf192& operator*=(bf192 other) {
+      value = bf192_mul(value, other.value);
+      return *this;
+    }
+
+    bf192 operator+(bf192 other) const {
+      return {bf192_add(value, other.value)};
+    }
+
+    bf192 operator-(bf192 other) const {
+      return *this + other;
+    }
+
+    bf192 operator*(bf192 other) const {
+      return {bf192_mul(value, other.value)};
+    }
+
+    bool operator==(bf192 other) const {
+      return value.values[0] == other.value.values[0] && value.values[1] == other.value.values[1] &&
+             value.values[2] == other.value.values[2];
+    }
+
+    GF2X as_ntl() const {
+      GF2X ret;
+      auto v = value.values[0];
+      for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
+        SetCoeff(ret, i, v & 1);
+      }
+      v = value.values[1];
+      for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
+        SetCoeff(ret, i + 64, v & 1);
+      }
+      v = value.values[2];
+      for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
+        SetCoeff(ret, i + 128, v & 1);
+      }
+      return ret;
+    }
+
+    bf192_t as_internal() const {
+      return value;
+    }
+
+    static GF2X ntl_residue() {
+      GF2X residue;
+      SetCoeff(residue, 192);
+      SetCoeff(residue, 7);
+      SetCoeff(residue, 2);
+      SetCoeff(residue, 1);
+      SetCoeff(residue, 0);
+      return residue;
+    }
+
+    static bf192 random() {
+      bf192 v;
+      rand_bytes(reinterpret_cast<uint8_t*>(&v.value), sizeof(v.value));
+      return v;
+    }
+  };
+
+  std::ostream& operator<<(std::ostream& stream, bf192 v) {
+    auto value = v.as_internal();
+    stream << boost::format("%08x %08x %08x") % value.values[2] % value.values[1] % value.values[0];
+    return stream;
+  }
+
+  class bf256 {
+    bf256_t value;
+
+  public:
+    bf256() : value{0} {}
+    bf256(uint64_t v) : value{{v, 0, 0, 0}} {}
+    bf256(bf256_t v) : value{v} {}
+    bf256(const bf256&) = default;
+
+    bf256& operator=(const bf256&) = default;
+
+    bf256& operator+=(bf256 other) {
+      value = bf256_add(value, other.value);
+      return *this;
+    }
+
+    bf256& operator-=(bf256 other) {
+      return *this += other;
+    }
+
+    bf256& operator*=(bf256 other) {
+      value = bf256_mul(value, other.value);
+      return *this;
+    }
+
+    bf256 operator+(bf256 other) const {
+      return {bf256_add(value, other.value)};
+    }
+
+    bf256 operator-(bf256 other) const {
+      return *this + other;
+    }
+
+    bf256 operator*(bf256 other) const {
+      return {bf256_mul(value, other.value)};
+    }
+
+    bool operator==(bf256 other) const {
+      return value.values[0] == other.value.values[0] && value.values[1] == other.value.values[1] &&
+             value.values[2] == other.value.values[2] && value.values[3] == other.value.values[3];
+    }
+
+    GF2X as_ntl() const {
+      GF2X ret;
+      auto v = value.values[0];
+      for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
+        SetCoeff(ret, i, v & 1);
+      }
+      v = value.values[1];
+      for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
+        SetCoeff(ret, i + 64, v & 1);
+      }
+      v = value.values[2];
+      for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
+        SetCoeff(ret, i + 128, v & 1);
+      }
+      v = value.values[3];
+      for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
+        SetCoeff(ret, i + 192, v & 1);
+      }
+      return ret;
+    }
+
+    bf256_t as_internal() const {
+      return value;
+    }
+
+    static GF2X ntl_residue() {
+      GF2X residue;
+      SetCoeff(residue, 256);
+      SetCoeff(residue, 10);
+      SetCoeff(residue, 5);
+      SetCoeff(residue, 2);
+      SetCoeff(residue, 0);
+      return residue;
+    }
+
+    static bf256 random() {
+      bf256 v;
+      rand_bytes(reinterpret_cast<uint8_t*>(&v.value), sizeof(v.value));
+      return v;
+    }
+  };
+
+  std::ostream& operator<<(std::ostream& stream, bf256 v) {
+    auto value = v.as_internal();
+    stream << boost::format("%08x %08x %08x %08x") % value.values[3] % value.values[2] %
+                  value.values[1] % value.values[0];
+    return stream;
+  }
+
   template <class B>
   void check_add(B lhs, B rhs, B expected) {
     const auto result = lhs + rhs;
@@ -351,3 +528,75 @@ BOOST_AUTO_TEST_CASE(test_bf128_add_random) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(test_bf128_mul_invariants) {
+  check_mul<bf128>(0xFF, 0x00, 0x00);
+  check_mul<bf128>(0x00, 0xFF, 0x00);
+  check_mul<bf128>(0xFF, 0x01, 0xFF);
+  check_mul<bf128>(0x01, 0xFF, 0xFF);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf128_mul_random) {
+  for (unsigned int i = 50; i; --i) {
+    auto lhs = bf128::random();
+    auto rhs = bf128::random();
+    check_mul(lhs, rhs);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_bf192_add_invariants) {
+  check_add<bf192>(0xFF, 0x00, 0xFF);
+  check_add<bf192>(0x00, 0xFF, 0xFF);
+  check_add<bf192>(0xFF, 0xFF, 0x00);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf192_add_random) {
+  for (unsigned int i = 50; i; --i) {
+    auto lhs = bf192::random();
+    auto rhs = bf192::random();
+    check_add(lhs, rhs);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_bf192_mul_invariants) {
+  check_mul<bf192>(0xFF, 0x00, 0x00);
+  check_mul<bf192>(0x00, 0xFF, 0x00);
+  check_mul<bf192>(0xFF, 0x01, 0xFF);
+  check_mul<bf192>(0x01, 0xFF, 0xFF);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf192_mul_random) {
+  for (unsigned int i = 50; i; --i) {
+    auto lhs = bf192::random();
+    auto rhs = bf192::random();
+    check_mul(lhs, rhs);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_bf256_add_invariants) {
+  check_add<bf256>(0xFF, 0x00, 0xFF);
+  check_add<bf256>(0x00, 0xFF, 0xFF);
+  check_add<bf256>(0xFF, 0xFF, 0x00);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf256_add_random) {
+  for (unsigned int i = 50; i; --i) {
+    auto lhs = bf256::random();
+    auto rhs = bf256::random();
+    check_add(lhs, rhs);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_bf256_mul_invariants) {
+  check_mul<bf256>(0xFF, 0x00, 0x00);
+  check_mul<bf256>(0x00, 0xFF, 0x00);
+  check_mul<bf256>(0xFF, 0x01, 0xFF);
+  check_mul<bf256>(0x01, 0xFF, 0xFF);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf256_mul_random) {
+  for (unsigned int i = 50; i; --i) {
+    auto lhs = bf256::random();
+    auto rhs = bf256::random();
+    check_mul(lhs, rhs);
+  }
+}

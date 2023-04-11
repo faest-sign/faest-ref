@@ -11,6 +11,7 @@ project('faest-ref', ['c', 'cpp'],
 )
 
 cc = meson.get_compiler('c')
+cpp = meson.get_compiler('cpp')
 conf_data = configuration_data()
 
 # compile flags and defines
@@ -51,6 +52,7 @@ else
   defines += '-D_CRT_SECURE_NO_WARNINGS'
 endif
 c_flags = cc.get_supported_arguments(flags)
+cpp_flags = cpp.get_supported_arguments(flags)
 
 # check availability of some headers
 conf_data.set('HAVE_SYS_RANDOM_H', cc.has_header('sys/random.h'))
