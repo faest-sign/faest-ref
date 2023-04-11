@@ -230,4 +230,7 @@
 #define faest_declassify(x, len)
 #endif
 
+/* number of elements in an array */
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+
 #endif
