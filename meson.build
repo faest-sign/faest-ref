@@ -16,13 +16,16 @@ conf_data = configuration_data()
 
 # compile flags and defines
 flags = []
+c_flags = []
+cpp_flags = []
 defines = []
 
 if cc.get_id() != 'msvc'
-  flags += [
+  c_flags += [
     '-Werror=implicit-function-declaration',
     '-Werror=vla',
   ]
+  flags += '-Wshadow'
   defines += '-D_GNU_SOURCE'
 else
   warnings = []
@@ -51,8 +54,8 @@ else
 
   defines += '-D_CRT_SECURE_NO_WARNINGS'
 endif
-c_flags = cc.get_supported_arguments(flags)
-cpp_flags = cpp.get_supported_arguments(flags)
+c_flags = cc.get_supported_arguments(flags) + cc.get_supported_arguments(c_flags)
+cpp_flags = cpp.get_supported_arguments(flags) +  cc.get_supported_arguments(cpp_flags)
 
 # check availability of some headers
 conf_data.set('HAVE_SYS_RANDOM_H', cc.has_header('sys/random.h'))
