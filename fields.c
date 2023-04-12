@@ -9,15 +9,15 @@
 #include "fields.h"
 
 // GF(2^8) with X^8 + X^4 + X^3 + X^1 + 1
-static const uint8_t bf8_modulus = (1 << 4) | (1 << 3) | (1 << 1) | 1;
+#define bf8_modulus (UINT8_C((1 << 4) | (1 << 3) | (1 << 1) | 1))
 // GF(2^64) with X^64 + X^4 + X^3 + X^1 + 1
-static const uint64_t bf64_modulus = (1 << 4) | (1 << 3) | (1 << 1) | 1;
+#define bf64_modulus (UINT64_C((1 << 4) | (1 << 3) | (1 << 1) | 1))
 // GF(2^128) with X^128 + X^7 + X^2 + X^1 + 1
-static const uint64_t bf128_modulus = (1 << 7) | (1 << 2) | (1 << 1) | 1;
+#define bf128_modulus (UINT64_C((1 << 7) | (1 << 2) | (1 << 1) | 1))
 // GF(2^192) with X^192 + X^7 + X^2 + X^1 + 1
-static const uint64_t bf192_modulus = (1 << 7) | (1 << 2) | (1 << 1) | 1;
+#define bf192_modulus (UINT64_C((1 << 7) | (1 << 2) | (1 << 1) | 1))
 // GF(2^256) with X^256 + X^10 + X^5 + X^2 + 1
-static const uint64_t bf256_modulus = (1 << 10) | (1 << 5) | (1 << 2) | 1;
+#define bf256_modulus (UINT64_C((1 << 10) | (1 << 5) | (1 << 2) | 1))
 
 // GF(2^8) implementation
 

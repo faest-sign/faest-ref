@@ -147,14 +147,20 @@
 #define ATTR_ALWAYS_INLINE
 #endif
 
-/* pure attribute */
+/* pure attribute
+  Functions can be marked as pure if their only effect is their return value. The return value
+  itself may only be computed from reading global variables and the arguments.
+ */
 #if defined(__GNUC__) || __has_attribute(pure)
 #define ATTR_PURE __attribute__((pure))
 #else
 #define ATTR_PURE
 #endif
 
-/* const attribute */
+/* constr attribute
+  Functions can be marked as pure if their only effect is their return value. The return value
+  itself may only be computed from the arguments.
+ */
 #if defined(__GNUC__) || __has_attribute(const)
 #define ATTR_CONST __attribute__((const))
 #else

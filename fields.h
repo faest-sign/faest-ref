@@ -26,20 +26,20 @@ typedef struct {
   uint64_t values[4];
 } bf256_t;
 
-bf8_t bf8_add(bf8_t lhs, bf8_t rhs);
-bf8_t bf8_mul(bf8_t lhs, bf8_t rhs);
+ATTR_CONST bf8_t bf8_add(bf8_t lhs, bf8_t rhs);
+ATTR_CONST bf8_t bf8_mul(bf8_t lhs, bf8_t rhs);
 
-bf64_t bf64_add(bf64_t lhs, bf64_t rhs);
-bf64_t bf64_mul(bf64_t lhs, bf64_t rhs);
+ATTR_CONST bf64_t bf64_add(bf64_t lhs, bf64_t rhs);
+ATTR_CONST bf64_t bf64_mul(bf64_t lhs, bf64_t rhs);
 
-bf128_t bf128_add(bf128_t lhs, bf128_t rhs);
-bf128_t bf128_mul(bf128_t lhs, bf128_t rhs);
+ATTR_CONST bf128_t bf128_add(bf128_t lhs, bf128_t rhs);
+ATTR_CONST bf128_t bf128_mul(bf128_t lhs, bf128_t rhs);
 
-bf192_t bf192_add(bf192_t lhs, bf192_t rhs);
-bf192_t bf192_mul(bf192_t lhs, bf192_t rhs);
+ATTR_CONST bf192_t bf192_add(bf192_t lhs, bf192_t rhs);
+ATTR_CONST bf192_t bf192_mul(bf192_t lhs, bf192_t rhs);
 
-bf256_t bf256_add(bf256_t lhs, bf256_t rhs);
-bf256_t bf256_mul(bf256_t lhs, bf256_t rhs);
+ATTR_CONST bf256_t bf256_add(bf256_t lhs, bf256_t rhs);
+ATTR_CONST bf256_t bf256_mul(bf256_t lhs, bf256_t rhs);
 
 FAEST_END_C_DECL
 
