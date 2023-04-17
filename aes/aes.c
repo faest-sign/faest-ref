@@ -40,7 +40,7 @@ static bf8_t SetBit(bf8_t in, uint8_t index) {
 }
 
 // TODO: Use Intel intrincics ??
-static void AddRoundKey(bf8_t round, state_t* state, bf8_t* round_key) {
+static void AddRoundKey(bf8_t round, state_t* state) {
     // printf("\n");
     for(uint8_t c = 0; c < NC; c++) {
         for(uint8_t r = 0; r < NR; r++) {
@@ -180,7 +180,7 @@ static bf8_t Rcon(uint8_t in) {
     return tmp;
 }
 
-static void KeyExpansion(bf8_t* round_key, bf8_t* key) {
+static void KeyExpansion(bf8_t* key) {
     
     for(uint8_t k = 0; k < NK; k++) {
         round_key[4*k] = key[4*k];
@@ -223,29 +223,29 @@ static void KeyExpansion(bf8_t* round_key, bf8_t* key) {
 }
 
 // Cipher
-static void Cipher(state_t* state, bf8_t* round_key) {
+static void Cipher(state_t* state) {
     uint8_t round = 0;
 
     // first round
-    AddRoundKey(round, state, round_key);
+    AddRoundKey(round, state);
 
     for(round = 1; round < NROUND; round++) {
         SubBytes(state);
         ShiftRow(state);
         MixColoumn(state);
-        AddRoundKey(round,state,round_key);
+        AddRoundKey(round,state);
     }
 
     // // last round
     SubBytes(state);
     ShiftRow(state);
-    AddRoundKey(round,state,round_key);
+    AddRoundKey(round,state);
 
 }
 
 // Getting all round keys
 void Initialize(bf8_t* key, bf8_t* iv_) {
-    KeyExpansion(round_key, key);
+    KeyExpansion(key);
     memcpy(iv, iv_, 16);
 }
 
@@ -265,12 +265,12 @@ void Encrypt(bf8_t* buffer) {
 
     memcpy(buffer,iv,16);
 
-    Cipher((state_t*)buffer, round_key);
+    Cipher((state_t*)buffer);
 
     IncrementIV();
 }
 
-int main(int argc, char* argv[]) {
+/*int main(int argc, char* argv[]) {
     bf8_t key[16] = {0x2b, 0x7e, 0x15, 0x16,
                     0x28, 0xae, 0xd2, 0xa6,
                     0xab, 0xf7, 0x15, 0x88,
@@ -305,5 +305,4 @@ int main(int argc, char* argv[]) {
     } else {
         printf("Expected Didn't Match");
     }
-
-}
+}*/
