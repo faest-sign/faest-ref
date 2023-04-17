@@ -70,6 +70,18 @@ conf_data.set('HAVE_EXPLICIT_BZERO', cc.has_header_symbol('string.h', 'explicit_
 conf_data.set('HAVE_CONSTTIME_MEMEQUAL', cc.has_header_symbol('string.h', 'consttime_memequal', args: defines))
 conf_data.set('HAVE_TIMINGSAFE_BCMP', cc.has_header_symbol('string.h', 'timingsafe_bcmp', args: defines))
 
+# parameter sets
+parameter_sets = []
+
+# parameter set: L1
+param_l1 = configuration_data()
+param_l1.set('PARAM', 'L1')
+param_l1.set('PARAM_L', 'l1')
+param_l1.set('PK_SIZE', 32)
+param_l1.set('SK_SIZE', 16)
+param_l1.set('SIG_SIZE', 12345)
+parameter_sets += param_l1
+
 # dependencies
 build_dependencies = []
 
@@ -98,6 +110,7 @@ sources = files(
 
 # header files to install
 headers = files(
+  'faest_defines.h'
 )
 
 # SHA3 implementation
@@ -150,6 +163,20 @@ else
   endif
 endif
 
+# generate files for parameter sets
+foreach parameter_set : parameter_sets
+  headers += configure_file(
+    input: 'faest_param.h.in',
+    output: 'faest_' + parameter_set.get('PARAM_L') + '.h',
+    configuration: parameter_set
+  )
+  sources += configure_file(
+    input: 'faest_param.c.in',
+    output: 'faest_' + parameter_set.get('PARAM_L') + '.c',
+    configuration: parameter_set
+  )
+endforeach
+
 # faest library
 libfaest = static_library('faest',
   sources,
@@ -157,6 +184,7 @@ libfaest = static_library('faest',
   include_directories: include_directories,
   c_args: defines + c_flags
 )
+install_headers(headers)
 libfaest_dependency = declare_dependency(
   link_with: libfaest,
   include_directories: include_directories
