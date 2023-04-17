@@ -169,32 +169,64 @@ endif
 foreach parameter_set : parameter_sets
   headers += configure_file(
     input: 'faest_param.h.in',
-    output: 'faest_' + parameter_set.get('PARAM_L') + '.h',
+    output: 'faest_@0@.h'.format(parameter_set.get('PARAM_L')),
     configuration: parameter_set
   )
   sources += configure_file(
     input: 'faest_param.c.in',
-    output: 'faest_' + parameter_set.get('PARAM_L') + '.c',
+    output: 'faest_@0@.c'.format(parameter_set.get('PARAM_L')),
     configuration: parameter_set
   )
 endforeach
 
-# faest library
-libfaest = static_library('faest',
+# static faest library
+libfaest_static = static_library('faest',
   sources,
   # dependencies: build_dependencies,
   include_directories: include_directories,
-  c_args: defines + c_flags
+  c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT='],
+  install: true
 )
-install_headers(headers)
+libfaest_static_dependency = declare_dependency(
+  link_with: libfaest_static,
+  include_directories: include_directories
+)
+
+# shared library
+visibility_define = []
+if host_machine.system() == 'windows'
+  visibility_define += '-DFAEST_EXPORT=__declspec(dllexport)'
+elif cc.has_function_attribute('visibility:default')
+  visibility_define += '-DFAEST_EXPORT=__attribute__((visibility("default")))'
+endif
+libfaest = shared_library('faest',
+  sources,
+  # dependencies: build_dependencies,
+  include_directories: include_directories,
+  c_args: defines + c_flags + visibility_define,
+  install: true,
+  version: '0.0.0',
+  gnu_symbol_visibility: 'hidden'
+)
 libfaest_dependency = declare_dependency(
   link_with: libfaest,
   include_directories: include_directories
 )
 
+# install headers
+install_headers(headers)
+
+# install pkg config file
+pkg = import('pkgconfig')
+pkg.generate(
+  name: 'faest',
+  description: 'FAEST signature scheme',
+  libraries: [libfaest]
+)
+
 # SUPERCOP / NIST files
 foreach parameter_set : parameter_sets
-  subdir('faest_' + parameter_set.get('PARAM_L'))
+  subdir('faest_@0@'.format(parameter_set.get('PARAM_L')))
 endforeach
 
 subdir('tests')
