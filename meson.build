@@ -71,9 +71,11 @@ conf_data.set('HAVE_CONSTTIME_MEMEQUAL', cc.has_header_symbol('string.h', 'const
 conf_data.set('HAVE_TIMINGSAFE_BCMP', cc.has_header_symbol('string.h', 'timingsafe_bcmp', args: defines))
 
 # parameter sets
+# After changing the parameter sets, be sure to run crypto_sign_generator.py to create the corresponding meson files.
 parameter_sets = []
 
 # parameter set: L1
+# TODO: FIXME
 param_l1 = configuration_data()
 param_l1.set('PARAM', 'L1')
 param_l1.set('PARAM_L', 'l1')
@@ -189,5 +191,10 @@ libfaest_dependency = declare_dependency(
   link_with: libfaest,
   include_directories: include_directories
 )
+
+# SUPERCOP / NIST files
+foreach parameter_set : parameter_sets
+  subdir('faest_' + parameter_set.get('PARAM_L'))
+endforeach
 
 subdir('tests')

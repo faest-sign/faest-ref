@@ -1,0 +1,22 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
+#ifndef CRYPTO_SIGN_@PARAM@_H
+#define CRYPTO_SIGN_@PARAM@_H
+
+#define CRYPTO_SECRETKEYBYTES @SK_SIZE@
+#define CRYPTO_PUBLICKEYBYTES @PK_SIZE@
+#define CRYPTO_BYTES @SIG_SIZE@
+#define CRYPTO_ALGNAME "faest@PARAM_L@"
+#define CRYPTO_DETERMINISTIC 1
+
+int crypto_sign_keypair(unsigned char* pk, unsigned char* sk);
+int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned char* m,
+                unsigned long long mlen, const unsigned char* sk);
+int crypto_sign_open(unsigned char* m, unsigned long long* mlen, const unsigned char* sm,
+                     unsigned long long smlen, const unsigned char* pk);
+
+#endif
+
+// vim: ft=c
