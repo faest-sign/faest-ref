@@ -10,5 +10,5 @@ typedef bf8_t state_t[4][4];
 bf8_t round_key[16*11];
 bf8_t iv[16];
 
-void Initialize(bf8_t* key, bf8_t* iv_);
-void Encrypt(bf8_t* buffer);
+void initialize(bf8_t* key, bf8_t* iv_);
+void encrypt(bf8_t* buffer);
