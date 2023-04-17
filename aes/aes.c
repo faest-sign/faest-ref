@@ -5,31 +5,47 @@
 // TODO - Integrate with the existing framework
 // TODO - 192 and 256 support
 // TODO - Benchmark and optimize implementation
-// 
 
 // AES CTR mode 128/192/256
 
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "aes.h"
 
-#define nc 4 // total coloumns
-#define nr 4 // total rows
-#define nk 4 // 8*4 bits key
-#define nround 10 // total rounds
+#define NC 4 // total coloumns
+#define NR 4 // total rows
+#define NK 4 // 8*4 bits key
+#define NROUND 10 // total rounds
 
-#define bf8_modulus (UINT8_C((1 << 4) | (1 << 3) | (1 << 1) | 1))
+#define modulus_bf8 (UINT8_C((1 << 4) | (1 << 3) | (1 << 1) | 1)) // 0x1B
 
-// Round transformation functions, we do not need to implement the inverse for our CTR mode usecase
+bf8_t MULbf8(bf8_t lhs, bf8_t rhs) {
+  bf8_t result = 0;
+  for (unsigned int idx = 8; idx; --idx, rhs >>= 1) {
+    result ^= (-(rhs & 1)) & lhs;
+    const uint8_t mask = -((lhs >> 7) & 1);
+    lhs                = (lhs << 1) ^ (mask & modulus_bf8);
+  }
+  return result;
+}
+
+static bf8_t GetBit(bf8_t in, uint8_t index) {
+    return (in >> index) & 0x01;
+}
+
+static bf8_t SetBit(bf8_t in, uint8_t index) {
+    return (in << index);
+}
 
 // TODO: Use Intel intrincics ??
 static void AddRoundKey(bf8_t round, state_t* state, bf8_t* round_key) {
     // printf("\n");
-    for(uint8_t c = 0; c < nc; c++) {
-        for(uint8_t r = 0; r < nr; r++) {
+    for(uint8_t c = 0; c < NC; c++) {
+        for(uint8_t r = 0; r < NR; r++) {
             // printf("%.2x ",(*state)[c][r]);
-            (*state)[c][r] ^= round_key[(nc * round * 4) + (c * nc) + r];
+            (*state)[c][r] ^= round_key[(NC * round * 4) + (c * NC) + r];
         }
         // printf("\n");
     }
@@ -55,11 +71,43 @@ static const bf8_t sbox[256] = {
         0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16 // f
 };
 
-// TODO: Implement non-LUT
+// I guess this is the Itoh-Tsujii inverse... found it from a previous implementation of mine
+static bf8_t ModuloInverse(bf8_t in) {
+
+    if(0x00 == in) {
+        return 0x00;
+    }
+
+    uint16_t t1 = in;
+    uint16_t t2 = t1;
+
+    for(size_t i = 0; i < 6; i++) {
+        t2 = MULbf8(t2,t2);
+        t1 = MULbf8(t1, t2);
+    }
+
+    t1 = MULbf8(t1,t1);
+    return (bf8_t)t1;
+}
+
+
 static void SubBytes(state_t* state) {
-    for(uint8_t c = 0; c < nc; c++) {
-        for(uint8_t r = 0; r < nr; r++) {
-            (*state)[c][r] = sbox[(*state)[c][r]];
+
+    for(uint8_t c = 0; c < NC; c++) {
+        for(uint8_t r = 0; r < NR; r++) {
+
+            bf8_t t = ModuloInverse((*state)[c][r]);
+            bf8_t t0 = SetBit( GetBit(t,0) ^ GetBit(t,4) ^ GetBit(t,5) ^ GetBit(t,6) ^ GetBit(t,7) ^ 0x01, 0);
+            bf8_t t1 = SetBit( GetBit(t,0) ^ GetBit(t,1) ^ GetBit(t,5) ^ GetBit(t,6) ^ GetBit(t,7) ^ 0x01, 1);
+            bf8_t t2 = SetBit( GetBit(t,0) ^ GetBit(t,1) ^ GetBit(t,2) ^ GetBit(t,6) ^ GetBit(t,7), 2);
+            bf8_t t3 = SetBit( GetBit(t,0) ^ GetBit(t,1) ^ GetBit(t,2) ^ GetBit(t,3) ^ GetBit(t,7), 3);
+            bf8_t t4 = SetBit( GetBit(t,0) ^ GetBit(t,1) ^ GetBit(t,2) ^ GetBit(t,3) ^ GetBit(t,4), 4);
+            bf8_t t5 = SetBit( GetBit(t,1) ^ GetBit(t,2) ^ GetBit(t,3) ^ GetBit(t,4) ^ GetBit(t,5) ^ 0x01, 5);
+            bf8_t t6 = SetBit( GetBit(t,2) ^ GetBit(t,3) ^ GetBit(t,4) ^ GetBit(t,5) ^ GetBit(t,6) ^ 0x01, 6);
+            bf8_t t7 = SetBit( GetBit(t,3) ^ GetBit(t,4) ^ GetBit(t,5) ^ GetBit(t,6) ^ GetBit(t,7), 7);
+            (*state)[c][r] = t0 ^ t1 ^ t2 ^ t3 ^ t4 ^ t5 ^ t6 ^ t7;
+
+            // (*state)[c][r] = sbox[(*state)[c][r]];
         }
     }
 }
@@ -85,44 +133,21 @@ static void ShiftRow(state_t* state) {
     (*state)[1][3] = tmp;
 }
 
-// TODO: Reuse the field.c mul
-static bf8_t xtime(bf8_t x) {
-    return (x << 1) ^ (((x >> 7) & 1) * 0x1b);
-}
-
-// TODO: proper mul
-static bf8_t MulGF2_8(bf8_t a, bf8_t b) {
-
-    if (0x02 == b) {
-        return xtime(a);
-    }
-    else if (0x03 == b) {
-        return xtime(a) ^ a;
-    }
-
-    // bf8_t out = (b & 1) * a;
-    // bf8_t xtime_in = a;
-    // for(uint8_t i = 1; i < 8; i++) {
-    //     xtime_in = xtime(xtime_in);
-    //     out ^= ((b >> i) & 1) * xtime_in;
-    // }
-    // return out;
-}
 
 static void MixColoumn(state_t* state) {
-    for(uint8_t c = 0; c < nc; c++) {
+    for(uint8_t c = 0; c < NC; c++) {
 
-        bf8_t tmp = MulGF2_8((*state)[c][0],0x02) ^ MulGF2_8((*state)[c][1],0x03) 
+        bf8_t tmp = MULbf8((*state)[c][0],0x02) ^ MULbf8((*state)[c][1],0x03) 
                         ^ (*state)[c][2] ^ (*state)[c][3];
 
-        bf8_t tmp_1 = (*state)[c][0] ^ MulGF2_8((*state)[c][1],(bf8_t)0x02) 
-                        ^ MulGF2_8((*state)[c][2],(bf8_t)0x03) ^ (*state)[c][3];
+        bf8_t tmp_1 = (*state)[c][0] ^ MULbf8((*state)[c][1],(bf8_t)0x02) 
+                        ^ MULbf8((*state)[c][2],(bf8_t)0x03) ^ (*state)[c][3];
 
-        bf8_t tmp_2 = (*state)[c][0] ^ (*state)[c][1] ^ MulGF2_8((*state)[c][2],(bf8_t)0x02) 
-                        ^ MulGF2_8((*state)[c][3],(bf8_t)0x03);
+        bf8_t tmp_2 = (*state)[c][0] ^ (*state)[c][1] ^ MULbf8((*state)[c][2],(bf8_t)0x02) 
+                        ^ MULbf8((*state)[c][3],(bf8_t)0x03);
                         
-        bf8_t tmp_3 = MulGF2_8((*state)[c][0],(bf8_t)0x03) ^ (*state)[c][1] ^ (*state)[c][2] 
-                        ^ MulGF2_8((*state)[c][3],(bf8_t)0x02);
+        bf8_t tmp_3 = MULbf8((*state)[c][0],(bf8_t)0x03) ^ (*state)[c][1] ^ (*state)[c][2] 
+                        ^ MULbf8((*state)[c][3],(bf8_t)0x02);
 
         (*state)[c][0] = tmp;
         (*state)[c][1] = tmp_1;
@@ -150,14 +175,14 @@ static void RotWord(bf8_t* words) {
 static bf8_t Rcon(uint8_t in) {
     bf8_t tmp = 1;
     for(uint8_t i = 1; i < in; i++) {
-        tmp = MulGF2_8(tmp,(bf8_t)0x02);
+        tmp = MULbf8(tmp,(bf8_t)0x02);
     }
     return tmp;
 }
 
 static void KeyExpansion(bf8_t* round_key, bf8_t* key) {
     
-    for(uint8_t k = 0; k < nk; k++) {
+    for(uint8_t k = 0; k < NK; k++) {
         round_key[4*k] = key[4*k];
         round_key[(4*k)+1] = key[(4*k)+1];
         round_key[(4*k)+2] = key[(4*k)+2];
@@ -169,24 +194,23 @@ static void KeyExpansion(bf8_t* round_key, bf8_t* key) {
     //     printf("%.2x %.2x %.2x %.2x \n",round_key[i],round_key[i+1],round_key[i+2],round_key[i+3]);
     // }
 
-
     bf8_t tmp[4];
-    for(uint8_t k = nk; k < nc * (nround+1); k++) {
+    for(uint8_t k = NK; k < NC * (NROUND+1); k++) {
         uint8_t j = (k-1)*4;
         tmp[0] = round_key[j];
         tmp[1] = round_key[j+1];
         tmp[2] = round_key[j+2];
         tmp[3] = round_key[j+3];
 
-        if (k % nk == 0) {
+        if (k % NK == 0) {
             RotWord(tmp);
             SubWords(tmp);
-            tmp[0] ^= Rcon(k/nk);
+            tmp[0] ^= Rcon(k/NK);
             // printf("Round %d Key \n", k/nc);
         }
 
         j = k*4;
-        uint8_t m = (k - nk) * 4;
+        uint8_t m = (k - NK) * 4;
         round_key[j] = round_key[m] ^ tmp[0];
         round_key[j+1] = round_key[m + 1] ^ tmp[1];
         round_key[j+2] = round_key[m + 2] ^ tmp[2];
@@ -205,7 +229,7 @@ static void Cipher(state_t* state, bf8_t* round_key) {
     // first round
     AddRoundKey(round, state, round_key);
 
-    for(round = 1; round < nround; round++) {
+    for(round = 1; round < NROUND; round++) {
         SubBytes(state);
         ShiftRow(state);
         MixColoumn(state);
@@ -255,6 +279,10 @@ int main(int argc, char* argv[]) {
                     0x88, 0x5a, 0x30, 0x8d,
                     0x31, 0x31, 0x98, 0xa2,
                     0xe0, 0x37, 0x07, 0x34};
+    bf8_t expect_out[16] = {0x39,0x25,0x84,0x1d,
+                            0x02,0xdc,0x09,0xfb,
+                            0xdc,0x11,0x85,0x97,
+                            0x19,0x6a,0x0b,0x32};
 
     Initialize(key, iv);
 
@@ -264,6 +292,18 @@ int main(int argc, char* argv[]) {
     printf("Round Output \n");
     for(uint8_t i = 0; i < 16; i += 4) {
         printf("%.2x %.2x %.2x %.2x \n",buffer[i],buffer[i+1],buffer[i+2],buffer[i+3]);
+    }
+
+    uint8_t match = 1;
+    for(uint8_t i = 0; i < 16; i += 1) {
+        if(expect_out[i] != buffer[i]) {
+            match = 0;
+        }
+    }
+    if (match == 1) {
+        printf("Expected Matches");
+    } else {
+        printf("Expected Didn't Match");
     }
 
 }
