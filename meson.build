@@ -108,6 +108,7 @@ sources = files(
   'compat.c',
   'fields.c',
   'randomness.c',
+  'random_oracle.c'
 )
 
 # header files to install
