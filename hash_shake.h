@@ -47,11 +47,11 @@ typedef struct hash_context_oqs_s {
 } hash_context;
 
 /**
- * Initialize hash context based on the digest size used by Picnic. If the size is 32 bytes,
+ * Initialize hash context based on the security parameter. If the security parameter is 128,
  * SHAKE128 is used, otherwise SHAKE256 is used.
  */
-static inline void hash_init(hash_context* ctx, size_t digest_size) {
-  if (digest_size == 32) {
+static inline void hash_init(hash_context* ctx, unsigned int security_param) {
+  if (security_param == 128) {
     OQS_SHA3_shake128_inc_init(&ctx->shake128_ctx);
     ctx->shake256 = 0;
   } else {
@@ -101,8 +101,8 @@ typedef struct hash_context_x4_oqs_s {
   unsigned int shake256;
 } hash_context_x4;
 
-static inline void hash_init_x4(hash_context_x4* ctx, size_t digest_size) {
-  if (digest_size == 32) {
+static inline void hash_init_x4(hash_context_x4* ctx, unsigned int security_param) {
+  if (security_param == 128) {
     OQS_SHA3_shake128_x4_inc_init(&ctx->shake128_ctx);
     ctx->shake256 = 0;
   } else {
@@ -137,9 +137,9 @@ static inline void hash_update_x4_1(hash_context_x4* ctx, const uint8_t* data, s
   }
 }
 
-static inline void hash_init_prefix_x4(hash_context_x4* ctx, size_t digest_size,
+static inline void hash_init_prefix_x4(hash_context_x4* ctx, unsigned int security_parameter,
                                        const uint8_t prefix) {
-  if (digest_size == 32) {
+  if (security_param == 128) {
     OQS_SHA3_shake128_x4_inc_init(&ctx->shake128_ctx);
     OQS_SHA3_shake128_x4_inc_absorb(&ctx->shake128_ctx, &prefix, &prefix, &prefix, &prefix,
                                     sizeof(prefix));
@@ -205,11 +205,11 @@ static inline void hash_clear_x4(hash_context_x4* ctx) {
 typedef Keccak_HashInstance hash_context;
 
 /**
- * Initialize hash context based on the digest size used by Picnic. If the size is 32 bytes,
+ * Initialize hash context based on the security parameter. If the security parameter is 128,
  * SHAKE128 is used, otherwise SHAKE256 is used.
  */
-static inline void hash_init(hash_context* ctx, size_t digest_size) {
-  if (digest_size == 32) {
+static inline void hash_init(hash_context* ctx, unsigned int security_param) {
+  if (security_param == 128) {
     Keccak_HashInitialize_SHAKE128(ctx);
   } else {
     Keccak_HashInitialize_SHAKE256(ctx);
@@ -236,8 +236,9 @@ static inline void hash_update_uint16_le(hash_context* ctx, uint16_t data) {
   hash_update(ctx, (const uint8_t*)&data_le, sizeof(data_le));
 }
 
-static inline void hash_init_prefix(hash_context* ctx, size_t digest_size, const uint8_t prefix) {
-  hash_init(ctx, digest_size);
+static inline void hash_init_prefix(hash_context* ctx, unsigned int security_param,
+                                    const uint8_t prefix) {
+  hash_init(ctx, security_param);
   hash_update(ctx, &prefix, sizeof(prefix));
 }
 
@@ -245,8 +246,8 @@ static inline void hash_init_prefix(hash_context* ctx, size_t digest_size, const
 /* Instances that work with 4 states in parallel. */
 typedef Keccak_HashInstancetimes4 hash_context_x4;
 
-static inline void hash_init_x4(hash_context_x4* ctx, size_t digest_size) {
-  if (digest_size == 32) {
+static inline void hash_init_x4(hash_context_x4* ctx, unsigned int security_param) {
+  if (security_param == 128) {
     Keccak_HashInitializetimes4_SHAKE128(ctx);
   } else {
     Keccak_HashInitializetimes4_SHAKE256(ctx);
@@ -269,9 +270,9 @@ static inline void hash_update_x4_1(hash_context_x4* ctx, const uint8_t* data, s
   hash_update_x4(ctx, tmp, size);
 }
 
-static inline void hash_init_prefix_x4(hash_context_x4* ctx, size_t digest_size,
+static inline void hash_init_prefix_x4(hash_context_x4* ctx, unsigned int security_param,
                                        const uint8_t prefix) {
-  hash_init_x4(ctx, digest_size);
+  hash_init_x4(ctx, security_param);
   hash_update_x4_1(ctx, &prefix, sizeof(prefix));
 }
 
@@ -296,9 +297,9 @@ typedef struct hash_context_x4_s {
   hash_context instances[4];
 } hash_context_x4;
 
-static inline void hash_init_x4(hash_context_x4* ctx, size_t digest_size) {
+static inline void hash_init_x4(hash_context_x4* ctx, unsigned int security_param) {
   for (unsigned int i = 0; i < 4; ++i) {
-    hash_init(&ctx->instances[i], digest_size);
+    hash_init(&ctx->instances[i], security_param);
   }
 }
 
@@ -323,10 +324,10 @@ static inline void hash_update_x4_1(hash_context_x4* ctx, const uint8_t* data, s
   }
 }
 
-static inline void hash_init_prefix_x4(hash_context_x4* ctx, size_t digest_size,
+static inline void hash_init_prefix_x4(hash_context_x4* ctx, unsigned int security_param,
                                        const uint8_t prefix) {
   for (unsigned int i = 0; i < 4; ++i) {
-    hash_init_prefix(&ctx->instances[i], digest_size, prefix);
+    hash_init_prefix(&ctx->instances[i], security_param, prefix);
   }
 }
 

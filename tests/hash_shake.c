@@ -12,7 +12,7 @@ int main(void) {
   const uint8_t key[] = {0xab, 0xcd};
 
   hash_context ctx;
-  hash_init(&ctx, 64);
+  hash_init(&ctx, 256);
   hash_update(&ctx, key, sizeof(key));
   hash_final(&ctx);
 
