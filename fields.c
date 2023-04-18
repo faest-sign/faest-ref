@@ -7,6 +7,7 @@
 #endif
 
 #include "fields.h"
+#include "endian_compat.h"
 
 // GF(2^8) with X^8 + X^4 + X^3 + X^1 + 1
 #define bf8_modulus (UINT8_C((1 << 4) | (1 << 3) | (1 << 1) | 1))
@@ -20,6 +21,14 @@
 #define bf256_modulus (UINT64_C((1 << 10) | (1 << 5) | (1 << 2) | 1))
 
 // GF(2^8) implementation
+
+bf8_t bf8_load(const uint8_t* src) {
+  return *src;
+}
+
+void bf8_store(uint8_t* dst, bf8_t src) {
+  *dst = src;
+}
 
 bf8_t bf8_add(bf8_t lhs, bf8_t rhs) {
   return lhs ^ rhs;
@@ -37,6 +46,22 @@ bf8_t bf8_mul(bf8_t lhs, bf8_t rhs) {
 
 // GF(2^64) implementation
 
+bf64_t bf64_load(const uint8_t* src) {
+  bf64_t ret;
+  memcpy(&ret, src, sizeof(ret));
+#if defined(FAEST_IS_BIG_ENDIAN)
+  ret = be64toh(ret);
+#endif
+  return ret;
+}
+
+void bf64_store(uint8_t* dst, bf64_t src) {
+#if defined(FAEST_IS_BIG_ENDIAN)
+  src = htole64(src);
+#endif
+  memcpy(dst, &src, sizeof(src));
+}
+
 bf64_t bf64_add(bf64_t lhs, bf64_t rhs) {
   return lhs ^ rhs;
 }
@@ -52,6 +77,24 @@ bf64_t bf64_mul(bf64_t lhs, bf64_t rhs) {
 }
 
 // GF(2^128) implementation
+
+bf128_t bf128_load(const uint8_t* src) {
+  bf128_t ret;
+  memcpy(&ret, src, sizeof(ret));
+#if defined(FAEST_IS_BIG_ENDIAN)
+  ret.values[0] = le64toh(ret.values[0]);
+  ret.values[1] = le64toh(ret.values[1]);
+#endif
+  return ret;
+}
+
+void bf128_store(uint8_t* dst, bf128_t src) {
+#if defined(FAEST_IS_BIG_ENDIAN)
+  src.values[0] = htole64(src.values[0]);
+  src.values[1] = htole64(src.values[1]);
+#endif
+  memcpy(dst, &src, sizeof(src));
+}
 
 bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
@@ -104,6 +147,26 @@ bf128_t bf128_mul(bf128_t lhs, bf128_t rhs) {
 
 // GF(2^192) implementation
 
+bf192_t bf192_load(const uint8_t* src) {
+  bf192_t ret;
+  memcpy(&ret, src, sizeof(ret));
+#if defined(FAEST_IS_BIG_ENDIAN)
+  ret.values[0] = le64toh(ret.values[0]);
+  ret.values[1] = le64toh(ret.values[1]);
+  ret.values[2] = le64toh(ret.values[2]);
+#endif
+  return ret;
+}
+
+void bf192_store(uint8_t* dst, bf192_t src) {
+#if defined(FAEST_IS_BIG_ENDIAN)
+  src.values[0] = htole64(src.values[0]);
+  src.values[1] = htole64(src.values[1]);
+  src.values[2] = htole64(src.values[2]);
+#endif
+  memcpy(dst, &src, sizeof(src));
+}
+
 bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] ^= rhs.values[i];
@@ -155,6 +218,28 @@ bf192_t bf192_mul(bf192_t lhs, bf192_t rhs) {
 }
 
 // GF(2^256) implementation
+
+bf256_t bf256_load(const uint8_t* src) {
+  bf256_t ret;
+  memcpy(&ret, src, sizeof(ret));
+#if defined(FAEST_IS_BIG_ENDIAN)
+  ret.values[0] = le64toh(ret.values[0]);
+  ret.values[1] = le64toh(ret.values[1]);
+  ret.values[2] = le64toh(ret.values[2]);
+  ret.values[3] = le64toh(ret.values[3]);
+#endif
+  return ret;
+}
+
+void bf256_store(uint8_t* dst, bf256_t src) {
+#if defined(FAEST_IS_BIG_ENDIAN)
+  src.values[0] = htole64(src.values[0]);
+  src.values[1] = htole64(src.values[1]);
+  src.values[2] = htole64(src.values[2]);
+  src.values[3] = htole64(src.values[3]);
+#endif
+  memcpy(dst, &src, sizeof(src));
+}
 
 bf256_t bf256_add(bf256_t lhs, bf256_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {

@@ -26,18 +26,28 @@ typedef struct {
   uint64_t values[4];
 } bf256_t;
 
+bf8_t bf8_load(const uint8_t* src);
+void bf8_store(uint8_t* dst, bf8_t src);
 ATTR_CONST bf8_t bf8_add(bf8_t lhs, bf8_t rhs);
 ATTR_CONST bf8_t bf8_mul(bf8_t lhs, bf8_t rhs);
 
+bf64_t bf64_load(const uint8_t* src);
+void bf64_store(uint8_t* dst, bf64_t src);
 ATTR_CONST bf64_t bf64_add(bf64_t lhs, bf64_t rhs);
 ATTR_CONST bf64_t bf64_mul(bf64_t lhs, bf64_t rhs);
 
+bf128_t bf128_load(const uint8_t* src);
+void bf128_store(uint8_t* dst, bf128_t src);
 ATTR_CONST bf128_t bf128_add(bf128_t lhs, bf128_t rhs);
 ATTR_CONST bf128_t bf128_mul(bf128_t lhs, bf128_t rhs);
 
+bf192_t bf192_load(const uint8_t* src);
+void bf192_store(uint8_t* dst, bf192_t src);
 ATTR_CONST bf192_t bf192_add(bf192_t lhs, bf192_t rhs);
 ATTR_CONST bf192_t bf192_mul(bf192_t lhs, bf192_t rhs);
 
+bf256_t bf256_load(const uint8_t* src);
+void bf256_store(uint8_t* dst, bf256_t src);
 ATTR_CONST bf256_t bf256_add(bf256_t lhs, bf256_t rhs);
 ATTR_CONST bf256_t bf256_mul(bf256_t lhs, bf256_t rhs);
 
