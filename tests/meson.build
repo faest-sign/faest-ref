@@ -8,12 +8,12 @@ hash_shake = executable('test_hash_shake', files('hash_shake.c'),
 )
 test('hash_shake', hash_shake)
 
-aes_128_ctr = executable('test_aes_128_ctr', files('aes.c'),
+aes_ctr = executable('test_aes_ctr', files('aes.c'),
   dependencies: [libfaest_dependency],
   include_directories: include_directories,
   c_args: defines + c_flags
 )
-test('aes_128_ctr', aes_128_ctr)
+test('aes_ctr', aes_ctr)
 
 if boost_test.found() and ntl.found()
   fields = executable('test_fields', files('fields.cpp'),
