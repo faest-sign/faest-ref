@@ -70,6 +70,20 @@ conf_data.set('HAVE_EXPLICIT_BZERO', cc.has_header_symbol('string.h', 'explicit_
 conf_data.set('HAVE_CONSTTIME_MEMEQUAL', cc.has_header_symbol('string.h', 'consttime_memequal', args: defines))
 conf_data.set('HAVE_TIMINGSAFE_BCMP', cc.has_header_symbol('string.h', 'timingsafe_bcmp', args: defines))
 
+# parameter sets
+# After changing the parameter sets, be sure to run crypto_sign_generator.py to create the corresponding meson files.
+parameter_sets = []
+
+# parameter set: L1
+# TODO: FIXME
+param_l1 = configuration_data()
+param_l1.set('PARAM', 'L1')
+param_l1.set('PARAM_L', 'l1')
+param_l1.set('PK_SIZE', 32)
+param_l1.set('SK_SIZE', 16)
+param_l1.set('SIG_SIZE', 12345)
+parameter_sets += param_l1
+
 # dependencies
 build_dependencies = []
 
@@ -98,6 +112,7 @@ sources = files(
 
 # header files to install
 headers = files(
+  'faest_defines.h'
 )
 
 # SHA3 implementation
@@ -150,16 +165,68 @@ else
   endif
 endif
 
-# faest library
-libfaest = static_library('faest',
+# generate files for parameter sets
+foreach parameter_set : parameter_sets
+  headers += configure_file(
+    input: 'faest_param.h.in',
+    output: 'faest_@0@.h'.format(parameter_set.get('PARAM_L')),
+    configuration: parameter_set
+  )
+  sources += configure_file(
+    input: 'faest_param.c.in',
+    output: 'faest_@0@.c'.format(parameter_set.get('PARAM_L')),
+    configuration: parameter_set
+  )
+endforeach
+
+# static faest library
+libfaest_static = static_library('faest',
   sources,
   # dependencies: build_dependencies,
   include_directories: include_directories,
-  c_args: defines + c_flags
+  c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT='],
+  install: true
+)
+libfaest_static_dependency = declare_dependency(
+  link_with: libfaest_static,
+  include_directories: include_directories
+)
+
+# shared library
+visibility_define = []
+if host_machine.system() == 'windows'
+  visibility_define += '-DFAEST_EXPORT=__declspec(dllexport)'
+elif cc.has_function_attribute('visibility:default')
+  visibility_define += '-DFAEST_EXPORT=__attribute__((visibility("default")))'
+endif
+libfaest = shared_library('faest',
+  sources,
+  # dependencies: build_dependencies,
+  include_directories: include_directories,
+  c_args: defines + c_flags + visibility_define,
+  install: true,
+  version: '0.0.0',
+  gnu_symbol_visibility: 'hidden'
 )
 libfaest_dependency = declare_dependency(
   link_with: libfaest,
   include_directories: include_directories
 )
+
+# install headers
+install_headers(headers)
+
+# install pkg config file
+pkg = import('pkgconfig')
+pkg.generate(
+  name: 'faest',
+  description: 'FAEST signature scheme',
+  libraries: [libfaest]
+)
+
+# SUPERCOP / NIST files
+foreach parameter_set : parameter_sets
+  subdir('faest_@0@'.format(parameter_set.get('PARAM_L')))
+endforeach
 
 subdir('tests')

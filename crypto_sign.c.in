@@ -1,0 +1,42 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
+#ifdef SUPERCOP
+#include "crypto_sign.h"
+#else
+#include "api.h"
+#endif
+
+#include "faest_@PARAM_L@.h"
+
+#include <string.h>
+
+int crypto_sign_keypair(unsigned char* pk, unsigned char* sk) {
+  return faest_@PARAM_L@_keygen(pk, sk);
+}
+
+int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned char* m,
+                unsigned long long mlen, const unsigned char* sk) {
+  *smlen = mlen + FAEST_@PARAM@_MAX_SIGNATURE_SIZE;
+  memmove(sm, m, mlen);
+  return faest_@PARAM_L@_sign(sk, sm, mlen, sm + mlen, NULL);
+}
+
+int crypto_sign_open(unsigned char* m, unsigned long long* mlen, const unsigned char* sm,
+                     unsigned long long smlen, const unsigned char* pk) {
+  if (smlen < FAEST_@PARAM@_MAX_SIGNATURE_SIZE) {
+    // signature too short
+    return -1;
+  }
+  unsigned long long m_length = smlen - FAEST_@PARAM@_MAX_SIGNATURE_SIZE;
+  if (!faest_@PARAM_L@_verify(pk, sm, m_length, sm + m_length, FAEST_@PARAM@_MAX_SIGNATURE_SIZE)) {
+    return -1;
+  }
+
+  *mlen = m_length;
+  memmove(m, sm, m_length);
+  return 0;
+}
+
+// vim: ft=c

@@ -80,6 +80,8 @@ FAEST_END_C_DECL
 #endif /* HAVE_TIMINGSAFE_BCMP */
 
 #if defined(HAVE_EXPLICIT_BZERO)
+#include <string.h>
+
 #define faest_explicit_bzero(ptr, len) explicit_bzero((ptr), (len))
 #else
 FAEST_BEGIN_C_DECL

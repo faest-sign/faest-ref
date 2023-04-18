@@ -60,6 +60,7 @@ bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
   return lhs;
 }
 
+ATTR_CONST
 static bf128_t bf128_and(bf128_t lhs, bf128_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] &= rhs.values[i];
@@ -67,12 +68,14 @@ static bf128_t bf128_and(bf128_t lhs, bf128_t rhs) {
   return lhs;
 }
 
+ATTR_CONST
 static bf128_t bf128_shift_left_1(bf128_t value) {
   value.values[1] = (value.values[1] << 1) | (value.values[0] >> 63);
   value.values[0] = value.values[0] << 1;
   return value;
 }
 
+ATTR_CONST
 static uint64_t bf128_bit_to_uint64_mask(bf128_t value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
@@ -80,6 +83,7 @@ static uint64_t bf128_bit_to_uint64_mask(bf128_t value, unsigned int bit) {
   return -((value.values[byte_idx] >> bit_idx) & 1);
 }
 
+ATTR_CONST
 static bf128_t bf128_bit_to_mask(bf128_t value, unsigned int bit) {
   bf128_t ret;
   ret.values[0] = ret.values[1] = bf128_bit_to_uint64_mask(value, bit);
@@ -107,6 +111,7 @@ bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
   return lhs;
 }
 
+ATTR_CONST
 static bf192_t bf192_and(bf192_t lhs, bf192_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] &= rhs.values[i];
@@ -114,6 +119,7 @@ static bf192_t bf192_and(bf192_t lhs, bf192_t rhs) {
   return lhs;
 }
 
+ATTR_CONST
 static bf192_t bf192_shift_left_1(bf192_t value) {
   value.values[2] = (value.values[2] << 1) | (value.values[1] >> 63);
   value.values[1] = (value.values[1] << 1) | (value.values[0] >> 63);
@@ -121,6 +127,7 @@ static bf192_t bf192_shift_left_1(bf192_t value) {
   return value;
 }
 
+ATTR_CONST
 static uint64_t bf192_bit_to_uint64_mask(bf192_t value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
@@ -128,6 +135,7 @@ static uint64_t bf192_bit_to_uint64_mask(bf192_t value, unsigned int bit) {
   return -((value.values[byte_idx] >> bit_idx) & 1);
 }
 
+ATTR_CONST
 static bf192_t bf192_bit_to_mask(bf192_t value, unsigned int bit) {
   bf192_t ret;
   ret.values[0] = ret.values[1] = ret.values[2] = bf192_bit_to_uint64_mask(value, bit);
@@ -155,6 +163,7 @@ bf256_t bf256_add(bf256_t lhs, bf256_t rhs) {
   return lhs;
 }
 
+ATTR_CONST
 static bf256_t bf256_and(bf256_t lhs, bf256_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] &= rhs.values[i];
@@ -162,6 +171,7 @@ static bf256_t bf256_and(bf256_t lhs, bf256_t rhs) {
   return lhs;
 }
 
+ATTR_CONST
 static bf256_t bf256_shift_left_1(bf256_t value) {
   value.values[3] = (value.values[3] << 1) | (value.values[2] >> 63);
   value.values[2] = (value.values[2] << 1) | (value.values[1] >> 63);
@@ -170,6 +180,7 @@ static bf256_t bf256_shift_left_1(bf256_t value) {
   return value;
 }
 
+ATTR_CONST
 static uint64_t bf256_bit_to_uint64_mask(bf256_t value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
@@ -177,6 +188,7 @@ static uint64_t bf256_bit_to_uint64_mask(bf256_t value, unsigned int bit) {
   return -((value.values[byte_idx] >> bit_idx) & 1);
 }
 
+ATTR_CONST
 static bf256_t bf256_bit_to_mask(bf256_t value, unsigned int bit) {
   bf256_t ret;
   ret.values[0] = ret.values[1] = ret.values[2] = ret.values[3] =

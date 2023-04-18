@@ -1,0 +1,61 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include "faest_@PARAM_L@.h"
+#include "compat.h"
+
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(const uint8_t* pk, const uint8_t* sk) {
+  if (!pk || !sk) {
+    return -1;
+  }
+
+  // TODO
+  return 1;
+}
+
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sk_to_pk(const uint8_t* sk, uint8_t* pk) {
+  if (!sk || !pk) {
+    return -1;
+  }
+
+  // TODO
+  return 1;
+}
+
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* sk, const uint8_t* pk) {
+  if (!sk || !pk) {
+    return -1;
+  }
+
+  // TODO
+  return 1;
+}
+
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len) {
+  if (!sk || !signature || !signature_len) {
+    return -1;
+  }
+
+  // TODO
+  return 1;
+}
+
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* pk, const uint8_t* message, size_t message_len, const uint8_t* signature, size_t signature_len) {
+  if (!pk || !signature || !signature_len) {
+    return -1;
+  }
+
+  // TODO
+  return 1;
+}
+
+void FAEST_CALLING_CONVENTION faest_@PARAM_L@_clear_private_key(uint8_t* key) {
+  faest_explicit_bzero(key, FAEST_@PARAM@_PRIVATE_KEY_SIZE);
+}
+
+// vim: ft=c
