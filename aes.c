@@ -19,7 +19,7 @@ const uint8_t bsize = nc*nr; // block size
 
 uint8_t kwords; // key words
 uint8_t nround; // no round
-uint16_t sec_lv; // 128,192,256
+uint16_t seclv; // 128,192,256
 
 // Common functions
 bf8_t mul_bf8(bf8_t lhs, bf8_t rhs) {
@@ -62,13 +62,23 @@ static bf8_t compute_sbox(bf8_t in) {
     bf8_t t7 = set_bit( get_bit(t,3) ^ get_bit(t,4) ^ get_bit(t,5) ^ get_bit(t,6) ^ get_bit(t,7), 7);
     return t0 ^ t1 ^ t2 ^ t3 ^ t4 ^ t5 ^ t6 ^ t7;
 }
+void increment_iv(bf8_t* iv) {
+    for(uint8_t i = 16; i > 0; i--) {
+        if(iv[i-1] == 0xff) {
+            iv[i-1] = 0x00;
+            continue;
+        }
+        iv[i-1] += 0x01;
+        break;
+    }
+}
 
 // ## AES ##
 // Round Functions
-static void add_round_key(bf8_t round, state_t* state, bf8_t* round_key) {
+static void add_round_key(bf8_t round, state_t* state, bf8_t* roundKey) {
     for(uint8_t c = 0; c < nc; c++) {
         for(uint8_t r = 0; r < nr; r++) {
-            (*state)[c][r] ^= round_key[(nc * round * 4) + (c * nc) + r];
+            (*state)[c][r] ^= roundKey[(nc * round * 4) + (c * nc) + r];
         }
     }
 }
@@ -138,20 +148,20 @@ static bf8_t round_const(uint8_t in) {
     return tmp;
 }
 // Main Functions
-static void key_expansion(bf8_t* key, bf8_t* round_key) {
+static void key_expansion(bf8_t* key, bf8_t* roundKey) {
     for(uint8_t k = 0; k < kwords; k++) {
-        round_key[4*k] = key[4*k];
-        round_key[(4*k)+1] = key[(4*k)+1];
-        round_key[(4*k)+2] = key[(4*k)+2];
-        round_key[(4*k)+3] = key[(4*k)+3];
+        roundKey[4*k] = key[4*k];
+        roundKey[(4*k)+1] = key[(4*k)+1];
+        roundKey[(4*k)+2] = key[(4*k)+2];
+        roundKey[(4*k)+3] = key[(4*k)+3];
     }
     bf8_t tmp[4];
     for(uint8_t k = kwords; k < nc * (nround+1); k++) {
         uint8_t j = (k-1)*4;
-        tmp[0] = round_key[j];
-        tmp[1] = round_key[j+1];
-        tmp[2] = round_key[j+2];
-        tmp[3] = round_key[j+3];
+        tmp[0] = roundKey[j];
+        tmp[1] = roundKey[j+1];
+        tmp[2] = roundKey[j+2];
+        tmp[3] = roundKey[j+3];
 
         if (k % kwords == 0) {
             rot_word(tmp);
@@ -159,58 +169,58 @@ static void key_expansion(bf8_t* key, bf8_t* round_key) {
             tmp[0] ^= round_const(k/kwords);
         }
 
-        if (sec_lv == 256 && (k % kwords) == 4) {
+        if (seclv == 256 && (k % kwords) == 4) {
             sub_words(tmp);
         }
 
         j = k*4;
         uint8_t m = (k - kwords) * 4;
-        round_key[j] = round_key[m] ^ tmp[0];
-        round_key[j+1] = round_key[m + 1] ^ tmp[1];
-        round_key[j+2] = round_key[m + 2] ^ tmp[2];
-        round_key[j+3] = round_key[m + 3] ^ tmp[3];
+        roundKey[j] = roundKey[m] ^ tmp[0];
+        roundKey[j+1] = roundKey[m + 1] ^ tmp[1];
+        roundKey[j+2] = roundKey[m + 2] ^ tmp[2];
+        roundKey[j+3] = roundKey[m + 3] ^ tmp[3];
     }
 }
-static void cipher(state_t* state, bf8_t* round_key) {
+static void cipher(state_t* state, bf8_t* roundKey) {
     uint8_t round = 0;
 
     // first round
-    add_round_key(round, state, round_key);
+    add_round_key(round, state, roundKey);
 
     for(round = 1; round < nround; round++) {
         sub_bytes(state);
         shift_row(state);
         mix_coloumn(state);
-        add_round_key(round,state, round_key);
+        add_round_key(round,state, roundKey);
     }
 
     // last round
     sub_bytes(state);
     shift_row(state);
-    add_round_key(round,state, round_key);
+    add_round_key(round,state, roundKey);
 }
 
 // Calling Functions
-void aes_ctr_encrypt(bf8_t* key, bf8_t* iv, bf8_t* output, uint16_t sec_lv_) {
-    sec_lv = sec_lv_;
-    if (sec_lv_ == 256) {
+void aes_ctr_encrypt(bf8_t* key, bf8_t* iv, bf8_t* plaintext, bf8_t* output, uint16_t seclv_) {
+    seclv = seclv_;
+    if (seclv_ == 256) {
         kwords = 8;
         nround = 14;
         bf8_t round_key[16*(14+1)];
         key_expansion(key, round_key);
         cipher((state_t*)iv, round_key);
         for(uint8_t i = 0; i < 16; i++) {
-            output[i] = output[i] ^ iv[i];
+            output[i] = plaintext[i] ^ iv[i];
         }
     }
-    else if (sec_lv_ == 192) {
+    else if (seclv_ == 192) {
         kwords = 6;
         nround = 12;
         bf8_t round_key[16*(12+1)];
         key_expansion(key, round_key);
         cipher((state_t*)iv, round_key);
         for(uint8_t i = 0; i < 16; i++) {
-            output[i] = output[i] ^ iv[i];
+            output[i] = plaintext[i] ^ iv[i];
         }
     }
     else {
@@ -220,7 +230,7 @@ void aes_ctr_encrypt(bf8_t* key, bf8_t* iv, bf8_t* output, uint16_t sec_lv_) {
         key_expansion(key, round_key);
         cipher((state_t*)iv, round_key);
         for(uint8_t i = 0; i < 16; i++) {
-            output[i] = output[i] ^ iv[i];
+            output[i] = plaintext[i] ^ iv[i];
         }
     }
 }

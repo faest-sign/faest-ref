@@ -15,6 +15,13 @@ aes_ctr = executable('test_aes_ctr', files('aes.c'),
 )
 test('aes_ctr', aes_ctr)
 
+tree = executable('tree', files('tree.c'),
+  dependencies: [libfaest_static_dependency],
+  include_directories: include_directories,
+  c_args: defines + c_flags
+)
+test('tree', tree)
+
 if boost_test.found() and ntl.found()
   fields = executable('test_fields', files('fields.cpp'),
     dependencies: [libfaest_static_dependency, boost_test, ntl],
