@@ -105,6 +105,7 @@ include_directories = [include_directories('.')]
 
 # source files
 sources = files(
+  'aes.c',
   'compat.c',
   'fields.c',
   'randomness.c',
