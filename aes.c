@@ -7,9 +7,8 @@
 #include <math.h>
 #include <stdint.h>
 
-#define MODULUS_BF8 (UINT8_C((1 << 4) | (1 << 3) | (1 << 1) | 1)) // 0x1B
+#include "fields.h"
 
-typedef uint8_t bf8_t;
 typedef uint64_t bf64_t;
 typedef bf8_t state_t[4][4];
 
@@ -21,35 +20,14 @@ uint8_t kwords; // key words
 uint8_t nround; // no round
 uint16_t seclv; // 128,192,256
 
-// Common functions
-bf8_t mul_bf8(bf8_t lhs, bf8_t rhs) {
-  bf8_t result = 0;
-  for (unsigned int idx = 8; idx; --idx, rhs >>= 1) {
-    result ^= (-(rhs & 1)) & lhs;
-    const uint8_t mask = -((lhs >> 7) & 1);
-    lhs                = (lhs << 1) ^ (mask & MODULUS_BF8);
-  }
-  return result;
+ATTR_CONST static bf8_t get_bit(bf8_t in, uint8_t index) {
+  return (in >> index) & 0x01;
 }
-static bf8_t get_bit(bf8_t in, uint8_t index) {
-    return (in >> index) & 0x01;
+
+ATTR_CONST static bf8_t set_bit(bf8_t in, uint8_t index) {
+  return (in << index);
 }
-static bf8_t set_bit(bf8_t in, uint8_t index) {
-    return (in << index);
-}
-static bf8_t modulo_inverse(bf8_t in) {
-    if(0x00 == in) {
-        return 0x00;
-    }
-    uint16_t t1 = in;
-    uint16_t t2 = t1;
-    for(size_t i = 0; i < 6; i++) {
-        t2 = mul_bf8(t2,t2);
-        t1 = mul_bf8(t1,t2);
-    }
-    t1 = mul_bf8(t1,t1);
-    return (bf8_t)t1;
-}
+
 static bf8_t compute_sbox(bf8_t in) {
     bf8_t t = modulo_inverse(in);
     bf8_t t0 = set_bit( get_bit(t,0) ^ get_bit(t,4) ^ get_bit(t,5) ^ get_bit(t,6) ^ get_bit(t,7) ^ 0x01, 0);

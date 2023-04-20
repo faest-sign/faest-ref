@@ -30,6 +30,7 @@ bf8_t bf8_load(const uint8_t* src);
 void bf8_store(uint8_t* dst, bf8_t src);
 ATTR_CONST bf8_t bf8_add(bf8_t lhs, bf8_t rhs);
 ATTR_CONST bf8_t bf8_mul(bf8_t lhs, bf8_t rhs);
+ATTR_CONST bf8_t bf8_inverse(bf8_t lhs);
 
 bf64_t bf64_load(const uint8_t* src);
 void bf64_store(uint8_t* dst, bf64_t src);

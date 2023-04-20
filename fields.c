@@ -46,6 +46,16 @@ bf8_t bf8_mul(bf8_t lhs, bf8_t rhs) {
   return result;
 }
 
+bf8_t bf8_inverse(bf8_t in) {
+  uint8_t t1 = in;
+  uint8_t t2 = in;
+  for (size_t i = 0; i < 6; i++) {
+    t2 = bf8_mul(t2, t2);
+    t1 = bf8_mul(t1, t2);
+  }
+  return bf8_mul(t1, t1);
+}
+
 // GF(2^64) implementation
 
 bf64_t bf64_load(const uint8_t* src) {
