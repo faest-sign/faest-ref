@@ -15,12 +15,11 @@
 
 #include "fields.h"
 
-typedef uint64_t bf64_t;
 typedef bf8_t state_t[4][4];
 
-const uint8_t nc    = 4;       // no coloumn
-const uint8_t nr    = 4;       // no row
-const uint8_t bsize = nc * nr; // block size
+static const uint8_t nc    = 4;       // # of columns
+static const uint8_t nr    = 4;       // # of rows
+static const uint8_t bsize = nc * nr; // block size
 
 uint8_t kwords; // key words
 uint8_t nround; // no round
@@ -102,7 +101,8 @@ static void shift_row(state_t* state) {
   (*state)[2][3] = (*state)[1][3];
   (*state)[1][3] = tmp;
 }
-static void mix_coloumn(state_t* state) {
+
+static void mix_column(state_t* state) {
   for (uint8_t c = 0; c < nc; c++) {
     bf8_t tmp = bf8_mul((*state)[c][0], 0x02) ^ bf8_mul((*state)[c][1], 0x03) ^ (*state)[c][2] ^
                 (*state)[c][3];
@@ -119,6 +119,7 @@ static void mix_coloumn(state_t* state) {
     (*state)[c][3] = tmp_3;
   }
 }
+
 // Key Expansion functions
 static void sub_words(bf8_t* words) {
   words[0] = compute_sbox(words[0]);
@@ -126,6 +127,7 @@ static void sub_words(bf8_t* words) {
   words[2] = compute_sbox(words[2]);
   words[3] = compute_sbox(words[3]);
 }
+
 static void rot_word(bf8_t* words) {
   bf8_t tmp = words[0];
   words[0]  = words[1];
@@ -133,6 +135,7 @@ static void rot_word(bf8_t* words) {
   words[2]  = words[3];
   words[3]  = tmp;
 }
+
 static bf8_t round_const(uint8_t in) {
   bf8_t tmp = 1;
   for (uint8_t i = 1; i < in; i++) {
@@ -140,6 +143,7 @@ static bf8_t round_const(uint8_t in) {
   }
   return tmp;
 }
+
 // Main Functions
 static void key_expansion(bf8_t* key, bf8_t* roundKey) {
   for (uint8_t k = 0; k < kwords; k++) {
@@ -174,6 +178,7 @@ static void key_expansion(bf8_t* key, bf8_t* roundKey) {
     roundKey[j + 3] = roundKey[m + 3] ^ tmp[3];
   }
 }
+
 static void cipher(state_t* state, bf8_t* roundKey) {
   uint8_t round = 0;
 
@@ -183,7 +188,7 @@ static void cipher(state_t* state, bf8_t* roundKey) {
   for (round = 1; round < nround; round++) {
     sub_bytes(state);
     shift_row(state);
-    mix_coloumn(state);
+    mix_column(state);
     add_round_key(round, state, roundKey);
   }
 
