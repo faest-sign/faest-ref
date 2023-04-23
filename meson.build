@@ -74,15 +74,83 @@ conf_data.set('HAVE_TIMINGSAFE_BCMP', cc.has_header_symbol('string.h', 'timingsa
 # After changing the parameter sets, be sure to run crypto_sign_generator.py to create the corresponding meson files.
 parameter_sets = []
 
-# parameter set: L1
-# TODO: FIXME
-param_l1 = configuration_data()
-param_l1.set('PARAM', 'L1')
-param_l1.set('PARAM_L', 'l1')
-param_l1.set('PK_SIZE', 32)
-param_l1.set('SK_SIZE', 16)
-param_l1.set('SIG_SIZE', 12345)
-parameter_sets += param_l1
+# parameter set: FAEST-128s
+param_128s = configuration_data()
+param_128s.set('PARAM', '128S')
+param_128s.set('PARAM_L', '128s')
+param_128s.set('ELL', 1600)
+param_128s.set('TAU', 11)
+param_128s.set('K_0', 12)
+param_128s.set('K_1', 11)
+param_128s.set('PK_SIZE', 32)
+param_128s.set('SK_SIZE', 16)
+param_128s.set('SIG_SIZE', 5034)
+parameter_sets += param_128s
+
+# parameter set: FAEST-128f
+param_128f = configuration_data()
+param_128f.set('PARAM', '128F')
+param_128f.set('PARAM_L', '128f')
+param_128f.set('ELL', 1600)
+param_128f.set('TAU', 16)
+param_128f.set('K_0', 8)
+param_128f.set('K_1', 8)
+param_128f.set('PK_SIZE', 32)
+param_128f.set('SK_SIZE', 16)
+param_128f.set('SIG_SIZE', 6384)
+parameter_sets += param_128f
+
+# parameter set: FAEST-192s
+param_192s = configuration_data()
+param_192s.set('PARAM', '192S')
+param_192s.set('PARAM_L', '192s')
+param_192s.set('ELL', 3328)
+param_192s.set('TAU', 16)
+param_192s.set('K_0', 12)
+param_192s.set('K_1', 12)
+param_192s.set('PK_SIZE', 48)
+param_192s.set('SK_SIZE', 24)
+param_192s.set('SIG_SIZE', 12952)
+parameter_sets += param_192s
+
+# parameter set: FAEST-192f
+param_192f = configuration_data()
+param_192f.set('PARAM', '192F')
+param_192f.set('PARAM_L', '192f')
+param_192f.set('ELL', 3328)
+param_192f.set('TAU', 24)
+param_192f.set('K_0', 8)
+param_192f.set('K_1', 8)
+param_192f.set('PK_SIZE', 48)
+param_192f.set('SK_SIZE', 24)
+param_192f.set('SIG_SIZE', 17064)
+parameter_sets += param_192f
+
+# parameter set: FAEST-256s
+param_256s = configuration_data()
+param_256s.set('PARAM', '256S')
+param_256s.set('PARAM_L', '256s')
+param_256s.set('ELL', 4000)
+param_256s.set('TAU', 22)
+param_256s.set('K_0', 12)
+param_256s.set('K_1', 11)
+param_256s.set('PK_SIZE', 64)
+param_256s.set('SK_SIZE', 32)
+param_256s.set('SIG_SIZE', 22212)
+parameter_sets += param_256s
+
+# parameter set: FAEST-256f
+param_256f = configuration_data()
+param_256f.set('PARAM', '256F')
+param_256f.set('PARAM_L', '256f')
+param_256f.set('ELL', 4000)
+param_256f.set('TAU', 32)
+param_256f.set('K_0', 8)
+param_256f.set('K_1', 8)
+param_256f.set('PK_SIZE', 64)
+param_256f.set('SK_SIZE', 32)
+param_256f.set('SIG_SIZE', 28512)
+parameter_sets += param_256f
 
 # dependencies
 build_dependencies = []
