@@ -34,7 +34,7 @@ ATTR_CONST static bf8_t set_bit(bf8_t in, uint8_t index) {
 }
 
 static bf8_t compute_sbox(bf8_t in) {
-  bf8_t t  = bf8_inverse(in);
+  bf8_t t  = bf8_inv(in);
   bf8_t t0 = set_bit(
       get_bit(t, 0) ^ get_bit(t, 4) ^ get_bit(t, 5) ^ get_bit(t, 6) ^ get_bit(t, 7) ^ 0x01, 0);
   bf8_t t1 = set_bit(
