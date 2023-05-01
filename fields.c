@@ -8,6 +8,7 @@
 
 #include "fields.h"
 #include "endian_compat.h"
+#include "randomness.h"
 
 #include <string.h>
 
@@ -32,6 +33,12 @@ void bf8_store(uint8_t* dst, bf8_t src) {
   *dst = src;
 }
 
+bf8_t bf8_rand() {
+  bf8_t ret;
+  rand_bytes(&ret, sizeof(ret));
+  return ret;
+}
+
 bf8_t bf8_add(bf8_t lhs, bf8_t rhs) {
   return lhs ^ rhs;
 }
@@ -47,9 +54,9 @@ bf8_t bf8_mul(bf8_t lhs, bf8_t rhs) {
 }
 
 bf8_t bf8_inverse(bf8_t in) {
-  uint8_t t1 = in;
-  uint8_t t2 = in;
-  for (size_t i = 0; i < 6; i++) {
+  bf8_t t1 = in;
+  bf8_t t2 = in;
+  for (size_t i = 0; i < 8 - 2; i++) {
     t2 = bf8_mul(t2, t2);
     t1 = bf8_mul(t1, t2);
   }
@@ -72,6 +79,12 @@ void bf64_store(uint8_t* dst, bf64_t src) {
   src = htole64(src);
 #endif
   memcpy(dst, &src, sizeof(src));
+}
+
+bf64_t bf64_rand() {
+  bf64_t ret;
+  rand_bytes((uint8_t*)&ret, sizeof(ret));
+  return ret;
 }
 
 bf64_t bf64_add(bf64_t lhs, bf64_t rhs) {
@@ -104,6 +117,12 @@ void bf128_store(uint8_t* dst, bf128_t src) {
     uint64_t tmp = htole64(src.values[i]);
     memcpy(dst, &tmp, sizeof(tmp));
   }
+}
+
+bf128_t bf128_rand() {
+  bf128_t ret;
+  rand_bytes((uint8_t*)ret.values, sizeof(ret));
+  return ret;
 }
 
 bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
@@ -173,6 +192,12 @@ void bf192_store(uint8_t* dst, bf192_t src) {
   }
 }
 
+bf192_t bf192_rand() {
+  bf192_t ret;
+  rand_bytes((uint8_t*)ret.values, sizeof(ret));
+  return ret;
+}
+
 bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] ^= rhs.values[i];
@@ -239,6 +264,12 @@ void bf256_store(uint8_t* dst, bf256_t src) {
     uint64_t tmp = htole64(src.values[i]);
     memcpy(dst, &tmp, sizeof(tmp));
   }
+}
+
+bf256_t bf256_rand() {
+  bf256_t ret;
+  rand_bytes((uint8_t*)ret.values, sizeof(ret));
+  return ret;
 }
 
 bf256_t bf256_add(bf256_t lhs, bf256_t rhs) {

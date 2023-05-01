@@ -81,9 +81,7 @@ namespace {
     }
 
     static bf8 random() {
-      bf8 v;
-      rand_bytes(&v.value, sizeof(v.value));
-      return v;
+      return bf8_rand();
     }
   };
 
@@ -156,9 +154,7 @@ namespace {
     }
 
     static bf64 random() {
-      bf64 v;
-      rand_bytes(reinterpret_cast<uint8_t*>(&v.value), sizeof(v.value));
-      return v;
+      return bf64_rand();
     }
   };
 
@@ -236,9 +232,7 @@ namespace {
     }
 
     static bf128 random() {
-      bf128 v;
-      rand_bytes(reinterpret_cast<uint8_t*>(&v.value), sizeof(v.value));
-      return v;
+      return bf128_rand();
     }
   };
 
@@ -322,9 +316,7 @@ namespace {
     }
 
     static bf192 random() {
-      bf192 v;
-      rand_bytes(reinterpret_cast<uint8_t*>(&v.value), sizeof(v.value));
-      return v;
+      return bf192_rand();
     }
   };
 
@@ -412,9 +404,7 @@ namespace {
     }
 
     static bf256 random() {
-      bf256 v;
-      rand_bytes(reinterpret_cast<uint8_t*>(&v.value), sizeof(v.value));
-      return v;
+      return bf256_rand();
     }
   };
 
