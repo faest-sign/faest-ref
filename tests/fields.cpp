@@ -17,6 +17,11 @@
 using namespace NTL;
 
 namespace {
+  GF2X DivMod(const GF2X& lhs, const GF2X& rhs, const GF2XModulus& modulus) {
+    const auto denom = InvMod(rhs, modulus);
+    return MulMod(lhs, denom, modulus);
+  }
+
   class bf8 {
     bf8_t value;
 
@@ -51,6 +56,10 @@ namespace {
 
     bf8 operator*(bf8 other) const {
       return {bf8_mul(value, other.value)};
+    }
+
+    bf8 operator/(bf8 other) const {
+      return {bf8_mul(value, bf8_inv(other.value))};
     }
 
     bool operator==(bf8 other) const {
@@ -126,6 +135,10 @@ namespace {
       return {bf64_mul(value, other.value)};
     }
 
+    bf64 operator/(bf64 other) const {
+      return {bf64_mul(value, bf64_inv(other.value))};
+    }
+
     bool operator==(bf64 other) const {
       return value == other.value;
     }
@@ -198,6 +211,10 @@ namespace {
 
     bf128 operator*(bf128 other) const {
       return {bf128_mul(value, other.value)};
+    }
+
+    bf128 operator/(bf128 other) const {
+      return {bf128_mul(value, bf128_inv(other.value))};
     }
 
     bool operator==(bf128 other) const {
@@ -277,6 +294,10 @@ namespace {
 
     bf192 operator*(bf192 other) const {
       return {bf192_mul(value, other.value)};
+    }
+
+    bf192 operator/(bf192 other) const {
+      return {bf192_mul(value, bf192_inv(other.value))};
     }
 
     bool operator==(bf192 other) const {
@@ -363,6 +384,10 @@ namespace {
       return {bf256_mul(value, other.value)};
     }
 
+    bf256 operator/(bf256 other) const {
+      return {bf256_mul(value, bf256_inv(other.value))};
+    }
+
     bool operator==(bf256 other) const {
       return value.values[0] == other.value.values[0] && value.values[1] == other.value.values[1] &&
              value.values[2] == other.value.values[2] && value.values[3] == other.value.values[3];
@@ -444,6 +469,21 @@ namespace {
     const auto ntl_result = MulMod(lhs.as_ntl(), rhs.as_ntl(), B::ntl_residue());
     BOOST_TEST(ntl_result == result.as_ntl());
   }
+
+  template <class B>
+  void check_div(B lhs, B rhs, B expected) {
+    const auto result = lhs / rhs;
+    BOOST_TEST(result == expected);
+    const auto ntl_result = DivMod(lhs.as_ntl(), rhs.as_ntl(), B::ntl_residue());
+    BOOST_TEST(ntl_result == result.as_ntl());
+  }
+
+  template <class B>
+  void check_div(B lhs, B rhs) {
+    const auto result     = lhs / rhs;
+    const auto ntl_result = DivMod(lhs.as_ntl(), rhs.as_ntl(), B::ntl_residue());
+    BOOST_TEST(ntl_result == result.as_ntl());
+  }
 } // namespace
 
 BOOST_AUTO_TEST_CASE(test_bf8_add_invariants) {
@@ -465,6 +505,7 @@ BOOST_AUTO_TEST_CASE(test_bf8_mul_invariants) {
   check_mul<bf8>(0x00, 0xFF, 0x00);
   check_mul<bf8>(0xFF, 0x01, 0xFF);
   check_mul<bf8>(0x01, 0xFF, 0xFF);
+  check_div<bf8>(0xFF, 0x01, 0xFF);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf8_mul_random) {
@@ -472,6 +513,17 @@ BOOST_AUTO_TEST_CASE(test_bf8_mul_random) {
     auto lhs = bf8::random();
     auto rhs = bf8::random();
     check_mul(lhs, rhs);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_bf8_div_random) {
+  for (unsigned int i = 50; i; --i) {
+    auto lhs = bf8::random();
+    auto rhs = bf8::random();
+    if (rhs == bf8{}) {
+      continue;
+    }
+    check_div(lhs, rhs);
   }
 }
 
@@ -494,6 +546,7 @@ BOOST_AUTO_TEST_CASE(test_bf64_mul_invariants) {
   check_mul<bf64>(0x00, 0xFF, 0x00);
   check_mul<bf64>(0xFF, 0x01, 0xFF);
   check_mul<bf64>(0x01, 0xFF, 0xFF);
+  check_div<bf64>(0xFF, 0x01, 0xFF);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf64_mul_random) {
@@ -504,10 +557,22 @@ BOOST_AUTO_TEST_CASE(test_bf64_mul_random) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(test_bf64_div_random) {
+  for (unsigned int i = 50; i; --i) {
+    auto lhs = bf64::random();
+    auto rhs = bf64::random();
+    if (rhs == bf64{}) {
+      continue;
+    }
+    check_div(lhs, rhs);
+  }
+}
+
 BOOST_AUTO_TEST_CASE(test_bf128_add_invariants) {
   check_add<bf128>(0xFF, 0x00, 0xFF);
   check_add<bf128>(0x00, 0xFF, 0xFF);
   check_add<bf128>(0xFF, 0xFF, 0x00);
+  check_div<bf64>(0xFF, 0x01, 0xFF);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf128_add_random) {
@@ -523,6 +588,7 @@ BOOST_AUTO_TEST_CASE(test_bf128_mul_invariants) {
   check_mul<bf128>(0x00, 0xFF, 0x00);
   check_mul<bf128>(0xFF, 0x01, 0xFF);
   check_mul<bf128>(0x01, 0xFF, 0xFF);
+  check_div<bf128>(0xFF, 0x01, 0xFF);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf128_mul_random) {
@@ -530,6 +596,17 @@ BOOST_AUTO_TEST_CASE(test_bf128_mul_random) {
     auto lhs = bf128::random();
     auto rhs = bf128::random();
     check_mul(lhs, rhs);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_bf128_div_random) {
+  for (unsigned int i = 50; i; --i) {
+    auto lhs = bf128::random();
+    auto rhs = bf128::random();
+    if (rhs == bf128{}) {
+      continue;
+    }
+    check_div(lhs, rhs);
   }
 }
 
@@ -552,6 +629,7 @@ BOOST_AUTO_TEST_CASE(test_bf192_mul_invariants) {
   check_mul<bf192>(0x00, 0xFF, 0x00);
   check_mul<bf192>(0xFF, 0x01, 0xFF);
   check_mul<bf192>(0x01, 0xFF, 0xFF);
+  check_div<bf192>(0xFF, 0x01, 0xFF);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf192_mul_random) {
@@ -559,6 +637,17 @@ BOOST_AUTO_TEST_CASE(test_bf192_mul_random) {
     auto lhs = bf192::random();
     auto rhs = bf192::random();
     check_mul(lhs, rhs);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_bf192_div_random) {
+  for (unsigned int i = 50; i; --i) {
+    auto lhs = bf192::random();
+    auto rhs = bf192::random();
+    if (rhs == bf192{}) {
+      continue;
+    }
+    check_div(lhs, rhs);
   }
 }
 
@@ -581,6 +670,7 @@ BOOST_AUTO_TEST_CASE(test_bf256_mul_invariants) {
   check_mul<bf256>(0x00, 0xFF, 0x00);
   check_mul<bf256>(0xFF, 0x01, 0xFF);
   check_mul<bf256>(0x01, 0xFF, 0xFF);
+  check_div<bf256>(0xFF, 0x01, 0xFF);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf256_mul_random) {
@@ -588,5 +678,16 @@ BOOST_AUTO_TEST_CASE(test_bf256_mul_random) {
     auto lhs = bf256::random();
     auto rhs = bf256::random();
     check_mul(lhs, rhs);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_bf256_div_random) {
+  for (unsigned int i = 50; i; --i) {
+    auto lhs = bf256::random();
+    auto rhs = bf256::random();
+    if (rhs == bf256{}) {
+      continue;
+    }
+    check_div(lhs, rhs);
   }
 }
