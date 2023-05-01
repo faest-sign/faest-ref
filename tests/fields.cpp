@@ -13,6 +13,8 @@
 #include <NTL/GF2X.h>
 #include <boost/format.hpp>
 #include <boost/test/included/unit_test.hpp>
+#include <algorithm>
+#include <iterator>
 
 using namespace NTL;
 
@@ -218,7 +220,8 @@ namespace {
     }
 
     bool operator==(bf128 other) const {
-      return value.values[0] == other.value.values[0] && value.values[1] == other.value.values[1];
+      return std::equal(std::begin(value.values), std::end(value.values),
+                        std::begin(other.value.values), std::end(other.value.values));
     }
 
     GF2X as_ntl() const {
@@ -301,8 +304,8 @@ namespace {
     }
 
     bool operator==(bf192 other) const {
-      return value.values[0] == other.value.values[0] && value.values[1] == other.value.values[1] &&
-             value.values[2] == other.value.values[2];
+      return std::equal(std::begin(value.values), std::end(value.values),
+                        std::begin(other.value.values), std::end(other.value.values));
     }
 
     GF2X as_ntl() const {
@@ -389,8 +392,8 @@ namespace {
     }
 
     bool operator==(bf256 other) const {
-      return value.values[0] == other.value.values[0] && value.values[1] == other.value.values[1] &&
-             value.values[2] == other.value.values[2] && value.values[3] == other.value.values[3];
+      return std::equal(std::begin(value.values), std::end(value.values),
+                        std::begin(other.value.values), std::end(other.value.values));
     }
 
     GF2X as_ntl() const {
