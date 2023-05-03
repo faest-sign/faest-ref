@@ -4,8 +4,9 @@
 
 #include "../hash_shake.h"
 #include "../tree.c"
+#include "../faest_param.c.in"
 
-/*
+
 static int contains(uint16_t* list, size_t len, uint16_t value)
 {
     for(size_t i = 0; i < len; i++) {
@@ -15,7 +16,7 @@ static int contains(uint16_t* list, size_t len, uint16_t value)
     }
     return 0;
 }
-int get_param_set(picnic_params_t picnicParams, faestParamSet_t* paramset);
+
 int runSeedTest(uint16_t* hideList, size_t hideListSize, size_t numLeaves, faestParamSet_t* params)
 {
     uint8_t iSeed[16];
@@ -41,13 +42,11 @@ int runSeedTest(uint16_t* hideList, size_t hideListSize, size_t numLeaves, faest
         }
     }
 
-#if 0
-    printf("hideList: ");
-    for(size_t i = 0; i < hideListSize; i++) {
-        printf("%u, ", hideList[i]);
-    }
-    printf("\n");
-#endif
+    // printf("hideList: ");
+    // for(size_t i = 0; i < hideListSize; i++) {
+    //     printf("%u, ", hideList[i]);
+    // }
+    // printf("\n");
 
     memset(iSeed, 0x07, sizeof(iSeed));
     memset(salt, 0x09, sizeof(salt));
@@ -56,10 +55,7 @@ int runSeedTest(uint16_t* hideList, size_t hideListSize, size_t numLeaves, faest
     tree_t* tree = generateSeeds(numLeaves, iSeed, salt, repIndex, params);
     tree_t* tree2 = createTree(numLeaves, params->seedSizeBytes); 
 
-#if 0
-    printTree("tree", tree);
-#endif
-
+    // printTree("tree", tree);
 
     size_t initialOutputSize = (tree->numLeaves)*params->seedSizeBytes;
     uint8_t* output = malloc(initialOutputSize);
@@ -90,16 +86,13 @@ int runSeedTest(uint16_t* hideList, size_t hideListSize, size_t numLeaves, faest
         goto Exit;
     }
 
-#if 0
-    printf("%s: numLeaves = %lu, revealed %lu\n", __func__, tree->numLeaves, outputLen/tree->dataSize);
-#endif
+    // printf("%s: numLeaves = %lu, revealed %lu\n", __func__, tree->numLeaves, outputLen/tree->dataSize);
 
-    if(params->numOpenedRounds*ceil_log2(params->numMPCRounds/params->numOpenedRounds) < outputLen/tree->dataSize) {
+    if(params->numOpenedRounds*ceil_log2(params->t/params->numOpenedRounds) < outputLen/tree->dataSize) {
         printf("%s: Output length is larger than expected\n", __func__);
         ret = 0;
         goto Exit;
     }
-
 
     //printf("%s: Reconstructing seeds\n", __func__);
     int res = reconstructSeeds(tree2, hideList, hideListSize, output, outputLen, salt, repIndex, params);
@@ -109,10 +102,8 @@ int runSeedTest(uint16_t* hideList, size_t hideListSize, size_t numLeaves, faest
         goto Exit;
     }
 
-#if 0 
-    printf("seeds in reconstructed tree:\n");
-    printSeeds(tree2->nodes[0], params->seedSizeBytes, 15 );
-#endif
+    // printf("seeds in reconstructed tree:\n");
+    // printSeeds(tree2->nodes[0], params->seedSizeBytes, 15 );
 
     // Check that we have the correct seeds, and that they match
     size_t firstLeaf = tree->numNodes - tree->numLeaves;
@@ -158,8 +149,6 @@ Exit:
 
     return ret;
 }
-*/
-
 
 void printTreeInfo(const char* label, tree_t* tree) 
 {
@@ -170,7 +159,6 @@ void printTreeInfo(const char* label, tree_t* tree)
     printf("tree->numLeaves = %lu\n", tree->numLeaves);
 }
 
-
 void printTree(const char* label, tree_t* tree) 
 {
     printf("%s:\n", label);
@@ -179,8 +167,6 @@ void printTree(const char* label, tree_t* tree)
         printHex("", tree->nodes[i], tree->dataSize);
     }
 }
-
-
 
 int runMerkleTest(uint16_t* missingLeaves, size_t missingLeavesSize, size_t numLeaves, faestParamSet_t* params)
 {
@@ -304,29 +290,20 @@ Exit:
     return ret;
 }
 
-
 int main(void) {
 
-    // size_t tests = 0; 
-    // size_t passed = 0; 
-    // size_t numIterations = 50;
+    size_t tests = 0; 
+    size_t passed = 0; 
+    size_t numIterations = 50;
 
     printf("Running seed tree tests\n");
 
-    faestParamSet_t param = { .digestSizeBytes = 128, .saltSizeBytes = 128, .seedSizeBytes = 128, .stateSizeBits = 128, .stateSizeBytes = 16, .stateSizeWords = 4};
+    faest_paramset_t param;
 
-    uint16_t hideList6[3] = {2, 3, 6};
-    runMerkleTest(hideList6, 3, 7, &param);
-
-     return 0;
-
-    /*
-   
-#if  1
-    for (picnic_params_t p = Picnic3_L1; p <= Picnic3_L5; p++) {
-        get_param_set(p, &params); 
+    for (faest_paramid_t p = FAEST_L1_S; p <= FAEST_L5_F; p++) {
+        param = FAEST_GET_PARAMSET(p); 
         for(size_t i = 0; i < numIterations; i++) {
-            passed += runSeedTest(NULL, params.numOpenedRounds, params.numMPCRounds, &params);
+            passed += runSeedTest(NULL, params.numOpenedRounds, params.t, &params);
             tests++;
         }
         for(size_t i = 0; i < numIterations; i++) {
@@ -360,17 +337,11 @@ int main(void) {
 
     }
 
-#endif
-
-
-
-
-#if 1
     printf("Running Merkle tree tests\n");
-    for (picnic_params_t p = Picnic3_L1; p <= Picnic3_L5; p++) {
-        get_param_set(p, &params); 
+    for (faest_paramid_t p = FAEST_L1_S; p <= FAEST_L5_F; p++) {
+        param = FAEST_GET_PARAMSET(p); 
         for(size_t i = 0; i < numIterations; i++) {
-            passed += runMerkleTest(NULL, params.numOpenedRounds, params.numMPCRounds, &params);
+            passed += runMerkleTest(NULL, params.numOpenedRounds, params.t, &params);
             tests++;
         }
         for(size_t i = 0; i < numIterations; i++) {
@@ -407,11 +378,8 @@ int main(void) {
         tests++;
     }
 
-#endif
-
     printf("Done, %lu of %lu tests passed\n", passed, tests);
 
     return 0;
-*/
 }
 

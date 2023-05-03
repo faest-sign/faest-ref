@@ -9,7 +9,7 @@
 #include "tree.h"
 
 // Helper functions
-// TODO: Move it to faest somewhere...
+// TODO Move it to faest somewhere...
 /* Number of leading zeroes of x.
  * From the book
  * H.S. Warren, *Hacker's Delight*, Pearson Education, 2003.
@@ -29,7 +29,7 @@ static int32_t nlz(uint32_t x)
 
     return n;
 }
-// TODO: Move it to faest somewhere...
+// TODO Move it to faest somewhere...
 uint32_t ceil_log2(uint32_t x)
 {
     if (x == 0) {
@@ -37,7 +37,7 @@ uint32_t ceil_log2(uint32_t x)
     }
     return 32 - nlz(x - 1);
 }
-// TODO: Move it to faest somewhere...
+// TODO Move it to faest somewhere...
 void printHex(const char* s, const uint8_t* data, size_t len)
 {
     printf("%s: ", s);
@@ -46,9 +46,6 @@ void printHex(const char* s, const uint8_t* data, size_t len)
     }
     printf("\n");
 }
-
-
-
 
 static int contains(size_t* list, size_t len, size_t value)
 {
@@ -152,7 +149,8 @@ uint8_t* getLeaf(tree_t* tree, size_t leafIndex)
     return tree->nodes[firstLeaf + leafIndex];
 }
 
-void hashSeed(uint8_t* digest, const uint8_t* inputSeed, uint8_t* salt, size_t repIndex, size_t nodeIndex, faestParamSet_t* params)
+void hashSeed(uint8_t* digest, const uint8_t* inputSeed, uint8_t* salt, size_t repIndex, size_t nodeIndex, 
+                faestParamSet_t* params)
 {
     hash_context ctx;
 
@@ -341,7 +339,8 @@ size_t revealSeedsSize(size_t numNodes, uint16_t* hideList, size_t hideListSize,
     return numNodesRevealed * params->seedSizeBytes;
 }
 
-size_t revealSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_t* output, size_t outputSize, faestParamSet_t* params)
+size_t revealSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_t* output, size_t outputSize, 
+                    faestParamSet_t* params)
 {
     uint8_t* outputBase = output;
     size_t revealedSize = 0;
@@ -471,7 +470,6 @@ void buildMerkleTree(tree_t* tree, uint8_t** leafData, uint8_t* salt, faestParam
     }
 }
 
-
 /* Note that we never output the root node */
 static size_t* getRevealedMerkleNodes(tree_t* tree, uint16_t* missingLeaves,
                                       size_t missingLeavesSize, size_t* outputSize)
@@ -536,7 +534,6 @@ size_t openMerkleTreeSize(size_t numNodes, uint16_t* missingLeaves, size_t missi
 
     return revealedSize * params->digestSizeBytes;
 }
-
 
 /* Serialze the missing nodes that the verifier will require to check commitments for non-missing leaves */
 uint8_t* openMerkleTree(tree_t* tree, uint16_t* missingLeaves, size_t missingLeavesSize, size_t* outputSizeBytes)
@@ -633,3 +630,4 @@ int verifyMerkleTree(tree_t* tree, /* uint16_t* missingLeaves, size_t missingLea
 
     return 0;
 }
+
