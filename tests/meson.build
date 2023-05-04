@@ -31,4 +31,11 @@ if boost_test.found()
     cpp_args: defines + cpp_flags
   )
   test('aes_ctr', aes_ctr)
+
+  instances = executable('test_instances', files('instances.cpp'),
+    dependencies: [libfaest_static_dependency, boost_test],
+    include_directories: include_directories,
+    cpp_args: defines + cpp_flags
+  )
+  test('instances', instances)
 endif

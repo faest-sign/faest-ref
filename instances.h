@@ -5,10 +5,11 @@
 #ifndef INSTANCES_H
 #define INSTANCES_H
 
-#include "faest_defines.h"
+#include "macros.h"
 
 #include <stddef.h>
 #include <stdint.h>
+FAEST_BEGIN_C_DECL
 
 // TODO - Add paramset struct faest_param_t here, containing faest_L1, faest_L3, faest_L5.... ?
 typedef enum faest_paramid_t {
@@ -60,5 +61,7 @@ typedef struct faest_paramset_t {
 const char* faest_get_param_name(faest_paramid_t paramid);
 int faest_check_paramset(faest_paramset_t* paramset);
 faest_paramset_t faest_get_paramset(faest_paramid_t paramid);
+
+FAEST_END_C_DECL
 
 #endif
