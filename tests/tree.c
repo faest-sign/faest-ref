@@ -301,7 +301,7 @@ int main(void) {
 
   faest_paramset_t params;
 
-  for (faest_paramid_t p = FAEST_L1_S; p <= FAEST_L5_F; p++) {
+  for (faest_paramid_t p = FAEST_128S; p <= FAEST_256F; p++) {
     params = faest_get_paramset(p);
     for (size_t i = 0; i < numIterations; i++) {
       passed += runSeedTest(NULL, params.numOpenedRounds, params.t, &params);
@@ -338,7 +338,7 @@ int main(void) {
   }
 
   printf("Running Merkle tree tests\n");
-  for (faest_paramid_t p = FAEST_L1_S; p <= FAEST_L5_F; p++) {
+  for (faest_paramid_t p = FAEST_128S; p <= FAEST_256F; p++) {
     params = faest_get_paramset(p);
     for (size_t i = 0; i < numIterations; i++) {
       passed += runMerkleTest(NULL, params.numOpenedRounds, params.t, &params);

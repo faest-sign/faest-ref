@@ -8,7 +8,7 @@
 
 namespace {
   constexpr faest_paramid_t all_parameters[] = {
-      FAEST_L1_S, FAEST_L1_F, FAEST_L3_S, FAEST_L3_F, FAEST_L5_S, FAEST_L5_F,
+      FAEST_128S, FEAST_128F, FAEST_192S, FAEST_192F, FAEST_256S, FAEST_256F,
   };
 } // namespace
 

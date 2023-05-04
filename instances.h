@@ -14,12 +14,12 @@ FAEST_BEGIN_C_DECL
 // TODO - Add paramset struct faest_param_t here, containing faest_L1, faest_L3, faest_L5.... ?
 typedef enum faest_paramid_t {
   PARAMETER_SET_INVALID   = 0,
-  FAEST_L1_S              = 1,
-  FAEST_L1_F              = 2,
-  FAEST_L3_S              = 3,
-  FAEST_L3_F              = 4,
-  FAEST_L5_S              = 5,
-  FAEST_L5_F              = 6,
+  FAEST_128S              = 1,
+  FEAST_128F              = 2,
+  FAEST_192S              = 3,
+  FAEST_192F              = 4,
+  FAEST_256S              = 5,
+  FAEST_256F              = 6,
   PARAMETER_SET_MAX_INDEX = 7
 } faest_paramid_t;
 
