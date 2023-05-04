@@ -57,4 +57,8 @@ typedef struct faest_paramset_t {
   faest_paramid_t faest_paramid;
 } faest_paramset_t;
 
+const char* faest_get_param_name(faest_paramid_t paramid);
+int faest_check_paramset(faest_paramset_t* paramset);
+faest_paramset_t faest_get_paramset(faest_paramid_t paramid);
+
 #endif

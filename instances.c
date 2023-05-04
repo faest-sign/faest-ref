@@ -2,9 +2,14 @@
  *  SPDX-License-Identifier: MIT
  */
 
+#if defined(WITH_CONFIG_H)
+#include <config.h>
+#else
+#error "FIXME: Instances are currently only listed in config.h"
+#endif
 #include "instances.h"
 
-const char* FAEST_GET_PARAM_NAME(faest_paramid_t paramid) {
+const char* faest_get_param_name(faest_paramid_t paramid) {
   switch (paramid) {
   case PARAMETER_SET_INVALID:
     return "PARAMETER_SET_INVALID";
@@ -25,7 +30,7 @@ const char* FAEST_GET_PARAM_NAME(faest_paramid_t paramid) {
   }
 }
 
-int FAEST_CHECK_PARAMSET(faest_paramset_t* paramset) {
+int faest_check_paramset(faest_paramset_t* paramset) {
   uint32_t tmp = (paramset->faest_param.k0 * paramset->faest_param.t0) +
                  (paramset->faest_param.k1 * paramset->faest_param.t1);
   if (tmp == paramset->faest_param.lambda)
@@ -34,10 +39,10 @@ int FAEST_CHECK_PARAMSET(faest_paramset_t* paramset) {
 }
 
 // keySize, blockSize, numRounds, numSboxes, stateSizeBits, stateSizeBytes, stateSizeWords
-const cipher_param_t AES_128_PARAMS     = {16, 16, 10, 200, 128, 16, 4};
-const cipher_param_t AES_192_PARAMS     = {24, 16, 12, 220, 128, 16, 4};
-const cipher_param_t AES_256_PARAMS     = {32, 16, 14, 240, 128, 16, 4};
-const cipher_param_t AES_INVALID_PARAMS = {0, 0, 0, 0, 0, 0, 0};
+static const cipher_param_t AES_128_PARAMS     = {16, 16, 10, 200, 128, 16, 4};
+static const cipher_param_t AES_192_PARAMS     = {24, 16, 12, 220, 128, 16, 4};
+static const cipher_param_t AES_256_PARAMS     = {32, 16, 14, 240, 128, 16, 4};
+static const cipher_param_t AES_INVALID_PARAMS = {0, 0, 0, 0, 0, 0, 0};
 // TODO: Later
 // const cipher_param_t AES_128_EM_PARAMS = {16,16,10,160,128,16,4};
 
@@ -47,13 +52,86 @@ const cipher_param_t AES_INVALID_PARAMS = {0, 0, 0, 0, 0, 0, 0};
 // numOpenRounds,
 //                                                          seedSizeBytes, saltSizeBytes,
 //                                                          digestSizeBytes
-const faest_param_t FAEST_128_S_PARAMS   = {128, 1600, 11, 12, 11, 7, 4, 32, 16, 0, 16, 16, 16};
-const faest_param_t FAEST_128_F_PARAMS   = {128, 1600, 16, 8, 8, 0, 16, 32, 16, 0, 16, 16, 16};
-const faest_param_t FAEST_192_S_PARAMS   = {192, 3328, 16, 12, 12, 0, 16, 32, 16, 0, 16, 16, 16};
-const faest_param_t FAEST_192_F_PARAMS   = {192, 3328, 24, 8, 8, 0, 24, 32, 16, 0, 16, 16, 16};
-const faest_param_t FAEST_256_S_PARAMS   = {256, 4000, 22, 12, 11, 14, 8, 32, 16, 0, 16, 16, 16};
-const faest_param_t FAEST_256_F_PARAMS   = {256, 4000, 32, 8, 8, 0, 32, 32, 16, 0, 16, 16, 16};
-const faest_param_t FAEST_INVALID_PARAMS = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static const faest_param_t FAEST_128_S_PARAMS = {FAEST_128S_LAMBDA,
+                                                 FAEST_128S_ELL,
+                                                 FAEST_128S_TAU,
+                                                 FAEST_128S_K_0,
+                                                 FAEST_128S_K_1,
+                                                 FAEST_128S_T_0,
+                                                 FAEST_128S_T_1,
+                                                 FAEST_128S_PK_SIZE,
+                                                 FAEST_128S_SK_SIZE,
+                                                 0,
+                                                 16,
+                                                 16,
+                                                 FAEST_128S_SIG_SIZE};
+static const faest_param_t FAEST_128_F_PARAMS = {FAEST_128F_LAMBDA,
+                                                 FAEST_128F_ELL,
+                                                 FAEST_128F_TAU,
+                                                 FAEST_128F_K_0,
+                                                 FAEST_128F_K_1,
+                                                 FAEST_128F_T_0,
+                                                 FAEST_128F_T_1,
+                                                 FAEST_128F_PK_SIZE,
+                                                 FAEST_128F_SK_SIZE,
+                                                 0,
+                                                 16,
+                                                 16,
+                                                 FAEST_128S_SIG_SIZE};
+static const faest_param_t FAEST_192_S_PARAMS = {FAEST_192S_LAMBDA,
+                                                 FAEST_192S_ELL,
+                                                 FAEST_192S_TAU,
+                                                 FAEST_192S_K_0,
+                                                 FAEST_192S_K_1,
+                                                 FAEST_192S_T_0,
+                                                 FAEST_192S_T_1,
+                                                 FAEST_192S_PK_SIZE,
+                                                 FAEST_192S_SK_SIZE,
+                                                 0,
+                                                 16,
+                                                 16,
+                                                 FAEST_192S_SIG_SIZE};
+static const faest_param_t FAEST_192_F_PARAMS = {FAEST_192F_LAMBDA,
+                                                 FAEST_192F_ELL,
+                                                 FAEST_192F_TAU,
+                                                 FAEST_192F_K_0,
+                                                 FAEST_192F_K_1,
+                                                 FAEST_192F_T_0,
+                                                 FAEST_192F_T_1,
+                                                 FAEST_192F_PK_SIZE,
+                                                 FAEST_192F_SK_SIZE,
+                                                 0,
+                                                 16,
+                                                 16,
+                                                 FAEST_192S_SIG_SIZE};
+static const faest_param_t FAEST_256_S_PARAMS = {FAEST_256S_LAMBDA,
+                                                 FAEST_256S_ELL,
+                                                 FAEST_256S_TAU,
+                                                 FAEST_256S_K_0,
+                                                 FAEST_256S_K_1,
+                                                 FAEST_256S_T_0,
+                                                 FAEST_256S_T_1,
+                                                 FAEST_256S_PK_SIZE,
+                                                 FAEST_256S_SK_SIZE,
+                                                 0,
+                                                 16,
+                                                 16,
+                                                 FAEST_256S_SIG_SIZE};
+static const faest_param_t FAEST_256_F_PARAMS = {FAEST_256F_LAMBDA,
+                                                 FAEST_256F_ELL,
+                                                 FAEST_256F_TAU,
+                                                 FAEST_256F_K_0,
+                                                 FAEST_256F_K_1,
+                                                 FAEST_256F_T_0,
+                                                 FAEST_256F_T_1,
+                                                 FAEST_256F_PK_SIZE,
+                                                 FAEST_256F_SK_SIZE,
+                                                 0,
+                                                 16,
+                                                 16,
+                                                 FAEST_256S_SIG_SIZE};
+
+static const faest_param_t FAEST_INVALID_PARAMS = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static const faest_paramset_t faestInstances[PARAMETER_SET_MAX_INDEX] = {
     {AES_INVALID_PARAMS, FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
@@ -64,8 +142,7 @@ static const faest_paramset_t faestInstances[PARAMETER_SET_MAX_INDEX] = {
     {AES_256_PARAMS, FAEST_256_S_PARAMS, FAEST_L5_S},
     {AES_256_PARAMS, FAEST_256_F_PARAMS, FAEST_L5_F}};
 
-faest_paramset_t FAEST_GET_PARAMSET(faest_paramid_t paramid) {
-
+faest_paramset_t faest_get_paramset(faest_paramid_t paramid) {
   switch (paramid) {
   case FAEST_L1_S:
     return faestInstances[1];
