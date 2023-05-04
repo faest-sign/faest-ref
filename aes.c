@@ -15,21 +15,27 @@
 
 #include "fields.h"
 
-typedef bf8_t state_t[4][4];
+// # of columns
+#define AES_NC 4
+// # of rows
+#define AES_NR 4
+// block size
+#define AES_BLOCK_SIZE (AES_NC * AES_NR)
 
-static const uint8_t nc    = 4;       // # of columns
-static const uint8_t nr    = 4;       // # of rows
-static const uint8_t bsize = nc * nr; // block size
+typedef bf8_t state_t[AES_NC][AES_NR];
 
-uint8_t kwords; // key words
-uint8_t nround; // no round
-uint16_t seclv; // 128,192,256
+static uint8_t kwords; // key words
+static uint8_t nround; // no round
+static uint16_t seclv; // 128,192,256
 
-ATTR_CONST static bf8_t get_bit(bf8_t in, uint8_t index) {
+static const bf8_t round_constants[10] = {0x01, 0x02, 0x04, 0x08, 0x10,
+                                          0x20, 0x40, 0x80, 0x1b, 0x36};
+
+ATTR_CONST static inline bf8_t get_bit(bf8_t in, uint8_t index) {
   return (in >> index) & 0x01;
 }
 
-ATTR_CONST static bf8_t set_bit(bf8_t in, uint8_t index) {
+ATTR_CONST static inline bf8_t set_bit(bf8_t in, uint8_t index) {
   return (in << index);
 }
 
@@ -55,7 +61,7 @@ static bf8_t compute_sbox(bf8_t in) {
 }
 
 void aes_increment_iv(bf8_t* iv) {
-  for (uint8_t i = 16; i > 0; i--) {
+  for (unsigned int i = 16; i > 0; i--) {
     if (iv[i - 1] == 0xff) {
       iv[i - 1] = 0x00;
       continue;
@@ -68,15 +74,15 @@ void aes_increment_iv(bf8_t* iv) {
 // ## AES ##
 // Round Functions
 static void add_round_key(bf8_t round, state_t* state, bf8_t* roundKey) {
-  for (uint8_t c = 0; c < nc; c++) {
-    for (uint8_t r = 0; r < nr; r++) {
-      (*state)[c][r] ^= roundKey[(nc * round * 4) + (c * nc) + r];
+  for (unsigned int c = 0; c < AES_NC; c++) {
+    for (unsigned int r = 0; r < AES_NR; r++) {
+      (*state)[c][r] ^= roundKey[(AES_NC * round * 4) + (c * AES_NC) + r];
     }
   }
 }
 static void sub_bytes(state_t* state) {
-  for (uint8_t c = 0; c < nc; c++) {
-    for (uint8_t r = 0; r < nr; r++) {
+  for (unsigned int c = 0; c < AES_NC; c++) {
+    for (unsigned int r = 0; r < AES_NR; r++) {
       (*state)[c][r] = compute_sbox((*state)[c][r]);
     }
   }
@@ -103,7 +109,7 @@ static void shift_row(state_t* state) {
 }
 
 static void mix_column(state_t* state) {
-  for (uint8_t c = 0; c < nc; c++) {
+  for (uint8_t c = 0; c < AES_NC; c++) {
     bf8_t tmp = bf8_mul((*state)[c][0], 0x02) ^ bf8_mul((*state)[c][1], 0x03) ^ (*state)[c][2] ^
                 (*state)[c][3];
     bf8_t tmp_1 = (*state)[c][0] ^ bf8_mul((*state)[c][1], 0x02) ^ bf8_mul((*state)[c][2], 0x03) ^
@@ -136,14 +142,6 @@ static void rot_word(bf8_t* words) {
   words[3]  = tmp;
 }
 
-static bf8_t round_const(uint8_t in) {
-  bf8_t tmp = 1;
-  for (uint8_t i = 1; i < in; i++) {
-    tmp = bf8_mul(tmp, 0x02);
-  }
-  return tmp;
-}
-
 // Main Functions
 static void key_expansion(bf8_t* key, bf8_t* roundKey) {
   for (uint8_t k = 0; k < kwords; k++) {
@@ -153,7 +151,7 @@ static void key_expansion(bf8_t* key, bf8_t* roundKey) {
     roundKey[(4 * k) + 3] = key[(4 * k) + 3];
   }
   bf8_t tmp[4];
-  for (uint8_t k = kwords; k < nc * (nround + 1); k++) {
+  for (uint8_t k = kwords; k < AES_NC * (nround + 1); k++) {
     uint8_t j = (k - 1) * 4;
     tmp[0]    = roundKey[j];
     tmp[1]    = roundKey[j + 1];
@@ -163,7 +161,7 @@ static void key_expansion(bf8_t* key, bf8_t* roundKey) {
     if (k % kwords == 0) {
       rot_word(tmp);
       sub_words(tmp);
-      tmp[0] ^= round_const(k / kwords);
+      tmp[0] ^= round_constants[(k / kwords) - 1];
     }
 
     if (seclv == 256 && (k % kwords) == 4) {
