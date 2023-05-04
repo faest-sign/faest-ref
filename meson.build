@@ -1,6 +1,6 @@
 project('faest-ref', ['c', 'cpp'],
   version: '0.0.0',
-  meson_version: '>=0.56',
+  meson_version: '>=0.57',
   default_options: [
     'c_std=c11',
     'cpp_std=c++17',
@@ -151,6 +151,14 @@ param_256f.set('PK_SIZE', 64)
 param_256f.set('SK_SIZE', 32)
 param_256f.set('SIG_SIZE', 28512)
 parameter_sets += param_256f
+
+# also make data from all parameter sets available "globally"
+foreach parameter_set : parameter_sets
+  parameter_set_prefix = 'FAEST_@0@'.format(parameter_set.get('PARAM'))
+  foreach key : parameter_set.keys()
+    conf_data.set('@0@_@1@'.format(parameter_set_prefix, key), parameter_set.get(key))
+  endforeach
+endforeach
 
 # dependencies
 build_dependencies = []
