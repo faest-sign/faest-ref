@@ -189,19 +189,6 @@ static void load_state(state_t iv, const uint8_t* src) {
   }
 }
 
-static void increment_iv(state_t iv) {
-  for (unsigned int idx = 16; idx > 0; idx--) {
-    unsigned int i = (idx - 1) / 4;
-    unsigned int j = (idx - 1) % 4;
-    if (iv[i][j] == 0xff) {
-      iv[i][j] = 0x00;
-      continue;
-    }
-    iv[i][j] += 0x01;
-    break;
-  }
-}
-
 static void aes_encrypt(const aes_round_key_t* keys, state_t state, unsigned int num_rounds) {
   // first round
   add_round_key(0, state, keys);
