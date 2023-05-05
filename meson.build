@@ -178,7 +178,7 @@ sources = files(
   'fields.c',
   'randomness.c',
   'random_oracle.c',
-  'tree.c'
+  'vc.c'
 )
 
 # header files to install

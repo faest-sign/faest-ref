@@ -7,19 +7,12 @@
 // Tested against Appendix B - Cipher Example
 
 #include "aes.h"
-
-#include <string.h>
-#include <stdio.h>
-#include <math.h>
-#include <stdint.h>
-
 #include "fields.h"
 
 typedef bf8_t state_t[4][4];
 
 static const uint8_t nc    = 4;       // # of columns
 static const uint8_t nr    = 4;       // # of rows
-static const uint8_t bsize = nc * nr; // block size
 
 uint8_t kwords; // key words
 uint8_t nround; // no round
@@ -198,7 +191,7 @@ static void cipher(state_t* state, bf8_t* roundKey) {
   add_round_key(round, state, roundKey);
 }
 
-// Calling Functions
+// AES Encrypt
 void aes_ctr_encrypt(bf8_t* key, bf8_t* iv, bf8_t* plaintext, bf8_t* output, uint16_t seclv_) {
   seclv = seclv_;
   if (seclv_ == 256) {
@@ -228,5 +221,61 @@ void aes_ctr_encrypt(bf8_t* key, bf8_t* iv, bf8_t* plaintext, bf8_t* output, uin
     for (uint8_t i = 0; i < 16; i++) {
       output[i] = plaintext[i] ^ iv[i];
     }
+  }
+}
+
+// AES PRG (configured for the FAEST requirement of having 2*lambda)
+bf8_t *aes_ctr_prg(bf8_t* key, bf8_t* iv, uint16_t seclv_) {
+  seclv = seclv_;
+
+  bf8_t *out;
+  out = malloc(seclv/4);
+  bf8_t state[16];
+
+  switch (seclv)
+  {
+  case 256:
+    kwords = 8;
+    nround = 14;
+    bf8_t round_key_256[16 * (14 + 1)];
+    key_expansion(key, round_key_256);
+    for(uint64_t i = 0; i < 4; i++) {     // Outputs 2*lambda bits = 2*(lambda/8) bytes -> (16,16,16,16)
+      memcpy(state, iv, 16);
+      cipher((state_t*)state, round_key_256);
+      for(uint64_t j = i*16; j < (i*16)+16; j++) {
+        out[j] = state[j%16];
+      }
+      aes_increment_iv(iv);
+    }
+    return out;
+  case 192:
+    kwords = 6;
+    nround = 12;
+    bf8_t round_key_192[16 * (12 + 1)];
+    key_expansion(key, round_key_192);
+    for(uint64_t i = 0; i < 3; i++) {     // Outputs 2*lambda bits = 2*(lambda/8) bytes -> (16,16,16)
+      memcpy(state, iv, 16);
+      cipher((state_t*)state, round_key_192);
+      for(uint64_t j = i*16; j < (i*16)+16; j++) {
+        out[j] = state[j%16];
+      }
+      aes_increment_iv(iv);
+    }
+    return out;
+  default:
+    kwords = 4;
+    nround = 10;
+    bf8_t round_key_128[16 * (10 + 1)];
+    key_expansion(key, round_key_128);
+
+    for(uint64_t i = 0; i < 2; i++) {     // Outputs 2*lambda bits = 2*(lambda/8) bytes -> (16,16)
+      memcpy(state, iv, 16);
+      cipher((state_t*)state, round_key_128);
+      for(uint64_t j = i*16; j < (i*16)+16; j++) {
+        out[j] = state[j%16];
+      }
+      aes_increment_iv(iv);
+    }
+    return out;
   }
 }
