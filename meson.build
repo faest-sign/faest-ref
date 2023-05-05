@@ -1,6 +1,6 @@
 project('faest-ref', ['c', 'cpp'],
   version: '0.0.0',
-  meson_version: '>=0.56',
+  meson_version: '>=0.57',
   default_options: [
     'c_std=c11',
     'cpp_std=c++17',
@@ -76,12 +76,15 @@ parameter_sets = []
 
 # parameter set: FAEST-128s
 param_128s = configuration_data()
+param_128s.set('LAMBDA', 128)
 param_128s.set('PARAM', '128S')
 param_128s.set('PARAM_L', '128s')
 param_128s.set('ELL', 1600)
 param_128s.set('TAU', 11)
 param_128s.set('K_0', 12)
 param_128s.set('K_1', 11)
+param_128s.set('T_0', 7)
+param_128s.set('T_1', 4)
 param_128s.set('PK_SIZE', 32)
 param_128s.set('SK_SIZE', 16)
 param_128s.set('SIG_SIZE', 5034)
@@ -89,12 +92,15 @@ parameter_sets += param_128s
 
 # parameter set: FAEST-128f
 param_128f = configuration_data()
+param_128f.set('LAMBDA', 128)
 param_128f.set('PARAM', '128F')
 param_128f.set('PARAM_L', '128f')
 param_128f.set('ELL', 1600)
 param_128f.set('TAU', 16)
 param_128f.set('K_0', 8)
 param_128f.set('K_1', 8)
+param_128f.set('T_0', 0)
+param_128f.set('T_1', 16)
 param_128f.set('PK_SIZE', 32)
 param_128f.set('SK_SIZE', 16)
 param_128f.set('SIG_SIZE', 6384)
@@ -102,12 +108,15 @@ parameter_sets += param_128f
 
 # parameter set: FAEST-192s
 param_192s = configuration_data()
+param_192s.set('LAMBDA', 192)
 param_192s.set('PARAM', '192S')
 param_192s.set('PARAM_L', '192s')
 param_192s.set('ELL', 3328)
 param_192s.set('TAU', 16)
 param_192s.set('K_0', 12)
 param_192s.set('K_1', 12)
+param_192s.set('T_0', 0)
+param_192s.set('T_1', 16)
 param_192s.set('PK_SIZE', 48)
 param_192s.set('SK_SIZE', 24)
 param_192s.set('SIG_SIZE', 12952)
@@ -115,12 +124,15 @@ parameter_sets += param_192s
 
 # parameter set: FAEST-192f
 param_192f = configuration_data()
+param_192f.set('LAMBDA', 192)
 param_192f.set('PARAM', '192F')
 param_192f.set('PARAM_L', '192f')
 param_192f.set('ELL', 3328)
 param_192f.set('TAU', 24)
 param_192f.set('K_0', 8)
 param_192f.set('K_1', 8)
+param_192f.set('T_0', 0)
+param_192f.set('T_1', 24)
 param_192f.set('PK_SIZE', 48)
 param_192f.set('SK_SIZE', 24)
 param_192f.set('SIG_SIZE', 17064)
@@ -128,12 +140,15 @@ parameter_sets += param_192f
 
 # parameter set: FAEST-256s
 param_256s = configuration_data()
+param_256s.set('LAMBDA', 256)
 param_256s.set('PARAM', '256S')
 param_256s.set('PARAM_L', '256s')
 param_256s.set('ELL', 4000)
 param_256s.set('TAU', 22)
 param_256s.set('K_0', 12)
 param_256s.set('K_1', 11)
+param_256s.set('T_0', 14)
+param_256s.set('T_1', 8)
 param_256s.set('PK_SIZE', 64)
 param_256s.set('SK_SIZE', 32)
 param_256s.set('SIG_SIZE', 22212)
@@ -141,16 +156,27 @@ parameter_sets += param_256s
 
 # parameter set: FAEST-256f
 param_256f = configuration_data()
+param_256f.set('LAMBDA', 256)
 param_256f.set('PARAM', '256F')
 param_256f.set('PARAM_L', '256f')
 param_256f.set('ELL', 4000)
 param_256f.set('TAU', 32)
 param_256f.set('K_0', 8)
 param_256f.set('K_1', 8)
+param_256f.set('T_0', 0)
+param_256f.set('T_1', 32)
 param_256f.set('PK_SIZE', 64)
 param_256f.set('SK_SIZE', 32)
 param_256f.set('SIG_SIZE', 28512)
 parameter_sets += param_256f
+
+# also make data from all parameter sets available "globally"
+foreach parameter_set : parameter_sets
+  parameter_set_prefix = 'FAEST_@0@'.format(parameter_set.get('PARAM'))
+  foreach key : parameter_set.keys()
+    conf_data.set('@0@_@1@'.format(parameter_set_prefix, key), parameter_set.get(key))
+  endforeach
+endforeach
 
 # dependencies
 build_dependencies = []
@@ -176,6 +202,7 @@ sources = files(
   'aes.c',
   'compat.c',
   'fields.c',
+  'instances.c',
   'randomness.c',
   'random_oracle.c',
   'vc.c'
