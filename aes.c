@@ -57,7 +57,7 @@ static bf8_t compute_sbox(bf8_t in) {
   return t0 ^ t1 ^ t2 ^ t3 ^ t4 ^ t5 ^ t6 ^ t7;
 }
 
-void aes_increment_ctr(uint8_t* iv) {
+void increment_iv(uint8_t* iv) {
   for (unsigned int i = 16; i > 0; i--) {
     if (iv[i - 1] == 0xff) {
       iv[i - 1] = 0x00;
@@ -206,91 +206,89 @@ static void aes_encrypt(const aes_round_key_t* keys, state_t state, unsigned int
   add_round_key(num_rounds, state, keys);
 }
 
-void aes128_ctr_encrypt(const aes128_round_keys_t* round_key, const uint8_t* iv,
+void aes128_ctr_encrypt(const uint8_t* key, const uint8_t* iv,
                         const uint8_t* plaintext, uint8_t* ciphertext) {
   state_t state;
   load_state(state, iv);
-  aes_encrypt(round_key->keys, state, 10);
+  aes128_round_keys_t round_key;
+  aes128_init_round_keys(&round_key, key);
+  aes_encrypt(round_key.keys, state, 10);
+
+  for (unsigned int i = 0; i < 16; ++i) {
+    ciphertext[i] = plaintext[i] ^ state[i / 4][i % 4];
+  }
+}
+void aes192_ctr_encrypt(const uint8_t* key, const uint8_t* iv,
+                        const uint8_t* plaintext, uint8_t* ciphertext) {
+  state_t state;
+  load_state(state, iv);
+  aes192_round_keys_t round_key;
+  aes192_init_round_keys(&round_key, key);
+  aes_encrypt(round_key.keys, state, 12);
+
+  for (unsigned int i = 0; i < 16; ++i) {
+    ciphertext[i] = plaintext[i] ^ state[i / 4][i % 4];
+  }
+}
+void aes256_ctr_encrypt(const uint8_t* key, const uint8_t* iv,
+                        const uint8_t* plaintext, uint8_t* ciphertext) {
+  state_t state;
+  load_state(state, iv);
+  aes256_round_keys_t round_key;
+  aes256_init_round_keys(&round_key, key);
+  aes_encrypt(round_key.keys, state, 14);
 
   for (unsigned int i = 0; i < 16; ++i) {
     ciphertext[i] = plaintext[i] ^ state[i / 4][i % 4];
   }
 }
 
-void aes192_ctr_encrypt(const aes192_round_keys_t* round_key, const uint8_t* iv,
-                        const uint8_t* plaintext, uint8_t* ciphertext) {
-  state_t state;
-  load_state(state, iv);
-  aes_encrypt(round_key->keys, state, 12);
 
-  for (unsigned int i = 0; i < 16; ++i) {
-    ciphertext[i] = plaintext[i] ^ state[i / 4][i % 4];
-  }
-}
-
-void aes256_ctr_encrypt(const aes256_round_keys_t* round_key, const uint8_t* iv,
-                        const uint8_t* plaintext, uint8_t* ciphertext) {
-  state_t state;
-  load_state(state, iv);
-  aes_encrypt(round_key->keys, state, 14);
-
-  for (unsigned int i = 0; i < 16; ++i) {
-    ciphertext[i] = plaintext[i] ^ state[i / 4][i % 4];
-  }
-}
-
-// AES PRG (configured for the FAEST requirement of having 2*lambda)
-bf8_t *aes_ctr_prg(bf8_t* key, bf8_t* iv, uint16_t seclv_) {
-  seclv = seclv_;
-
-  bf8_t *out;
-  out = malloc(seclv/4);
-  bf8_t state[16];
-
-  switch (seclv)
-  {
-  case 256:
-    kwords = 8;
-    nround = 14;
-    bf8_t round_key_256[16 * (14 + 1)];
-    key_expansion(key, round_key_256);
-    for(uint64_t i = 0; i < 4; i++) {     // Outputs 2*lambda bits = 2*(lambda/8) bytes -> (16,16,16,16)
-      memcpy(state, iv, 16);
-      cipher((state_t*)state, round_key_256);
-      for(uint64_t j = i*16; j < (i*16)+16; j++) {
-        out[j] = state[j%16];
+void aes_prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl) {
+  uint32_t outlenbits = seclvl*2;
+  uint64_t k = 0;
+  switch (seclvl) {
+    case 256:
+      for(uint64_t i = 0; i < ceil(outlenbits/256); i++) { 
+        state_t state;
+        load_state(state, iv);
+        aes256_round_keys_t round_key;
+        aes256_init_round_keys(&round_key, key);
+        aes_encrypt(round_key.keys, state, 14);
+        for (unsigned int j = 0; j < 16; ++j) {
+          out[k] = state[j / 4][j % 4];
+          k++;
+        }
+        increment_iv(iv);
       }
-      aes_increment_iv(iv);
-    }
-    return out;
-  case 192:
-    kwords = 6;
-    nround = 12;
-    bf8_t round_key_192[16 * (12 + 1)];
-    key_expansion(key, round_key_192);
-    for(uint64_t i = 0; i < 3; i++) {     // Outputs 2*lambda bits = 2*(lambda/8) bytes -> (16,16,16)
-      memcpy(state, iv, 16);
-      cipher((state_t*)state, round_key_192);
-      for(uint64_t j = i*16; j < (i*16)+16; j++) {
-        out[j] = state[j%16];
+      break;
+    case 192:
+      for(uint64_t i = 0; i < ceil(outlenbits/192); i++) { 
+        state_t state;
+        load_state(state, iv);
+        aes192_round_keys_t round_key;
+        aes192_init_round_keys(&round_key, key);
+        aes_encrypt(round_key.keys, state, 12);
+        for (unsigned int j = 0; j < 16; ++j) {
+          out[k] = state[j / 4][j % 4];
+          k++;
+        }
+        increment_iv(iv);
       }
-      aes_increment_iv(iv);
-    }
-    return out;
-  default:
-    kwords = 4;
-    nround = 10;
-    bf8_t round_key_128[16 * (10 + 1)];
-    key_expansion(key, round_key_128);
-
-    for(uint64_t i = 0; i < 2; i++) {     // Outputs 2*lambda bits = 2*(lambda/8) bytes -> (16,16)
-      memcpy(state, iv, 16);
-      cipher((state_t*)state, round_key_128);
-      for(uint64_t j = i*16; j < (i*16)+16; j++) {
-        out[j] = state[j%16];
+      break;
+    default:
+      for(uint64_t i = 0; i < ceil(outlenbits/128); i++) { 
+        state_t state;
+        load_state(state, iv);
+        aes128_round_keys_t round_key;
+        aes128_init_round_keys(&round_key, key);
+        aes_encrypt(round_key.keys, state, 10);
+        for (unsigned int j = 0; j < 16; ++j) {
+          out[k] = state[j / 4][j % 4];
+          k++;
+        }
+        increment_iv(iv);
       }
-      aes_increment_iv(iv);
-    }
-    return out;
+      break;
   }
 }

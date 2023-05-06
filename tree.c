@@ -7,45 +7,8 @@
 
 #include "hash_shake.h"
 #include "tree.h"
-
-// Helper functions
-// TODO Move it to faest somewhere...
-/* Number of leading zeroes of x.
- * From the book
- * H.S. Warren, *Hacker's Delight*, Pearson Education, 2003.
- * http://www.hackersdelight.org/hdcodetxt/nlz.c.txt
- */
-static int32_t nlz(uint32_t x)
-{
-    uint32_t n;
-
-    if (x == 0) return (32);
-    n = 1;
-    if((x >> 16) == 0) {n = n + 16; x = x << 16;}
-    if((x >> 24) == 0) {n = n + 8;  x = x << 8;}
-    if((x >> 28) == 0) {n = n + 4;  x = x << 4;}
-    if((x >> 30) == 0) {n = n + 2;  x = x << 2;}
-    n = n - (x >> 31);
-
-    return n;
-}
-// TODO Move it to faest somewhere...
-uint32_t ceil_log2(uint32_t x)
-{
-    if (x == 0) {
-        return 0;
-    }
-    return 32 - nlz(x - 1);
-}
-// TODO Move it to faest somewhere...
-void printHex(const char* s, const uint8_t* data, size_t len)
-{
-    printf("%s: ", s);
-    for (size_t i = 0; i < len; i++) {
-        printf("%02X", data[i]);
-    }
-    printf("\n");
-}
+#include "aes.h"
+#include "utils.h"
 
 static int contains(size_t* list, size_t len, size_t value)
 {
@@ -150,17 +113,17 @@ uint8_t* getLeaf(tree_t* tree, size_t leafIndex)
 }
 
 void hashSeed(uint8_t* digest, const uint8_t* inputSeed, uint8_t* salt, size_t repIndex, size_t nodeIndex, 
-                faestParamSet_t* params)
+                faest_paramset_t* params)
 {
     hash_context ctx;
 
-    hash_init(&ctx, params->stateSizeBits);
-    hash_update(&ctx, inputSeed, params->seedSizeBytes);
-    hash_update(&ctx, salt, params->saltSizeBytes);
+    hash_init(&ctx, params->cipher_param.stateSizeBits);
+    hash_update(&ctx, inputSeed, params->faest_param.seedSizeBytes);
+    hash_update(&ctx, salt, params->faest_param.saltSizeBytes);
     hash_update_uint16_le(&ctx, (uint16_t)repIndex);
     hash_update_uint16_le(&ctx, (uint16_t)nodeIndex);
     hash_final(&ctx);
-    hash_squeeze(&ctx, digest, params->seedSizeBytes);
+    hash_squeeze(&ctx, digest, params->faest_param.seedSizeBytes);
 
     // HashInit(&ctx, params, hashPrefix);
     // HashUpdate(&ctx, inputSeed, params->seedSizeBytes);
@@ -171,9 +134,9 @@ void hashSeed(uint8_t* digest, const uint8_t* inputSeed, uint8_t* salt, size_t r
     // HashSqueeze(&ctx, digest, 2 * params->seedSizeBytes);
 }
 
-void expandSeeds(tree_t* tree, uint8_t* salt, size_t repIndex, faestParamSet_t* params)
+void expandSeeds(tree_t* tree, faest_paramset_t* params)
 {
-    uint8_t tmp[2*MAX_SEED_SIZE_BYTES];
+    uint8_t out[2*MAX_SEED_SIZE_BYTES];
 
     /* Walk the tree, expanding seeds where possible. Compute children of
      * non-leaf nodes. */
@@ -184,18 +147,26 @@ void expandSeeds(tree_t* tree, uint8_t* salt, size_t repIndex, faestParamSet_t* 
             continue;
         }
 
-        hashSeed(tmp, tree->nodes[i], salt, repIndex, i, params);
+        // Always statring with zeor IV
+        uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00};
+
+        // Here we use the AES ctr PRG to get the nodes, starting from root and
+        // assign it to the tree
+        aes_prg(tree->nodes[i], iv, out, params->faest_param.seclvl);
 
         if (!tree->haveNode[2 * i + 1]) {
             /* left child = H_left(seed_i || salt || t || i) */
-            memcpy(tree->nodes[2 * i + 1], tmp, params->seedSizeBytes);
+            memcpy(tree->nodes[2 * i + 1], out, params->faest_param.seedSizeBytes);
             tree->haveNode[2 * i + 1] = 1;
         }
 
         /* The last non-leaf node will only have a left child when there are an odd number of leaves */
         if (exists(tree, 2 * i + 2) && !tree->haveNode[2 * i + 2]) {
             /* right child = H_right(seed_i || salt || t || i)  */
-            memcpy(tree->nodes[2 * i + 2], tmp + params->seedSizeBytes, params->seedSizeBytes);
+            memcpy(tree->nodes[2 * i + 2], out + params->faest_param.seedSizeBytes, params->faest_param.seedSizeBytes);
             tree->haveNode[2 * i + 2] = 1;
         }
 
@@ -203,13 +174,14 @@ void expandSeeds(tree_t* tree, uint8_t* salt, size_t repIndex, faestParamSet_t* 
 
 }
 
-tree_t* generateSeeds(size_t nSeeds, uint8_t* rootSeed, uint8_t* salt, size_t repIndex, faestParamSet_t* params)
+/* This looks like an important function !!! */
+tree_t* generateSeeds(size_t nSeeds, uint8_t* rootSeed, uint8_t* salt, size_t repIndex, faest_paramset_t* params)
 {
-    tree_t* tree = createTree(nSeeds, params->seedSizeBytes);
+    tree_t* tree = createTree(nSeeds, params->faest_param.seedSizeBytes);
 
-    memcpy(tree->nodes[0], rootSeed, params->seedSizeBytes);
+    memcpy(tree->nodes[0], rootSeed, params->faest_param.seedSizeBytes);
     tree->haveNode[0] = 1;
-    expandSeeds(tree, salt, repIndex, params);
+    expandSeeds(tree, params);
 
     return tree;
 }
@@ -328,19 +300,19 @@ static size_t* getRevealedNodes(tree_t* tree, uint16_t* hideList, size_t hideLis
     return revealed;
 }
 
-size_t revealSeedsSize(size_t numNodes, uint16_t* hideList, size_t hideListSize, faestParamSet_t* params)
+size_t revealSeedsSize(size_t numNodes, uint16_t* hideList, size_t hideListSize, faest_paramset_t* params)
 {
-    tree_t* tree = createTree(numNodes, params->seedSizeBytes);
+    tree_t* tree = createTree(numNodes, params->faest_param.seedSizeBytes);
     size_t numNodesRevealed = 0;
     size_t* revealed = getRevealedNodes(tree, hideList, hideListSize, &numNodesRevealed);
 
     freeTree(tree);
     free(revealed);
-    return numNodesRevealed * params->seedSizeBytes;
+    return numNodesRevealed * params->faest_param.seedSizeBytes;
 }
 
 size_t revealSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_t* output, size_t outputSize, 
-                    faestParamSet_t* params)
+                    faest_paramset_t* params)
 {
     uint8_t* outputBase = output;
     size_t revealedSize = 0;
@@ -353,14 +325,14 @@ size_t revealSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_
 
     size_t* revealed = getRevealedNodes(tree, hideList, hideListSize, &revealedSize);
     for (size_t i = 0; i < revealedSize; i++) {
-        outLen -= params->seedSizeBytes;
+        outLen -= params->faest_param.seedSizeBytes;
         if (outLen < 0) {
             assert(!"Insufficient sized buffer provided to revealSeeds");
             free(revealed);
             return 0;
         }
-        memcpy(output, tree->nodes[revealed[i]], params->seedSizeBytes);
-        output += params->seedSizeBytes;
+        memcpy(output, tree->nodes[revealed[i]], params->faest_param.seedSizeBytes);
+        output += params->faest_param.seedSizeBytes;
     }
 
 
@@ -369,7 +341,7 @@ size_t revealSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_
 }
 
 int reconstructSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize,
-                     uint8_t* input, size_t inputLen, uint8_t* salt, size_t repIndex, faestParamSet_t* params)
+                     uint8_t* input, size_t inputLen, uint8_t* salt, size_t repIndex, faest_paramset_t* params)
 {
     int ret =  0;
 
@@ -381,24 +353,24 @@ int reconstructSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize,
     size_t revealedSize = 0;
     size_t* revealed = getRevealedNodes(tree, hideList, hideListSize, &revealedSize);
     for (size_t i = 0; i < revealedSize; i++) {
-        inLen -= params->seedSizeBytes;
+        inLen -= params->faest_param.seedSizeBytes;
         if (inLen < 0) {
             ret = -1;
             goto Exit;
         }
-        memcpy(tree->nodes[revealed[i]], input, params->seedSizeBytes);
+        memcpy(tree->nodes[revealed[i]], input, params->faest_param.seedSizeBytes);
         tree->haveNode[revealed[i]] = 1;
-        input += params->seedSizeBytes;
+        input += params->faest_param.seedSizeBytes;
     }
 
-    expandSeeds(tree, salt, repIndex, params);
+    expandSeeds(tree, params);
 
 Exit:
     free(revealed);
     return ret;
 }
 
-static void computeParentHash(tree_t* tree, size_t child, uint8_t* salt, faestParamSet_t* params)
+static void computeParentHash(tree_t* tree, size_t child, uint8_t* salt, faest_paramset_t* params)
 {
     if (!exists(tree, child)) {
         return;
@@ -422,17 +394,17 @@ static void computeParentHash(tree_t* tree, size_t child, uint8_t* salt, faestPa
     /* Compute parent data = H(left child data || [right child data] || salt || parent idx) */
     hash_context ctx;
 
-    hash_init(&ctx, params->stateSizeBits);
-    hash_update(&ctx, tree->nodes[2 * parent + 1], params->digestSizeBytes);
+    hash_init(&ctx, params->cipher_param.stateSizeBits);
+    hash_update(&ctx, tree->nodes[2 * parent + 1], params->faest_param.digestSizeBytes);
     if (hasRightChild(tree, parent)) {
         /* One node may not have a right child when there's an odd number of leaves */
-        hash_update(&ctx, tree->nodes[2 * parent + 2], params->digestSizeBytes);
+        hash_update(&ctx, tree->nodes[2 * parent + 2], params->faest_param.digestSizeBytes);
     }
 
-    hash_update(&ctx, salt, params->saltSizeBytes);
+    hash_update(&ctx, salt, params->faest_param.saltSizeBytes);
     hash_update_uint16_le(&ctx, (uint16_t)parent);
     hash_final(&ctx);
-    hash_squeeze(&ctx, tree->nodes[parent], params->digestSizeBytes);
+    hash_squeeze(&ctx, tree->nodes[parent], params->faest_param.digestSizeBytes);
     tree->haveNode[parent] = 1;
 
 
@@ -452,7 +424,7 @@ static void computeParentHash(tree_t* tree, size_t child, uint8_t* salt, faestPa
 
 /* Create a Merkle tree by hashing up all nodes.
  * leafData must have length tree->numNodes, but some may be NULL. */
-void buildMerkleTree(tree_t* tree, uint8_t** leafData, uint8_t* salt, faestParamSet_t* params)
+void buildMerkleTree(tree_t* tree, uint8_t** leafData, uint8_t* salt, faest_paramset_t* params)
 {
     size_t firstLeaf = tree->numNodes - tree->numLeaves;
 
@@ -522,17 +494,17 @@ static size_t* getRevealedMerkleNodes(tree_t* tree, uint16_t* missingLeaves,
     return revealed;
 }
 
-size_t openMerkleTreeSize(size_t numNodes, uint16_t* missingLeaves, size_t missingLeavesSize, faestParamSet_t* params)
+size_t openMerkleTreeSize(size_t numNodes, uint16_t* missingLeaves, size_t missingLeavesSize, faest_paramset_t* params)
 {
 
-    tree_t* tree = createTree(numNodes, params->digestSizeBytes);
+    tree_t* tree = createTree(numNodes, params->faest_param.digestSizeBytes);
     size_t revealedSize = 0;
     size_t* revealed = getRevealedMerkleNodes(tree, missingLeaves, missingLeavesSize, &revealedSize);
 
     freeTree(tree);
     free(revealed);
 
-    return revealedSize * params->digestSizeBytes;
+    return revealedSize * params->faest_param.digestSizeBytes;
 }
 
 /* Serialze the missing nodes that the verifier will require to check commitments for non-missing leaves */
@@ -598,7 +570,7 @@ Exit:
 
 /* verifyMerkleTree: verify for each leaf that is set */
 int verifyMerkleTree(tree_t* tree, /* uint16_t* missingLeaves, size_t missingLeavesSize, */
-                     uint8_t** leafData, uint8_t* salt, faestParamSet_t* params)
+                     uint8_t** leafData, uint8_t* salt, faest_paramset_t* params)
 {
     size_t firstLeaf = tree->numNodes - tree->numLeaves;
 
@@ -631,3 +603,19 @@ int verifyMerkleTree(tree_t* tree, /* uint16_t* missingLeaves, size_t missingLea
     return 0;
 }
 
+/* Gets how many nodes will be there in the tree in total */
+uint64_t getBinaryTreeNodeCount(uint64_t depth) {
+    uint64_t out = 0;
+    for(uint64_t i = depth; i < 1; i--) {
+        out += (2 << i);
+    }
+    out += 1;
+    return out;
+}
+
+/* Calculates the flat array index of the binary tree position */
+uint64_t getNodeIndex(uint64_t depth, uint64_t pos) {
+
+    // always between [0...(2^depth)-1]
+    return (uint64_t)(((2 << depth)-1) + pos);
+}

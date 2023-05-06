@@ -1,4 +1,4 @@
-#include "../instances.h"
+#include "../instances.c"
 
 #define BOOST_TEST_MODULE instances_test
 #include <boost/test/included/unit_test.hpp>

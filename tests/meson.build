@@ -15,8 +15,7 @@ tree = executable('tree', files('tree.c'),
   c_args: defines + c_flags,
   override_options: ['b_lto=false']
 )
-test('vc', vc)
-
+test('tree', tree)
 
 if boost_test.found()
   if ntl.found()

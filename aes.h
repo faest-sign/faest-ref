@@ -34,14 +34,13 @@ void aes128_init_round_keys(aes128_round_keys_t* round_key, const uint8_t* key);
 void aes192_init_round_keys(aes192_round_keys_t* round_key, const uint8_t* key);
 void aes256_init_round_keys(aes256_round_keys_t* round_key, const uint8_t* key);
 
-void aes128_ctr_encrypt(const aes128_round_keys_t* round_key, const uint8_t* iv,
-                        const uint8_t* plaintext, uint8_t* ciphertext);
-void aes192_ctr_encrypt(const aes192_round_keys_t* round_key, const uint8_t* iv,
-                        const uint8_t* plaintext, uint8_t* ciphertext);
-void aes256_ctr_encrypt(const aes256_round_keys_t* round_key, const uint8_t* iv,
-                        const uint8_t* plaintext, uint8_t* ciphertext);
+void aes128_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext, uint8_t* ciphertext);
+void aes192_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext, uint8_t* ciphertext);
+void aes256_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext, uint8_t* ciphertext);
 
-void aes_increment_ctr(uint8_t* ctr);
+void increment_iv(uint8_t* iv);
+
+void aes_prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl);
 
 FAEST_END_C_DECL
 

@@ -6,6 +6,7 @@
 #define HASH_SHAKE_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 #include "macros.h"
 #include "endian_compat.h"
