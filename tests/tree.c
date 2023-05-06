@@ -296,18 +296,10 @@ int main(void) {
 
   printf("Running seed tree tests\n");
 
-  faest_paramset_t params;
-  params = faest_get_paramset(FAEST_128S);
-  passed += runSeedTest(NULL, 3, 8, &params);
-  tests++;
-
-  printf("Done, %lu of %lu tests passed\n", passed, tests);
-
-
-  /*for (faest_paramid_t p = FAEST_128S; p <= FAEST_256F; p++) {
-    params = faest_get_paramset(p);
+  for (faest_paramid_t p = FAEST_128S; p <= FEAST_128F; p++) {
+    faest_paramset_t params = faest_get_paramset(p);
     for (size_t i = 0; i < numIterations; i++) {
-      passed += runSeedTest(NULL, params.numOpenedRounds, params.t, &params);
+      passed += runSeedTest(NULL, params.faest_param.numOpenRounds, params.faest_param.t, &params);
       tests++;
     }
     for (size_t i = 0; i < numIterations; i++) {
@@ -341,10 +333,10 @@ int main(void) {
   }
 
   printf("Running Merkle tree tests\n");
-  for (faest_paramid_t p = FAEST_128S; p <= FAEST_256F; p++) {
-    params = faest_get_paramset(p);
+  for (faest_paramid_t p = FAEST_128S; p <= FEAST_128F; p++) {
+    faest_paramset_t params = faest_get_paramset(p);
     for (size_t i = 0; i < numIterations; i++) {
-      passed += runMerkleTest(NULL, params.numOpenedRounds, params.t, &params);
+      passed += runMerkleTest(NULL, params.faest_param.numOpenRounds, params.faest_param.t, &params);
       tests++;
     }
     for (size_t i = 0; i < numIterations; i++) {
@@ -382,8 +374,6 @@ int main(void) {
   }
 
   printf("Done, %lu of %lu tests passed\n", passed, tests);
-
-  */
 
   return 0;
 }
