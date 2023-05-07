@@ -91,7 +91,8 @@ param_128s.set('OPEN_ROUNDS', 1)
 param_128s.set('SEC_LVL', 128)
 param_128s.set('SEED_SIZE', 16)
 param_128s.set('SALT_SIZE', 16)
-param_128s.set('DIGEST_SIZE', 32)
+param_128s.set('DIGEST_SIZE_H_0', 48)
+param_128s.set('DIGEST_SIZE_H_1', 32)
 param_128s.set('SIG_SIZE', 5034)
 parameter_sets += param_128s
 
@@ -112,7 +113,8 @@ param_128f.set('OPEN_ROUNDS', 1)
 param_128f.set('SEC_LVL', 128)
 param_128f.set('SEED_SIZE', 16)
 param_128f.set('SALT_SIZE', 16)
-param_128f.set('DIGEST_SIZE', 32)
+param_128f.set('DIGEST_SIZE_H_0', 48)
+param_128f.set('DIGEST_SIZE_H_1', 32)
 param_128f.set('SIG_SIZE', 6384)
 parameter_sets += param_128f
 
@@ -133,7 +135,8 @@ param_192s.set('OPEN_ROUNDS', 1)
 param_192s.set('SEC_LVL', 192)
 param_192s.set('SEED_SIZE', 24)
 param_192s.set('SALT_SIZE', 24)
-param_192s.set('DIGEST_SIZE', 48)
+param_192s.set('DIGEST_SIZE_H_0', 72)
+param_192s.set('DIGEST_SIZE_H_1', 48)
 param_192s.set('SIG_SIZE', 12952)
 parameter_sets += param_192s
 
@@ -154,7 +157,8 @@ param_192f.set('OPEN_ROUNDS', 1)
 param_192f.set('SEC_LVL', 192)
 param_192f.set('SEED_SIZE', 24)
 param_192f.set('SALT_SIZE', 24)
-param_192f.set('DIGEST_SIZE', 48)
+param_192f.set('DIGEST_SIZE_H_0', 72)
+param_192f.set('DIGEST_SIZE_H_1', 48)
 param_192f.set('SIG_SIZE', 17064)
 parameter_sets += param_192f
 
@@ -175,7 +179,8 @@ param_256s.set('OPEN_ROUNDS', 1)
 param_256s.set('SEC_LVL', 256)
 param_256s.set('SEED_SIZE', 32)
 param_256s.set('SALT_SIZE', 32)
-param_256s.set('DIGEST_SIZE', 64)
+param_256s.set('DIGEST_SIZE_H_0', 96)
+param_256s.set('DIGEST_SIZE_H_1', 64)
 param_256s.set('SIG_SIZE', 22212)
 parameter_sets += param_256s
 
@@ -196,7 +201,8 @@ param_256f.set('OPEN_ROUNDS', 1)
 param_256f.set('SEC_LVL', 256)
 param_256f.set('SEED_SIZE', 32)
 param_256f.set('SALT_SIZE', 32)
-param_256f.set('DIGEST_SIZE', 64)
+param_256f.set('DIGEST_SIZE_H_0', 96)
+param_256f.set('DIGEST_SIZE_H_1', 64)
 param_256f.set('SIG_SIZE', 28512)
 parameter_sets += param_256f
 

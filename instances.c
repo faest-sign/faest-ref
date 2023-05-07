@@ -66,7 +66,8 @@ static const faest_param_t FAEST_128_S_PARAMS = {FAEST_128S_LAMBDA,
                                                  FAEST_128S_SEC_LVL,
                                                  FAEST_128S_SEED_SIZE,
                                                  FAEST_128S_SALT_SIZE,
-                                                 FAEST_128S_DIGEST_SIZE};
+                                                 FAEST_128S_DIGEST_SIZE_H_0,
+                                                 FAEST_128S_DIGEST_SIZE_H_1};
 static const faest_param_t FAEST_128_F_PARAMS = {FAEST_128F_LAMBDA,
                                                  FAEST_128F_ELL,
                                                  FAEST_128F_TAU,
@@ -80,7 +81,8 @@ static const faest_param_t FAEST_128_F_PARAMS = {FAEST_128F_LAMBDA,
                                                  FAEST_128F_SEC_LVL,
                                                  FAEST_128F_SEED_SIZE,
                                                  FAEST_128F_SALT_SIZE,
-                                                 FAEST_128F_DIGEST_SIZE};
+                                                 FAEST_128F_DIGEST_SIZE_H_0,
+                                                 FAEST_128F_DIGEST_SIZE_H_1};
 static const faest_param_t FAEST_192_S_PARAMS = {FAEST_192S_LAMBDA,
                                                  FAEST_192S_ELL,
                                                  FAEST_192S_TAU,
@@ -94,7 +96,8 @@ static const faest_param_t FAEST_192_S_PARAMS = {FAEST_192S_LAMBDA,
                                                  FAEST_192S_SEC_LVL,
                                                  FAEST_192S_SEED_SIZE,
                                                  FAEST_192S_SALT_SIZE,
-                                                 FAEST_192S_DIGEST_SIZE};
+                                                 FAEST_192S_DIGEST_SIZE_H_0,
+                                                 FAEST_192S_DIGEST_SIZE_H_1};
 static const faest_param_t FAEST_192_F_PARAMS = {FAEST_192F_LAMBDA,
                                                  FAEST_192F_ELL,
                                                  FAEST_192F_TAU,
@@ -108,7 +111,8 @@ static const faest_param_t FAEST_192_F_PARAMS = {FAEST_192F_LAMBDA,
                                                  FAEST_192F_SEC_LVL,
                                                  FAEST_192F_SEED_SIZE,
                                                  FAEST_192F_SALT_SIZE,
-                                                 FAEST_192F_DIGEST_SIZE};
+                                                 FAEST_192F_DIGEST_SIZE_H_0,
+                                                 FAEST_192F_DIGEST_SIZE_H_1};
 static const faest_param_t FAEST_256_S_PARAMS = {FAEST_256S_LAMBDA,
                                                  FAEST_256S_ELL,
                                                  FAEST_256S_TAU,
@@ -122,7 +126,8 @@ static const faest_param_t FAEST_256_S_PARAMS = {FAEST_256S_LAMBDA,
                                                  FAEST_256S_SEC_LVL,
                                                  FAEST_256S_SEED_SIZE,
                                                  FAEST_256S_SALT_SIZE,
-                                                 FAEST_256S_DIGEST_SIZE};
+                                                 FAEST_256S_DIGEST_SIZE_H_0,
+                                                 FAEST_256S_DIGEST_SIZE_H_1};
 static const faest_param_t FAEST_256_F_PARAMS = {FAEST_256F_LAMBDA,
                                                  FAEST_256F_ELL,
                                                  FAEST_256F_TAU,
@@ -136,9 +141,10 @@ static const faest_param_t FAEST_256_F_PARAMS = {FAEST_256F_LAMBDA,
                                                  FAEST_256F_SEC_LVL,
                                                  FAEST_256F_SEED_SIZE,
                                                  FAEST_256F_SALT_SIZE,
-                                                 FAEST_256F_DIGEST_SIZE};
+                                                 FAEST_256F_DIGEST_SIZE_H_0,
+                                                 FAEST_256F_DIGEST_SIZE_H_1};
 
-static const faest_param_t FAEST_INVALID_PARAMS = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static const faest_param_t FAEST_INVALID_PARAMS = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static const faest_paramset_t faestInstances[PARAMETER_SET_MAX_INDEX] = {
     {AES_INVALID_PARAMS, FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},

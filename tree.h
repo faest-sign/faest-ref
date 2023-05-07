@@ -13,7 +13,7 @@ typedef struct tree_t {
 /* The largest seed size is 256 bits, for the Picnic3-L5-FS parameter set. */
 #define MAX_SEED_SIZE_BYTES (32)
 
-tree_t* createTree(size_t numLeaves, size_t dataSize);
+tree_t* createTree(faest_paramset_t* params);
 void freeTree(tree_t* tree);
 uint8_t** getLeaves(tree_t* tree);
 /* Get one leaf, leafIndex must be in [0, tree->numLeaves -1] */
@@ -27,9 +27,9 @@ void printLeaves(tree_t* tree);
 
 /* Returns the number of bytes written to output.  A safe number of bytes for
  * callers to allocate is numLeaves*params->seedSizeBytes, or call revealSeedsSize. */
-tree_t* generateSeeds(size_t nSeeds, uint8_t* rootSeed, faest_paramset_t* params);
+tree_t* generateSeeds(uint8_t* rootSeed, faest_paramset_t* params);
 size_t revealSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_t* output, size_t outputLen, faest_paramset_t* params);
-size_t revealSeedsSize(size_t numNodes, uint16_t* hideList, size_t hideListSize, faest_paramset_t* params);
+size_t revealSeedsSize(uint16_t* hideList, size_t hideListSize, faest_paramset_t* params);
 int reconstructSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize,
                      uint8_t* input, size_t inputLen, faest_paramset_t* params);
 
@@ -48,7 +48,7 @@ int reconstructSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize,
  */
 void buildMerkleTree(tree_t* tree, uint8_t** leafData, uint8_t* salt, faest_paramset_t* params);
 uint8_t* openMerkleTree(tree_t* tree, uint16_t* missingLeaves, size_t missingLeavesSize, size_t* outputSizeBytes);
-size_t openMerkleTreeSize(size_t numNodes, uint16_t* notMissingLeaves, size_t notMissingLeavesSize, faest_paramset_t* params);
+size_t openMerkleTreeSize(uint16_t* missingLeaves, size_t missingLeavesSize, faest_paramset_t* params);
 int addMerkleNodes(tree_t* tree, uint16_t* missingLeaves, size_t missingLeavesSize, uint8_t* input, size_t inputSize);
 int verifyMerkleTree(tree_t* tree, uint8_t** leafData, uint8_t* salt, faest_paramset_t* params);
 uint64_t getBinaryTreeNodeCount(uint64_t depth);
