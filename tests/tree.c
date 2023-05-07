@@ -8,6 +8,13 @@
 #include "../instances.h"
 #include "../utils.h"
 
+void printTree(const char* label, tree_t* tree) {
+  printf("%s:\n", label);
+  for (size_t i = 0; i < tree->numNodes; i++) {
+    printf("node[%02lu] (have=%d, exists=%d) ", i, tree->haveNode[i], tree->exists[i]);
+    printHex("", tree->nodes[i], tree->dataSize);
+  }
+}
 static int contains(uint16_t* list, size_t len, uint16_t value) {
   for (size_t i = 0; i < len; i++) {
     if (list[i] == value) {
@@ -16,11 +23,8 @@ static int contains(uint16_t* list, size_t len, uint16_t value) {
   }
   return 0;
 }
-int runSeedTest(uint16_t* hideList, size_t hideListSize, size_t numLeaves,
-                faest_paramset_t* params) {
-  uint8_t iSeed[16];
-  uint8_t salt[16];
-  size_t repIndex  = 19;
+int runSeedTest(uint16_t* hideList, size_t hideListSize, size_t numLeaves, uint8_t* rootKey,
+   faest_paramset_t* params) {
   int freeHideList = 0;
   int ret          = 1;
 
@@ -48,14 +52,16 @@ int runSeedTest(uint16_t* hideList, size_t hideListSize, size_t numLeaves,
   // }
   // printf("\n");
 
-  memset(iSeed, 0x07, sizeof(iSeed));
-  memset(salt, 0x09, sizeof(salt));
+  // memset(iSeed, 0x07, sizeof(iSeed));
+  // memset(salt, 0x09, sizeof(salt));
 
   // printf("%s: Generating seeds\n", __func__);
-  tree_t* tree  = generateSeeds(numLeaves, iSeed, salt, repIndex, params);
+  tree_t* tree  = generateSeeds(numLeaves, rootKey, params);
   tree_t* tree2 = createTree(numLeaves, params->faest_param.seedSizeBytes);
 
-  // printTree("tree", tree);
+#if 0
+  printTree("tree", tree);
+#endif
 
   size_t initialOutputSize = (tree->numLeaves) * params->faest_param.seedSizeBytes;
   uint8_t* output          = malloc(initialOutputSize);
@@ -98,7 +104,7 @@ int runSeedTest(uint16_t* hideList, size_t hideListSize, size_t numLeaves,
 
   // printf("%s: Reconstructing seeds\n", __func__);
   int res =
-      reconstructSeeds(tree2, hideList, hideListSize, output, outputLen, salt, repIndex, params);
+      reconstructSeeds(tree2, hideList, hideListSize, output, outputLen, params);
   if (res != 0) {
     printf("%s: Reconstructing seeds FAILED\n", __func__);
     ret = 0;
@@ -162,13 +168,7 @@ void printTreeInfo(const char* label, tree_t* tree) {
   printf("tree->numNodes = %lu\n", tree->numNodes);
   printf("tree->numLeaves = %lu\n", tree->numLeaves);
 }
-void printTree(const char* label, tree_t* tree) {
-  printf("%s:\n", label);
-  for (size_t i = 0; i < tree->numNodes; i++) {
-    printf("node[%02lu] (have=%d, exists=%d) ", i, tree->haveNode[i], tree->exists[i]);
-    printHex("", tree->nodes[i], tree->dataSize);
-  }
-}
+
 int runMerkleTest(uint16_t* missingLeaves, size_t missingLeavesSize, size_t numLeaves,
                   faest_paramset_t* params) {
   //    uint8_t iSeed[16];
@@ -220,7 +220,7 @@ int runMerkleTest(uint16_t* missingLeaves, size_t missingLeavesSize, size_t numL
 
   buildMerkleTree(tree, leafData, salt, params);
 
-#if 1
+#if 0
   printTree("Tree after buildMerkleTree", tree);
 #endif
 
@@ -251,12 +251,14 @@ int runMerkleTest(uint16_t* missingLeaves, size_t missingLeavesSize, size_t numL
     goto Exit;
   }
 
+#if 0
   printTree("tree2 after addMerkleNodes", tree2);
+#endif
 
   ret = verifyMerkleTree(tree2, leafData, salt, params);
   if (ret != 0) {
     printf("Failed to verify Merkle tree\n");
-#if 1
+#if 0
     printTreeInfo("tree", tree);
     printTreeInfo("tree2", tree2);
     printTree("tree", tree);
@@ -272,8 +274,10 @@ int runMerkleTest(uint16_t* missingLeaves, size_t missingLeavesSize, size_t numL
     goto Exit;
   }
 
+#if 0
   printTree("tree", tree);
   printTree("tree2", tree2);
+#endif
 
   ret = 1;
 Exit:
@@ -296,44 +300,49 @@ int main(void) {
 
   printf("Running seed tree tests\n");
 
-  for (faest_paramid_t p = FAEST_128S; p <= FEAST_128F; p++) {
+  /* We can use the uint8 32 root, the 128 and 192 aes turncate the root key appropriately in the
+  implementation */
+  uint8_t root[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+                        0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+                        0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+  for (faest_paramid_t p = FAEST_128S; p <= FAEST_256F; p++) {
     faest_paramset_t params = faest_get_paramset(p);
+
     for (size_t i = 0; i < numIterations; i++) {
-      passed += runSeedTest(NULL, params.faest_param.numOpenRounds, params.faest_param.t, &params);
+      passed += runSeedTest(NULL, params.faest_param.numOpenRounds, params.faest_param.t, root, &params);
       tests++;
     }
+
     for (size_t i = 0; i < numIterations; i++) {
-      passed += runSeedTest(NULL, 3, 8, &params);
+      passed += runSeedTest(NULL, 3, 8, root, &params);
       tests++;
-      passed += runSeedTest(NULL, 3, 7, &params);
+      passed += runSeedTest(NULL, 3, 7, root, &params);
       tests++;
-      passed += runSeedTest(NULL, 3, 6, &params);
+      passed += runSeedTest(NULL, 3, 6, root, &params);
       tests++;
-      passed += runSeedTest(NULL, 4, 5, &params);
+      passed += runSeedTest(NULL, 4, 5, root, &params);
       tests++;
-      passed += runSeedTest(NULL, 2, 5, &params);
+      passed += runSeedTest(NULL, 2, 5, root, &params);
       tests++;
     }
 
     uint16_t hideList[3] = {2, 3, 6};
-    passed += runSeedTest(hideList, 3, 7, &params);
+    passed += runSeedTest(hideList, 3, 7, root, &params);
     tests++;
-
     uint16_t hideList2[2] = {2, 3};
-    passed += runSeedTest(hideList2, 2, 6, &params);
+    passed += runSeedTest(hideList2, 2, 6, root, &params);
     tests++;
-
     uint16_t hideList3[2] = {2, 3};
-    passed += runSeedTest(hideList3, 2, 5, &params);
+    passed += runSeedTest(hideList3, 2, 5, root, &params);
     tests++;
-
     uint16_t hideList5[2] = {2, 3};
-    passed += runSeedTest(hideList5, 2, 6, &params);
+    passed += runSeedTest(hideList5, 2, 6, root, &params);
     tests++;
   }
 
   printf("Running Merkle tree tests\n");
-  for (faest_paramid_t p = FAEST_128S; p <= FEAST_128F; p++) {
+  for (faest_paramid_t p = FAEST_128S; p <= FAEST_128F; p++) {
     faest_paramset_t params = faest_get_paramset(p);
     for (size_t i = 0; i < numIterations; i++) {
       passed += runMerkleTest(NULL, params.faest_param.numOpenRounds, params.faest_param.t, &params);
@@ -355,19 +364,15 @@ int main(void) {
     uint16_t hideList6[3] = {2, 3, 6};
     passed += runMerkleTest(hideList6, 3, 7, &params);
     tests++;
-
     uint16_t hideList4[2] = {2, 3};
     passed += runMerkleTest(hideList4, 2, 5, &params);
     tests++;
-
     uint16_t missingLeaves0[2] = {2, 3};
     passed += runMerkleTest(missingLeaves0, 2, 6, &params);
     tests++;
-
     uint16_t missingLeaves[4] = {4, 5, 6, 7};
     passed += runMerkleTest(missingLeaves, 4, 8, &params);
     tests++;
-
     uint16_t missingLeaves2[5] = {2, 3, 4, 8, 11};
     passed += runMerkleTest(missingLeaves2, 5, 13, &params);
     tests++;

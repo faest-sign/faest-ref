@@ -16,8 +16,8 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
     return "PARAMETER_SET_INVALID";
   case FAEST_128S:
     return "FAEST_128S";
-  case FEAST_128F:
-    return "FEAST_128F";
+  case FAEST_128F:
+    return "FAEST_128F";
   case FAEST_192S:
     return "FAEST_192S";
   case FAEST_192F:
@@ -143,7 +143,7 @@ static const faest_param_t FAEST_INVALID_PARAMS = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 static const faest_paramset_t faestInstances[PARAMETER_SET_MAX_INDEX] = {
     {AES_INVALID_PARAMS, FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
     {AES_128_PARAMS, FAEST_128_S_PARAMS, FAEST_128S},
-    {AES_128_PARAMS, FAEST_128_F_PARAMS, FEAST_128F},
+    {AES_128_PARAMS, FAEST_128_F_PARAMS, FAEST_128F},
     {AES_192_PARAMS, FAEST_192_S_PARAMS, FAEST_192S},
     {AES_192_PARAMS, FAEST_192_F_PARAMS, FAEST_192F},
     {AES_256_PARAMS, FAEST_256_S_PARAMS, FAEST_256S},
@@ -153,7 +153,7 @@ faest_paramset_t faest_get_paramset(faest_paramid_t paramid) {
   switch (paramid) {
   case FAEST_128S:
     return faestInstances[1];
-  case FEAST_128F:
+  case FAEST_128F:
     return faestInstances[2];
   case FAEST_192S:
     return faestInstances[3];

@@ -147,7 +147,7 @@ void expandSeeds(tree_t* tree, faest_paramset_t* params)
             continue;
         }
 
-        // Always statring with zeor IV
+        // Always statring with zeor IV ?
         uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00,
@@ -174,8 +174,8 @@ void expandSeeds(tree_t* tree, faest_paramset_t* params)
 
 }
 
-/* This looks like an important function !!! */
-tree_t* generateSeeds(size_t nSeeds, uint8_t* rootSeed, uint8_t* salt, size_t repIndex, faest_paramset_t* params)
+// STARTING HERE
+tree_t* generateSeeds(size_t nSeeds, uint8_t* rootSeed, faest_paramset_t* params)
 {
     tree_t* tree = createTree(nSeeds, params->faest_param.seedSizeBytes);
 
@@ -341,7 +341,7 @@ size_t revealSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_
 }
 
 int reconstructSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize,
-                     uint8_t* input, size_t inputLen, uint8_t* salt, size_t repIndex, faest_paramset_t* params)
+                     uint8_t* input, size_t inputLen, faest_paramset_t* params)
 {
     int ret =  0;
 

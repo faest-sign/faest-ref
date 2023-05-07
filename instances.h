@@ -15,7 +15,7 @@ FAEST_BEGIN_C_DECL
 typedef enum faest_paramid_t {
   PARAMETER_SET_INVALID   = 0,
   FAEST_128S              = 1,
-  FEAST_128F              = 2,
+  FAEST_128F              = 2,
   FAEST_192S              = 3,
   FAEST_192F              = 4,
   FAEST_256S              = 5,

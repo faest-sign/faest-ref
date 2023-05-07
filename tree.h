@@ -27,10 +27,11 @@ void printLeaves(tree_t* tree);
 
 /* Returns the number of bytes written to output.  A safe number of bytes for
  * callers to allocate is numLeaves*params->seedSizeBytes, or call revealSeedsSize. */
-tree_t* generateSeeds(size_t nSeeds, uint8_t* rootSeed, uint8_t* salt, size_t repIndex, faest_paramset_t* params);
+tree_t* generateSeeds(size_t nSeeds, uint8_t* rootSeed, faest_paramset_t* params);
 size_t revealSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_t* output, size_t outputLen, faest_paramset_t* params);
 size_t revealSeedsSize(size_t numNodes, uint16_t* hideList, size_t hideListSize, faest_paramset_t* params);
-int reconstructSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_t* input, size_t inputLen, uint8_t* salt, size_t repIndex, faest_paramset_t* params);
+int reconstructSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize,
+                     uint8_t* input, size_t inputLen, faest_paramset_t* params);
 
 /* Functions for Merkle hash trees used for commitments.
  *

@@ -183,9 +183,9 @@ void aes256_init_round_keys(aes256_round_keys_t* round_key, const uint8_t* key) 
   expand_key(round_key->keys, key, 8, 14, true);
 }
 
-static void load_state(state_t iv, const uint8_t* src) {
+static void load_state(state_t state, const uint8_t* src) {
   for (unsigned int i = 0; i != 16; ++i) {
-    iv[i / 4][i % 4] = bf8_load(&src[i]);
+    state[i / 4][i % 4] = bf8_load(&src[i]);
   }
 }
 
@@ -249,7 +249,7 @@ void aes_prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl) {
   uint64_t k = 0;
   switch (seclvl) {
     case 256:
-      for(uint64_t i = 0; i < ceil(outlenbits/256); i++) { 
+      for(uint64_t i = 0; i < 4; i++) { 
         state_t state;
         load_state(state, iv);
         aes256_round_keys_t round_key;
@@ -261,9 +261,9 @@ void aes_prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl) {
         }
         increment_iv(iv);
       }
-      break;
+      return;
     case 192:
-      for(uint64_t i = 0; i < ceil(outlenbits/192); i++) { 
+      for(uint64_t i = 0; i < 3; i++) { 
         state_t state;
         load_state(state, iv);
         aes192_round_keys_t round_key;
@@ -275,9 +275,9 @@ void aes_prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl) {
         }
         increment_iv(iv);
       }
-      break;
+      return;
     default:
-      for(uint64_t i = 0; i < ceil(outlenbits/128); i++) { 
+      for(uint64_t i = 0; i < 2; i++) { 
         state_t state;
         load_state(state, iv);
         aes128_round_keys_t round_key;
@@ -289,6 +289,6 @@ void aes_prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl) {
         }
         increment_iv(iv);
       }
-      break;
+      return;
   }
 }
