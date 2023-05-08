@@ -239,6 +239,7 @@ sources = files(
   'compat.c',
   'fields.c',
   'instances.c',
+  'owf.c',
   'randomness.c',
   'random_oracle.c',
   'tree.c',

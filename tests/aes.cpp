@@ -22,8 +22,11 @@ BOOST_AUTO_TEST_CASE(test_aes128) {
   constexpr uint8_t plaintext_128[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+  aes128_round_keys_t ctx;
+  aes128_init_round_keys(&ctx, key_128);
+
   block_t output_128;
-  aes128_ctr_encrypt(key_128, iv_128, plaintext_128, output_128.data());
+  aes128_ctr_encrypt(&ctx, iv_128, plaintext_128, output_128.data());
 
   BOOST_TEST(output_128 == expected_128);
 }
@@ -39,8 +42,11 @@ BOOST_AUTO_TEST_CASE(test_aes192) {
   constexpr uint8_t plaintext_192[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+  aes192_round_keys_t ctx;
+  aes192_init_round_keys(&ctx, key_192);
+
   block_t output_192;
-  aes192_ctr_encrypt(key_192, iv_192, plaintext_192, output_192.data());
+  aes192_ctr_encrypt(&ctx, iv_192, plaintext_192, output_192.data());
 
   BOOST_TEST(output_192 == expected_192);
 }
@@ -56,8 +62,11 @@ BOOST_AUTO_TEST_CASE(test_aes256) {
   constexpr uint8_t plaintext_256[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+  aes256_round_keys_t ctx;
+  aes256_init_round_keys(&ctx, key_256);
+
   block_t output_256;
-  aes256_ctr_encrypt(key_256, iv_256, plaintext_256, output_256.data());
+  aes256_ctr_encrypt(&ctx, iv_256, plaintext_256, output_256.data());
 
   BOOST_TEST(output_256 == expected_256);
 }
@@ -67,7 +76,7 @@ BOOST_AUTO_TEST_CASE(test_increment_counter) {
                                    0xea, 0xfc, 0x49, 0x90, 0x4b, 0x49, 0x6f, 0xff};
   constexpr block_t iv_expected = {0x8e, 0xa2, 0xb7, 0xca, 0x51, 0x67, 0x45, 0xbf,
                                    0xea, 0xfc, 0x49, 0x90, 0x4b, 0x49, 0x70, 0x00};
-  increment_iv(iv.data());
+  aes_increment_iv(iv.data());
 
   BOOST_TEST(iv == iv_expected);
 }
