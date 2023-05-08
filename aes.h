@@ -34,9 +34,19 @@ void aes128_init_round_keys(aes128_round_keys_t* round_key, const uint8_t* key);
 void aes192_init_round_keys(aes192_round_keys_t* round_key, const uint8_t* key);
 void aes256_init_round_keys(aes256_round_keys_t* round_key, const uint8_t* key);
 
-void aes128_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext, uint8_t* ciphertext);
-void aes192_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext, uint8_t* ciphertext);
-void aes256_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext, uint8_t* ciphertext);
+void aes128_encrypt_block(const aes128_round_keys_t* key, const uint8_t* plaintext,
+                          uint8_t* ciphertext);
+void aes192_encrypt_block(const aes128_round_keys_t* key, const uint8_t* plaintext,
+                          uint8_t* ciphertext);
+void aes256_encrypt_block(const aes128_round_keys_t* key, const uint8_t* plaintext,
+                          uint8_t* ciphertext);
+
+void aes128_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext,
+                        uint8_t* ciphertext);
+void aes192_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext,
+                        uint8_t* ciphertext);
+void aes256_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext,
+                        uint8_t* ciphertext);
 
 void increment_iv(uint8_t* iv);
 

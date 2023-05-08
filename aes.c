@@ -189,6 +189,12 @@ static void load_state(state_t state, const uint8_t* src) {
   }
 }
 
+static void store_state(uint8_t* dst, const state_t state) {
+  for (unsigned int i = 0; i != 16; ++i) {
+    bf8_store(&dst[i], state[i / 4][i % 4]);
+  }
+}
+
 static void aes_encrypt(const aes_round_key_t* keys, state_t state, unsigned int num_rounds) {
   // first round
   add_round_key(0, state, keys);
@@ -206,8 +212,32 @@ static void aes_encrypt(const aes_round_key_t* keys, state_t state, unsigned int
   add_round_key(num_rounds, state, keys);
 }
 
-void aes128_ctr_encrypt(const uint8_t* key, const uint8_t* iv,
-                        const uint8_t* plaintext, uint8_t* ciphertext) {
+void aes128_encrypt_block(const aes128_round_keys_t* key, const uint8_t* plaintext,
+                          uint8_t* ciphertext) {
+  state_t state;
+  load_state(state, plaintext);
+  aes_encrypt(key->keys, state, 10);
+  store_state(ciphertext, state);
+}
+
+void aes192_encrypt_block(const aes128_round_keys_t* key, const uint8_t* plaintext,
+                          uint8_t* ciphertext) {
+  state_t state;
+  load_state(state, plaintext);
+  aes_encrypt(key->keys, state, 12);
+  store_state(ciphertext, state);
+}
+
+void aes256_encrypt_block(const aes128_round_keys_t* key, const uint8_t* plaintext,
+                          uint8_t* ciphertext) {
+  state_t state;
+  load_state(state, plaintext);
+  aes_encrypt(key->keys, state, 14);
+  store_state(ciphertext, state);
+}
+
+void aes128_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext,
+                        uint8_t* ciphertext) {
   state_t state;
   load_state(state, iv);
   aes128_round_keys_t round_key;
@@ -218,8 +248,8 @@ void aes128_ctr_encrypt(const uint8_t* key, const uint8_t* iv,
     ciphertext[i] = plaintext[i] ^ state[i / 4][i % 4];
   }
 }
-void aes192_ctr_encrypt(const uint8_t* key, const uint8_t* iv,
-                        const uint8_t* plaintext, uint8_t* ciphertext) {
+void aes192_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext,
+                        uint8_t* ciphertext) {
   state_t state;
   load_state(state, iv);
   aes192_round_keys_t round_key;
@@ -230,8 +260,8 @@ void aes192_ctr_encrypt(const uint8_t* key, const uint8_t* iv,
     ciphertext[i] = plaintext[i] ^ state[i / 4][i % 4];
   }
 }
-void aes256_ctr_encrypt(const uint8_t* key, const uint8_t* iv,
-                        const uint8_t* plaintext, uint8_t* ciphertext) {
+void aes256_ctr_encrypt(const uint8_t* key, const uint8_t* iv, const uint8_t* plaintext,
+                        uint8_t* ciphertext) {
   state_t state;
   load_state(state, iv);
   aes256_round_keys_t round_key;
@@ -242,7 +272,6 @@ void aes256_ctr_encrypt(const uint8_t* key, const uint8_t* iv,
     ciphertext[i] = plaintext[i] ^ state[i / 4][i % 4];
   }
 }
-
 
 void aes_prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl) {
   uint32_t outlenbits = seclvl*2;
