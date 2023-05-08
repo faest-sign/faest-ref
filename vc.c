@@ -12,6 +12,11 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, c
     uint8_t** buffer;
     buffer = malloc(params->faest_param.t * sizeof(uint8_t*));
 
+    vecCom->dk = malloc(tree->numNodes * sizeof(uint8_t*));
+    vecCom->dcom = malloc(params->faest_param.t * sizeof(uint8_t*));
+    vecCom->sd = malloc(params->faest_param.t * sizeof(uint8_t*));   
+
+
     /* Doing H_0 */
     uint8_t** leaves = getLeaves(tree);
     for(uint32_t i = 0; i < params->faest_param.t; i++) {
@@ -24,7 +29,7 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, c
         hash_squeeze(&ctx, buffer[i], params->faest_param.h0digestSizeBytes);
 
         memcpy(vecCom->sd[i], buffer[i], params->faest_param.seclvl);
-        memcpy(vecCom->com[i], buffer[i] + params->faest_param.seclvl, 2*params->faest_param.seclvl);
+        memcpy(vecCom->dcom[i], buffer[i] + params->faest_param.seclvl, 2*params->faest_param.seclvl);
     }
 
     /* Doing H_1 */
