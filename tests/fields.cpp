@@ -9,10 +9,9 @@
 #include "../fields.h"
 #include "../randomness.h"
 
-#define BOOST_TEST_MODULE fields_test
 #include <NTL/GF2X.h>
 #include <boost/format.hpp>
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <algorithm>
 #include <iterator>
 
@@ -489,6 +488,8 @@ namespace {
   }
 } // namespace
 
+BOOST_AUTO_TEST_SUITE(fields);
+
 BOOST_AUTO_TEST_CASE(test_bf8_add_invariants) {
   check_add<bf8>(0xFF, 0x00, 0xFF);
   check_add<bf8>(0x00, 0xFF, 0xFF);
@@ -694,3 +695,5 @@ BOOST_AUTO_TEST_CASE(test_bf256_div_random) {
     check_div(lhs, rhs);
   }
 }
+
+BOOST_AUTO_TEST_SUITE_END();

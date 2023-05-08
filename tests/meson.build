@@ -18,29 +18,18 @@ tree = executable('tree', files('tree.c'),
 test('tree', tree)
 
 if boost_test.found()
+  test_sources = files('aes.cpp', 'extended_tests.cpp', 'instances.cpp')
+  test_deps = []
   if ntl.found()
-  fields = executable('test_fields', files('fields.cpp'),
-    dependencies: [libfaest_static_dependency, boost_test, ntl],
-    include_directories: include_directories,
-    cpp_args: defines + cpp_flags,
-    override_options: ['b_lto=false']
-  )
-  test('fields', fields)
+    test_sources += files('fields.cpp')
+    test_deps += ntl
   endif
 
-  aes_ctr = executable('test_aes_ctr', files('aes.cpp'),
-    dependencies: [libfaest_static_dependency, boost_test],
-    include_directories: include_directories,
-    cpp_args: defines + cpp_flags,
-    override_options: ['b_lto=false']
-  )
-  test('aes_ctr', aes_ctr)
-
-  instances = executable('test_instances', files('instances.cpp'),
-    dependencies: [libfaest_static_dependency, boost_test],
-    include_directories: include_directories,
-    cpp_args: defines + cpp_flags,
-    override_options: ['b_lto=false']
-  )
-  test('instances', instances)
+  extended_tests = executable('test_extended_tests', test_sources,
+      dependencies: [libfaest_static_dependency, boost_test] + test_deps,
+      include_directories: include_directories,
+      cpp_args: defines + cpp_flags + ['-DBOOST_TEST_DYN_LINK'],
+      override_options: ['b_lto=false']
+    )
+  test('extended_tests', extended_tests)
 endif

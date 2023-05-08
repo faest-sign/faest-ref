@@ -3,13 +3,14 @@
 
 #include "../aes.h"
 
-#define BOOST_TEST_MODULE aes_test
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <array>
 
 namespace {
   typedef std::array<uint8_t, 16> block_t;
 }
+
+BOOST_AUTO_TEST_SUITE(aes);
 
 BOOST_AUTO_TEST_CASE(test_aes128) {
   constexpr uint8_t key_128[16]       = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -70,3 +71,5 @@ BOOST_AUTO_TEST_CASE(test_increment_counter) {
 
   BOOST_TEST(iv == iv_expected);
 }
+
+BOOST_AUTO_TEST_SUITE_END();
