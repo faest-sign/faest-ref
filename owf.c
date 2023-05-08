@@ -35,9 +35,19 @@ void owf_em_128(const uint8_t* key, const uint8_t* input, uint8_t* output) {
 }
 
 void owf_em_192(const uint8_t* key, const uint8_t* input, uint8_t* output) {
-  // TODO
+  aes_round_keys_t round_keys;
+  rijndael192_init_round_keys(&round_keys, key);
+  rijndael192_encrypt_block(&round_keys, input, output);
+  for (unsigned int i = 0; i != 24; ++i) {
+    output[i] ^= key[i];
+  }
 }
 
 void owf_em_256(const uint8_t* key, const uint8_t* input, uint8_t* output) {
-  // TODO
+  aes_round_keys_t round_keys;
+  rijndael256_init_round_keys(&round_keys, key);
+  rijndael256_encrypt_block(&round_keys, input, output);
+  for (unsigned int i = 0; i != 32; ++i) {
+    output[i] ^= key[i];
+  }
 }
