@@ -9,26 +9,27 @@
 
 // implementation of H_0
 
-typedef hash_context H0_t;
+typedef hash_context H0_context_t;
 
-void H0_init(H0_t* ro, unsigned int security_param);
-void H0_update(H0_t* ro, const uint8_t* src, size_t len);
-void H0_final(H0_t* ro, uint8_t* seed, size_t seed_len, uint8_t* commitment, size_t commitment_len);
+void H0_init(H0_context_t* H0_ctx, unsigned int security_param);
+void H0_update(H0_context_t* H0_ctx, const uint8_t* src, size_t len);
+void H0_final(H0_context_t* H0_ctx, uint8_t* seed, size_t seed_len, uint8_t* commitment,
+              size_t commitment_len);
 
 // implementation of H_1
 
-typedef hash_context H1_t;
+typedef hash_context H1_context_t;
 
-void H1_init(H1_t* ro, unsigned int security_param);
-void H1_update(H1_t* ro, const uint8_t* src, size_t len);
-void H1_final(H1_t* ro, uint8_t* digest, size_t len);
+void H1_init(H1_context_t* H1_ctx, unsigned int security_param);
+void H1_update(H1_context_t* H1_ctx, const uint8_t* src, size_t len);
+void H1_final(H1_context_t* H1_ctx, uint8_t* digest, size_t len);
 
 // implementation of H_2
 
-typedef hash_context random_oracle_t;
+typedef hash_context H2_context_t;
 
-void random_oracle_init(random_oracle_t* ro, unsigned int security_param);
-void random_oracle_update(random_oracle_t* ro, const uint8_t* src, size_t len);
-void random_oracle_final(random_oracle_t* ro, uint8_t* digest, size_t len);
+void H2_init(H2_context_t* ctx, unsigned int security_param);
+void H2_update(H2_context_t* ctx, const uint8_t* src, size_t len);
+void H2_final(H2_context_t* ctx, uint8_t* digest, size_t len);
 
 #endif

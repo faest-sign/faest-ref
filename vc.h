@@ -3,18 +3,33 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "fields.h"
+#include "tree.h"
+#include "aes.h"
+#include "random_oracle.h"
+#include "instances.h"
 
-typedef uint8_t com_t;           // Using Keccak 128,256
-typedef uint8_t dk_t;         // Using AES in CTR mode, with output (2*lambda)
+typedef uint8_t com_t;
+typedef uint8_t dk_t;
 typedef uint8_t dcom_t;
-typedef uint8_t sd_t;         // Size lambda for each message
+typedef uint8_t sd_t;
 
 typedef struct vec_com_t {
-    com_t* com;
-    dk_t** dk;
-    dcom_t** dcom;
-    sd_t** sd;
+  com_t* h;
+  dk_t* k;
+  dcom_t* com;
+  sd_t* sd;
 } vec_com_t;
 
-void vector_commitment(const uint8_t* rootKey, const faest_param_t* params, const uint8_t* salt, vec_com_t* vecCom);
+typedef struct vec_com_rec_t {
+  com_t* h;
+  dk_t* k;
+  dcom_t* com;
+  sd_t* m;
+} vec_com_rec_t;
+
+void NumRec(uint32_t depth, const uint8_t* bi, uint64_t* out);
+
+void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, vec_com_t* vecCom);
+
+void vector_open(const faest_paramset_t* params, const vec_com_t* vecCom, const uint8_t* b,
+                 uint8_t* pdec);

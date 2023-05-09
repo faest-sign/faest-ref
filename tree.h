@@ -1,13 +1,13 @@
 #include "instances.h"
 
 typedef struct tree_t {
-    size_t depth;       /* The depth of the tree */
-    uint8_t** nodes;    /* The data for each node */
-    size_t dataSize;    /* The size data at each node, in bytes */
-    uint8_t* haveNode;  /* If we have the data (seed or hash) for node i, haveSeed[i] is 1 */
-    uint8_t* exists;    /* Since the tree is not always complete, nodes marked 0 don't exist */
-    size_t numNodes;    /* The total number of nodes in the tree */
-    size_t numLeaves;   /* The total number of leaves in the tree */
+  size_t depth;      /* The depth of the tree */
+  uint8_t** nodes;   /* The data for each node */
+  size_t dataSize;   /* The size data at each node, in bytes */
+  uint8_t* haveNode; /* If we have the data (seed or hash) for node i, haveSeed[i] is 1 */
+  uint8_t* exists;   /* Since the tree is not always complete, nodes marked 0 don't exist */
+  size_t numNodes;   /* The total number of nodes in the tree */
+  size_t numLeaves;  /* The total number of leaves in the tree */
 } tree_t;
 
 /* The largest seed size is 256 bits, for the Picnic3-L5-FS parameter set. */
@@ -28,10 +28,11 @@ void printLeaves(tree_t* tree);
 /* Returns the number of bytes written to output.  A safe number of bytes for
  * callers to allocate is numLeaves*params->seedSizeBytes, or call revealSeedsSize. */
 tree_t* generateSeeds(uint8_t* rootSeed, faest_paramset_t* params);
-size_t revealSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_t* output, size_t outputLen, faest_paramset_t* params);
+size_t revealSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_t* output,
+                   size_t outputLen, faest_paramset_t* params);
 size_t revealSeedsSize(uint16_t* hideList, size_t hideListSize, faest_paramset_t* params);
-int reconstructSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize,
-                     uint8_t* input, size_t inputLen, faest_paramset_t* params);
+int reconstructSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize, uint8_t* input,
+                     size_t inputLen, faest_paramset_t* params);
 
 /* Functions for Merkle hash trees used for commitments.
  *
@@ -47,9 +48,13 @@ int reconstructSeeds(tree_t* tree, uint16_t* hideList, size_t hideListSize,
  *      4. freeTree
  */
 void buildMerkleTree(tree_t* tree, uint8_t** leafData, uint8_t* salt, faest_paramset_t* params);
-uint8_t* openMerkleTree(tree_t* tree, uint16_t* missingLeaves, size_t missingLeavesSize, size_t* outputSizeBytes);
-size_t openMerkleTreeSize(uint16_t* missingLeaves, size_t missingLeavesSize, faest_paramset_t* params);
-int addMerkleNodes(tree_t* tree, uint16_t* missingLeaves, size_t missingLeavesSize, uint8_t* input, size_t inputSize);
+uint8_t* openMerkleTree(tree_t* tree, uint16_t* missingLeaves, size_t missingLeavesSize,
+                        size_t* outputSizeBytes);
+size_t openMerkleTreeSize(uint16_t* missingLeaves, size_t missingLeavesSize,
+                          faest_paramset_t* params);
+int addMerkleNodes(tree_t* tree, uint16_t* missingLeaves, size_t missingLeavesSize, uint8_t* input,
+                   size_t inputSize);
 int verifyMerkleTree(tree_t* tree, uint8_t** leafData, uint8_t* salt, faest_paramset_t* params);
 uint64_t getBinaryTreeNodeCount(uint64_t depth);
 uint64_t getNodeIndex(uint64_t depth, uint64_t pos);
+uint64_t getBinaryTreeNodeCountFromIndex(uint64_t depth);
