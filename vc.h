@@ -7,24 +7,26 @@
 #include "aes.h"
 #include "random_oracle.h"
 #include "instances.h"
-
-typedef uint8_t com_t;
-typedef uint8_t dk_t;
-typedef uint8_t dcom_t;
-typedef uint8_t sd_t;
+#include "utils.h"
 
 typedef struct vec_com_t {
-  com_t* h;
-  dk_t* k;
-  dcom_t* com;
-  sd_t* sd;
+  uint8_t* h;
+  uint8_t* k;
+  uint32_t k_uint_size;
+  uint8_t* com;
+  uint32_t com_unit_size;
+  uint8_t* sd;
+  uint32_t sd_uint_size;
 } vec_com_t;
 
 typedef struct vec_com_rec_t {
-  com_t* h;
-  dk_t* k;
-  dcom_t* com;
-  sd_t* m;
+  uint8_t* h;
+  uint8_t* k;
+  uint32_t k_uint_size;
+  uint8_t* com;
+  uint32_t com_unit_size;
+  uint8_t* m;
+  uint32_t m_uint_size;
 } vec_com_rec_t;
 
 void NumRec(uint32_t depth, const uint8_t* bi, uint64_t* out);

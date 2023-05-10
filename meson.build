@@ -243,7 +243,9 @@ sources = files(
   'randomness.c',
   'random_oracle.c',
   'tree.c',
-  'utils.c'
+  'utils.c',
+  'vc.c',
+  'vole.c'
 )
 
 # header files to install

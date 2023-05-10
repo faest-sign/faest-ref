@@ -1,7 +1,8 @@
 #include "vc.h"
 
+/* Gets the bit string of a node according to its position in the binary tree */
+/* idx -> 2 -> {0,1},, Little Endian */
 int BitDec(uint32_t leafIndex, uint32_t depth, uint8_t* out) {
-  out        = malloc(depth);
   uint32_t i = leafIndex;
   if (leafIndex >= (2 << depth)) {
     return -1;
@@ -15,7 +16,7 @@ int BitDec(uint32_t leafIndex, uint32_t depth, uint8_t* out) {
 
 void NumRec(uint32_t depth, const uint8_t* bi, uint64_t* out) {
   for (uint32_t i = 0; i < depth; i++) {
-    out = *out ^ (uint64_t)(bi[i] * (2 << i));
+    *out = *out + ((uint64_t)bi[i] * (1 << i));
   }
 }
 
@@ -27,13 +28,17 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, v
   uint32_t lambda2Bytes   = lambda2 / 8;
   uint32_t vole_instances = params->faest_param.t;
 
-  tree_t* tree;
-  tree = generateSeeds(rootKey, params);
+  tree_t* tree = generateSeeds(rootKey, params);
 
   vecCom->h   = malloc(lambda2Bytes);
   vecCom->k   = malloc(tree->numNodes * lambdaBytes);
   vecCom->com = malloc(vole_instances * lambda2Bytes);
   vecCom->sd  = malloc(vole_instances * lambdaBytes);
+
+  /* Saving the tree nodes in K */
+  for (uint32_t i = 0; i < tree->numNodes; i++) {
+    memcpy(vecCom->k + (i * lambdaBytes), tree->nodes[i], lambdaBytes);
+  }
 
   uint8_t** leaves = getLeaves(tree);
 
@@ -49,9 +54,10 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, v
     break;
   }
   for (uint32_t i = 0; i < vole_instances; i++) {
-    H0_update(&h0_ctx, leaves[i], lambda2Bytes);
+    H0_update(&h0_ctx, leaves[i], lambdaBytes);
+    H0_final(&h0_ctx, vecCom->sd + i * lambdaBytes, lambdaBytes, vecCom->com + i * lambda2Bytes,
+             lambda2Bytes);
   }
-  H0_final(&h0_ctx, vecCom->sd, lambda, vecCom->com, lambda2Bytes);
 
   /* Doing H_1 */
   /* If lambda=128, SHAKE128 else SHAKE256*/

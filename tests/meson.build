@@ -17,6 +17,14 @@ tree = executable('tree', files('tree.c'),
 )
 test('tree', tree)
 
+vc = executable('vc', files('vc.c'),
+  dependencies: [libfaest_static_dependency],
+  include_directories: include_directories,
+  c_args: defines + c_flags,
+  override_options: ['b_lto=false']
+)
+test('vc', vc)
+
 if boost_test.found()
   test_sources = files('aes.cpp', 'extended_tests.cpp', 'instances.cpp')
   test_deps = []

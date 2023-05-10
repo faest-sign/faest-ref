@@ -127,6 +127,7 @@ void hashSeed(uint8_t* digest, const uint8_t* inputSeed, uint8_t* salt, size_t r
 
 void expandSeeds(tree_t* tree, faest_paramset_t* params) {
   uint8_t out[2 * MAX_SEED_SIZE_BYTES];
+  // uint8_t* out = malloc(2 * params->faest_param.seedSizeBytes);
 
   /* Walk the tree, expanding seeds where possible. Compute children of
    * non-leaf nodes. */
@@ -143,14 +144,14 @@ void expandSeeds(tree_t* tree, faest_paramset_t* params) {
 
     // Here we use the AES ctr PRG to get the nodes, starting from root and
     // assign it to the tree
-    aes_prg(tree->nodes[i], iv, out, params->faest_param.seclvl);
+    aes_prg(tree->nodes[i], iv, out, params->faest_param.seclvl, params->faest_param.seclvl * 2);
+
     if (!tree->haveNode[2 * i + 1]) {
       /* left child = H_left(seed_i || salt || t || i) */
       memcpy(tree->nodes[2 * i + 1], out, params->faest_param.seedSizeBytes);
       tree->haveNode[2 * i + 1] = 1;
     }
 
-    aes_prg(tree->nodes[i], iv, out, params->faest_param.seclvl);
     /* The last non-leaf node will only have a left child when there are an odd number of leaves */
     if (exists(tree, 2 * i + 2) && !tree->haveNode[2 * i + 2]) {
       /* right child = H_right(seed_i || salt || t || i)  */
