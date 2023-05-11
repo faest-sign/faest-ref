@@ -4,7 +4,7 @@
 /* idx -> 2 -> {0,1},, Little Endian */
 int BitDec(uint32_t leafIndex, uint32_t depth, uint8_t* out) {
   uint32_t i = leafIndex;
-  if (leafIndex >= (2 << depth)) {
+  if (leafIndex >= (uint32_t)(2 << depth)) {
     return -1;
   }
   for (uint32_t j = 0; j < depth; j++) {
@@ -29,6 +29,11 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, v
   uint32_t vole_instances = params->faest_param.t;
 
   tree_t* tree = generateSeeds(rootKey, params);
+
+#if 1
+  printTree("tree_128_t_11", tree);
+  printTreeInfo("tree_128_t_11_info", tree);
+#endif
 
   vecCom->h   = malloc(lambda2Bytes);
   vecCom->k   = malloc(tree->numNodes * lambdaBytes);
@@ -76,8 +81,8 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, v
   H1_final(&h1_ctx, vecCom->h, lambda2Bytes);
 }
 
-void vector_open(const faest_paramset_t* params, const vec_com_t* vecCom, const uint8_t* b,
-                 uint8_t* pdec) {
+void vector_open(const faest_paramset_t* params, const uint8_t* k, const uint8_t* com,
+                 const uint8_t* b, uint32_t leafIndex, uint8_t* pdec, uint8_t* com_j) {
 
   uint32_t lambda         = params->faest_param.lambda;
   uint32_t lambda2        = lambda * 2;
@@ -85,18 +90,15 @@ void vector_open(const faest_paramset_t* params, const vec_com_t* vecCom, const 
   uint32_t lambda2Bytes   = lambda2 / 8;
   uint32_t vole_instances = params->faest_param.t;
 
-  uint8_t depth = sizeof(b);
-  uint64_t out;
-  NumRec(depth, b, &out);
-  pdec = malloc((lambda2Bytes * depth) + lambda2Bytes);
+  uint32_t depth = ceil_log2(params->faest_param.t);
 
-  memcpy(pdec, vecCom->com, lambda2Bytes);
+  memcpy(com_j, com + (leafIndex * lambda2Bytes), lambda2Bytes);
+
   uint32_t a = 0;
   for (uint32_t d = 0; d < depth; d++) {
-
-    memcpy(pdec + (lambda2Bytes * (d + 1)),
-           vecCom->k + (lambda2Bytes * getNodeIndex(d, 2 * a + b[d])), lambda2Bytes);
-    a = 2 * a + b[d];
+    memcpy(pdec + (lambdaBytes * d),
+           k + (lambdaBytes * getNodeIndex(d, (2 * a) + b[(depth - 1) - d])), lambdaBytes);
+    a = (2 * a) + b[(depth - 1) - d];
   }
 }
 

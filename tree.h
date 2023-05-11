@@ -58,3 +58,6 @@ int verifyMerkleTree(tree_t* tree, uint8_t** leafData, uint8_t* salt, faest_para
 uint64_t getBinaryTreeNodeCount(uint64_t depth);
 uint64_t getNodeIndex(uint64_t depth, uint64_t pos);
 uint64_t getBinaryTreeNodeCountFromIndex(uint64_t depth);
+void printTree(const char* label, tree_t* tree);
+void printTreeInfo(const char* label, tree_t* tree);
+int contains(size_t* list, size_t len, size_t value);

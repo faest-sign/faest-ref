@@ -10,7 +10,24 @@
 #include "aes.h"
 #include "utils.h"
 
-static int contains(size_t* list, size_t len, size_t value) {
+void printTree(const char* label, tree_t* tree) {
+  printf("%s:\n", label);
+  for (size_t i = 0; i < tree->numNodes; i++) {
+    printf("node[%02lu] (have=%d, exists=%d) ", i, tree->haveNode[i], tree->exists[i]);
+    printHex("", tree->nodes[i], tree->dataSize);
+  }
+}
+
+void printTreeInfo(const char* label, tree_t* tree) {
+  printf("%s:\n", label);
+  printf("tree->depth = %lu\n", tree->depth);
+  printHex("haveNode", tree->haveNode, tree->numNodes);
+  ; // If we have the seed or hash for node i, haveNode[i] is 1
+  printf("tree->numNodes = %lu\n", tree->numNodes);
+  printf("tree->numLeaves = %lu\n", tree->numLeaves);
+}
+
+int contains(size_t* list, size_t len, size_t value) {
   for (size_t i = 0; i < len; i++) {
     if (list[i] == value) {
       return 1;
@@ -147,14 +164,12 @@ void expandSeeds(tree_t* tree, faest_paramset_t* params) {
     aes_prg(tree->nodes[i], iv, out, params->faest_param.seclvl, params->faest_param.seclvl * 2);
 
     if (!tree->haveNode[2 * i + 1]) {
-      /* left child = H_left(seed_i || salt || t || i) */
       memcpy(tree->nodes[2 * i + 1], out, params->faest_param.seedSizeBytes);
       tree->haveNode[2 * i + 1] = 1;
     }
 
     /* The last non-leaf node will only have a left child when there are an odd number of leaves */
     if (exists(tree, 2 * i + 2) && !tree->haveNode[2 * i + 2]) {
-      /* right child = H_right(seed_i || salt || t || i)  */
       memcpy(tree->nodes[2 * i + 2], out + params->faest_param.seedSizeBytes,
              params->faest_param.seedSizeBytes);
       tree->haveNode[2 * i + 2] = 1;

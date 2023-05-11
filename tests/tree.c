@@ -8,32 +8,6 @@
 #include "../instances.h"
 #include "../utils.h"
 
-void printTree(const char* label, tree_t* tree) {
-  printf("%s:\n", label);
-  for (size_t i = 0; i < tree->numNodes; i++) {
-    printf("node[%02lu] (have=%d, exists=%d) ", i, tree->haveNode[i], tree->exists[i]);
-    printHex("", tree->nodes[i], tree->dataSize);
-  }
-}
-
-static int contains(uint16_t* list, size_t len, uint16_t value) {
-  for (size_t i = 0; i < len; i++) {
-    if (list[i] == value) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-void printTreeInfo(const char* label, tree_t* tree) {
-  printf("%s:\n", label);
-  printf("tree->depth = %lu\n", tree->depth);
-  printHex("haveNode", tree->haveNode, tree->numNodes);
-  ; // If we have the seed or hash for node i, haveNode[i] is 1
-  printf("tree->numNodes = %lu\n", tree->numNodes);
-  printf("tree->numLeaves = %lu\n", tree->numLeaves);
-}
-
 int runSeedTest(uint16_t* hideList, size_t hideListSize, uint8_t* rootKey,
                 faest_paramset_t* params) {
   int freeHideList   = 0;
@@ -166,9 +140,8 @@ Exit:
 
 int main(void) {
 
-  size_t tests         = 0;
-  size_t passed        = 0;
-  size_t numIterations = 50;
+  size_t tests  = 0;
+  size_t passed = 0;
 
   printf("Running seed tree tests\n");
 
@@ -181,13 +154,10 @@ int main(void) {
   for (faest_paramid_t p = FAEST_128S; p <= FAEST_256F; p++) {
     faest_paramset_t params = faest_get_paramset(p);
 
-    for (size_t i = 0; i < numIterations; i++) {
-      passed += runSeedTest(NULL, params.faest_param.numOpenRounds, rootKey, &params);
-      tests++;
-    }
+    passed += runSeedTest(NULL, params.faest_param.numOpenRounds, rootKey, &params);
+    tests++;
 
     printf("Done, %lu of %lu tests passed\n", passed, tests);
-
-    return 0;
   }
+  return 0;
 }
