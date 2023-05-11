@@ -7,6 +7,7 @@
 #include "../tree.h"
 #include "../instances.h"
 #include "../utils.h"
+#include "../compat.h"
 
 void printTree(const char* label, tree_t* tree) {
   printf("%s:\n", label);

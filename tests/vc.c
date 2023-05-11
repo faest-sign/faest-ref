@@ -1,5 +1,6 @@
 #include "../vc.c"
 #include "../fields.h"
+#include "../compat.h"
 
 int test_numrec_bitdec() {
   uint8_t expect_out_1[2] = {0x00, 0x01};

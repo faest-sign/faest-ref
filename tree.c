@@ -8,6 +8,7 @@
 #include "hash_shake.h"
 #include "tree.h"
 #include "aes.h"
+#include "compat.h"
 #include "utils.h"
 
 static int contains(size_t* list, size_t len, size_t value) {
