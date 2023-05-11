@@ -39,6 +39,14 @@ bf8_t bf8_rand() {
   return ret;
 }
 
+bf8_t bf8_zero() {
+  return 0;
+}
+
+bf8_t bf8_one() {
+  return 1;
+}
+
 bf8_t bf8_add(bf8_t lhs, bf8_t rhs) {
   return lhs ^ rhs;
 }
@@ -87,6 +95,14 @@ bf64_t bf64_rand() {
   return ret;
 }
 
+bf64_t bf64_zero() {
+  return 0;
+}
+
+bf64_t bf64_one() {
+  return 1;
+}
+
 bf64_t bf64_add(bf64_t lhs, bf64_t rhs) {
   return lhs ^ rhs;
 }
@@ -133,6 +149,16 @@ bf128_t bf128_rand() {
   bf128_t ret;
   rand_bytes((uint8_t*)ret.values, sizeof(ret));
   return ret;
+}
+
+bf128_t bf128_zero() {
+  bf128_t r = {0};
+  return r;
+}
+
+bf128_t bf128_one() {
+  bf128_t r = {1, 0};
+  return r;
 }
 
 bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
@@ -218,6 +244,16 @@ bf192_t bf192_rand() {
   return ret;
 }
 
+bf192_t bf192_zero() {
+  bf192_t r = {0};
+  return r;
+}
+
+bf192_t bf192_one() {
+  bf192_t r = {1, 0, 0};
+  return r;
+}
+
 bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] ^= rhs.values[i];
@@ -294,6 +330,16 @@ void bf256_store(uint8_t* dst, bf256_t src) {
     uint64_t tmp = htole64(src.values[i]);
     memcpy(dst, &tmp, sizeof(tmp));
   }
+}
+
+bf256_t bf256_zero() {
+  bf256_t r = {0};
+  return r;
+}
+
+bf256_t bf256_one() {
+  bf256_t r = {1, 0, 0, 0};
+  return r;
 }
 
 bf256_t bf256_rand() {
