@@ -321,7 +321,7 @@ endforeach
 # static faest library
 libfaest_static = static_library('faest',
   sources,
-  # dependencies: build_dependencies,
+  dependencies: build_dependencies,
   include_directories: include_directories,
   c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT='],
   install: true
@@ -340,7 +340,7 @@ elif cc.has_function_attribute('visibility:default')
 endif
 libfaest = shared_library('faest',
   sources,
-  # dependencies: build_dependencies,
+  dependencies: build_dependencies,
   include_directories: include_directories,
   c_args: defines + c_flags + visibility_define,
   install: true,
