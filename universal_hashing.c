@@ -43,11 +43,8 @@ void vole_hash_128(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8
   bf64_store(tmp, compute_h1(t, x, ell));
   bf128_t h1p = bf128_load(tmp);
 
-  bf128_t b_r0 = bf128_load(r0);
-  bf128_t b_r1 = bf128_load(r1);
-
-  h0  = bf128_add(h0, bf128_mul(b_r0, h1p));
-  h1p = bf128_mul(b_r1, h1p);
+  h0  = bf128_add(h0, bf128_mul(bf128_load(r0), h1p));
+  h1p = bf128_mul(bf128_load(r1), h1p);
 
   bf128_store(h, h0);
   bf128_store(tmp, h1p);
@@ -71,11 +68,8 @@ void vole_hash_192(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8
   bf64_store(tmp, compute_h1(t, x, ell));
   bf192_t h1p = bf192_load(tmp);
 
-  bf192_t b_r0 = bf192_load(r0);
-  bf192_t b_r1 = bf192_load(r1);
-
-  h0  = bf192_add(h0, bf192_mul(b_r0, h1p));
-  h1p = bf192_mul(b_r1, h1p);
+  h0  = bf192_add(h0, bf192_mul(bf192_load(r0), h1p));
+  h1p = bf192_mul(bf192_load(r1), h1p);
 
   bf192_store(h, h0);
   bf192_store(tmp, h1p);
@@ -99,11 +93,8 @@ void vole_hash_256(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8
   bf64_store(tmp, compute_h1(t, x, ell));
   bf256_t h1p = bf256_load(tmp);
 
-  bf256_t b_r0 = bf256_load(r0);
-  bf256_t b_r1 = bf256_load(r1);
-
-  h0  = bf256_add(h0, bf256_mul(b_r0, h1p));
-  h1p = bf256_mul(b_r1, h1p);
+  h0  = bf256_add(h0, bf256_mul(bf256_load(r0), h1p));
+  h1p = bf256_mul(bf256_load(r1), h1p);
 
   bf256_store(h, h0);
   bf256_store(tmp, h1p);
