@@ -229,7 +229,7 @@ config_header = configure_file(
   output_format: 'c',
   configuration: conf_data
 )
-defines += '-DWITH_CONFIG_H'
+defines += '-DHAVE_CONFIG_H'
 
 include_directories = [include_directories('.')]
 

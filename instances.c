@@ -2,7 +2,7 @@
  *  SPDX-License-Identifier: MIT
  */
 
-#if defined(WITH_CONFIG_H)
+#if defined(HAVE_CONFIG_H)
 #include <config.h>
 #else
 #error "FIXME: Instances are currently only listed in config.h"
