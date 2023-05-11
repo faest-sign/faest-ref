@@ -26,7 +26,7 @@ vc = executable('vc', files('vc.c'),
 test('vc', vc)
 
 if boost_test.found()
-  test_sources = files('aes.cpp', 'extended_tests.cpp', 'instances.cpp')
+  test_sources = files('aes.cpp', 'extended_tests.cpp', 'instances.cpp', 'universal_hashing.cpp')
   test_deps = []
   if ntl.found()
     test_sources += files('fields.cpp')

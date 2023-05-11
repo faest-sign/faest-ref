@@ -132,7 +132,7 @@ bf64_t bf64_inv(bf64_t in) {
 bf128_t bf128_load(const uint8_t* src) {
   bf128_t ret;
   for (unsigned int i = 0; i != ARRAY_SIZE(ret.values); ++i, src += sizeof(uint64_t)) {
-    memcpy(&ret.values[i], src, sizeof(ret));
+    memcpy(&ret.values[i], src, sizeof(ret.values[i]));
     ret.values[i] = le64toh(ret.values[i]);
   }
   return ret;
@@ -157,7 +157,7 @@ bf128_t bf128_zero() {
 }
 
 bf128_t bf128_one() {
-  bf128_t r = {1, 0};
+  bf128_t r = {{1, 0}};
   return r;
 }
 
@@ -225,7 +225,7 @@ bf128_t bf128_inv(bf128_t in) {
 bf192_t bf192_load(const uint8_t* src) {
   bf192_t ret;
   for (unsigned int i = 0; i != ARRAY_SIZE(ret.values); ++i, src += sizeof(uint64_t)) {
-    memcpy(&ret.values[i], src, sizeof(ret));
+    memcpy(&ret.values[i], src, sizeof(ret.values[i]));
     ret.values[i] = le64toh(ret.values[i]);
   }
   return ret;
@@ -250,7 +250,7 @@ bf192_t bf192_zero() {
 }
 
 bf192_t bf192_one() {
-  bf192_t r = {1, 0, 0};
+  bf192_t r = {{1, 0, 0}};
   return r;
 }
 
@@ -319,7 +319,7 @@ bf192_t bf192_inv(bf192_t in) {
 bf256_t bf256_load(const uint8_t* src) {
   bf256_t ret;
   for (unsigned int i = 0; i != ARRAY_SIZE(ret.values); ++i, src += sizeof(uint64_t)) {
-    memcpy(&ret.values[i], src, sizeof(ret));
+    memcpy(&ret.values[i], src, sizeof(ret.values[i]));
     ret.values[i] = le64toh(ret.values[i]);
   }
   return ret;
@@ -338,7 +338,7 @@ bf256_t bf256_zero() {
 }
 
 bf256_t bf256_one() {
-  bf256_t r = {1, 0, 0, 0};
+  bf256_t r = {{1, 0, 0, 0}};
   return r;
 }
 
