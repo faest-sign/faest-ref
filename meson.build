@@ -240,9 +240,10 @@ sources = files(
   'fields.c',
   'instances.c',
   'owf.c',
-  'randomness.c',
   'random_oracle.c',
+  'randomness.c',
   'tree.c',
+  'universal_hashing.c',
   'utils.c',
   'vc.c',
   'vole.c'
