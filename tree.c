@@ -8,6 +8,7 @@
 #include "hash_shake.h"
 #include "tree.h"
 #include "aes.h"
+#include "compat.h"
 #include "utils.h"
 
 void printTree(const char* label, tree_t* tree) {

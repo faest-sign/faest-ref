@@ -7,6 +7,7 @@
 #include "../tree.h"
 #include "../instances.h"
 #include "../utils.h"
+#include "../compat.h"
 
 int runSeedTest(uint16_t* hideList, size_t hideListSize, uint8_t* rootKey,
                 faest_paramset_t* params) {
