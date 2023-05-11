@@ -5,7 +5,6 @@ hash_shake = executable('test_hash_shake', files('hash_shake.c'),
   dependencies: [libfaest_static_dependency],
   include_directories: include_directories,
   c_args: defines + c_flags,
-  override_options: ['b_lto=false']
 )
 test('hash_shake', hash_shake)
 
@@ -13,7 +12,6 @@ tree = executable('tree', files('tree.c'),
   dependencies: [libfaest_static_dependency],
   include_directories: include_directories,
   c_args: defines + c_flags,
-  override_options: ['b_lto=false']
 )
 test('tree', tree)
 
@@ -21,7 +19,6 @@ vc = executable('vc', files('vc.c'),
   dependencies: [libfaest_static_dependency],
   include_directories: include_directories,
   c_args: defines + c_flags,
-  override_options: ['b_lto=false']
 )
 test('vc', vc)
 
@@ -37,7 +34,6 @@ if boost_test.found()
       dependencies: [libfaest_static_dependency, boost_test] + test_deps,
       include_directories: include_directories,
       cpp_args: defines + cpp_flags + ['-DBOOST_TEST_DYN_LINK'],
-      override_options: ['b_lto=false']
     )
   test('extended_tests', extended_tests)
 endif
