@@ -8,8 +8,6 @@
 
 #include "universal_hashing.h"
 
-#include "fields.h"
-
 #include <assert.h>
 #include <string.h>
 

@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "fields.h"
+
 #define UNIVERSAL_HASH_B 16
 
 void vole_hash_128(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8_t* s,
