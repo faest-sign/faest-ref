@@ -320,7 +320,7 @@ void aes_prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uin
   switch (seclvl) {
   case 256:
     aes256_init_round_keys(&round_key, key);
-    for (uint64_t i = 0; i < ceil(outSizeBits / 128); i++) {
+    for (uint64_t i = 0; i < (outSizeBits + 127) / 128; i++) {
       load_state(state, iv, 4);
       aes_encrypt(&round_key, state, 4, 14);
       store_state(out + i * 16, state, 4);
@@ -329,7 +329,7 @@ void aes_prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uin
     return;
   case 192:
     aes192_init_round_keys(&round_key, key);
-    for (uint64_t i = 0; i < ceil(outSizeBits / 128); i++) {
+    for (uint64_t i = 0; i < (outSizeBits + 127) / 128; i++) {
       load_state(state, iv, 4);
       aes_encrypt(&round_key, state, 4, 12);
       store_state(out + i * 16, state, 4);
@@ -338,7 +338,7 @@ void aes_prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uin
     return;
   default:
     aes128_init_round_keys(&round_key, key);
-    for (uint64_t i = 0; i < ceil(outSizeBits / 128); i++) {
+    for (uint64_t i = 0; i < (outSizeBits + 127) / 128; i++) {
       load_state(state, iv, 4);
       aes_encrypt(&round_key, state, 4, 10);
       store_state(out + i * 16, state, 4);

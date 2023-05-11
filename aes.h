@@ -10,7 +10,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <math.h>
 
 FAEST_BEGIN_C_DECL
 
