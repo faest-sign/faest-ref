@@ -37,10 +37,6 @@ int runSeedTest(uint16_t* hideList, size_t hideListSize, uint8_t* rootKey,
   tree_t* tree  = generateSeeds(rootKey, params);
   tree_t* tree2 = createTree(params);
 
-#if 0
-  printTree("tree", tree);
-#endif
-
   size_t initialOutputSize = (tree->numLeaves) * params->faest_param.seedSizeBytes;
   uint8_t* output          = malloc(initialOutputSize);
 

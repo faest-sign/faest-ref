@@ -14,10 +14,12 @@ int BitDec(uint32_t leafIndex, uint32_t depth, uint8_t* out) {
   return 1;
 }
 
-void NumRec(uint32_t depth, const uint8_t* bi, uint64_t* out) {
+uint64_t NumRec(uint32_t depth, const uint8_t* bi) {
+  uint64_t out = 0;
   for (uint32_t i = 0; i < depth; i++) {
-    *out = *out + ((uint64_t)bi[i] * (1 << i));
+    out = out + ((uint64_t)bi[i] * (1 << i));
   }
+  return out;
 }
 
 void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, vec_com_t* vecCom,
@@ -29,12 +31,7 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, v
   uint32_t lambda2Bytes   = lambda2 / 8;
   uint32_t vole_instances = params->faest_param.t;
 
-  tree = generateSeeds(rootKey, params);
-
-#if 1
-  printTree("tree_128_t_11", tree);
-  printTreeInfo("tree_128_t_11_info", tree);
-#endif
+  *tree = *(generateSeeds(rootKey, params));
 
   vecCom->h   = malloc(lambda2Bytes);
   vecCom->k   = malloc(tree->numNodes * lambdaBytes);
@@ -83,7 +80,7 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, v
 }
 
 void vector_open(const faest_paramset_t* params, const uint8_t* k, const uint8_t* com,
-                 const uint8_t* b, uint32_t leafIndex, uint8_t* pdec, uint8_t* com_j) {
+                 const uint8_t* b, uint8_t* pdec, uint8_t* com_j) {
 
   uint32_t lambda         = params->faest_param.lambda;
   uint32_t lambda2        = lambda * 2;
@@ -92,6 +89,8 @@ void vector_open(const faest_paramset_t* params, const uint8_t* k, const uint8_t
   uint32_t vole_instances = params->faest_param.t;
 
   uint32_t depth = ceil_log2(params->faest_param.t);
+
+  uint64_t leafIndex = NumRec(depth, b);
 
   memcpy(com_j, com + (leafIndex * lambda2Bytes), lambda2Bytes);
 
@@ -103,7 +102,8 @@ void vector_open(const faest_paramset_t* params, const uint8_t* k, const uint8_t
   }
 }
 
-void vector_reconstruction(const faest_paramset_t* params, const uint8_t* pdec, const uint8_t* b,
+void vector_reconstruction(const faest_paramset_t* params, const uint8_t* pdec,
+                           const uint8_t* com_j, const uint8_t* b, const vec_com_t* VecCom,
                            vec_com_rec_t* VecComRec) {
 
   uint32_t lambda         = params->faest_param.lambda;
@@ -112,21 +112,24 @@ void vector_reconstruction(const faest_paramset_t* params, const uint8_t* pdec, 
   uint32_t lambda2Bytes   = lambda2 / 8;
   uint32_t vole_instances = params->faest_param.t;
 
-  uint8_t depth = sizeof(b);
-  uint64_t j_;
-  NumRec(depth, b, &j_);
+  uint8_t depth      = ceil_log2(params->faest_param.t);
+  uint64_t leafIndex = NumRec(depth, b);
 
-  VecComRec->h   = malloc(lambda2Bytes);
-  VecComRec->k   = malloc(getBinaryTreeNodeCountFromIndex(depth) * lambdaBytes);
-  VecComRec->com = malloc((vole_instances * lambda2Bytes) - 1);
-  VecComRec->m   = malloc((vole_instances * lambdaBytes) - 1);
+  VecComRec->h = malloc(lambda2Bytes);
+  VecComRec->k =
+      malloc((getBinaryTreeNodeCount(params) - 1) * lambdaBytes); // excluding the root k_0,0
+  VecComRec->com = malloc(vole_instances * lambda2Bytes);
+  VecComRec->m   = malloc(vole_instances * lambdaBytes);
 
-  memcpy(VecComRec->com, pdec[0], lambda2);
+  memcpy(VecComRec->com + (lambda2Bytes * leafIndex), com_j, lambda2Bytes);
+
+  memcpy(VecComRec->k, VecCom->k + lambdaBytes, (getBinaryTreeNodeCount(params) - 1) * lambdaBytes);
 
   uint32_t a = 0;
-  for (uint32_t d = 1; d <= depth; d++) {
-    memcpy(VecComRec->k + getNodeIndex(d, 2 * a + b[d]), pdec + (lambda2Bytes * d), lambda2Bytes);
-    a = a * 2 + b[d];
+  for (uint32_t d = 0; d < depth; d++) {
+    memcpy(VecComRec->k + (lambdaBytes * (getNodeIndex(d, 2 * a + b[(depth - 1) - d]) - 1)),
+           pdec + (lambdaBytes * d), lambdaBytes);
+    a = a * 2 + b[(depth - 1) - d];
   }
 
   /* Doing H_0 */
@@ -152,26 +155,25 @@ void vector_reconstruction(const faest_paramset_t* params, const uint8_t* pdec, 
     break;
   }
 
-  for (uint32_t j = 0; j < (1 << depth); j++) {
-    if (j == j_) {
+  for (uint32_t j = 0; j < vole_instances; j++) {
+    if (j == leafIndex) {
       continue;
     }
-    for (uint32_t i = 0; i < vole_instances; i++) {
-      H0_update(&h0_ctx, VecComRec->k + getNodeIndex(depth, i), lambda2Bytes);
-    }
-    H0_final(&h0_ctx, VecComRec->m, lambda, VecComRec->com, lambda2Bytes);
-
-    for (uint32_t i = 0; i < vole_instances; i++) {
-      H1_update(&h1_ctx, VecComRec->com + (i * lambda2Bytes), lambda2Bytes);
-    }
-    H1_final(&h1_ctx, VecComRec->h, lambda2Bytes);
+    /* -1 because root node is not present here */
+    H0_update(&h0_ctx, VecComRec->k + ((getNodeIndex(depth, j) - 1) * lambdaBytes), lambdaBytes);
+    H0_final(&h0_ctx, VecComRec->m + (lambdaBytes * j), lambdaBytes,
+             VecComRec->com + (lambda2Bytes * j), lambda2Bytes);
   }
+
+  H1_update(&h1_ctx, VecComRec->com, lambda2Bytes * vole_instances);
+  H1_final(&h1_ctx, VecComRec->h, lambda2Bytes);
 }
 
-int vector_verify(const faest_paramset_t* params, const uint8_t* pdec, const uint8_t* b,
-                  vec_com_rec_t* VecComRec, vec_com_t* VecCom) {
-  vector_reconstruction(params, pdec, b, VecComRec);
-  if (memcmp(VecCom->com, VecComRec->com, sizeof(VecComRec->com)) == 0) {
+int vector_verify(const faest_paramset_t* params, const uint8_t* pdec, const uint8_t* com_j,
+                  const uint8_t* b, const vec_com_t* VecCom, vec_com_rec_t* VecComRec) {
+  vector_reconstruction(params, pdec, com_j, b, VecCom, VecComRec);
+  if (memcmp(VecCom->com, VecComRec->com,
+             params->faest_param.t * (params->faest_param.seclvl * 2)) == 0) {
     return 1;
   } else {
     return 0;

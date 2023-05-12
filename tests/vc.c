@@ -6,30 +6,26 @@ int test_numrec_bitdec() {
   uint8_t expect_out_1[2] = {0x00, 0x01};
   uint8_t* b_1            = malloc(2);
   BitDec(2, 2, b_1);
-  uint64_t* idx_1 = malloc(sizeof(uint64_t));
-  NumRec(2, b_1, idx_1);
+  uint64_t idx_1 = NumRec(2, b_1);
 
   uint8_t expect_out_2[4] = {0x01, 0x01, 0x01, 0x00};
   uint8_t* b_2            = malloc(4);
   BitDec(7, 4, b_2);
-  uint64_t* idx_2 = malloc(sizeof(uint64_t));
-  NumRec(4, b_2, idx_2);
+  uint64_t idx_2 = NumRec(4, b_2);
 
   uint8_t expect_out_3[4] = {0x00, 0x01, 0x00, 0x01};
   uint8_t* b_3            = malloc(4);
   BitDec(10, 4, b_3);
-  uint64_t* idx_3 = malloc(sizeof(uint64_t));
-  NumRec(4, b_3, idx_3);
+  uint64_t idx_3 = NumRec(4, b_3);
 
   uint8_t expect_out_4[4] = {0x01, 0x00, 0x01, 0x01};
   uint8_t* b_4            = malloc(4);
   BitDec(13, 4, b_4);
-  uint64_t* idx_4 = malloc(sizeof(uint64_t));
-  NumRec(4, b_4, idx_4);
+  uint64_t idx_4 = NumRec(4, b_4);
 
-  if (memcmp(b_1, &expect_out_1, 2) == 0 && *idx_1 == 2 && memcmp(b_2, &expect_out_2, 4) == 0 &&
-      *idx_2 == 7 && memcmp(b_3, &expect_out_3, 4) == 0 && *idx_3 == 10 &&
-      memcmp(b_4, &expect_out_4, 4) == 0 && *idx_4 == 13) {
+  if (memcmp(b_1, &expect_out_1, 2) == 0 && idx_1 == 2 && memcmp(b_2, &expect_out_2, 4) == 0 &&
+      idx_2 == 7 && memcmp(b_3, &expect_out_3, 4) == 0 && idx_3 == 10 &&
+      memcmp(b_4, &expect_out_4, 4) == 0 && idx_4 == 13) {
     return 0;
   } else {
     return 1;
@@ -44,7 +40,7 @@ int test_vector_commitment() {
 
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
-  tree_t* tree;
+  tree_t* tree = malloc(sizeof(tree_t));
   vector_commitment(rootKey, &params, &vecCom, tree);
 
 #if 0
@@ -137,14 +133,14 @@ int test_vector_commitment() {
   return 0;
 }
 
-int test_vector_open() {
+int test_vector_open_128() {
   uint8_t rootKey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
                          0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
                          0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
 
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
-  tree_t* tree;
+  tree_t* tree = malloc(sizeof(tree_t));
   vector_commitment(rootKey, &params, &vecCom, tree);
 
   uint32_t leafIndex = 7;
@@ -152,38 +148,305 @@ int test_vector_open() {
   uint8_t* b         = malloc(depth);
   BitDec(leafIndex, depth, b);
 
+  uint32_t lambda  = params.faest_param.seclvl / 8;
+  uint32_t lambda2 = params.faest_param.seclvl / 4;
+  uint8_t* pdec    = malloc(depth * lambda);
+  uint8_t* com_j   = malloc(lambda2);
+  vector_open(&params, vecCom.k, vecCom.com, b, pdec, com_j);
+
+#if 0
+  printTree("tree_128_t_11", tree);
+  printTreeInfo("tree_128_t_11_info", tree);
   for (uint32_t i = 0; i < depth; i++) {
     printf("%.2x ", b[i]);
   }
   printf("\n");
 
-  uint32_t lambda  = params.faest_param.seclvl / 8;
-  uint32_t lambda2 = params.faest_param.seclvl / 8;
-  uint8_t* pdec    = malloc(depth * lambda);
-  uint8_t* com_j   = malloc(lambda2);
-  vector_open(&params, vecCom.k, vecCom.com, b, leafIndex, pdec, com_j);
-
+  printf("printing all coms \n");
+  for (uint32_t j = 0; j < params.faest_param.t; j++) {
+    for (uint32_t i = 0; i < lambda2; i++) {
+      printf("%.2x", *(vecCom.com + (j * lambda2) + i));
+    }
+    printf("\n");
+  }
+  printf("printing com_j\n");
   for (uint32_t i = 0; i < lambda2; i++) {
-    printf("%.2x ", *(com_j + i));
+    printf("%.2x", *(com_j + i));
   }
   printf("\n");
 
+  printf("printing pdec\n");
   for (uint32_t j = 0; j < depth; j++) {
     for (uint32_t i = 0; i < lambda; i++) {
       printf("%.2x", *(pdec + i + (j * lambda)));
     }
     printf("\n");
   }
+#endif
 
-  // TODO Cross verify with the tree nodes : )
+  if (memcmp(vecCom.com + (leafIndex * lambda2), com_j, lambda2) == 0 &&
+      memcmp(pdec, tree->nodes[1], lambda) == 0 &&
+      memcmp(pdec + lambda, tree->nodes[4], lambda) == 0 &&
+      memcmp(pdec + (lambda * 2), tree->nodes[10], lambda) == 0 &&
+      memcmp(pdec + (lambda * 3), tree->nodes[22], lambda) == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+int test_vector_open_192() {
+  uint8_t rootKey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+                         0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+                         0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+  faest_paramset_t params = faest_get_paramset(3); // Just using the FAEST-192s
+  vec_com_t vecCom;
+  tree_t* tree = malloc(sizeof(tree_t));
+  vector_commitment(rootKey, &params, &vecCom, tree);
+
+  uint32_t leafIndex = 10;
+  uint32_t depth     = ceil_log2(params.faest_param.t);
+  uint8_t* b         = malloc(depth);
+  BitDec(leafIndex, depth, b);
+
+  uint32_t lambda  = params.faest_param.seclvl / 8;
+  uint32_t lambda2 = params.faest_param.seclvl / 4;
+  uint8_t* pdec    = malloc(depth * lambda);
+  uint8_t* com_j   = malloc(lambda2);
+  vector_open(&params, vecCom.k, vecCom.com, b, pdec, com_j);
+
+#if 0
+  printTree("tree_192_t_16", tree);
+  printTreeInfo("tree_192_t_16_info", tree);
+  for (uint32_t i = 0; i < depth; i++) {
+    printf("%.2x ", b[i]);
+  }
+  printf("\n");
+
+  printf("printing all coms \n");
+  for (uint32_t j = 0; j < params.faest_param.t; j++) {
+    for (uint32_t i = 0; i < lambda2; i++) {
+      printf("%.2x", *(vecCom.com + (j * lambda2) + i));
+    }
+    printf("\n");
+  }
+  printf("printing com_j\n");
+  for (uint32_t i = 0; i < lambda2; i++) {
+    printf("%.2x", *(com_j + i));
+  }
+  printf("\n");
+
+  printf("printing pdec\n");
+  for (uint32_t j = 0; j < depth; j++) {
+    for (uint32_t i = 0; i < lambda; i++) {
+      printf("%.2x", *(pdec + i + (j * lambda)));
+    }
+    printf("\n");
+  }
+#endif
+
+  if (memcmp(vecCom.com + (leafIndex * lambda2), com_j, lambda2) == 0 &&
+      memcmp(pdec, tree->nodes[2], lambda) == 0 &&
+      memcmp(pdec + lambda, tree->nodes[5], lambda) == 0 &&
+      memcmp(pdec + (lambda * 2), tree->nodes[12], lambda) == 0 &&
+      memcmp(pdec + (lambda * 3), tree->nodes[25], lambda) == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+int test_vector_open_256() {
+  uint8_t rootKey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+                         0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+                         0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+  faest_paramset_t params = faest_get_paramset(5); // Just using the FAEST-192s
+  vec_com_t vecCom;
+  tree_t* tree = malloc(sizeof(tree_t));
+  vector_commitment(rootKey, &params, &vecCom, tree);
+
+  uint32_t leafIndex = 20;
+  uint32_t depth     = ceil_log2(params.faest_param.t);
+  uint8_t* b         = malloc(depth);
+  BitDec(leafIndex, depth, b);
+
+  uint32_t lambda  = params.faest_param.seclvl / 8;
+  uint32_t lambda2 = params.faest_param.seclvl / 4;
+  uint8_t* pdec    = malloc(depth * lambda);
+  uint8_t* com_j   = malloc(lambda2);
+  vector_open(&params, vecCom.k, vecCom.com, b, pdec, com_j);
+
+#if 0
+  printTree("tree_256_t_22", tree);
+  printTreeInfo("tree_256_t_22_info", tree);
+  for (uint32_t i = 0; i < depth; i++) {
+    printf("%.2x ", b[i]);
+  }
+  printf("\n");
+
+  printf("printing all coms \n");
+  for (uint32_t j = 0; j < params.faest_param.t; j++) {
+    for (uint32_t i = 0; i < lambda2; i++) {
+      printf("%.2x", *(vecCom.com + (j * lambda2) + i));
+    }
+    printf("\n");
+  }
+  printf("printing com_j\n");
+  for (uint32_t i = 0; i < lambda2; i++) {
+    printf("%.2x", *(com_j + i));
+  }
+  printf("\n");
+
+  printf("printing pdec\n");
+  for (uint32_t j = 0; j < depth; j++) {
+    for (uint32_t i = 0; i < lambda; i++) {
+      printf("%.2x", *(pdec + i + (j * lambda)));
+    }
+    printf("\n");
+  }
+#endif
+
+  if (memcmp(vecCom.com + (leafIndex * lambda2), com_j, lambda2) == 0 &&
+      memcmp(pdec, tree->nodes[2], lambda) == 0 &&
+      memcmp(pdec + lambda, tree->nodes[5], lambda) == 0 &&
+      memcmp(pdec + (lambda * 2), tree->nodes[12], lambda) == 0 &&
+      memcmp(pdec + (lambda * 3), tree->nodes[25], lambda) == 0 &&
+      memcmp(pdec + (lambda * 4), tree->nodes[51], lambda) == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+int test_vector_reconstruct_and_verify() {
+
+  uint8_t rootKey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+                         0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+                         0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
+  faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
+  vec_com_t vecCom;
+  tree_t* tree = malloc(sizeof(tree_t));
+  vector_commitment(rootKey, &params, &vecCom, tree);
+
+  uint32_t leafIndex = 7;
+  uint32_t depth     = ceil_log2(params.faest_param.t);
+  uint8_t* b         = malloc(depth);
+  BitDec(leafIndex, depth, b);
+
+  uint32_t lambda  = params.faest_param.seclvl / 8;
+  uint32_t lambda2 = params.faest_param.seclvl / 4;
+  uint8_t* pdec    = malloc(depth * lambda);
+  uint8_t* com_j   = malloc(lambda2);
+  vector_open(&params, vecCom.k, vecCom.com, b, pdec, com_j);
+
+  vec_com_rec_t vecComRec;
+
+  vector_verify(&params, pdec, com_j, b, &vecCom, &vecComRec);
+
+#if 1
+  // printTree("tree_128_t_11", tree);
+  // printTreeInfo("tree_128_t_11_info", tree);
+  // for (uint32_t i = 0; i < depth; i++) {
+  //   printf("%.2x ", b[i]);
+  // }
+  // printf("\n");
+
+  // printf("printing all coms \n");
+  // for (uint32_t j = 0; j < params.faest_param.t; j++) {
+  //   for (uint32_t i = 0; i < lambda2; i++) {
+  //     printf("%.2x", *(vecCom.com + (j * lambda2) + i));
+  //   }
+  //   printf("\n");
+  // }
+  // printf("printing com_j\n");
+  // for (uint32_t i = 0; i < lambda2; i++) {
+  //   printf("%.2x", *(com_j + i));
+  // }
+  // printf("\n");
+
+  // printf("printing pdec\n");
+  // for (uint32_t j = 0; j < depth; j++) {
+  //   for (uint32_t i = 0; i < lambda; i++) {
+  //     printf("%.2x", *(pdec + i + (j * lambda)));
+  //   }
+  //   printf("\n");
+  // }
+
+  printf("\n ########################## \n");
+  printf("printing vecCom.k / vecComRed.k\n");
+  for (uint32_t i = 0; i < getBinaryTreeNodeCount(&params); i++) {
+    for (uint32_t j = 0; j < lambda; j++) {
+      printf("%.2x", *(vecCom.k + j + (i * lambda)));
+    }
+    printf("\n");
+  }
+  printf("\n");
+  for (uint32_t i = 0; i < getBinaryTreeNodeCount(&params) - 1; i++) {
+    for (uint32_t j = 0; j < lambda; j++) {
+      printf("%.2x", *(vecComRec.k + j + (i * lambda)));
+    }
+    printf("\n");
+  }
+
+  printf("\n");
+  printf("printing vecCom.sd / vecComRed.m\n");
+  for (uint32_t i = 0; i < params.faest_param.t; i++) {
+    for (uint32_t j = 0; j < lambda; j++) {
+      printf("%.2x", *(vecCom.sd + j + (i * lambda)));
+    }
+    printf("\n");
+  }
+  printf("\n");
+  for (uint32_t i = 0; i < params.faest_param.t; i++) {
+    for (uint32_t j = 0; j < lambda; j++) {
+      printf("%.2x", *(vecComRec.m + j + (i * lambda)));
+    }
+    printf("\n");
+  }
+
+  printf("\n");
+  printf("printing vecCom.com / vecComRed.com\n");
+  for (uint32_t i = 0; i < params.faest_param.t; i++) {
+    for (uint32_t j = 0; j < lambda2; j++) {
+      printf("%.2x", *(vecCom.com + j + (i * lambda2)));
+    }
+    printf("\n");
+  }
+  printf("\n");
+  for (uint32_t i = 0; i < params.faest_param.t; i++) {
+    for (uint32_t j = 0; j < lambda2; j++) {
+      printf("%.2x", *(vecComRec.com + j + (i * lambda2)));
+    }
+    printf("\n");
+  }
+
+  printf("\n");
+  printf("printing vecCom.h / vecComRed.h\n");
+  for (uint32_t j = 0; j < lambda2; j++) {
+    printf("%.2x", *(vecCom.h + j));
+  }
+  printf("\n");
+  for (uint32_t j = 0; j < lambda2; j++) {
+    printf("%.2x", *(vecComRec.h + j));
+  }
+  printf("\n");
+
+#endif
 
   return 0;
 }
 
 int main(void) {
-  if (test_vector_open()) {
-    return 1;
-  } else {
+  if (
+      // test_numrec_bitdec() == 0 && test_vector_commitment() == 0 && test_vector_open_128() == 0
+      // &&
+      //   test_vector_open_192() == 0 && test_vector_open_256() == 0 &&
+      test_vector_reconstruct_and_verify() == 1) {
     return 0;
+  } else {
+    return 1;
   }
 }

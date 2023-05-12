@@ -588,27 +588,21 @@ int verifyMerkleTree(tree_t* tree, /* uint16_t* missingLeaves, size_t missingLea
 }
 
 /* Gets how many nodes will be there in the tree in total including root node */
-uint64_t getBinaryTreeNodeCount(uint64_t depth) {
-  uint64_t out = 0;
-  for (uint64_t i = depth; i < 1; i--) {
-    out += (1 << i);
-  }
-  out += 1;
-  return out;
-}
+uint64_t getBinaryTreeNodeCount(const faest_paramset_t* params) {
 
-/* Gets the number of nodes+leaves (excluding the root node) for a tree with a given depth */
-uint64_t getBinaryTreeNodeCountFromIndex(uint64_t depth) {
-  uint64_t count = 0;
-  for (uint32_t i = 1; i < depth; i++) {
-    count += (1 << i);
-  }
-  return count;
+  uint32_t depth = ceil_log2(params->faest_param.t) + 1;
+  return ((1 << depth) - 1) - ((1 << (depth - 1)) - params->faest_param.t);
+
+  // uint64_t out = 0;
+  // for (uint64_t i = depth; i > 0; i--) {
+  //   out += (1 << i);
+  // }
+  // out += 1;
+  // return out;
 }
 
 /* Calculates the flat array index of the binary tree position */
-uint64_t getNodeIndex(uint64_t depth, uint64_t pos) {
+uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex) {
 
-  // always between [0...(2^depth)-1]
-  return (uint64_t)(((2 << depth) - 1) + pos);
+  return (((2 << depth) - 2) + (levelIndex + 1));
 }

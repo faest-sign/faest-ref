@@ -21,18 +21,26 @@ typedef struct vec_com_t {
 
 typedef struct vec_com_rec_t {
   uint8_t* h;
-  uint8_t* k;
+  uint8_t* k; // contains vole_instances-1 elements
   uint32_t k_uint_size;
-  uint8_t* com;
+  uint8_t* com; // contains vole_instances-1 elements
   uint32_t com_unit_size;
-  uint8_t* m;
+  uint8_t* com_j;
+  uint8_t* m; // contains vole_instances-1 elements
   uint32_t m_uint_size;
 } vec_com_rec_t;
 
-void NumRec(uint32_t depth, const uint8_t* bi, uint64_t* out);
+uint64_t NumRec(uint32_t depth, const uint8_t* bi);
 
 void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, vec_com_t* vecCom,
                        tree_t* tree);
 
 void vector_open(const faest_paramset_t* params, const uint8_t* k, const uint8_t* com,
-                 const uint8_t* b, uint32_t leafIndex, uint8_t* pdec, uint8_t* com_j);
+                 const uint8_t* b, uint8_t* pdec, uint8_t* com_j);
+
+void vector_reconstruction(const faest_paramset_t* params, const uint8_t* pdec,
+                           const uint8_t* com_j, const uint8_t* b, const vec_com_t* VecCom,
+                           vec_com_rec_t* VecComRec);
+
+int vector_verify(const faest_paramset_t* params, const uint8_t* pdec, const uint8_t* com_j,
+                  const uint8_t* b, const vec_com_t* VecCom, vec_com_rec_t* VecComRec);
