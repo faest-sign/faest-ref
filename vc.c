@@ -20,7 +20,8 @@ void NumRec(uint32_t depth, const uint8_t* bi, uint64_t* out) {
   }
 }
 
-void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, vec_com_t* vecCom) {
+void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, vec_com_t* vecCom,
+                       tree_t* tree) {
 
   uint32_t lambda         = params->faest_param.lambda;
   uint32_t lambda2        = lambda * 2;
@@ -28,7 +29,7 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, v
   uint32_t lambda2Bytes   = lambda2 / 8;
   uint32_t vole_instances = params->faest_param.t;
 
-  tree_t* tree = generateSeeds(rootKey, params);
+  tree = generateSeeds(rootKey, params);
 
 #if 1
   printTree("tree_128_t_11", tree);

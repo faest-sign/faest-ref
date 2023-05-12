@@ -44,8 +44,8 @@ int test_vector_commitment() {
 
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
-
-  vector_commitment(rootKey, &params, &vecCom);
+  tree_t* tree;
+  vector_commitment(rootKey, &params, &vecCom, tree);
 
 #if 0
   uint32_t treeDepth = ceil_log2(params.faest_param.t) + 1;
@@ -144,7 +144,8 @@ int test_vector_open() {
 
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
-  vector_commitment(rootKey, &params, &vecCom);
+  tree_t* tree;
+  vector_commitment(rootKey, &params, &vecCom, tree);
 
   uint32_t leafIndex = 7;
   uint32_t depth     = ceil_log2(params.faest_param.t);
