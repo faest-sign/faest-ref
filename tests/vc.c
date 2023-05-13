@@ -344,36 +344,15 @@ int test_vector_reconstruct_and_verify() {
 
   vec_com_rec_t vecComRec;
 
-  vector_verify(&params, pdec, com_j, b, &vecCom, &vecComRec);
+  int verify_ret = vector_verify(&params, pdec, com_j, b, &vecCom, &vecComRec);
 
-#if 1
-  // printTree("tree_128_t_11", tree);
-  // printTreeInfo("tree_128_t_11_info", tree);
-  // for (uint32_t i = 0; i < depth; i++) {
-  //   printf("%.2x ", b[i]);
-  // }
-  // printf("\n");
-
-  // printf("printing all coms \n");
-  // for (uint32_t j = 0; j < params.faest_param.t; j++) {
-  //   for (uint32_t i = 0; i < lambda2; i++) {
-  //     printf("%.2x", *(vecCom.com + (j * lambda2) + i));
-  //   }
-  //   printf("\n");
-  // }
-  // printf("printing com_j\n");
-  // for (uint32_t i = 0; i < lambda2; i++) {
-  //   printf("%.2x", *(com_j + i));
-  // }
-  // printf("\n");
-
-  // printf("printing pdec\n");
-  // for (uint32_t j = 0; j < depth; j++) {
-  //   for (uint32_t i = 0; i < lambda; i++) {
-  //     printf("%.2x", *(pdec + i + (j * lambda)));
-  //   }
-  //   printf("\n");
-  // }
+#if 0
+  printTree("tree_128_t_11", tree);
+  printTreeInfo("tree_128_t_11_info", tree);
+  for (uint32_t i = 0; i < depth; i++) {
+    printf("%.2x ", b[i]);
+  }
+  printf("\n");
 
   printf("\n ########################## \n");
   printf("printing vecCom.k / vecComRed.k\n");
@@ -381,15 +360,19 @@ int test_vector_reconstruct_and_verify() {
     for (uint32_t j = 0; j < lambda; j++) {
       printf("%.2x", *(vecCom.k + j + (i * lambda)));
     }
-    printf("\n");
-  }
-  printf("\n");
-  for (uint32_t i = 0; i < getBinaryTreeNodeCount(&params) - 1; i++) {
+    printf(" ");
     for (uint32_t j = 0; j < lambda; j++) {
       printf("%.2x", *(vecComRec.k + j + (i * lambda)));
     }
+    uint8_t* zeros = malloc(lambda);
+    memset(zeros, 0, lambda);
+    if (memcmp(vecComRec.k + (i * lambda), zeros, lambda) == 0) {
+      printf("<--Hidden/NA");
+    }
+
     printf("\n");
   }
+  printf("\n");
 
   printf("\n");
   printf("printing vecCom.sd / vecComRed.m\n");
@@ -397,15 +380,16 @@ int test_vector_reconstruct_and_verify() {
     for (uint32_t j = 0; j < lambda; j++) {
       printf("%.2x", *(vecCom.sd + j + (i * lambda)));
     }
-    printf("\n");
-  }
-  printf("\n");
-  for (uint32_t i = 0; i < params.faest_param.t; i++) {
+    printf(" ");
     for (uint32_t j = 0; j < lambda; j++) {
       printf("%.2x", *(vecComRec.m + j + (i * lambda)));
     }
+    if (i == leafIndex) {
+      printf("<-- Hidden");
+    }
     printf("\n");
   }
+  printf("\n");
 
   printf("\n");
   printf("printing vecCom.com / vecComRed.com\n");
@@ -413,22 +397,23 @@ int test_vector_reconstruct_and_verify() {
     for (uint32_t j = 0; j < lambda2; j++) {
       printf("%.2x", *(vecCom.com + j + (i * lambda2)));
     }
-    printf("\n");
-  }
-  printf("\n");
-  for (uint32_t i = 0; i < params.faest_param.t; i++) {
+    printf(" ");
     for (uint32_t j = 0; j < lambda2; j++) {
       printf("%.2x", *(vecComRec.com + j + (i * lambda2)));
     }
+    if (i == leafIndex) {
+      printf("<-- com_j*");
+    }
     printf("\n");
   }
+  printf("\n");
 
   printf("\n");
   printf("printing vecCom.h / vecComRed.h\n");
   for (uint32_t j = 0; j < lambda2; j++) {
     printf("%.2x", *(vecCom.h + j));
   }
-  printf("\n");
+  printf(" ");
   for (uint32_t j = 0; j < lambda2; j++) {
     printf("%.2x", *(vecComRec.h + j));
   }
@@ -436,15 +421,18 @@ int test_vector_reconstruct_and_verify() {
 
 #endif
 
-  return 0;
+  if (verify_ret == 1) {
+    return 0;
+  } else {
+    return 1;
+  }
 }
 
 int main(void) {
-  if (
-      // test_numrec_bitdec() == 0 && test_vector_commitment() == 0 && test_vector_open_128() == 0
-      // &&
-      //   test_vector_open_192() == 0 && test_vector_open_256() == 0 &&
-      test_vector_reconstruct_and_verify() == 1) {
+  if (test_numrec_bitdec() == 0 && test_vector_commitment() == 0 && test_vector_open_128() == 0 &&
+      test_vector_open_192() == 0 && test_vector_open_256() == 0 &&
+      test_vector_reconstruct_and_verify() == 0) {
+    printf("vc.c : All tests pass !!\n");
     return 0;
   } else {
     return 1;

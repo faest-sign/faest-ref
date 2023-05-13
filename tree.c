@@ -604,5 +604,5 @@ uint64_t getBinaryTreeNodeCount(const faest_paramset_t* params) {
 /* Calculates the flat array index of the binary tree position */
 uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex) {
 
-  return (((2 << depth) - 2) + (levelIndex + 1));
+  return (((2 << (depth - 1)) - 2) + (levelIndex + 1));
 }

@@ -45,18 +45,18 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, v
 
   uint8_t** leaves = getLeaves(tree);
 
-  /* Doing H_0 */
-  H0_context_t h0_ctx;
-  /* If lambda=128, SHAKE128 else SHAKE256*/
-  switch (lambda) {
-  case 128:
-    H0_init(&h0_ctx, 128);
-    break;
-  default:
-    H0_init(&h0_ctx, 256);
-    break;
-  }
   for (uint32_t i = 0; i < vole_instances; i++) {
+    /* Doing H_0 */
+    H0_context_t h0_ctx;
+    /* If lambda=128, SHAKE128 else SHAKE256*/
+    switch (lambda) {
+    case 128:
+      H0_init(&h0_ctx, 128);
+      break;
+    default:
+      H0_init(&h0_ctx, 256);
+      break;
+    }
     H0_update(&h0_ctx, leaves[i], lambdaBytes);
     H0_final(&h0_ctx, vecCom->sd + i * lambdaBytes, lambdaBytes, vecCom->com + i * lambda2Bytes,
              lambda2Bytes);
@@ -97,7 +97,7 @@ void vector_open(const faest_paramset_t* params, const uint8_t* k, const uint8_t
   uint32_t a = 0;
   for (uint32_t d = 0; d < depth; d++) {
     memcpy(pdec + (lambdaBytes * d),
-           k + (lambdaBytes * getNodeIndex(d, (2 * a) + b[(depth - 1) - d])), lambdaBytes);
+           k + (lambdaBytes * getNodeIndex(d + 1, (2 * a) + b[(depth - 1) - d])), lambdaBytes);
     a = (2 * a) + b[(depth - 1) - d];
   }
 }
@@ -115,33 +115,46 @@ void vector_reconstruction(const faest_paramset_t* params, const uint8_t* pdec,
   uint8_t depth      = ceil_log2(params->faest_param.t);
   uint64_t leafIndex = NumRec(depth, b);
 
-  VecComRec->h = malloc(lambda2Bytes);
-  VecComRec->k =
-      malloc((getBinaryTreeNodeCount(params) - 1) * lambdaBytes); // excluding the root k_0,0
+  VecComRec->h   = malloc(lambda2Bytes);
+  VecComRec->k   = malloc(getBinaryTreeNodeCount(params) * lambdaBytes);
   VecComRec->com = malloc(vole_instances * lambda2Bytes);
   VecComRec->m   = malloc(vole_instances * lambdaBytes);
 
   memcpy(VecComRec->com + (lambda2Bytes * leafIndex), com_j, lambda2Bytes);
 
-  memcpy(VecComRec->k, VecCom->k + lambdaBytes, (getBinaryTreeNodeCount(params) - 1) * lambdaBytes);
+  memset(VecComRec->k, 0, lambdaBytes); // setting root node to 0
 
-  uint32_t a = 0;
+  // TODO - Here stupidly everything is copied, only the reveled should be present :/
+  memcpy(VecComRec->k + lambdaBytes, VecCom->k + lambdaBytes,
+         (getBinaryTreeNodeCount(params) - 1) * lambdaBytes);
+  uint32_t a     = 0;
+  uint8_t* zeros = malloc(lambdaBytes);
+  memset(zeros, 0, lambdaBytes);
   for (uint32_t d = 0; d < depth; d++) {
-    memcpy(VecComRec->k + (lambdaBytes * (getNodeIndex(d, 2 * a + b[(depth - 1) - d]) - 1)),
-           pdec + (lambdaBytes * d), lambdaBytes);
+    memcpy(VecComRec->k + (lambdaBytes * (getNodeIndex((d + 1), 2 * a + b[(depth - 1) - d]))),
+           zeros, lambdaBytes);
+    // memcpy(VecComRec->k + (lambdaBytes * (getNodeIndex(d, 2 * a + b[(depth - 1) - d]))),
+    //        pdec + (lambdaBytes * d), lambdaBytes);
     a = a * 2 + b[(depth - 1) - d];
   }
 
-  /* Doing H_0 */
-  H0_context_t h0_ctx;
-  /* If lambda=128, SHAKE128 else SHAKE256*/
-  switch (lambda) {
-  case 128:
-    H0_init(&h0_ctx, 128);
-    break;
-  default:
-    H0_init(&h0_ctx, 256);
-    break;
+  for (uint32_t j = 0; j < vole_instances; j++) {
+    if (j != leafIndex) {
+      /* Doing H_0 */
+      H0_context_t h0_ctx;
+      /* If lambda=128, SHAKE128 else SHAKE256*/
+      switch (lambda) {
+      case 128:
+        H0_init(&h0_ctx, 128);
+        break;
+      default:
+        H0_init(&h0_ctx, 256);
+        break;
+      }
+      H0_update(&h0_ctx, VecComRec->k + (getNodeIndex(depth, j) * lambdaBytes), lambdaBytes);
+      H0_final(&h0_ctx, VecComRec->m + (lambdaBytes * j), lambdaBytes,
+               VecComRec->com + (lambda2Bytes * j), lambda2Bytes);
+    }
   }
   /* Doing H_1 */
   /* If lambda=128, SHAKE128 else SHAKE256*/
@@ -154,17 +167,6 @@ void vector_reconstruction(const faest_paramset_t* params, const uint8_t* pdec,
     H1_init(&h1_ctx, 256);
     break;
   }
-
-  for (uint32_t j = 0; j < vole_instances; j++) {
-    if (j == leafIndex) {
-      continue;
-    }
-    /* -1 because root node is not present here */
-    H0_update(&h0_ctx, VecComRec->k + ((getNodeIndex(depth, j) - 1) * lambdaBytes), lambdaBytes);
-    H0_final(&h0_ctx, VecComRec->m + (lambdaBytes * j), lambdaBytes,
-             VecComRec->com + (lambda2Bytes * j), lambda2Bytes);
-  }
-
   H1_update(&h1_ctx, VecComRec->com, lambda2Bytes * vole_instances);
   H1_final(&h1_ctx, VecComRec->h, lambda2Bytes);
 }
@@ -173,7 +175,7 @@ int vector_verify(const faest_paramset_t* params, const uint8_t* pdec, const uin
                   const uint8_t* b, const vec_com_t* VecCom, vec_com_rec_t* VecComRec) {
   vector_reconstruction(params, pdec, com_j, b, VecCom, VecComRec);
   if (memcmp(VecCom->com, VecComRec->com,
-             params->faest_param.t * (params->faest_param.seclvl * 2)) == 0) {
+             params->faest_param.t * (params->faest_param.seclvl / 4)) == 0) {
     return 1;
   } else {
     return 0;
