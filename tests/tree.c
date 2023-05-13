@@ -13,7 +13,7 @@ int runSeedTest(uint16_t* hideList, size_t hideListSize, uint8_t* rootKey,
                 faest_paramset_t* params) {
   int freeHideList   = 0;
   int ret            = 1;
-  size_t numVoleInst = params->faest_param.t; // number of leaves
+  size_t numVoleInst = params->faest_param.k0; // number of leaves
 
   if (numVoleInst < hideListSize - 1) {
     printf("%s invalid input (numLeaves = %lu, hideListSize = %lu)\n", __func__, numVoleInst,
@@ -34,8 +34,8 @@ int runSeedTest(uint16_t* hideList, size_t hideListSize, uint8_t* rootKey,
   }
 
   // printf("%s: Generating seeds\n", __func__);
-  tree_t* tree  = generateSeeds(rootKey, params);
-  tree_t* tree2 = createTree(params);
+  tree_t* tree  = generateSeeds(rootKey, params, params->faest_param.k0);
+  tree_t* tree2 = createTree(params, params->faest_param.k0);
 
   size_t initialOutputSize = (tree->numLeaves) * params->faest_param.seedSizeBytes;
   uint8_t* output          = malloc(initialOutputSize);

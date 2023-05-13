@@ -47,14 +47,14 @@ int exists(tree_t* tree, size_t i) {
   return 0;
 }
 
-tree_t* createTree(faest_paramset_t* params) {
+tree_t* createTree(faest_paramset_t* params, uint32_t voleInstances) {
   tree_t* tree = malloc(sizeof(tree_t));
 
-  tree->depth    = ceil_log2(params->faest_param.t) + 1;
+  tree->depth    = ceil_log2(voleInstances) + 1;
   tree->numNodes = ((1 << (tree->depth)) - 1) -
                    ((1 << (tree->depth - 1)) -
-                    params->faest_param.t); /* Num nodes in complete - number of missing leaves */
-  tree->numLeaves = params->faest_param.t;
+                    voleInstances); /* Num nodes in complete - number of missing leaves */
+  tree->numLeaves = voleInstances;
   tree->dataSize  = params->faest_param.seedSizeBytes;
   tree->nodes     = malloc(tree->numNodes * sizeof(uint8_t*));
 
@@ -162,7 +162,7 @@ void expandSeeds(tree_t* tree, faest_paramset_t* params) {
 
     // Here we use the AES ctr PRG to get the nodes, starting from root and
     // assign it to the tree
-    aes_prg(tree->nodes[i], iv, out, params->faest_param.seclvl, params->faest_param.seclvl * 2);
+    aes_prg(tree->nodes[i], iv, out, params->faest_param.lambda, params->faest_param.lambda * 2);
 
     if (!tree->haveNode[2 * i + 1]) {
       memcpy(tree->nodes[2 * i + 1], out, params->faest_param.seedSizeBytes);
@@ -178,8 +178,8 @@ void expandSeeds(tree_t* tree, faest_paramset_t* params) {
   }
 }
 
-tree_t* generateSeeds(uint8_t* rootSeed, faest_paramset_t* params) {
-  tree_t* tree = createTree(params);
+tree_t* generateSeeds(uint8_t* rootSeed, faest_paramset_t* params, uint32_t voleInstances) {
+  tree_t* tree = createTree(params, voleInstances);
 
   memcpy(tree->nodes[0], rootSeed, params->faest_param.seedSizeBytes);
   tree->haveNode[0] = 1;
@@ -297,7 +297,7 @@ static size_t* getRevealedNodes(tree_t* tree, uint16_t* hideList, size_t hideLis
 }
 
 size_t revealSeedsSize(uint16_t* hideList, size_t hideListSize, faest_paramset_t* params) {
-  tree_t* tree            = createTree(params);
+  tree_t* tree            = createTree(params, params->faest_param.k0);
   size_t numNodesRevealed = 0;
   size_t* revealed        = getRevealedNodes(tree, hideList, hideListSize, &numNodesRevealed);
 
@@ -481,7 +481,7 @@ static size_t* getRevealedMerkleNodes(tree_t* tree, uint16_t* missingLeaves,
 size_t openMerkleTreeSize(uint16_t* missingLeaves, size_t missingLeavesSize,
                           faest_paramset_t* params) {
 
-  tree_t* tree        = createTree(params);
+  tree_t* tree        = createTree(params, params->faest_param.k0);
   size_t revealedSize = 0;
   size_t* revealed = getRevealedMerkleNodes(tree, missingLeaves, missingLeavesSize, &revealedSize);
 
@@ -590,8 +590,8 @@ int verifyMerkleTree(tree_t* tree, /* uint16_t* missingLeaves, size_t missingLea
 /* Gets how many nodes will be there in the tree in total including root node */
 uint64_t getBinaryTreeNodeCount(const faest_paramset_t* params) {
 
-  uint32_t depth = ceil_log2(params->faest_param.t) + 1;
-  return ((1 << depth) - 1) - ((1 << (depth - 1)) - params->faest_param.t);
+  uint32_t depth = ceil_log2(params->faest_param.k0) + 1;
+  return ((1 << depth) - 1) - ((1 << (depth - 1)) - params->faest_param.k0);
 
   // uint64_t out = 0;
   // for (uint64_t i = depth; i > 0; i--) {

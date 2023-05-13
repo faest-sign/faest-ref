@@ -41,11 +41,11 @@ int test_vector_commitment() {
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
   tree_t* tree = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, &vecCom, tree);
+  vector_commitment(rootKey, &params, &vecCom, tree, params.faest_param.k0);
 
 #if 0
-  uint32_t treeDepth = ceil_log2(params.faest_param.t) + 1;
-  uint32_t numNodes  = ((1 << treeDepth) - 1) - ((1 << (treeDepth - 1)) - params.faest_param.t);
+  uint32_t treeDepth = ceil_log2(params.faest_param.k0) + 1;
+  uint32_t numNodes  = ((1 << treeDepth) - 1) - ((1 << (treeDepth - 1)) - params.faest_param.k0);
   printf("Printing h \n");
   for (uint32_t i = 0; i < params.faest_param.seclvl / 4; i++) {
     printf("%.2x ", *(vecCom.h + i));
@@ -59,14 +59,14 @@ int test_vector_commitment() {
     printf("\n");
   }
   printf("Printing com \n");
-  for (uint32_t j = 0; j < params.faest_param.t; j++) {
+  for (uint32_t j = 0; j < params.faest_param.k0; j++) {
     for (uint32_t i = 0; i < params.faest_param.seclvl / 4; i++) {
       printf("%.2x ", *((vecCom.com + i) + (params.faest_param.seclvl / 4 * j)));
     }
     printf("\n");
   }
   printf("Printing sd \n");
-  for (uint32_t j = 0; j < params.faest_param.t; j++) {
+  for (uint32_t j = 0; j < params.faest_param.k0; j++) {
     for (uint32_t i = 0; i < params.faest_param.seclvl / 8; i++) {
       printf("%.2x ", *((vecCom.sd + i) + (params.faest_param.seclvl / 8 * j)));
     }
@@ -141,10 +141,10 @@ int test_vector_open_128() {
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
   tree_t* tree = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, &vecCom, tree);
+  vector_commitment(rootKey, &params, &vecCom, tree, params.faest_param.k0);
 
   uint32_t leafIndex = 7;
-  uint32_t depth     = ceil_log2(params.faest_param.t);
+  uint32_t depth     = ceil_log2(params.faest_param.k0);
   uint8_t* b         = malloc(depth);
   BitDec(leafIndex, depth, b);
 
@@ -163,7 +163,7 @@ int test_vector_open_128() {
   printf("\n");
 
   printf("printing all coms \n");
-  for (uint32_t j = 0; j < params.faest_param.t; j++) {
+  for (uint32_t j = 0; j < params.faest_param.k0; j++) {
     for (uint32_t i = 0; i < lambda2; i++) {
       printf("%.2x", *(vecCom.com + (j * lambda2) + i));
     }
@@ -203,10 +203,10 @@ int test_vector_open_192() {
   faest_paramset_t params = faest_get_paramset(3); // Just using the FAEST-192s
   vec_com_t vecCom;
   tree_t* tree = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, &vecCom, tree);
+  vector_commitment(rootKey, &params, &vecCom, tree, params.faest_param.k0);
 
   uint32_t leafIndex = 10;
-  uint32_t depth     = ceil_log2(params.faest_param.t);
+  uint32_t depth     = ceil_log2(params.faest_param.k0);
   uint8_t* b         = malloc(depth);
   BitDec(leafIndex, depth, b);
 
@@ -225,7 +225,7 @@ int test_vector_open_192() {
   printf("\n");
 
   printf("printing all coms \n");
-  for (uint32_t j = 0; j < params.faest_param.t; j++) {
+  for (uint32_t j = 0; j < params.faest_param.k0; j++) {
     for (uint32_t i = 0; i < lambda2; i++) {
       printf("%.2x", *(vecCom.com + (j * lambda2) + i));
     }
@@ -262,13 +262,13 @@ int test_vector_open_256() {
                          0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
                          0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
 
-  faest_paramset_t params = faest_get_paramset(5); // Just using the FAEST-192s
+  faest_paramset_t params = faest_get_paramset(5); // Just using the FAEST-256s
   vec_com_t vecCom;
   tree_t* tree = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, &vecCom, tree);
+  vector_commitment(rootKey, &params, &vecCom, tree, params.faest_param.k0);
 
-  uint32_t leafIndex = 20;
-  uint32_t depth     = ceil_log2(params.faest_param.t);
+  uint32_t leafIndex = 7;
+  uint32_t depth     = ceil_log2(params.faest_param.k0);
   uint8_t* b         = malloc(depth);
   BitDec(leafIndex, depth, b);
 
@@ -287,7 +287,7 @@ int test_vector_open_256() {
   printf("\n");
 
   printf("printing all coms \n");
-  for (uint32_t j = 0; j < params.faest_param.t; j++) {
+  for (uint32_t j = 0; j < params.faest_param.k0; j++) {
     for (uint32_t i = 0; i < lambda2; i++) {
       printf("%.2x", *(vecCom.com + (j * lambda2) + i));
     }
@@ -309,11 +309,10 @@ int test_vector_open_256() {
 #endif
 
   if (memcmp(vecCom.com + (leafIndex * lambda2), com_j, lambda2) == 0 &&
-      memcmp(pdec, tree->nodes[2], lambda) == 0 &&
-      memcmp(pdec + lambda, tree->nodes[5], lambda) == 0 &&
-      memcmp(pdec + (lambda * 2), tree->nodes[12], lambda) == 0 &&
-      memcmp(pdec + (lambda * 3), tree->nodes[25], lambda) == 0 &&
-      memcmp(pdec + (lambda * 4), tree->nodes[51], lambda) == 0) {
+      memcmp(pdec, tree->nodes[1], lambda) == 0 &&
+      memcmp(pdec + lambda, tree->nodes[4], lambda) == 0 &&
+      memcmp(pdec + (lambda * 2), tree->nodes[10], lambda) == 0 &&
+      memcmp(pdec + (lambda * 3), tree->nodes[22], lambda) == 0) {
     return 0;
   } else {
     return 1;
@@ -329,10 +328,10 @@ int test_vector_reconstruct_and_verify() {
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
   tree_t* tree = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, &vecCom, tree);
+  vector_commitment(rootKey, &params, &vecCom, tree, params.faest_param.k0);
 
   uint32_t leafIndex = 7;
-  uint32_t depth     = ceil_log2(params.faest_param.t);
+  uint32_t depth     = ceil_log2(params.faest_param.k0);
   uint8_t* b         = malloc(depth);
   BitDec(leafIndex, depth, b);
 
@@ -376,7 +375,7 @@ int test_vector_reconstruct_and_verify() {
 
   printf("\n");
   printf("printing vecCom.sd / vecComRed.m\n");
-  for (uint32_t i = 0; i < params.faest_param.t; i++) {
+  for (uint32_t i = 0; i < params.faest_param.k0; i++) {
     for (uint32_t j = 0; j < lambda; j++) {
       printf("%.2x", *(vecCom.sd + j + (i * lambda)));
     }
@@ -393,7 +392,7 @@ int test_vector_reconstruct_and_verify() {
 
   printf("\n");
   printf("printing vecCom.com / vecComRed.com\n");
-  for (uint32_t i = 0; i < params.faest_param.t; i++) {
+  for (uint32_t i = 0; i < params.faest_param.k0; i++) {
     for (uint32_t j = 0; j < lambda2; j++) {
       printf("%.2x", *(vecCom.com + j + (i * lambda2)));
     }
