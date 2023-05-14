@@ -418,7 +418,7 @@ int test_vector_reconstruct_and_verify() {
   int verify_ret =
       vector_verify(&params, pdec, com_j, b, lambdabits, numVoleInstances, &vecCom, &vecComRec);
 
-#if 0
+#if 1
   printTree("tree_128_t_11", tree);
   printTreeInfo("tree_128_t_11_info", tree);
   printf("Hidden leaf index : %d\n", leafIndex);

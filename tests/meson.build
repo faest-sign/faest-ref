@@ -22,6 +22,13 @@ vc = executable('vc', files('vc.c'),
 )
 test('vc', vc)
 
+vole = executable('vole', files('vole.c'),
+  dependencies: [libfaest_static_dependency],
+  include_directories: include_directories,
+  c_args: defines + c_flags,
+)
+test('vole', vole)
+
 if boost_test.found()
   test_sources = files('aes.cpp', 'extended_tests.cpp', 'instances.cpp', 'universal_hashing.cpp')
   test_deps = []

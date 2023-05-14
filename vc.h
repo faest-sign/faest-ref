@@ -9,6 +9,8 @@
 #include "instances.h"
 #include "utils.h"
 
+// TODO: Remove the sizese,, looks reduddant !!
+
 typedef struct vec_com_t {
   uint8_t* h;
   uint8_t* k;
@@ -21,14 +23,16 @@ typedef struct vec_com_t {
 
 typedef struct vec_com_rec_t {
   uint8_t* h;
-  uint8_t* k; // contains vole_instances-1 elements
+  uint8_t* k;
   uint32_t k_uint_size;
-  uint8_t* com; // contains vole_instances-1 elements
+  uint8_t* com;
   uint32_t com_unit_size;
   uint8_t* com_j;
-  uint8_t* m; // contains vole_instances-1 elements
+  uint8_t* m;
   uint32_t m_uint_size;
 } vec_com_rec_t;
+
+int BitDec(uint32_t leafIndex, uint32_t depth, uint8_t* out);
 
 uint64_t NumRec(uint32_t depth, const uint8_t* bi);
 

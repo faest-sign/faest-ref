@@ -98,7 +98,8 @@ void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t
   // TODO
   /* Unsure but perhaps we open the nodes (k) of the tree exlcuding the pdec nodes here and not in
    * vec reconstruct */
-  vecComRec->k = malloc(getBinaryTreeNodeCount(numVoleInstances) * lambda);
+  vecComRec->k           = malloc(getBinaryTreeNodeCount(numVoleInstances) * lambda);
+  vecComRec->k_uint_size = lambda;
   memset(vecComRec->k, 0, lambda); // setting root node to 0
   memcpy(vecComRec->k + lambda, vecCom->k + lambda,
          (getBinaryTreeNodeCount(numVoleInstances) - 1) * lambda);
@@ -122,9 +123,11 @@ void vector_reconstruction(const faest_paramset_t* params, const uint8_t* pdec,
   uint8_t depth      = ceil_log2(NumVoleInstances);
   uint64_t leafIndex = NumRec(depth, b);
 
-  VecComRec->h   = malloc(lambda2);
-  VecComRec->com = malloc(NumVoleInstances * lambda2);
-  VecComRec->m   = malloc(NumVoleInstances * lambda);
+  VecComRec->h             = malloc(lambda2);
+  VecComRec->com           = malloc(NumVoleInstances * lambda2);
+  VecComRec->com_unit_size = lambda2;
+  VecComRec->m             = malloc(NumVoleInstances * lambda);
+  VecComRec->m_uint_size   = lambda;
 
   memcpy(VecComRec->com + (lambda2 * leafIndex), com_j, lambda2);
   for (uint32_t j = 0; j < NumVoleInstances; j++) {

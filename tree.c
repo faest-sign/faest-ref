@@ -47,14 +47,14 @@ int exists(tree_t* tree, size_t i) {
   return 0;
 }
 
-tree_t* createTree(faest_paramset_t* params, uint32_t voleInstances) {
+tree_t* createTree(faest_paramset_t* params, uint32_t numVoleInstances) {
   tree_t* tree = malloc(sizeof(tree_t));
 
-  tree->depth    = ceil_log2(voleInstances) + 1;
+  tree->depth    = ceil_log2(numVoleInstances) + 1;
   tree->numNodes = ((1 << (tree->depth)) - 1) -
                    ((1 << (tree->depth - 1)) -
-                    voleInstances); /* Num nodes in complete - number of missing leaves */
-  tree->numLeaves = voleInstances;
+                    numVoleInstances); /* Num nodes in complete - number of missing leaves */
+  tree->numLeaves = numVoleInstances;
   tree->dataSize  = params->faest_param.seedSizeBytes;
   tree->nodes     = malloc(tree->numNodes * sizeof(uint8_t*));
 
@@ -144,8 +144,8 @@ void hashSeed(uint8_t* digest, const uint8_t* inputSeed, uint8_t* salt, size_t r
 }
 
 void expandSeeds(tree_t* tree, faest_paramset_t* params) {
-  uint8_t out[2 * MAX_SEED_SIZE_BYTES];
-  // uint8_t* out = malloc(2 * params->faest_param.seedSizeBytes);
+  // uint8_t out[2 * MAX_SEED_SIZE_BYTES];
+  uint8_t* out = malloc(2 * params->faest_param.seedSizeBytes);
 
   /* Walk the tree, expanding seeds where possible. Compute children of
    * non-leaf nodes. */
@@ -178,8 +178,8 @@ void expandSeeds(tree_t* tree, faest_paramset_t* params) {
   }
 }
 
-tree_t* generateSeeds(uint8_t* rootSeed, faest_paramset_t* params, uint32_t voleInstances) {
-  tree_t* tree = createTree(params, voleInstances);
+tree_t* generateSeeds(uint8_t* rootSeed, faest_paramset_t* params, uint32_t numVoleInstances) {
+  tree_t* tree = createTree(params, numVoleInstances);
 
   memcpy(tree->nodes[0], rootSeed, params->faest_param.seedSizeBytes);
   tree->haveNode[0] = 1;
@@ -223,7 +223,7 @@ size_t getSibling(tree_t* tree, size_t node) {
 
 void printSeeds(uint8_t* seedsBuf, size_t seedLen, size_t numSeeds) {
   for (size_t i = 0; i < numSeeds; i++) {
-    printf("seed %lu", i);
+    printf("leaf %lu", i);
     printHex("", seedsBuf, seedLen);
     seedsBuf += seedLen;
   }
@@ -603,6 +603,8 @@ uint64_t getBinaryTreeNodeCount(uint32_t numVoleInstances) {
 
 /* Calculates the flat array index of the binary tree position */
 uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex) {
-
+  if (depth == 0) {
+    return 0;
+  }
   return (((2 << (depth - 1)) - 2) + (levelIndex + 1));
 }
