@@ -55,7 +55,7 @@ size_t openMerkleTreeSize(uint16_t* missingLeaves, size_t missingLeavesSize,
 int addMerkleNodes(tree_t* tree, uint16_t* missingLeaves, size_t missingLeavesSize, uint8_t* input,
                    size_t inputSize);
 int verifyMerkleTree(tree_t* tree, uint8_t** leafData, uint8_t* salt, faest_paramset_t* params);
-uint64_t getBinaryTreeNodeCount(const faest_paramset_t* params);
+uint64_t getBinaryTreeNodeCount(uint32_t numVoleInstances);
 uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex);
 void printTree(const char* label, tree_t* tree);
 void printTreeInfo(const char* label, tree_t* tree);

@@ -588,10 +588,10 @@ int verifyMerkleTree(tree_t* tree, /* uint16_t* missingLeaves, size_t missingLea
 }
 
 /* Gets how many nodes will be there in the tree in total including root node */
-uint64_t getBinaryTreeNodeCount(const faest_paramset_t* params) {
+uint64_t getBinaryTreeNodeCount(uint32_t numVoleInstances) {
 
-  uint32_t depth = ceil_log2(params->faest_param.k0) + 1;
-  return ((1 << depth) - 1) - ((1 << (depth - 1)) - params->faest_param.k0);
+  uint32_t depth = ceil_log2(numVoleInstances) + 1;
+  return ((1 << depth) - 1) - ((1 << (depth - 1)) - numVoleInstances);
 
   // uint64_t out = 0;
   // for (uint64_t i = depth; i > 0; i--) {
