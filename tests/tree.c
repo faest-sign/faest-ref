@@ -13,7 +13,7 @@ int runSeedTest(uint8_t* rootKey, faest_paramset_t* params, uint32_t numVoleInst
 
   tree_t* tree = generateSeeds(rootKey, params, numVoleInstances);
 
-#if 1
+#if 0
   printTreeInfo("tree", tree);
   printTree("tree", tree);
   printLeaves(tree);

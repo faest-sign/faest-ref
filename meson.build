@@ -246,7 +246,8 @@ sources = files(
   'universal_hashing.c',
   'utils.c',
   'vc.c',
-  'vole.c'
+  'vole.c',
+  'faest.c'
 )
 
 # header files to install

@@ -40,12 +40,13 @@ int test_vector_commitment() {
 
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
-  tree_t* tree = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, &vecCom, tree, params.faest_param.k0);
+  tree_t* tree              = malloc(sizeof(tree_t));
+  uint32_t numVoleInstances = (1 << params.faest_param.k0);
+  vector_commitment(rootKey, &params, &vecCom, tree, numVoleInstances);
 
 #if 0
-  uint32_t treeDepth = ceil_log2(params.faest_param.k0) + 1;
-  uint32_t numNodes  = ((1 << treeDepth) - 1) - ((1 << (treeDepth - 1)) - params.faest_param.k0);
+  uint32_t treeDepth = ceil_log2(numVoleInstances) + 1;
+  uint32_t numNodes  = ((1 << treeDepth) - 1) - ((1 << (treeDepth - 1)) - numVoleInstances);
   printf("Printing h \n");
   for (uint32_t i = 0; i < params.faest_param.seclvl / 4; i++) {
     printf("%.2x ", *(vecCom.h + i));
@@ -59,14 +60,14 @@ int test_vector_commitment() {
     printf("\n");
   }
   printf("Printing com \n");
-  for (uint32_t j = 0; j < params.faest_param.k0; j++) {
+  for (uint32_t j = 0; j < numVoleInstances; j++) {
     for (uint32_t i = 0; i < params.faest_param.seclvl / 4; i++) {
       printf("%.2x ", *((vecCom.com + i) + (params.faest_param.seclvl / 4 * j)));
     }
     printf("\n");
   }
   printf("Printing sd \n");
-  for (uint32_t j = 0; j < params.faest_param.k0; j++) {
+  for (uint32_t j = 0; j < numVoleInstances; j++) {
     for (uint32_t i = 0; i < params.faest_param.seclvl / 8; i++) {
       printf("%.2x ", *((vecCom.sd + i) + (params.faest_param.seclvl / 8 * j)));
     }
@@ -141,7 +142,7 @@ int test_vector_open_128() {
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
   vec_com_rec_t vecComRec;
-  uint32_t numVoleInstances = params.faest_param.k0;
+  uint32_t numVoleInstances = 16;
   uint32_t lambdabits       = params.faest_param.lambda;
   tree_t* tree              = malloc(sizeof(tree_t));
   vector_commitment(rootKey, &params, &vecCom, tree, numVoleInstances);
@@ -227,7 +228,7 @@ int test_vector_open_192() {
   faest_paramset_t params = faest_get_paramset(3); // Just using the FAEST-192s
   vec_com_t vecCom;
   vec_com_rec_t vecComRec;
-  uint32_t numVoleInstances = params.faest_param.k0;
+  uint32_t numVoleInstances = 16;
   uint32_t lambdabits       = params.faest_param.lambda;
   tree_t* tree              = malloc(sizeof(tree_t));
   vector_commitment(rootKey, &params, &vecCom, tree, numVoleInstances);
@@ -312,7 +313,7 @@ int test_vector_open_256() {
   faest_paramset_t params = faest_get_paramset(5); // Just using the FAEST-256s
   vec_com_t vecCom;
   vec_com_rec_t vecComRec;
-  uint32_t numVoleInstances = params.faest_param.k0;
+  uint32_t numVoleInstances = 16;
   uint32_t lambdabits       = params.faest_param.lambda;
   tree_t* tree              = malloc(sizeof(tree_t));
   vector_commitment(rootKey, &params, &vecCom, tree, numVoleInstances);
@@ -418,7 +419,7 @@ int test_vector_reconstruct_and_verify() {
   int verify_ret =
       vector_verify(&params, pdec, com_j, b, lambdabits, numVoleInstances, &vecCom, &vecComRec);
 
-#if 1
+#if 0
   printTree("tree_128_t_11", tree);
   printTreeInfo("tree_128_t_11_info", tree);
   printf("Hidden leaf index : %d\n", leafIndex);

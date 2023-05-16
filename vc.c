@@ -23,21 +23,18 @@ uint64_t NumRec(uint32_t depth, const uint8_t* bi) {
 }
 
 void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, vec_com_t* vecCom,
-                       tree_t* tree, uint32_t voleInstances) {
-
-  uint32_t lambda  = params->faest_param.lambda / 8;
-  uint32_t lambda2 = params->faest_param.lambda / 4;
+                       tree_t* tree, uint32_t numVoleInstances) {
 
   /* Generating the tree with a rootkey */
-  *tree = *(generateSeeds(rootKey, params, voleInstances));
+  *tree = *generateSeeds(rootKey, params, numVoleInstances);
 
-  vecCom->h             = malloc(lambda2);
-  vecCom->k_uint_size   = lambda;
+  vecCom->h             = malloc(params->faest_param.lambda / 4);
+  vecCom->k_uint_size   = params->faest_param.lambda / 8;
   vecCom->k             = malloc(tree->numNodes * vecCom->k_uint_size);
-  vecCom->com_unit_size = lambda2;
-  vecCom->com           = malloc(voleInstances * vecCom->com_unit_size);
-  vecCom->sd_uint_size  = lambda;
-  vecCom->sd            = malloc(voleInstances * vecCom->sd_uint_size);
+  vecCom->com_unit_size = params->faest_param.lambda / 4;
+  vecCom->com           = malloc(numVoleInstances * vecCom->com_unit_size);
+  vecCom->sd_uint_size  = params->faest_param.lambda / 8;
+  vecCom->sd            = malloc(numVoleInstances * vecCom->sd_uint_size);
 
   /* Saving the tree nodes in K */
   for (uint32_t i = 0; i < tree->numNodes; i++) {
@@ -46,7 +43,7 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, v
 
   uint8_t** leaves = getLeaves(tree);
 
-  for (uint32_t i = 0; i < voleInstances; i++) {
+  for (uint32_t i = 0; i < numVoleInstances; i++) {
     H0_context_t h0_ctx;
     switch (params->faest_param.lambda) {
     case 128:
@@ -58,12 +55,12 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, v
     }
     /* Generating the sd messages and com commitments from each leaf */
     H0_update(&h0_ctx, leaves[i], vecCom->k_uint_size);
-    H0_final(&h0_ctx, vecCom->sd + i * vecCom->sd_uint_size, vecCom->sd_uint_size,
-             vecCom->com + i * vecCom->com_unit_size, vecCom->com_unit_size);
+    H0_final(&h0_ctx, vecCom->sd + (i * vecCom->sd_uint_size), vecCom->sd_uint_size,
+             vecCom->com + (i * vecCom->com_unit_size), vecCom->com_unit_size);
   }
 
   H1_context_t h1_ctx;
-  switch (lambda) {
+  switch (params->faest_param.lambda) {
   case 128:
     H1_init(&h1_ctx, 128);
     break;
@@ -71,11 +68,11 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, v
     H1_init(&h1_ctx, 256);
     break;
   }
-  for (uint32_t i = 0; i < voleInstances; i++) {
+  for (uint32_t i = 0; i < numVoleInstances; i++) {
     H1_update(&h1_ctx, vecCom->com + (i * vecCom->com_unit_size), vecCom->com_unit_size);
   }
   /* Generating final commitment from all the com commitments */
-  H1_final(&h1_ctx, vecCom->h, lambda2);
+  H1_final(&h1_ctx, vecCom->h, params->faest_param.lambda / 4);
 }
 
 void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t* pdec,
@@ -128,6 +125,8 @@ void vector_reconstruction(const faest_paramset_t* params, const uint8_t* pdec,
   VecComRec->com_unit_size = lambda2;
   VecComRec->m             = malloc(NumVoleInstances * lambda);
   VecComRec->m_uint_size   = lambda;
+
+  // TODO: actually reconstruct the k^d_0...2^d
 
   memcpy(VecComRec->com + (lambda2 * leafIndex), com_j, lambda2);
   for (uint32_t j = 0; j < NumVoleInstances; j++) {
