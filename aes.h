@@ -29,15 +29,15 @@ bool aes256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key);
 bool rijndael192_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key);
 bool rijndael256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key);
 
-void aes128_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
+bool aes128_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext);
-void aes192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
+bool aes192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext);
-void aes256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
+bool aes256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext);
-void rijndael192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
+bool rijndael192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                                uint8_t* ciphertext);
-void rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
+bool rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                                uint8_t* ciphertext);
 
 void aes128_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const uint8_t* plaintext,
