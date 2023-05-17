@@ -8,7 +8,6 @@
 
 namespace {
   static constexpr size_t xs = 8;
-
 } // namespace
 
 BOOST_AUTO_TEST_SUITE(universal_hashing);
@@ -89,7 +88,7 @@ BOOST_AUTO_TEST_CASE(test_zk_hash_192) {
     x[i] = bf192::random().as_internal();
   }
 
-  std::array<uint8_t, 16> digest;
+  std::array<uint8_t, 24> digest;
   zk_hash_192(digest.data(), r.data(), s.data(), t.data(), x.data(), xs);
   BOOST_TEST(digest != decltype(digest){});
 }
@@ -104,7 +103,7 @@ BOOST_AUTO_TEST_CASE(test_zk_hash_256) {
     x[i] = bf256::random().as_internal();
   }
 
-  std::array<uint8_t, 16> digest;
+  std::array<uint8_t, 32> digest;
   zk_hash_256(digest.data(), r.data(), s.data(), t.data(), x.data(), xs);
   BOOST_TEST(digest != decltype(digest){});
 }
