@@ -110,9 +110,9 @@ void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t
   }
 }
 
-void vector_reconstruction(const faest_paramset_t* params, const uint8_t* pdec,
-                           const uint8_t* com_j, const uint8_t* b, uint32_t lambdaBits,
-                           uint32_t NumVoleInstances, const vec_com_t* VecCom,
+// TODO: use pdec here !!!
+void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b,
+                           uint32_t lambdaBits, uint32_t NumVoleInstances,
                            vec_com_rec_t* VecComRec) {
 
   uint32_t lambda    = lambdaBits / 8;
@@ -163,7 +163,7 @@ void vector_reconstruction(const faest_paramset_t* params, const uint8_t* pdec,
 int vector_verify(const faest_paramset_t* params, const uint8_t* pdec, const uint8_t* com_j,
                   const uint8_t* b, uint32_t lambdaBits, uint32_t numVoleInstances,
                   const vec_com_t* VecCom, vec_com_rec_t* VecComRec) {
-  vector_reconstruction(params, pdec, com_j, b, lambdaBits, numVoleInstances, VecCom, VecComRec);
+  vector_reconstruction(pdec, com_j, b, lambdaBits, numVoleInstances, VecComRec);
   if (memcmp(VecCom->com, VecComRec->com,
              params->faest_param.k0 * (params->faest_param.seclvl / 4)) == 0) {
     return 1;

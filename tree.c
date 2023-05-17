@@ -47,7 +47,7 @@ int exists(tree_t* tree, size_t i) {
   return 0;
 }
 
-tree_t* createTree(faest_paramset_t* params, uint32_t numVoleInstances) {
+tree_t* createTree(const faest_paramset_t* params, uint32_t numVoleInstances) {
   tree_t* tree = malloc(sizeof(tree_t));
 
   tree->depth    = ceil_log2(numVoleInstances) + 1;
@@ -143,7 +143,7 @@ void hashSeed(uint8_t* digest, const uint8_t* inputSeed, uint8_t* salt, size_t r
   // HashSqueeze(&ctx, digest, 2 * params->seedSizeBytes);
 }
 
-void expandSeeds(tree_t* tree, faest_paramset_t* params) {
+void expandSeeds(tree_t* tree, const faest_paramset_t* params) {
   // uint8_t out[2 * MAX_SEED_SIZE_BYTES];
   uint8_t* out = malloc(2 * params->faest_param.seedSizeBytes);
 
@@ -162,7 +162,7 @@ void expandSeeds(tree_t* tree, faest_paramset_t* params) {
 
     // Here we use the AES ctr PRG to get the nodes, starting from root and
     // assign it to the tree
-    aes_prg(tree->nodes[i], iv, out, params->faest_param.lambda, params->faest_param.lambda * 2);
+    prg(tree->nodes[i], iv, out, params->faest_param.lambda, params->faest_param.lambda * 2);
 
     if (!tree->haveNode[2 * i + 1]) {
       memcpy(tree->nodes[2 * i + 1], out, params->faest_param.seedSizeBytes);
@@ -178,7 +178,8 @@ void expandSeeds(tree_t* tree, faest_paramset_t* params) {
   }
 }
 
-tree_t* generateSeeds(uint8_t* rootSeed, faest_paramset_t* params, uint32_t numVoleInstances) {
+tree_t* generateSeeds(const uint8_t* rootSeed, const faest_paramset_t* params,
+                      uint32_t numVoleInstances) {
   tree_t* tree = createTree(params, numVoleInstances);
 
   memcpy(tree->nodes[0], rootSeed, params->faest_param.seedSizeBytes);

@@ -17,7 +17,7 @@ void ConvertToVoleProver(uint32_t lambda, const uint8_t* sd, uint32_t numVoleIns
     memset(r + (getNodeIndex(depth, 0) * outLenBytes), 0, outLenBytes);
   } else {
     uint8_t* out = malloc(outLenBytes);
-    aes_prg(sd, iv, out, lambda, outLenBytes * 8);
+    prg(sd, iv, out, lambda, outLenBytes * 8);
     memcpy(r + (getNodeIndex(depth, 0) * outLenBytes), out, outLenBytes);
   }
 
@@ -25,7 +25,7 @@ void ConvertToVoleProver(uint32_t lambda, const uint8_t* sd, uint32_t numVoleIns
     uint8_t iv_[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     uint8_t* out    = malloc(outLenBytes);
-    aes_prg(sd + ((lambda / 8) * i), iv_, out, lambda, outLenBytes * 8);
+    prg(sd + ((lambda / 8) * i), iv_, out, lambda, outLenBytes * 8);
     memcpy(r + (outLenBytes * (getNodeIndex(depth, 0) + i)), out, outLenBytes);
   }
 
@@ -48,7 +48,7 @@ void ConvertToVoleProver(uint32_t lambda, const uint8_t* sd, uint32_t numVoleIns
 }
 
 void ConvertToVoleVerifier(uint32_t lambda, const uint8_t* sd, uint32_t numVoleInstances,
-                           uint32_t depth, uint32_t outLenBytes, uint8_t* u, uint8_t* v) {
+                           uint32_t depth, uint32_t outLenBytes, uint8_t* v) {
   uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   uint8_t* r     = malloc(getBinaryTreeNodeCount(numVoleInstances) * outLenBytes);
@@ -64,7 +64,7 @@ void ConvertToVoleVerifier(uint32_t lambda, const uint8_t* sd, uint32_t numVoleI
     memset(r + (getNodeIndex(depth, 0) * outLenBytes), 0, outLenBytes);
   } else {
     uint8_t* out = malloc(outLenBytes);
-    aes_prg(sd, iv, out, lambda, outLenBytes * 8);
+    prg(sd, iv, out, lambda, outLenBytes * 8);
     memcpy(r + (getNodeIndex(depth, 0) * outLenBytes), out, outLenBytes);
   }
 
@@ -72,7 +72,7 @@ void ConvertToVoleVerifier(uint32_t lambda, const uint8_t* sd, uint32_t numVoleI
     uint8_t iv_[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     uint8_t* out    = malloc(outLenBytes);
-    aes_prg(sd + ((lambda / 8) * i), iv_, out, lambda, outLenBytes * 8);
+    prg(sd + ((lambda / 8) * i), iv_, out, lambda, outLenBytes * 8);
     memcpy(r + (outLenBytes * (getNodeIndex(depth, 0) + i)), out, outLenBytes);
   }
 

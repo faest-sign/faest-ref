@@ -19,8 +19,15 @@ int runSeedTest(uint8_t* rootKey, faest_paramset_t* params, uint32_t numVoleInst
   printLeaves(tree);
 #endif
 
-  // TODO: make tests
-  return 1;
+  // TODO: make more tests
+  if (tree->numLeaves == (size_t)(1 << params->faest_param.k0) &&
+      tree->depth == ceil_log2(numVoleInstances) + 1 &&
+      tree->numNodes ==
+          (size_t)((1 << params->faest_param.k0) + (1 << params->faest_param.k0) - 1)) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 int main(void) {
@@ -38,8 +45,7 @@ int main(void) {
 
   for (faest_paramid_t p = FAEST_128S; p <= FAEST_256F; p++) {
     faest_paramset_t params = faest_get_paramset(p);
-
-    passed += runSeedTest(rootKey, &params, params.faest_param.k0);
+    passed += runSeedTest(rootKey, &params, (1 << params.faest_param.k0));
   }
   printf("Done, %lu of %lu tests passed\n", passed, tests);
   return 0;

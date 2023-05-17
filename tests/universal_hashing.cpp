@@ -11,7 +11,7 @@ namespace {
 
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(universal_hashing);
+BOOST_AUTO_TEST_SUITE(universal_hashing)
 
 BOOST_AUTO_TEST_CASE(test_vole_hash_128) {
   auto r0 = bf128::random().as_uint8();
@@ -109,4 +109,4 @@ BOOST_AUTO_TEST_CASE(test_zk_hash_256) {
   BOOST_TEST(digest != decltype(digest){});
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END()

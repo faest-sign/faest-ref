@@ -12,7 +12,7 @@ namespace {
   typedef std::array<uint8_t, 32> block256_t;
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(aes);
+BOOST_AUTO_TEST_SUITE(aes)
 
 BOOST_AUTO_TEST_CASE(test_aes128) {
   constexpr uint8_t key_128[16]       = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -116,4 +116,4 @@ BOOST_AUTO_TEST_CASE(test_increment_counter) {
   BOOST_TEST(iv == iv_expected);
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END()

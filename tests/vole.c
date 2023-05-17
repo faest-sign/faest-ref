@@ -85,14 +85,12 @@ int test_ConvertToVoleVerifier() {
   vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambdabits, &vecComRec,
               &vecCom);
 
-  int verify_ret =
-      vector_verify(&params, pdec, com_j, b, lambdabits, numVoleInstances, &vecCom, &vecComRec);
+  vector_verify(&params, pdec, com_j, b, lambdabits, numVoleInstances, &vecCom, &vecComRec);
 
   uint32_t outlen = 16;
-  uint8_t* u      = malloc(outlen);
   uint8_t* v      = malloc(outlen * depth);
   // TODO: we do not input veccomRec.m but instead something else defined in
-  ConvertToVoleVerifier(lambda, vecComRec.m, numVoleInstances, depth, outlen, u, v);
+  ConvertToVoleVerifier(lambda, vecComRec.m, numVoleInstances, depth, outlen, v);
 
 // TODO: write better test cases : )
 #if 0

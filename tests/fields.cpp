@@ -103,7 +103,7 @@ namespace {
   }
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(fields);
+BOOST_AUTO_TEST_SUITE(fields)
 
 BOOST_AUTO_TEST_CASE(test_bf8_add_invariants) {
   add_invariants<bf8>();
@@ -684,4 +684,4 @@ BOOST_AUTO_TEST_CASE(test_bf256_tv) {
   }
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END()

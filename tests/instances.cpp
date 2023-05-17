@@ -10,7 +10,7 @@ namespace {
   };
 } // namespace
 
-BOOST_AUTO_TEST_SUITE(instances);
+BOOST_AUTO_TEST_SUITE(instances)
 
 BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
@@ -29,4 +29,4 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
   }
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END()

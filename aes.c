@@ -316,7 +316,7 @@ void aes256_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const ui
   }
 }
 
-void aes_prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uint64_t outSizeBits) {
+void prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uint64_t outSizeBits) {
   aes_round_keys_t round_key;
   aes_block_t state;
   load_state(state, iv, 4);

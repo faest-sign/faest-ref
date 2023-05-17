@@ -17,6 +17,7 @@ int ChalDec(const uint8_t* chal, uint32_t i, uint32_t k0, uint32_t t0, uint32_t 
     hi = (t0 * k0) + ((t + 1) * k1) - 1;
   }
   memcpy(chalout, chal + lo, hi - lo);
+  return 1;
 }
 
 void voleCommit(uint8_t* rootKey, uint32_t lambda, uint32_t outlen, uint32_t tau, uint32_t k0,
@@ -31,7 +32,7 @@ void voleCommit(uint8_t* rootKey, uint32_t lambda, uint32_t outlen, uint32_t tau
   uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   uint8_t* out   = malloc(tau * (lambda / 8));
-  aes_prg(rootKey, iv, out, lambda, lambda * tau);
+  prg(rootKey, iv, out, lambda, lambda * tau);
   for (uint32_t i = 0; i < tau; i++) {
     keys[i] = malloc(lambda / 8);
     memcpy(keys[i], out + (i * (lambda / 8)), lambda / 8);
@@ -73,9 +74,8 @@ void voleCommit(uint8_t* rootKey, uint32_t lambda, uint32_t outlen, uint32_t tau
   H1_final(&h1_ctx, hcom, lambda / 4);
 }
 
-void voleVerify(const faest_paramset_t* params, const uint8_t* chal, const uint8_t** pdec,
-                const uint8_t** com_j, uint32_t lambda, uint32_t outlen, uint32_t tau, uint32_t k0,
-                uint32_t k1, uint8_t* hcom, uint8_t** u, uint8_t** q, vec_com_t** vecCom,
+void voleVerify(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint32_t lambda,
+                uint32_t outlen, uint32_t tau, uint32_t k0, uint32_t k1, uint8_t* hcom, uint8_t** q,
                 vec_com_rec_t** vecComRec) {
   uint32_t t0 = lambda % tau;
   uint32_t t1 = (lambda - (k0 * t0)) / k1;
@@ -94,14 +94,13 @@ void voleVerify(const faest_paramset_t* params, const uint8_t* chal, const uint8
     uint8_t* chalout = malloc(depth);
     ChalDec(chal, i, k0, t0, k1, t1, chalout);
     uint32_t idx = NumRec(depth, chalout);
-    vector_reconstruction(params, pdec[i], com_j[i], chalout, lambda, N, vecCom[i], vecComRec[i]);
+    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, N, vecComRec[i]);
     sd[i] = malloc(N * (lambda / 8));
     for (uint32_t j = 1; j < N; j++) {
       memcpy(sd[i] + (j * (lambda / 8)), vecComRec[i]->k + ((j * (lambda / 8)) ^ idx), lambda / 8);
     }
-    u[i] = malloc(outlen);
     q[i] = malloc(outlen * depth);
-    ConvertToVoleVerifier(lambda, sd[i], N, depth, outlen, u[i], q[i]);
+    ConvertToVoleVerifier(lambda, sd[i], N, depth, outlen, q[i]);
   }
   H1_context_t h1_ctx;
   switch (lambda) {

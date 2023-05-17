@@ -8,12 +8,12 @@ int test_ChalDec() {
   uint32_t t1             = params.faest_param.t1;
   uint8_t* chal           = malloc((k0 * t0) + (k1 * t1));
   uint8_t* chalout        = malloc((k0 * t0) + (k1 * t1));
-  uint32_t i              = 5; // between [0..t0+t1)
+  uint32_t idx            = 5; // between [0..t0+t1)
 
   for (uint32_t i = 0; i < (k0 * t0) + (k1 * t1); i++) {
     *(chal + i) = rand() % 2;
   }
-  ChalDec(chal, i, k0, t0, k1, t1, chalout);
+  ChalDec(chal, idx, k0, t0, k1, t1, chalout);
 
   if (memcmp(chalout, chal + 60, 11) == 0) {
     return 1;
@@ -96,11 +96,10 @@ int test_FAESTVoleVerify() {
       chal, 0,
       (params.faest_param.k0 * params.faest_param.t0) +
           (params.faest_param.k1 * params.faest_param.t1)); // always setting it to 0s for testing
-  uint8_t** q  = malloc(params.faest_param.t * sizeof(uint8_t*));
-  uint8_t** u_ = malloc(params.faest_param.t * sizeof(uint8_t*));
+  uint8_t** q = malloc(params.faest_param.t * sizeof(uint8_t*));
 
-  voleVerify(&params, chal, pdec, com_j, params.faest_param.lambda, outlen, params.faest_param.t,
-             params.faest_param.k0, params.faest_param.k1, hcom, u_, q, vecCom, vecComRec);
+  voleVerify(chal, pdec, com_j, params.faest_param.lambda, outlen, params.faest_param.t,
+             params.faest_param.k0, params.faest_param.k1, hcom, q, vecComRec);
 
   // TODO: make tests !!
   return 1;
