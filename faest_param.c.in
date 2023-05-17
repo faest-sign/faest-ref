@@ -29,7 +29,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
   return 0;
 }
 
-int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* sk, const uint8_t* pk) {
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk, const uint8_t* sk) {
   if (!sk || !pk) {
     return -1;
   }

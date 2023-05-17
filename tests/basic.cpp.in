@@ -16,5 +16,5 @@ BOOST_AUTO_TEST_CASE(test_@PARAM_L@_keygen) {
   std::array<uint8_t, FAEST_@PARAM@_PRIVATE_KEY_SIZE> sk;
 
   BOOST_TEST(faest_@PARAM_L@_keygen(pk.data(), sk.data()) == 0);
-  BOOST_TEST(faest_@PARAM_L@_validate_keypair(sk.data(), pk.data()) == 0);
+  BOOST_TEST(faest_@PARAM_L@_validate_keypair(pk.data(), sk.data()) == 0);
 }

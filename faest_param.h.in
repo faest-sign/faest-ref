@@ -75,7 +75,7 @@ FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* 
  *
  * @return Returns 0 if the key pair is valid, or a nonzero value indicating an error
  */
-FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* sk, const uint8_t* pk);
+FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk, const uint8_t* sk);
 
 /**
  * Clear data of a private key.
