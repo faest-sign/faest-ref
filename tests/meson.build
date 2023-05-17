@@ -44,6 +44,14 @@ if boost_test.found()
     test_deps += ntl
   endif
 
+  foreach parameter_set : parameter_sets
+    test_sources += configure_file(
+      input: 'basic.cpp.in',
+      output: 'faest_@0@_basic.cpp'.format(parameter_set.get('PARAM_L')),
+      configuration: parameter_set
+    )
+  endforeach
+
   extended_tests = executable('test_extended_tests', test_sources,
       dependencies: [libfaest_static_dependency, boost_test] + test_deps,
       include_directories: include_directories,
