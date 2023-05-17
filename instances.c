@@ -58,17 +58,14 @@ int faest_check_paramset(faest_paramset_t* paramset) {
   { 24, 16, 12, 220, 128, 16, 4 }
 #define AES_256_PARAMS                                                                             \
   { 32, 16, 14, 240, 128, 16, 4 }
-// FIXME
 #define AES_EM_128_PARAMS                                                                          \
   { 16, 16, 10, 200, 128, 16, 4 }
 #define AES_EM_192_PARAMS                                                                          \
-  { 24, 24, 12, 220, 128, 16, 4 }
+  { 24, 24, 12, 220, 192, 24, 6 }
 #define AES_EM_256_PARAMS                                                                          \
-  { 32, 32, 14, 240, 128, 16, 4 }
+  { 32, 32, 14, 240, 256, 32, 8 }
 #define AES_INVALID_PARAMS                                                                         \
   { 0, 0, 0, 0, 0, 0, 0 }
-// TODO: Later
-// const cipher_param_t AES_128_EM_PARAMS = {16,16,10,160,128,16,4};
 
 // TODO: Adapt the last three params (seedSizeBytes, saltSizeBytes, digestSizeBytes)
 // TODO: Number of open rounds, number of MPC rounds
@@ -185,32 +182,8 @@ static const faest_paramset_t faestInstances[PARAMETER_SET_MAX_INDEX] = {
     {AES_EM_256_PARAMS, FAEST_EM_256_F_PARAMS, FAEST_EM_256F}};
 
 faest_paramset_t faest_get_paramset(faest_paramid_t paramid) {
-  switch (paramid) {
-  case FAEST_128S:
-    return faestInstances[1];
-  case FAEST_128F:
-    return faestInstances[2];
-  case FAEST_192S:
-    return faestInstances[3];
-  case FAEST_192F:
-    return faestInstances[4];
-  case FAEST_256S:
-    return faestInstances[5];
-  case FAEST_256F:
-    return faestInstances[6];
-  case FAEST_EM_128S:
-    return faestInstances[7];
-  case FAEST_EM_128F:
-    return faestInstances[8];
-  case FAEST_EM_192S:
-    return faestInstances[9];
-  case FAEST_EM_192F:
-    return faestInstances[10];
-  case FAEST_EM_256S:
-    return faestInstances[11];
-  case FAEST_EM_256F:
-    return faestInstances[12];
-  default:
+  if (paramid == PARAMETER_SET_INVALID || paramid >= PARAMETER_SET_MAX_INDEX) {
     return faestInstances[0];
   }
+  return faestInstances[paramid];
 }
