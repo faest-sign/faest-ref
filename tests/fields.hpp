@@ -112,8 +112,11 @@ namespace {
     bf64_t value;
 
   public:
+    typedef std::array<uint8_t, 8> bytes;
+
     bf64() : value{0} {}
     bf64(bf64_t v) : value{v} {}
+    bf64(const bytes& b) : value(bf64_load(b.data())) {}
     bf64(const bf64&) = default;
 
     bf64& operator=(const bf64&) = default;
@@ -165,8 +168,8 @@ namespace {
       return value;
     }
 
-    std::array<uint8_t, 8> as_uint8() const {
-      std::array<uint8_t, 8> ret;
+    bytes as_uint8() const {
+      bytes ret;
       bf64_store(ret.data(), value);
       return ret;
     }
@@ -203,9 +206,12 @@ namespace {
     bf128_t value;
 
   public:
+    typedef std::array<uint8_t, 16> bytes;
+
     bf128() : value{0} {}
     bf128(uint64_t v) : value{{v, 0}} {}
     bf128(bf128_t v) : value{v} {}
+    bf128(const bytes& b) : value(bf128_load(b.data())) {}
     bf128(const bf128&) = default;
 
     bf128& operator=(const bf128&) = default;
@@ -262,8 +268,8 @@ namespace {
       return value;
     }
 
-    std::array<uint8_t, 16> as_uint8() const {
-      std::array<uint8_t, 16> ret;
+    bytes as_uint8() const {
+      bytes ret;
       bf128_store(ret.data(), value);
       return ret;
     }
@@ -301,9 +307,12 @@ namespace {
     bf192_t value;
 
   public:
+    typedef std::array<uint8_t, 24> bytes;
+
     bf192() : value{0} {}
     bf192(uint64_t v) : value{{v, 0, 0}} {}
     bf192(bf192_t v) : value{v} {}
+    bf192(const bytes& b) : value(bf192_load(b.data())) {}
     bf192(const bf192&) = default;
 
     bf192& operator=(const bf192&) = default;
@@ -364,8 +373,8 @@ namespace {
       return value;
     }
 
-    std::array<uint8_t, 24> as_uint8() const {
-      std::array<uint8_t, 24> ret;
+    bytes as_uint8() const {
+      bytes ret;
       bf192_store(ret.data(), value);
       return ret;
     }
@@ -403,9 +412,12 @@ namespace {
     bf256_t value;
 
   public:
+    typedef std::array<uint8_t, 32> bytes;
+
     bf256() : value{0} {}
     bf256(uint64_t v) : value{{v, 0, 0, 0}} {}
     bf256(bf256_t v) : value{v} {}
+    bf256(const bytes& b) : value(bf256_load(b.data())) {}
     bf256(const bf256&) = default;
 
     bf256& operator=(const bf256&) = default;
@@ -470,8 +482,8 @@ namespace {
       return value;
     }
 
-    std::array<uint8_t, 32> as_uint8() const {
-      std::array<uint8_t, 32> ret;
+    bytes as_uint8() const {
+      bytes ret;
       bf256_store(ret.data(), value);
       return ret;
     }
