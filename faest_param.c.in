@@ -36,8 +36,16 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* sk,
     return -1;
   }
 
-  // TODO
-  return 1;
+  const uint8_t* message = pk;
+  const uint8_t* expected_output = pk + @PK_SIZE@ / 2;
+
+  uint8_t output[@PK_SIZE@ / 2] = { 0 };
+  if (!faest_@PARAM_L@_owf(sk, message, output)) {
+    // zero bytes in SubBytes input
+    return 1;
+  }
+
+  return faest_timingsafe_bcmp(output, expected_output, sizeof(output)) == 0 ? 0 : 2;
 }
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* pk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len) {
