@@ -16,8 +16,8 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
     return -1;
   }
 
-  uint8_t* message = pk;
-  rand_bytes(message, @PK_SIZE@ / 2);
+  uint8_t* input = pk;
+  rand_bytes(input, @PK_SIZE@ / 2);
 
   uint8_t* output = pk + @PK_SIZE@ / 2;
 
@@ -25,7 +25,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
   while (!done) {
     rand_bytes(sk, FAEST_@PARAM@_PRIVATE_KEY_SIZE);
 
-    done = faest_@PARAM_L@_owf(sk, message, output);
+    done = faest_@PARAM_L@_owf(sk, input, output);
   }
 
   return 0;
@@ -36,11 +36,11 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* sk,
     return -1;
   }
 
-  const uint8_t* message = pk;
+  const uint8_t* input = pk;
   const uint8_t* expected_output = pk + @PK_SIZE@ / 2;
 
   uint8_t output[@PK_SIZE@ / 2] = { 0 };
-  if (!faest_@PARAM_L@_owf(sk, message, output)) {
+  if (!faest_@PARAM_L@_owf(sk, input, output)) {
     // zero bytes in SubBytes input
     return 1;
   }
