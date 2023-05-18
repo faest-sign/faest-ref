@@ -84,12 +84,12 @@ int test_FAESTVoleVerify() {
     }
     b[i] = malloc(depth);
     memset(b[i], 0, depth); // always opening the first leaf for this test
-    pdec[i]      = malloc(depth * params.faest_param.lambdaBytes);
-    com_j[i]     = malloc(params.faest_param.lambdaBytes * 2);
-    vecComRec[i] = malloc(sizeof(vec_com_rec_t));
+    pdec[i]  = malloc(depth * params.faest_param.lambdaBytes);
+    com_j[i] = malloc(params.faest_param.lambdaBytes * 2);
+    // vecComRec[i] = malloc(sizeof(vec_com_rec_t));
 
     vector_open(vecCom[i]->k, vecCom[i]->com, b[i], pdec[i], com_j[i], numVoleInstances,
-                params.faest_param.lambda, params.faest_param.lambdaBytes, vecComRec[i], vecCom[i]);
+                params.faest_param.lambdaBytes);
   }
 
   uint8_t* chal = malloc((params.faest_param.k0 * params.faest_param.t0) +

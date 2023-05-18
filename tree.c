@@ -186,6 +186,11 @@ tree_t* generateSeeds(const uint8_t* rootSeed, const faest_paramset_t* params,
   tree->haveNode[0] = 1;
   expandSeeds(tree, params);
 
+#if 0
+  printTree("tree", tree);
+  printTreeInfo("tree_info", tree);
+#endif
+
   return tree;
 }
 

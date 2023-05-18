@@ -50,8 +50,7 @@ void voleCommit(uint8_t* rootKey, uint32_t lambda, uint32_t lambdaBytes, uint32_
     ui[i]     = malloc(outlen);
     v[i]      = malloc(depth * outlen);
     vecCom[i] = malloc(sizeof(vec_com_t));
-    tree[i]   = malloc(sizeof(tree_t));
-    vector_commitment(keys[i], params, lambda, lambdaBytes, vecCom[i], tree[i], N);
+    vector_commitment(keys[i], params, lambda, lambdaBytes, vecCom[i], N);
     ConvertToVoleProver(lambda, lambdaBytes, vecCom[i]->sd, N, depth, outlen, ui[i], v[i]);
   }
   memcpy(u, ui, outlen);

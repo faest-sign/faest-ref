@@ -52,8 +52,7 @@ typedef struct faest_param_t {
   uint32_t pkSizeBytes;          // pk part of the signature
   uint32_t skSizeBytes;          // sk part of the signature
   uint32_t numOpenRounds;        // round opened
-  uint32_t seclvl;            // security level L1, L3 or L5 // TODO: redundant as lambda, remove it
-  uint32_t seedSizeBytes;     // size of the seed in bytes
+  uint32_t seedSizeBytes;        // size of the seed in bytes
   uint32_t saltSizeBytes;     // size of the salt in bytes (maybe not required !!) TODO remove it ??
   uint32_t h0digestSizeBytes; // size of the digest size in bytes for H_0
   uint32_t h1digestSizeBytes; // size of the digest size in bytes for H_0

@@ -67,104 +67,93 @@ int faest_check_paramset(faest_paramset_t* paramset) {
 #define AES_INVALID_PARAMS                                                                         \
   { 0, 0, 0, 0, 0, 0, 0 }
 
-// TODO: Adapt the last three params (seedSizeBytes, saltSizeBytes, digestSizeBytes)
-// TODO: Number of open rounds, number of MPC rounds
-// lambda, lenExpAESWitnessBits, t, k0, k1, t0, t1, pkSizeBytes, skSizeBytes, uint32_t
-// numOpenRounds,
-//                                                          seedSizeBytes, saltSizeBytes,
-//                                                          digestSizeBytes
+// TODO: Finilize the params in the end
 #define FAEST_128_S_PARAMS                                                                         \
   {                                                                                                \
     FAEST_128S_LAMBDA, FAEST_128S_LAMBDA_BYTES, FAEST_128S_ELL, FAEST_128S_TAU, FAEST_128S_K_0,    \
         FAEST_128S_K_1, FAEST_128S_T_0, FAEST_128S_T_1, FAEST_128S_PK_SIZE, FAEST_128S_SK_SIZE,    \
-        FAEST_128S_OPEN_ROUNDS, FAEST_128S_SEC_LVL, FAEST_128S_SEED_SIZE, FAEST_128S_SALT_SIZE,    \
+        FAEST_128S_OPEN_ROUNDS, FAEST_128S_SEED_SIZE, FAEST_128S_SALT_SIZE,                        \
         FAEST_128S_DIGEST_SIZE_H_0, FAEST_128S_DIGEST_SIZE_H_1                                     \
   }
 #define FAEST_128_F_PARAMS                                                                         \
   {                                                                                                \
     FAEST_128F_LAMBDA, FAEST_128F_LAMBDA_BYTES, FAEST_128F_ELL, FAEST_128F_TAU, FAEST_128F_K_0,    \
         FAEST_128F_K_1, FAEST_128F_T_0, FAEST_128F_T_1, FAEST_128F_PK_SIZE, FAEST_128F_SK_SIZE,    \
-        FAEST_128F_OPEN_ROUNDS, FAEST_128F_SEC_LVL, FAEST_128F_SEED_SIZE, FAEST_128F_SALT_SIZE,    \
+        FAEST_128F_OPEN_ROUNDS, FAEST_128F_SEED_SIZE, FAEST_128F_SALT_SIZE,                        \
         FAEST_128F_DIGEST_SIZE_H_0, FAEST_128F_DIGEST_SIZE_H_1                                     \
   }
 #define FAEST_192_S_PARAMS                                                                         \
   {                                                                                                \
     FAEST_192S_LAMBDA, FAEST_192S_LAMBDA_BYTES, FAEST_192S_ELL, FAEST_192S_TAU, FAEST_192S_K_0,    \
         FAEST_192S_K_1, FAEST_192S_T_0, FAEST_192S_T_1, FAEST_192S_PK_SIZE, FAEST_192S_SK_SIZE,    \
-        FAEST_192S_OPEN_ROUNDS, FAEST_192S_SEC_LVL, FAEST_192S_SEED_SIZE, FAEST_192S_SALT_SIZE,    \
+        FAEST_192S_OPEN_ROUNDS, FAEST_192S_SEED_SIZE, FAEST_192S_SALT_SIZE,                        \
         FAEST_192S_DIGEST_SIZE_H_0, FAEST_192S_DIGEST_SIZE_H_1                                     \
   }
 #define FAEST_192_F_PARAMS                                                                         \
   {                                                                                                \
     FAEST_192F_LAMBDA, FAEST_192F_LAMBDA_BYTES, FAEST_192F_ELL, FAEST_192F_TAU, FAEST_192F_K_0,    \
         FAEST_192F_K_1, FAEST_192F_T_0, FAEST_192F_T_1, FAEST_192F_PK_SIZE, FAEST_192F_SK_SIZE,    \
-        FAEST_192F_OPEN_ROUNDS, FAEST_192F_SEC_LVL, FAEST_192F_SEED_SIZE, FAEST_192F_SALT_SIZE,    \
+        FAEST_192F_OPEN_ROUNDS, FAEST_192F_SEED_SIZE, FAEST_192F_SALT_SIZE,                        \
         FAEST_192F_DIGEST_SIZE_H_0, FAEST_192F_DIGEST_SIZE_H_1                                     \
   }
 #define FAEST_256_S_PARAMS                                                                         \
   {                                                                                                \
     FAEST_256S_LAMBDA, FAEST_256S_LAMBDA_BYTES, FAEST_256S_ELL, FAEST_256S_TAU, FAEST_256S_K_0,    \
         FAEST_256S_K_1, FAEST_256S_T_0, FAEST_256S_T_1, FAEST_256S_PK_SIZE, FAEST_256S_SK_SIZE,    \
-        FAEST_256S_OPEN_ROUNDS, FAEST_256S_SEC_LVL, FAEST_256S_SEED_SIZE, FAEST_256S_SALT_SIZE,    \
+        FAEST_256S_OPEN_ROUNDS, FAEST_256S_SEED_SIZE, FAEST_256S_SALT_SIZE,                        \
         FAEST_256S_DIGEST_SIZE_H_0, FAEST_256S_DIGEST_SIZE_H_1                                     \
   }
 #define FAEST_256_F_PARAMS                                                                         \
   {                                                                                                \
     FAEST_256F_LAMBDA, FAEST_256F_LAMBDA_BYTES, FAEST_256F_ELL, FAEST_256F_TAU, FAEST_256F_K_0,    \
         FAEST_256F_K_1, FAEST_256F_T_0, FAEST_256F_T_1, FAEST_256F_PK_SIZE, FAEST_256F_SK_SIZE,    \
-        FAEST_256F_OPEN_ROUNDS, FAEST_256F_SEC_LVL, FAEST_256F_SEED_SIZE, FAEST_256F_SALT_SIZE,    \
+        FAEST_256F_OPEN_ROUNDS, FAEST_256F_SEED_SIZE, FAEST_256F_SALT_SIZE,                        \
         FAEST_256F_DIGEST_SIZE_H_0, FAEST_256F_DIGEST_SIZE_H_1                                     \
   }
 #define FAEST_EM_128_S_PARAMS                                                                      \
   {                                                                                                \
     FAEST_EM_128S_LAMBDA, FAEST_EM_128S_ELL, FAEST_EM_128S_TAU, FAEST_EM_128S_K_0,                 \
         FAEST_EM_128S_K_1, FAEST_EM_128S_T_0, FAEST_EM_128S_T_1, FAEST_EM_128S_PK_SIZE,            \
-        FAEST_EM_128S_SK_SIZE, FAEST_EM_128S_OPEN_ROUNDS, FAEST_EM_128S_SEC_LVL,                   \
-        FAEST_EM_128S_SEED_SIZE, FAEST_EM_128S_SALT_SIZE, FAEST_EM_128S_DIGEST_SIZE_H_0,           \
-        FAEST_EM_128S_DIGEST_SIZE_H_1                                                              \
+        FAEST_EM_128S_SK_SIZE, FAEST_EM_128S_OPEN_ROUNDS, FAEST_EM_128S_SEED_SIZE,                 \
+        FAEST_EM_128S_SALT_SIZE, FAEST_EM_128S_DIGEST_SIZE_H_0, FAEST_EM_128S_DIGEST_SIZE_H_1      \
   }
 #define FAEST_EM_128_F_PARAMS                                                                      \
   {                                                                                                \
     FAEST_EM_128F_LAMBDA, FAEST_EM_128F_ELL, FAEST_EM_128F_TAU, FAEST_EM_128F_K_0,                 \
         FAEST_EM_128F_K_1, FAEST_EM_128F_T_0, FAEST_EM_128F_T_1, FAEST_EM_128F_PK_SIZE,            \
-        FAEST_EM_128F_SK_SIZE, FAEST_EM_128F_OPEN_ROUNDS, FAEST_EM_128F_SEC_LVL,                   \
-        FAEST_EM_128F_SEED_SIZE, FAEST_EM_128F_SALT_SIZE, FAEST_EM_128F_DIGEST_SIZE_H_0,           \
-        FAEST_EM_128F_DIGEST_SIZE_H_1                                                              \
+        FAEST_EM_128F_SK_SIZE, FAEST_EM_128F_OPEN_ROUNDS, FAEST_EM_128F_SEED_SIZE,                 \
+        FAEST_EM_128F_SALT_SIZE, FAEST_EM_128F_DIGEST_SIZE_H_0, FAEST_EM_128F_DIGEST_SIZE_H_1      \
   }
 #define FAEST_EM_192_S_PARAMS                                                                      \
   {                                                                                                \
     FAEST_EM_192S_LAMBDA, FAEST_EM_192S_ELL, FAEST_EM_192S_TAU, FAEST_EM_192S_K_0,                 \
         FAEST_EM_192S_K_1, FAEST_EM_192S_T_0, FAEST_EM_192S_T_1, FAEST_EM_192S_PK_SIZE,            \
-        FAEST_EM_192S_SK_SIZE, FAEST_EM_192S_OPEN_ROUNDS, FAEST_EM_192S_SEC_LVL,                   \
-        FAEST_EM_192S_SEED_SIZE, FAEST_EM_192S_SALT_SIZE, FAEST_EM_192S_DIGEST_SIZE_H_0,           \
-        FAEST_EM_192S_DIGEST_SIZE_H_1                                                              \
+        FAEST_EM_192S_SK_SIZE, FAEST_EM_192S_OPEN_ROUNDS, FAEST_EM_192S_SEED_SIZE,                 \
+        FAEST_EM_192S_SALT_SIZE, FAEST_EM_192S_DIGEST_SIZE_H_0, FAEST_EM_192S_DIGEST_SIZE_H_1      \
   }
 #define FAEST_EM_192_F_PARAMS                                                                      \
   {                                                                                                \
     FAEST_EM_192F_LAMBDA, FAEST_EM_192F_ELL, FAEST_EM_192F_TAU, FAEST_EM_192F_K_0,                 \
         FAEST_EM_192F_K_1, FAEST_EM_192F_T_0, FAEST_EM_192F_T_1, FAEST_EM_192F_PK_SIZE,            \
-        FAEST_EM_192F_SK_SIZE, FAEST_EM_192F_OPEN_ROUNDS, FAEST_EM_192F_SEC_LVL,                   \
-        FAEST_EM_192F_SEED_SIZE, FAEST_EM_192F_SALT_SIZE, FAEST_EM_192F_DIGEST_SIZE_H_0,           \
-        FAEST_EM_192F_DIGEST_SIZE_H_1                                                              \
+        FAEST_EM_192F_SK_SIZE, FAEST_EM_192F_OPEN_ROUNDS, FAEST_EM_192F_SEED_SIZE,                 \
+        FAEST_EM_192F_SALT_SIZE, FAEST_EM_192F_DIGEST_SIZE_H_0, FAEST_EM_192F_DIGEST_SIZE_H_1      \
   }
 #define FAEST_EM_256_S_PARAMS                                                                      \
   {                                                                                                \
     FAEST_EM_256S_LAMBDA, FAEST_EM_256S_ELL, FAEST_EM_256S_TAU, FAEST_EM_256S_K_0,                 \
         FAEST_EM_256S_K_1, FAEST_EM_256S_T_0, FAEST_EM_256S_T_1, FAEST_EM_256S_PK_SIZE,            \
-        FAEST_EM_256S_SK_SIZE, FAEST_EM_256S_OPEN_ROUNDS, FAEST_EM_256S_SEC_LVL,                   \
-        FAEST_EM_256S_SEED_SIZE, FAEST_EM_256S_SALT_SIZE, FAEST_EM_256S_DIGEST_SIZE_H_0,           \
-        FAEST_EM_256S_DIGEST_SIZE_H_1                                                              \
+        FAEST_EM_256S_SK_SIZE, FAEST_EM_256S_OPEN_ROUNDS, FAEST_EM_256S_SEED_SIZE,                 \
+        FAEST_EM_256S_SALT_SIZE, FAEST_EM_256S_DIGEST_SIZE_H_0, FAEST_EM_256S_DIGEST_SIZE_H_1      \
   }
 #define FAEST_EM_256_F_PARAMS                                                                      \
   {                                                                                                \
     FAEST_EM_256F_LAMBDA, FAEST_EM_256F_ELL, FAEST_EM_256F_TAU, FAEST_EM_256F_K_0,                 \
         FAEST_EM_256F_K_1, FAEST_EM_256F_T_0, FAEST_EM_256F_T_1, FAEST_EM_256F_PK_SIZE,            \
-        FAEST_EM_256F_SK_SIZE, FAEST_EM_256F_OPEN_ROUNDS, FAEST_EM_256F_SEC_LVL,                   \
-        FAEST_EM_256F_SEED_SIZE, FAEST_EM_256F_SALT_SIZE, FAEST_EM_256F_DIGEST_SIZE_H_0,           \
-        FAEST_EM_256F_DIGEST_SIZE_H_1                                                              \
+        FAEST_EM_256F_SK_SIZE, FAEST_EM_256F_OPEN_ROUNDS, FAEST_EM_256F_SEED_SIZE,                 \
+        FAEST_EM_256F_SALT_SIZE, FAEST_EM_256F_DIGEST_SIZE_H_0, FAEST_EM_256F_DIGEST_SIZE_H_1      \
   }
 #define FAEST_INVALID_PARAMS                                                                       \
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
 static const faest_paramset_t faestInstances[PARAMETER_SET_MAX_INDEX] = {
     {AES_INVALID_PARAMS, FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},

@@ -8,12 +8,11 @@ int test_ConvertToVoleProver() {
 
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
-  vec_com_rec_t vecComRec;
+  // vec_com_rec_t vecComRec;
   uint32_t numVoleInstances = (1 << params.faest_param.k0);
   uint32_t lambda           = params.faest_param.lambda;
   uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
-  tree_t* tree              = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, tree, numVoleInstances);
+  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
 
   uint32_t leafIndex = 7;
   uint32_t depth     = ceil_log2(numVoleInstances);
@@ -22,8 +21,7 @@ int test_ConvertToVoleProver() {
 
   uint8_t* pdec  = malloc(depth * lambdaBytes);
   uint8_t* com_j = malloc(lambdaBytes * 2);
-  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambda, lambdaBytes,
-              &vecComRec, &vecCom);
+  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambdaBytes);
 
   uint32_t outlen = 16;
   uint8_t* u      = malloc(outlen);
@@ -70,8 +68,7 @@ int test_ConvertToVoleVerifier() {
   uint32_t numVoleInstances = (1 << params.faest_param.k0);
   uint32_t lambda           = params.faest_param.lambda;
   uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
-  tree_t* tree              = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, tree, numVoleInstances);
+  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
 
   uint32_t leafIndex = 7;
   uint32_t depth     = ceil_log2(numVoleInstances);
@@ -80,10 +77,9 @@ int test_ConvertToVoleVerifier() {
 
   uint8_t* pdec  = malloc(depth * lambdaBytes);
   uint8_t* com_j = malloc(lambdaBytes * 2);
-  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambda, lambdaBytes,
-              &vecComRec, &vecCom);
+  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambdaBytes);
 
-  vector_verify(pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, &vecCom, &vecComRec);
+  vector_verify(pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, &vecComRec, &vecCom.h);
 
   uint32_t outlen = 16;
   uint8_t* v      = malloc(outlen * depth);
