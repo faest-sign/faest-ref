@@ -86,7 +86,6 @@ int test_FAESTVoleVerify() {
     memset(b[i], 0, depth); // always opening the first leaf for this test
     pdec[i]  = malloc(depth * params.faest_param.lambdaBytes);
     com_j[i] = malloc(params.faest_param.lambdaBytes * 2);
-    // vecComRec[i] = malloc(sizeof(vec_com_rec_t));
 
     vector_open(vecCom[i]->k, vecCom[i]->com, b[i], pdec[i], com_j[i], numVoleInstances,
                 params.faest_param.lambdaBytes);
@@ -94,18 +93,34 @@ int test_FAESTVoleVerify() {
 
   uint8_t* chal = malloc((params.faest_param.k0 * params.faest_param.t0) +
                          (params.faest_param.k1 * params.faest_param.t1));
-  memset(
-      chal, 0,
-      (params.faest_param.k0 * params.faest_param.t0) +
-          (params.faest_param.k1 * params.faest_param.t1)); // always setting it to 0s for testing
+  // always setting it to 0s for testing
+  memset(chal, 0,
+         (params.faest_param.k0 * params.faest_param.t0) +
+             (params.faest_param.k1 * params.faest_param.t1));
   uint8_t** q = malloc(params.faest_param.t * sizeof(uint8_t*));
 
+  uint8_t* hcomRec = malloc(params.faest_param.lambdaBytes);
+
   voleVerify(chal, pdec, com_j, params.faest_param.lambda, params.faest_param.lambdaBytes, outlen,
-             params.faest_param.t, params.faest_param.k0, params.faest_param.k1, hcom, q,
+             params.faest_param.t, params.faest_param.k0, params.faest_param.k1, hcomRec, q,
              vecComRec);
 
-  // TODO: make tests !!
-  return 1;
+#if 1
+  for (uint32_t i = 0; i < params.faest_param.lambdaBytes; i++) {
+    printf("%.2x", *(hcom + i));
+  }
+  printf(" ");
+  for (uint32_t i = 0; i < params.faest_param.lambdaBytes; i++) {
+    printf("%.2x", *(hcomRec + i));
+  }
+  printf("\n");
+#endif
+
+  // TODO: check why the hcoms do not match !!
+  printf("TODO: check why the hcoms do not match !!\n");
+  if (memcmp(hcom, hcomRec, params.faest_param.lambdaBytes) == 0) {
+    return 1;
+  }
 }
 
 int main(void) {

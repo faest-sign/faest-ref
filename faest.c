@@ -91,10 +91,13 @@ void voleVerify(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint32_t l
       depth = k1;
       N     = (1 << k1);
     }
-    // TODO: use the pdec here as described in the specification !!
+
     uint8_t* chalout = malloc(depth);
     ChalDec(chal, i, k0, t0, k1, t1, chalout);
     uint32_t idx = NumRec(depth, chalout);
+    pdec[i]      = malloc(depth * lambdaBytes);
+    com_j[i]     = malloc(lambdaBytes * 2);
+    vecComRec[i] = malloc(sizeof(vec_com_rec_t));
     vector_reconstruction(pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, vecComRec[i]);
     sd[i] = malloc(N * lambdaBytes);
     for (uint32_t j = 1; j < N; j++) {
