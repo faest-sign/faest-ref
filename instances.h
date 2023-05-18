@@ -36,6 +36,7 @@ typedef struct cipher_param_t {
 
 typedef struct faest_param_t {
   uint32_t lambda;               // lambda
+  uint32_t lambdaBytes;          // lambda in bytes
   uint32_t lenExpAESWitnessBits; // l
   uint32_t t;                    // t, number of VOLE instances (number of repetition)
   uint32_t k0;                   // k0 = ceil(lambda/t)

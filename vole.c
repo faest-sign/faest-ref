@@ -1,7 +1,8 @@
 #include "vole.h"
 
-void ConvertToVoleProver(uint32_t lambda, const uint8_t* sd, uint32_t numVoleInstances,
-                         uint32_t depth, uint32_t outLenBytes, uint8_t* u, uint8_t* v) {
+void ConvertToVoleProver(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
+                         uint32_t numVoleInstances, uint32_t depth, uint32_t outLenBytes,
+                         uint8_t* u, uint8_t* v) {
 
   uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -11,13 +12,13 @@ void ConvertToVoleProver(uint32_t lambda, const uint8_t* sd, uint32_t numVoleIns
   keep it consistent like k_0,0 being the root and k_d,0 being the first leaf by manipulating it
   with getNodeIndex() due to ease of understanding... */
 
-  uint8_t* allZeros = malloc(lambda / 8);
-  memset(allZeros, 0, lambda / 8);
-  if (memcmp(sd, allZeros, lambda / 8) == 0) {
+  uint8_t* allZeros = malloc(lambdaBytes);
+  memset(allZeros, 0, lambdaBytes);
+  if (memcmp(sd, allZeros, lambdaBytes) == 0) {
     memset(r + (getNodeIndex(depth, 0) * outLenBytes), 0, outLenBytes);
   } else {
     uint8_t* out = malloc(outLenBytes);
-    prg(sd, iv, out, lambda, outLenBytes * 8);
+    prg(sd, iv, out, lambda, outLenBytes);
     memcpy(r + (getNodeIndex(depth, 0) * outLenBytes), out, outLenBytes);
   }
 
@@ -25,7 +26,7 @@ void ConvertToVoleProver(uint32_t lambda, const uint8_t* sd, uint32_t numVoleIns
     uint8_t iv_[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     uint8_t* out    = malloc(outLenBytes);
-    prg(sd + ((lambda / 8) * i), iv_, out, lambda, outLenBytes * 8);
+    prg(sd + (lambdaBytes * i), iv_, out, lambda, outLenBytes);
     memcpy(r + (outLenBytes * (getNodeIndex(depth, 0) + i)), out, outLenBytes);
   }
 
@@ -47,8 +48,9 @@ void ConvertToVoleProver(uint32_t lambda, const uint8_t* sd, uint32_t numVoleIns
   memcpy(u, r, outLenBytes);
 }
 
-void ConvertToVoleVerifier(uint32_t lambda, const uint8_t* sd, uint32_t numVoleInstances,
-                           uint32_t depth, uint32_t outLenBytes, uint8_t* v) {
+void ConvertToVoleVerifier(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
+                           uint32_t numVoleInstances, uint32_t depth, uint32_t outLenBytes,
+                           uint8_t* v) {
   uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   uint8_t* r     = malloc(getBinaryTreeNodeCount(numVoleInstances) * outLenBytes);
@@ -58,13 +60,13 @@ void ConvertToVoleVerifier(uint32_t lambda, const uint8_t* sd, uint32_t numVoleI
   with getNodeIndex() due to ease of understanding... */
 
   // TODO: stupid way to check,, change it !!
-  uint8_t* allZeros = malloc(outLenBytes);
-  memset(allZeros, 0, outLenBytes);
-  if (memcmp(sd, allZeros, lambda) == 0) {
+  uint8_t* allZeros = malloc(lambdaBytes);
+  memset(allZeros, 0, lambdaBytes);
+  if (memcmp(sd, allZeros, lambdaBytes) == 0) {
     memset(r + (getNodeIndex(depth, 0) * outLenBytes), 0, outLenBytes);
   } else {
     uint8_t* out = malloc(outLenBytes);
-    prg(sd, iv, out, lambda, outLenBytes * 8);
+    prg(sd, iv, out, lambda, outLenBytes);
     memcpy(r + (getNodeIndex(depth, 0) * outLenBytes), out, outLenBytes);
   }
 
@@ -72,7 +74,7 @@ void ConvertToVoleVerifier(uint32_t lambda, const uint8_t* sd, uint32_t numVoleI
     uint8_t iv_[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     uint8_t* out    = malloc(outLenBytes);
-    prg(sd + ((lambda / 8) * i), iv_, out, lambda, outLenBytes * 8);
+    prg(sd + (lambdaBytes * i), iv_, out, lambda, outLenBytes);
     memcpy(r + (outLenBytes * (getNodeIndex(depth, 0) + i)), out, outLenBytes);
   }
 

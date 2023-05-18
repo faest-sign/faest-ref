@@ -162,7 +162,7 @@ void expandSeeds(tree_t* tree, const faest_paramset_t* params) {
 
     // Here we use the AES ctr PRG to get the nodes, starting from root and
     // assign it to the tree
-    prg(tree->nodes[i], iv, out, params->faest_param.lambda, params->faest_param.lambda * 2);
+    prg(tree->nodes[i], iv, out, params->faest_param.lambda, params->faest_param.lambda / 4);
 
     if (!tree->haveNode[2 * i + 1]) {
       memcpy(tree->nodes[2 * i + 1], out, params->faest_param.seedSizeBytes);

@@ -20,9 +20,10 @@ int ChalDec(const uint8_t* chal, uint32_t i, uint32_t k0, uint32_t t0, uint32_t 
   return 1;
 }
 
-void voleCommit(uint8_t* rootKey, uint32_t lambda, uint32_t outlen, uint32_t tau, uint32_t k0,
-                uint32_t k1, const faest_paramset_t* params, uint8_t* hcom, vec_com_t** vecCom,
-                uint8_t** c, uint8_t* u, uint8_t** v) {
+void voleCommit(uint8_t* rootKey, uint32_t lambda, uint32_t lambdaBytes, uint32_t outlen,
+                uint32_t tau, uint32_t k0, uint32_t k1, const faest_paramset_t* params,
+                uint8_t* hcom, vec_com_t** vecCom, uint8_t** c, uint8_t* u, uint8_t** v) {
+
   tree_t** tree = malloc(sizeof(tree_t*) * tau);
   uint8_t** ui  = malloc(params->faest_param.t * sizeof(uint8_t*));
   uint32_t N;
@@ -31,11 +32,11 @@ void voleCommit(uint8_t* rootKey, uint32_t lambda, uint32_t outlen, uint32_t tau
 
   uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  uint8_t* out   = malloc(tau * (lambda / 8));
-  prg(rootKey, iv, out, lambda, lambda * tau);
+  uint8_t* out   = malloc(tau * lambdaBytes);
+  prg(rootKey, iv, out, lambda, lambdaBytes * tau);
   for (uint32_t i = 0; i < tau; i++) {
-    keys[i] = malloc(lambda / 8);
-    memcpy(keys[i], out + (i * (lambda / 8)), lambda / 8);
+    keys[i] = malloc(lambdaBytes);
+    memcpy(keys[i], out + (i * lambdaBytes), lambdaBytes);
   }
 
   for (uint32_t i = 0; i < tau; i++) {
@@ -50,11 +51,12 @@ void voleCommit(uint8_t* rootKey, uint32_t lambda, uint32_t outlen, uint32_t tau
     v[i]      = malloc(depth * outlen);
     vecCom[i] = malloc(sizeof(vec_com_t));
     tree[i]   = malloc(sizeof(tree_t));
-    vector_commitment(keys[i], params, vecCom[i], tree[i], N);
-    ConvertToVoleProver(lambda, vecCom[i]->sd, N, depth, outlen, ui[i], v[i]);
+    vector_commitment(keys[i], params, lambda, lambdaBytes, vecCom[i], tree[i], N);
+    ConvertToVoleProver(lambda, lambdaBytes, vecCom[i]->sd, N, depth, outlen, ui[i], v[i]);
   }
   memcpy(u, ui, outlen);
   for (uint32_t i = 1; i < tau; i++) {
+    c[i] = malloc(outlen);
     xorUint8Arr(u, ui[i], c[i], outlen);
   }
 
@@ -68,15 +70,15 @@ void voleCommit(uint8_t* rootKey, uint32_t lambda, uint32_t outlen, uint32_t tau
     break;
   }
   for (uint32_t i = 0; i < tau; i++) {
-    H1_update(&h1_ctx, vecCom[i]->com, lambda / 4);
+    H1_update(&h1_ctx, vecCom[i]->com, lambdaBytes * 2);
   }
   /* Generating final commitment from all the com commitments */
-  H1_final(&h1_ctx, hcom, lambda / 4);
+  H1_final(&h1_ctx, hcom, lambdaBytes * 2);
 }
 
 void voleVerify(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint32_t lambda,
-                uint32_t outlen, uint32_t tau, uint32_t k0, uint32_t k1, uint8_t* hcom, uint8_t** q,
-                vec_com_rec_t** vecComRec) {
+                uint32_t lambdaBytes, uint32_t outlen, uint32_t tau, uint32_t k0, uint32_t k1,
+                uint8_t* hcom, uint8_t** q, vec_com_rec_t** vecComRec) {
   uint32_t t0 = lambda % tau;
   uint32_t t1 = (lambda - (k0 * t0)) / k1;
   uint32_t depth;
@@ -94,13 +96,13 @@ void voleVerify(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint32_t l
     uint8_t* chalout = malloc(depth);
     ChalDec(chal, i, k0, t0, k1, t1, chalout);
     uint32_t idx = NumRec(depth, chalout);
-    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, N, vecComRec[i]);
-    sd[i] = malloc(N * (lambda / 8));
+    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, vecComRec[i]);
+    sd[i] = malloc(N * lambdaBytes);
     for (uint32_t j = 1; j < N; j++) {
-      memcpy(sd[i] + (j * (lambda / 8)), vecComRec[i]->k + ((j * (lambda / 8)) ^ idx), lambda / 8);
+      memcpy(sd[i] + (j * lambdaBytes), vecComRec[i]->k + ((j * lambdaBytes) ^ idx), lambdaBytes);
     }
     q[i] = malloc(outlen * depth);
-    ConvertToVoleVerifier(lambda, sd[i], N, depth, outlen, q[i]);
+    ConvertToVoleVerifier(lambda, lambdaBytes, sd[i], N, depth, outlen, q[i]);
   }
   H1_context_t h1_ctx;
   switch (lambda) {
@@ -112,8 +114,8 @@ void voleVerify(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint32_t l
     break;
   }
   for (uint32_t i = 0; i < tau; i++) {
-    H1_update(&h1_ctx, vecComRec[i]->com, lambda / 4);
+    H1_update(&h1_ctx, vecComRec[i]->com, lambdaBytes * 2);
   }
   /* Generating final commitment from all the com commitments */
-  H1_final(&h1_ctx, hcom, lambda / 4);
+  H1_final(&h1_ctx, hcom, lambdaBytes * 2);
 }

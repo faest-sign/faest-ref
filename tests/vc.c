@@ -42,7 +42,8 @@ int test_vector_commitment() {
   vec_com_t vecCom;
   tree_t* tree              = malloc(sizeof(tree_t));
   uint32_t numVoleInstances = (1 << params.faest_param.k0);
-  vector_commitment(rootKey, &params, &vecCom, tree, numVoleInstances);
+  vector_commitment(rootKey, &params, params.faest_param.lambda, params.faest_param.lambdaBytes,
+                    &vecCom, tree, numVoleInstances);
 
 #if 0
   uint32_t treeDepth = ceil_log2(numVoleInstances) + 1;
@@ -143,21 +144,20 @@ int test_vector_open_128() {
   vec_com_t vecCom;
   vec_com_rec_t vecComRec;
   uint32_t numVoleInstances = 16;
-  uint32_t lambdabits       = params.faest_param.lambda;
+  uint32_t lambda           = params.faest_param.lambda;
+  uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
   tree_t* tree              = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, &vecCom, tree, numVoleInstances);
+  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, tree, numVoleInstances);
 
   uint32_t leafIndex = 7;
   uint32_t depth     = ceil_log2(numVoleInstances);
   uint8_t* b         = malloc(depth);
   BitDec(leafIndex, depth, b);
 
-  uint32_t lambda  = lambdabits / 8;
-  uint32_t lambda2 = lambdabits / 4;
-  uint8_t* pdec    = malloc(depth * lambda);
-  uint8_t* com_j   = malloc(lambda2);
-  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambdabits, &vecComRec,
-              &vecCom);
+  uint8_t* pdec  = malloc(depth * lambdaBytes);
+  uint8_t* com_j = malloc(lambdaBytes * 2);
+  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambda, lambdaBytes,
+              &vecComRec, &vecCom);
 
 #if 0
   printTree("tree_128_t_11", tree);
@@ -209,11 +209,11 @@ int test_vector_open_128() {
   printf("\n");
 #endif
 
-  if (memcmp(vecCom.com + (leafIndex * lambda2), com_j, lambda2) == 0 &&
-      memcmp(pdec, tree->nodes[1], lambda) == 0 &&
-      memcmp(pdec + lambda, tree->nodes[4], lambda) == 0 &&
-      memcmp(pdec + (lambda * 2), tree->nodes[10], lambda) == 0 &&
-      memcmp(pdec + (lambda * 3), tree->nodes[22], lambda) == 0) {
+  if (memcmp(vecCom.com + (leafIndex * lambdaBytes * 2), com_j, lambdaBytes * 2) == 0 &&
+      memcmp(pdec, tree->nodes[1], lambdaBytes) == 0 &&
+      memcmp(pdec + lambdaBytes, tree->nodes[4], lambdaBytes) == 0 &&
+      memcmp(pdec + (lambdaBytes * 2), tree->nodes[10], lambdaBytes) == 0 &&
+      memcmp(pdec + (lambdaBytes * 3), tree->nodes[22], lambdaBytes) == 0) {
     return 0;
   } else {
     return 1;
@@ -229,21 +229,20 @@ int test_vector_open_192() {
   vec_com_t vecCom;
   vec_com_rec_t vecComRec;
   uint32_t numVoleInstances = 16;
-  uint32_t lambdabits       = params.faest_param.lambda;
+  uint32_t lambda           = params.faest_param.lambda;
+  uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
   tree_t* tree              = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, &vecCom, tree, numVoleInstances);
+  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, tree, numVoleInstances);
 
   uint32_t leafIndex = 10;
   uint32_t depth     = ceil_log2(numVoleInstances);
   uint8_t* b         = malloc(depth);
   BitDec(leafIndex, depth, b);
 
-  uint32_t lambda  = lambdabits / 8;
-  uint32_t lambda2 = lambdabits / 4;
-  uint8_t* pdec    = malloc(depth * lambda);
-  uint8_t* com_j   = malloc(lambda2);
-  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambdabits, &vecComRec,
-              &vecCom);
+  uint8_t* pdec  = malloc(depth * lambdaBytes);
+  uint8_t* com_j = malloc(lambdaBytes * 2);
+  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambda, lambdaBytes,
+              &vecComRec, &vecCom);
 
 #if 0
   printTree("tree_128_t_11", tree);
@@ -294,11 +293,11 @@ int test_vector_open_192() {
   }
 #endif
 
-  if (memcmp(vecCom.com + (leafIndex * lambda2), com_j, lambda2) == 0 &&
-      memcmp(pdec, tree->nodes[2], lambda) == 0 &&
-      memcmp(pdec + lambda, tree->nodes[5], lambda) == 0 &&
-      memcmp(pdec + (lambda * 2), tree->nodes[12], lambda) == 0 &&
-      memcmp(pdec + (lambda * 3), tree->nodes[25], lambda) == 0) {
+  if (memcmp(vecCom.com + (leafIndex * lambdaBytes * 2), com_j, lambdaBytes * 2) == 0 &&
+      memcmp(pdec, tree->nodes[2], lambdaBytes) == 0 &&
+      memcmp(pdec + lambdaBytes, tree->nodes[5], lambdaBytes) == 0 &&
+      memcmp(pdec + (lambdaBytes * 2), tree->nodes[12], lambdaBytes) == 0 &&
+      memcmp(pdec + (lambdaBytes * 3), tree->nodes[25], lambdaBytes) == 0) {
     return 0;
   } else {
     return 1;
@@ -314,21 +313,20 @@ int test_vector_open_256() {
   vec_com_t vecCom;
   vec_com_rec_t vecComRec;
   uint32_t numVoleInstances = 16;
-  uint32_t lambdabits       = params.faest_param.lambda;
+  uint32_t lambda           = params.faest_param.lambda;
+  uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
   tree_t* tree              = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, &vecCom, tree, numVoleInstances);
+  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, tree, numVoleInstances);
 
   uint32_t leafIndex = 7;
   uint32_t depth     = ceil_log2(numVoleInstances);
   uint8_t* b         = malloc(depth);
   BitDec(leafIndex, depth, b);
 
-  uint32_t lambda  = lambdabits / 8;
-  uint32_t lambda2 = lambdabits / 4;
-  uint8_t* pdec    = malloc(depth * lambda);
-  uint8_t* com_j   = malloc(lambda2);
-  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambdabits, &vecComRec,
-              &vecCom);
+  uint8_t* pdec  = malloc(depth * lambdaBytes);
+  uint8_t* com_j = malloc(lambdaBytes * 2);
+  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambda, lambdaBytes,
+              &vecComRec, &vecCom);
 
 #if 0
   printTree("tree_128_t_11", tree);
@@ -379,11 +377,11 @@ int test_vector_open_256() {
   }
 #endif
 
-  if (memcmp(vecCom.com + (leafIndex * lambda2), com_j, lambda2) == 0 &&
-      memcmp(pdec, tree->nodes[1], lambda) == 0 &&
-      memcmp(pdec + lambda, tree->nodes[4], lambda) == 0 &&
-      memcmp(pdec + (lambda * 2), tree->nodes[10], lambda) == 0 &&
-      memcmp(pdec + (lambda * 3), tree->nodes[22], lambda) == 0) {
+  if (memcmp(vecCom.com + (leafIndex * (lambdaBytes * 2)), com_j, lambdaBytes * 2) == 0 &&
+      memcmp(pdec, tree->nodes[1], lambdaBytes) == 0 &&
+      memcmp(pdec + lambdaBytes, tree->nodes[4], lambdaBytes) == 0 &&
+      memcmp(pdec + (lambdaBytes * 2), tree->nodes[10], lambdaBytes) == 0 &&
+      memcmp(pdec + (lambdaBytes * 3), tree->nodes[22], lambdaBytes) == 0) {
     return 0;
   } else {
     return 1;
@@ -400,24 +398,23 @@ int test_vector_reconstruct_and_verify() {
   vec_com_t vecCom;
   vec_com_rec_t vecComRec;
   uint32_t numVoleInstances = params.faest_param.k0;
-  uint32_t lambdabits       = params.faest_param.lambda;
+  uint32_t lambda           = params.faest_param.lambda;
+  uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
   tree_t* tree              = malloc(sizeof(tree_t));
-  vector_commitment(rootKey, &params, &vecCom, tree, numVoleInstances);
+  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, tree, numVoleInstances);
 
   uint32_t leafIndex = 7;
   uint32_t depth     = ceil_log2(numVoleInstances);
   uint8_t* b         = malloc(depth);
   BitDec(leafIndex, depth, b);
 
-  uint32_t lambda  = lambdabits / 8;
-  uint32_t lambda2 = lambdabits / 4;
-  uint8_t* pdec    = malloc(depth * lambda);
-  uint8_t* com_j   = malloc(lambda2);
-  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambdabits, &vecComRec,
-              &vecCom);
+  uint8_t* pdec  = malloc(depth * lambdaBytes);
+  uint8_t* com_j = malloc(lambdaBytes * 2);
+  vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambda, lambdaBytes,
+              &vecComRec, &vecCom);
 
   int verify_ret =
-      vector_verify(&params, pdec, com_j, b, lambdabits, numVoleInstances, &vecCom, &vecComRec);
+      vector_verify(pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, &vecCom, &vecComRec);
 
 #if 0
   printTree("tree_128_t_11", tree);

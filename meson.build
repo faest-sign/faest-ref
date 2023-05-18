@@ -77,6 +77,7 @@ parameter_sets = []
 # parameter set: FAEST-128s
 param_128s = configuration_data()
 param_128s.set('LAMBDA', 128)
+param_128s.set('LAMBDA_BYTES', 16)
 param_128s.set('PARAM', '128S')
 param_128s.set('PARAM_L', '128s')
 param_128s.set('ELL', 1600)
@@ -99,6 +100,7 @@ parameter_sets += param_128s
 # parameter set: FAEST-128f
 param_128f = configuration_data()
 param_128f.set('LAMBDA', 128)
+param_128f.set('LAMBDA_BYTES', 16)
 param_128f.set('PARAM', '128F')
 param_128f.set('PARAM_L', '128f')
 param_128f.set('ELL', 1600)
@@ -121,6 +123,7 @@ parameter_sets += param_128f
 # parameter set: FAEST-192s
 param_192s = configuration_data()
 param_192s.set('LAMBDA', 192)
+param_192s.set('LAMBDA_BYTES', 24)
 param_192s.set('PARAM', '192S')
 param_192s.set('PARAM_L', '192s')
 param_192s.set('ELL', 3328)
@@ -143,6 +146,7 @@ parameter_sets += param_192s
 # parameter set: FAEST-192f
 param_192f = configuration_data()
 param_192f.set('LAMBDA', 192)
+param_192f.set('LAMBDA_BYTES', 24)
 param_192f.set('PARAM', '192F')
 param_192f.set('PARAM_L', '192f')
 param_192f.set('ELL', 3328)
@@ -165,6 +169,7 @@ parameter_sets += param_192f
 # parameter set: FAEST-256s
 param_256s = configuration_data()
 param_256s.set('LAMBDA', 256)
+param_256s.set('LAMBDA_BYTES', 32)
 param_256s.set('PARAM', '256S')
 param_256s.set('PARAM_L', '256s')
 param_256s.set('ELL', 4000)
@@ -187,6 +192,7 @@ parameter_sets += param_256s
 # parameter set: FAEST-256f
 param_256f = configuration_data()
 param_256f.set('LAMBDA', 256)
+param_256f.set('LAMBDA_BYTES', 32)
 param_256f.set('PARAM', '256F')
 param_256f.set('PARAM_L', '256f')
 param_256f.set('ELL', 4000)
