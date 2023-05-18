@@ -8,35 +8,45 @@
 
 #include "faest_@PARAM_L@.h"
 #include "compat.h"
+#include "randomness.h"
+#include "owf.h"
 
-int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(const uint8_t* pk, const uint8_t* sk) {
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
   if (!pk || !sk) {
     return -1;
   }
 
-  // TODO
-  return 1;
+  uint8_t* input = pk;
+  uint8_t* output = pk + @PK_SIZE@ / 2;
+  rand_bytes(input, @PK_SIZE@ / 2);
+
+  bool done = false;
+  while (!done) {
+    rand_bytes(sk, FAEST_@PARAM@_PRIVATE_KEY_SIZE);
+    done = faest_@PARAM_L@_owf(sk, input, output);
+  }
+
+  return 0;
 }
 
-int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sk_to_pk(const uint8_t* sk, uint8_t* pk) {
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk, const uint8_t* sk) {
   if (!sk || !pk) {
     return -1;
   }
 
-  // TODO
-  return 1;
-}
+  const uint8_t* input = pk;
+  const uint8_t* expected_output = pk + @PK_SIZE@ / 2;
 
-int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* sk, const uint8_t* pk) {
-  if (!sk || !pk) {
-    return -1;
+  uint8_t output[@PK_SIZE@ / 2] = { 0 };
+  if (!faest_@PARAM_L@_owf(sk, input, output)) {
+    // zero bytes in SubBytes input
+    return 1;
   }
 
-  // TODO
-  return 1;
+  return faest_timingsafe_bcmp(output, expected_output, sizeof(output)) == 0 ? 0 : 2;
 }
 
-int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len) {
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* pk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len) {
   if (!sk || !signature || !signature_len) {
     return -1;
   }

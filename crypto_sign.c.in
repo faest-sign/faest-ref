@@ -13,14 +13,18 @@
 #include <string.h>
 
 int crypto_sign_keypair(unsigned char* pk, unsigned char* sk) {
-  return faest_@PARAM_L@_keygen(pk, sk);
+  int ret = faest_@PARAM_L@_keygen(pk, sk);
+  if (ret == 0) {
+    memcpy(sk + @SK_SIZE@, pk, @PK_SIZE@);
+  }
+  return ret;
 }
 
 int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned char* m,
                 unsigned long long mlen, const unsigned char* sk) {
   *smlen = mlen + FAEST_@PARAM@_MAX_SIGNATURE_SIZE;
   memmove(sm, m, mlen);
-  return faest_@PARAM_L@_sign(sk, sm, mlen, sm + mlen, NULL);
+  return faest_@PARAM_L@_sign(sk, sk + @SK_SIZE@, sm, mlen, sm + mlen, NULL);
 }
 
 int crypto_sign_open(unsigned char* m, unsigned long long* mlen, const unsigned char* sm,

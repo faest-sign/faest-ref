@@ -29,20 +29,18 @@ extern "C" {
  *
  * @return Returns 0 for success, or a nonzero value indicating an error.
  */
-FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(const uint8_t* pk, const uint8_t* sk);
+FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk);
 
 /**
  * Signature function.
  * Signs a message with the given keypair.
  *
  * @param[in] sk      The signer's private key.
+ * @param[in] pk      The signer's public key.
  * @param[in] message The message to be signed.
  * @param[in] message_len The length of the message, in bytes.
  * @param[out] signature A buffer to hold the signature. The specific max number of
- * bytes required for a parameter set is given by @PARAM_L@_signature_size(). Note
- * that the length of each signature varies slightly, for the parameter sets
- * using the FS transform.  The parameter sets using the Unruh transform have a
- * fixed length.
+ * bytes required for a parameter set is given by @PARAM_L@_signature_size().
  * @param[in,out] signature_len The length of the provided signature buffer.
  * On success, this is set to the number of bytes written to the signature buffer.
  *
@@ -50,7 +48,7 @@ FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(const uint8_t* 
  *
  * @see faest_verify(), faest_keygen(), faest_signature_size()
  */
-FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len);
+FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* pk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len);
 
 /**
  * Verification function.
@@ -77,7 +75,7 @@ FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* 
  *
  * @return Returns 0 if the key pair is valid, or a nonzero value indicating an error
  */
-FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* sk, const uint8_t* pk);
+FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk, const uint8_t* sk);
 
 /**
  * Clear data of a private key.
@@ -85,15 +83,6 @@ FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const
  * @param[out] key The private key to clear
  */
 FAEST_EXPORT void FAEST_CALLING_CONVENTION faest_@PARAM_L@_clear_private_key(uint8_t* key);
-
-/**
- * Compute public key from private key.
- *
- * @param[in] sk The private key
- * @param[out] pk The public key to be populated
- * @return Returns 0 on success, or a nonzero value indicating an error.
- **/
-FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sk_to_pk(const uint8_t* sk, uint8_t* pk);
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,13 @@ typedef enum faest_paramid_t {
   FAEST_192F              = 4,
   FAEST_256S              = 5,
   FAEST_256F              = 6,
-  PARAMETER_SET_MAX_INDEX = 7
+  FAEST_EM_128S           = 7,
+  FAEST_EM_128F           = 8,
+  FAEST_EM_192S           = 9,
+  FAEST_EM_192F           = 10,
+  FAEST_EM_256S           = 11,
+  FAEST_EM_256F           = 12,
+  PARAMETER_SET_MAX_INDEX = 13
 } faest_paramid_t;
 
 // Param for the cipher that is used,, AES in this case
