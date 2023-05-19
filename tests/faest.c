@@ -56,15 +56,16 @@ int test_FAESTVoleVerify() {
 
   uint32_t outlen = 16;
 
-  uint8_t* hcom      = malloc(params.faest_param.lambdaBytes);
-  vec_com_t** vecCom = malloc(params.faest_param.t * (sizeof(vec_com_t*)));
-  uint8_t** c        = malloc((params.faest_param.t * sizeof(uint8_t*)) - 1);
-  uint8_t* u         = malloc(outlen);
-  uint8_t** v        = malloc(params.faest_param.t * sizeof(uint8_t*));
+  uint32_t lambda      = params.faest_param.lambda;
+  uint32_t lambdaBytes = params.faest_param.lambdaBytes;
+  uint8_t* hcom        = malloc(lambdaBytes);
+  vec_com_t** vecCom   = malloc(params.faest_param.t * (sizeof(vec_com_t*)));
+  uint8_t** c          = malloc((params.faest_param.t * sizeof(uint8_t*)) - 1);
+  uint8_t* u           = malloc(outlen);
+  uint8_t** v          = malloc(params.faest_param.t * sizeof(uint8_t*));
 
-  voleCommit(rootKey, params.faest_param.lambda, params.faest_param.lambdaBytes, outlen,
-             params.faest_param.t, params.faest_param.k0, params.faest_param.k1, &params, hcom,
-             vecCom, c, u, v);
+  voleCommit(rootKey, lambda, lambdaBytes, outlen, params.faest_param.t, params.faest_param.k0,
+             params.faest_param.k1, &params, hcom, vecCom, c, u, v);
 
   // TODO: this shouldn't be here !!
   uint8_t** pdec            = malloc(params.faest_param.t * sizeof(uint8_t*));
@@ -83,42 +84,55 @@ int test_FAESTVoleVerify() {
       numVoleInstances = 1 << depth;
     }
     b[i] = malloc(depth);
-    memset(b[i], 0, depth); // always opening the first leaf for this test
-    pdec[i]  = malloc(depth * params.faest_param.lambdaBytes);
-    com_j[i] = malloc(params.faest_param.lambdaBytes * 2);
+    memset(b[i], 0, depth); // TODO: LOOKOUT !! always opening the first leaf for this test
+    pdec[i]  = malloc(depth * lambdaBytes);
+    com_j[i] = malloc(lambdaBytes * 2);
 
     vector_open(vecCom[i]->k, vecCom[i]->com, b[i], pdec[i], com_j[i], numVoleInstances,
-                params.faest_param.lambdaBytes);
+                lambdaBytes);
   }
 
   uint8_t* chal = malloc((params.faest_param.k0 * params.faest_param.t0) +
                          (params.faest_param.k1 * params.faest_param.t1));
-  // always setting it to 0s for testing
+  // TODO: LOOKOUT !! always setting it to 0s for testing
   memset(chal, 0,
          (params.faest_param.k0 * params.faest_param.t0) +
              (params.faest_param.k1 * params.faest_param.t1));
   uint8_t** q = malloc(params.faest_param.t * sizeof(uint8_t*));
 
-  uint8_t* hcomRec = malloc(params.faest_param.lambdaBytes);
+  uint8_t* hcomRec = malloc(lambdaBytes);
 
-  voleVerify(chal, pdec, com_j, params.faest_param.lambda, params.faest_param.lambdaBytes, outlen,
-             params.faest_param.t, params.faest_param.k0, params.faest_param.k1, hcomRec, q,
-             vecComRec);
+  voleVerify(chal, pdec, com_j, lambda, lambdaBytes, outlen, params.faest_param.t,
+             params.faest_param.k0, params.faest_param.k1, hcomRec, q, vecComRec);
 
-#if 1
-  for (uint32_t i = 0; i < params.faest_param.lambdaBytes; i++) {
+#if 0
+  for (uint z = 0; z < params.faest_param.t; z++) {
+    printf("%d) printing vecCom.com / vecComRed.com\n", z);
+    for (uint32_t i = 0; i < params.faest_param.k0; i++) {
+      for (uint32_t j = 0; j < lambdaBytes * 2; j++) {
+        printf("%.2x", *(vecCom[z]->com + j + (i * lambdaBytes * 2)));
+      }
+      printf(" ");
+      for (uint32_t j = 0; j < lambdaBytes * 2; j++) {
+        printf("%.2x", *(vecComRec[z]->com + j + (i * lambdaBytes * 2)));
+      }
+      if (i == 0) {
+        printf("<-- com_j*");
+      }
+      printf("\n");
+    }
+  }
+  printf("\n");
+  for (uint32_t i = 0; i < lambdaBytes; i++) {
     printf("%.2x", *(hcom + i));
   }
   printf(" ");
-  for (uint32_t i = 0; i < params.faest_param.lambdaBytes; i++) {
+  for (uint32_t i = 0; i < lambdaBytes; i++) {
     printf("%.2x", *(hcomRec + i));
   }
   printf("\n");
 #endif
-
-  // TODO: check why the hcoms do not match !!
-  printf("TODO: check why the hcoms do not match !!\n");
-  if (memcmp(hcom, hcomRec, params.faest_param.lambdaBytes) == 0) {
+  if (memcmp(hcom, hcomRec, lambdaBytes) == 0) {
     return 1;
   }
 }

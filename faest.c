@@ -24,8 +24,7 @@ void voleCommit(uint8_t* rootKey, uint32_t lambda, uint32_t lambdaBytes, uint32_
                 uint32_t tau, uint32_t k0, uint32_t k1, const faest_paramset_t* params,
                 uint8_t* hcom, vec_com_t** vecCom, uint8_t** c, uint8_t* u, uint8_t** v) {
 
-  tree_t** tree = malloc(sizeof(tree_t*) * tau);
-  uint8_t** ui  = malloc(params->faest_param.t * sizeof(uint8_t*));
+  uint8_t** ui = malloc(params->faest_param.t * sizeof(uint8_t*));
   uint32_t N;
   uint32_t depth;
   uint8_t** keys = malloc(tau * sizeof(uint8_t*));
@@ -95,10 +94,9 @@ void voleVerify(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint32_t l
     uint8_t* chalout = malloc(depth);
     ChalDec(chal, i, k0, t0, k1, t1, chalout);
     uint32_t idx = NumRec(depth, chalout);
-    pdec[i]      = malloc(depth * lambdaBytes);
-    com_j[i]     = malloc(lambdaBytes * 2);
     vecComRec[i] = malloc(sizeof(vec_com_rec_t));
-    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, vecComRec[i]);
+
+    vector_reconstruction(pdec[i], com_j[i], chal, lambda, lambdaBytes, N, vecComRec[i]);
     sd[i] = malloc(N * lambdaBytes);
     for (uint32_t j = 1; j < N; j++) {
       memcpy(sd[i] + (j * lambdaBytes), vecComRec[i]->k + ((j * lambdaBytes) ^ idx), lambdaBytes);
