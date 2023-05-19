@@ -32,4 +32,12 @@ void H2_init(H2_context_t* ctx, unsigned int security_param);
 void H2_update(H2_context_t* ctx, const uint8_t* src, size_t len);
 void H2_final(H2_context_t* ctx, uint8_t* digest, size_t len);
 
+// implementation for H_3
+
+typedef hash_context H3_context_t;
+
+void H3_init(H3_context_t* ctx, unsigned int security_param);
+void H3_update(H3_context_t* ctx, const uint8_t* src, size_t len);
+void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len);
+
 #endif

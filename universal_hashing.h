@@ -21,6 +21,8 @@ void vole_hash_192(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8
                    const uint8_t* t, const uint8_t* x, size_t ell);
 void vole_hash_256(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8_t* s,
                    const uint8_t* t, const uint8_t* x, size_t ell);
+void vole_hash(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8_t* s, const uint8_t* t,
+               const uint8_t* x, size_t ell, uint32_t lambda);
 
 void zk_hash_128(uint8_t* h, const uint8_t* r, const uint8_t* s, const uint8_t* t, const bf128_t* x,
                  size_t ell);

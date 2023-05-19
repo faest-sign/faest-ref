@@ -43,14 +43,7 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, u
   uint8_t** leaves = getLeaves(tree);
   for (uint32_t i = 0; i < numVoleInstances; i++) {
     H0_context_t h0_ctx;
-    switch (lambda) {
-    case 128:
-      H0_init(&h0_ctx, 128);
-      break;
-    default:
-      H0_init(&h0_ctx, 256);
-      break;
-    }
+    H0_init(&h0_ctx, lambda);
     H0_update(&h0_ctx, leaves[i], lambdaBytes);
     H0_final(&h0_ctx, vecCom->sd + (i * lambdaBytes), lambdaBytes,
              vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
@@ -58,14 +51,7 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, u
 
   // Step: 6
   H1_context_t h1_ctx;
-  switch (lambda) {
-  case 128:
-    H1_init(&h1_ctx, 128);
-    break;
-  default:
-    H1_init(&h1_ctx, 256);
-    break;
-  }
+  H1_init(&h1_ctx, lambda);
   for (uint32_t i = 0; i < numVoleInstances; i++) {
     H1_update(&h1_ctx, vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
@@ -134,14 +120,7 @@ void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint
     /* Reconstruct the coms and the m from the ks while keeping k_j* secret */
     if (j != leafIndex) {
       H0_context_t h0_ctx;
-      switch (lambda) {
-      case 128:
-        H0_init(&h0_ctx, 128);
-        break;
-      default:
-        H0_init(&h0_ctx, 256);
-        break;
-      }
+      H0_init(&h0_ctx, lambda);
       H0_update(&h0_ctx, vecComRec->k + (getNodeIndex(depth, j) * lambdaBytes), lambdaBytes);
       H0_final(&h0_ctx, vecComRec->m + (lambdaBytes * j), lambdaBytes,
                vecComRec->com + (lambdaBytes * 2 * j), lambdaBytes * 2);
@@ -150,14 +129,7 @@ void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint
   // Step: 12
   memcpy(vecComRec->com + (lambdaBytes * 2 * leafIndex), com_j, lambdaBytes * 2);
   H1_context_t h1_ctx;
-  switch (lambda) {
-  case 128:
-    H1_init(&h1_ctx, 128);
-    break;
-  default:
-    H1_init(&h1_ctx, 256);
-    break;
-  }
+  H1_init(&h1_ctx, lambda);
   H1_update(&h1_ctx, vecComRec->com, lambdaBytes * 2 * numVoleInstances);
   H1_final(&h1_ctx, vecComRec->h, lambdaBytes * 2);
 }

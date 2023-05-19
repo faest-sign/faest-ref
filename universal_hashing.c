@@ -95,6 +95,21 @@ void vole_hash_256(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8
   memcpy(h + 256 / 8, tmp, UNIVERSAL_HASH_B);
 }
 
+void vole_hash(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8_t* s, const uint8_t* t,
+               const uint8_t* x, size_t ell, uint32_t lambda) {
+  switch (lambda) {
+  case 256:
+    vole_hash_256(h, r0, r1, s, t, x, ell);
+    break;
+  case 192:
+    vole_hash_192(h, r0, r1, s, t, x, ell);
+    break;
+  default:
+    vole_hash_128(h, r0, r1, s, t, x, ell);
+    break;
+  }
+}
+
 void zk_hash_128(uint8_t* h, const uint8_t* r, const uint8_t* s, const uint8_t* t, const bf128_t* x,
                  size_t ell) {
   bf128_t b_s       = bf128_load(s);

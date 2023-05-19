@@ -26,4 +26,7 @@ void xorUint8Arr(const uint8_t* a, const uint8_t* b, uint8_t* out, uint32_t len)
   }
 }
 
-// TODO: some function for uint8* array ptr given block size and index
+// TODO: use this everywhere !!
+uint8_t* getUint8ArrPtr(uint8_t* in, uint32_t unitSize, uint32_t idx) {
+  return (in + (unitSize * idx));
+}
