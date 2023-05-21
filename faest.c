@@ -1,5 +1,79 @@
 #include "faest.h"
 
+// TODO: Using the simple rand(), set to some secure sampling
+void keyGen(uint32_t lambda, uint32_t lambdaBytes, uint8_t* sk, uint8_t* pk) {
+
+  uint8_t* x0    = malloc(16);
+  uint8_t* out_0 = malloc(16);
+  for (uint32_t i = 0; i < 16; i++) {
+    x0[i] = rand() % UINT8_MAX;
+  }
+
+  uint8_t* x1    = malloc(16);
+  uint8_t* out_1 = malloc(16);
+  if (lambda == 192 || lambda == 256) {
+    for (uint32_t i = 0; i < 16; i++) {
+      x1[i] = rand() % UINT8_MAX;
+    }
+  }
+
+  bool zeroInpSB = false;
+  uint8_t* key   = malloc(lambdaBytes);
+  uint8_t* y;
+  switch (lambda) {
+  case 256:
+    while (zeroInpSB == false) {
+      for (uint32_t i = 0; i < lambdaBytes; i++) {
+        key[i] = rand() % UINT8_MAX;
+      }
+      if (owf_256(key, x0, out_0) == true && owf_256(key, x1, out_1) == true) {
+        y = malloc(32);
+        memcpy(y, out_0, 16);
+        memcpy(y + 16, out_1, 16);
+        zeroInpSB = true;
+      }
+    }
+    break;
+  case 192:
+    while (zeroInpSB == false) {
+      for (uint32_t i = 0; i < lambdaBytes; i++) {
+        key[i] = rand() % UINT8_MAX;
+      }
+      if (owf_192(key, x0, out_0) == true && owf_192(key, x1, out_1) == true) {
+        y = malloc(32);
+        memcpy(y, out_0, 16);
+        memcpy(y + 16, out_1, 16);
+        zeroInpSB = true;
+      }
+    }
+    break;
+  default:
+    while (zeroInpSB == false) {
+      for (uint32_t i = 0; i < lambdaBytes; i++) {
+        key[i] = rand() % UINT8_MAX;
+      }
+      if (owf_128(key, x0, out_0) == true) {
+        y = malloc(16);
+        memcpy(y, out_0, 16);
+        zeroInpSB = true;
+      }
+    }
+  }
+  sk = malloc(lambdaBytes);
+  memcpy(sk, key, lambdaBytes);
+
+  if (lambda == 128) {
+    pk = malloc(32);
+    memcpy(pk, x0, 16);
+    memcpy(pk, y, 16);
+  } else {
+    pk = malloc(64);
+    memcpy(pk, x0, 16);
+    memcpy(pk + 16, x1, 16);
+    memcpy(pk + 32, y, 32);
+  }
+}
+
 // TODO: is l in bytes or bits ?? The code is most likely designed for bytes
 void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_paramset_t* params,
           uint32_t l, signature_t* signature) {

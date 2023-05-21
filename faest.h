@@ -1,5 +1,8 @@
+#include <stdlib.h>
+
 #include "vole.h"
 #include "universal_hashing.h"
+#include "owf.h"
 
 typedef struct signature_t {
   uint8_t* hcom;
@@ -13,5 +16,10 @@ typedef struct signature_t {
   uint8_t** com_j;
 } signature_t;
 
+void keyGen(uint32_t lambda, uint32_t lambdaBytes, uint8_t* sk, uint8_t* pk);
+
 void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_paramset_t* params,
           uint32_t l, signature_t* signature);
+
+int verify(const uint8_t* msg, const uint8_t* pk, const faest_paramset_t* params, uint32_t l,
+           const signature_t* signature)
