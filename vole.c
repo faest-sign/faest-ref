@@ -16,6 +16,7 @@ int ChalDec(const uint8_t* chal, uint32_t i, uint32_t k0, uint32_t t0, uint32_t 
     lo = (t0 * k0) + (t * k1);
     hi = (t0 * k0) + ((t + 1) * k1) - 1;
   }
+  // TODO: this should be always 8...
   memcpy(chalout, chal + lo, hi - lo);
   return 1;
 }
