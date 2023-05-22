@@ -3,6 +3,7 @@
 #include "vole.h"
 #include "universal_hashing.h"
 #include "owf.h"
+#include "faest_aes.h"
 
 typedef struct signature_t {
   uint8_t* hcom;

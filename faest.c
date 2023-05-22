@@ -1,5 +1,11 @@
 #include "faest.h"
 
+// TODO: TEST EVERYTHING HERE !!!
+
+// TODO: Do not pass lambdaBytes everywhere, compute it in the function....
+
+// TODO: change q to Q where applicable
+
 // TODO: Using the simple rand(), set to some secure sampling
 void keyGen(uint32_t lambda, uint32_t lambdaBytes, uint8_t* sk, uint8_t* pk) {
 
@@ -74,7 +80,7 @@ void keyGen(uint32_t lambda, uint32_t lambdaBytes, uint8_t* sk, uint8_t* pk) {
   }
 }
 
-// TODO: is l in bytes or bits ?? The code is most likely designed for bytes
+// TODO: l is in bits, change it everywhere
 void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_paramset_t* params,
           uint32_t l, signature_t* signature) {
 
@@ -163,7 +169,7 @@ void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_
   // Step: 12..13
   // TODO
   uint8_t* w;
-  aesExtendWitness(lambda, sk, in, w);
+  aes_extend_witness(lambda, sk, in, w);
   uint32_t l;
   xorUint8Arr(w, u, signature->d, l);
 
@@ -197,7 +203,7 @@ void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_
 
   // Step: 18
   // TODO
-  aesProve(w, u, v, in, out, chal_2, lambda, tau, l, signature->a_tilde, signature->b_tilde);
+  aes_prove(w, u, v, in, out, chal_2, lambda, tau, l, signature->a_tilde, signature->b_tilde);
 
   // Step: 19
   // TODO
@@ -236,7 +242,7 @@ void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_
   }
 }
 
-// TODO: is l in bytes or bits ?? The code is most likely designed for bytes
+// TODO: l is in bits, change it everywhere
 int verify(const uint8_t* msg, const uint8_t* pk, const faest_paramset_t* params, uint32_t l,
            const signature_t* signature) {
 
@@ -361,7 +367,7 @@ int verify(const uint8_t* msg, const uint8_t* pk, const faest_paramset_t* params
       b = 1;
     }
     // TODO: the bits are represented as uint8,, hopefully its not too bad
-    uint8_t* chalout = malloc(8);
+    uint8_t* chalout;
     ChalDec(chal_3, i, params->faest_param.k0, params->faest_param.t0, params->faest_param.k1,
             params->faest_param.t1, chalout);
     d_tilde[i] = malloc(8);

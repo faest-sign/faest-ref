@@ -1,5 +1,7 @@
 #include "vole.h"
 
+// TODO: Do not pass lambdaBytes everywhere, compute it in the function....
+
 int ChalDec(const uint8_t* chal, uint32_t i, uint32_t k0, uint32_t t0, uint32_t k1, uint32_t t1,
             uint8_t* chalout) {
   uint32_t lo;
@@ -16,11 +18,13 @@ int ChalDec(const uint8_t* chal, uint32_t i, uint32_t k0, uint32_t t0, uint32_t 
     lo = (t0 * k0) + (t * k1);
     hi = (t0 * k0) + ((t + 1) * k1) - 1;
   }
+  chalout = malloc(hi - lo);
   // TODO: this should be always 8...
   memcpy(chalout, chal + lo, hi - lo);
   return 1;
 }
 
+// TODO: outlen (l) is in bits, change it everywhere
 void voleCommit(const uint8_t* rootKey, uint32_t lambda, uint32_t lambdaBytes, uint32_t outlen,
                 const faest_paramset_t* params, uint8_t* hcom, vec_com_t** vecCom, uint8_t** c,
                 uint8_t* u, uint8_t** v) {
