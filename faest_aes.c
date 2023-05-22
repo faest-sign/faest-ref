@@ -227,6 +227,49 @@ int aes_key_schedule_constraints(uint32_t lambda, const uint8_t* w, const uint8_
   return 0; // error
 }
 
+int aes_cipher_forward(uint32_t lambda, uint32_t m, const uint8_t* in, uint8_t Mtag, uint8_t Mkey,
+                       const uint8_t* delta, uint8_t* y) {
+
+  uint32_t lambdaByte = lambda / 8;
+
+  // STep: 1
+  // TODO: This should be in the parameters
+  uint32_t numround = 10;
+  if (m == 1) {
+    y = malloc(numround * 16);
+  } else {
+    y = malloc(lambdaByte * numround * 16);
+  }
+
+  // Step: 2
+  for (uint8_t i = 0; i < 16; i++) {
+    for (uint8_t j = 0; j < 8; j++) {
+      // TODO: line 4
+    }
+    // TODO: line 5
+  }
+
+  // STep: 6..10
+  uint32_t R;
+  for (uint32_t j = 1; j < R; j++) {
+    for (uint32_t c = 0; c <= 3; c++) {
+      // TODO: this is wrong...
+      uint32_t ix = 16 * (j - 1) + 4 * c;
+      uint32_t ik = 16 * j + 4 * c;
+      uint32_t iy = 16 * j + 4 * c;
+      for (uint32_t r = 0; r <= 3; r++) {
+        // TODO: line 12, 13
+      }
+      // TODO: line 14..17
+    }
+  }
+}
+
+int aes_cipher_backward(uint32_t lambda, uint32_t m, const uint8_t* out, uint8_t Mtag, uint8_t Mkey,
+                        const uint8_t* delta, uint8_t* y) {}
+
+int aes_cipher_constraints() {}
+
 // w (extended witness bits), u (vole masks), v (vole tags), in (faest public-key input block
 // bits), out (faest public-key output block bits), chal (quicksilver challenge), a_tilde and
 // b_tilde (quicksilver response)
