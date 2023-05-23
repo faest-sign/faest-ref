@@ -27,6 +27,7 @@ namespace {
   }
 
   constexpr size_t num_tvs = 100;
+  typedef std::array<uint8_t, 48> seed_t;
 } // namespace
 
 int main() {
@@ -34,13 +35,13 @@ int main() {
   constexpr std::string_view fn_rsp = "PQCsignKAT_" CRYPTO_ALGNAME ".rsp";
 
   {
-    std::array<uint8_t, 48> entropy_input;
+    seed_t entropy_input;
     for (size_t i = 0; i < sizeof(entropy_input); i++)
       entropy_input[i] = i;
     randombytes_init(entropy_input.data(), NULL, 256);
   }
 
-  std::vector<std::array<uint8_t, 48>> seeds;
+  std::vector<seed_t> seeds;
   std::vector<std::vector<uint8_t>> messages;
   seeds.reserve(num_tvs);
   messages.reserve(num_tvs);
@@ -52,7 +53,7 @@ int main() {
       return KAT_FILE_OPEN_ERROR;
     }
     for (unsigned int i = 0; i < num_tvs; i++) {
-      std::array<uint8_t, 48> seed;
+      seed_t seed;
       randombytes(seed.data(), 48);
       seeds.emplace_back(seed);
 
