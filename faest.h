@@ -1,3 +1,6 @@
+#ifndef FAEST_H
+#define FAEST_H
+
 #include <stdlib.h>
 
 #include "vole.h"
@@ -23,4 +26,6 @@ void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_
           uint32_t l, signature_t* signature);
 
 int verify(const uint8_t* msg, const uint8_t* pk, const faest_paramset_t* params, uint32_t l,
-           const signature_t* signature)
+           const signature_t* signature);
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef FAEST_FAEST_AES_H
+#define FAEST_FAEST_AES_H
+
 #include <stdbool.h>
 
 #include "vc.h"
@@ -24,4 +27,5 @@ int aes_cipher_backward(uint32_t lambda, uint32_t m, const uint8_t* out, uint8_t
                         const uint8_t* delta, uint8_t* y)
 
     void aes_prove(uint8_t* w, uint8_t* u, uint8_t** v, uint8_t* in, uint8_t* out, uint8_t* chal_2,
-                   uint32_t lambda, uint32_t tau, uint32_t l, uint8_t* a_tilde, uint8_t* b_tilde);
+                   uint32_t lambda, uint32_t tau, uint32_t l, uint8_t* a_tilde, uint8_t* b_tilde);#endif#endif
+#endif

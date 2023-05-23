@@ -1,3 +1,6 @@
+#ifndef FAEST_TREE_H
+#define FAEST_TREE_H
+
 #include "instances.h"
 
 typedef struct tree_t {
@@ -61,3 +64,5 @@ uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex);
 void printTree(const char* label, tree_t* tree);
 void printTreeInfo(const char* label, tree_t* tree);
 int contains(size_t* list, size_t len, size_t value);
+
+#endif
