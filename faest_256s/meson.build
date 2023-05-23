@@ -28,10 +28,11 @@ libfaest_256s_dependency = declare_dependency(
   include_directories: include_directories
 )
 if openssl.found()
-  tv_sources = files('../tools/rng.c', '../tools/PQCgenKAT_sign.c')
+  tv_sources = files('../tools/rng.c', '../tools/PQCgenKAT_sign.cpp')
   test_vector_generator = executable('feast_256s_test_vectors', [sources] + faest_sources + tv_sources,
     dependencies: [openssl],
     include_directories: include_directories,
     c_args: defines + c_flags + ['-DHAVE_RANDOMBYTES'],
+    cpp_args: defines + cpp_flags + ['-DHAVE_RANDOMBYTES']
   )
 endif
