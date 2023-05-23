@@ -49,7 +49,7 @@ libfaest_{param_name}_dependency = declare_dependency(
   include_directories: include_directories
 )
 if openssl.found()
-  tv_sources = files('../tools/rng.c', '../tools/PQCgenKAT_sign.cpp')
+  tv_sources = files(join_paths(meson.source_root(), 'tools', 'rng.c'), join_paths(meson.source_root(), 'tools', 'PQCgenKAT_sign.cpp'))
   test_vector_generator = executable('feast_{param_name}_test_vectors', [sources] + faest_sources + tv_sources,
     dependencies: [openssl],
     include_directories: include_directories,
