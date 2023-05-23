@@ -4,6 +4,16 @@ from pathlib import Path
 
 def main():
     param_name = sys.argv[1]
+    if param_name == "all":
+        for bits in (128, 192, 256):
+            for t in ("s", "f"):
+                generate(f"{bits}{t}")
+                generate(f"em_{bits}{t}")
+    else:
+        generate(param_name)
+
+
+def generate(param_name):
     output_file = Path(f"faest_{param_name}") / "meson.build"
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -34,10 +44,18 @@ libfaest_{param_name} = static_library('faest_{param_name}',
   c_args: defines + c_flags
 )
 install_headers(headers, subdir: 'faest_{param_name}')
-libfaest_dependency = declare_dependency(
-  link_with: libfaest,
+libfaest_{param_name}_dependency = declare_dependency(
+  link_with: libfaest_{param_name},
   include_directories: include_directories
 )
+if openssl.found()
+  tv_sources = files('../tools/rng.c', '../tools/PQCgenKAT_sign.c')
+  test_vector_generator = executable('feast_{param_name}_test_vectors', [sources] + faest_sources + tv_sources,
+    dependencies: [openssl],
+    include_directories: include_directories,
+    c_args: defines + c_flags + ['-DHAVE_RANDOMBYTES'],
+  )
+endif
 """
         )
 

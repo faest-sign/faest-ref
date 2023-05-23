@@ -347,6 +347,8 @@ foreach parameter_set : parameter_sets
 endforeach
 
 # dependencies
+# for test vector generation
+openssl = dependency('openssl', required: false)
 build_dependencies = []
 
 if host_machine.system() == 'windows'
@@ -366,7 +368,7 @@ defines += '-DHAVE_CONFIG_H'
 include_directories = [include_directories('.')]
 
 # source files
-sources = files(
+faest_sources = files(
   'aes.c',
   'compat.c',
   'fields.c',
@@ -402,7 +404,7 @@ if sha3 == 's390-cpacf'
   defines += '-DWITH_SHAKE_S390_CPACF'
 else
   defines += '-DWITH_KECCAK_X4'
-  sources += files(
+  faest_sources += files(
     'sha3/KeccakHash.c',
     'sha3/KeccakSponge.c',
     'sha3/KeccakSpongetimes4.c',
@@ -410,22 +412,22 @@ else
   )
 
   if sha3 == 'avx2'
-    sources += files(
+    faest_sources += files(
       'sha3/avx2/KeccakP-1600-AVX2.s',
       'sha3/avx2/KeccakP-1600-times4-SIMD256.c',
     )
   elif sha3 == 'opt64'
-    sources += files(
+    faest_sources += files(
       'sha3/opt64/KeccakP-1600-opt64.c',
       'sha3/opt64/KeccakP-1600-times4-on1.c',
     )
   elif sha3 == 'plain32'
-    sources += files(
+    faest_sources += files(
       'sha3/plain32/KeccakP-1600-inplace32BI.c',
       'sha3/plain32/KeccakP-1600-times4-on1.c',
     )
   elif sha3 == 'armv8a-neon'
-    sources += files(
+    faest_sources += files(
       'sha3/armv8a-neon/KeccakP-1600-armv8a-neon.s',
       'sha3/opt64/KeccakP-1600-times4-on1.c',
     )
@@ -444,7 +446,7 @@ foreach parameter_set : parameter_sets
     output: 'faest_@0@.h'.format(parameter_set.get('PARAM_L')),
     configuration: parameter_set
   )
-  sources += configure_file(
+  faest_sources += configure_file(
     input: 'faest_param.c.in',
     output: 'faest_@0@.c'.format(parameter_set.get('PARAM_L')),
     configuration: parameter_set
@@ -453,7 +455,7 @@ endforeach
 
 # static faest library
 libfaest_static = static_library('faest',
-  sources,
+  faest_sources,
   dependencies: build_dependencies,
   include_directories: include_directories,
   c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT='],
@@ -472,7 +474,7 @@ elif cc.has_function_attribute('visibility:default')
   visibility_define += '-DFAEST_EXPORT=__attribute__((visibility("default")))'
 endif
 libfaest = shared_library('faest',
-  sources,
+  faest_sources,
   dependencies: build_dependencies,
   include_directories: include_directories,
   c_args: defines + c_flags + visibility_define,

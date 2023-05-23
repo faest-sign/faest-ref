@@ -23,7 +23,15 @@ libfaest_192s = static_library('faest_192s',
   c_args: defines + c_flags
 )
 install_headers(headers, subdir: 'faest_192s')
-libfaest_dependency = declare_dependency(
-  link_with: libfaest,
+libfaest_192s_dependency = declare_dependency(
+  link_with: libfaest_192s,
   include_directories: include_directories
 )
+if openssl.found()
+  tv_sources = files('../tools/rng.c', '../tools/PQCgenKAT_sign.c')
+  test_vector_generator = executable('feast_192s_test_vectors', [sources] + faest_sources + tv_sources,
+    dependencies: [openssl],
+    include_directories: include_directories,
+    c_args: defines + c_flags + ['-DHAVE_RANDOMBYTES'],
+  )
+endif
