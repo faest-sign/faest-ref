@@ -1,3 +1,6 @@
+#ifndef FAEST_VC_H
+#define FAEST_VC_H
+
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
@@ -43,3 +46,5 @@ void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint
 int vector_verify(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b, uint32_t lambda,
                   uint32_t lambdaBytes, uint32_t numVoleInstances, vec_com_rec_t* vecComRec,
                   uint8_t* vecComH);
+
+#endif

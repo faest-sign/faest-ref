@@ -118,10 +118,7 @@ static void shift_row(aes_block_t state, unsigned int block_words) {
   }
 
   for (unsigned int i = 0; i < block_words; ++i) {
-    state[i][0] = new_state[i][0];
-    state[i][1] = new_state[i][1];
-    state[i][2] = new_state[i][2];
-    state[i][3] = new_state[i][3];
+    memcpy(&state[i][0], &new_state[i][0], AES_NR);
   }
 }
 

@@ -23,7 +23,16 @@ libfaest_em_128s = static_library('faest_em_128s',
   c_args: defines + c_flags
 )
 install_headers(headers, subdir: 'faest_em_128s')
-libfaest_dependency = declare_dependency(
-  link_with: libfaest,
+libfaest_em_128s_dependency = declare_dependency(
+  link_with: libfaest_em_128s,
   include_directories: include_directories
 )
+if openssl.found()
+  tv_sources = files('../tools/rng.c', '../tools/PQCgenKAT_sign.cpp')
+  test_vector_generator = executable('feast_em_128s_test_vectors', [sources] + faest_sources + tv_sources,
+    dependencies: [openssl],
+    include_directories: include_directories,
+    c_args: defines + c_flags + ['-DHAVE_RANDOMBYTES'],
+    cpp_args: defines + cpp_flags + ['-DHAVE_RANDOMBYTES']
+  )
+endif
