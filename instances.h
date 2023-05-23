@@ -41,21 +41,25 @@ typedef struct cipher_param_t {
 } cipher_param_t;
 
 typedef struct faest_param_t {
-  uint32_t lambda;               // lambda
-  uint32_t lambdaBytes;          // lambda in bytes
-  uint32_t lenExpAESWitnessBits; // l
-  uint32_t t;                    // t, number of VOLE instances (number of repetition)
-  uint32_t k0;                   // k0 = ceil(lambda/t)
-  uint32_t k1;                   // k1 = floor(lambda/t)
-  uint32_t t0;                   // t0 = lambda mod t; number if BOLE instances of size 2^(k0)
-  uint32_t t1;                   // t1 = t - (lambda mod t); number if BOLE instances of size 2^(k1)
-  uint32_t pkSizeBytes;          // pk part of the signature
-  uint32_t skSizeBytes;          // sk part of the signature
-  uint32_t numOpenRounds;        // round opened
-  uint32_t seedSizeBytes;        // size of the seed in bytes
-  uint32_t saltSizeBytes;     // size of the salt in bytes (maybe not required !!) TODO remove it ??
-  uint32_t h0digestSizeBytes; // size of the digest size in bytes for H_0
-  uint32_t h1digestSizeBytes; // size of the digest size in bytes for H_0
+  uint32_t lambda;
+  uint32_t Nwd;
+  uint32_t Ske;
+  uint32_t R;
+  uint32_t Senc;
+  uint32_t beta;
+  uint32_t l;
+  uint32_t Lke;
+  uint32_t Lenc;
+  uint32_t c;
+  uint32_t tau;
+  uint32_t k0;
+  uint32_t k1;
+  uint32_t t0;
+  uint32_t t1;
+  uint32_t b;
+  uint32_t sigSize;
+  uint32_t pkSize;
+  uint32_t skSize;
 } faest_param_t;
 
 // TODO - Add paramset struct paramset_t here, containing numround, numsbox, seedSizeBytes,
