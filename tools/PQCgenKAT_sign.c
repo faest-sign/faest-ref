@@ -23,11 +23,7 @@ int		FindMarker(FILE *infile, const char *marker);
 int		ReadHex(FILE *infile, unsigned char *A, int Length, char *str);
 void	fprintBstr(FILE *fp, char *S, unsigned char *A, unsigned long long L);
 
-char    AlgName[] = CRYPTO_ALGNAME;
-static const char* l1 = "L1";
-static const char* l3 = "L3";
-static const char* l5 = "L5";
-static const char* unknown = "UNKNOWN_PARAM_SET";
+static const char    AlgName[] = CRYPTO_ALGNAME;
 
 int
 main()
@@ -43,37 +39,19 @@ main()
     int                 done;
     unsigned char       pk[CRYPTO_PUBLICKEYBYTES], sk[CRYPTO_SECRETKEYBYTES];
     int                 ret_val;
-    const char*         suffix;
-
-
-    switch (CRYPTO_PUBLICKEYBYTES) {
-        case 1 + 2 * 16:
-        case 1 + 2 * 17:
-            suffix = l1;
-            break;
-        case 1 + 2 * 24:
-            suffix = l3;
-            break;
-        case 1 + 2 * 32:
-            suffix = l5;
-            break;
-        default:
-            suffix = unknown;
-            break;
-    }
 
     // Create the REQUEST file
-    sprintf(fn_req, "PQCsignKAT_%s.req", suffix);
+    sprintf(fn_req, "PQCsignKAT_%s.req", AlgName);
     if ( (fp_req = fopen(fn_req, "w")) == NULL ) {
         printf("Couldn't open <%s> for write\n", fn_req);
         return KAT_FILE_OPEN_ERROR;
     }
-    sprintf(fn_rsp, "PQCsignKAT_%s.rsp", suffix);
+    sprintf(fn_rsp, "PQCsignKAT_%s.rsp", AlgName);
     if ( (fp_rsp = fopen(fn_rsp, "w")) == NULL ) {
         printf("Couldn't open <%s> for write\n", fn_rsp);
         return KAT_FILE_OPEN_ERROR;
     }
-    
+
     for (int i=0; i<48; i++)
         entropy_input[i] = i;
 
