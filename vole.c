@@ -25,14 +25,15 @@ int ChalDec(const uint8_t* chal, uint32_t i, uint32_t k0, uint32_t t0, uint32_t 
 }
 
 // TODO: outlen (l) is in bits, change it everywhere
-void voleCommit(const uint8_t* rootKey, uint32_t lambda, uint32_t lambdaBytes, uint32_t outlen,
-                const faest_paramset_t* params, uint8_t* hcom, vec_com_t** vecCom, uint8_t** c,
-                uint8_t* u, uint8_t** v) {
+void voleCommit(const uint8_t* rootKey, uint32_t outlen, const faest_paramset_t* params,
+                uint8_t* hcom, vec_com_t** vecCom, uint8_t** c, uint8_t* u, uint8_t** v) {
 
-  uint32_t tau = params->faest_param.t;
-  uint32_t k0  = params->faest_param.k0;
-  uint32_t k1  = params->faest_param.k1;
-  uint8_t** ui = malloc(params->faest_param.t * sizeof(uint8_t*));
+  uint32_t lambda      = params->faest_param.lambda;
+  uint32_t lambdaBytes = lambda / 8;
+  uint32_t tau         = params->faest_param.tau;
+  uint32_t k0          = params->faest_param.k0;
+  uint32_t k1          = params->faest_param.k1;
+  uint8_t** ui         = malloc(params->faest_param.tau * sizeof(uint8_t*));
   uint32_t N;
   uint32_t depth;
   uint8_t** keys = malloc(tau * sizeof(uint8_t*));

@@ -85,8 +85,8 @@ void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_
           uint32_t l, signature_t* signature) {
 
   uint32_t lambda      = params->faest_param.lambda;
-  uint32_t lambdaBytes = params->faest_param.lambdaBytes;
-  uint32_t tau         = params->faest_param.t;
+  uint32_t lambdaBytes = lambda / 8;
+  uint32_t tau         = params->faest_param.tau;
 
   // Step: 1
   uint8_t* p = malloc(lambdaBytes);
@@ -115,9 +115,9 @@ void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_
 
   // Step: 3..4
   vec_com_t** vecCom = malloc(tau * sizeof(vec_com_t*));
-  uint8_t* u         = malloc(l);
+  uint8_t* u_        = malloc(l);
   uint8_t** v        = malloc(tau * sizeof(uint8_t*));
-  voleCommit(rootkey, lambda, lambdaBytes, l, params, signature->hcom, vecCom, signature->c, u, v);
+  voleCommit(rootkey, l, params, signature->hcom, vecCom, signature->c, u_, v);
 
   // Step: 5
   uint8_t* chal_1 = malloc(lambdaBytes);
@@ -170,7 +170,6 @@ void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_
   // TODO
   uint8_t* w;
   aes_extend_witness(lambda, sk, in, w);
-  uint32_t l;
   xorUint8Arr(w, u, signature->d, l);
 
   // Step: 14
@@ -223,10 +222,10 @@ void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_
   // Step: 20..23
   uint32_t numVoleInstances = 0;
   uint32_t depth            = 0;
-  uint8_t** s               = malloc(tau * sizeof(uint8_t*));
+  uint8_t** s_              = malloc(tau * sizeof(uint8_t*));
   for (uint32_t i = 0; i < tau; i++) {
     ChalDec(chal_3, i, params->faest_param.k0, params->faest_param.t0, params->faest_param.k1,
-            params->faest_param.t1, s[i]);
+            params->faest_param.t1, s_[i]);
 
     if (i < (lambda % tau)) { // Computing the num of vole and the depth here
       numVoleInstances = 1 << params->faest_param.k0;
@@ -237,7 +236,7 @@ void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_
     }
     signature->pdec[i]  = malloc(depth);
     signature->com_j[i] = malloc(lambdaBytes * 2);
-    vector_open(vecCom[i]->k, vecCom[i]->com, s[i], signature->pdec[i], signature->com_j[i],
+    vector_open(vecCom[i]->k, vecCom[i]->com, s_[i], signature->pdec[i], signature->com_j[i],
                 numVoleInstances, lambdaBytes);
   }
 }
@@ -247,8 +246,8 @@ int verify(const uint8_t* msg, const uint8_t* pk, const faest_paramset_t* params
            const signature_t* signature) {
 
   uint32_t lambda      = params->faest_param.lambda;
-  uint32_t lambdaBytes = params->faest_param.lambdaBytes;
-  uint32_t tau         = params->faest_param.t;
+  uint32_t lambdaBytes = lambda / 8;
+  uint32_t tau         = params->faest_param.tau;
 
   // Step: 2..3
   // TODO: Where does B come from ?
@@ -393,8 +392,8 @@ int verify(const uint8_t* msg, const uint8_t* pk, const faest_paramset_t* params
   }
 
   uint32_t ret;
-  aesVerify(signature->d, q, chal_2, chal_3, tau, signature->a_tilde, signature->b_tilde, in, out,
-            ret);
+  aes_verify(signature->d, q, chal_2, chal_3, signature->a_tilde, signature->b_tilde, in, out,
+             lambda, tau, l, params->faest_param.k0, params->faest_param.k1);
 
   if (ret == 0) {
     return 0;

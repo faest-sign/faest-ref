@@ -41,7 +41,7 @@ int test_vector_commitment() {
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
   uint32_t numVoleInstances = (1 << params.faest_param.k0);
-  vector_commitment(rootKey, &params, params.faest_param.lambda, params.faest_param.lambdaBytes,
+  vector_commitment(rootKey, &params, params.faest_param.lambda, params.faest_param.lambda / 8,
                     &vecCom, numVoleInstances);
 
 #if 0
@@ -87,7 +87,7 @@ int test_vector_open_128() {
   vec_com_t* vecCom         = malloc(sizeof(vecCom));
   uint32_t numVoleInstances = 16;
   uint32_t lambda           = params.faest_param.lambda;
-  uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
+  uint32_t lambdaBytes      = lambda / 8;
   vector_commitment(rootKey, &params, lambda, lambdaBytes, vecCom, numVoleInstances);
 
   uint32_t leafIndex = 7;
@@ -160,7 +160,7 @@ int test_vector_open_192() {
   // vec_com_rec_t vecComRec;
   uint32_t numVoleInstances = 16;
   uint32_t lambda           = params.faest_param.lambda;
-  uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
+  uint32_t lambdaBytes      = lambda / 8;
   vector_commitment(rootKey, &params, lambda, lambdaBytes, vecCom, numVoleInstances);
 
   uint32_t leafIndex = 10;
@@ -232,7 +232,7 @@ int test_vector_open_256() {
   vec_com_t* vecCom         = malloc(sizeof(vec_com_t));
   uint32_t numVoleInstances = 16;
   uint32_t lambda           = params.faest_param.lambda;
-  uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
+  uint32_t lambdaBytes      = lambda / 8;
   vector_commitment(rootKey, &params, lambda, lambdaBytes, vecCom, numVoleInstances);
 
   uint32_t leafIndex = 7;
@@ -306,7 +306,7 @@ int test_vector_reconstruct_and_verify() {
   vec_com_rec_t* vecComRec  = malloc(sizeof(vec_com_rec_t));
   uint32_t numVoleInstances = 16;
   uint32_t lambda           = params.faest_param.lambda;
-  uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
+  uint32_t lambdaBytes      = lambda / 8;
   vector_commitment(rootKey, &params, lambda, lambdaBytes, vecCom, numVoleInstances);
 
   uint32_t leafIndex = 7;

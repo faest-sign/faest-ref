@@ -3,7 +3,44 @@
 // TODO: change q to Q where applicable
 
 // TODO: Unsure what is happeninig here...
-void aes_extend_witness(uint32_t lambda, const uint8_t* sk, const uint8_t* in, uint8_t* w) {}
+// Bwd -> block_word,,, for EM mode
+void aes_extend_witness(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Bwd, uint32_t l,
+                        uint32_t Ske, uint32_t beta, const uint8_t* key, const uint8_t* in,
+                        uint8_t* w) {
+
+  // Step 1..5
+  // TODO: check the comments about w
+  w = malloc(l + 7 / 8);
+  aes_round_key_t* round_keys;
+  expand_key(round_keys, key, Nwd, 4, R);
+  w = realloc(w, sizeof(w) + Nwd);
+  // TODO: hopefully this copies fine...
+  memcpy(w, round_keys, Nwd * 8);
+  uint32_t ik = Nwd;
+  // Step: 6..9
+  for (uint32_t j = 0; j < Ske / 4; j++) {
+    w = realloc(w, sizeof(w) + sizeof(round_keys[ik]));
+    memcpy(w, round_keys[ik], sizeof(round_keys[ik]));
+    if (lambda == 192) {
+      ik += 6;
+    }
+    ik += 4;
+  }
+  // Step: 10..19
+  for (uint32_t b = 0; b < beta; b++) {
+    uint8_t* state = malloc(16);
+    // TODO: what is the size that is being copied ??, FIX it !!
+    memcpy(state, in, 16);
+    add_round_key(0, state, round_keys, Bwd);
+    for (uint32_t j = 1; j < R; j++) {
+      sub_bytes(state, Bwd);
+      shift_row(state, Bwd);
+      w = realloc(w, sizeof(w) + sizeof(state));
+      mix_column(state, Bwd);
+      add_round_key(j, state, round_keys, Bwd);
+    }
+  }
+}
 
 int aes_key_schedule_forward(uint32_t lambda, uint32_t m, const uint8_t* x, uint8_t Mtag,
                              uint8_t Mkey, const uint8_t* delta, uint8_t* y) {
@@ -265,8 +302,8 @@ int aes_cipher_forward(uint32_t lambda, uint32_t m, const uint8_t* in, uint8_t M
   }
 }
 
-int aes_cipher_backward(uint32_t lambda, uint32_t m, const uint8_t* out, uint8_t Mtag, uint8_t Mkey,
-                        const uint8_t* delta, uint8_t* y) {}
+int aes_cipher_backward(uint32_t lambda, uint8_t* x, uint8_t* xk, uint8_t* out, bool Mtag,
+                        bool Mkey, uint8_t* delta) {}
 
 int aes_cipher_constraints() {}
 

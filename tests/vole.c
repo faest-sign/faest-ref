@@ -34,12 +34,11 @@ int test_FAESTVoleCommit() {
   uint32_t outlen = 16;
 
   uint8_t* hcom      = malloc(params.faest_param.lambda / 8);
-  vec_com_t** vecCom = malloc(params.faest_param.t * (sizeof(vec_com_t*)));
-  uint8_t** c        = malloc((params.faest_param.t * sizeof(uint8_t*)) - 1);
+  vec_com_t** vecCom = malloc(params.faest_param.tau * (sizeof(vec_com_t*)));
+  uint8_t** c        = malloc((params.faest_param.tau * sizeof(uint8_t*)) - 1);
   uint8_t* u         = malloc(outlen);
-  uint8_t** v        = malloc(params.faest_param.t * sizeof(uint8_t*));
-  voleCommit(rootKey, params.faest_param.lambda, params.faest_param.lambdaBytes, outlen, &params,
-             hcom, vecCom, c, u, v);
+  uint8_t** v        = malloc(params.faest_param.tau * sizeof(uint8_t*));
+  voleCommit(rootKey, outlen, &params, hcom, vecCom, c, u, v);
 
   // TODO: make tests !!
   return 1;
@@ -56,24 +55,24 @@ int test_FAESTVoleVerify() {
   uint32_t outlen = 16;
 
   uint32_t lambda      = params.faest_param.lambda;
-  uint32_t lambdaBytes = params.faest_param.lambdaBytes;
+  uint32_t lambdaBytes = lambda / 8;
   uint8_t* hcom        = malloc(lambdaBytes * 2);
-  vec_com_t** vecCom   = malloc(params.faest_param.t * (sizeof(vec_com_t*)));
-  uint8_t** c          = malloc((params.faest_param.t * sizeof(uint8_t*)) - 1);
+  vec_com_t** vecCom   = malloc(params.faest_param.tau * (sizeof(vec_com_t*)));
+  uint8_t** c          = malloc((params.faest_param.tau * sizeof(uint8_t*)) - 1);
   uint8_t* u           = malloc(outlen);
-  uint8_t** v          = malloc(params.faest_param.t * sizeof(uint8_t*));
+  uint8_t** v          = malloc(params.faest_param.tau * sizeof(uint8_t*));
 
-  voleCommit(rootKey, lambda, lambdaBytes, outlen, &params, hcom, vecCom, c, u, v);
+  voleCommit(rootKey, outlen, &params, hcom, vecCom, c, u, v);
 
   // TODO: this shouldn't be here !!
-  uint8_t** pdec            = malloc(params.faest_param.t * sizeof(uint8_t*));
-  uint8_t** b               = malloc(params.faest_param.t * sizeof(uint8_t*));
-  uint8_t** com_j           = malloc(params.faest_param.t * sizeof(uint8_t*));
-  vec_com_rec_t** vecComRec = malloc(params.faest_param.t * sizeof(vec_com_rec_t*));
+  uint8_t** pdec            = malloc(params.faest_param.tau * sizeof(uint8_t*));
+  uint8_t** b               = malloc(params.faest_param.tau * sizeof(uint8_t*));
+  uint8_t** com_j           = malloc(params.faest_param.tau * sizeof(uint8_t*));
+  vec_com_rec_t** vecComRec = malloc(params.faest_param.tau * sizeof(vec_com_rec_t*));
 
   uint32_t depth;
   uint32_t numVoleInstances;
-  for (uint32_t i = 0; i < params.faest_param.t; i++) {
+  for (uint32_t i = 0; i < params.faest_param.tau; i++) {
     if (i < params.faest_param.t0) {
       depth            = params.faest_param.k0;
       numVoleInstances = 1 << depth;
@@ -96,11 +95,11 @@ int test_FAESTVoleVerify() {
   memset(chal, 0,
          (params.faest_param.k0 * params.faest_param.t0) +
              (params.faest_param.k1 * params.faest_param.t1));
-  uint8_t** q = malloc(params.faest_param.t * sizeof(uint8_t*));
+  uint8_t** q = malloc(params.faest_param.tau * sizeof(uint8_t*));
 
   uint8_t* hcomRec = malloc(lambdaBytes * 2);
 
-  voleVerify(chal, pdec, com_j, lambda, lambdaBytes, outlen, params.faest_param.t,
+  voleVerify(chal, pdec, com_j, lambda, lambdaBytes, outlen, params.faest_param.tau,
              params.faest_param.k0, params.faest_param.k1, hcomRec, q, vecComRec);
 
 #if 0
@@ -146,7 +145,7 @@ int test_ConvertToVoleProver() {
   // vec_com_rec_t vecComRec;
   uint32_t numVoleInstances = (1 << params.faest_param.k0);
   uint32_t lambda           = params.faest_param.lambda;
-  uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
+  uint32_t lambdaBytes      = lambda / 8;
   vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
 
   uint32_t leafIndex = 7;
@@ -202,7 +201,7 @@ int test_ConvertToVoleVerifier() {
   vec_com_rec_t vecComRec;
   uint32_t numVoleInstances = (1 << params.faest_param.k0);
   uint32_t lambda           = params.faest_param.lambda;
-  uint32_t lambdaBytes      = params.faest_param.lambdaBytes;
+  uint32_t lambdaBytes      = lambda / 8;
   vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
 
   uint32_t leafIndex = 7;

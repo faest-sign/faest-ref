@@ -417,10 +417,9 @@ faest_sources = files(
   'tree.c',
   'universal_hashing.c',
   'utils.c',
-  'vc.c'
-  # ,
-  #'vole.c',
-  #'faest.c'
+  'vc.c',
+  'vole.c'
+  # ,  'faest.c'
 )
 
 # header files to install
