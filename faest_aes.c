@@ -110,6 +110,7 @@ int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t
   }
 }
 
+// TODO: generalize bf128_t to bf(lambda)_t
 int aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Ske, uint8_t Lke,
                               uint32_t m, const uint8_t* x, const uint8_t* xk, uint8_t Mtag,
                               uint8_t Mkey, const uint8_t* delta, uint8_t* y_out) {
@@ -307,77 +308,72 @@ int aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_
   }
 }
 
-int aes_key_schedule_constraints(uint32_t lambda, const uint8_t* w, const uint8_t* v,
-                                 const uint8_t Mkey, const uint8_t* q, const uint8_t* delta,
-                                 uint8_t** A, uint8_t* k, uint8_t* vk, uint8_t* B, uint8_t* qk) {
-
+// TODO
+void aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Ske,
+                                  uint32_t Lke, const uint8_t* w, const uint8_t* v,
+                                  const uint8_t Mkey, const uint8_t* q, const uint8_t* delta,
+                                  uint8_t** A, uint8_t* k, uint8_t* vk, uint8_t* B, uint8_t* qk) {
   uint32_t lambdaByte = lambda / 8;
-
   if (Mkey == 0) {
-
     // STep: 2
     uint8_t *k, vk, w_dash, v_w_dash;
-    aes_key_schedule_forward(lambda, 1, w, 0, 0, NULL, k);
+    aes_key_schedule_forward(lambda, R, Nwd, 1, w, 0, 0, NULL, k);
 
     // Step: 3
-    aes_key_schedule_forward(lambda, lambda, v, 1, 0, NULL, vk);
+    aes_key_schedule_forward(lambda, R, Nwd, lambda, v, 1, 0, NULL, vk);
 
     // Step: 4
     uint8_t* w_lambda = malloc(sizeof(w) - lambdaByte);
     memcpy(w_lambda, w + lambdaByte, sizeof(w) - lambdaByte);
-    aes_key_schedule_backward(lambda, 1, w_lambda, k, 0, 0, NULL, w_dash);
+    aes_key_schedule_backward(lambda, R, Nwd, Ske, Lke, 1, w_lambda, k, 0, 0, NULL, w_dash);
 
     // Step: 5
     uint8_t* v_lambda = malloc(sizeof(v) - lambdaByte);
     memcpy(v_lambda, v + lambdaByte, sizeof(v) - lambdaByte);
-    aes_key_schedule_backward(lambda, lambda, v_lambda, vk, 1, 0, NULL, v_w_dash);
+    aes_key_schedule_backward(lambda, R, Nwd, Ske, Lke, lambda, v_lambda, vk, 1, 0, NULL, v_w_dash);
 
     // Step: 6..8
-    // TODO: what is S_ke ?
-    uint32_t S_ke, N;
-    for (uint32_t j = 0; j < S_ke / 4; j++) {
-      uint32_t i = lambda - 32 + (j * (lambda / floor(N / 4)));
+    uint32_t iwd = 32 * (Nwd - 1);
+    for (uint32_t j = 0; j < Ske / 4; j++) {
 
       for (uint32_t r = 0; r <= 3; r) {
         // TODO: line 9..12
       }
-
       // Step: 13..15
       for (uint32_t r = 0; r <= 3; r) {
         // TODO: line 14..15
       }
+      if (lambda == 192) {
+        iwd = iwd + 192;
+      } else {
+        iwd = iwd + 128;
+      }
     }
-
-    return 1; // returninig from branch 1
   } else {
-
     // Step: 18..19
-    aes_key_schedule_forward(lambda, lambda, q, 0, 1, delta, qk);
+    aes_key_schedule_forward(lambda, R, Nwd, lambda, q, 0, 1, delta, qk);
     uint8_t* q_w_dash;
     uint8_t* q_lambda = malloc(sizeof(q) - lambdaByte);
     memcpy(q_lambda, q + lambdaByte, lambdaByte);
-    // TODO: check if it is indeed null ?
-    aes_key_schedule_backward(lambda, lambda, q_lambda, NULL, 0, 1, delta, q_w_dash);
-
+    aes_key_schedule_backward(lambda, R, Nwd, Ske, Lke, lambda, q_lambda, qk, 0, 1, delta,
+                              q_w_dash);
     // Step 20..22
-    // TODO: fix s_ke
-    uint32_t S_ke, N;
-    for (uint32_t j = 0; j < S_ke / 4; j++) {
-      uint32_t i = lambda - 32 + (j * (lambda / floor(N / 4)));
-
+    uint32_t iwd = 32 * (Nwd - 1);
+    for (uint32_t j = 0; j < Ske / 4; j++) {
       for (uint32_t r = 0; r <= 3; r++) {
-        // TODO: steps 23..24
+        // TODO: steps 25..26
       }
-
-      // STep: 25
+      // STep: 27
       for (uint32_t r = 0; r <= 3; r++) {
-        // TODO: step 26
+        // TODO: step 28
+      }
+      if (lambda == 192) {
+        iwd = iwd + 192;
+      } else {
+        iwd = iwd + 128;
       }
     }
-
-    return 2; // returnining from brach 2
   }
-  return 0; // error
 }
 
 int aes_cipher_forward(uint32_t lambda, uint32_t m, const uint8_t* in, uint8_t Mtag, uint8_t Mkey,

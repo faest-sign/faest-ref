@@ -9,17 +9,22 @@
 #include "universal_hashing.h"
 #include "aes.h"
 
-void aes_extend_witness(uint32_t lambda, const uint8_t* sk, const uint8_t* in, uint8_t* w);
+void aes_extend_witness(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Bwd, uint32_t l,
+                        uint32_t Ske, uint32_t beta, const uint8_t* key, const uint8_t** in,
+                        uint8_t* w_out);
 
-int aes_key_schedule_forward(uint32_t lambda, uint32_t m, const uint8_t* x, uint8_t Mtag,
-                             uint8_t Mkey, const uint8_t* delta, uint8_t* y);
+int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t m,
+                             const uint8_t* x, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
+                             uint8_t* y_out);
 
-int aes_key_schedule_backward(uint32_t lambda, uint32_t m, const uint8_t* x, const uint8_t* xk,
-                              uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, uint8_t* y);
+int aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Ske, uint8_t Lke,
+                              uint32_t m, const uint8_t* x, const uint8_t* xk, uint8_t Mtag,
+                              uint8_t Mkey, const uint8_t* delta, uint8_t* y_out);
 
-int aes_key_schedule_constraints(uint32_t lambda, const uint8_t* w, const uint8_t* v,
-                                 const uint8_t Mkey, const uint8_t* q, const uint8_t* delta,
-                                 uint8_t** A, uint8_t* k, uint8_t* vk, uint8_t* B, uint8_t* qk);
+void aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Ske,
+                                  uint32_t Lke, const uint8_t* w, const uint8_t* v,
+                                  const uint8_t Mkey, const uint8_t* q, const uint8_t* delta,
+                                  uint8_t** A, uint8_t* k, uint8_t* vk, uint8_t* B, uint8_t* qk);
 
 int aes_cipher_forward(uint32_t lambda, uint32_t m, const uint8_t* in, uint8_t Mtag, uint8_t Mkey,
                        const uint8_t* delta, uint8_t* y);
