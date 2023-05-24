@@ -16,6 +16,7 @@ FAEST_BEGIN_C_DECL
 
 typedef uint8_t aes_word_t[4];
 // round key with 4 (AES) up to 8 (Rijndael-256) units
+// TODO: aes_round_key_t[8] should this be 8 ?
 typedef aes_word_t aes_round_key_t[8];
 
 // # of rows

@@ -2,63 +2,51 @@
 // TODO: Do not pass lambdaBytes everywhere, compute it in the function....
 // TODO: change q to Q where applicable
 
-// TODO: Unsure what is happeninig here...
-// Bwd -> block_word,,, for EM mode
+// Bwd -> block_words,,, for EM mode
 void aes_extend_witness(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Bwd, uint32_t l,
-                        uint32_t Ske, uint32_t beta, const uint8_t* key, const uint8_t* in,
-                        uint8_t* w) {
+                        uint32_t Ske, uint32_t beta, const uint8_t* key, const uint8_t** in,
+                        uint8_t* w_out) {
 
   // Step 1..5
-  // TODO: check the comments about w
-  w = malloc(l + 7 / 8);
+  uint32_t w_byte_idx = 0;
+  w_out               = malloc(l + 7 / 8);
   aes_round_key_t* round_keys;
   expand_key(round_keys, key, Nwd, 4, R);
-  w = realloc(w, sizeof(w) + Nwd);
-  // TODO: hopefully this copies fine...
-  memcpy(w, round_keys, Nwd * 8);
+  memcpy(w_out, round_keys, Nwd);
+  w_byte_idx += Nwd;
   uint32_t ik = Nwd;
   // Step: 6..9
   for (uint32_t j = 0; j < Ske / 4; j++) {
-    w = realloc(w, sizeof(w) + sizeof(round_keys[ik]));
-    memcpy(w, round_keys[ik], sizeof(round_keys[ik]));
+    memcpy(w_out + w_byte_idx, round_keys[ik], 4);
+    w_byte_idx += 4;
     if (lambda == 192) {
       ik += 6;
+    } else {
+      ik += 4;
     }
-    ik += 4;
   }
   // Step: 10..19
   for (uint32_t b = 0; b < beta; b++) {
     uint8_t* state = malloc(16);
-    // TODO: what is the size that is being copied ??, FIX it !!
-    memcpy(state, in, 16);
+    memcpy(state, in[b], 16);
     add_round_key(0, state, round_keys, Bwd);
     for (uint32_t j = 1; j < R; j++) {
       sub_bytes(state, Bwd);
       shift_row(state, Bwd);
-      w = realloc(w, sizeof(w) + sizeof(state));
+      memcpy(w_out + w_byte_idx, state, sizeof(state));
+      w_byte_idx += sizeof(state);
       mix_column(state, Bwd);
       add_round_key(j, state, round_keys, Bwd);
     }
   }
 }
 
-int aes_key_schedule_forward(uint32_t lambda, uint32_t m, const uint8_t* x, uint8_t Mtag,
-                             uint8_t Mkey, const uint8_t* delta, uint8_t* y) {
+// TODO: generalize bf128_t to bf(lambda)_t
+int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t m,
+                             const uint8_t* x, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
+                             uint8_t* y_out) {
 
   uint32_t lambdaByte = lambda / 8;
-  uint32_t numround   = 0;
-  // TODO: verify if they mean the word size N is the key size and not the standard block size
-  uint32_t N = lambdaByte / 4;
-  switch (lambda) {
-  case 256:
-    numround = 14;
-    break;
-  case 192:
-    numround = 12;
-  default:
-    numround = 10;
-    break;
-  }
 
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
@@ -66,50 +54,63 @@ int aes_key_schedule_forward(uint32_t lambda, uint32_t m, const uint8_t* x, uint
   }
 
   // STep: 2..3
-  // TODO, change to field type
   if (m == 1) {
-    y = malloc((numround + 1) * 16);
-  } else {
-    y = malloc((numround + 1) * lambdaByte);
-  }
-  memcpy(y, x, 16);
+    bf8_t* bf_y = malloc(sizeof(bf8_t) * ((R + 1) * 128));
+    for (uint32_t i = 0; i < lambda; i++) {
+      bf_y[i] = bf8_load(x + i);
+    }
+    // Step: 4
+    uint32_t i_wd = lambdaByte;
 
-  // Step: 4
-  uint32_t i_wd = lambdaByte;
-
-  // Step: 5..10
-  // TODO, check if this is not N * (numround + 1) ?
-  for (uint32_t j = N; j < 4 * (numround + 1); j++) {
-    if (j % N == 0 || (N > 6 && j % N == 4)) {
-      // TODO: doing as per the byte thingy, hope its no problem
-      memcpy(y + (4 * N), x + i_wd, 4);
-      i_wd += 4;
-    } else {
-      for (uint32_t i = 0; i < 4; i++) {
-        y[(4 * j) - i] = y[4 * (j - N) + i] + y[4 * (j - 1) + i];
+    // Step: 5..10
+    for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
+      if (j % Nwd == 0 || (Nwd > 6 && j % Nwd == 4)) {
+        for (uint32_t i = (j * 32); i < ((j * 32) + 31); i++) {
+          bf_y[i] = bf8_load(x + i);
+        }
+        i_wd += 32;
+      } else {
+        for (uint32_t i = 0; i < 32; i++) {
+          bf_y[32 * j + i] = bf8_add(bf_y[32 * (j - Nwd) + i], bf_y[32 * (j - 1) + i]);
+        }
       }
     }
+    y_out = malloc(sizeof(bf_y));
+    bf8_store(y_out, bf_y);
+    return 1;
+
+  } else {
+    bf128_t* bf_y = malloc(sizeof(bf128_t) * ((R + 1) * 128));
+    for (uint32_t i = 0; i < lambda; i++) {
+      bf_y[i] = bf128_load(x + (i * lambdaByte));
+    }
+    // Step: 4
+    uint32_t i_wd = lambdaByte;
+
+    // Step: 5..10
+    for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
+      if (j % Nwd == 0 || (Nwd > 6 && j % Nwd == 4)) {
+        for (uint32_t i = (j * 32); i < ((j * 32) + 31); i++) {
+          bf_y[i] = bf128_load(x + (lambda * i));
+        }
+        i_wd += 32;
+      } else {
+        for (uint32_t i = 0; i < 32; i++) {
+          bf_y[32 * j + i] = bf128_add(bf_y[32 * (j - Nwd) + i], bf_y[32 * (j - 1) + i]);
+        }
+      }
+    }
+    y_out = malloc(sizeof(bf_y));
+    bf8_store(y_out, bf_y);
+    return 1;
   }
-  return 1;
 }
 
-int aes_key_schedule_backward(uint32_t lambda, uint32_t m, const uint8_t* x, const uint8_t* xk,
-                              uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, uint8_t* y) {
+int aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Ske, uint32_t m,
+                              const uint8_t* x, const uint8_t* xk, uint8_t Mtag, uint8_t Mkey,
+                              const uint8_t* delta, uint8_t* y_out) {
 
   uint32_t lambdaByte = lambda / 8;
-  uint32_t numround   = 0;
-  // TODO: verify if they mean the word size N is the key size and not the standard block size
-  uint32_t N = lambdaByte / 4;
-  switch (lambda) {
-  case 256:
-    numround = 14;
-    break;
-  case 192:
-    numround = 12;
-  default:
-    numround = 10;
-    break;
-  }
 
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
@@ -117,14 +118,19 @@ int aes_key_schedule_backward(uint32_t lambda, uint32_t m, const uint8_t* x, con
   }
 
   // STep: 2
-  // TODO: change to field type
-  uint8_t* y;
-  // TODO: what is S_ke_Byte ??
   uint32_t S_ke_Byte = 8;
   if (m == 1) {
-    y = malloc(S_ke_Byte);
+    bf8_t* bf_y  = malloc(8 * Ske);
+    uint32_t iwd = 0;
+    uint32_t c   = 0;
+    bool rmvRcon = true;
+    bool ircon   = false;
+
+    for (uint32_t j = 0; j < Ske; j++) {
+    }
+
   } else {
-    y = malloc(lambdaByte * S_ke_Byte);
+    bf128_t* bf_y = malloc(8 * Ske);
   }
 
   // Step: 3..4
