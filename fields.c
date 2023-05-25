@@ -71,6 +71,14 @@ bf8_t bf8_inv(bf8_t in) {
   return bf8_mul(t1, t1);
 }
 
+bf8_t bf8_from_bit(const uint8_t* bit) {
+  if (bit == 0) {
+    return bf8_zero();
+  } else {
+    return bf8_one();
+  }
+}
+
 // GF(2^64) implementation
 
 bf64_t bf64_load(const uint8_t* src) {
@@ -125,6 +133,14 @@ bf64_t bf64_inv(bf64_t in) {
     t1 = bf64_mul(t1, t2);
   }
   return bf64_mul(t1, t1);
+}
+
+bf64_t bf64_from_bit(const uint8_t* bit) {
+  if (bit == 0) {
+    return bf64_zero();
+  } else {
+    return bf64_one();
+  }
 }
 
 // GF(2^128) implementation
@@ -227,6 +243,14 @@ bf128_t bf128_inv(bf128_t in) {
   return bf128_mul(t1, t1);
 }
 
+bf128_t bf128_from_bit(const uint8_t* bit) {
+  if (bit == 0) {
+    return bf128_zero();
+  } else {
+    return bf128_one();
+  }
+}
+
 // GF(2^192) implementation
 
 bf192_t bf192_load(const uint8_t* src) {
@@ -327,6 +351,14 @@ bf192_t bf192_inv(bf192_t in) {
     t1 = bf192_mul(t1, t2);
   }
   return bf192_mul(t1, t1);
+}
+
+bf192_t bf192_from_bit(const uint8_t* bit) {
+  if (bit == 0) {
+    return bf192_zero();
+  } else {
+    return bf192_one();
+  }
 }
 
 // GF(2^256) implementation
@@ -432,4 +464,12 @@ bf256_t bf256_inv(bf256_t in) {
     t1 = bf256_mul(t1, t2);
   }
   return bf256_mul(t1, t1);
+}
+
+bf256_t bf256_from_bit(const uint8_t* bit) {
+  if (bit == 0) {
+    return bf256_zero();
+  } else {
+    return bf256_one();
+  }
 }

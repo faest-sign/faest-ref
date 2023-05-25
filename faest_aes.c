@@ -376,48 +376,246 @@ void aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uin
   }
 }
 
-int aes_cipher_forward(uint32_t lambda, uint32_t m, const uint8_t* in, uint8_t Mtag, uint8_t Mkey,
-                       const uint8_t* delta, uint8_t* y) {
+int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, const uint8_t* x,
+                    uint8_t* xk, uint8_t* in, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
+                    uint8_t* y_out) {
 
-  uint32_t lambdaByte = lambda / 8;
+  uint32_t lambdaBytes = lambda / 8;
+  uint32_t x_len       = lambdaBytes * Lenc;
+  uint32_t delta_len   = lambdaBytes;
+  uint32_t in_len      = 16;
+  uint32_t y_out_len   = lambdaBytes * R * 16;
 
-  // STep: 1
-  // TODO: This should be in the parameters
-  uint32_t numround = 10;
+  uint32_t bf_y_len = sizeof(bf128_t) * R * 16;
+  bf128_t* bf_y     = malloc(bf_y_len);
+
+  uint32_t ird;
+
   if (m == 1) {
-    y = malloc(numround * 16);
-  } else {
-    y = malloc(lambdaByte * numround * 16);
-  }
+    bf8_t bf_minus_mtag = bf8_from_bit(1 - Mtag);
+    bf8_t bf_minus_mkey = bf8_from_bit(1 - Mkey);
 
-  // Step: 2
-  for (uint8_t i = 0; i < 16; i++) {
-    for (uint8_t j = 0; j < 8; j++) {
-      // TODO: line 4
-    }
-    // TODO: line 5
-  }
-
-  // STep: 6..10
-  uint32_t R;
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      // TODO: this is wrong...
-      uint32_t ix = 16 * (j - 1) + 4 * c;
-      uint32_t ik = 16 * j + 4 * c;
-      uint32_t iy = 16 * j + 4 * c;
-      for (uint32_t r = 0; r <= 3; r++) {
-        // TODO: line 12, 13
+    for (uint32_t i = 0; i < 16; i++) {
+      bf8_t* bf_xin = malloc(8);
+      for (uint32_t j = 0; j < 8; j++) {
+        bf_xin[j] =
+            bf8_mul(bf8_mul(bf8_from_bit(getBit(in + (8 * i), j)), bf_minus_mtag), bf_minus_mkey);
       }
-      // TODO: line 14..17
+      // TODO: ByteCombine
+      bf_y[i];
+    }
+    uint32_t ix, ik, iy;
+    for (uint32_t j = 0; j < R; j++) {
+      for (uint32_t c = 0; c < 3; c++) {
+        ix                 = 128 * (j - 1) + 32 * c;
+        ik                 = 128 * j + 32 * c;
+        iy                 = 16 * j + 4 * c;
+        bf128_t* bf_x_hat  = malloc(sizeof(bf128_t) * 3);
+        bf128_t* bf_xk_hat = malloc(sizeof(bf128_t) * 3);
+        for (uint32_t r = 0; r < 3; r++) {
+          // TODO: Bytecombine
+          bf_x_hat[r];
+          bf_xk_hat[r];
+        }
+        bf8_t one   = bf8_one();
+        bf8_t two   = bf8_add(one, one);
+        bf8_t three = bf8_add(two, one);
+        // TODO: multiplication by {...}_{F_{2^8}}
+        bf_y[iy + 0] = bf_x_hat[0];
+        bf_y[iy + 1] = bf_x_hat[0];
+        bf_y[iy + 2] = bf_x_hat[0];
+        bf_y[iy + 3] = bf_x_hat[0];
+      }
+    }
+    y_out        = malloc(bf_y_len);
+    uint32_t idx = 0;
+    for (uint32_t i = 0; i < bf_y_len; i += lambdaBytes) {
+      bf128_store(y_out + i, bf_y[idx]);
+      idx += 1;
+    }
+  } else {
+    bf128_t bf_minus_mtag = bf128_from_bit(1 - Mtag);
+    bf128_t bf_minus_mkey = bf128_from_bit(1 - Mkey);
+    bf128_t bf_mkey       = bf128_from_bit(Mkey);
+
+    for (uint32_t i = 0; i < 16; i++) {
+      bf128_t* bf_xin = malloc(sizeof(bf128_t) * 8);
+      for (uint32_t j = 0; j < 8; j++) {
+        bf_xin[j] = bf128_mul(bf128_mul(bf128_from_bit(getBit(in + (8 * i), j)), bf_minus_mtag),
+                              bf128_add(bf128_mul(bf_mkey, bf128_load(delta)), bf_minus_mkey));
+      }
+      // TODO: ByteCombine
+      bf_y[i];
+    }
+    uint32_t ix, ik, iy;
+    for (uint32_t j = 0; j < R; j++) {
+      for (uint32_t c = 0; c < 3; c++) {
+        ix                 = 128 * (j - 1) + 32 * c;
+        ik                 = 128 * j + 32 * c;
+        iy                 = 16 * j + 4 * c;
+        bf128_t* bf_x_hat  = malloc(sizeof(bf128_t) * 3);
+        bf128_t* bf_xk_hat = malloc(sizeof(bf128_t) * 3);
+        for (uint32_t r = 0; r < 3; r++) {
+          // TODO: Bytecombine
+          bf_x_hat[r];
+          bf_xk_hat[r];
+        }
+        bf8_t one   = bf8_one();
+        bf8_t two   = bf8_add(one, one);
+        bf8_t three = bf8_add(two, one);
+        // TODO: multiplication by {...}_{F_{2^8}}
+        bf_y[iy + 0] = bf_x_hat[0];
+        bf_y[iy + 1] = bf_x_hat[0];
+        bf_y[iy + 2] = bf_x_hat[0];
+        bf_y[iy + 3] = bf_x_hat[0];
+      }
+    }
+    y_out        = malloc(bf_y_len);
+    uint32_t idx = 0;
+    for (uint32_t i = 0; i < bf_y_len; i += lambdaBytes) {
+      bf128_store(y_out + i, bf_y[idx]);
+      idx += 1;
     }
   }
 }
 
-int aes_cipher_backward(uint32_t lambda, uint8_t* x, uint8_t* xk, uint8_t* out, bool Mtag,
-                        bool Mkey, uint8_t* delta) {}
+int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, const uint8_t* x,
+                     uint8_t* xk, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, uint8_t* out,
+                     uint8_t* y_out) {
 
-int aes_cipher_constraints() {}
+  uint32_t lambdaBytes = lambda / 8;
+  uint32_t x_len       = lambdaBytes * Lenc;
+  uint32_t delta_len   = lambdaBytes;
+  uint32_t out_len     = 16;
+  uint32_t y_out_len   = lambdaBytes * R * 16;
+
+  uint32_t bf_y_len = sizeof(bf128_t) * R * 16;
+  bf128_t* bf_y     = malloc(bf_y_len);
+
+  uint32_t ird;
+
+  if (m == 1) {
+
+    // If m == 1, Mkey should be 0, because we then cancel delta in line 10
+    if (Mkey != 0) {
+      return -1;
+    }
+
+    bf8_t* bf_x_tilde   = malloc(8);
+    bf8_t* bf_xout      = malloc(8);
+    bf8_t bf_minus_mtag = bf8_from_bit(1 - Mtag);
+    bf8_t bf_minus_mkey = bf8_from_bit(1 - Mkey);
+
+    for (uint32_t j = 0; j < R; j++) {
+      for (uint32_t c = 0; c < 3; c++) {
+        for (uint32_t r = 0; r < 3; r++) {
+          ird = (128 * j) + (32 * (c - r % 4)) + (8 * r);
+
+          if (j < (R - 1)) {
+
+            for (uint32_t i = 0; i < 8; i++) {
+              // converting from bit index to byte idx
+              bf_x_tilde[i] = bf8_from_bit(getBit(x + (ird / 8), i));
+            }
+
+          } else {
+            for (uint32_t i = 0; i < 8; i++) {
+              // converting bit idx to byte idx
+              bf_xout[i] =
+                  bf8_mul(bf8_mul(bf8_from_bit(getBit(out[(ird - 1152) / 8], i)), bf_minus_mtag),
+                          bf_minus_mkey);
+              bf_x_tilde[i] = bf8_add(bf_xout[i], bf8_from_bit(getBit(xk + (128 + ird) / 8, i)));
+            }
+          }
+          bf8_t* bf_y_tilde = malloc(8);
+          // TODO: multiplication with different field size ???
+          bf_y_tilde[7] = bf8_add(bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
+                                  bf8_mul(bf_minus_mtag, bf_minus_mkey));
+          bf_y_tilde[6] = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[1]);
+          bf_y_tilde[5] = bf8_add(bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]),
+                                  bf8_mul(bf_minus_mtag, bf_minus_mkey));
+          bf_y_tilde[4] = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[5]), bf_x_tilde[2]);
+          bf_y_tilde[3] = bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[4]), bf_x_tilde[1]);
+          bf_y_tilde[2] = bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[3]), bf_x_tilde[0]);
+          bf_y_tilde[1] = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[2]);
+          bf_y_tilde[0] = bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[1]);
+
+          // TODO: ByteCombine is missing !!!!
+          bf_y[16 * j + 4 * c + r];
+        }
+      }
+    }
+    y_out        = malloc(y_out_len);
+    uint32_t idx = 0;
+    for (uint32_t i = 0; i < y_out_len; i += lambdaBytes) {
+      bf128_store(y_out + i, bf_y[idx]);
+      idx++;
+    }
+  } else {
+
+    bf128_t* bf_x_tilde   = malloc(sizeof(bf128_t) * 8);
+    bf128_t* bf_xout      = malloc(sizeof(bf128_t) * 8);
+    bf128_t bf_minus_mtag = bf128_from_bit(1 - Mtag);
+    bf128_t bf_minus_mkey = bf128_from_bit(1 - Mkey);
+    bf128_t bf_mkey       = bf128_from_bit(Mkey);
+
+    for (uint32_t j = 0; j < R; j++) {
+      for (uint32_t c = 0; c < 3; c++) {
+        for (uint32_t r = 0; r < 3; r++) {
+          ird = (128 * j) + (32 * (c - r % 4)) + (8 * r);
+
+          if (j < (R - 1)) {
+
+            for (uint32_t i = 0; i < 8; i++) {
+              // TODO: check here if getting the bit makes sense and the converting to bf128 !!
+              bf_x_tilde[i] = bf128_from_bit(getBit(x + (ird / 8), i));
+            }
+
+          } else {
+            for (uint32_t i = 0; i < 8; i++) {
+              uint8_t* out_zeros_concat = malloc(m / 8);
+              out_zeros_concat[0]       = (getBit(out[(ird - 1152) / 8], i) << 7);
+              memset(out_zeros_concat + 1, 0, (m / 8) - 1);
+
+              bf_xout[i] =
+                  bf128_mul(bf128_mul(bf128_load(out_zeros_concat), bf_minus_mtag),
+                            bf128_add(bf128_mul(bf_mkey, bf128_load(delta)), bf_minus_mkey));
+
+              // TODO: check here if getting the bit makes sense and the converting to bf128 !!
+              bf_x_tilde[i] =
+                  bf128_add(bf_xout[i], bf128_from_bit(getBit(xk + ((128 + ird) / 8), i)));
+            }
+          }
+          bf128_t* bf_y_tilde = malloc(8);
+          // TODO: multiplication with different field size ???
+          bf_y_tilde[7] =
+              bf128_add(bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
+                        bf128_mul(bf_minus_mtag, bf_minus_mkey));
+          bf_y_tilde[6] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[1]);
+          bf_y_tilde[5] =
+              bf128_add(bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]),
+                        bf128_mul(bf_minus_mtag, bf_minus_mkey));
+          bf_y_tilde[4] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[5]), bf_x_tilde[2]);
+          bf_y_tilde[3] = bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[4]), bf_x_tilde[1]);
+          bf_y_tilde[2] = bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[3]), bf_x_tilde[0]);
+          bf_y_tilde[1] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[2]);
+          bf_y_tilde[0] = bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[1]);
+
+          // TODO: ByteCombine is missing !!!!
+          bf_y[16 * j + 4 * c + r];
+        }
+      }
+    }
+    y_out        = malloc(y_out_len);
+    uint32_t idx = 0;
+    for (uint32_t i = 0; i < y_out_len; i += lambdaBytes) {
+      bf128_store(y_out + i, bf_y[idx]);
+      idx++;
+    }
+  }
+}
+
+int aes_enc_constraints() {}
 
 // w (extended witness bits), u (vole masks), v (vole tags), in (faest public-key input block
 // bits), out (faest public-key output block bits), chal (quicksilver challenge), a_tilde and
