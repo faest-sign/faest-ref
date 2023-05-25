@@ -143,13 +143,9 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 
   // Step: 8
   uint8_t* V_tilde;
-  uint8_t* r0_1;
-  uint8_t* r1_1;
-  uint8_t* s_1;
-  uint8_t* t_1;
   uint8_t* x_1;
   size_t ell_1;
-  vole_hash(V_tilde, r0_1, r1_1, s_1, t_1, x_1, ell_1, lambda);
+  vole_hash(V_tilde, r0, r1, s, t, x_1, ell_1, lambda);
 
   // Step: 9
   H1_context_t h1_ctx_1;

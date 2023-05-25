@@ -187,7 +187,7 @@ void expandSeeds(tree_t* tree, const faest_paramset_t* params) {
 tree_t* generateSeeds(const uint8_t* rootSeed, const faest_paramset_t* params,
                       uint32_t numVoleInstances) {
 
-  uint32_t lambdaBytes = params->faest_param.lambda;
+  uint32_t lambdaBytes = params->faest_param.lambda / 8;
   tree_t* tree         = createTree(params, numVoleInstances);
 
   memcpy(tree->nodes[0], rootSeed, lambdaBytes);
