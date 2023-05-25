@@ -61,58 +61,68 @@ int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t
 
   // STep: 2..3
   if (m == 1) {
-    bf8_t* bf_y = malloc(sizeof(bf8_t) * ((R + 1) * 128));
-    for (uint32_t i = 0; i < lambda; i++) {
-      bf_y[i] = bf8_load(x + i);
+    bf8_t* bf_y = malloc(y_out_len);
+    for (uint32_t i = 0; i < lambdaBytes; i++) {
+      for (uint32_t j = 0; j < 8; j++) {
+        bf_y[(i * 8) + j] = bf8_from_bit(getBit(x + i, j));
+      }
     }
     // Step: 4
-    uint32_t i_wd = lambdaByte;
+    uint32_t i_wd = lambda;
 
     // Step: 5..10
     for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
-      if (j % Nwd == 0 || (Nwd > 6 && j % Nwd == 4)) {
-        for (uint32_t i = (j * 32); i < ((j * 32) + 31); i++) {
-          bf_y[i] = bf8_load(x + i);
+
+      if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
+
+        for (uint32_t i = (j * 32); i <= ((j * 32) + 31); i++) {
+          // TODO: hopefully this magic works fine here
+          bf_y[i] = bf8_from_bit(getBit(x + (i / 8), i % 8));
         }
         i_wd += 32;
       } else {
         for (uint32_t i = 0; i < 32; i++) {
-          bf_y[32 * j + i] = bf8_add(bf_y[32 * (j - Nwd) + i], bf_y[32 * (j - 1) + i]);
+          bf_y[(32 * j) + i] = bf8_add(bf_y[32 * (j - Nwd) + i], bf_y[32 * (j - 1) + i]);
         }
       }
     }
-    y_out = malloc(sizeof(bf_y));
-    for (uint32_t i = 0; i < sizeof(bf_y); i++) {
+
+    y_out = malloc(y_out_len);
+    for (uint32_t i = 0; i < y_out_len; i++) {
       bf8_store(y_out + i, bf_y[i]);
     }
-    return 1;
-
   } else {
-    bf128_t* bf_y = malloc(sizeof(bf128_t) * ((R + 1) * 128));
-    for (uint32_t i = 0; i < lambda; i++) {
-      bf_y[i] = bf128_load(x + (i * lambdaByte));
+    bf128_t* bf_y = malloc(y_out_len);
+    for (uint32_t i = 0; i < lambdaBytes; i++) {
+      for (uint32_t j = 0; j < 8; j++) {
+        bf_y[(i * 8) + j] = bf128_from_bit(getBit(x + i, j));
+      }
     }
     // Step: 4
-    uint32_t i_wd = lambdaByte;
+    uint32_t i_wd = lambda;
 
     // Step: 5..10
     for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
-      if (j % Nwd == 0 || (Nwd > 6 && j % Nwd == 4)) {
-        for (uint32_t i = (j * 32); i < ((j * 32) + 31); i++) {
-          bf_y[i] = bf128_load(x + (lambda * i));
+
+      if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
+
+        for (uint32_t i = (j * 32); i <= ((j * 32) + 31); i++) {
+          // TODO: hopefully this magic works fine here
+          bf_y[i] = bf128_from_bit(getBit(x + (i / 8), i % 8));
         }
         i_wd += 32;
       } else {
         for (uint32_t i = 0; i < 32; i++) {
-          bf_y[32 * j + i] = bf128_add(bf_y[32 * (j - Nwd) + i], bf_y[32 * (j - 1) + i]);
+          bf_y[(32 * j) + i] = bf128_add(bf_y[32 * (j - Nwd) + i], bf_y[32 * (j - 1) + i]);
         }
       }
     }
-    y_out = malloc(sizeof(bf_y));
-    for (uint32_t i = 0; i < sizeof(bf_y) / sizeof(bf_y[0]); i++) {
-      bf128_store(y_out + (i * sizeof(bf_y[0])), bf_y[i]);
+    y_out        = malloc(y_out_len);
+    uint32_t idx = 0;
+    for (uint32_t i = 0; i < y_out_len; i += lambdaBytes) {
+      bf128_store(y_out + i, bf_y[idx]);
+      idx += 1;
     }
-    return 1;
   }
 }
 

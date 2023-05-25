@@ -13,7 +13,7 @@ void aes_extend_witness(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Bwd,
                         uint32_t Ske, uint32_t beta, const uint8_t* key, const uint8_t** in,
                         uint8_t* w_out);
 
-int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t m,
+int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Lke, uint32_t m,
                              const uint8_t* x, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
                              uint8_t* y_out);
 
@@ -35,7 +35,7 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
                      uint8_t* xk, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, uint8_t* out,
                      uint8_t* y_out);
 
-void aes_prove(uint8_t* w, uint8_t* u, uint8_t** v, uint8_t* in, uint8_t* out, uint8_t* chal_2,
+void aes_prove(uint8_t* w, uint8_t* u, uint8_t** v, uint8_t* in, uint8_t* out, uint8_t* chal,
                uint32_t lambda, uint32_t tau, uint32_t l, uint8_t* a_tilde, uint8_t* b_tilde);
 
 bool aes_verify(uint8_t* d, uint8_t* Q, uint8_t* chal_2, uint8_t* chal_3, uint8_t* a_tilde,
