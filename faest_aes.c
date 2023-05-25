@@ -642,7 +642,78 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
   return 1;
 }
 
-int aes_enc_constraints() {}
+int aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Senc,
+                        const uint8_t* in, const uint8_t* out, const uint8_t* w, const uint8_t* v,
+                        const uint8_t* k, const uint8_t* vk, uint8_t Mkey, const uint8_t* q,
+                        const uint8_t* qk, const uint8_t* delta, uint8_t* A0, uint8_t* A1,
+                        uint8_t* B) {
+
+  // TODO: unused vars, remove them in the end !!
+  uint32_t lambdaBytes = lambda / 8;
+  uint32_t in_len      = 16;
+  uint32_t out_len     = 16;
+  uint32_t w_len       = Lenc;
+  uint32_t v_len       = Lenc;
+  uint32_t k_len       = (R + 1) * 128;
+  uint32_t vk_len      = ((R + 1) * 128) * lambdaBytes;
+  uint32_t q_len       = Lenc * lambdaBytes;
+  uint32_t qk_len      = ((R + 1) * 128) * lambdaBytes;
+  uint32_t delta_len   = lambdaBytes;
+
+  if (Mkey == 0) {
+    uint8_t *s, vs, s_dash, vs_dash;
+    aes_enc_forward(lambda, R, 1, Lenc, w, k, in, 0, 0, NULL, s);
+    aes_enc_forward(lambda, R, lambda, Lenc, v, vk, in, 1, 0, NULL, vs);
+    aes_enc_backward(lambda, R, 1, Lenc, w, k, 0, 0, delta, out, s_dash);
+    aes_enc_backward(lambda, R, lambda, Lenc, v, vk, 1, 0, delta, out, vs_dash);
+
+    bf128_t* bf_s       = malloc(sizeof(bf128_t) * Senc);
+    bf128_t* bf_vs      = malloc(sizeof(bf128_t) * Senc);
+    bf128_t* bf_s_dash  = malloc(sizeof(bf128_t) * Senc);
+    bf128_t* bf_vs_dash = malloc(sizeof(bf128_t) * Senc);
+    uint32_t idx        = 0;
+    for (uint8_t i = 0; i < Senc; i++) {
+      bf_s[i]       = bf128_load(s + idx);
+      bf_vs[i]      = bf128_load(vs + idx);
+      bf_s_dash[i]  = bf128_load(s_dash + idx);
+      bf_vs_dash[i] = bf128_load(vs_dash + idx);
+      idx += lambdaBytes;
+    }
+    bf128_t* bf_a0 = malloc(sizeof(bf128_t) * Senc);
+    bf128_t* bf_a1 = malloc(sizeof(bf128_t) * Senc);
+    A0             = malloc(lambdaBytes * Senc);
+    A1             = malloc(lambdaBytes * Senc);
+    for (uint32_t j = 0; j < Senc; j++) {
+      bf_a0[j] = bf128_mul(bf_vs[j], bf_vs_dash[j]);
+      bf128_store(A0 + (lambdaBytes * j), bf_a0[j]);
+      // TODO : Subtraction by 1_{F_{2^8}}
+      bf_a1[j] =
+          bf128_add(bf128_mul(bf128_add(bf_s[j], bf_vs[j]), bf128_add(bf_s_dash[j], bf_vs_dash[j])),
+                    bf_a0[j]);
+      bf128_store(A1 + (lambdaBytes * j), bf_a1[j]);
+    }
+  } else {
+    uint8_t *qs, qs_dash;
+    aes_enc_forward(lambda, R, lambda, Lenc, q, qk, in, 0, 1, delta, qs);
+    aes_enc_backward(lambda, R, lambda, Lenc, q, qk, 0, 1, delta, out, qs_dash);
+
+    bf128_t* bf_qs      = malloc(sizeof(bf128_t) * Senc);
+    bf128_t* bf_qs_dash = malloc(sizeof(bf128_t) * Senc);
+    uint32_t idx        = 0;
+    for (uint32_t i = 0; i < Senc; i++) {
+      bf_qs[i]      = bf128_load(qs + idx);
+      bf_qs_dash[i] = bf128_load(qs_dash + idx);
+      idx += lambdaBytes;
+    }
+    bf128_t* bf_b = malloc(sizeof(bf128_t) * Senc);
+    B             = malloc(lambdaBytes * Senc);
+    for (uint32_t j = 0; j < Senc; j++) {
+      // TODO: multiplication by 1_{F_{2^8}}
+      bf_b[j] = bf128_mul(bf_qs[j], bf_qs_dash[j]);
+      bf128_store(B + (lambdaBytes * j), bf_b[j]);
+    }
+  }
+}
 
 // w (extended witness bits), u (vole masks), v (vole tags), in (faest public-key input block
 // bits), out (faest public-key output block bits), chal (quicksilver challenge), a_tilde and
