@@ -1,4 +1,6 @@
 #include "faest.h"
+#include "faest_aes.h"
+#include "randomness.h"
 
 // TODO: TEST EVERYTHING HERE !!!
 
@@ -81,66 +83,63 @@ void keyGen(uint32_t lambda, uint32_t lambdaBytes, uint8_t* sk, uint8_t* pk) {
 }
 
 // TODO: l is in bits, change it everywhere
-void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_paramset_t* params,
-          uint32_t l, signature_t* signature) {
+void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* pk,
+          const faest_paramset_t* params, uint32_t ol, signature_t* signature) {
 
-  uint32_t lambda      = params->faest_param.lambda;
-  uint32_t lambdaBytes = lambda / 8;
-  uint32_t tau         = params->faest_param.tau;
+  const uint32_t l           = params->faest_param.l;
+  const uint32_t lambda      = params->faest_param.lambda;
+  const uint32_t lambdaBytes = lambda / 8;
+  const uint32_t tau         = params->faest_param.tau;
+  const uint32_t ell_hat =
+      params->faest_param.l + params->faest_param.lambda * 2 + params->faest_param.b;
 
   // Step: 1
-  uint8_t* p = malloc(lambdaBytes);
-  // TODO: Setting it to all zero for now, ask in the group and change it accordingly
-  memset(p, 0, lambdaBytes);
+  uint8_t* rho = malloc(lambdaBytes);
+  rand_bytes(rho, lambdaBytes);
 
   // Step: 2
-  uint8_t* u             = malloc(lambdaBytes * 2);
-  uint8_t* pk_msg_concat = malloc(sizeof(pk) + sizeof(msg));
-  memcpy(pk_msg_concat, pk, sizeof(pk));
-  memcpy(pk_msg_concat + sizeof(pk), msg, sizeof(msg));
-  H1_context_t h1_ctx;
-  H1_init(&h1_ctx, lambda);
-  H1_update(&h1_ctx, pk_msg_concat, sizeof(pk_msg_concat));
-  H1_final(&h1_ctx, u, lambdaBytes * 2);
+  uint8_t* mu = malloc(lambdaBytes * 2);
+  {
+    H1_context_t h1_ctx;
+    H1_init(&h1_ctx, lambda);
+    H1_update(&h1_ctx, pk, params->faest_param.pkSize);
+    H1_update(&h1_ctx, msg, msglen);
+    H1_final(&h1_ctx, mu, lambdaBytes * 2);
+  }
 
-  uint8_t* rootkey       = malloc(lambdaBytes);
-  uint8_t* sk_u_p_concat = malloc(sizeof(sk) + sizeof(u) + sizeof(p));
-  memcpy(sk_u_p_concat, sk, sizeof(sk));
-  memcpy(sk_u_p_concat + sizeof(sk), u, sizeof(u));
-  memcpy(sk_u_p_concat + sizeof(sk) + sizeof(u), p, sizeof(p));
-  H3_context_t h3_ctx;
-  H3_init(&h3_ctx, lambda);
-  H3_update(&h3_ctx, sk_u_p_concat, sizeof(sk_u_p_concat));
-  H3_final(&h3_ctx, rootkey, lambdaBytes);
+  uint8_t* rootkey = malloc(lambdaBytes);
+  {
+    H3_context_t h3_ctx;
+    H3_init(&h3_ctx, lambda);
+    H3_update(&h3_ctx, sk, params->faest_param.skSize);
+    H3_update(&h3_ctx, mu, lambdaBytes * 2);
+    H3_update(&h3_ctx, rho, lambdaBytes);
+    H3_final(&h3_ctx, rootkey, lambdaBytes);
+  }
 
   // Step: 3..4
   vec_com_t** vecCom = malloc(tau * sizeof(vec_com_t*));
   uint8_t* u_        = malloc(l);
   uint8_t** v        = malloc(tau * sizeof(uint8_t*));
-  voleCommit(rootkey, l, params, signature->hcom, vecCom, signature->c, u_, v);
+  voleCommit(rootkey, ell_hat, params, signature->hcom, vecCom, signature->c, u_, v);
 
   // Step: 5
   uint8_t* chal_1 = malloc(lambdaBytes);
   H2_context_t h2_ctx;
   H2_init(&h2_ctx, lambda);
-  uint8_t* u_hcom_c_concat = malloc(sizeof(u) + sizeof(signature->hcom) + (tau * l));
-  memcpy(u_hcom_c_concat, u, sizeof(u));
-  memcpy(u_hcom_c_concat + sizeof(u), signature->hcom, sizeof(signature->hcom));
-  for (uint32_t i = 0; i < (tau - 1); i++) {
-    memcpy(u_hcom_c_concat + sizeof(u) + sizeof(signature->hcom) + (l * i), signature->c[i], l);
+  H2_update(&h2_ctx, mu, lambdaBytes * 2);
+  H2_update(&h2_ctx, signature->hcom, lambdaBytes * 2);
+  for (unsigned int i = 0; i < (tau - 1); ++i) {
+    H2_update(&h2_ctx, signature->c[i], ell_hat / 8);
   }
-  H2_update(&h2_ctx, u_hcom_c_concat, sizeof(u_hcom_c_concat));
   H2_final(&h2_ctx, chal_1, (5 * lambdaBytes) + 8);
 
   // Step: 7
-  // TODO: Find what are these ???
-  uint8_t* r0;
-  uint8_t* r1;
-  uint8_t* s;
-  uint8_t* t;
-  uint8_t* x;
-  size_t ell;
-  vole_hash(signature->u_tilde, r0, r1, s, t, x, ell, lambda);
+  uint8_t* r0 = chal_1;
+  uint8_t* r1 = chal_1 + lambdaBytes;
+  uint8_t* s  = chal_1 + lambdaBytes * 2;
+  uint8_t* t  = chal_1 + lambdaBytes * 3;
+  vole_hash(signature->u_tilde, r0, r1, s, t, u_, l, lambda);
 
   // Step: 8
   uint8_t* V_tilde;
@@ -170,7 +169,7 @@ void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_
   // TODO
   uint8_t* w;
   aes_extend_witness(lambda, sk, in, w);
-  xorUint8Arr(w, u, signature->d, l);
+  xorUint8Arr(w, mu, signature->d, l);
 
   // Step: 14
   // TODO
@@ -202,7 +201,7 @@ void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_
 
   // Step: 18
   // TODO
-  aes_prove(w, u, v, in, out, chal_2, lambda, tau, l, signature->a_tilde, signature->b_tilde);
+  aes_prove(w, mu, v, in, out, chal_2, lambda, tau, l, signature->a_tilde, signature->b_tilde);
 
   // Step: 19
   // TODO
