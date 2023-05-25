@@ -387,6 +387,7 @@ endforeach
 # dependencies
 # for test vector generation
 openssl = dependency('openssl', required: false)
+boost_program_options = dependency('boost', required: false, modules: ['program_options'])
 build_dependencies = []
 
 if host_machine.system() == 'windows'
