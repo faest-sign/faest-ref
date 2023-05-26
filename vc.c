@@ -162,7 +162,9 @@ int vector_verify(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b, u
   }
 
   if (ret == 0) {
-    *rec = vecComRec;
+    if (rec) {
+      *rec = vecComRec;
+    }
     return 1;
   } else {
     return 0;
