@@ -8,25 +8,37 @@
 
 // TODO: Do not pass lambdaBytes everywhere, compute it in the function....
 
-int ChalDec(const uint8_t* chal, uint32_t i, uint32_t k0, uint32_t t0, uint32_t k1, uint32_t t1,
-            uint8_t* chalout) {
-  uint32_t lo;
-  uint32_t hi;
-  uint32_t t;
+static inline uint8_t get_bit(const uint8_t* in, unsigned int index) {
+  return in[index / 8] >> (7 - index % 8);
+}
+
+#if 0
+static inline void set_bit(uint8_t* dst, uint8_t in, unsigned int index) {
+  dst[index / 8] |= in << (7 - index % 8);
+}
+#endif
+
+int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t0, unsigned int k1,
+            unsigned int t1, uint8_t* chalout) {
   if (i >= t0 + t1) {
     return 0;
   }
+
+  unsigned int lo;
+  unsigned int hi;
   if (i < t0) {
     lo = i * k0;
     hi = ((i + 1) * k0) - 1;
   } else {
-    t  = i - t0;
-    lo = (t0 * k0) + (t * k1);
-    hi = (t0 * k0) + ((t + 1) * k1) - 1;
+    unsigned int t = i - t0;
+    lo             = (t0 * k0) + (t * k1);
+    hi             = (t0 * k0) + ((t + 1) * k1) - 1;
   }
-  chalout = malloc(hi - lo);
-  // TODO: this should be always 8...
-  memcpy(chalout, chal + lo, hi - lo);
+
+  for (unsigned int j = lo; j != hi; ++j) {
+    // set_bit(chalout, i - lo, get_bit(chal, i));
+    chalout[j] = get_bit(chal, j);
+  }
   return 1;
 }
 
