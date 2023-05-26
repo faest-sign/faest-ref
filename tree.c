@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "hash_shake.h"
 #include "tree.h"
 #include "aes.h"
 #include "compat.h"
@@ -47,16 +46,16 @@ int exists(tree_t* tree, size_t i) {
   return 0;
 }
 
-tree_t* createTree(const faest_paramset_t* params, uint32_t numVoleInstances) {
+tree_t* createTree(const faest_paramset_t* params, uint32_t num_nodes) {
   tree_t* tree = malloc(sizeof(tree_t));
 
   uint32_t lambdaBytes = params->faest_param.lambda / 8;
 
-  tree->depth    = ceil_log2(numVoleInstances) + 1;
-  tree->numNodes = ((1 << (tree->depth)) - 1) -
-                   ((1 << (tree->depth - 1)) -
-                    numVoleInstances); /* Num nodes in complete - number of missing leaves */
-  tree->numLeaves = numVoleInstances;
+  tree->depth = ceil_log2(num_nodes) + 1;
+  tree->numNodes =
+      ((1 << (tree->depth)) - 1) -
+      ((1 << (tree->depth - 1)) - num_nodes); /* Num nodes in complete - number of missing leaves */
+  tree->numLeaves = num_nodes;
   tree->dataSize  = lambdaBytes;
   tree->nodes     = malloc(tree->numNodes * sizeof(uint8_t*));
 
@@ -122,29 +121,6 @@ uint8_t* getLeaf(tree_t* tree, size_t leafIndex) {
   assert(leafIndex < tree->numLeaves);
   size_t firstLeaf = tree->numNodes - tree->numLeaves;
   return tree->nodes[firstLeaf + leafIndex];
-}
-
-void hashSeed(uint8_t* digest, const uint8_t* inputSeed, uint8_t* salt, size_t repIndex,
-              size_t nodeIndex, faest_paramset_t* params) {
-  hash_context ctx;
-
-  uint32_t lambdaBytes = params->faest_param.lambda / 8;
-
-  hash_init(&ctx, params->cipher_param.stateSizeBits);
-  hash_update(&ctx, inputSeed, lambdaBytes);
-  hash_update(&ctx, salt, lambdaBytes);
-  hash_update_uint16_le(&ctx, (uint16_t)repIndex);
-  hash_update_uint16_le(&ctx, (uint16_t)nodeIndex);
-  hash_final(&ctx);
-  hash_squeeze(&ctx, digest, lambdaBytes);
-
-  // HashInit(&ctx, params, hashPrefix);
-  // HashUpdate(&ctx, inputSeed, params->seedSizeBytes);
-  // HashUpdate(&ctx, salt, params->saltSizeBytes);
-  // HashUpdateIntLE(&ctx, (uint16_t)repIndex);
-  // HashUpdateIntLE(&ctx, (uint16_t)nodeIndex);
-  // HashFinal(&ctx);
-  // HashSqueeze(&ctx, digest, 2 * params->seedSizeBytes);
 }
 
 void expandSeeds(tree_t* tree, const faest_paramset_t* params) {
@@ -378,75 +354,6 @@ Exit:
   return ret;
 }
 
-static void computeParentHash(tree_t* tree, size_t child, uint8_t* salt, faest_paramset_t* params) {
-
-  uint32_t lambdaBytes = params->faest_param.lambda / 8;
-  if (!exists(tree, child)) {
-    return;
-  }
-
-  size_t parent = getParent(child);
-
-  if (tree->haveNode[parent]) {
-    return;
-  }
-
-  /* Compute the hash for parent, if we have everything */
-  if (!tree->haveNode[2 * parent + 1]) {
-    return;
-  }
-
-  if (exists(tree, 2 * parent + 2) && !tree->haveNode[2 * parent + 2]) {
-    return;
-  }
-
-  /* Compute parent data = H(left child data || [right child data] || salt || parent idx) */
-  hash_context ctx;
-  hash_init(&ctx, params->cipher_param.stateSizeBits);
-  hash_update(&ctx, tree->nodes[2 * parent + 1], lambdaBytes * 2);
-  if (hasRightChild(tree, parent)) {
-    /* One node may not have a right child when there's an odd number of leaves */
-    hash_update(&ctx, tree->nodes[2 * parent + 2], lambdaBytes * 2);
-  }
-  hash_update(&ctx, salt, lambdaBytes);
-  hash_update_uint16_le(&ctx, (uint16_t)parent);
-  hash_final(&ctx);
-  hash_squeeze(&ctx, tree->nodes[parent], lambdaBytes * 2);
-  tree->haveNode[parent] = 1;
-
-  // HashInit(&ctx, params, HASH_PREFIX_3);
-  // HashUpdate(&ctx, tree->nodes[2 * parent + 1], params->digestSizeBytes);
-  // if (hasRightChild(tree, parent)) {
-  //     /* One node may not have a right child when there's an odd number of leaves */
-  //     HashUpdate(&ctx, tree->nodes[2 * parent + 2], params->digestSizeBytes);
-  // }
-
-  // HashUpdate(&ctx, salt, params->saltSizeBytes);
-  // HashUpdateIntLE(&ctx, (uint16_t)parent);
-  // HashFinal(&ctx);
-  // HashSqueeze(&ctx, tree->nodes[parent], params->digestSizeBytes);
-  // tree->haveNode[parent] = 1;
-}
-
-/* Create a Merkle tree by hashing up all nodes.
- * leafData must have length tree->numNodes, but some may be NULL. */
-void buildMerkleTree(tree_t* tree, uint8_t** leafData, uint8_t* salt, faest_paramset_t* params) {
-  size_t firstLeaf = tree->numNodes - tree->numLeaves;
-
-  /* Copy data to the leaves. The actual data being committed to has already been
-   * hashed, according to the spec. */
-  for (size_t i = 0; i < tree->numLeaves; i++) {
-    if (leafData[i] != NULL) {
-      memcpy(tree->nodes[firstLeaf + i], leafData[i], tree->dataSize);
-      tree->haveNode[firstLeaf + i] = 1;
-    }
-  }
-  /* Starting at the leaves, work up the tree, computing the hashes for intermediate nodes */
-  for (int i = (int)tree->numNodes; i > 0; i--) {
-    computeParentHash(tree, i, salt, params);
-  }
-}
-
 /* Note that we never output the root node */
 static size_t* getRevealedMerkleNodes(tree_t* tree, uint16_t* missingLeaves,
                                       size_t missingLeavesSize, size_t* outputSize) {
@@ -571,40 +478,6 @@ Exit:
   free(revealed);
 
   return ret;
-}
-
-/* verifyMerkleTree: verify for each leaf that is set */
-int verifyMerkleTree(tree_t* tree, /* uint16_t* missingLeaves, size_t missingLeavesSize, */
-                     uint8_t** leafData, uint8_t* salt, faest_paramset_t* params) {
-  size_t firstLeaf = tree->numNodes - tree->numLeaves;
-
-  /* Copy the leaf data, where we have it. The actual data being committed to has already been
-   * hashed, according to the spec. */
-  for (size_t i = 0; i < tree->numLeaves; i++) {
-    if (leafData[i] != NULL) {
-      if (tree->haveNode[firstLeaf + i] == 1) {
-        return -1; /* A leaf was assigned from the prover for a node we've recomputed */
-      }
-
-      if (leafData[i] != NULL) {
-        memcpy(tree->nodes[firstLeaf + i], leafData[i], tree->dataSize);
-        tree->haveNode[firstLeaf + i] = 1;
-      }
-    }
-  }
-
-  /* At this point the tree has some of the leaves, and some intermediate nodes
-   * Work up the tree, computing all nodes we don't have that are missing. */
-  for (int i = (int)tree->numNodes; i > 0; i--) {
-    computeParentHash(tree, i, salt, params);
-  }
-
-  /* Fail if the root was not computed. */
-  if (!tree->haveNode[0]) {
-    return -1;
-  }
-
-  return 0;
 }
 
 /* Gets how many nodes will be there in the tree in total including root node */
