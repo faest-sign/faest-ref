@@ -310,10 +310,10 @@ void aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uin
 
     // STep: 2
     uint8_t *k, vk, w_dash, v_w_dash;
-    aes_key_schedule_forward(lambda, R, Nwd, 1, w, 0, 0, NULL, k);
+    aes_key_schedule_forward(lambda, R, Nwd, Lke, 1, w, 0, 0, NULL, k);
 
     // Step: 3
-    aes_key_schedule_forward(lambda, R, Nwd, lambda, v, 1, 0, NULL, vk);
+    aes_key_schedule_forward(lambda, R, Nwd, Lke, lambda, v, 1, 0, NULL, vk);
 
     // Step: 4
     uint8_t* w_lambda = malloc(w_len - lambdaByte);
@@ -359,7 +359,7 @@ void aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uin
     }
   } else {
     // Step: 19..20
-    aes_key_schedule_forward(lambda, R, Nwd, lambda, q, 0, 1, delta, qk);
+    aes_key_schedule_forward(lambda, R, Nwd, Lke, lambda, q, 0, 1, delta, qk);
     uint8_t* q_w_dash;
     uint8_t* q_lambda = malloc(q_len - lambdaByte);
     memcpy(q_lambda, q + lambdaByte, q_len - lambdaByte);
@@ -715,130 +715,87 @@ int aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Sen
   }
 }
 
-// w (extended witness bits), u (vole masks), v (vole tags), in (faest public-key input block
-// bits), out (faest public-key output block bits), chal (quicksilver challenge), a_tilde and
-// b_tilde (quicksilver response)
-void aes_prove(uint8_t* w, uint8_t* u, uint8_t** v, uint8_t* in, uint8_t* out, uint8_t* chal,
-               uint32_t lambda, uint32_t tau, uint32_t l, uint8_t* a_tilde, uint8_t* b_tilde) {
+void aes_prove(uint8_t* w, uint8_t* u, uint8_t** V, uint8_t* in, uint8_t* out, uint8_t* chal,
+               uint32_t lambda, uint32_t R, uint32_t tau, uint32_t l, uint32_t beta, uint32_t Lke,
+               uint32_t Lenc, uint32_t C, uint32_t Nwd, uint32_t Ske, uint32_t Senc,
+               uint8_t* a_tilde, uint8_t* b_tilde) {
 
-  uint32_t lByte      = l / 8;
-  uint32_t lambdaByte = lambda / 8;
+  uint32_t lambdaBytes = lambda / 8;
+  uint32_t w_len       = l;
+  uint32_t u_len       = lambda;
+  uint32_t in_len      = beta * 128;
+  uint32_t out_len     = beta * 128;
+  uint32_t chal        = (3 * lambda) + 64;
 
-  // Step: 1
-  // TODO: Is to field, equivalent to the function bf_load ??
-  // TODO: Are we really passing it bit by bit to ToField function ?
-  uint8_t* w_field = malloc(lByte);
-  //   bf8_t* bf_w = malloc(lByte);
-  //   for (uint32_t i = 0; lByte < l; i++) {
-  //     bf_w[i] = bf8_load(w[i]);
-  //   }
-
-  // Step: 2
-  // TODO: Is to field, equivalent to the function bf_load ??
-  // TODO: Are we really passing it bit by bit to ToField function ?
-  // TODO: Unsure what to do here
-  uint8_t v_field = malloc(lByte + lambdaByte);
-  //   for (uint32_t i = 0; i < lByte + lambdaBytes; i++) {
-  //   }
-
-  // Step: 3
   uint8_t* in_0  = malloc(16);
   uint8_t* out_0 = malloc(16);
   memcpy(in_0, in, 16);
   memcpy(out_0, out, 16);
 
-  // Step: 4
-  // TODO: What is B ?
-  uint32_t B     = 2;
   uint8_t* in_1  = malloc(16);
   uint8_t* out_1 = malloc(16);
-  if (B == 2) {
+  if (beta == 2) {
     memcpy(in_1, in + 16, 16);
     memcpy(out_1, out + 16, 16);
   }
 
-  // Step: 5
-  // TODO: Sampling some element from the field ??
-  uint8_t *a0, a1;
+  uint8_t* w_tilde = malloc(Lke / 8);
+  uint8_t* v_tilde = malloc(Lke / 8);
+  memcpy(w_tilde, w, Lke / 8);
+  // TODO: fix V copy
+  memcpy(v_tilde, V, Lke / 8);
 
-  // Step: 6
-  // TODO: What is l_ke ??
-  uint32_t lByte_ke      = 16;
-  uint8_t* w_field_tilde = malloc(lByte_ke);
-  memcpy(w_field_tilde, w_field, lByte_ke);
-  uint8_t* v_field_tilde = malloc(lByte_ke);
-  memcpy(v_field_tilde, v_field, lByte_ke);
+  uint8_t *A0, *A1, *k, *vk, *B, *qk;
+  aes_key_schedule_constraints(lambda, R, Nwd, Ske, Lke, w_tilde, v_tilde, 0, NULL, NULL, A0, A1, k,
+                               vk, B, qk);
 
-  // Step: 7
-  uint8_t MKey = 0;
-  uint8_t* q;
-  uint8_t* delta;
-  uint8_t* a0_tilde;
-  uint8_t* a1_tilde;
-  uint8_t* k;
-  uint8_t* vk;
-  aes_key_schedule_constrains(lambda, w_field_tilde, v_field_tilde, MKey, q, delta, a0_tilde,
-                              a1_tilde, k, vk);
-
-  // Step: 8
-  // TODO: resize it before memcpy
-  memcpy(a0, a0_tilde, sizeof(a0_tilde));
-  memcpy(a1, a1_tilde, sizeof(a1_tilde));
-
-  // Step: 9
-  // TODO
   uint32_t lByte_enc;
-  memcpy(w_field_tilde, w_field + lByte_ke, lByte_enc);
-  memcpy(v_field_tilde, v_field + lByte_ke, lByte_enc);
+  memcpy(w_tilde, w + Lke, Lenc);
+  // TODO: fix V copy
+  memcpy(v_tilde, V + Lke, Lenc);
 
-  // Step: 10
-  // TODO
-  uint8_t* qk;
-  aes_cipher_constrains(lambda, in_0, out_0, w_field_tilde, v_field_tilde, k, vk, MKey, q, qk,
-                        delta, a0_tilde, a1_tilde);
+  uint8_t *A0_1, *A1_1;
 
-  // Step: 11
-  // TODO
-  memcpy(a0, a0_tilde, sizeof(a0_tilde));
-  memcpy(a1, a1_tilde, sizeof(a1_tilde));
+  aes_enc_constraints(lambda, R, Lenc, Senc, in_0, out_0, w_tilde, v_tilde, k, vk, 0, NULL, NULL,
+                      NULL, A0_1, A1_1, B);
 
-  // STep: 12..15
-  // TODO
-  if (B == 2) {
-    memcpy(w_field_tilde, w_field + (lByte_ke + lByte_enc), (lByte) - (lByte_ke + lByte_enc));
-    memcpy(v_field_tilde, v_field + (lByte_ke + lByte_enc), (lByte) - (lByte_ke + lByte_enc));
-    aes_cipher_constrains(lambda, in_1, out_1, w_field_tilde, v_field_tilde, k, vk, MKey, q, qk,
-                          delta, a0_tilde, a1_tilde);
+  A0 = realloc(A0, lambdaBytes * (Ske / 8) + (lambdaBytes * Senc));
+  A1 = realloc(A1, lambdaBytes * (Ske / 8) + (lambdaBytes * Senc));
+  memcpy(A0 + (lambdaBytes * (Ske / 8)), A0_1, lambdaBytes * Senc);
+  memcpy(A1 + (lambdaBytes * (Ske / 8)), A1_1, lambdaBytes * Senc);
+
+  if (beta == 2) {
+    uint8_t *A0_2, *A1_2;
+    memcpy(w_tilde, w + Lke + Lenc, l - (Lke + Lenc));
+    memcpy(v_tilde, V + Lke + Lenc, l - (Lke + Lenc));
+    aes_enc_constraints(lambda, R, Lenc, Senc, in_1, out_1, w_tilde, v_tilde, k, vk, 0, NULL, NULL,
+                        NULL, A0_2, A1_2, B);
+
+    A0 = realloc(A0, (lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc)));
+    A1 = realloc(A1, (lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc)));
+    memcpy(A0 + (lambdaBytes * (Ske / 8)) + (lambdaBytes * Senc), A0_2, lambdaBytes * Senc);
+    memcpy(A1 + (lambdaBytes * (Ske / 8)) + (lambdaBytes * Senc), A1_2, lambdaBytes * Senc);
   }
 
-  // Step: 16..17
-  for (uint32_t i = lByte; i < lByte + lambdaByte; i++) {
-    // TODO: unsure what is happening here...
+  bf128_t* bf_u = malloc(sizeof(bf128_t) * lambda);
+  uint32_t idx  = 0;
+  for (uint32_t i = l; i < l + lambda; i++) {
+    bf_u[i] = bf128_load(u + idx);
+    idx += lambdaBytes;
   }
+  // TODO: unsure what is happeninig in line 18
+  // TODO: check if the sizes have been assigned correctly
+  uint8_t* us = malloc(lambdaBytes * lambdaBytes);
+  uint8_t* vs = malloc(lambdaBytes * lambdaBytes);
 
-  // STep: 18
-  // TODO: unsure
-  uint8_t* us;
-  uint8_t* vs;
+  uint8_t* a1_us_concat = malloc(((lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc))) +
+                                 sizeof(lambdaBytes * lambdaBytes));
+  uint8_t* a0_vs_concat = malloc(((lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc))) +
+                                 sizeof(lambdaBytes * lambdaBytes));
 
-  // Step: 19..20
-  // TODO
-  uint8_t* a1_us_concat = malloc(sizeof(a1) + sizeof(us));
-  uint8_t* a0_vs_concat = malloc(sizeof(a0) + sizeof(vs));
-  switch (lambda) {
-  case 256:
-    zk_hash_256(a_tilde, r, chal, t, a1_us_concat, ell);
-    zk_hash_256(b_tilde, r, chal, t, a0_vs_concat, ell);
-    break;
-  case 192:
-    zk_hash_192(a_tilde, r, chal, t, a1_us_concat, ell);
-    zk_hash_192(b_tilde, r, chal, t, a0_vs_concat, ell);
-    break;
-  default:
-    zk_hash_128(a_tilde, r, chal, t, a1_us_concat, ell);
-    zk_hash_128(b_tilde, r, chal, t, a0_vs_concat, ell);
-    break;
-  }
+  // TODO: what was ell, r and t ?
+  zk_hash_128(a_tilde, r, chal, t, a1_us_concat, l);
+  zk_hash_128(b_tilde, r, chal, t, a0_vs_concat, l);
 }
 
 bool aes_verify(uint8_t* d, uint8_t* Q, uint8_t* chal_2, uint8_t* chal_3, uint8_t* a_tilde,
