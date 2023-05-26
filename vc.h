@@ -44,6 +44,7 @@ int vector_verify(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b, u
                   uint32_t lambdaBytes, uint32_t numVoleInstances, vec_com_rec_t* rec,
                   const uint8_t* vecComH);
 
+void vec_com_clear(vec_com_t* com);
 void vec_com_rec_clear(vec_com_rec_t* rec);
 
 FAEST_END_C_DECL

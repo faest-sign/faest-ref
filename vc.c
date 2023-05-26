@@ -62,6 +62,7 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, u
     H0_final(&h0_ctx, vecCom->sd + (i * lambdaBytes), lambdaBytes,
              vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
+  freeTree(tree);
 
   // Step: 6
   H1_context_t h1_ctx;
@@ -112,7 +113,8 @@ void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint
            pdec + (lambdaBytes * (i - 1)), lambdaBytes);
     memset(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * a + b[depth - i])), 0, lambdaBytes);
 
-    for (uint32_t j = 0; j < (1 << (i - 1)); j++) {
+    const uint32_t current_depth = (1 << (i - 1));
+    for (uint32_t j = 0; j < current_depth; j++) {
       if (j == a) {
         continue;
       }
@@ -165,6 +167,13 @@ int vector_verify(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b, u
   } else {
     return 0;
   }
+}
+
+void vec_com_clear(vec_com_t* com) {
+  free(com->sd);
+  free(com->com);
+  free(com->k);
+  free(com->h);
 }
 
 void vec_com_rec_clear(vec_com_rec_t* rec) {
