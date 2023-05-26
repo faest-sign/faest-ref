@@ -125,14 +125,16 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 
   // Step: 5
   uint8_t* chal_1 = malloc(lambdaBytes);
-  H2_context_t h2_ctx;
-  H2_init(&h2_ctx, lambda);
-  H2_update(&h2_ctx, mu, lambdaBytes * 2);
-  H2_update(&h2_ctx, signature->hcom, lambdaBytes * 2);
-  for (unsigned int i = 0; i < (tau - 1); ++i) {
-    H2_update(&h2_ctx, signature->c[i], ell_hat / 8);
+  {
+    H2_context_t h2_ctx;
+    H2_init(&h2_ctx, lambda);
+    H2_update(&h2_ctx, mu, lambdaBytes * 2);
+    H2_update(&h2_ctx, signature->hcom, lambdaBytes * 2);
+    for (unsigned int i = 0; i < (tau - 1); ++i) {
+      H2_update(&h2_ctx, signature->c[i], ell_hat / 8);
+    }
+    H2_final(&h2_ctx, chal_1, (5 * lambdaBytes) + 8);
   }
-  H2_final(&h2_ctx, chal_1, (5 * lambdaBytes) + 8);
 
   // Step: 7
   uint8_t* r0 = chal_1;
@@ -141,16 +143,18 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   uint8_t* t  = chal_1 + lambdaBytes * 3;
   vole_hash(signature->u_tilde, r0, r1, s, t, u_, l, lambda);
 
-  // Step: 8
-  uint8_t* V_tilde;
-  uint8_t* x_1;
-  size_t ell_1;
-  vole_hash(V_tilde, r0, r1, s, t, x_1, ell_1, lambda);
-
-  // Step: 9
+  // Step: 8 and 9
   H1_context_t h1_ctx_1;
   H1_init(&h1_ctx_1, lambda);
-  H1_update(&h1_ctx_1, V_tilde, sizeof(V_tilde));
+
+  uint8_t* V_tilde = malloc(what);
+  for (unsigned int i = 0; i != WHAT; ++i) {
+    vole_hash(V_tilde, r0, r1, s, t, x_1, ell_1, lambda);
+    H1_update(&h1_ctx_1, V_tilde, what);
+  }
+  free(V_tilde);
+
+  // Step: 9
   H1_final(&h1_ctx_1, signature->h_v, lambdaBytes * 2);
 
   // Step: 10..11
@@ -168,27 +172,18 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   xorUint8Arr(w, mu, signature->d, l);
 
   // Step: 14
-  // TODO
-  uint8_t* chal_2;
-  uint8_t* chal_1_u_tilde_h_v_d_concat;
-  memcpy(chal_1_u_tilde_h_v_d_concat, chal_1, sizeof(chal_1));
-
-  memcpy(chal_1_u_tilde_h_v_d_concat + sizeof(chal_1), signature->u_tilde,
-         sizeof(signature->u_tilde));
-
-  memcpy(chal_1_u_tilde_h_v_d_concat + sizeof(chal_1) + sizeof(signature->u_tilde), signature->h_v,
-         sizeof(signature->h_v));
-
-  for (uint32_t i = 0; i < tau; i++) {
-
-    memcpy(chal_1_u_tilde_h_v_d_concat + sizeof(chal_1) + sizeof(signature->u_tilde) +
-               sizeof(signature->h_v) + (i * l),
-           signature->c[i], sizeof(l));
+  uint8_t* chal_2 = malloc(3 * lambdaBytes + 8);
+  {
+    H2_context_t h2_ctx_1;
+    H2_init(&h2_ctx_1, lambda);
+    H2_update(&h2_ctx_1, chal_1, lambdaBytes);
+    H2_update(&h2_ctx_1, signature->u_tilde, utilde_bytes);
+    H2_update(&h2_ctx_1, signature->h_v, 2 * lambdaBytes);
+    for (unsigned int i = 0; i < tau; i++) {
+      H2_update(&h2_ctx_1, signature->c[i], ell_hat_bytes);
+    }
+    H2_final(&h2_ctx_1, chal_2, (3 * lambdaBytes) + 8);
   }
-  H2_context_t h2_ctx_1;
-  H2_init(&h2_ctx_1, lambda);
-  H2_update(&h2_ctx_1, chal_1_u_tilde_h_v_d_concat, sizeof(chal_1_u_tilde_h_v_d_concat));
-  H2_final(&h2_ctx_1, chal_2, (3 * lambdaBytes) + 8);
 
   // Step: 15..17
   // TODO
