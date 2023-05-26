@@ -31,7 +31,7 @@ int BitDec(uint32_t leafIndex, uint32_t depth, uint8_t* out) {
 uint64_t NumRec(uint32_t depth, const uint8_t* bi) {
   uint64_t out = 0;
   for (uint32_t i = 0; i < depth; i++) {
-    out = out + ((uint64_t)bi[i] * (1 << i));
+    out = out + ((uint64_t)bi[i] << i);
   }
   return out;
 }
@@ -100,9 +100,9 @@ void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint
   uint8_t depth      = ceil_log2(numVoleInstances);
   uint64_t leafIndex = NumRec(depth, b);
   vecComRec->h       = malloc(lambdaBytes * 2);
+  vecComRec->k       = calloc(getBinaryTreeNodeCount(numVoleInstances), lambdaBytes);
   vecComRec->com     = malloc(numVoleInstances * lambdaBytes * 2);
   vecComRec->m       = malloc(numVoleInstances * lambdaBytes);
-  vecComRec->k       = calloc(getBinaryTreeNodeCount(numVoleInstances), lambdaBytes);
 
   // Step: 3..9
   uint32_t a   = 0;
@@ -149,13 +149,27 @@ void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint
 }
 
 int vector_verify(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b, uint32_t lambda,
-                  uint32_t lambdaBytes, uint32_t numVoleInstances, vec_com_rec_t* vecComRec,
-                  uint8_t* vecComH) {
+                  uint32_t lambdaBytes, uint32_t numVoleInstances, vec_com_rec_t* rec,
+                  const uint8_t* vecComH) {
+  vec_com_rec_t vecComRec;
 
-  vector_reconstruction(pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, vecComRec);
-  if (memcmp(vecComH, vecComRec->h, lambdaBytes * 2) == 0) {
+  vector_reconstruction(pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, &vecComRec);
+  int ret = memcmp(vecComH, vecComRec.h, lambdaBytes * 2);
+  if (!rec || ret) {
+    vec_com_rec_clear(&vecComRec);
+  }
+
+  if (ret == 0) {
+    *rec = vecComRec;
     return 1;
   } else {
     return 0;
   }
+}
+
+void vec_com_rec_clear(vec_com_rec_t* rec) {
+  free(rec->m);
+  free(rec->com);
+  free(rec->k);
+  free(rec->h);
 }

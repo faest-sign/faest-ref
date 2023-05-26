@@ -23,7 +23,6 @@ typedef struct vec_com_rec_t {
   uint8_t* h;
   uint8_t* k;
   uint8_t* com;
-  uint8_t* com_j;
   uint8_t* m;
 } vec_com_rec_t;
 
@@ -42,8 +41,10 @@ void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint
                            vec_com_rec_t* vecComRec);
 
 int vector_verify(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b, uint32_t lambda,
-                  uint32_t lambdaBytes, uint32_t numVoleInstances, vec_com_rec_t* vecComRec,
-                  uint8_t* vecComH);
+                  uint32_t lambdaBytes, uint32_t numVoleInstances, vec_com_rec_t* rec,
+                  const uint8_t* vecComH);
+
+void vec_com_rec_clear(vec_com_rec_t* rec);
 
 FAEST_END_C_DECL
 
