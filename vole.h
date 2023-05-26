@@ -9,7 +9,7 @@ FAEST_BEGIN_C_DECL
 int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t0, unsigned int k1,
             unsigned int t1, uint8_t* chalout);
 
-void voleCommit(const uint8_t* rootKey, uint32_t outlen, const faest_paramset_t* params,
+void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t* params,
                 uint8_t* hcom, vec_com_t* vecCom, uint8_t** c, uint8_t* u, uint8_t** v);
 
 void voleVerify(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint32_t lambda,

@@ -43,13 +43,14 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
 }
 
 // TODO: outlen (l) is in bits, change it everywhere
-void voleCommit(const uint8_t* rootKey, uint32_t outlen, const faest_paramset_t* params,
+void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t* params,
                 uint8_t* hcom, vec_com_t* vecCom, uint8_t** c, uint8_t* u, uint8_t** v) {
 
   uint32_t lambda      = params->faest_param.lambda;
   uint32_t lambdaBytes = lambda / 8;
+  uint32_t ellhatBytes = (ellhat + 7) / 8;
   uint32_t tau         = params->faest_param.tau;
-  uint32_t tau0        = lambda % tau;
+  uint32_t tau0        = params->faest_param.t0;
   uint32_t k0          = params->faest_param.k0;
   uint32_t k1          = params->faest_param.k1;
   uint8_t** ui         = malloc(params->faest_param.tau * sizeof(uint8_t*));
@@ -75,23 +76,23 @@ void voleCommit(const uint8_t* rootKey, uint32_t outlen, const faest_paramset_t*
       N     = 1 << k1;
       depth = k1;
     }
-    ui[i] = malloc(outlen);
-    v[i]  = malloc(depth * outlen);
+    ui[i] = malloc(ellhatBytes);
+    v[i]  = malloc(depth * ellhatBytes);
 
     // Step 5
     vector_commitment(expanded_keys + i * lambdaBytes, params, lambda, lambdaBytes, &vecCom[i], N);
     // Step 6, 7 (and parts of 8)
-    ConvertToVoleProver(lambda, lambdaBytes, vecCom[i].sd, N, depth, outlen, ui[i], v[i]);
+    ConvertToVoleProver(lambda, lambdaBytes, vecCom[i].sd, N, depth, ellhatBytes, ui[i], v[i]);
     // Step 12 (part)
     H1_update(&h1_ctx, vecCom[i].com, lambdaBytes * 2);
   }
   free(expanded_keys);
   // Step 9
-  memcpy(u, ui[0], outlen);
+  memcpy(u, ui[0], ellhatBytes);
   for (uint32_t i = 1; i < tau; i++) {
     // Step 11
-    c[i - 1] = malloc(outlen);
-    xorUint8Arr(u, ui[i], c[i - 1], outlen);
+    c[i - 1] = malloc(ellhatBytes);
+    xorUint8Arr(u, ui[i], c[i - 1], ellhatBytes);
   }
 
   // Step 12: Generating final commitment from all the com commitments

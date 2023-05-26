@@ -1,6 +1,15 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "faest.h"
 #include "faest_aes.h"
 #include "randomness.h"
+#include "random_oracle.h"
 
 // TODO: TEST EVERYTHING HERE !!!
 
@@ -84,20 +93,20 @@ void keyGen(uint32_t lambda, uint32_t lambdaBytes, uint8_t* sk, uint8_t* pk) {
 
 // TODO: l is in bits, change it everywhere
 void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* pk,
-          const faest_paramset_t* params, uint32_t ol, signature_t* signature) {
-
+          const faest_paramset_t* params, signature_t* signature) {
   const uint32_t l           = params->faest_param.l;
   const uint32_t lambda      = params->faest_param.lambda;
   const uint32_t lambdaBytes = lambda / 8;
   const uint32_t tau         = params->faest_param.tau;
+  const uint32_t tau0        = params->faest_param.t0;
   const uint32_t ell_hat =
       params->faest_param.l + params->faest_param.lambda * 2 + params->faest_param.b;
+  const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
 
-  // Step: 1
   uint8_t* rho = malloc(lambdaBytes);
   rand_bytes(rho, lambdaBytes);
 
-  // Step: 2
+  // Step: 1
   uint8_t* mu = malloc(lambdaBytes * 2);
   {
     H1_context_t h1_ctx;
@@ -118,10 +127,11 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   }
 
   // Step: 3..4
-  vec_com_t** vecCom = malloc(tau * sizeof(vec_com_t*));
-  uint8_t* u_        = malloc(l);
-  uint8_t** v        = malloc(tau * sizeof(uint8_t*));
+  vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
+  uint8_t* u_       = malloc(l);
+  uint8_t** v       = malloc(tau * sizeof(uint8_t*));
   voleCommit(rootkey, ell_hat, params, signature->hcom, vecCom, signature->c, u_, v);
+  free(rootkey);
 
   // Step: 5
   uint8_t* chal_1 = malloc(lambdaBytes);
@@ -142,34 +152,32 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   uint8_t* s  = chal_1 + lambdaBytes * 2;
   uint8_t* t  = chal_1 + lambdaBytes * 3;
   vole_hash(signature->u_tilde, r0, r1, s, t, u_, l, lambda);
+  free(chal_1);
 
   // Step: 8 and 9
-  H1_context_t h1_ctx_1;
-  H1_init(&h1_ctx_1, lambda);
+  {
+    H1_context_t h1_ctx_1;
+    H1_init(&h1_ctx_1, lambda);
 
-  uint8_t* V_tilde = malloc(what);
-  for (unsigned int i = 0; i != WHAT; ++i) {
-    vole_hash(V_tilde, r0, r1, s, t, x_1, ell_1, lambda);
-    H1_update(&h1_ctx_1, V_tilde, what);
+    uint8_t* V_tilde = malloc(what);
+    for (unsigned int i = 0; i != WHAT; ++i) {
+      vole_hash(V_tilde, r0, r1, s, t, x_1, ell_1, lambda);
+      H1_update(&h1_ctx_1, V_tilde, what);
+    }
+    free(V_tilde);
+
+    // Step: 9
+    H1_final(&h1_ctx_1, signature->h_v, lambdaBytes * 2);
   }
-  free(V_tilde);
-
-  // Step: 9
-  H1_final(&h1_ctx_1, signature->h_v, lambdaBytes * 2);
 
   // Step: 10..11
-  // TODO: From where does in, out and B come ?
-  uint8_t B;
-  uint8_t* in;
-  uint8_t* out;
-  if (B == 1) {
-    // TODO: unclear what they mean by parse here ?
-  }
+  const uint8_t* in  = pk;
+  const uint8_t* out = pk + lambdaBytes;
   // Step: 12..13
   // TODO
   uint8_t* w;
   aes_extend_witness(lambda, sk, in, w);
-  xorUint8Arr(w, mu, signature->d, l);
+  xorUint8Arr(w, u, signature->d, l);
 
   // Step: 14
   uint8_t* chal_2 = malloc(3 * lambdaBytes + 8);
@@ -192,43 +200,35 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 
   // Step: 18
   // TODO
-  aes_prove(w, mu, v, in, out, chal_2, lambda, tau, l, signature->a_tilde, signature->b_tilde);
+  aes_prove(w, u, v, in, out, chal_2, lambda, tau, l, signature->a_tilde, signature->b_tilde);
 
   // Step: 19
   // TODO
-  uint8_t* chal_2_a_tilde_b_tilde_concat =
-      malloc(sizeof(chal_2) + sizeof(signature->a_tilde) + sizeof(signature->b_tilde));
-  memcpy(chal_2_a_tilde_b_tilde_concat, chal_2, sizeof(chal_2));
-  memcpy(chal_2_a_tilde_b_tilde_concat + sizeof(chal_2), signature->a_tilde,
-         sizeof(signature->a_tilde));
-  memcpy(chal_2_a_tilde_b_tilde_concat + sizeof(chal_2) + sizeof(signature->a_tilde),
-         signature->b_tilde, sizeof(signature->b_tilde));
   uint8_t* chal_3 = malloc(lambdaBytes);
-  H2_context_t h2_ctx_2;
-  H2_init(&h2_ctx_2, lambda);
-  H2_update(&h2_ctx_2, chal_2_a_tilde_b_tilde_concat, sizeof(chal_2_a_tilde_b_tilde_concat));
-  H2_final(&h2_ctx_2, chal_3, lambdaBytes);
+  {
+    H2_context_t h2_ctx_2;
+    H2_init(&h2_ctx_2, lambda);
+    H2_update(&h2_ctx_2, chal_2, 3 * lambdaBytes + 8);
+    H2_update(&h2_ctx_2, signature->a_tilde, lambdaBytes);
+    H2_update(&h2_ctx_2, signature->b_tilde, lambdaBytes);
+    H2_final(&h2_ctx_2, chal_3, lambdaBytes);
+  }
+  free(chal_2);
 
   // Step: 20..23
-  uint32_t numVoleInstances = 0;
-  uint32_t depth            = 0;
-  uint8_t** s_              = malloc(tau * sizeof(uint8_t*));
+  uint8_t* s_ = malloc(MAX(params->faest_param.k0, params->faest_param.k1));
   for (uint32_t i = 0; i < tau; i++) {
     ChalDec(chal_3, i, params->faest_param.k0, params->faest_param.t0, params->faest_param.k1,
-            params->faest_param.t1, s_[i]);
-
-    if (i < (lambda % tau)) { // Computing the num of vole and the depth here
-      numVoleInstances = 1 << params->faest_param.k0;
-      depth            = params->faest_param.k0;
-    } else {
-      numVoleInstances = 1 << params->faest_param.k1;
-      depth            = params->faest_param.k1;
-    }
-    signature->pdec[i]  = malloc(depth);
-    signature->com_j[i] = malloc(lambdaBytes * 2);
-    vector_open(vecCom[i]->k, vecCom[i]->com, s_[i], signature->pdec[i], signature->com_j[i],
-                numVoleInstances, lambdaBytes);
+            params->faest_param.t1, s_);
+    unsigned int num_vole_instances =
+        i < tau0 ? (1 << params->faest_param.k0) : (1 << params->faest_param.k1);
+    vector_open(vecCom[i].k, vecCom[i].com, s_, signature->pdec[i], signature->com_j[i],
+                num_vole_instances, lambdaBytes);
+    vec_com_clear(&vecCom[i]);
   }
+  free(s);
+  free(chal_3);
+  free(vecCom);
 }
 
 // TODO: l is in bits, change it everywhere
@@ -394,12 +394,13 @@ int verify(const uint8_t* msg, const uint8_t* pk, const faest_paramset_t* params
 int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
                         const faest_paramset_t* params) {
   uint8_t* const old_dst    = dst;
+  const unsigned int tau0   = params->faest_param.t0;
   const size_t lambda_bytes = params->faest_param.lambda / 8;
-  const size_t ell_bytes    = params->faest_param.l / 8;
+  const size_t ell_bytes    = (params->faest_param.l + 7) / 8;
   const size_t ell_hat =
       params->faest_param.l + params->faest_param.lambda * 2 + params->faest_param.b;
-  const size_t ell_hat_bytes = ell_hat / 8;
-  const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b);
+  const size_t ell_hat_bytes = (ell_hat + 7) / 8;
+  const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
 
   // serialize h_com (2 * \lambda)
   memcpy(dst, signature->hcom, lambda_bytes * 2);
@@ -433,8 +434,10 @@ int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
 
   // serialize pdec_i, com_i
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
-    memcpy(dst, signature->pdec[i], lambda_bytes);
-    dst += lambda_bytes;
+    unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
+
+    memcpy(dst, signature->pdec[i], depth * lambda_bytes);
+    dst += depth * lambda_bytes;
     memcpy(dst, signature->com_j[i], lambda_bytes);
     dst += lambda_bytes;
   }
@@ -446,12 +449,13 @@ int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
 signature_t init_signature(const faest_paramset_t* params) {
   signature_t sig = {NULL};
 
+  const unsigned int tau0   = params->faest_param.t0;
   const size_t lambda_bytes = params->faest_param.lambda / 8;
-  const size_t ell_bytes    = params->faest_param.l / 8;
+  const size_t ell_bytes    = (params->faest_param.l + 7) / 8;
   const size_t ell_hat =
       params->faest_param.l + params->faest_param.lambda * 2 + params->faest_param.b;
   const size_t ell_hat_bytes = ell_hat / 8;
-  const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b);
+  const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
 
   sig.hcom = malloc(lambda_bytes * 2);
   sig.c    = calloc(params->faest_param.tau, sizeof(uint8_t*));
@@ -465,7 +469,8 @@ signature_t init_signature(const faest_paramset_t* params) {
   sig.b_tilde = malloc(lambda_bytes);
   sig.pdec    = calloc(params->faest_param.tau, sizeof(uint8_t*));
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
-    sig.pdec[i] = malloc(lambda_bytes);
+    unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
+    sig.pdec[i]        = malloc(depth * lambda_bytes);
   }
   sig.com_j = calloc(params->faest_param.tau, sizeof(uint8_t*));
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
@@ -504,13 +509,13 @@ void free_signature(signature_t sig, const faest_paramset_t* params) {
 }
 
 signature_t deserialize_signature(const uint8_t* src, size_t len, const faest_paramset_t* params) {
-
+  const unsigned int tau0   = params->faest_param.t0;
   const size_t lambda_bytes = params->faest_param.lambda / 8;
-  const size_t ell_bytes    = params->faest_param.l / 8;
+  const size_t ell_bytes    = (params->faest_param.l + 7) / 8;
   const size_t ell_hat =
       params->faest_param.l + params->faest_param.lambda * 2 + params->faest_param.b;
-  const size_t ell_hat_bytes = ell_hat / 8;
-  const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b);
+  const size_t ell_hat_bytes = (ell_hat + 7) / 8;
+  const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
 
   signature_t sig = init_signature(params);
 
@@ -545,8 +550,9 @@ signature_t deserialize_signature(const uint8_t* src, size_t len, const faest_pa
 
   // serialize pdec_i, com_i
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
-    memcpy(sig.pdec[i], src, lambda_bytes);
-    src += lambda_bytes;
+    unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
+    memcpy(sig.pdec[i], src, depth * lambda_bytes);
+    src += depth * lambda_bytes;
     memcpy(sig.com_j[i], src, lambda_bytes);
     src += lambda_bytes;
   }
