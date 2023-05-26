@@ -80,6 +80,8 @@ BOOST_AUTO_TEST_CASE(test_vector_open_128) {
                     lambdaBytes) == 0);
   BOOST_TEST(memcmp(pdec.data() + (lambdaBytes * 3), vecCom.k + (lambdaBytes * getNodeIndex(4, 6)),
                     lambdaBytes) == 0);
+
+  vec_com_clear(&vecCom);
 }
 
 BOOST_AUTO_TEST_CASE(test_vector_open_192) {
@@ -114,6 +116,8 @@ BOOST_AUTO_TEST_CASE(test_vector_open_192) {
                     lambdaBytes) == 0);
   BOOST_TEST(memcmp(pdec.data() + (lambdaBytes * 3), vecCom.k + (lambdaBytes * getNodeIndex(4, 11)),
                     lambdaBytes) == 0);
+
+  vec_com_clear(&vecCom);
 }
 
 BOOST_AUTO_TEST_CASE(test_vector_open_256) {
@@ -149,6 +153,8 @@ BOOST_AUTO_TEST_CASE(test_vector_open_256) {
                     lambdaBytes) == 0);
   BOOST_TEST(memcmp(pdec.data() + (lambdaBytes * 3), vecCom.k + (lambdaBytes * getNodeIndex(4, 6)),
                     lambdaBytes) == 0);
+
+  vec_com_clear(&vecCom);
 }
 
 BOOST_AUTO_TEST_CASE(test_vector_reconstruct_and_verify) {
@@ -176,6 +182,8 @@ BOOST_AUTO_TEST_CASE(test_vector_reconstruct_and_verify) {
 
   BOOST_TEST(vector_verify(pdec.data(), com_j.data(), b, lambda, lambdaBytes, numVoleInstances,
                            nullptr, vecCom.h) == 1);
+
+  vec_com_clear(&vecCom);
 }
 
 namespace {
@@ -594,6 +602,8 @@ BOOST_AUTO_TEST_CASE(tv_faest_128f) {
     BOOST_TEST(vector_verify(pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes, 16, nullptr,
                              vecCom.h) == 1);
   }
+
+  vec_com_clear(&vecCom);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_192f) {
@@ -623,6 +633,8 @@ BOOST_AUTO_TEST_CASE(tv_faest_192f) {
     BOOST_TEST(vector_verify(pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes, 16, nullptr,
                              vecCom.h) == 1);
   }
+
+  vec_com_clear(&vecCom);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_256f) {
@@ -652,6 +664,8 @@ BOOST_AUTO_TEST_CASE(tv_faest_256f) {
     BOOST_TEST(vector_verify(pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes, 32, nullptr,
                              vecCom.h) == 1);
   }
+
+  vec_com_clear(&vecCom);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
