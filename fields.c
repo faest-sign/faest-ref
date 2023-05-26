@@ -71,7 +71,7 @@ bf8_t bf8_inv(bf8_t in) {
   return bf8_mul(t1, t1);
 }
 
-bf8_t bf8_from_bit(const uint8_t* bit) {
+bf8_t bf8_from_bit(uint8_t bit) {
   if (bit == 0) {
     return bf8_zero();
   } else {
@@ -135,7 +135,7 @@ bf64_t bf64_inv(bf64_t in) {
   return bf64_mul(t1, t1);
 }
 
-bf64_t bf64_from_bit(const uint8_t* bit) {
+bf64_t bf64_from_bit(uint8_t bit) {
   if (bit == 0) {
     return bf64_zero();
   } else {
@@ -243,7 +243,7 @@ bf128_t bf128_inv(bf128_t in) {
   return bf128_mul(t1, t1);
 }
 
-bf128_t bf128_from_bit(const uint8_t* bit) {
+bf128_t bf128_from_bit(uint8_t bit) {
   if (bit == 0) {
     return bf128_zero();
   } else {
@@ -353,7 +353,7 @@ bf192_t bf192_inv(bf192_t in) {
   return bf192_mul(t1, t1);
 }
 
-bf192_t bf192_from_bit(const uint8_t* bit) {
+bf192_t bf192_from_bit(uint8_t bit) {
   if (bit == 0) {
     return bf192_zero();
   } else {
@@ -466,7 +466,7 @@ bf256_t bf256_inv(bf256_t in) {
   return bf256_mul(t1, t1);
 }
 
-bf256_t bf256_from_bit(const uint8_t* bit) {
+bf256_t bf256_from_bit(uint8_t bit) {
   if (bit == 0) {
     return bf256_zero();
   } else {

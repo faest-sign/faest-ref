@@ -802,9 +802,7 @@ bool aes_verify(uint8_t* d, uint8_t* Q, uint8_t* chal_2, uint8_t* chal_3, uint8_
                 uint8_t* b_tilde, uint8_t* in, uint8_t* out, uint32_t lambda, uint32_t tau,
                 uint32_t l, uint32_t k0, uint32_t k1) {
 
-  uint32_t lByte = l / 8;
-
-  // Step: 1
+    // Step: 1
   // TODO: confirm if this is a check or we actually assign it here
   uint32_t t0 = lambda % tau;
   uint32_t t1 = (lambda - (k0 * t0)) / k1;
