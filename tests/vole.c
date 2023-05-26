@@ -1,4 +1,5 @@
 #include "../vole.h"
+#include "compat.h"
 
 int test_ChalDec() {
   faest_paramset_t params = faest_get_paramset(1);

@@ -6,11 +6,9 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "tree.h"
-#include "aes.h"
-#include "random_oracle.h"
 #include "instances.h"
-#include "utils.h"
+
+FAEST_BEGIN_C_DECL
 
 // TODO: Remove the sizese,, looks reduddant !!
 
@@ -46,5 +44,7 @@ void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint
 int vector_verify(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b, uint32_t lambda,
                   uint32_t lambdaBytes, uint32_t numVoleInstances, vec_com_rec_t* vecComRec,
                   uint8_t* vecComH);
+
+FAEST_END_C_DECL
 
 #endif

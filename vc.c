@@ -1,4 +1,18 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "vc.h"
+#include "random_oracle.h"
+#include "tree.h"
+#include "compat.h"
+#include "aes.h"
+
+#include <string.h>
 
 /* Gets the bit string of a node according to its position in the binary tree */
 /* idx -> 2 -> {0,1},, Little Endian */

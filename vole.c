@@ -1,4 +1,10 @@
 #include "vole.h"
+#include "tree.h"
+#include "aes.h"
+#include "utils.h"
+#include "random_oracle.h"
+
+#include <string.h>
 
 // TODO: Do not pass lambdaBytes everywhere, compute it in the function....
 
