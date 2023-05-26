@@ -34,11 +34,11 @@ int test_FAESTVoleCommit() {
                                                    //   vec_com_rec_t vecComRec;
   uint32_t outlen = 16;
 
-  uint8_t* hcom      = malloc(params.faest_param.lambda / 8);
-  vec_com_t** vecCom = malloc(params.faest_param.tau * (sizeof(vec_com_t*)));
-  uint8_t** c        = malloc((params.faest_param.tau * sizeof(uint8_t*)) - 1);
-  uint8_t* u         = malloc(outlen);
-  uint8_t** v        = malloc(params.faest_param.tau * sizeof(uint8_t*));
+  uint8_t* hcom     = malloc(params.faest_param.lambda / 8);
+  vec_com_t* vecCom = malloc(params.faest_param.tau * (sizeof(vec_com_t)));
+  uint8_t** c       = malloc((params.faest_param.tau * sizeof(uint8_t*)) - 1);
+  uint8_t* u        = malloc(outlen);
+  uint8_t** v       = malloc(params.faest_param.tau * sizeof(uint8_t*));
   voleCommit(rootKey, outlen, &params, hcom, vecCom, c, u, v);
 
   // TODO: make tests !!
@@ -58,7 +58,7 @@ int test_FAESTVoleVerify() {
   uint32_t lambda      = params.faest_param.lambda;
   uint32_t lambdaBytes = lambda / 8;
   uint8_t* hcom        = malloc(lambdaBytes * 2);
-  vec_com_t** vecCom   = malloc(params.faest_param.tau * (sizeof(vec_com_t*)));
+  vec_com_t* vecCom    = malloc(params.faest_param.tau * (sizeof(vec_com_t)));
   uint8_t** c          = malloc((params.faest_param.tau * sizeof(uint8_t*)) - 1);
   uint8_t* u           = malloc(outlen);
   uint8_t** v          = malloc(params.faest_param.tau * sizeof(uint8_t*));
@@ -86,8 +86,7 @@ int test_FAESTVoleVerify() {
     pdec[i]  = malloc(depth * lambdaBytes);
     com_j[i] = malloc(lambdaBytes * 2);
 
-    vector_open(vecCom[i]->k, vecCom[i]->com, b[i], pdec[i], com_j[i], numVoleInstances,
-                lambdaBytes);
+    vector_open(vecCom[i].k, vecCom[i].com, b[i], pdec[i], com_j[i], numVoleInstances, lambdaBytes);
   }
 
   uint8_t* chal = malloc((params.faest_param.k0 * params.faest_param.t0) +
@@ -133,6 +132,7 @@ int test_FAESTVoleVerify() {
   if (memcmp(hcom, hcomRec, lambdaBytes) == 0) {
     return 1;
   }
+  return 0;
 }
 
 int test_ConvertToVoleProver() {
@@ -214,7 +214,7 @@ int test_ConvertToVoleVerifier() {
   uint8_t* com_j = malloc(lambdaBytes * 2);
   vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambdaBytes);
 
-  vector_verify(pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, &vecComRec, &vecCom.h);
+  vector_verify(pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, &vecComRec, vecCom.h);
 
   uint32_t outlen = 16;
   uint8_t* v      = malloc(outlen * depth);
