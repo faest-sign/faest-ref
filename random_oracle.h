@@ -6,6 +6,9 @@
 #define FAEST_RANDOM_ORACLE_H
 
 #include "hash_shake.h"
+#include "macros.h"
+
+FAEST_BEGIN_C_DECL
 
 // implementation of H_0
 
@@ -39,5 +42,7 @@ typedef hash_context H3_context_t;
 void H3_init(H3_context_t* ctx, unsigned int security_param);
 void H3_update(H3_context_t* ctx, const uint8_t* src, size_t len);
 void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len);
+
+FAEST_END_C_DECL
 
 #endif

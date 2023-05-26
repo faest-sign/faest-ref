@@ -3,6 +3,8 @@
 
 #include "instances.h"
 
+FAEST_BEGIN_C_DECL
+
 typedef struct tree_t {
   size_t depth;      /* The depth of the tree */
   uint8_t** nodes;   /* The data for each node */
@@ -64,5 +66,8 @@ uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex);
 void printTree(const char* label, tree_t* tree);
 void printTreeInfo(const char* label, tree_t* tree);
 int contains(size_t* list, size_t len, size_t value);
+uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex);
+
+FAEST_END_C_DECL
 
 #endif
