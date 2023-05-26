@@ -10,6 +10,8 @@
 #include "compat.h"
 #include "randomness.h"
 #include "owf.h"
+#include "instances.h"
+#include "faest.h"
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
   if (!pk || !sk) {
@@ -47,21 +49,32 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk,
 }
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* pk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len) {
-  if (!sk || !signature || !signature_len) {
+  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE) {
     return -1;
   }
 
-  // TODO
+  const faest_paramset_t params = faest_get_paramset(FAEST_@PARAM@);
+  signature_t sig = init_signature(&params);
+
+  sign(message, message_len, sk, pk, &params, &sig);
+  serialize_signature(signature, signature_len, &sig, &params);
+  free_signature(sig, &params);
+
   return 1;
 }
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* pk, const uint8_t* message, size_t message_len, const uint8_t* signature, size_t signature_len) {
-  if (!pk || !signature || !signature_len) {
+  if (!pk || !signature || signature_len != FAEST_@PARAM@_SIGNATURE_SIZE) {
     return -1;
   }
 
-  // TODO
-  return 1;
+  const faest_paramset_t params = faest_get_paramset(FAEST_@PARAM@);
+  signature_t sig = deserialize_signature(signature, signature_len, &params);
+
+  int ret = verify(message, message_len, pk, &params, &sig);
+  free_signature(sig, &params);
+
+  return ret;
 }
 
 void FAEST_CALLING_CONVENTION faest_@PARAM_L@_clear_private_key(uint8_t* key) {

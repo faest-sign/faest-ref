@@ -38,7 +38,7 @@ int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned cha
     return -1;
   }
 
-  *smlen = mlen + FAEST_@PARAM@_MAX_SIGNATURE_SIZE;
+  *smlen = mlen + FAEST_@PARAM@_SIGNATURE_SIZE;
   memmove(sm, m, mlen);
 
   return faest_@PARAM_L@_sign(SK_KEY(sk), pk, sm, mlen, sm + mlen, NULL);
@@ -46,12 +46,12 @@ int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned cha
 
 int crypto_sign_open(unsigned char* m, unsigned long long* mlen, const unsigned char* sm,
                      unsigned long long smlen, const unsigned char* pk) {
-  if (smlen < FAEST_@PARAM@_MAX_SIGNATURE_SIZE) {
+  if (smlen < FAEST_@PARAM@_SIGNATURE_SIZE) {
     // signature too short
     return -1;
   }
-  unsigned long long m_length = smlen - FAEST_@PARAM@_MAX_SIGNATURE_SIZE;
-  if (!faest_@PARAM_L@_verify(pk, sm, m_length, sm + m_length, FAEST_@PARAM@_MAX_SIGNATURE_SIZE)) {
+  unsigned long long m_length = smlen - FAEST_@PARAM@_SIGNATURE_SIZE;
+  if (!faest_@PARAM_L@_verify(pk, sm, m_length, sm + m_length, FAEST_@PARAM@_SIGNATURE_SIZE)) {
     return -1;
   }
 
