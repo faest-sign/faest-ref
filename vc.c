@@ -82,10 +82,10 @@ void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t
 
   // Step: 3..6
   uint32_t a = 0;
-  for (uint32_t d = 0; d < depth; d++) {
-    memcpy(pdec + (lambdaBytes * d),
-           k + (lambdaBytes * getNodeIndex(d + 1, (2 * a) + !b[(depth - 1) - d])), lambdaBytes);
-    a = (2 * a) + b[(depth - 1) - d];
+  for (uint32_t i = 0; i < depth; i++) {
+    memcpy(pdec + (lambdaBytes * i),
+           k + (lambdaBytes * getNodeIndex(i + 1, (2 * a) + !b[depth - 1 - i])), lambdaBytes);
+    a = (2 * a) + b[depth - 1 - i];
   }
 
   // Step: 7
@@ -102,32 +102,32 @@ void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint
   vecComRec->h       = malloc(lambdaBytes * 2);
   vecComRec->com     = malloc(numVoleInstances * lambdaBytes * 2);
   vecComRec->m       = malloc(numVoleInstances * lambdaBytes);
-  vecComRec->k       = malloc(getBinaryTreeNodeCount(numVoleInstances) * lambdaBytes);
+  vecComRec->k       = calloc(getBinaryTreeNodeCount(numVoleInstances), lambdaBytes);
 
   // Step: 3..9
-  uint8_t* zeros = malloc(lambdaBytes);
-  memset(zeros, 0, lambdaBytes);
-  memset(vecComRec->k, 0, lambdaBytes);
-  uint32_t a = 0;
-  for (uint32_t d = 1; d <= depth; d++) {
-    memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(d, 2 * a + !b[depth - d])),
-           pdec + (lambdaBytes * (d - 1)), lambdaBytes);
-    memset(vecComRec->k + (lambdaBytes * getNodeIndex(d, 2 * a + b[depth - d])), 0, lambdaBytes);
-    a = a * 2 + b[depth - d];
+  uint32_t a   = 0;
+  uint8_t* out = malloc(lambdaBytes * 2);
+  for (uint32_t i = 1; i <= depth; i++) {
+    memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * a + !b[depth - i])),
+           pdec + (lambdaBytes * (i - 1)), lambdaBytes);
+    memset(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * a + b[depth - i])), 0, lambdaBytes);
 
-    for (uint32_t j = 0; j < (1 << d); j++) {
-      if (memcmp(vecComRec->k + (lambdaBytes * getNodeIndex(d, j)), zeros, lambdaBytes) == 0) {
+    for (uint32_t j = 0; j < (1 << (i - 1)); j++) {
+      if (j == a) {
         continue;
       }
       uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-      uint8_t* out   = malloc(lambdaBytes * 2);
-      prg(vecComRec->k + (lambdaBytes * getNodeIndex(d, j)), iv, out, lambda, lambdaBytes * 2);
-      memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(d + 1, 2 * j)), out, lambdaBytes);
-      memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(d + 1, (2 * j) + 1)), out + lambdaBytes,
+
+      prg(vecComRec->k + (lambdaBytes * getNodeIndex(i - 1, j)), iv, out, lambda, lambdaBytes * 2);
+      memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * j)), out, lambdaBytes);
+      memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, (2 * j) + 1)), out + lambdaBytes,
              lambdaBytes);
     }
+
+    a = a * 2 + b[depth - i];
   }
+  free(out);
 
   // Step: 10..11
   for (uint32_t j = 0; j < numVoleInstances; j++) {
