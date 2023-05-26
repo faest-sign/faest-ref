@@ -68,7 +68,7 @@ ATTR_CONST bf192_t bf192_one();
 ATTR_CONST bf192_t bf192_add(bf192_t lhs, bf192_t rhs);
 ATTR_CONST bf192_t bf192_mul(bf192_t lhs, bf192_t rhs);
 ATTR_CONST bf192_t bf192_inv(bf192_t lhs);
-ATTR_CONST bf192_t bf192_from_bit(uint8_t bit)
+ATTR_CONST bf192_t bf192_from_bit(uint8_t bit);
 
 bf256_t bf256_load(const uint8_t* src);
 ATTR_CONST bf256_t bf256_from_bf64(bf64_t src);
