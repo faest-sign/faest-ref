@@ -168,7 +168,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 
   // Step: 10..11
   const uint8_t* in  = pk;
-  const uint8_t* out = pk + lambdaBytes;
+  const uint8_t* out = pk + params->faest_param.pkSize / 2;
   // Step: 12..13
   // TODO
   uint8_t* w;
@@ -228,7 +228,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 }
 
 // TODO: l is in bits, change it everywhere
-int verify(const uint8_t* msg, const uint8_t* pk, const faest_paramset_t* params, uint32_t l,
+int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_paramset_t* params,
            const signature_t* signature) {
 
   uint32_t lambda      = params->faest_param.lambda;
@@ -236,20 +236,11 @@ int verify(const uint8_t* msg, const uint8_t* pk, const faest_paramset_t* params
   uint32_t tau         = params->faest_param.tau;
 
   // Step: 2..3
-  // TODO: Where does B come from ?
   uint8_t B;
-  uint8_t* in;
-  uint8_t* out;
-  if (B == 1) {
-    // TODO: unclear what they mean by parse here ?
-  } else {
-    // TODO
-  }
+  uint8_t* in  = pk;
+  uint8_t* out = pk + params->faest_param.pkSize / 2;
 
   // Step: 4
-  if (params->faest_param.t0 != lambda % tau) {
-    return -1;
-  }
   uint8_t* mu            = malloc(lambdaBytes * 2);
   uint8_t* pk_msg_concat = malloc(sizeof(pk) + sizeof(msg));
   memcpy(pk_msg_concat, pk, sizeof(pk));

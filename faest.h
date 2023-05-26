@@ -25,10 +25,10 @@ void free_signature(signature_t sig, const faest_paramset_t* params);
 
 void keyGen(uint32_t lambda, uint32_t lambdaBytes, uint8_t* sk, uint8_t* pk);
 
-void sign(const uint8_t* msg, const uint8_t* sk, const uint8_t* pk, const faest_paramset_t* params,
-          signature_t* signature);
+void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* pk,
+          const faest_paramset_t* params, signature_t* signature);
 
-int verify(const uint8_t* msg, const uint8_t* pk, const faest_paramset_t* params, uint32_t l,
+int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_paramset_t* params,
            const signature_t* signature);
 
 int serialize_signature(uint8_t* dest, size_t* len, const signature_t* signature,
