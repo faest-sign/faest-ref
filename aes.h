@@ -56,18 +56,8 @@ void aes256_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const ui
 void aes_increment_iv(uint8_t* iv);
 
 void prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uint64_t outSizeBytes);
-
-static int expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
-                      unsigned int block_words, unsigned int num_rounds);
-
-static void add_round_key(unsigned int round, aes_block_t state, const aes_round_keys_t* round_key,
-                          unsigned int block_words);
-
-static int sub_bytes(aes_block_t state, unsigned int block_words);
-
-static void shift_row(aes_block_t state, unsigned int block_words);
-
-static void mix_column(aes_block_t state, unsigned int block_words);
+uint8_t* aes_extend_witness(unsigned int lambda, unsigned int l, const uint8_t* key,
+                            const uint8_t* in);
 
 FAEST_END_C_DECL
 

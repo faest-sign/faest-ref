@@ -9,10 +9,6 @@
 #include "universal_hashing.h"
 #include "aes.h"
 
-void aes_extend_witness(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Bwd, uint32_t l,
-                        uint32_t Ske, uint32_t beta, const uint8_t* key, const uint8_t** in,
-                        uint8_t* w_out);
-
 int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Lke, uint32_t m,
                              const uint8_t* x, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
                              uint8_t* y_out);

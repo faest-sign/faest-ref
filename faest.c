@@ -173,9 +173,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   const uint8_t* out = pk + params->faest_param.pkSize / 2;
   // Step: 12..13
   // TODO
-  uint8_t* w;
-  aes_extend_witness(lambda, sk, in, w);
-  xorUint8Arr(w, u, signature->d, l);
+  uint8_t* w = aes_extend_witness(lambda, l, sk, in);
+  xorUint8Arr(w, u_, signature->d, ell_bytes);
 
   // Step: 14
   uint8_t* chal_2 = malloc(3 * lambdaBytes + 8);
@@ -196,7 +195,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 
   // Step: 18
   // TODO
-  aes_prove(w, u, v, in, out, chal_2, lambda, tau, l, signature->a_tilde, signature->b_tilde);
+  aes_prove(w, u_, v, in, out, chal_2, lambda, tau, l, signature->a_tilde, signature->b_tilde);
 
   // Step: 19
   uint8_t* chal_3 = malloc(lambdaBytes);

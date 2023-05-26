@@ -4,45 +4,6 @@
 
 static uint8_t Rcon[10] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x26};
 
-// Bwd -> block_words,,, for EM mode
-void aes_extend_witness(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Bwd, uint32_t l,
-                        uint32_t Ske, uint32_t beta, const uint8_t* key, const uint8_t** in,
-                        uint8_t* w_out) {
-
-  // Step 1..5
-  uint32_t w_byte_idx = 0;
-  w_out               = malloc(l + 7 / 8);
-  aes_round_key_t* round_keys;
-  expand_key(round_keys, key, Nwd, 4, R);
-  memcpy(w_out, round_keys, Nwd);
-  w_byte_idx += Nwd;
-  uint32_t ik = Nwd;
-  // Step: 6..9
-  for (uint32_t j = 0; j < Ske / 4; j++) {
-    memcpy(w_out + w_byte_idx, round_keys[ik], 4);
-    w_byte_idx += 4;
-    if (lambda == 192) {
-      ik += 6;
-    } else {
-      ik += 4;
-    }
-  }
-  // Step: 10..19
-  for (uint32_t b = 0; b < beta; b++) {
-    uint8_t* state = malloc(16);
-    memcpy(state, in[b], 16);
-    add_round_key(0, state, round_keys, Bwd);
-    for (uint32_t j = 1; j < R; j++) {
-      sub_bytes(state, Bwd);
-      shift_row(state, Bwd);
-      memcpy(w_out + w_byte_idx, state, sizeof(state));
-      w_byte_idx += sizeof(state);
-      mix_column(state, Bwd);
-      add_round_key(j, state, round_keys, Bwd);
-    }
-  }
-}
-
 // TODO: generalize bf128_t to bf(lambda)_t
 int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Lke, uint32_t m,
                              const uint8_t* x, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
