@@ -7,159 +7,205 @@
 #endif
 
 #include "universal_hashing.h"
+#include "utils.h"
 
 #include <assert.h>
 #include <string.h>
 
-static bf64_t compute_h1(const uint8_t* t, const uint8_t* x, size_t ell) {
-  bf64_t b_t = bf64_load(t);
-  bf64_t h1  = bf64_zero();
+static bf64_t compute_h1(const uint8_t* t, const uint8_t* x, unsigned int lambda,
+                         unsigned int ell) {
+  const bf64_t b_t = bf64_load(t);
 
-  const size_t length_64 = ell / 64;
-  assert(length_64 * 64 == ell);
+  const unsigned int length_64 = (ell + lambda + 63) / 64;
 
-  bf64_t running_t = bf64_one();
-  for (size_t i = 0; i != length_64; ++i, running_t = bf64_mul(running_t, b_t)) {
+  uint8_t tmp[sizeof(bf64_t)] = {0};
+  memcpy(tmp, x + (length_64 - 1) * sizeof(bf64_t),
+         (ell + lambda) % 64 == 0 ? sizeof(bf64_t) : ((ell + lambda) % 64) / 8);
+  bf64_t h1 = bf64_load(tmp);
+
+  bf64_t running_t = b_t;
+  for (unsigned int i = 1; i != length_64; ++i, running_t = bf64_mul(running_t, b_t)) {
     h1 = bf64_add(h1, bf64_mul(running_t, bf64_load(x + (length_64 - 1 - i) * 64 / 8)));
   }
 
   return h1;
 }
 
-void vole_hash_128(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8_t* s,
-                   const uint8_t* t, const uint8_t* x, size_t ell) {
-  const size_t length_lambda = ell / 128;
-  assert(length_lambda * 128 == ell);
+void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
+  const uint8_t* r0 = sd;
+  const uint8_t* r1 = sd + 128 / 8;
+  const uint8_t* r2 = sd + 2 * 128 / 8;
+  const uint8_t* r3 = sd + 3 * 128 / 8;
+  const uint8_t* s  = sd + 4 * 128 / 8;
+  const uint8_t* t  = sd + 5 * 128 / 8;
+  const uint8_t* x1 = x + (ell + 128) / 8;
 
-  bf128_t b_s       = bf128_load(s);
-  bf128_t running_s = bf128_one();
-  bf128_t h0        = bf128_zero();
-  for (size_t i = 0; i != length_lambda; ++i, running_s = bf128_mul(running_s, b_s)) {
+  const unsigned int length_lambda = (ell + 128 + (128 - 1)) / 128;
+
+  uint8_t tmp[sizeof(bf128_t)] = {0};
+  memcpy(tmp, x + (length_lambda - 1) * sizeof(bf128_t),
+         (ell + 128) % 128 == 0 ? sizeof(bf128_t) : ((ell + 128) % 128) / 8);
+  bf128_t h0 = bf128_load(tmp);
+
+  const bf128_t b_s = bf128_load(s);
+  bf128_t running_s = b_s;
+  for (unsigned int i = 1; i != length_lambda; ++i, running_s = bf128_mul(running_s, b_s)) {
     h0 = bf128_add(h0, bf128_mul(running_s, bf128_load(x + (length_lambda - 1 - i) * 128 / 8)));
   }
 
-  bf128_t h1p = bf128_from_bf64(compute_h1(t, x, ell));
+  bf128_t h1p = bf128_from_bf64(compute_h1(t, x, 128, ell));
+  bf128_t h2  = bf128_add(bf128_mul(bf128_load(r0), h0), bf128_mul(bf128_load(r1), h1p));
+  bf128_t h3  = bf128_add(bf128_mul(bf128_load(r2), h0), bf128_mul(bf128_load(r3), h1p));
 
-  h0  = bf128_add(h0, bf128_mul(bf128_load(r0), h1p));
-  h1p = bf128_mul(bf128_load(r1), h1p);
-
-  bf128_store(h, h0);
-  uint8_t tmp[128 / 8] = {0};
-  bf128_store(tmp, h1p);
+  bf128_store(h, h2);
+  bf128_store(tmp, h3);
   memcpy(h + 128 / 8, tmp, UNIVERSAL_HASH_B);
+  xorUint8Arr(h, x1, h, 128 / 8 + UNIVERSAL_HASH_B);
 }
 
-void vole_hash_192(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8_t* s,
-                   const uint8_t* t, const uint8_t* x, size_t ell) {
-  const size_t length_lambda = ell / 192;
-  assert(length_lambda * 192 == ell);
+void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
+  const uint8_t* r0 = sd;
+  const uint8_t* r1 = sd + 192 / 8;
+  const uint8_t* r2 = sd + 2 * 192 / 8;
+  const uint8_t* r3 = sd + 3 * 192 / 8;
+  const uint8_t* s  = sd + 4 * 192 / 8;
+  const uint8_t* t  = sd + 5 * 192 / 8;
+  const uint8_t* x1 = x + (ell + 192) / 8;
 
-  bf192_t b_s       = bf192_load(s);
-  bf192_t running_s = bf192_one();
-  bf192_t h0        = bf192_zero();
-  for (size_t i = 0; i != length_lambda; ++i, running_s = bf192_mul(running_s, b_s)) {
+  const unsigned int length_lambda = (ell + 192 + (192 - 1)) / 192;
+
+  uint8_t tmp[sizeof(bf192_t)] = {0};
+  memcpy(tmp, x + (length_lambda - 1) * sizeof(bf192_t),
+         (ell + 192) % 192 == 0 ? sizeof(bf192_t) : ((ell + 192) % 192) / 8);
+  bf192_t h0 = bf192_load(tmp);
+
+  const bf192_t b_s = bf192_load(s);
+  bf192_t running_s = b_s;
+  for (unsigned int i = 1; i != length_lambda; ++i, running_s = bf192_mul(running_s, b_s)) {
     h0 = bf192_add(h0, bf192_mul(running_s, bf192_load(x + (length_lambda - 1 - i) * 192 / 8)));
   }
 
-  bf192_t h1p = bf192_from_bf64(compute_h1(t, x, ell));
+  bf192_t h1p = bf192_from_bf64(compute_h1(t, x, 192, ell));
+  bf192_t h2  = bf192_add(bf192_mul(bf192_load(r0), h0), bf192_mul(bf192_load(r1), h1p));
+  bf192_t h3  = bf192_add(bf192_mul(bf192_load(r2), h0), bf192_mul(bf192_load(r3), h1p));
 
-  h0  = bf192_add(h0, bf192_mul(bf192_load(r0), h1p));
-  h1p = bf192_mul(bf192_load(r1), h1p);
-
-  bf192_store(h, h0);
-  uint8_t tmp[192 / 8] = {0};
-  bf192_store(tmp, h1p);
+  bf192_store(h, h2);
+  bf192_store(tmp, h3);
   memcpy(h + 192 / 8, tmp, UNIVERSAL_HASH_B);
+  xorUint8Arr(h, x1, h, 192 / 8 + UNIVERSAL_HASH_B);
 }
 
-void vole_hash_256(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8_t* s,
-                   const uint8_t* t, const uint8_t* x, size_t ell) {
-  const size_t length_lambda = ell / 256;
-  assert(length_lambda * 256 == ell);
+void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
+  const uint8_t* r0 = sd;
+  const uint8_t* r1 = sd + 256 / 8;
+  const uint8_t* r2 = sd + 2 * 256 / 8;
+  const uint8_t* r3 = sd + 3 * 256 / 8;
+  const uint8_t* s  = sd + 4 * 256 / 8;
+  const uint8_t* t  = sd + 5 * 256 / 8;
+  const uint8_t* x1 = x + (ell + 256) / 8;
 
-  bf256_t b_s       = bf256_load(s);
-  bf256_t running_s = bf256_one();
-  bf256_t h0        = bf256_zero();
-  for (size_t i = 0; i != length_lambda; ++i, running_s = bf256_mul(running_s, b_s)) {
+  const unsigned int length_lambda = (ell + 256 + (256 - 1)) / 256;
+
+  uint8_t tmp[sizeof(bf256_t)] = {0};
+  memcpy(tmp, x + (length_lambda - 1) * sizeof(bf256_t),
+         (ell + 256) % 256 == 0 ? sizeof(bf256_t) : ((ell + 256) % 256) / 8);
+  bf256_t h0 = bf256_load(tmp);
+
+  const bf256_t b_s = bf256_load(s);
+  bf256_t running_s = b_s;
+  for (unsigned int i = 1; i != length_lambda; ++i, running_s = bf256_mul(running_s, b_s)) {
     h0 = bf256_add(h0, bf256_mul(running_s, bf256_load(x + (length_lambda - 1 - i) * 256 / 8)));
   }
 
-  bf256_t h1p = bf256_from_bf64(compute_h1(t, x, ell));
+  bf256_t h1p = bf256_from_bf64(compute_h1(t, x, 256, ell));
+  bf256_t h2  = bf256_add(bf256_mul(bf256_load(r0), h0), bf256_mul(bf256_load(r1), h1p));
+  bf256_t h3  = bf256_add(bf256_mul(bf256_load(r2), h0), bf256_mul(bf256_load(r3), h1p));
 
-  h0  = bf256_add(h0, bf256_mul(bf256_load(r0), h1p));
-  h1p = bf256_mul(bf256_load(r1), h1p);
-
-  bf256_store(h, h0);
-  uint8_t tmp[256 / 8] = {0};
-  bf256_store(tmp, h1p);
+  bf256_store(h, h2);
+  bf256_store(tmp, h3);
   memcpy(h + 256 / 8, tmp, UNIVERSAL_HASH_B);
+  xorUint8Arr(h, x1, h, 256 / 8 + UNIVERSAL_HASH_B);
 }
 
-void vole_hash(uint8_t* h, const uint8_t* r0, const uint8_t* r1, const uint8_t* s, const uint8_t* t,
-               const uint8_t* x, size_t ell, uint32_t lambda) {
+void vole_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, uint32_t lambda) {
   switch (lambda) {
   case 256:
-    vole_hash_256(h, r0, r1, s, t, x, ell);
+    vole_hash_256(h, sd, x, ell);
     break;
   case 192:
-    vole_hash_192(h, r0, r1, s, t, x, ell);
+    vole_hash_192(h, sd, x, ell);
     break;
   default:
-    vole_hash_128(h, r0, r1, s, t, x, ell);
+    vole_hash_128(h, sd, x, ell);
     break;
   }
 }
 
-void zk_hash_128(uint8_t* h, const uint8_t* r, const uint8_t* s, const uint8_t* t, const bf128_t* x,
-                 size_t ell) {
+void zk_hash_128(uint8_t* h, const uint8_t* sd, const bf128_t* x, unsigned int ell) {
+  const uint8_t* r0 = sd;
+  const uint8_t* r1 = sd + 128 / 8;
+  const uint8_t* s  = sd + 2 * 128 / 8;
+  const uint8_t* t  = sd + 3 * 128 / 8;
+  const bf128_t* x1 = x + ell;
+
   bf128_t b_s       = bf128_load(s);
   bf128_t b_t       = bf128_from_bf64(bf64_load(t));
   bf128_t running_s = bf128_one();
   bf128_t running_t = bf128_one();
   bf128_t h0        = bf128_zero();
   bf128_t h1        = bf128_zero();
-  for (size_t i = 0; i != ell;
+  for (unsigned int i = 0; i != ell;
        ++i, running_s = bf128_mul(running_s, b_s), running_s = bf128_mul(running_t, b_t)) {
     h0 = bf128_add(h0, bf128_mul(running_s, x[ell - 1 - i]));
     h1 = bf128_add(h1, bf128_mul(running_t, x[ell - 1 - i]));
   }
 
-  h0 = bf128_add(h0, bf128_mul(bf128_load(r), h1));
+  h0 = bf128_add(bf128_add(bf128_mul(bf128_load(r0), h0), bf128_mul(bf128_load(r1), h1)), *x1);
   bf128_store(h, h0);
 }
 
-void zk_hash_192(uint8_t* h, const uint8_t* r, const uint8_t* s, const uint8_t* t, const bf192_t* x,
-                 size_t ell) {
+void zk_hash_192(uint8_t* h, const uint8_t* sd, const bf192_t* x, unsigned int ell) {
+  const uint8_t* r0 = sd;
+  const uint8_t* r1 = sd + 192 / 8;
+  const uint8_t* s  = sd + 2 * 192 / 8;
+  const uint8_t* t  = sd + 3 * 192 / 8;
+  const bf192_t* x1 = x + ell;
+
   bf192_t b_s       = bf192_load(s);
   bf192_t b_t       = bf192_from_bf64(bf64_load(t));
   bf192_t running_s = bf192_one();
   bf192_t running_t = bf192_one();
   bf192_t h0        = bf192_zero();
   bf192_t h1        = bf192_zero();
-  for (size_t i = 0; i != ell;
+  for (unsigned int i = 0; i != ell;
        ++i, running_s = bf192_mul(running_s, b_s), running_s = bf192_mul(running_t, b_t)) {
     h0 = bf192_add(h0, bf192_mul(running_s, x[ell - 1 - i]));
     h1 = bf192_add(h1, bf192_mul(running_t, x[ell - 1 - i]));
   }
 
-  h0 = bf192_add(h0, bf192_mul(bf192_load(r), h1));
+  h0 = bf192_add(bf192_add(bf192_mul(bf192_load(r0), h0), bf192_mul(bf192_load(r1), h1)), *x1);
   bf192_store(h, h0);
 }
 
-void zk_hash_256(uint8_t* h, const uint8_t* r, const uint8_t* s, const uint8_t* t, const bf256_t* x,
-                 size_t ell) {
+void zk_hash_256(uint8_t* h, const uint8_t* sd, const bf256_t* x, unsigned int ell) {
+  const uint8_t* r0 = sd;
+  const uint8_t* r1 = sd + 256 / 8;
+  const uint8_t* s  = sd + 2 * 256 / 8;
+  const uint8_t* t  = sd + 3 * 256 / 8;
+  const bf256_t* x1 = x + ell;
+
   bf256_t b_s       = bf256_load(s);
   bf256_t b_t       = bf256_from_bf64(bf64_load(t));
   bf256_t running_s = bf256_one();
   bf256_t running_t = bf256_one();
   bf256_t h0        = bf256_zero();
   bf256_t h1        = bf256_zero();
-  for (size_t i = 0; i != ell;
+  for (unsigned int i = 0; i != ell;
        ++i, running_s = bf256_mul(running_s, b_s), running_s = bf256_mul(running_t, b_t)) {
     h0 = bf256_add(h0, bf256_mul(running_s, x[ell - 1 - i]));
     h1 = bf256_add(h1, bf256_mul(running_t, x[ell - 1 - i]));
   }
 
-  h0 = bf256_add(h0, bf256_mul(bf256_load(r), h1));
+  h0 = bf256_add(bf256_add(bf256_mul(bf256_load(r0), h0), bf256_mul(bf256_load(r1), h1)), *x1);
   bf256_store(h, h0);
 }

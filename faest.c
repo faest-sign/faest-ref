@@ -147,11 +147,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   }
 
   // Step: 7
-  uint8_t* r0 = chal_1;
-  uint8_t* r1 = chal_1 + lambdaBytes;
-  uint8_t* s  = chal_1 + lambdaBytes * 2;
-  uint8_t* t  = chal_1 + lambdaBytes * 3;
-  vole_hash(signature->u_tilde, r0, r1, s, t, u_, l, lambda);
+  vole_hash(signature->u_tilde, chal_1, u_, l, lambda);
   free(chal_1);
 
   // Step: 8 and 9
@@ -161,7 +157,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 
     uint8_t* V_tilde = malloc(what);
     for (unsigned int i = 0; i != WHAT; ++i) {
-      vole_hash(V_tilde, r0, r1, s, t, x_1, ell_1, lambda);
+      vole_hash(V_tilde, chal_1, ell_1, lambda);
       H1_update(&h1_ctx_1, V_tilde, what);
     }
     free(V_tilde);
