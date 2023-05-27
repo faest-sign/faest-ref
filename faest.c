@@ -10,6 +10,7 @@
 #include "faest_aes.h"
 #include "randomness.h"
 #include "random_oracle.h"
+#include "utils.h"
 
 // TODO: TEST EVERYTHING HERE !!!
 
@@ -17,81 +18,6 @@
 
 // TODO: change q to Q where applicable
 
-// TODO: Using the simple rand(), set to some secure sampling
-void keyGen(uint32_t lambda, uint32_t lambdaBytes, uint8_t* sk, uint8_t* pk) {
-
-  uint8_t* x0    = malloc(16);
-  uint8_t* out_0 = malloc(16);
-  for (uint32_t i = 0; i < 16; i++) {
-    x0[i] = rand() % UINT8_MAX;
-  }
-
-  uint8_t* x1    = malloc(16);
-  uint8_t* out_1 = malloc(16);
-  if (lambda == 192 || lambda == 256) {
-    for (uint32_t i = 0; i < 16; i++) {
-      x1[i] = rand() % UINT8_MAX;
-    }
-  }
-
-  bool zeroInpSB = false;
-  uint8_t* key   = malloc(lambdaBytes);
-  uint8_t* y;
-  switch (lambda) {
-  case 256:
-    while (zeroInpSB == false) {
-      for (uint32_t i = 0; i < lambdaBytes; i++) {
-        key[i] = rand() % UINT8_MAX;
-      }
-      if (owf_256(key, x0, out_0) == true && owf_256(key, x1, out_1) == true) {
-        y = malloc(32);
-        memcpy(y, out_0, 16);
-        memcpy(y + 16, out_1, 16);
-        zeroInpSB = true;
-      }
-    }
-    break;
-  case 192:
-    while (zeroInpSB == false) {
-      for (uint32_t i = 0; i < lambdaBytes; i++) {
-        key[i] = rand() % UINT8_MAX;
-      }
-      if (owf_192(key, x0, out_0) == true && owf_192(key, x1, out_1) == true) {
-        y = malloc(32);
-        memcpy(y, out_0, 16);
-        memcpy(y + 16, out_1, 16);
-        zeroInpSB = true;
-      }
-    }
-    break;
-  default:
-    while (zeroInpSB == false) {
-      for (uint32_t i = 0; i < lambdaBytes; i++) {
-        key[i] = rand() % UINT8_MAX;
-      }
-      if (owf_128(key, x0, out_0) == true) {
-        y = malloc(16);
-        memcpy(y, out_0, 16);
-        zeroInpSB = true;
-      }
-    }
-  }
-  sk = malloc(lambdaBytes);
-  memcpy(sk, key, lambdaBytes);
-
-  if (lambda == 128) {
-    pk = malloc(32);
-    memcpy(pk, x0, 16);
-    memcpy(pk, y, 16);
-  } else {
-    pk = malloc(64);
-    memcpy(pk, x0, 16);
-    memcpy(pk + 16, x1, 16);
-    memcpy(pk + 32, y, 32);
-  }
-}
-
-// TODO: l is in bits, change it everywhere
 void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* pk,
           const faest_paramset_t* params, signature_t* signature) {
   const uint32_t l           = params->faest_param.l;
@@ -156,10 +82,10 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H1_context_t h1_ctx_1;
     H1_init(&h1_ctx_1, lambda);
 
-    uint8_t* V_tilde = malloc(what);
-    for (unsigned int i = 0; i != WHAT; ++i) {
-      vole_hash(V_tilde, chal_1, ell_1, lambda);
-      H1_update(&h1_ctx_1, V_tilde, what);
+    uint8_t* V_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
+    for (unsigned int i = 0; i != lambda; ++i) {
+      vole_hash(V_tilde, chal_1, v[i], ell_hat, lambda);
+      H1_update(&h1_ctx_1, V_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     free(V_tilde);
 
@@ -195,7 +121,9 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 
   // Step: 18
   // TODO
-  aes_prove(w, u_, v, in, out, chal_2, lambda, tau, l, signature->a_tilde, signature->b_tilde);
+  unsigned int R, beta, Lke, Lenc, C, Nwd, Ske, Senc;
+  aes_prove(w, u_, v, in, out, chal_2, lambda, R, tau, l, beta, Lke, Lenc, C, Nwd, Ske, Senc,
+            signature->a_tilde, signature->b_tilde);
 
   // Step: 19
   uint8_t* chal_3 = malloc(lambdaBytes);
@@ -359,11 +287,13 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     return 0;
   }
 
-  uint32_t ret;
-  aes_verify(signature->d, q, chal_2, chal_3, signature->a_tilde, signature->b_tilde, in, out,
-             lambda, tau, l, params->faest_param.k0, params->faest_param.k1);
+  unsigned int beta, R, Nwd, Ske, Lke, Lenc, Senc, C;
+  bool ret =
+      aes_verify(signature->d, q, chal_2, chal_3, signature->a_tilde, signature->b_tilde, in, out,
+                 lambda, tau, l, beta, R, Nwd, Ske, Lke, Lenc, Senc, C, params->faest_param.k0,
+                 params->faest_param.k1, params->faest_param.t0, params->faest_param.t1);
 
-  if (ret == 0) {
+  if (ret) {
     return 0;
   }
   return 1;

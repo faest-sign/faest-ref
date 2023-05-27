@@ -410,6 +410,7 @@ include_directories = [include_directories('.')]
 faest_sources = files(
   'aes.c',
   'compat.c',
+  'faest.c',
   'fields.c',
   'instances.c',
   'owf.c',
@@ -420,7 +421,6 @@ faest_sources = files(
   'utils.c',
   'vc.c',
   'vole.c'
-  # ,  'faest.c'
 )
 
 # header files to install
