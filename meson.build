@@ -411,6 +411,7 @@ faest_sources = files(
   'aes.c',
   'compat.c',
   'faest.c',
+  'faest_aes.c',
   'fields.c',
   'instances.c',
   'owf.c',

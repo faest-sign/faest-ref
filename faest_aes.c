@@ -1,8 +1,15 @@
 #include "faest_aes.h"
+
+#include <string.h>
+
 // TODO: Do not pass lambdaBytes everywhere, compute it in the function....
 // TODO: change q to Q where applicable
 
 static uint8_t Rcon[10] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x26};
+
+ATTR_CONST static inline bf8_t get_bit(bf8_t in, uint8_t index) {
+  return (in >> index) & 0x01;
+}
 
 // TODO: generalize bf128_t to bf(lambda)_t
 int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Lke, uint32_t m,
@@ -25,7 +32,7 @@ int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t
     bf8_t* bf_y = malloc(y_out_len);
     for (uint32_t i = 0; i < lambdaBytes; i++) {
       for (uint32_t j = 0; j < 8; j++) {
-        bf_y[(i * 8) + j] = bf8_from_bit(getBit(x + i, j));
+        bf_y[(i * 8) + j] = bf8_from_bit(get_bit(x + i, j));
       }
     }
     // Step: 4
@@ -38,7 +45,7 @@ int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t
 
         for (uint32_t i = (j * 32); i <= ((j * 32) + 31); i++) {
           // TODO: hopefully this magic works fine here
-          bf_y[i] = bf8_from_bit(getBit(x + (i / 8), i % 8));
+          bf_y[i] = bf8_from_bit(get_bit(x + (i / 8), i % 8));
         }
         i_wd += 32;
       } else {
@@ -56,7 +63,7 @@ int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t
     bf128_t* bf_y = malloc(y_out_len);
     for (uint32_t i = 0; i < lambdaBytes; i++) {
       for (uint32_t j = 0; j < 8; j++) {
-        bf_y[(i * 8) + j] = bf128_from_bit(getBit(x + i, j));
+        bf_y[(i * 8) + j] = bf128_from_bit(get_bit(x + i, j));
       }
     }
     // Step: 4
@@ -69,7 +76,7 @@ int aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t
 
         for (uint32_t i = (j * 32); i <= ((j * 32) + 31); i++) {
           // TODO: hopefully this magic works fine here
-          bf_y[i] = bf128_from_bit(getBit(x + (i / 8), i % 8));
+          bf_y[i] = bf128_from_bit(get_bit(x + (i / 8), i % 8));
         }
         i_wd += 32;
       } else {
@@ -127,8 +134,8 @@ int aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_
     for (uint32_t j = 0; j < Ske; j++) {
 
       for (uint32_t i = 0; i < 8; i++) {
-        bf_x_tilde[i] = bf8_add(bf8_from_bit(getBit(x + j, i)),
-                                bf8_from_bit(getBit(xk + ((iwd + 8 * c) / 8), i)));
+        bf_x_tilde[i] = bf8_add(bf8_from_bit(get_bit(x + j, i)),
+                                bf8_from_bit(get_bit(xk + ((iwd + 8 * c) / 8), i)));
       }
 
       if (Mtag == 0 && rmvRcon == true && c == 0) {
@@ -137,7 +144,7 @@ int aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_
         ircon       = ircon + 1;
         bf8_t* bf_r = malloc(8);
         for (uint32_t i = 0; i < 8; i++) {
-          bf_r[i]       = bf8_from_bit(getBit(r, i));
+          bf_r[i]       = bf8_from_bit(get_bit(r, i));
           bf_r[i]       = bf8_mul(bf_r[i], bf_minus_mkey);
           bf_x_tilde[i] = bf8_add(bf_x_tilde[i], bf_r[i]);
         }
@@ -193,8 +200,8 @@ int aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_
     for (uint32_t j = 0; j < Ske; j++) {
 
       for (uint32_t i = 0; i < 8; i++) {
-        bf_x_tilde[i] = bf128_add(bf128_from_bit(getBit(x + j, i)),
-                                  bf128_from_bit(getBit(xk + ((iwd + 8 * c) / 8), i)));
+        bf_x_tilde[i] = bf128_add(bf128_from_bit(get_bit(x + j, i)),
+                                  bf128_from_bit(get_bit(xk + ((iwd + 8 * c) / 8), i)));
       }
 
       if (Mtag == 0 && rmvRcon == true && c == 0) {
@@ -204,7 +211,7 @@ int aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_
 
         for (uint32_t i = 0; i < 8; i++) {
           // TODO: hopefully the endianness is fine here
-          bf_r[i]                   = bf128_from_bit(getBit(r, i));
+          bf_r[i]                   = bf128_from_bit(get_bit(r, i));
           bf128_t bf_zeros_r_concat = bf128_zero();
           bf_zeros_r_concat         = bf128_add(bf_r[i], bf_zeros_r_concat);
           bf_r[i]                   = bf128_mul(bf_zeros_r_concat,
@@ -385,7 +392,7 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
       bf8_t* bf_xin = malloc(8);
       for (uint32_t j = 0; j < 8; j++) {
         bf_xin[j] =
-            bf8_mul(bf8_mul(bf8_from_bit(getBit(in + (8 * i), j)), bf_minus_mtag), bf_minus_mkey);
+            bf8_mul(bf8_mul(bf8_from_bit(get_bit(in + (8 * i), j)), bf_minus_mtag), bf_minus_mkey);
       }
       // TODO: ByteCombine
       bf_y[i];
@@ -427,7 +434,7 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
     for (uint32_t i = 0; i < 16; i++) {
       bf128_t* bf_xin = malloc(sizeof(bf128_t) * 8);
       for (uint32_t j = 0; j < 8; j++) {
-        bf_xin[j] = bf128_mul(bf128_mul(bf128_from_bit(getBit(in + (8 * i), j)), bf_minus_mtag),
+        bf_xin[j] = bf128_mul(bf128_mul(bf128_from_bit(get_bit(in + (8 * i), j)), bf_minus_mtag),
                               bf128_add(bf128_mul(bf_mkey, bf128_load(delta)), bf_minus_mkey));
       }
       // TODO: ByteCombine
@@ -502,16 +509,16 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
 
             for (uint32_t i = 0; i < 8; i++) {
               // converting from bit index to byte idx
-              bf_x_tilde[i] = bf8_from_bit(getBit(x + (ird / 8), i));
+              bf_x_tilde[i] = bf8_from_bit(get_bit(x + (ird / 8), i));
             }
 
           } else {
             for (uint32_t i = 0; i < 8; i++) {
               // converting bit idx to byte idx
               bf_xout[i] =
-                  bf8_mul(bf8_mul(bf8_from_bit(getBit(out[(ird - 1152) / 8], i)), bf_minus_mtag),
+                  bf8_mul(bf8_mul(bf8_from_bit(get_bit(out[(ird - 1152) / 8], i)), bf_minus_mtag),
                           bf_minus_mkey);
-              bf_x_tilde[i] = bf8_add(bf_xout[i], bf8_from_bit(getBit(xk + (128 + ird) / 8, i)));
+              bf_x_tilde[i] = bf8_add(bf_xout[i], bf8_from_bit(get_bit(xk + (128 + ird) / 8, i)));
             }
           }
           bf8_t* bf_y_tilde = malloc(8);
@@ -555,14 +562,14 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
 
             for (uint32_t i = 0; i < 8; i++) {
               // TODO: check here if getting the bit makes sense and the converting to bf128 !!
-              bf_x_tilde[i] = bf128_from_bit(getBit(x + (ird / 8), i));
+              bf_x_tilde[i] = bf128_from_bit(get_bit(x + (ird / 8), i));
             }
 
           } else {
             for (uint32_t i = 0; i < 8; i++) {
               // TODO: hopefully the endianness is fine
               uint8_t* out_zeros_concat = malloc(lambdaBytes);
-              out_zeros_concat[0]       = (getBit(out[(ird - 1152) / 8], i) << 7);
+              out_zeros_concat[0]       = (get_bit(out[(ird - 1152) / 8], i) << 7);
               memset(out_zeros_concat + 1, 0, lambdaBytes - 1);
 
               bf_xout[i] =
@@ -571,7 +578,7 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
 
               // TODO: check here if getting the bit makes sense and the converting to bf128 !!
               bf_x_tilde[i] =
-                  bf128_add(bf_xout[i], bf128_from_bit(getBit(xk + ((128 + ird) / 8), i)));
+                  bf128_add(bf_xout[i], bf128_from_bit(get_bit(xk + ((128 + ird) / 8), i)));
             }
           }
           bf128_t* bf_y_tilde = malloc(8);
@@ -687,7 +694,6 @@ void aes_prove(uint8_t* w, uint8_t* u, uint8_t** V, uint8_t* in, uint8_t* out, u
   uint32_t u_len       = lambda;
   uint32_t in_len      = beta * 128;
   uint32_t out_len     = beta * 128;
-  uint32_t chal        = (3 * lambda) + 64;
 
   uint8_t* in_0  = malloc(16);
   uint8_t* out_0 = malloc(16);
@@ -756,8 +762,8 @@ void aes_prove(uint8_t* w, uint8_t* u, uint8_t** V, uint8_t* in, uint8_t* out, u
                                  sizeof(lambdaBytes * lambdaBytes));
 
   // TODO: what was ell, r and t ?
-  zk_hash_128(a_tilde, r, chal, t, a1_us_concat, l);
-  zk_hash_128(b_tilde, r, chal, t, a0_vs_concat, l);
+  zk_hash_128(a_tilde, chal, a1_us_concat, l);
+  zk_hash_128(b_tilde, chal, a0_vs_concat, l);
 }
 
 bool aes_verify(uint8_t* d, uint8_t** Q, uint8_t* chal_2, uint8_t* chal_3, uint8_t* a_tilde,
