@@ -99,8 +99,8 @@ int test_FAESTVoleVerify() {
 
   uint8_t* hcomRec = malloc(lambdaBytes * 2);
 
-  voleVerify(chal, pdec, com_j, lambda, lambdaBytes, outlen, params.faest_param.tau,
-             params.faest_param.k0, params.faest_param.k1, hcomRec, q, vecComRec);
+  voleReconstruct(chal, pdec, com_j, lambda, lambdaBytes, outlen, params.faest_param.tau,
+                  params.faest_param.k0, params.faest_param.k1, hcomRec, q, vecComRec);
 
 #if 0
   for (uint z = 0; z < params.faest_param.t; z++) {

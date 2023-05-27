@@ -223,8 +223,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   uint8_t** q              = malloc(tau * sizeof(uint8_t*));
   vec_com_rec_t* vecComRec = malloc(sizeof(vec_com_rec_t));
   uint8_t* hcomverify      = malloc(lambdaBytes * 2);
-  voleVerify(chal_3, signature->pdec, signature->com_j, lambda, lambdaBytes, l, tau,
-             params->faest_param.k0, params->faest_param.k1, hcomverify, q, vecComRec);
+  voleReconstruct(chal_3, signature->pdec, signature->com_j, lambda, lambdaBytes, l, tau,
+                  params->faest_param.k0, params->faest_param.k1, hcomverify, q, vecComRec);
   if (memcmp(hcomverify, signature->hcom, lambdaBytes * 2) != 0) {
     return 0;
   }
