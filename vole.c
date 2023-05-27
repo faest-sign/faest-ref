@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "random_oracle.h"
 
+#include <stdbool.h>
 #include <string.h>
 
 // TODO: Do not pass lambdaBytes everywhere, compute it in the function....
@@ -138,6 +139,16 @@ void voleVerify(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint32_t l
   H1_final(&h1_ctx, hcom, lambdaBytes * 2);
 }
 
+static bool is_all_zeros(const uint8_t* array, size_t len) {
+  for (size_t idx = 0; idx != len; ++idx) {
+    if (array[idx]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void ConvertToVoleProver(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
                          uint32_t numVoleInstances, uint32_t depth, uint32_t outLenBytes,
                          uint8_t* u, uint8_t* v) {
@@ -150,22 +161,17 @@ void ConvertToVoleProver(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* s
   keep it consistent like k_0,0 being the root and k_d,0 being the first leaf by manipulating it
   with getNodeIndex() due to ease of understanding... */
 
-  uint8_t* allZeros = malloc(lambdaBytes);
-  memset(allZeros, 0, lambdaBytes);
-  if (memcmp(sd, allZeros, lambdaBytes) == 0) {
+  if (is_all_zeros(sd, lambdaBytes)) {
     memset(r + (getNodeIndex(depth, 0) * outLenBytes), 0, outLenBytes);
   } else {
-    uint8_t* out = malloc(outLenBytes);
-    prg(sd, iv, out, lambda, outLenBytes);
-    memcpy(r + (getNodeIndex(depth, 0) * outLenBytes), out, outLenBytes);
+    prg(sd, iv, r + (getNodeIndex(depth, 0) * outLenBytes), lambda, outLenBytes);
   }
 
   for (uint32_t i = 1; i < numVoleInstances; i++) {
     uint8_t iv_[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    uint8_t* out    = malloc(outLenBytes);
-    prg(sd + (lambdaBytes * i), iv_, out, lambda, outLenBytes);
-    memcpy(r + (outLenBytes * (getNodeIndex(depth, 0) + i)), out, outLenBytes);
+    prg(sd + (lambdaBytes * i), iv_, r + (outLenBytes * (getNodeIndex(depth, 0) + i)), lambda,
+        outLenBytes);
   }
 
   memset(v, 0, depth * outLenBytes);
@@ -197,23 +203,17 @@ void ConvertToVoleVerifier(uint32_t lambda, uint32_t lambdaBytes, const uint8_t*
   keep it consistent like k_0,0 being the root and k_d,0 being the first leaf by manipulating it
   with getNodeIndex() due to ease of understanding... */
 
-  // TODO: stupid way to check,, change it !!
-  uint8_t* allZeros = malloc(lambdaBytes);
-  memset(allZeros, 0, lambdaBytes);
-  if (memcmp(sd, allZeros, lambdaBytes) == 0) {
+  if (is_all_zeros(sd, lambdaBytes)) {
     memset(r + (getNodeIndex(depth, 0) * outLenBytes), 0, outLenBytes);
   } else {
-    uint8_t* out = malloc(outLenBytes);
-    prg(sd, iv, out, lambda, outLenBytes);
-    memcpy(r + (getNodeIndex(depth, 0) * outLenBytes), out, outLenBytes);
+    prg(sd, iv, r + (getNodeIndex(depth, 0) * outLenBytes), lambda, outLenBytes);
   }
 
   for (uint32_t i = 1; i < numVoleInstances; i++) {
     uint8_t iv_[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    uint8_t* out    = malloc(outLenBytes);
-    prg(sd + (lambdaBytes * i), iv_, out, lambda, outLenBytes);
-    memcpy(r + (outLenBytes * (getNodeIndex(depth, 0) + i)), out, outLenBytes);
+    prg(sd + (lambdaBytes * i), iv_, r + (outLenBytes * (getNodeIndex(depth, 0) + i)), lambda,
+        outLenBytes);
   }
 
   memset(v, 0, depth * outLenBytes);
