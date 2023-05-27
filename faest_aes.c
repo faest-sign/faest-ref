@@ -850,13 +850,13 @@ bool aes_verify(uint8_t* d, uint8_t** Q, uint8_t* chal_2, uint8_t* chal_3, uint8
   uint32_t ell;
   switch (lambda) {
   case 256:
-    zk_hash_256(q_tilde, r, chal_2, t, b_qs_conat, ell);
+    zk_hash_256(q_tilde, chal_2, b_qs_conat, ell);
     break;
   case 192:
-    zk_hash_192(q_tilde, r, chal_2, t, b_qs_conat, ell);
+    zk_hash_192(q_tilde, chal_2, b_qs_conat, ell);
     break;
   default:
-    zk_hash_128(q_tilde, r, chal_2, t, b_qs_conat, ell);
+    zk_hash_128(q_tilde, chal_2, b_qs_conat, ell);
     break;
   }
 
