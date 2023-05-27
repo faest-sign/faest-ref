@@ -220,71 +220,81 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   free(chal_2);
 
   // Step: 9..11
-  uint8_t** q              = malloc(tau * sizeof(uint8_t*));
+  uint8_t** qprime         = malloc(tau * sizeof(uint8_t*));
   vec_com_rec_t* vecComRec = malloc(sizeof(vec_com_rec_t));
   uint8_t* hcomverify      = malloc(lambdaBytes * 2);
-  voleReconstruct(chal_3, signature->pdec, signature->com_j, lambda, lambdaBytes, l, tau,
-                  params->faest_param.k0, params->faest_param.k1, hcomverify, q, vecComRec);
+  voleReconstruct(chal_3, signature->pdec, signature->com_j, lambda, lambdaBytes, ell_hat, tau,
+                  params->faest_param.k0, params->faest_param.k1, hcomverify, qprime, vecComRec);
   if (memcmp(hcomverify, signature->hcom, lambdaBytes * 2) != 0) {
     return 0;
   }
 
-  // Step: 12
-  // TODO: no clue what this will take... FIX Q !!
-  uint8_t* r0;
-  uint8_t** q_tilde = malloc(tau * sizeof(uint8_t*));
-  uint32_t depth    = 0;
-  size_t ell;
-  q_tilde[0] = malloc(l * depth);
-  memcpy(q_tilde[0], q[0], sizeof(q[0]));
-  for (uint32_t i = 1; i < tau; i++) {
-    if (i < (lambda % tau)) { // Computing the num of vole and the depth here
-      depth = params->faest_param.k0;
-    } else {
-      depth = params->faest_param.k1;
+  H1_context_t h1_ctx;
+  H1_init(&h1_ctx, lambda);
+
+  // Step: 13
+  uint8_t** q      = malloc(tau * sizeof(uint8_t*));
+  q[0]             = malloc(lambda * ell_hat_bytes);
+  uint8_t** Dtilde = malloc(tau * sizeof(uint8_t*));
+  Dtilde[0]        = calloc(lambda, (lambdaBytes + UNIVERSAL_HASH_B));
+
+  const unsigned int max_depth = MAX(params->faest_param.k0, params->faest_param.k0);
+  uint8_t* delta               = malloc(max_depth);
+  for (uint32_t i = 0; i < tau; i++) {
+    const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
+    if (i < tau - 1) {
+      q[i + 1]      = q[i] + depth;
+      Dtilde[i + 1] = Dtilde[i] + depth;
     }
-    q_tilde[i] = malloc(l * depth);
-    for (uint32_t d = 0; d < depth; d++) {
-      for (uint32_t k = 0; k < l; k++) {
-        *(q_tilde[i] + (d * l) + k) = *(q[i] + (d * l) + k) ^ *(signature->c[i] + (d * l) + k);
+
+    // Step 15
+    ChalDec(chal_3, i, params->faest_param.k0, params->faest_param.t0, params->faest_param.k1,
+            params->faest_param.t1, delta);
+    // Step 16
+    for (unsigned int j = 0; j != depth; ++j) {
+      if (delta[j]) {
+        memcpy(Dtilde[i] + j * utilde_bytes, signature->u_tilde, utilde_bytes);
+      }
+    }
+
+    if (!i) {
+      // Step 12
+      memcpy(q[i], qprime[i], ell_hat_bytes * depth);
+    } else {
+      // Step 18
+      for (uint32_t d = 0; d < depth; d++) {
+        if (delta[d]) {
+          xorUint8Arr(qprime[i] + d * ell_hat_bytes, signature->c[i], q[i] + d * ell_hat_bytes,
+                      ell_hat_bytes);
+        } else {
+          memcpy(q[i] + d * ell_hat_bytes, qprime[i] + d * ell_hat_bytes, ell_hat_bytes);
+        }
       }
     }
   }
-  vole_hash(vecComRec->h, chal_1, q_tilde, ell, lambda);
 
-  // Step: 13..16
-  uint8_t b         = 0;
-  uint8_t** d_tilde = malloc(tau * sizeof(uint8_t*));
-  for (uint32_t i = 0; i < tau; i++) {
-    if (i < params->faest_param.t0) {
-      b = 0;
-    } else {
-      b = 1;
-    }
-    // TODO: the bits are represented as uint8,, hopefully its not too bad
-    uint8_t* chalout;
-    ChalDec(chal_3, i, params->faest_param.k0, params->faest_param.t0, params->faest_param.k1,
-            params->faest_param.t1, chalout);
-    d_tilde[i] = malloc(8);
-    for (uint32_t j = 0; j < 8; j++) {
-      d_tilde[i][j] = chalout[j] ^ signature->u_tilde[j];
-    }
-  }
+  // Step 19
+  {
+    H1_context_t h1_ctx_1;
+    H1_init(&h1_ctx_1, lambda);
 
-  // Step: 17..18
-  uint8_t* q_tilde_tmp = malloc(tau * 8);
-  for (uint32_t i = 0; i < tau; i++) {
-    for (uint8_t j = 0; j < 8; j++) {
-      *(q_tilde_tmp + (i * tau) + j) = *(q_tilde[i] + j) ^ *(d_tilde[i] + j);
+    uint8_t* Q_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
+    for (unsigned int i = 0; i != lambda; ++i) {
+      vole_hash(Q_tilde, chal_1, q[0] + i * ell_hat_bytes, ell_hat, lambda);
+      xorUint8Arr(Q_tilde, Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B), Q_tilde,
+                  lambdaBytes + UNIVERSAL_HASH_B);
+      H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
-  }
-  uint8_t* hv_verify = malloc(lambdaBytes * 2);
-  H1_context_t h1_ctx_1;
-  H1_init(&h1_ctx_1, lambda);
-  H1_update(&h1_ctx_1, q_tilde_tmp, tau * 8);
-  H1_final(&h1_ctx_1, hv_verify, lambdaBytes * 2);
-  if (memcmp(signature->h_v, hv_verify, lambdaBytes * 2) != 0) {
-    return 0;
+    free(Q_tilde);
+
+    // Step: 20
+    uint8_t* check_h_v = malloc(lambdaBytes * 2);
+    H1_final(&h1_ctx_1, check_h_v, lambdaBytes * 2);
+    int ret = memcmp(check_h_v, signature->h_v, lambdaBytes * 2);
+    free(check_h_v);
+    if (ret) {
+      return 0;
+    }
   }
 
   unsigned int beta, R, Nwd, Ske, Lke, Lenc, Senc, C;
