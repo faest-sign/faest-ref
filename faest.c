@@ -85,7 +85,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H3_final(&h3_ctx, rootkey, lambdaBytes);
   }
 
-  // Step: 3..4
+  // Step: 3
   uint8_t* hcom     = malloc(lambdaBytes * 2);
   vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
   uint8_t* u_       = malloc(l);
@@ -101,7 +101,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   free(rootkey);
   rootkey = NULL;
 
-  // Step: 5
+  // Step: 4
   uint8_t* chal_1 = malloc((5 * lambdaBytes) + 8);
   {
     H2_context_t h2_ctx;
@@ -116,10 +116,10 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   free(mu);
   mu = NULL;
 
-  // Step: 7
+  // Step: 6
   vole_hash(signature->u_tilde, chal_1, u_, l, lambda);
 
-  // Step: 8 and 9
+  // Step: 7 and 8
   uint8_t* h_v = malloc(lambdaBytes * 2);
   {
     H1_context_t h1_ctx_1;
@@ -127,26 +127,28 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 
     uint8_t* V_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
     for (unsigned int i = 0; i != lambda; ++i) {
+      // Step 7
       vole_hash(V_tilde, chal_1, v[i], ell_hat, lambda);
+      // Step 8
       H1_update(&h1_ctx_1, V_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     free(V_tilde);
 
-    // Step: 9
+    // Step: 8
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
   free(chal_1);
   chal_1 = NULL;
 
-  // Step: 10..11
+  // Step: 9
   const uint8_t* in  = pk;
   const uint8_t* out = pk + params->faest_param.pkSize / 2;
-  // Step: 12..13
-  // TODO
+  // Step: 10
   uint8_t* w = aes_extend_witness(lambda, l, sk, in);
+  // Step: 11
   xorUint8Arr(w, u_, signature->d, ell_bytes);
 
-  // Step: 14
+  // Step: 12
   uint8_t* chal_2 = malloc(3 * lambdaBytes + 8);
   {
     H2_context_t h2_ctx_1;
@@ -171,7 +173,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     v = new_v;
   }
 
-  // Step: 18
+  // Step: 16
   uint8_t* b_tilde     = malloc(lambdaBytes);
   const unsigned int R = params->cipher_param.numRounds, beta = lambda == 128 ? 1 : 2,
                      Lke = params->faest_param.Lke, Lenc = params->faest_param.Lenc,
@@ -187,7 +189,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   free(w);
   w = NULL;
 
-  // Step: 19
+  // Step: 17
   uint8_t* chal_3 = malloc(lambdaBytes);
   {
     H2_context_t h2_ctx_2;
@@ -202,13 +204,15 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   free(chal_2);
   chal_2 = NULL;
 
-  // Step: 20..23
+  // Step: 19..21
   uint8_t* s_ = malloc(MAX(params->faest_param.k0, params->faest_param.k1));
   for (uint32_t i = 0; i < tau; i++) {
+    // Step 20
     ChalDec(chal_3, i, params->faest_param.k0, params->faest_param.t0, params->faest_param.k1,
             params->faest_param.t1, s_);
     unsigned int num_vole_instances =
         i < tau0 ? (1 << params->faest_param.k0) : (1 << params->faest_param.k1);
+    // Step 21
     vector_open(vecCom[i].k, vecCom[i].com, s_, signature->pdec[i], signature->com_j[i],
                 num_vole_instances, lambdaBytes);
     vec_com_clear(&vecCom[i]);
