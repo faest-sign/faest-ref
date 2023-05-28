@@ -97,8 +97,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     v[i] = v[0] + i * ell_hat_bytes;
   }
   voleCommit(rootkey, ell_hat, params, hcom, vecCom, signature->c, u_, v);
-  free(hcom);
-  hcom = NULL;
   free(rootkey);
   rootkey = NULL;
 
@@ -114,6 +112,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     }
     H2_final(&h2_ctx, chal_1, (5 * lambdaBytes) + 8);
   }
+  free(hcom);
+  hcom = NULL;
   free(mu);
   mu = NULL;
 
@@ -138,9 +138,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     // Step: 8
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
-  free(chal_1);
-  chal_1 = NULL;
-
   // Step: 9
   const uint8_t* in  = pk;
   const uint8_t* out = pk + params->faest_param.pkSize / 2;
@@ -160,6 +157,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_update(&h2_ctx_1, signature->d, ell_bytes);
     H2_final(&h2_ctx_1, chal_2, (3 * lambdaBytes) + 8);
   }
+  free(chal_1);
+  chal_1 = NULL;
   free(h_v);
   h_v = NULL;
 
@@ -225,7 +224,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_paramset_t* params,
            const signature_t* signature) {
   const uint32_t l         = params->faest_param.l;
-  const uint32_t ell_bytes = (params->faest_param.l + 7) / 8;
+  const uint32_t ell_bytes = (l + 7) / 8;
 
   const uint32_t lambda      = params->faest_param.lambda;
   const uint32_t lambdaBytes = lambda / 8;
