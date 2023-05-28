@@ -30,6 +30,6 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
 
 int serialize_signature(uint8_t* dest, size_t* len, const signature_t* signature,
                         const faest_paramset_t* params);
-signature_t deserialize_signature(const uint8_t* src, size_t len, const faest_paramset_t* params);
+signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* params);
 
 #endif

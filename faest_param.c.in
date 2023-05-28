@@ -69,7 +69,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* pk, const uin
   }
 
   const faest_paramset_t params = faest_get_paramset(FAEST_@PARAM@);
-  signature_t sig = deserialize_signature(signature, signature_len, &params);
+  signature_t sig = deserialize_signature(signature, &params);
 
   int ret = verify(message, message_len, pk, &params, &sig);
   free_signature(sig, &params);

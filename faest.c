@@ -27,7 +27,7 @@ static inline void set_bit(uint8_t* dst, uint8_t in, unsigned int index) {
 }
 
 static uint8_t** column_to_row_major_and_shrink_V(uint8_t** v, unsigned int lambda,
-                                                  unsigned int ell, unsigned int ell_hat) {
+                                                  unsigned int ell) {
   assert(lambda % 8 == 0);
   const unsigned int lambda_bytes = lambda / 8;
 
@@ -165,7 +165,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   u_ = realloc(u_, (l + lambda) / 8);
   // Step: 15
   {
-    uint8_t** new_v = column_to_row_major_and_shrink_V(v, lambda, l, ell_hat);
+    uint8_t** new_v = column_to_row_major_and_shrink_V(v, lambda, l);
     free(v[0]);
     free(v);
     v = new_v;
@@ -492,7 +492,7 @@ void free_signature(signature_t sig, const faest_paramset_t* params) {
   }
 }
 
-signature_t deserialize_signature(const uint8_t* src, size_t len, const faest_paramset_t* params) {
+signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* params) {
   const unsigned int tau0   = params->faest_param.t0;
   const size_t lambda_bytes = params->faest_param.lambda / 8;
   const size_t ell_bytes    = (params->faest_param.l + 7) / 8;
