@@ -18,6 +18,37 @@
 
 // TODO: change q to Q where applicable
 
+static inline uint8_t get_bit(const uint8_t* in, unsigned int index) {
+  return in[index / 8] >> (7 - index % 8);
+}
+
+static inline void set_bit(uint8_t* dst, uint8_t in, unsigned int index) {
+  dst[index / 8] |= in << (7 - index % 8);
+}
+
+static uint8_t* column_to_row_major_and_shrink_V(const uint8_t* v, unsigned int lambda,
+                                                 unsigned int ell, unsigned int ell_hat) {
+  assert(lambda % 8 == 0);
+  const unsigned int lambda_bytes = lambda / 8;
+
+  // V is \hat \ell times \lambda matrix over F_2
+  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell rows and
+  // \lambda columns storing in row-major order
+  uint8_t** new_v = malloc(ell * sizeof(uint8_t*));
+  new_v[0]        = malloc(lambda * ell);
+  for (unsigned int i = 1; i < ell; ++i) {
+    new_v[i] = new_v[0] + i * lambda_bytes;
+  }
+
+  for (unsigned int row = 0; row != ell; ++row) {
+    for (unsigned int column = 0; column != lambda; ++column) {
+      set_bit(new_v[row], column, get_bit(v[column], row));
+    }
+  }
+
+  return new_v;
+}
+
 void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* pk,
           const faest_paramset_t* params, signature_t* signature) {
   const uint32_t l           = params->faest_param.l;
@@ -59,7 +90,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   // Step: 3..4
   vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
   uint8_t* u_       = malloc(l);
-  // v has \ell \hat rows, \lambda coluns, storing in column-major order
+  // v has \hat \ell rows, \lambda columns, storing in column-major order
   uint8_t** v = malloc(lambda * sizeof(uint8_t*));
   v[0]        = malloc(lambda * ell_hat_bytes);
   for (unsigned int i = 1; i < lambda; ++i) {
@@ -125,10 +156,16 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_final(&h2_ctx_1, chal_2, (3 * lambdaBytes) + 8);
   }
 
-  // Step: 15..17
+  // Step: 14
+  // TODO: check realloc errors
   u_ = realloc(u_, (l + lambda) / 8);
-  // V is \hat \ell times \lambda matrix over F_2
-  // v = v[0...l+lambda]
+  // Step: 15
+  {
+    uint8_t* new_v = column_to_row_major_and_shrink_V(v, lambda, l, ell_hat);
+    free(v[0]);
+    free(v);
+    v = new_v;
+  }
 
   // Step: 18
   const unsigned int R = params->cipher_param.numRounds, beta = lambda == 128 ? 1 : 2,
