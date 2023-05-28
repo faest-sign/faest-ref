@@ -50,7 +50,8 @@ static uint8_t** column_to_row_major_and_shrink_V(uint8_t** v, unsigned int lamb
 }
 
 void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* pk,
-          const faest_paramset_t* params, signature_t* signature) {
+          const uint8_t* rho, size_t rholen, const faest_paramset_t* params,
+          signature_t* signature) {
   const uint32_t l           = params->faest_param.l;
   const uint32_t ell_bytes   = (l + 7) / 8;
   const uint32_t lambda      = params->faest_param.lambda;
@@ -61,9 +62,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
       params->faest_param.l + params->faest_param.lambda * 2 + params->faest_param.b;
   const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
   const size_t utilde_bytes    = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
-
-  uint8_t* rho = malloc(lambdaBytes);
-  rand_bytes(rho, lambdaBytes);
 
   // Step: 1
   uint8_t* mu = malloc(lambdaBytes * 2);
@@ -81,11 +79,11 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H3_init(&h3_ctx, lambda);
     H3_update(&h3_ctx, sk, params->faest_param.skSize);
     H3_update(&h3_ctx, mu, lambdaBytes * 2);
-    H3_update(&h3_ctx, rho, lambdaBytes);
+    if (rho && rholen) {
+      H3_update(&h3_ctx, rho, rholen);
+    }
     H3_final(&h3_ctx, rootkey, lambdaBytes);
   }
-  free(rho);
-  rho = NULL;
 
   // Step: 3..4
   uint8_t* hcom     = malloc(lambdaBytes * 2);
