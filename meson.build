@@ -24,6 +24,7 @@ if cc.get_id() != 'msvc'
   c_flags += [
     '-Werror=implicit-function-declaration',
     '-Werror=vla',
+    '-Werror=incompatible-pointer-types',
   ]
   flags += '-Wshadow'
   defines += '-D_GNU_SOURCE'
@@ -389,6 +390,10 @@ endforeach
 openssl = dependency('openssl', required: false)
 boost_program_options = dependency('boost', required: false, modules: ['program_options'])
 build_dependencies = []
+if openssl.found()
+  build_dependencies += [openssl]
+  defines += '-DHAVE_OPENSSL'
+endif
 
 if host_machine.system() == 'windows'
   # require new enough Windows for bcrypt to be available

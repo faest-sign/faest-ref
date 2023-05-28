@@ -1,4 +1,15 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "faest_aes.h"
+#include "fields.h"
+#include "vole.h"
+#include "universal_hashing.h"
 
 #include <string.h>
 
@@ -682,9 +693,23 @@ int aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Sen
 }
 
 void aes_prove(uint8_t* w, uint8_t* u, uint8_t** V, const uint8_t* in, const uint8_t* out,
-               const uint8_t* chal, uint32_t lambda, uint32_t R, uint32_t tau, uint32_t l,
-               uint32_t beta, uint32_t Lke, uint32_t Lenc, uint32_t C, uint32_t Nwd, uint32_t Ske,
-               uint32_t Senc, uint8_t* a_tilde, uint8_t* b_tilde) {
+               const uint8_t* chal, uint8_t* a_tilde, uint8_t* b_tilde,
+               const faest_paramset_t* params) {
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int tau    = params->faest_param.tau;
+  const unsigned int t0     = params->faest_param.t0;
+  const unsigned int k0     = params->faest_param.k0;
+  const unsigned int t1     = params->faest_param.t1;
+  const unsigned int k1     = params->faest_param.k1;
+  const unsigned int beta   = params->faest_param.beta;
+  const unsigned int l      = params->faest_param.l;
+  const unsigned int Lke    = params->faest_param.Lke;
+  const unsigned int Lenc   = params->faest_param.Lenc;
+  const unsigned int R      = params->cipher_param.numRounds;
+  const unsigned int C      = params->faest_param.c;
+  const unsigned int Nwd    = params->faest_param.Nwd;
+  const unsigned int Ske    = params->faest_param.Ske;
+  const unsigned int Senc   = params->faest_param.Senc;
 
   uint32_t lambdaBytes = lambda / 8;
   uint32_t w_len       = l;
@@ -764,11 +789,24 @@ void aes_prove(uint8_t* w, uint8_t* u, uint8_t** V, const uint8_t* in, const uin
   // zk_hash_128(b_tilde, chal, a0_vs_concat, l);
 }
 
-bool aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chal_2, const uint8_t* chal_3,
-                const uint8_t* a_tilde, const uint8_t* b_tilde, const uint8_t* in,
-                const uint8_t* out, uint32_t lambda, uint32_t tau, uint32_t l, uint32_t beta,
-                uint32_t R, uint32_t Nwd, uint32_t Ske, uint32_t Lke, uint32_t Lenc, uint32_t Senc,
-                uint32_t C, uint32_t k0, uint32_t k1, uint32_t t0, uint32_t t1) {
+uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chal_2, const uint8_t* chal_3,
+                    const uint8_t* a_tilde, const uint8_t* in, const uint8_t* out,
+                    const faest_paramset_t* params) {
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int tau    = params->faest_param.tau;
+  const unsigned int t0     = params->faest_param.t0;
+  const unsigned int k0     = params->faest_param.k0;
+  const unsigned int t1     = params->faest_param.t1;
+  const unsigned int k1     = params->faest_param.k1;
+  const unsigned int beta   = params->faest_param.beta;
+  const unsigned int l      = params->faest_param.l;
+  const unsigned int Lke    = params->faest_param.Lke;
+  const unsigned int Lenc   = params->faest_param.Lenc;
+  const unsigned int R      = params->cipher_param.numRounds;
+  const unsigned int C      = params->faest_param.c;
+  const unsigned int Nwd    = params->faest_param.Nwd;
+  const unsigned int Ske    = params->faest_param.Ske;
+  const unsigned int Senc   = params->faest_param.Senc;
 
   uint32_t lambdaBytes = lambda / 8;
   uint32_t d_len       = l;
@@ -846,39 +884,24 @@ bool aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chal_2, const uint8_t* c
   }
 
   // TODO: line 18 and do till end !!
-  // TODO: what is ell ??
   uint8_t* qs;
-  uint8_t* q_tilde;
-
-  uint8_t *r, t;
-  uint32_t ell;
-  switch (lambda) {
-  case 256: {
-    bf256_t* b_qs_conat;
-    zk_hash_256(q_tilde, chal_2, b_qs_conat, ell);
-    break;
-  }
-  case 192: {
-    bf192_t* b_qs_conat;
-    zk_hash_192(q_tilde, chal_2, b_qs_conat, ell);
-    break;
-  }
-  default: {
-    bf128_t* b_qs_conat;
-    zk_hash_128(q_tilde, chal_2, b_qs_conat, ell);
-    break;
-  } break;
-  }
 
   // TODO: Do field operation here !!
-  uint8_t* q_check = malloc(sizeof(a_tilde));
-  for (uint32_t i = 0; i < sizeof(q_check); i++) {
-    q_check[i] = a_tilde[i] + (b_tilde[i] * delta[i]);
-  }
+  // uint8_t* q_check = malloc(sizeof(a_tilde));
+  // for (uint32_t i = 0; i < sizeof(q_check); i++) {
+  //   q_check[i] = a_tilde[i] + (b_tilde[i] * delta[i]);
+  // }
 
-  if (memcmp(q_tilde, q_check, sizeof(q_check)) == 0) {
-    return true;
-  } else {
-    return false;
-  }
+  // Step 19
+  bf128_t* b_qs_concat;
+  uint8_t* q_tilde = malloc(lambdaBytes);
+  zk_hash_128(q_tilde, chal_2, b_qs_concat, l);
+
+  uint8_t* b_tilde = q_tilde;
+  q_tilde          = NULL;
+
+  bf128_t bfqtilde = bf128_load(q_tilde);
+  bf128_store(b_tilde, bf128_add(bfqtilde, bf128_mul(bf128_load(a_tilde), bf128_load(delta))));
+
+  return b_tilde;
 }

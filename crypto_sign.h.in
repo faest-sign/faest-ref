@@ -9,7 +9,6 @@
 #define CRYPTO_PUBLICKEYBYTES @PK_SIZE@
 #define CRYPTO_BYTES @SIG_SIZE@
 #define CRYPTO_ALGNAME "faest@PARAM_L@"
-#define CRYPTO_DETERMINISTIC 1
 
 int crypto_sign_keypair(unsigned char* pk, unsigned char* sk);
 int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned char* m,

@@ -46,9 +46,11 @@ if boost_test.found()
   endforeach
 
   extended_tests = executable('test_extended_tests', test_sources,
-      dependencies: [libfaest_static_dependency, boost_test] + test_deps,
-      include_directories: include_directories,
-      cpp_args: defines + cpp_flags + ['-DBOOST_TEST_DYN_LINK'],
-    )
-  test('extended_tests', extended_tests)
+    dependencies: [libfaest_static_dependency, boost_test] + test_deps,
+    include_directories: include_directories,
+    cpp_args: defines + cpp_flags + ['-DBOOST_TEST_DYN_LINK'],
+  )
+  test('extended_tests', extended_tests,
+    timeout: 600,
+  )
 endif

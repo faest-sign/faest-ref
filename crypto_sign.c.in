@@ -8,8 +8,13 @@
 #include "api.h"
 #endif
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "faest_@PARAM_L@.h"
 #include "owf.h"
+#include "randomness.h"
 
 #include <string.h>
 
@@ -41,7 +46,13 @@ int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned cha
   *smlen = mlen + FAEST_@PARAM@_SIGNATURE_SIZE;
   memmove(sm, m, mlen);
 
-  return faest_@PARAM_L@_sign(SK_KEY(sk), pk, sm, mlen, sm + mlen, NULL);
+#if defined(CRYPTO_DETERMINISTIC) && CRYPTO_DETERMINISTIC == 1
+  return faest_@PARAM_L@_sign(SK_KEY(sk), pk, sm, mlen, NULL, 0, sm + mlen, NULL);
+#else
+  uint8_t rho[FAEST_@PARAM@_LAMBDA / 8];
+  rand_bytes(rho, sizeof(rho));
+  return faest_@PARAM_L@_sign(SK_KEY(sk), pk, sm, mlen, rho, sizeof(rho), sm + mlen, NULL);
+#endif
 }
 
 int crypto_sign_open(unsigned char* m, unsigned long long* mlen, const unsigned char* sm,
