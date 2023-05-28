@@ -26,7 +26,7 @@ static inline void set_bit(uint8_t* dst, uint8_t in, unsigned int index) {
   dst[index / 8] |= in << (7 - index % 8);
 }
 
-static uint8_t** column_to_row_major_and_shrink_V(const uint8_t* v, unsigned int lambda,
+static uint8_t** column_to_row_major_and_shrink_V(uint8_t** v, unsigned int lambda,
                                                   unsigned int ell, unsigned int ell_hat) {
   assert(lambda % 8 == 0);
   const unsigned int lambda_bytes = lambda / 8;
@@ -161,7 +161,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   u_ = realloc(u_, (l + lambda) / 8);
   // Step: 15
   {
-    uint8_t* new_v = column_to_row_major_and_shrink_V(v, lambda, l, ell_hat);
+    uint8_t** new_v = column_to_row_major_and_shrink_V(v, lambda, l, ell_hat);
     free(v[0]);
     free(v);
     v = new_v;
