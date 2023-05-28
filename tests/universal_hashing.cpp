@@ -4,6 +4,7 @@
 #include "randomness.h"
 
 #include <boost/test/unit_test.hpp>
+#include <boost/test/data/test_case.hpp>
 #include <array>
 #include <vector>
 
@@ -986,109 +987,99 @@ namespace {
   };
 } // namespace
 
-BOOST_AUTO_TEST_CASE(test_vole_hash_128_tv) {
-  for (size_t i = 0; i != TEST_VECTORS; ++i) {
-    std::array<uint8_t, sizeof(bf128::bytes) + UNIVERSAL_HASH_B> digest, expected_digest;
-    vole_hash_128(
-        digest.data(), vole_hash_128_sd.data() + i * (5 * sizeof(bf128::bytes) + 8),
-        vole_hash_128_xs.data() + i * (sizeof(bf128::bytes) * 2 + ell / 8 + UNIVERSAL_HASH_B), ell);
-    std::copy(vole_hash_128_digest.data() + i * expected_digest.size(),
-              vole_hash_128_digest.data() + (i + 1) * expected_digest.size(),
-              expected_digest.begin());
-    BOOST_TEST(digest == expected_digest);
-  }
+using boost::unit_test::data::xrange;
+
+BOOST_DATA_TEST_CASE(test_vole_hash_128_tv, xrange(TEST_VECTORS), i) {
+  std::array<uint8_t, sizeof(bf128::bytes) + UNIVERSAL_HASH_B> digest, expected_digest;
+  vole_hash_128(
+      digest.data(), vole_hash_128_sd.data() + i * (5 * sizeof(bf128::bytes) + 8),
+      vole_hash_128_xs.data() + i * (sizeof(bf128::bytes) * 2 + ell / 8 + UNIVERSAL_HASH_B), ell);
+  std::copy(vole_hash_128_digest.data() + i * expected_digest.size(),
+            vole_hash_128_digest.data() + (i + 1) * expected_digest.size(),
+            expected_digest.begin());
+  BOOST_TEST(digest == expected_digest);
 }
 
-BOOST_AUTO_TEST_CASE(test_vole_hash_192_tv) {
-  for (size_t i = 0; i != TEST_VECTORS; ++i) {
-    std::array<uint8_t, sizeof(bf192::bytes) + UNIVERSAL_HASH_B> digest, expected_digest;
-    vole_hash_192(
-        digest.data(), vole_hash_192_sd.data() + i * (5 * sizeof(bf192::bytes) + 8),
-        vole_hash_192_xs.data() + i * (sizeof(bf192::bytes) * 2 + ell / 8 + UNIVERSAL_HASH_B), ell);
-    std::copy(vole_hash_192_digest.data() + i * expected_digest.size(),
-              vole_hash_192_digest.data() + (i + 1) * expected_digest.size(),
-              expected_digest.begin());
-    BOOST_TEST(digest == expected_digest);
-  }
+BOOST_DATA_TEST_CASE(test_vole_hash_192_tv, xrange(TEST_VECTORS), i) {
+  std::array<uint8_t, sizeof(bf192::bytes) + UNIVERSAL_HASH_B> digest, expected_digest;
+  vole_hash_192(
+      digest.data(), vole_hash_192_sd.data() + i * (5 * sizeof(bf192::bytes) + 8),
+      vole_hash_192_xs.data() + i * (sizeof(bf192::bytes) * 2 + ell / 8 + UNIVERSAL_HASH_B), ell);
+  std::copy(vole_hash_192_digest.data() + i * expected_digest.size(),
+            vole_hash_192_digest.data() + (i + 1) * expected_digest.size(),
+            expected_digest.begin());
+  BOOST_TEST(digest == expected_digest);
 }
 
-BOOST_AUTO_TEST_CASE(test_vole_hash_256_tv) {
-  for (size_t i = 0; i != TEST_VECTORS; ++i) {
-    std::array<uint8_t, sizeof(bf256::bytes) + UNIVERSAL_HASH_B> digest, expected_digest;
-    vole_hash_256(
-        digest.data(), vole_hash_256_sd.data() + i * (5 * sizeof(bf256::bytes) + 8),
-        vole_hash_256_xs.data() + i * (sizeof(bf256::bytes) * 2 + ell / 8 + UNIVERSAL_HASH_B), ell);
-    std::copy(vole_hash_256_digest.data() + i * expected_digest.size(),
-              vole_hash_256_digest.data() + (i + 1) * expected_digest.size(),
-              expected_digest.begin());
-    BOOST_TEST(digest == expected_digest);
-  }
+BOOST_DATA_TEST_CASE(test_vole_hash_256_tv, xrange(TEST_VECTORS), i) {
+  std::array<uint8_t, sizeof(bf256::bytes) + UNIVERSAL_HASH_B> digest, expected_digest;
+  vole_hash_256(
+      digest.data(), vole_hash_256_sd.data() + i * (5 * sizeof(bf256::bytes) + 8),
+      vole_hash_256_xs.data() + i * (sizeof(bf256::bytes) * 2 + ell / 8 + UNIVERSAL_HASH_B), ell);
+  std::copy(vole_hash_256_digest.data() + i * expected_digest.size(),
+            vole_hash_256_digest.data() + (i + 1) * expected_digest.size(),
+            expected_digest.begin());
+  BOOST_TEST(digest == expected_digest);
 }
 
-BOOST_AUTO_TEST_CASE(test_zk_hash_128_tv) {
-  for (size_t i = 0; i != TEST_VECTORS; ++i) {
-    std::array<bf128_t, xs + 1> x;
-    for (unsigned int j = 0; j != xs + 1; ++j) {
-      bf128::bytes tmp;
-      std::copy(zk_hash_128_xs.data() + i * (xs * sizeof(bf128::bytes)) + j * sizeof(bf128::bytes),
-                zk_hash_128_xs.data() + i * (xs * sizeof(bf128::bytes)) +
-                    (j + 1) * sizeof(bf128::bytes),
-                tmp.begin());
-      x[j] = bf128{tmp}.as_internal();
-    }
-
-    std::array<uint8_t, sizeof(bf128::bytes)> digest{}, expected_digest;
-    std::copy(zk_hash_128_digest.data() + i * sizeof(bf128::bytes),
-              zk_hash_128_digest.data() + (i + 1) * sizeof(bf128::bytes), expected_digest.begin());
-    zk_hash_128(digest.data(),
-                zk_hash_128_sd.data() + i * (3 * sizeof(bf128::bytes) + sizeof(bf64::bytes)),
-                x.data(), xs);
-    BOOST_TEST(digest == expected_digest);
+BOOST_DATA_TEST_CASE(test_zk_hash_128_tv, xrange(TEST_VECTORS), i) {
+  std::array<bf128_t, xs + 1> x;
+  for (unsigned int j = 0; j != xs + 1; ++j) {
+    bf128::bytes tmp;
+    std::copy(zk_hash_128_xs.data() + i * (xs * sizeof(bf128::bytes)) + j * sizeof(bf128::bytes),
+              zk_hash_128_xs.data() + i * (xs * sizeof(bf128::bytes)) +
+                  (j + 1) * sizeof(bf128::bytes),
+              tmp.begin());
+    x[j] = bf128{tmp}.as_internal();
   }
+
+  std::array<uint8_t, sizeof(bf128::bytes)> digest{}, expected_digest;
+  std::copy(zk_hash_128_digest.data() + i * sizeof(bf128::bytes),
+            zk_hash_128_digest.data() + (i + 1) * sizeof(bf128::bytes), expected_digest.begin());
+  zk_hash_128(digest.data(),
+              zk_hash_128_sd.data() + i * (3 * sizeof(bf128::bytes) + sizeof(bf64::bytes)),
+              x.data(), xs);
+  BOOST_TEST(digest == expected_digest);
 }
 
-BOOST_AUTO_TEST_CASE(test_zk_hash_192_tv) {
-  for (size_t i = 0; i != TEST_VECTORS; ++i) {
-    std::array<bf192_t, xs + 1> x;
-    for (unsigned int j = 0; j != xs + 1; ++j) {
-      bf192::bytes tmp;
-      std::copy(zk_hash_192_xs.data() + i * (xs * sizeof(bf192::bytes)) + j * sizeof(bf192::bytes),
-                zk_hash_192_xs.data() + i * (xs * sizeof(bf192::bytes)) +
-                    (j + 1) * sizeof(bf192::bytes),
-                tmp.begin());
-      x[j] = bf192{tmp}.as_internal();
-    }
-
-    std::array<uint8_t, sizeof(bf192::bytes)> digest{}, expected_digest;
-    std::copy(zk_hash_192_digest.data() + i * sizeof(bf192::bytes),
-              zk_hash_192_digest.data() + (i + 1) * sizeof(bf192::bytes), expected_digest.begin());
-    zk_hash_192(digest.data(),
-                zk_hash_192_sd.data() + i * (3 * sizeof(bf192::bytes) + sizeof(bf64::bytes)),
-                x.data(), xs);
-    BOOST_TEST(digest == expected_digest);
+BOOST_DATA_TEST_CASE(test_zk_hash_192_tv, xrange(TEST_VECTORS), i) {
+  std::array<bf192_t, xs + 1> x;
+  for (unsigned int j = 0; j != xs + 1; ++j) {
+    bf192::bytes tmp;
+    std::copy(zk_hash_192_xs.data() + i * (xs * sizeof(bf192::bytes)) + j * sizeof(bf192::bytes),
+              zk_hash_192_xs.data() + i * (xs * sizeof(bf192::bytes)) +
+                  (j + 1) * sizeof(bf192::bytes),
+              tmp.begin());
+    x[j] = bf192{tmp}.as_internal();
   }
+
+  std::array<uint8_t, sizeof(bf192::bytes)> digest{}, expected_digest;
+  std::copy(zk_hash_192_digest.data() + i * sizeof(bf192::bytes),
+            zk_hash_192_digest.data() + (i + 1) * sizeof(bf192::bytes), expected_digest.begin());
+  zk_hash_192(digest.data(),
+              zk_hash_192_sd.data() + i * (3 * sizeof(bf192::bytes) + sizeof(bf64::bytes)),
+              x.data(), xs);
+  BOOST_TEST(digest == expected_digest);
 }
 
-BOOST_AUTO_TEST_CASE(test_zk_hash_256_tv) {
-  for (size_t i = 0; i != TEST_VECTORS; ++i) {
-    std::array<bf256_t, xs + 1> x;
-    for (unsigned int j = 0; j != xs + 1; ++j) {
-      bf256::bytes tmp;
-      std::copy(zk_hash_256_xs.data() + i * (xs * sizeof(bf256::bytes)) + j * sizeof(bf256::bytes),
-                zk_hash_256_xs.data() + i * (xs * sizeof(bf256::bytes)) +
-                    (j + 1) * sizeof(bf256::bytes),
-                tmp.begin());
-      x[j] = bf256{tmp}.as_internal();
-    }
-
-    std::array<uint8_t, sizeof(bf256::bytes)> digest{}, expected_digest;
-    std::copy(zk_hash_256_digest.data() + i * sizeof(bf256::bytes),
-              zk_hash_256_digest.data() + (i + 1) * sizeof(bf256::bytes), expected_digest.begin());
-    zk_hash_256(digest.data(),
-                zk_hash_256_sd.data() + i * (3 * sizeof(bf256::bytes) + sizeof(bf64::bytes)),
-                x.data(), xs);
-    BOOST_TEST(digest == expected_digest);
+BOOST_DATA_TEST_CASE(test_zk_hash_256_tv, xrange(TEST_VECTORS), i) {
+  std::array<bf256_t, xs + 1> x;
+  for (unsigned int j = 0; j != xs + 1; ++j) {
+    bf256::bytes tmp;
+    std::copy(zk_hash_256_xs.data() + i * (xs * sizeof(bf256::bytes)) + j * sizeof(bf256::bytes),
+              zk_hash_256_xs.data() + i * (xs * sizeof(bf256::bytes)) +
+                  (j + 1) * sizeof(bf256::bytes),
+              tmp.begin());
+    x[j] = bf256{tmp}.as_internal();
   }
+
+  std::array<uint8_t, sizeof(bf256::bytes)> digest{}, expected_digest;
+  std::copy(zk_hash_256_digest.data() + i * sizeof(bf256::bytes),
+            zk_hash_256_digest.data() + (i + 1) * sizeof(bf256::bytes), expected_digest.begin());
+  zk_hash_256(digest.data(),
+              zk_hash_256_sd.data() + i * (3 * sizeof(bf256::bytes) + sizeof(bf64::bytes)),
+              x.data(), xs);
+  BOOST_TEST(digest == expected_digest);
 }
 
 BOOST_AUTO_TEST_SUITE_END();
