@@ -6,6 +6,7 @@
 #define FAEST_AES_H
 
 #include "macros.h"
+#include "instances.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -56,8 +57,7 @@ void aes256_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const ui
 void aes_increment_iv(uint8_t* iv);
 
 void prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uint64_t outSizeBytes);
-uint8_t* aes_extend_witness(unsigned int lambda, unsigned int l, const uint8_t* key,
-                            const uint8_t* in);
+uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_paramset_t* params);
 
 FAEST_END_C_DECL
 
