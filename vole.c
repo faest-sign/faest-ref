@@ -61,7 +61,9 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
   uint32_t tau0        = params->faest_param.t0;
   uint32_t k0          = params->faest_param.k0;
   uint32_t k1          = params->faest_param.k1;
-  uint8_t** ui         = malloc(params->faest_param.tau * sizeof(uint8_t*));
+
+  uint8_t** ui = malloc(tau * sizeof(uint8_t*));
+  ui[0]        = malloc(tau * ellhatBytes);
 
   // Step 1
   uint8_t iv[16]         = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -86,7 +88,7 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
       N     = 1 << k1;
       depth = k1;
     }
-    ui[i] = malloc(ellhatBytes);
+    ui[i] = ui[0] + i * ellhatBytes;
 
     // Step 5
     vector_commitment(expanded_keys + i * lambdaBytes, params, lambda, lambdaBytes, &vecCom[i], N);
@@ -104,13 +106,12 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
   free(expanded_keys);
   // Step 9
   memcpy(u, ui[0], ellhatBytes);
-  free(ui[0]);
   for (uint32_t i = 1; i < tau; i++) {
     // Step 11
     c[i - 1] = malloc(ellhatBytes);
     xorUint8Arr(u, ui[i], c[i - 1], ellhatBytes);
-    free(ui[i]);
   }
+  free(ui[0]);
   free(ui);
 
   // Step 12: Generating final commitment from all the com commitments
@@ -124,8 +125,9 @@ void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint
   uint32_t t1 = (lambda - (k0 * t0)) / k1;
   uint32_t depth;
   uint32_t N;
-  uint8_t** sd = malloc(tau * sizeof(uint8_t*));
 
+  uint8_t* sd      = malloc((1 << MAX(k0, k1)) * lambdaBytes);
+  uint8_t* chalout = malloc(MAX(k0, k1));
   // STep: 1
   for (uint32_t i = 0; i < tau; i++) {
     // Step: 2
@@ -137,22 +139,21 @@ void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint
       N     = (1 << k1);
     }
 
-    uint8_t* chalout = malloc(depth);
     ChalDec(chall, i, k0, t0, k1, t1, chalout);
     uint32_t idx = NumRec(depth, chalout);
 
     vector_reconstruction(pdec[i], com_j[i], chall, lambda, lambdaBytes, N, &vecComRec[i]);
-    sd[i] = malloc(N * lambdaBytes);
 
     // Step: 6
+    memset(sd, 0, lambdaBytes);
     for (uint32_t j = 1; j < N; j++) {
-      memcpy(sd[i] + (j * lambdaBytes), vecComRec[i].k + ((j * lambdaBytes) ^ idx), lambdaBytes);
+      memcpy(sd + (j * lambdaBytes), vecComRec[i].k + ((j * lambdaBytes) ^ idx), lambdaBytes);
     }
     // STep: 7..8
     q[i] = malloc(outlen * depth);
-    ConvertToVole(lambda, lambdaBytes, sd[i], N, depth, outlen, NULL, q[i]);
-    free(sd[i]);
+    ConvertToVole(lambda, lambdaBytes, sd, N, depth, outlen, NULL, q[i]);
   }
+  free(chalout);
   free(sd);
 
   // Step: 9
