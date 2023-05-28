@@ -7,6 +7,7 @@
 #endif
 
 #include "faest.h"
+#include "aes.h"
 #include "faest_aes.h"
 #include "randomness.h"
 #include "random_oracle.h"
@@ -174,13 +175,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   }
 
   // Step: 16
-  uint8_t* b_tilde     = malloc(lambdaBytes);
-  const unsigned int R = params->cipher_param.numRounds, beta = lambda == 128 ? 1 : 2,
-                     Lke = params->faest_param.Lke, Lenc = params->faest_param.Lenc,
-                     C = params->faest_param.c, Nwd = params->faest_param.Nwd,
-                     Ske = params->faest_param.Ske, Senc = params->faest_param.Senc;
-  aes_prove(w, u_, v, in, out, chal_2, lambda, R, tau, l, beta, Lke, Lenc, C, Nwd, Ske, Senc,
-            signature->a_tilde, b_tilde);
+  uint8_t* b_tilde = malloc(lambdaBytes);
+  aes_prove(w, u_, v, in, out, chal_2, signature->a_tilde, b_tilde, params);
   free(v[0]);
   free(v);
   v = NULL;
@@ -360,14 +356,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   }
 
   // Step 18
-  const unsigned int R = params->cipher_param.numRounds, beta = lambda == 128 ? 1 : 2,
-                     Lke = params->faest_param.Lke, Lenc = params->faest_param.Lenc,
-                     C = params->faest_param.c, Nwd = params->faest_param.Nwd,
-                     Ske = params->faest_param.Ske, Senc = params->faest_param.Senc;
   uint8_t* b_tilde =
-      aes_verify(signature->d, q, chal_2, signature->chall_3, signature->a_tilde, in, out, lambda,
-                 tau, l, beta, R, Nwd, Ske, Lke, Lenc, Senc, C, params->faest_param.k0,
-                 params->faest_param.k1, params->faest_param.t0, params->faest_param.t1);
+      aes_verify(signature->d, q, chal_2, signature->chall_3, signature->a_tilde, in, out, params);
 
   // Step: 20
   uint8_t* chall_3 = malloc(lambdaBytes);

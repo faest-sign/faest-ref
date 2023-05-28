@@ -1,4 +1,15 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "faest_aes.h"
+#include "fields.h"
+#include "vole.h"
+#include "universal_hashing.h"
 
 #include <string.h>
 
@@ -682,9 +693,23 @@ int aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Sen
 }
 
 void aes_prove(uint8_t* w, uint8_t* u, uint8_t** V, const uint8_t* in, const uint8_t* out,
-               const uint8_t* chal, uint32_t lambda, uint32_t R, uint32_t tau, uint32_t l,
-               uint32_t beta, uint32_t Lke, uint32_t Lenc, uint32_t C, uint32_t Nwd, uint32_t Ske,
-               uint32_t Senc, uint8_t* a_tilde, uint8_t* b_tilde) {
+               const uint8_t* chal, uint8_t* a_tilde, uint8_t* b_tilde,
+               const faest_paramset_t* params) {
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int tau    = params->faest_param.tau;
+  const unsigned int t0     = params->faest_param.t0;
+  const unsigned int k0     = params->faest_param.k0;
+  const unsigned int t1     = params->faest_param.t1;
+  const unsigned int k1     = params->faest_param.k1;
+  const unsigned int beta   = params->faest_param.beta;
+  const unsigned int l      = params->faest_param.l;
+  const unsigned int Lke    = params->faest_param.Lke;
+  const unsigned int Lenc   = params->faest_param.Lenc;
+  const unsigned int R      = params->cipher_param.numRounds;
+  const unsigned int C      = params->faest_param.c;
+  const unsigned int Nwd    = params->faest_param.Nwd;
+  const unsigned int Ske    = params->faest_param.Ske;
+  const unsigned int Senc   = params->faest_param.Senc;
 
   uint32_t lambdaBytes = lambda / 8;
   uint32_t w_len       = l;
@@ -765,10 +790,23 @@ void aes_prove(uint8_t* w, uint8_t* u, uint8_t** V, const uint8_t* in, const uin
 }
 
 uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chal_2, const uint8_t* chal_3,
-                    const uint8_t* a_tilde, const uint8_t* in, const uint8_t* out, uint32_t lambda,
-                    uint32_t tau, uint32_t l, uint32_t beta, uint32_t R, uint32_t Nwd, uint32_t Ske,
-                    uint32_t Lke, uint32_t Lenc, uint32_t Senc, uint32_t C, uint32_t k0,
-                    uint32_t k1, uint32_t t0, uint32_t t1) {
+                    const uint8_t* a_tilde, const uint8_t* in, const uint8_t* out,
+                    const faest_paramset_t* params) {
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int tau    = params->faest_param.tau;
+  const unsigned int t0     = params->faest_param.t0;
+  const unsigned int k0     = params->faest_param.k0;
+  const unsigned int t1     = params->faest_param.t1;
+  const unsigned int k1     = params->faest_param.k1;
+  const unsigned int beta   = params->faest_param.beta;
+  const unsigned int l      = params->faest_param.l;
+  const unsigned int Lke    = params->faest_param.Lke;
+  const unsigned int Lenc   = params->faest_param.Lenc;
+  const unsigned int R      = params->cipher_param.numRounds;
+  const unsigned int C      = params->faest_param.c;
+  const unsigned int Nwd    = params->faest_param.Nwd;
+  const unsigned int Ske    = params->faest_param.Ske;
+  const unsigned int Senc   = params->faest_param.Senc;
 
   uint32_t lambdaBytes = lambda / 8;
   uint32_t d_len       = l;
