@@ -73,7 +73,7 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, u
   H1_final(&h1_ctx, vecCom->h, lambdaBytes * 2);
 }
 
-void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t* pdec,
+void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t* cop,
                  uint8_t* com_j, uint32_t numVoleInstances, uint32_t lambdaBytes) {
 
   uint32_t depth = ceil_log2(numVoleInstances);
@@ -84,7 +84,7 @@ void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t
   // Step: 3..6
   uint32_t a = 0;
   for (uint32_t i = 0; i < depth; i++) {
-    memcpy(pdec + (lambdaBytes * i),
+    memcpy(cop + (lambdaBytes * i),
            k + (lambdaBytes * getNodeIndex(i + 1, (2 * a) + !b[depth - 1 - i])), lambdaBytes);
     a = (2 * a) + b[depth - 1 - i];
   }
@@ -93,7 +93,7 @@ void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t
   memcpy(com_j, com + (leafIndex * lambdaBytes * 2), lambdaBytes * 2);
 }
 
-void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b,
+void vector_reconstruction(const uint8_t* cop, const uint8_t* com_j, const uint8_t* b,
                            uint32_t lambda, uint32_t lambdaBytes, uint32_t numVoleInstances,
                            vec_com_rec_t* vecComRec) {
 
@@ -110,7 +110,7 @@ void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint
   uint8_t* out = malloc(lambdaBytes * 2);
   for (uint32_t i = 1; i <= depth; i++) {
     memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * a + !b[depth - i])),
-           pdec + (lambdaBytes * (i - 1)), lambdaBytes);
+           cop + (lambdaBytes * (i - 1)), lambdaBytes);
     memset(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * a + b[depth - i])), 0, lambdaBytes);
 
     const uint32_t current_depth = (1 << (i - 1));
@@ -142,7 +142,7 @@ void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint
                vecComRec->com + (lambdaBytes * 2 * j), lambdaBytes * 2);
     }
   }
-  // Step: 12
+  // Step: 12..13
   memcpy(vecComRec->com + (lambdaBytes * 2 * leafIndex), com_j, lambdaBytes * 2);
   H1_context_t h1_ctx;
   H1_init(&h1_ctx, lambda);
@@ -155,7 +155,10 @@ int vector_verify(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b, u
                   const uint8_t* vecComH) {
   vec_com_rec_t vecComRec;
 
+  // Step: 2
   vector_reconstruction(pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, &vecComRec);
+
+  // STep: 3
   int ret = memcmp(vecComH, vecComRec.h, lambdaBytes * 2);
   if (!rec || ret) {
     vec_com_rec_clear(&vecComRec);

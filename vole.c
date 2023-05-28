@@ -51,7 +51,6 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
   return 1;
 }
 
-// TODO: outlen (l) is in bits, change it everywhere
 void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t* params,
                 uint8_t* hcom, vec_com_t* vecCom, uint8_t** c, uint8_t* u, uint8_t** v) {
 
@@ -91,24 +90,26 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
     // Step 5
     vector_commitment(expanded_keys + i * lambdaBytes, params, lambda, lambdaBytes, &vecCom[i], N);
     // Step 6, 7 (and parts of 8)
-    ConvertToVoleProver(lambda, lambdaBytes, vecCom[i].sd, N, depth, ellhatBytes, ui[i], v[i]);
+    ConvertToVole(lambda, lambdaBytes, vecCom[i].sd, N, depth, ellhatBytes, ui[i], v[i]);
     // Step 12 (part)
     H1_update(&h1_ctx, vecCom[i].com, lambdaBytes * 2);
   }
   free(expanded_keys);
   // Step 9
   memcpy(u, ui[0], ellhatBytes);
+  free(ui[0]);
   for (uint32_t i = 1; i < tau; i++) {
     // Step 11
     c[i - 1] = malloc(ellhatBytes);
     xorUint8Arr(u, ui[i], c[i - 1], ellhatBytes);
+    free(ui[i]);
   }
 
   // Step 12: Generating final commitment from all the com commitments
   H1_final(&h1_ctx, hcom, lambdaBytes * 2);
 }
 
-void voleReconstruct(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint32_t lambda,
+void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint32_t lambda,
                      uint32_t lambdaBytes, uint32_t outlen, uint32_t tau, uint32_t k0, uint32_t k1,
                      uint8_t* hcom, uint8_t** q, vec_com_rec_t** vecComRec) {
   uint32_t t0 = lambda % tau;
@@ -116,7 +117,10 @@ void voleReconstruct(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint3
   uint32_t depth;
   uint32_t N;
   uint8_t** sd = malloc(tau * sizeof(uint8_t*));
+
+  // STep: 1
   for (uint32_t i = 0; i < tau; i++) {
+    // Step: 2
     if (i < t0) {
       depth = k0;
       N     = (1 << k0);
@@ -125,19 +129,29 @@ void voleReconstruct(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint3
       N     = (1 << k1);
     }
 
-    uint8_t* chalout = malloc(depth);
-    ChalDec(chal, i, k0, t0, k1, t1, chalout);
-    uint32_t idx = NumRec(depth, chalout);
+    // Step: 3
+    uint8_t* challout = malloc(depth);
+    ChalDec(chall, i, k0, t0, k1, t1, challout);
+    uint32_t idx = NumRec(depth, challout);
     vecComRec[i] = malloc(sizeof(vec_com_rec_t));
+    free(challout);
 
-    vector_reconstruction(pdec[i], com_j[i], chal, lambda, lambdaBytes, N, vecComRec[i]);
+    // Step: 5
+    vector_reconstruction(pdec[i], com_j[i], chall, lambda, lambdaBytes, N, vecComRec[i]);
     sd[i] = malloc(N * lambdaBytes);
+
+    // Step: 6
     for (uint32_t j = 1; j < N; j++) {
       memcpy(sd[i] + (j * lambdaBytes), vecComRec[i]->k + ((j * lambdaBytes) ^ idx), lambdaBytes);
     }
+    // STep: 7..8
     q[i] = malloc(outlen * depth);
-    ConvertToVoleVerifier(lambda, lambdaBytes, sd[i], N, depth, outlen, q[i]);
+    ConvertToVole(lambda, lambdaBytes, sd[i], N, depth, outlen, NULL, q[i]);
+    free(sd[i]);
   }
+  free(sd);
+
+  // Step: 9
   H1_context_t h1_ctx;
   H1_init(&h1_ctx, lambda);
   for (uint32_t i = 0; i < tau; i++) {
@@ -157,9 +171,9 @@ static bool is_all_zeros(const uint8_t* array, size_t len) {
   return true;
 }
 
-void ConvertToVoleProver(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
-                         uint32_t numVoleInstances, uint32_t depth, uint32_t outLenBytes,
-                         uint8_t* u, uint8_t* v) {
+void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
+                   uint32_t numVoleInstances, uint32_t depth, uint32_t outLenBytes, uint8_t* u,
+                   uint8_t* v) {
 
   uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -169,12 +183,14 @@ void ConvertToVoleProver(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* s
   keep it consistent like k_0,0 being the root and k_d,0 being the first leaf by manipulating it
   with getNodeIndex() due to ease of understanding... */
 
+  // Step: 2
   if (is_all_zeros(sd, lambdaBytes)) {
     memset(r + (getNodeIndex(depth, 0) * outLenBytes), 0, outLenBytes);
   } else {
     prg(sd, iv, r + (getNodeIndex(depth, 0) * outLenBytes), lambda, outLenBytes);
   }
 
+  // Step: 3..4
   for (uint32_t i = 1; i < numVoleInstances; i++) {
     uint8_t iv_[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -182,6 +198,7 @@ void ConvertToVoleProver(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* s
         outLenBytes);
   }
 
+  // Step: 5..9
   memset(v, 0, depth * outLenBytes);
   for (uint32_t d = 0; d < depth; d++) {
     uint32_t depthloop = (numVoleInstances + ((1 << (d + 1)) - 1)) / (1 << (d + 1));
@@ -197,46 +214,9 @@ void ConvertToVoleProver(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* s
       }
     }
   }
-  memcpy(u, r, outLenBytes);
-}
-
-void ConvertToVoleVerifier(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
-                           uint32_t numVoleInstances, uint32_t depth, uint32_t outLenBytes,
-                           uint8_t* v) {
-  uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  uint8_t* r     = malloc(getBinaryTreeNodeCount(numVoleInstances) * outLenBytes);
-
-  /* Here r_d,0 is the root and r_0,0 is the first leaf, in this reference implementation we will
-  keep it consistent like k_0,0 being the root and k_d,0 being the first leaf by manipulating it
-  with getNodeIndex() due to ease of understanding... */
-
-  if (is_all_zeros(sd, lambdaBytes)) {
-    memset(r + (getNodeIndex(depth, 0) * outLenBytes), 0, outLenBytes);
-  } else {
-    prg(sd, iv, r + (getNodeIndex(depth, 0) * outLenBytes), lambda, outLenBytes);
+  // Step: 10
+  if (is_all_zeros(sd, lambdaBytes) == false && u != NULL) {
+    memcpy(u, r, outLenBytes);
   }
-
-  for (uint32_t i = 1; i < numVoleInstances; i++) {
-    uint8_t iv_[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    prg(sd + (lambdaBytes * i), iv_, r + (outLenBytes * (getNodeIndex(depth, 0) + i)), lambda,
-        outLenBytes);
-  }
-
-  memset(v, 0, depth * outLenBytes);
-  for (uint32_t d = 0; d < depth; d++) {
-    uint32_t depthloop = (numVoleInstances + ((1 << (d + 1)) - 1)) / (1 << (d + 1));
-    for (uint32_t i = 0; i < depthloop; i++) {
-      for (uint8_t b = 0; b < outLenBytes; b++) {
-        *(v + ((depth - 1 - d) * outLenBytes) + b) =
-            *(v + ((depth - 1 - d) * outLenBytes) + b) ^
-            *(r + (getNodeIndex(depth - d, 2 * i + 1) * outLenBytes) + b);
-
-        *(r + (getNodeIndex(depth - (d + 1), i) * outLenBytes) + b) =
-            *(r + (getNodeIndex(depth - d, 2 * i) * outLenBytes) + b) ^
-            *(r + (getNodeIndex(depth - d, (2 * i) + 1) * outLenBytes) + b);
-      }
-    }
-  }
+  free(r);
 }

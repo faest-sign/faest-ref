@@ -161,7 +161,7 @@ int test_ConvertToVoleProver() {
   uint32_t outlen = 16;
   uint8_t* u      = malloc(outlen);
   uint8_t* v      = malloc(outlen * depth);
-  ConvertToVoleProver(lambda, lambdaBytes, vecCom.sd, numVoleInstances, depth, outlen, u, v);
+  ConvertToVole(lambda, lambdaBytes, vecCom.sd, numVoleInstances, depth, outlen, u, v);
 
 // TODO: write better test cases : )
 #if 0
@@ -219,7 +219,7 @@ int test_ConvertToVoleVerifier() {
   uint32_t outlen = 16;
   uint8_t* v      = malloc(outlen * depth);
   // TODO: we do not input veccomRec.m but instead something else defined in
-  ConvertToVoleVerifier(lambda, lambdaBytes, vecComRec.m, numVoleInstances, depth, outlen, v);
+  ConvertToVole(lambda, lambdaBytes, vecComRec.m, numVoleInstances, depth, outlen, NULL, v);
 
 // TODO: write better test cases : )
 #if 0

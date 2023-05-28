@@ -12,8 +12,6 @@ void xorUint8Arr(const uint8_t* a, const uint8_t* b, uint8_t* out, uint32_t len)
 
 int printUint8Arr(uint8_t* arr, uint32_t unitSize, uint32_t len);
 
-uint8_t* getUint8ArrPtr(uint8_t* in, uint32_t unitSize, uint32_t idx);
-
 uint8_t getBit(const uint8_t* src, uint32_t idx);
 
 #endif
