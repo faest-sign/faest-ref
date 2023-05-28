@@ -88,6 +88,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   rho = NULL;
 
   // Step: 3..4
+  uint8_t* hcom     = malloc(lambdaBytes * 2);
   vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
   uint8_t* u_       = malloc(l);
   // v has \hat \ell rows, \lambda columns, storing in column-major order
@@ -96,7 +97,9 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   for (unsigned int i = 1; i < lambda; ++i) {
     v[i] = v[0] + i * ell_hat_bytes;
   }
-  voleCommit(rootkey, ell_hat, params, signature->hcom, vecCom, signature->c, u_, v);
+  voleCommit(rootkey, ell_hat, params, hcom, vecCom, signature->c, u_, v);
+  free(hcom);
+  hcom = NULL;
   free(rootkey);
   rootkey = NULL;
 
@@ -106,7 +109,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_context_t h2_ctx;
     H2_init(&h2_ctx, lambda);
     H2_update(&h2_ctx, mu, lambdaBytes * 2);
-    H2_update(&h2_ctx, signature->hcom, lambdaBytes * 2);
+    H2_update(&h2_ctx, hcom, lambdaBytes * 2);
     for (unsigned int i = 0; i < (tau - 1); ++i) {
       H2_update(&h2_ctx, signature->c[i], ell_hat_bytes);
     }
@@ -119,6 +122,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   vole_hash(signature->u_tilde, chal_1, u_, l, lambda);
 
   // Step: 8 and 9
+  uint8_t* h_v = malloc(lambdaBytes * 2);
   {
     H1_context_t h1_ctx_1;
     H1_init(&h1_ctx_1, lambda);
@@ -131,7 +135,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     free(V_tilde);
 
     // Step: 9
-    H1_final(&h1_ctx_1, signature->h_v, lambdaBytes * 2);
+    H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
   free(chal_1);
   chal_1 = NULL;
@@ -151,10 +155,12 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_init(&h2_ctx_1, lambda);
     H2_update(&h2_ctx_1, chal_1, lambdaBytes);
     H2_update(&h2_ctx_1, signature->u_tilde, utilde_bytes);
-    H2_update(&h2_ctx_1, signature->h_v, 2 * lambdaBytes);
+    H2_update(&h2_ctx_1, h_v, 2 * lambdaBytes);
     H2_update(&h2_ctx_1, signature->d, ell_bytes);
     H2_final(&h2_ctx_1, chal_2, (3 * lambdaBytes) + 8);
   }
+  free(h_v);
+  h_v = NULL;
 
   // Step: 14
   // TODO: check realloc errors
@@ -168,12 +174,13 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   }
 
   // Step: 18
+  uint8_t* b_tilde     = malloc(lambdaBytes);
   const unsigned int R = params->cipher_param.numRounds, beta = lambda == 128 ? 1 : 2,
                      Lke = params->faest_param.Lke, Lenc = params->faest_param.Lenc,
                      C = params->faest_param.c, Nwd = params->faest_param.Nwd,
                      Ske = params->faest_param.Ske, Senc = params->faest_param.Senc;
   aes_prove(w, u_, v, in, out, chal_2, lambda, R, tau, l, beta, Lke, Lenc, C, Nwd, Ske, Senc,
-            signature->a_tilde, signature->b_tilde);
+            signature->a_tilde, b_tilde);
   free(v[0]);
   free(v);
   v = NULL;
@@ -189,9 +196,11 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_init(&h2_ctx_2, lambda);
     H2_update(&h2_ctx_2, chal_2, 3 * lambdaBytes + 8);
     H2_update(&h2_ctx_2, signature->a_tilde, lambdaBytes);
-    H2_update(&h2_ctx_2, signature->b_tilde, lambdaBytes);
+    H2_update(&h2_ctx_2, b_tilde, lambdaBytes);
     H2_final(&h2_ctx_2, chal_3, lambdaBytes);
   }
+  free(b_tilde);
+  b_tilde = NULL;
   free(chal_2);
   chal_2 = NULL;
 
@@ -244,12 +253,26 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   }
 
   // Step: 5
+  uint8_t** qprime = malloc(tau * sizeof(uint8_t*));
+  uint8_t* hcom    = malloc(lambdaBytes * 2);
+  {
+    vec_com_rec_t* vecComRec = malloc(tau * sizeof(vec_com_rec_t));
+    voleReconstruct(signature->chall_3, signature->pdec, signature->com_j, lambda, lambdaBytes,
+                    ell_hat, tau, params->faest_param.k0, params->faest_param.k1, hcom, qprime,
+                    vecComRec);
+    for (unsigned int i = 0; i < tau; ++i) {
+      vec_com_rec_clear(&vecComRec[i]);
+    }
+    free(vecComRec);
+  }
+
+  // Step: 5
   uint8_t* chal_1 = malloc((5 * lambdaBytes) + 8);
   {
     H2_context_t h2_ctx;
     H2_init(&h2_ctx, lambda);
     H2_update(&h2_ctx, mu, lambdaBytes * 2);
-    H2_update(&h2_ctx, signature->hcom, lambdaBytes * 2);
+    H2_update(&h2_ctx, hcom, lambdaBytes * 2);
     for (unsigned int i = 0; i < (tau - 1); ++i) {
       H2_update(&h2_ctx, signature->c[i], ell_hat_bytes);
     }
@@ -258,51 +281,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   free(mu);
   mu = NULL;
 
-  // Step 6
-  uint8_t* chal_2 = malloc(3 * lambdaBytes + 8);
-  {
-    H2_context_t h2_ctx_1;
-    H2_init(&h2_ctx_1, lambda);
-    H2_update(&h2_ctx_1, chal_1, lambdaBytes);
-    H2_update(&h2_ctx_1, signature->u_tilde, utilde_bytes);
-    H2_update(&h2_ctx_1, signature->h_v, 2 * lambdaBytes);
-    H2_update(&h2_ctx_1, signature->d, ell_bytes);
-    H2_final(&h2_ctx_1, chal_2, (3 * lambdaBytes) + 8);
-  }
-
-  // Step: 7
-  uint8_t* chal_3 = malloc(lambdaBytes);
-  {
-    H2_context_t h2_ctx_2;
-    H2_init(&h2_ctx_2, lambda);
-    H2_update(&h2_ctx_2, chal_2, 3 * lambdaBytes + 8);
-    H2_update(&h2_ctx_2, signature->a_tilde, lambdaBytes);
-    H2_update(&h2_ctx_2, signature->b_tilde, lambdaBytes);
-    H2_final(&h2_ctx_2, chal_3, lambdaBytes);
-  }
-
-  // Step: 9..11
-  uint8_t** qprime = malloc(tau * sizeof(uint8_t*));
-  {
-    uint8_t* hcomverify      = malloc(lambdaBytes * 2);
-    vec_com_rec_t* vecComRec = malloc(tau * sizeof(vec_com_rec_t));
-    voleReconstruct(chal_3, signature->pdec, signature->com_j, lambda, lambdaBytes, ell_hat, tau,
-                    params->faest_param.k0, params->faest_param.k1, hcomverify, qprime, vecComRec);
-    for (unsigned int i = 0; i < tau; ++i) {
-      vec_com_rec_clear(&vecComRec[i]);
-    }
-
-    int ret = memcmp(hcomverify, signature->hcom, lambdaBytes * 2);
-    free(hcomverify);
-    if (ret) {
-      return 0;
-    }
-  }
-
-  H1_context_t h1_ctx;
-  H1_init(&h1_ctx, lambda);
-
-  // Step: 13
+  // Step: 8..14
   uint8_t** q      = malloc(tau * sizeof(uint8_t*));
   q[0]             = malloc(lambda * ell_hat_bytes);
   uint8_t** Dtilde = malloc(tau * sizeof(uint8_t*));
@@ -317,9 +296,9 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       Dtilde[i + 1] = Dtilde[i] + depth;
     }
 
-    // Step 15
-    ChalDec(chal_3, i, params->faest_param.k0, params->faest_param.t0, params->faest_param.k1,
-            params->faest_param.t1, delta);
+    // Step 11
+    ChalDec(signature->chall_3, i, params->faest_param.k0, params->faest_param.t0,
+            params->faest_param.k1, params->faest_param.t1, delta);
     // Step 16
     for (unsigned int j = 0; j != depth; ++j) {
       if (delta[j]) {
@@ -328,10 +307,10 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     }
 
     if (!i) {
-      // Step 12
+      // Step 8
       memcpy(q[i], qprime[i], ell_hat_bytes * depth);
     } else {
-      // Step 18
+      // Step 14
       for (uint32_t d = 0; d < depth; d++) {
         if (delta[d]) {
           xorUint8Arr(qprime[i] + d * ell_hat_bytes, signature->c[i], q[i] + d * ell_hat_bytes,
@@ -343,7 +322,10 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     }
   }
 
-  // Step 19
+  // TODO: Step 15
+
+  // Step 16
+  uint8_t* h_v = malloc(lambdaBytes * 2);
   {
     H1_context_t h1_ctx_1;
     H1_init(&h1_ctx_1, lambda);
@@ -360,31 +342,51 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     chal_1 = NULL;
 
     // Step: 20
-    uint8_t* check_h_v = malloc(lambdaBytes * 2);
-    H1_final(&h1_ctx_1, check_h_v, lambdaBytes * 2);
-    int ret = memcmp(check_h_v, signature->h_v, lambdaBytes * 2);
-    free(check_h_v);
-    if (ret) {
-      return 0;
-    }
+    H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
 
+  // Step 17
+  uint8_t* chal_2 = malloc(3 * lambdaBytes + 8);
+  {
+    H2_context_t h2_ctx_1;
+    H2_init(&h2_ctx_1, lambda);
+    H2_update(&h2_ctx_1, chal_1, lambdaBytes);
+    H2_update(&h2_ctx_1, signature->u_tilde, utilde_bytes);
+    H2_update(&h2_ctx_1, h_v, 2 * lambdaBytes);
+    H2_update(&h2_ctx_1, signature->d, ell_bytes);
+    H2_final(&h2_ctx_1, chal_2, (3 * lambdaBytes) + 8);
+  }
+
+  // Step 18
   const unsigned int R = params->cipher_param.numRounds, beta = lambda == 128 ? 1 : 2,
                      Lke = params->faest_param.Lke, Lenc = params->faest_param.Lenc,
                      C = params->faest_param.c, Nwd = params->faest_param.Nwd,
                      Ske = params->faest_param.Ske, Senc = params->faest_param.Senc;
-  bool ret =
-      aes_verify(signature->d, q, chal_2, chal_3, signature->a_tilde, signature->b_tilde, in, out,
-                 lambda, tau, l, beta, R, Nwd, Ske, Lke, Lenc, Senc, C, params->faest_param.k0,
+  uint8_t* b_tilde =
+      aes_verify(signature->d, q, chal_2, signature->chall_3, signature->a_tilde, in, out, lambda,
+                 tau, l, beta, R, Nwd, Ske, Lke, Lenc, Senc, C, params->faest_param.k0,
                  params->faest_param.k1, params->faest_param.t0, params->faest_param.t1);
 
+  // Step: 20
+  uint8_t* chall_3 = malloc(lambdaBytes);
+  {
+    H2_context_t h2_ctx_2;
+    H2_init(&h2_ctx_2, lambda);
+    H2_update(&h2_ctx_2, chal_2, 3 * lambdaBytes + 8);
+    H2_update(&h2_ctx_2, signature->a_tilde, lambdaBytes);
+    H2_update(&h2_ctx_2, b_tilde, lambdaBytes);
+    H2_final(&h2_ctx_2, chall_3, lambdaBytes);
+  }
+  free(b_tilde);
+  b_tilde = NULL;
   free(chal_2);
   chal_2 = NULL;
 
-  if (ret) {
-    return 0;
-  }
-  return 1;
+  // Step 21
+  int ret = memcmp(chall_3, signature->chall_3, lambdaBytes);
+  free(chall_3);
+
+  return ret == 0 ? 1 : 0;
 }
 
 int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
@@ -398,10 +400,6 @@ int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
   const size_t ell_hat_bytes = (ell_hat + 7) / 8;
   const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
 
-  // serialize h_com (2 * \lambda)
-  memcpy(dst, signature->hcom, lambda_bytes * 2);
-  dst += lambda_bytes * 2;
-
   // serialize c_i
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
     memcpy(dst, signature->c[i], ell_hat_bytes);
@@ -412,20 +410,12 @@ int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
   memcpy(dst, signature->u_tilde, utilde_bytes);
   dst += utilde_bytes;
 
-  // serialize h_v
-  memcpy(dst, signature->h_v, 2 * lambda_bytes);
-  dst += 2 * lambda_bytes;
-
   // serialize d
   memcpy(dst, signature->d, ell_bytes);
   dst += ell_bytes;
 
   // serialize a tilde
   memcpy(dst, signature->a_tilde, lambda_bytes);
-  dst += lambda_bytes;
-
-  // serialize b tilde
-  memcpy(dst, signature->b_tilde, lambda_bytes);
   dst += lambda_bytes;
 
   // serialize pdec_i, com_i
@@ -437,6 +427,10 @@ int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
     memcpy(dst, signature->com_j[i], lambda_bytes);
     dst += lambda_bytes;
   }
+
+  // serialize chall_3
+  memcpy(dst, signature->chall_3, lambda_bytes);
+  dst += lambda_bytes;
 
   *len = dst - old_dst;
   return 0;
@@ -453,16 +447,13 @@ signature_t init_signature(const faest_paramset_t* params) {
   const size_t ell_hat_bytes = ell_hat / 8;
   const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
 
-  sig.hcom = malloc(lambda_bytes * 2);
-  sig.c    = calloc(params->faest_param.tau, sizeof(uint8_t*));
+  sig.c = calloc(params->faest_param.tau, sizeof(uint8_t*));
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
     sig.c[i] = malloc(ell_hat_bytes);
   }
   sig.u_tilde = malloc(utilde_bytes);
-  sig.h_v     = malloc(2 * lambda_bytes);
   sig.d       = malloc(ell_bytes);
   sig.a_tilde = malloc(lambda_bytes);
-  sig.b_tilde = malloc(lambda_bytes);
   sig.pdec    = calloc(params->faest_param.tau, sizeof(uint8_t*));
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
     unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
@@ -472,11 +463,13 @@ signature_t init_signature(const faest_paramset_t* params) {
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
     sig.com_j[i] = malloc(lambda_bytes);
   }
+  sig.chall_3 = malloc(lambda_bytes);
 
   return sig;
 }
 
 void free_signature(signature_t sig, const faest_paramset_t* params) {
+  free(sig.chall_3);
   if (sig.com_j) {
     for (unsigned int i = params->faest_param.tau; i; --i) {
       free(sig.com_j[i - 1]);
@@ -489,10 +482,8 @@ void free_signature(signature_t sig, const faest_paramset_t* params) {
     }
     free(sig.pdec);
   }
-  free(sig.b_tilde);
   free(sig.a_tilde);
   free(sig.d);
-  free(sig.h_v);
   free(sig.u_tilde);
 
   if (sig.c) {
@@ -501,7 +492,6 @@ void free_signature(signature_t sig, const faest_paramset_t* params) {
     }
     free(sig.c);
   }
-  free(sig.hcom);
 }
 
 signature_t deserialize_signature(const uint8_t* src, size_t len, const faest_paramset_t* params) {
@@ -515,10 +505,6 @@ signature_t deserialize_signature(const uint8_t* src, size_t len, const faest_pa
 
   signature_t sig = init_signature(params);
 
-  // serialize h_com (2 * \lambda)
-  memcpy(sig.hcom, src, lambda_bytes * 2);
-  src += lambda_bytes * 2;
-
   // serialize c_i
   for (unsigned int i = 0; i != params->faest_param.tau; ++i, src += ell_hat_bytes) {
     memcpy(sig.c[i], src, ell_hat_bytes);
@@ -528,20 +514,12 @@ signature_t deserialize_signature(const uint8_t* src, size_t len, const faest_pa
   memcpy(sig.u_tilde, src, utilde_bytes);
   src += utilde_bytes;
 
-  // serialize h_v
-  memcpy(sig.h_v, src, 2 * lambda_bytes);
-  src += 2 * lambda_bytes;
-
   // serialize d
   memcpy(sig.d, src, ell_bytes);
   src += ell_bytes;
 
   // serialize a tilde
   memcpy(sig.a_tilde, src, lambda_bytes);
-  src += lambda_bytes;
-
-  // serialize b tilde
-  memcpy(sig.b_tilde, src, lambda_bytes);
   src += lambda_bytes;
 
   // serialize pdec_i, com_i
@@ -552,6 +530,10 @@ signature_t deserialize_signature(const uint8_t* src, size_t len, const faest_pa
     memcpy(sig.com_j[i], src, lambda_bytes);
     src += lambda_bytes;
   }
+
+  // serialize chall_3
+  memcpy(sig.chall_3, src, lambda_bytes);
+  src += lambda_bytes;
 
   return sig;
 }

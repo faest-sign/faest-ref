@@ -42,10 +42,10 @@ void aes_prove(uint8_t* w, uint8_t* u, uint8_t** V, const uint8_t* in, const uin
                uint32_t beta, uint32_t Lke, uint32_t Lenc, uint32_t C, uint32_t Nwd, uint32_t Ske,
                uint32_t Senc, uint8_t* a_tilde, uint8_t* b_tilde);
 
-bool aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chal_2, const uint8_t* chal_3,
-                const uint8_t* a_tilde, const uint8_t* b_tilde, const uint8_t* in,
-                const uint8_t* out, uint32_t lambda, uint32_t tau, uint32_t l, uint32_t beta,
-                uint32_t R, uint32_t Nwd, uint32_t Ske, uint32_t Lke, uint32_t Lenc, uint32_t Senc,
-                uint32_t C, uint32_t k0, uint32_t k1, uint32_t t0, uint32_t t1);
+uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chal_2, const uint8_t* chal_3,
+                    const uint8_t* a_tilde, const uint8_t* in, const uint8_t* out, uint32_t lambda,
+                    uint32_t tau, uint32_t l, uint32_t beta, uint32_t R, uint32_t Nwd, uint32_t Ske,
+                    uint32_t Lke, uint32_t Lenc, uint32_t Senc, uint32_t C, uint32_t k0,
+                    uint32_t k1, uint32_t t0, uint32_t t1);
 
 #endif

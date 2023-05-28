@@ -9,15 +9,13 @@
 #include "faest_aes.h"
 
 typedef struct signature_t {
-  uint8_t* hcom;
   uint8_t** c;
   uint8_t* u_tilde;
-  uint8_t* h_v;
   uint8_t* d;
   uint8_t* a_tilde;
-  uint8_t* b_tilde;
   uint8_t** pdec;
   uint8_t** com_j;
+  uint8_t* chall_3;
 } signature_t;
 
 signature_t init_signature(const faest_paramset_t* params);
