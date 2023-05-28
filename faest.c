@@ -19,7 +19,7 @@
 // TODO: change q to Q where applicable
 
 static inline uint8_t get_bit(const uint8_t* in, unsigned int index) {
-  return in[index / 8] >> (7 - index % 8);
+  return (in[index / 8] >> (7 - index % 8)) & 1;
 }
 
 static inline void set_bit(uint8_t* dst, uint8_t in, unsigned int index) {
@@ -174,6 +174,9 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
                      Ske = params->faest_param.Ske, Senc = params->faest_param.Senc;
   aes_prove(w, u_, v, in, out, chal_2, lambda, R, tau, l, beta, Lke, Lenc, C, Nwd, Ske, Senc,
             signature->a_tilde, signature->b_tilde);
+  free(v[0]);
+  free(v);
+  v = NULL;
   free(u_);
   u_ = NULL;
   free(w);

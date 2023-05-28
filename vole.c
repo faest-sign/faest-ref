@@ -18,7 +18,7 @@
 // TODO: Do not pass lambdaBytes everywhere, compute it in the function....
 
 static inline uint8_t get_bit(const uint8_t* in, unsigned int index) {
-  return in[index / 8] >> (7 - index % 8);
+  return (in[index / 8] >> (7 - index % 8)) & 1;
 }
 
 #if 0
