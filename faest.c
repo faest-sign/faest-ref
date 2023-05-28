@@ -53,13 +53,21 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H3_update(&h3_ctx, rho, lambdaBytes);
     H3_final(&h3_ctx, rootkey, lambdaBytes);
   }
+  free(rho);
+  rho = NULL;
 
   // Step: 3..4
   vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
   uint8_t* u_       = malloc(l);
-  uint8_t** v       = malloc(tau * sizeof(uint8_t*));
+  // v has \ell \hat rows, \lambda coluns, storing in column-major order
+  uint8_t** v = malloc(lambda * sizeof(uint8_t*));
+  v[0]        = malloc(lambda * ell_hat_bytes);
+  for (unsigned int i = 1; i < lambda; ++i) {
+    v[i] = v[0] + i * ell_hat_bytes;
+  }
   voleCommit(rootkey, ell_hat, params, signature->hcom, vecCom, signature->c, u_, v);
   free(rootkey);
+  rootkey = NULL;
 
   // Step: 5
   uint8_t* chal_1 = malloc((5 * lambdaBytes) + 8);
@@ -73,6 +81,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     }
     H2_final(&h2_ctx, chal_1, (5 * lambdaBytes) + 8);
   }
+  free(mu);
+  mu = NULL;
 
   // Step: 7
   vole_hash(signature->u_tilde, chal_1, u_, l, lambda);
@@ -93,6 +103,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H1_final(&h1_ctx_1, signature->h_v, lambdaBytes * 2);
   }
   free(chal_1);
+  chal_1 = NULL;
 
   // Step: 10..11
   const uint8_t* in  = pk;
@@ -115,15 +126,21 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   }
 
   // Step: 15..17
-  // TODO
-  // u = u[0..l+lambda)
+  u_ = realloc(u_, (l + lambda) / 8);
+  // V is \hat \ell times \lambda matrix over F_2
   // v = v[0...l+lambda]
 
   // Step: 18
-  // TODO
-  unsigned int R, beta, Lke, Lenc, C, Nwd, Ske, Senc;
+  const unsigned int R = params->cipher_param.numRounds, beta = lambda == 128 ? 1 : 2,
+                     Lke = params->faest_param.Lke, Lenc = params->faest_param.Lenc,
+                     C = params->faest_param.c, Nwd = params->faest_param.Nwd,
+                     Ske = params->faest_param.Ske, Senc = params->faest_param.Senc;
   aes_prove(w, u_, v, in, out, chal_2, lambda, R, tau, l, beta, Lke, Lenc, C, Nwd, Ske, Senc,
             signature->a_tilde, signature->b_tilde);
+  free(u_);
+  u_ = NULL;
+  free(w);
+  w = NULL;
 
   // Step: 19
   uint8_t* chal_3 = malloc(lambdaBytes);
@@ -136,6 +153,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_final(&h2_ctx_2, chal_3, lambdaBytes);
   }
   free(chal_2);
+  chal_2 = NULL;
 
   // Step: 20..23
   uint8_t* s_ = malloc(MAX(params->faest_param.k0, params->faest_param.k1));
@@ -149,8 +167,11 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     vec_com_clear(&vecCom[i]);
   }
   free(s_);
+  s_ = NULL;
   free(chal_3);
+  chal_3 = NULL;
   free(vecCom);
+  vecCom = NULL;
 }
 
 // TODO: l is in bits, change it everywhere
@@ -194,6 +215,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     }
     H2_final(&h2_ctx, chal_1, (5 * lambdaBytes) + 8);
   }
+  free(mu);
+  mu = NULL;
 
   // Step 6
   uint8_t* chal_2 = malloc(3 * lambdaBytes + 8);
@@ -217,16 +240,23 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     H2_update(&h2_ctx_2, signature->b_tilde, lambdaBytes);
     H2_final(&h2_ctx_2, chal_3, lambdaBytes);
   }
-  free(chal_2);
 
   // Step: 9..11
-  uint8_t** qprime         = malloc(tau * sizeof(uint8_t*));
-  vec_com_rec_t* vecComRec = malloc(sizeof(vec_com_rec_t));
-  uint8_t* hcomverify      = malloc(lambdaBytes * 2);
-  voleReconstruct(chal_3, signature->pdec, signature->com_j, lambda, lambdaBytes, ell_hat, tau,
-                  params->faest_param.k0, params->faest_param.k1, hcomverify, qprime, vecComRec);
-  if (memcmp(hcomverify, signature->hcom, lambdaBytes * 2) != 0) {
-    return 0;
+  uint8_t** qprime = malloc(tau * sizeof(uint8_t*));
+  {
+    uint8_t* hcomverify      = malloc(lambdaBytes * 2);
+    vec_com_rec_t* vecComRec = malloc(tau * sizeof(vec_com_rec_t));
+    voleReconstruct(chal_3, signature->pdec, signature->com_j, lambda, lambdaBytes, ell_hat, tau,
+                    params->faest_param.k0, params->faest_param.k1, hcomverify, qprime, vecComRec);
+    for (unsigned int i = 0; i < tau; ++i) {
+      vec_com_rec_clear(&vecComRec[i]);
+    }
+
+    int ret = memcmp(hcomverify, signature->hcom, lambdaBytes * 2);
+    free(hcomverify);
+    if (ret) {
+      return 0;
+    }
   }
 
   H1_context_t h1_ctx;
@@ -286,6 +316,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     free(Q_tilde);
+    free(chal_1);
+    chal_1 = NULL;
 
     // Step: 20
     uint8_t* check_h_v = malloc(lambdaBytes * 2);
@@ -297,11 +329,17 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     }
   }
 
-  unsigned int beta, R, Nwd, Ske, Lke, Lenc, Senc, C;
+  const unsigned int R = params->cipher_param.numRounds, beta = lambda == 128 ? 1 : 2,
+                     Lke = params->faest_param.Lke, Lenc = params->faest_param.Lenc,
+                     C = params->faest_param.c, Nwd = params->faest_param.Nwd,
+                     Ske = params->faest_param.Ske, Senc = params->faest_param.Senc;
   bool ret =
       aes_verify(signature->d, q, chal_2, chal_3, signature->a_tilde, signature->b_tilde, in, out,
                  lambda, tau, l, beta, R, Nwd, Ske, Lke, Lenc, Senc, C, params->faest_param.k0,
                  params->faest_param.k1, params->faest_param.t0, params->faest_param.t1);
+
+  free(chal_2);
+  chal_2 = NULL;
 
   if (ret) {
     return 0;
