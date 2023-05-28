@@ -396,50 +396,48 @@ void prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uint64_
 }
 
 // TODO: add support for Rijndael
-uint8_t* aes_extend_witness(unsigned int lambda, unsigned int l, const uint8_t* key,
-                            const uint8_t* in) {
+uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_paramset_t* params) {
+  const unsigned int lambda     = params->faest_param.lambda;
+  const unsigned int l          = params->faest_param.l;
+  const unsigned int S_ke       = params->faest_param.Ske;
+  const unsigned int num_rounds = params->cipher_param.numRounds;
+
   uint8_t* w           = malloc((l + 7) / 8);
   uint8_t* const w_out = w;
 
   // Step 3
   aes_round_keys_t round_keys;
-  unsigned int block_words = 4;
-  unsigned int S_ke;
-  unsigned int num_rounds;
+  const unsigned int block_words = 4;
   switch (lambda) {
   case 256:
-    S_ke       = 52;
-    num_rounds = 14;
     aes256_init_round_keys(&round_keys, key);
     break;
   case 192:
-    S_ke       = 32;
-    num_rounds = 12;
     aes192_init_round_keys(&round_keys, key);
     break;
   default:
-    S_ke       = 40;
-    num_rounds = 10;
     aes128_init_round_keys(&round_keys, key);
     break;
   }
 
   // Step 4
-  memcpy(w, round_keys.round_keys[0], lambda / 8);
-  w += lambda / 8;
+  for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
+    memcpy(w, round_keys.round_keys[i], sizeof(aes_word_t));
+    w += sizeof(aes_word_t);
+  }
 
   // Step 6
-  for (unsigned int j = 0, ik = lambda / 8; j != S_ke / 4; ++j) {
+  for (unsigned int j = 0, ik = params->faest_param.Nwd; j < S_ke / 4; ++j) {
     memcpy(w, round_keys.round_keys[ik], sizeof(aes_word_t));
     w += sizeof(aes_word_t);
     ik += lambda == 192 ? 6 : 4;
   }
 
   // Step 10
-  for (unsigned b = 0; b < (lambda + 127) / 128; b += 128, in += 16) {
+  for (unsigned b = 0; b < params->faest_param.beta; ++b, in += 16) {
     // Step 12
     aes_block_t state;
-    load_state(state, in, 4);
+    load_state(state, in, block_words);
 
     // Step 13
     add_round_key(0, state, &round_keys, block_words);
@@ -451,7 +449,7 @@ uint8_t* aes_extend_witness(unsigned int lambda, unsigned int l, const uint8_t* 
       shift_row(state, block_words);
       // Step 17
       store_state(w, state, block_words);
-      w += sizeof(state);
+      w += sizeof(aes_word_t) * block_words;
       // Step 18
       mix_column(state, block_words);
       // Step 19

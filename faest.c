@@ -142,7 +142,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   const uint8_t* in  = pk;
   const uint8_t* out = pk + params->faest_param.pkSize / 2;
   // Step: 10
-  uint8_t* w = aes_extend_witness(lambda, l, sk, in);
+  uint8_t* w = aes_extend_witness(sk, in, params);
   // Step: 11
   xorUint8Arr(w, u_, signature->d, ell_bytes);
 
