@@ -178,47 +178,40 @@ static bool is_all_zeros(const uint8_t* array, size_t len) {
 void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
                    uint32_t numVoleInstances, uint32_t depth, uint32_t outLenBytes, uint8_t* u,
                    uint8_t* v) {
+  // (depth + 1) x numVoleInstances array of outLenBytes
+  uint8_t* r = malloc((depth + 1) * numVoleInstances * outLenBytes);
 
-  uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  uint8_t* r     = malloc(getBinaryTreeNodeCount(numVoleInstances) * outLenBytes);
-
-  /* Here r_d,0 is the root and r_0,0 is the first leaf, in this reference implementation we will
-  keep it consistent like k_0,0 being the root and k_d,0 being the first leaf by manipulating it
-  with getNodeIndex() due to ease of understanding... */
+#define R(row, column) (r + ((row)*numVoleInstances + (column)) * outLenBytes)
 
   // Step: 2
   const bool sd_all_zeros = is_all_zeros(sd, lambdaBytes);
   if (sd_all_zeros) {
-    memset(r + (getNodeIndex(depth, 0) * outLenBytes), 0, outLenBytes);
+    memset(r, 0, outLenBytes);
   } else {
-    prg(sd, iv, r + (getNodeIndex(depth, 0) * outLenBytes), lambda, outLenBytes);
+    uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    prg(sd, iv, R(0, 0), lambda, outLenBytes);
   }
 
   // Step: 3..4
   for (uint32_t i = 1; i < numVoleInstances; i++) {
-    uint8_t iv_[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    prg(sd + (lambdaBytes * i), iv_, r + (outLenBytes * (getNodeIndex(depth, 0) + i)), lambda,
-        outLenBytes);
+    uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    prg(sd + (lambdaBytes * i), iv, R(0, i), lambda, outLenBytes);
   }
 
   // Step: 5..9
   memset(v, 0, depth * outLenBytes);
-  for (uint32_t d = 0; d < depth; d++) {
-    uint32_t depthloop = (numVoleInstances + ((1 << (d + 1)) - 1)) / (1 << (d + 1));
+  for (uint32_t j = 0; j < depth; j++) {
+    uint32_t depthloop = (numVoleInstances >> (j + 1));
     for (uint32_t i = 0; i < depthloop; i++) {
-      xorUint8Arr(v + ((depth - 1 - d) * outLenBytes),
-                  r + (getNodeIndex(depth - d, 2 * i + 1) * outLenBytes),
-                  v + ((depth - 1 - d) * outLenBytes), outLenBytes);
-      xorUint8Arr(r + (getNodeIndex(depth - d, 2 * i) * outLenBytes),
-                  r + (getNodeIndex(depth - d, (2 * i) + 1) * outLenBytes),
-                  r + (getNodeIndex(depth - (d + 1), i) * outLenBytes), outLenBytes);
+      xorUint8Arr(v + j * outLenBytes, R(j, 2 * i + 1), v + j * outLenBytes, outLenBytes);
+      xorUint8Arr(R(j + 1, 2 * i), R(j, 2 * i), R(j + 1, i), outLenBytes);
     }
   }
   // Step: 10
   if (sd_all_zeros == false && u != NULL) {
-    memcpy(u, r, outLenBytes);
+    memcpy(u, R(depth, 0), outLenBytes);
   }
   free(r);
 }
