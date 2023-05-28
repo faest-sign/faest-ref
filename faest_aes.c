@@ -828,10 +828,15 @@ void aes_prove(uint8_t* w, uint8_t* u, uint8_t** V, const uint8_t* in, const uin
   memcpy(a0_vs_concat + (lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc)), &bf_vs,
          lambdaBytes);
 
+  bf128_t* bf_a1_us_concat = malloc(sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
+  memcpy(bf_a1_us_concat, a1_us_concat, sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
+  bf128_t* bf_a0_vs_concat = malloc(sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
+  memcpy(bf_a0_vs_concat, a0_vs_concat, sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
+
   a_tilde = malloc(lambdaBytes);
   b_tilde = malloc(lambdaBytes);
-  zk_hash_128(a_tilde, chall, a1_us_concat, l);
-  zk_hash_128(b_tilde, chall, a0_vs_concat, l);
+  zk_hash_128(a_tilde, chall, bf_a1_us_concat, l);
+  zk_hash_128(b_tilde, chall, bf_a0_vs_concat, l);
 
   free(a1_us_concat);
   free(a0_vs_concat);
