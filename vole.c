@@ -111,6 +111,7 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
     xorUint8Arr(u, ui[i], c[i - 1], ellhatBytes);
     free(ui[i]);
   }
+  free(ui);
 
   // Step 12: Generating final commitment from all the com commitments
   H1_final(&h1_ctx, hcom, lambdaBytes * 2);
@@ -187,7 +188,8 @@ void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
   with getNodeIndex() due to ease of understanding... */
 
   // Step: 2
-  if (is_all_zeros(sd, lambdaBytes)) {
+  const bool sd_all_zeros = is_all_zeros(sd, lambdaBytes);
+  if (sd_all_zeros) {
     memset(r + (getNodeIndex(depth, 0) * outLenBytes), 0, outLenBytes);
   } else {
     prg(sd, iv, r + (getNodeIndex(depth, 0) * outLenBytes), lambda, outLenBytes);
@@ -206,19 +208,16 @@ void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
   for (uint32_t d = 0; d < depth; d++) {
     uint32_t depthloop = (numVoleInstances + ((1 << (d + 1)) - 1)) / (1 << (d + 1));
     for (uint32_t i = 0; i < depthloop; i++) {
-      for (uint8_t b = 0; b < outLenBytes; b++) {
-        *(v + ((depth - 1 - d) * outLenBytes) + b) =
-            *(v + ((depth - 1 - d) * outLenBytes) + b) ^
-            *(r + (getNodeIndex(depth - d, 2 * i + 1) * outLenBytes) + b);
-
-        *(r + (getNodeIndex(depth - (d + 1), i) * outLenBytes) + b) =
-            *(r + (getNodeIndex(depth - d, 2 * i) * outLenBytes) + b) ^
-            *(r + (getNodeIndex(depth - d, (2 * i) + 1) * outLenBytes) + b);
-      }
+      xorUint8Arr(v + ((depth - 1 - d) * outLenBytes),
+                  r + (getNodeIndex(depth - d, 2 * i + 1) * outLenBytes),
+                  v + ((depth - 1 - d) * outLenBytes), outLenBytes);
+      xorUint8Arr(r + (getNodeIndex(depth - d, 2 * i) * outLenBytes),
+                  r + (getNodeIndex(depth - d, (2 * i) + 1) * outLenBytes),
+                  r + (getNodeIndex(depth - (d + 1), i) * outLenBytes), outLenBytes);
     }
   }
   // Step: 10
-  if (is_all_zeros(sd, lambdaBytes) == false && u != NULL) {
+  if (sd_all_zeros == false && u != NULL) {
     memcpy(u, r, outLenBytes);
   }
   free(r);
