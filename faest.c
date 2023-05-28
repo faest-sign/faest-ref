@@ -322,9 +322,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     }
   }
 
-  // TODO: Step 15
-
-  // Step 16
+  // Step 15 and 16
   uint8_t* h_v = malloc(lambdaBytes * 2);
   {
     H1_context_t h1_ctx_1;
@@ -332,7 +330,9 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
 
     uint8_t* Q_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
     for (unsigned int i = 0; i != lambda; ++i) {
+      // Step 15
       vole_hash(Q_tilde, chal_1, q[0] + i * ell_hat_bytes, ell_hat, lambda);
+      // Step 16
       xorUint8Arr(Q_tilde, Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B), Q_tilde,
                   lambdaBytes + UNIVERSAL_HASH_B);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
@@ -341,7 +341,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     free(chal_1);
     chal_1 = NULL;
 
-    // Step: 20
+    // Step: 16
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
 
