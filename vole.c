@@ -91,7 +91,7 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
     // Step 5
     vector_commitment(expanded_keys + i * lambdaBytes, params, lambda, lambdaBytes, &vecCom[i], N);
     // Step 6
-    ConvertToVoleProver(lambda, lambdaBytes, vecCom[i].sd, N, depth, ellhatBytes, ui[i], tmp_v);
+    ConvertToVole(lambda, lambdaBytes, vecCom[i].sd, N, depth, ellhatBytes, ui[i], tmp_v);
     // Step 7 (and parts of 8)
     for (unsigned int j = 0; j < depth; ++j, ++v_idx) {
       memcpy(v[v_idx], tmp_v + j * ellhatBytes, ellhatBytes);
