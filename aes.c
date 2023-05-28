@@ -363,6 +363,8 @@ void prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uint64_
 // TODO: add support for Rijndael
 uint8_t* aes_extend_witness(unsigned int lambda, unsigned int l, const uint8_t* key,
                             const uint8_t* in) {
+
+  // Step 1
   uint8_t* w           = malloc((l + 7) / 8);
   uint8_t* const w_out = w;
 
@@ -393,7 +395,7 @@ uint8_t* aes_extend_witness(unsigned int lambda, unsigned int l, const uint8_t* 
   memcpy(w, round_keys.round_keys[0], lambda / 8);
   w += lambda / 8;
 
-  // Step 6
+  // Step 6..9
   for (unsigned int j = 0, ik = lambda / 8; j != S_ke / 4; ++j) {
     memcpy(w, round_keys.round_keys[ik], sizeof(aes_word_t));
     w += sizeof(aes_word_t);

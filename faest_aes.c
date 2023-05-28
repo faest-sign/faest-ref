@@ -26,7 +26,7 @@ uint8_t* aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uin
   const unsigned int xk_len      = (Lke / 8) * ((m + 7) / 8);
   const unsigned int y_out_len   = (R + 1) * 128 * ((m + 7) / 8);
 
-  // STep: 2..3
+  // Step: 2..3
   if (m == 1) {
     bf8_t* bf_y = malloc(y_out_len);
     for (uint32_t i = 0; i < lambdaBytes; i++) {
