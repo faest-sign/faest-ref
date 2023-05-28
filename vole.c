@@ -47,7 +47,7 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
   assert(hi - lo == k0 || hi - lo == k1);
   for (unsigned int j = lo; j < hi; ++j) {
     // set_bit(chalout, i - lo, get_bit(chal, i));
-    chalout[j] = get_bit(chal, j);
+    chalout[j - lo] = get_bit(chal, j);
   }
   return 1;
 }
