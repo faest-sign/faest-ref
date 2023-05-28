@@ -129,7 +129,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     uint8_t* V_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
     for (unsigned int i = 0; i != lambda; ++i) {
       // Step 7
-      vole_hash(V_tilde, chal_1, v[i], ell_hat, lambda);
+      vole_hash(V_tilde, chal_1, v[i], l, lambda);
       // Step 8
       H1_update(&h1_ctx_1, V_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
@@ -328,7 +328,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     uint8_t* Q_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
     for (unsigned int i = 0; i != lambda; ++i) {
       // Step 15
-      vole_hash(Q_tilde, chal_1, q[0] + i * ell_hat_bytes, ell_hat, lambda);
+      vole_hash(Q_tilde, chal_1, q[0] + i * ell_hat_bytes, l, lambda);
       // Step 16
       xorUint8Arr(Q_tilde, Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B), Q_tilde,
                   lambdaBytes + UNIVERSAL_HASH_B);
