@@ -15,6 +15,9 @@
 #include "fields.h"
 #include "compat.h"
 
+#if defined(HAVE_OPENSSL)
+#include <openssl/evp.h>
+#endif
 #include <string.h>
 
 static const bf8_t round_constants[30] = {
@@ -325,6 +328,7 @@ void aes256_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const ui
 }
 
 void prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uint64_t outSizeBytes) {
+#if !defined(HAVE_OPENSSL)
   aes_round_keys_t round_key;
   aes_block_t state;
   load_state(state, iv, 4);
@@ -358,6 +362,37 @@ void prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uint64_
     }
     return;
   }
+#else
+  const EVP_CIPHER* cipher;
+  switch (seclvl) {
+  case 256:
+    cipher = EVP_aes_256_ctr();
+    break;
+  case 192:
+    cipher = EVP_aes_192_ctr();
+    break;
+  case 128:
+    cipher = EVP_aes_128_ctr();
+    break;
+  }
+
+  EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+  assert(ctx);
+
+  EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv);
+
+  static const uint8_t plaintext[16] = {0};
+
+  int len = 0;
+  for (size_t idx = 0; idx < outSizeBytes / 16; idx += 1, out += 16) {
+    EVP_EncryptUpdate(ctx, out, &len, plaintext, sizeof(plaintext));
+  }
+  if (outSizeBytes % 16) {
+    EVP_EncryptUpdate(ctx, out, &len, plaintext, outSizeBytes % 16);
+  }
+  EVP_EncryptFinal_ex(ctx, out, &len);
+  EVP_CIPHER_CTX_free(ctx);
+#endif
 }
 
 // TODO: add support for Rijndael
