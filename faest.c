@@ -412,8 +412,8 @@ int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
 
     memcpy(dst, signature->pdec[i], depth * lambda_bytes);
     dst += depth * lambda_bytes;
-    memcpy(dst, signature->com_j[i], lambda_bytes);
-    dst += lambda_bytes;
+    memcpy(dst, signature->com_j[i], 2 * lambda_bytes);
+    dst += 2 * lambda_bytes;
   }
 
   // serialize chall_3
@@ -449,7 +449,7 @@ signature_t init_signature(const faest_paramset_t* params) {
   }
   sig.com_j = calloc(params->faest_param.tau, sizeof(uint8_t*));
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
-    sig.com_j[i] = malloc(lambda_bytes);
+    sig.com_j[i] = malloc(lambda_bytes * 2);
   }
   sig.chall_3 = malloc(lambda_bytes);
 
@@ -515,8 +515,8 @@ signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* pa
     unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
     memcpy(sig.pdec[i], src, depth * lambda_bytes);
     src += depth * lambda_bytes;
-    memcpy(sig.com_j[i], src, lambda_bytes);
-    src += lambda_bytes;
+    memcpy(sig.com_j[i], src, 2 * lambda_bytes);
+    src += 2 * lambda_bytes;
   }
 
   // serialize chall_3
