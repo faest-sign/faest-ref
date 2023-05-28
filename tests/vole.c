@@ -66,10 +66,9 @@ int test_FAESTVoleVerify() {
   voleCommit(rootKey, outlen, &params, hcom, vecCom, c, u, v);
 
   // TODO: this shouldn't be here !!
-  uint8_t** pdec           = malloc(params.faest_param.tau * sizeof(uint8_t*));
-  uint8_t** b              = malloc(params.faest_param.tau * sizeof(uint8_t*));
-  uint8_t** com_j          = malloc(params.faest_param.tau * sizeof(uint8_t*));
-  vec_com_rec_t* vecComRec = malloc(params.faest_param.tau * sizeof(vec_com_rec_t));
+  uint8_t** pdec  = malloc(params.faest_param.tau * sizeof(uint8_t*));
+  uint8_t** b     = malloc(params.faest_param.tau * sizeof(uint8_t*));
+  uint8_t** com_j = malloc(params.faest_param.tau * sizeof(uint8_t*));
 
   uint32_t depth;
   uint32_t numVoleInstances;
@@ -99,8 +98,7 @@ int test_FAESTVoleVerify() {
 
   uint8_t* hcomRec = malloc(lambdaBytes * 2);
 
-  voleReconstruct(chal, pdec, com_j, lambda, lambdaBytes, outlen, params.faest_param.tau,
-                  params.faest_param.k0, params.faest_param.k1, hcomRec, q, vecComRec);
+  voleReconstruct(chal, pdec, com_j, hcomRec, q, outlen, &params);
 
 #if 0
   for (uint z = 0; z < params.faest_param.t; z++) {

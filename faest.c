@@ -220,20 +220,18 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   vecCom = NULL;
 }
 
-// TODO: l is in bits, change it everywhere
 int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_paramset_t* params,
            const signature_t* signature) {
-  const uint32_t l         = params->faest_param.l;
-  const uint32_t ell_bytes = (l + 7) / 8;
-
-  const uint32_t lambda      = params->faest_param.lambda;
-  const uint32_t lambdaBytes = lambda / 8;
-  const uint32_t tau         = params->faest_param.tau;
-  const uint32_t tau0        = params->faest_param.t0;
-  const uint32_t ell_hat =
+  const unsigned int l           = params->faest_param.l;
+  const unsigned int ell_bytes   = (l + 7) / 8;
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int lambdaBytes = lambda / 8;
+  const unsigned int tau         = params->faest_param.tau;
+  const unsigned int tau0        = params->faest_param.t0;
+  const unsigned int ell_hat =
       params->faest_param.l + params->faest_param.lambda * 2 + params->faest_param.b;
-  const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
-  const size_t utilde_bytes    = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
+  const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
+  const unsigned int utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
 
   // Step: 2
   const uint8_t* in  = pk;
@@ -250,17 +248,16 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   }
 
   // Step: 5
-  uint8_t** qprime = malloc(tau * sizeof(uint8_t*));
-  uint8_t* hcom    = malloc(lambdaBytes * 2);
+  // q prime is a \hat \ell \times \lambda matrix
+  uint8_t** qprime = malloc(lambda * sizeof(uint8_t*));
+  qprime[0]        = malloc(lambda * ell_hat_bytes);
+  for (unsigned int i = 1; i < lambda; ++i) {
+    qprime[i] = qprime[0] + i * ell_hat_bytes;
+  }
+  uint8_t* hcom = malloc(lambdaBytes * 2);
   {
-    vec_com_rec_t* vecComRec = malloc(tau * sizeof(vec_com_rec_t));
-    voleReconstruct(signature->chall_3, signature->pdec, signature->com_j, lambda, lambdaBytes,
-                    ell_hat, tau, params->faest_param.k0, params->faest_param.k1, hcom, qprime,
-                    vecComRec);
-    for (unsigned int i = 0; i < tau; ++i) {
-      vec_com_rec_clear(&vecComRec[i]);
-    }
-    free(vecComRec);
+    voleReconstruct(signature->chall_3, signature->pdec, signature->com_j, hcom, qprime, ell_hat,
+                    params);
   }
 
   // Step: 5

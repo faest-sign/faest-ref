@@ -12,9 +12,8 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
 void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t* params,
                 uint8_t* hcom, vec_com_t* vecCom, uint8_t** c, uint8_t* u, uint8_t** v);
 
-void voleReconstruct(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint32_t lambda,
-                     uint32_t lambdaBytes, uint32_t outlen, uint32_t tau, uint32_t k0, uint32_t k1,
-                     uint8_t* hcom, uint8_t** q, vec_com_rec_t* vecComRec);
+void voleReconstruct(const uint8_t* chal, uint8_t** pdec, uint8_t** com_j, uint8_t* hcom,
+                     uint8_t** q, uint32_t ellhat, const faest_paramset_t* params);
 
 void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
                    uint32_t numVoleInstances, uint32_t depth, uint32_t outLenBytes, uint8_t* u,
