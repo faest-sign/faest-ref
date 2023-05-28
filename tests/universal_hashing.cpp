@@ -1091,4 +1091,4 @@ BOOST_DATA_TEST_CASE(test_zk_hash_256_tv, xrange(TEST_VECTORS), i) {
   BOOST_TEST(digest == expected_digest);
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END()
