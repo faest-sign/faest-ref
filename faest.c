@@ -26,8 +26,8 @@ static inline void set_bit(uint8_t* dst, uint8_t in, unsigned int index) {
   dst[index / 8] |= in << (7 - index % 8);
 }
 
-static uint8_t* column_to_row_major_and_shrink_V(const uint8_t* v, unsigned int lambda,
-                                                 unsigned int ell, unsigned int ell_hat) {
+static uint8_t** column_to_row_major_and_shrink_V(const uint8_t* v, unsigned int lambda,
+                                                  unsigned int ell, unsigned int ell_hat) {
   assert(lambda % 8 == 0);
   const unsigned int lambda_bytes = lambda / 8;
 
