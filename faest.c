@@ -33,15 +33,15 @@ static uint8_t** column_to_row_major_and_shrink_V(uint8_t** v, unsigned int lamb
   const unsigned int lambda_bytes = lambda / 8;
 
   // V is \hat \ell times \lambda matrix over F_2
-  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell rows and
-  // \lambda columns storing in row-major order
-  uint8_t** new_v = malloc(ell * sizeof(uint8_t*));
-  new_v[0]        = malloc(lambda * ell);
+  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
+  // rows and \lambda columns storing in row-major order
+  uint8_t** new_v = malloc((ell + lambda) * sizeof(uint8_t*));
+  new_v[0]        = malloc(lambda * (ell + lambda));
   for (unsigned int i = 1; i < ell; ++i) {
     new_v[i] = new_v[0] + i * lambda_bytes;
   }
 
-  for (unsigned int row = 0; row != ell; ++row) {
+  for (unsigned int row = 0; row != ell + lambda; ++row) {
     for (unsigned int column = 0; column != lambda; ++column) {
       set_bit(new_v[row], column, get_bit(v[column], row));
     }
