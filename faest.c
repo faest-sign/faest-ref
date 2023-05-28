@@ -33,15 +33,15 @@ static uint8_t** column_to_row_major_and_shrink_V(uint8_t** v, unsigned int lamb
   const unsigned int lambda_bytes = lambda / 8;
 
   // V is \hat \ell times \lambda matrix over F_2
-  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell rows and
-  // \lambda columns storing in row-major order
-  uint8_t** new_v = malloc(ell * sizeof(uint8_t*));
-  new_v[0]        = malloc(lambda * ell);
+  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
+  // rows and \lambda columns storing in row-major order
+  uint8_t** new_v = malloc((ell + lambda) * sizeof(uint8_t*));
+  new_v[0]        = malloc(lambda * (ell + lambda));
   for (unsigned int i = 1; i < ell; ++i) {
     new_v[i] = new_v[0] + i * lambda_bytes;
   }
 
-  for (unsigned int row = 0; row != ell; ++row) {
+  for (unsigned int row = 0; row != ell + lambda; ++row) {
     for (unsigned int column = 0; column != lambda; ++column) {
       set_bit(new_v[row], column, get_bit(v[column], row));
     }
@@ -307,7 +307,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       // Step 14
       for (uint32_t d = 0; d < depth; d++) {
         if (delta[d]) {
-          xorUint8Arr(qprime[i] + d * ell_hat_bytes, signature->c[i], q[i] + d * ell_hat_bytes,
+          xorUint8Arr(qprime[i] + d * ell_hat_bytes, signature->c[i - 1], q[i] + d * ell_hat_bytes,
                       ell_hat_bytes);
         } else {
           memcpy(q[i] + d * ell_hat_bytes, qprime[i] + d * ell_hat_bytes, ell_hat_bytes);
@@ -332,8 +332,6 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     free(Q_tilde);
-    free(chal_1);
-    chal_1 = NULL;
 
     // Step: 16
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
@@ -350,6 +348,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     H2_update(&h2_ctx_1, signature->d, ell_bytes);
     H2_final(&h2_ctx_1, chal_2, (3 * lambdaBytes) + 8);
   }
+  free(chal_1);
+  chal_1 = NULL;
 
   // Step 18
   uint8_t* b_tilde =
@@ -412,8 +412,8 @@ int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
 
     memcpy(dst, signature->pdec[i], depth * lambda_bytes);
     dst += depth * lambda_bytes;
-    memcpy(dst, signature->com_j[i], lambda_bytes);
-    dst += lambda_bytes;
+    memcpy(dst, signature->com_j[i], 2 * lambda_bytes);
+    dst += 2 * lambda_bytes;
   }
 
   // serialize chall_3
@@ -435,8 +435,8 @@ signature_t init_signature(const faest_paramset_t* params) {
   const size_t ell_hat_bytes = ell_hat / 8;
   const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
 
-  sig.c = calloc(params->faest_param.tau, sizeof(uint8_t*));
-  for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
+  sig.c = calloc(params->faest_param.tau - 1, sizeof(uint8_t*));
+  for (unsigned int i = 0; i != params->faest_param.tau - 1; ++i) {
     sig.c[i] = malloc(ell_hat_bytes);
   }
   sig.u_tilde = malloc(utilde_bytes);
@@ -449,7 +449,7 @@ signature_t init_signature(const faest_paramset_t* params) {
   }
   sig.com_j = calloc(params->faest_param.tau, sizeof(uint8_t*));
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
-    sig.com_j[i] = malloc(lambda_bytes);
+    sig.com_j[i] = malloc(lambda_bytes * 2);
   }
   sig.chall_3 = malloc(lambda_bytes);
 
@@ -475,7 +475,7 @@ void free_signature(signature_t sig, const faest_paramset_t* params) {
   free(sig.u_tilde);
 
   if (sig.c) {
-    for (unsigned int i = params->faest_param.tau; i; --i) {
+    for (unsigned int i = params->faest_param.tau - 1; i; --i) {
       free(sig.c[i - 1]);
     }
     free(sig.c);
@@ -494,7 +494,7 @@ signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* pa
   signature_t sig = init_signature(params);
 
   // serialize c_i
-  for (unsigned int i = 0; i != params->faest_param.tau; ++i, src += ell_hat_bytes) {
+  for (unsigned int i = 0; i != params->faest_param.tau - 1; ++i, src += ell_hat_bytes) {
     memcpy(sig.c[i], src, ell_hat_bytes);
   }
 
@@ -515,8 +515,8 @@ signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* pa
     unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
     memcpy(sig.pdec[i], src, depth * lambda_bytes);
     src += depth * lambda_bytes;
-    memcpy(sig.com_j[i], src, lambda_bytes);
-    src += lambda_bytes;
+    memcpy(sig.com_j[i], src, 2 * lambda_bytes);
+    src += 2 * lambda_bytes;
   }
 
   // serialize chall_3

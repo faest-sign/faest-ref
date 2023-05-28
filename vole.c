@@ -37,16 +37,17 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
   unsigned int hi;
   if (i < t0) {
     lo = i * k0;
-    hi = ((i + 1) * k0) - 1;
+    hi = ((i + 1) * k0);
   } else {
     unsigned int t = i - t0;
     lo             = (t0 * k0) + (t * k1);
-    hi             = (t0 * k0) + ((t + 1) * k1) - 1;
+    hi             = (t0 * k0) + ((t + 1) * k1);
   }
 
-  for (unsigned int j = lo; j != hi; ++j) {
+  assert(hi - lo == k0 || hi - lo == k1);
+  for (unsigned int j = lo; j < hi; ++j) {
     // set_bit(chalout, i - lo, get_bit(chal, i));
-    chalout[j] = get_bit(chal, j);
+    chalout[j - lo] = get_bit(chal, j);
   }
   return 1;
 }
@@ -154,7 +155,7 @@ void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint
     uint32_t idx = NumRec(depth, chalout);
 
     vec_com_rec_t vecComRec;
-    vector_reconstruction(pdec[i], com_j[i], chall, lambda, lambdaBytes, N, &vecComRec);
+    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, &vecComRec);
 
     // Step: 6
     memset(sd, 0, lambdaBytes);

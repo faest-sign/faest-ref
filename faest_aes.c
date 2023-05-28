@@ -723,9 +723,9 @@ void aes_prove(uint8_t* w, uint8_t* u, uint8_t** V, const uint8_t* in, const uin
 
   // Step: 1..2
   bf8_t* bf_w   = malloc(l);
-  bf128_t* bf_v = malloc(l + lambda);
+  bf128_t* bf_v = malloc((l + lambda) * sizeof(bf128_t));
   for (uint32_t i = 0; i < l; i++) {
-    bf_w[i] = bf8_load(get_bit(w + (i / 8), i % 8));
+    bf_w[i] = bf8_from_bit(get_bit(w[i / 8], i % 8));
   }
   for (uint32_t i = 0; i < l + lambda; i++) {
     bf_v[i] = bf128_load(V[i]);
