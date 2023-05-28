@@ -37,7 +37,7 @@ static uint8_t** column_to_row_major_and_shrink_V(uint8_t** v, unsigned int lamb
   // rows and \lambda columns storing in row-major order
   uint8_t** new_v = malloc((ell + lambda) * sizeof(uint8_t*));
   new_v[0]        = malloc(lambda * (ell + lambda));
-  for (unsigned int i = 1; i < ell; ++i) {
+  for (unsigned int i = 1; i < ell + lambda; ++i) {
     new_v[i] = new_v[0] + i * lambda_bytes;
   }
 
