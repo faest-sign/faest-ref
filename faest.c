@@ -307,7 +307,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       // Step 14
       for (uint32_t d = 0; d < depth; d++) {
         if (delta[d]) {
-          xorUint8Arr(qprime[i] + d * ell_hat_bytes, signature->c[i], q[i] + d * ell_hat_bytes,
+          xorUint8Arr(qprime[i] + d * ell_hat_bytes, signature->c[i - 1], q[i] + d * ell_hat_bytes,
                       ell_hat_bytes);
         } else {
           memcpy(q[i] + d * ell_hat_bytes, qprime[i] + d * ell_hat_bytes, ell_hat_bytes);
@@ -332,8 +332,6 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     free(Q_tilde);
-    free(chal_1);
-    chal_1 = NULL;
 
     // Step: 16
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
@@ -350,6 +348,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     H2_update(&h2_ctx_1, signature->d, ell_bytes);
     H2_final(&h2_ctx_1, chal_2, (3 * lambdaBytes) + 8);
   }
+  free(chal_1);
+  chal_1 = NULL;
 
   // Step 18
   uint8_t* b_tilde =
@@ -435,8 +435,8 @@ signature_t init_signature(const faest_paramset_t* params) {
   const size_t ell_hat_bytes = ell_hat / 8;
   const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
 
-  sig.c = calloc(params->faest_param.tau, sizeof(uint8_t*));
-  for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
+  sig.c = calloc(params->faest_param.tau - 1, sizeof(uint8_t*));
+  for (unsigned int i = 0; i != params->faest_param.tau - 1; ++i) {
     sig.c[i] = malloc(ell_hat_bytes);
   }
   sig.u_tilde = malloc(utilde_bytes);
@@ -475,7 +475,7 @@ void free_signature(signature_t sig, const faest_paramset_t* params) {
   free(sig.u_tilde);
 
   if (sig.c) {
-    for (unsigned int i = params->faest_param.tau; i; --i) {
+    for (unsigned int i = params->faest_param.tau - 1; i; --i) {
       free(sig.c[i - 1]);
     }
     free(sig.c);
@@ -494,7 +494,7 @@ signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* pa
   signature_t sig = init_signature(params);
 
   // serialize c_i
-  for (unsigned int i = 0; i != params->faest_param.tau; ++i, src += ell_hat_bytes) {
+  for (unsigned int i = 0; i != params->faest_param.tau - 1; ++i, src += ell_hat_bytes) {
     memcpy(sig.c[i], src, ell_hat_bytes);
   }
 
