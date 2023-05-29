@@ -2,7 +2,7 @@ CC?=gcc
 CXX?=g++
 CFLAGS+=-g -O3 -std=c11
 CXXFLAGS+=-g -O3 -std=c++17
-CPPFLAGS+=-I. -Isha3 -DNDEBUG
+CPPFLAGS+=-I. -Isha3 -DNDEBUG -DHAVE_OPENSSL
 
 SOURCES=$(filter-out randomness.c,$(wildcard *.c)) $(wildcard sha3/*.c) $(wildcard sha3/*.s)
 EXECUTABLE_APITEST=tests/api_test
@@ -25,7 +25,7 @@ $(EXECUTABLE_NISTKAT): CPPFLAGS+=-DHAVE_RANDOMBYTES
 $(EXECUTABLE_NISTKAT): CFLAGS+=-Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-result
 
 $(EXECUTABLE_APITEST): $(EXECUTABLE_APITEST).c.o $(LIBFAEST) randomness.c.o
-	$(CC) $(CPPFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(CPPFLAGS) $(LDFLAGS) $^ -lcrypto -o $@
 
 $(EXECUTABLE_NISTKAT): $(addsuffix .o, $(NISTKAT_SOURCES)) $(LIBFAEST) randomness.c.o
 	$(CXX) $(CPPFLAGS) $(LDFLAGS) $^ -lcrypto -o $@
