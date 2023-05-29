@@ -11,7 +11,10 @@
 #include "compat.h"
 #include "aes.h"
 
+#include <assert.h>
 #include <string.h>
+
+#define MAX_SEED_SIZE (256 / 8)
 
 typedef struct tree_t {
   size_t depth;      /* The depth of the tree */
@@ -96,8 +99,8 @@ static size_t getParent(size_t node) {
 static void expandSeeds(tree_t* tree, const faest_paramset_t* params) {
   uint32_t lambdaBytes = params->faest_param.lambda / 8;
 
-  // uint8_t out[2 * MAX_SEED_SIZE_BYTES];
-  uint8_t* out = malloc(2 * lambdaBytes);
+  uint8_t out[2 * MAX_SEED_SIZE];
+  assert(lambdaBytes <= sizeof(out));
 
   /* Walk the tree, expanding seeds where possible. Compute children of
    * non-leaf nodes. */
@@ -127,7 +130,6 @@ static void expandSeeds(tree_t* tree, const faest_paramset_t* params) {
       tree->haveNode[2 * i + 2] = 1;
     }
   }
-  free(out);
 }
 
 static tree_t generateSeeds(const uint8_t* rootSeed, const faest_paramset_t* params,
@@ -261,8 +263,8 @@ void vector_reconstruction(const uint8_t* cop, const uint8_t* com_j, const uint8
   vecComRec->m       = malloc(numVoleInstances * lambdaBytes);
 
   // Step: 3..9
-  uint32_t a   = 0;
-  uint8_t* out = malloc(lambdaBytes * 2);
+  uint32_t a = 0;
+  uint8_t out[2 * MAX_SEED_SIZE];
   for (uint32_t i = 1; i <= depth; i++) {
     memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * a + !b[depth - i])),
            cop + (lambdaBytes * (i - 1)), lambdaBytes);
@@ -284,7 +286,6 @@ void vector_reconstruction(const uint8_t* cop, const uint8_t* com_j, const uint8
 
     a = a * 2 + b[depth - i];
   }
-  free(out);
 
   // Step: 10..11
   for (uint32_t j = 0; j < numVoleInstances; j++) {
