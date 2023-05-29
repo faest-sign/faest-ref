@@ -22,15 +22,40 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(vole)
 
+BOOST_DATA_TEST_CASE(chal_dec, all_parameters, param_id) {
+  BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
+    const faest_paramset_t params  = faest_get_paramset(param_id);
+    const unsigned int lambda      = params.faest_param.lambda;
+    const unsigned int lambdaBytes = lambda / 8;
+
+    std::vector<uint8_t> chal;
+    chal.resize(lambdaBytes, 0xFF);
+
+    for (unsigned int i = 0; i < params.faest_param.tau; i++) {
+      const unsigned int depth =
+          (i < params.faest_param.t0) ? params.faest_param.k0 : params.faest_param.k1;
+      std::vector<uint8_t> chal_out;
+      chal_out.resize(depth, 0);
+
+      ChalDec(chal.data(), i, params.faest_param.k0, params.faest_param.t0, params.faest_param.k1,
+              params.faest_param.t1, chal_out.data());
+      for (unsigned int j = 0; j != depth; ++j) {
+        BOOST_TEST(chal_out[j] == 1);
+      }
+
+      BOOST_TEST(NumRec(depth, chal_out.data()) == (1 << depth) - 1);
+    }
+  }
+}
+
 BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const faest_paramset_t params = faest_get_paramset(param_id);
-
-    const uint32_t lambda      = params.faest_param.lambda;
-    const uint32_t lambdaBytes = lambda / 8;
-    const uint32_t ell_hat =
+    const faest_paramset_t params  = faest_get_paramset(param_id);
+    const unsigned int lambda      = params.faest_param.lambda;
+    const unsigned int lambdaBytes = lambda / 8;
+    const unsigned int ell_hat =
         params.faest_param.l + params.faest_param.lambda * 2 + params.faest_param.b;
-    const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
+    const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
 
     std::vector<uint8_t> hcom, hcomRec, u, b, chal;
     hcom.resize(lambdaBytes * 2);
@@ -95,15 +120,14 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
 BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const faest_paramset_t params = faest_get_paramset(param_id);
-
-    const uint32_t lambda      = params.faest_param.lambda;
-    const uint32_t lambdaBytes = lambda / 8;
-    const uint32_t ell_hat =
+    const faest_paramset_t params  = faest_get_paramset(param_id);
+    const unsigned int lambda      = params.faest_param.lambda;
+    const unsigned int lambdaBytes = lambda / 8;
+    const unsigned int ell_hat =
         params.faest_param.l + params.faest_param.lambda * 2 + params.faest_param.b;
-    const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
-    const unsigned int max_depth = std::max(params.faest_param.k0, params.faest_param.k1);
-    const unsigned int max_nodes = 1 << max_depth;
+    const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
+    const unsigned int max_depth     = std::max(params.faest_param.k0, params.faest_param.k1);
+    const unsigned int max_nodes     = 1 << max_depth;
 
     std::vector<uint8_t> sd, sdprime, u, v, q, chal_out, chal;
     sd.resize(max_nodes * lambdaBytes);
