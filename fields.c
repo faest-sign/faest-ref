@@ -148,6 +148,7 @@ bf64_t bf64_from_bit(uint8_t bit) {
 bf128_t bf128_byte_combine(uint8_t* x, uint8_t isBinary) {
   bf128_t bf_out = bf128_zero();
 
+  // True when F_2
   if (isBinary == 1) {
     for (uint32_t i = 0; i < 8; i++) {
       bf_out = bf128_add(bf_out, bf128_from_bf8(bf8_load(x[i])));
