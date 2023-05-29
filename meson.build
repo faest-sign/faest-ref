@@ -430,7 +430,6 @@ faest_sources = files(
   'owf.c',
   'random_oracle.c',
   'randomness.c',
-  'tree.c',
   'universal_hashing.c',
   'utils.c',
   'vc.c',

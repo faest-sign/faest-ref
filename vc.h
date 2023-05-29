@@ -4,11 +4,8 @@
 #include <stdint.h>
 
 #include "instances.h"
-#include "tree.h"
 
 FAEST_BEGIN_C_DECL
-
-// TODO: Remove the sizese,, looks reduddant !!
 
 typedef struct vec_com_t {
   uint8_t* h;
@@ -24,8 +21,10 @@ typedef struct vec_com_rec_t {
   uint8_t* m;
 } vec_com_rec_t;
 
-int BitDec(uint32_t leafIndex, uint32_t depth, uint8_t* out);
+uint64_t getBinaryTreeNodeCount(uint32_t numVoleInstances);
+uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex);
 
+int BitDec(uint32_t leafIndex, uint32_t depth, uint8_t* out);
 uint64_t NumRec(uint32_t depth, const uint8_t* bi);
 
 void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, uint32_t lambda,
