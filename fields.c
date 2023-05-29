@@ -72,11 +72,7 @@ bf8_t bf8_inv(bf8_t in) {
 }
 
 bf8_t bf8_from_bit(uint8_t bit) {
-  if (bit == 0) {
-    return bf8_zero();
-  } else {
-    return bf8_one();
-  }
+  return bit;
 }
 
 // GF(2^64) implementation
@@ -136,11 +132,7 @@ bf64_t bf64_inv(bf64_t in) {
 }
 
 bf64_t bf64_from_bit(uint8_t bit) {
-  if (bit == 0) {
-    return bf64_zero();
-  } else {
-    return bf64_one();
-  }
+  return bit;
 }
 
 // GF(2^128) implementation
@@ -267,11 +259,7 @@ bf128_t bf128_inv(bf128_t in) {
 }
 
 bf128_t bf128_from_bit(uint8_t bit) {
-  if (bit == 0) {
-    return bf128_zero();
-  } else {
-    return bf128_one();
-  }
+  return bf128_from_bf8(bit);
 }
 
 // GF(2^192) implementation
@@ -400,11 +388,7 @@ bf192_t bf192_inv(bf192_t in) {
 }
 
 bf192_t bf192_from_bit(uint8_t bit) {
-  if (bit == 0) {
-    return bf192_zero();
-  } else {
-    return bf192_one();
-  }
+  return bf192_from_bf8(bit);
 }
 
 // GF(2^256) implementation
@@ -537,9 +521,5 @@ bf256_t bf256_inv(bf256_t in) {
 }
 
 bf256_t bf256_from_bit(uint8_t bit) {
-  if (bit == 0) {
-    return bf256_zero();
-  } else {
-    return bf256_one();
-  }
+  return bf256_from_bf8(bit);
 }
