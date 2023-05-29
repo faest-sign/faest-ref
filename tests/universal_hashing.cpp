@@ -16,46 +16,46 @@ namespace {
 BOOST_AUTO_TEST_SUITE(universal_hashing)
 
 BOOST_AUTO_TEST_CASE(test_vole_hash_128) {
-  std::array<uint8_t, (5 * 128 + 64) / 8> sd;
+  std::array<uint8_t, (5 * 128 + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
   std::vector<uint8_t> x;
   x.resize((ell + 128 + 128 + UNIVERSAL_HASH_B_BITS) / 8);
   rand_bytes(x.data(), x.size());
 
-  std::array<uint8_t, (128 + UNIVERSAL_HASH_B_BITS) / 8> digest;
+  std::array<uint8_t, (128 + UNIVERSAL_HASH_B_BITS) / 8> digest{};
   vole_hash_128(digest.data(), sd.data(), x.data(), ell);
   BOOST_TEST(digest != decltype(digest){});
 }
 
 BOOST_AUTO_TEST_CASE(test_vole_hash_192) {
-  std::array<uint8_t, (5 * 192 + 64) / 8> sd;
+  std::array<uint8_t, (5 * 192 + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
   std::vector<uint8_t> x;
   x.resize((ell + 192 + 192 + UNIVERSAL_HASH_B_BITS) / 8);
   rand_bytes(x.data(), x.size());
 
-  std::array<uint8_t, (192 + UNIVERSAL_HASH_B_BITS) / 8> digest;
+  std::array<uint8_t, (192 + UNIVERSAL_HASH_B_BITS) / 8> digest{};
   vole_hash_192(digest.data(), sd.data(), x.data(), ell);
   BOOST_TEST(digest != decltype(digest){});
 }
 
 BOOST_AUTO_TEST_CASE(test_vole_hash_256) {
-  std::array<uint8_t, (5 * 256 + 64) / 8> sd;
+  std::array<uint8_t, (5 * 256 + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
   std::vector<uint8_t> x;
   x.resize((ell + 256 + 256 + UNIVERSAL_HASH_B_BITS) / 8);
   rand_bytes(x.data(), x.size());
 
-  std::array<uint8_t, (256 + UNIVERSAL_HASH_B_BITS) / 8> digest;
+  std::array<uint8_t, (256 + UNIVERSAL_HASH_B_BITS) / 8> digest{};
   vole_hash_256(digest.data(), sd.data(), x.data(), ell);
   BOOST_TEST(digest != decltype(digest){});
 }
 
 BOOST_AUTO_TEST_CASE(test_zk_hash_128) {
-  std::array<uint8_t, (3 * 128 + 64) / 8> sd;
+  std::array<uint8_t, (3 * 128 + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
   std::array<bf128_t, xs + 1> x;
@@ -63,13 +63,13 @@ BOOST_AUTO_TEST_CASE(test_zk_hash_128) {
     x[i] = bf128::random().as_internal();
   }
 
-  std::array<uint8_t, 128 / 8> digest;
+  std::array<uint8_t, 128 / 8> digest{};
   zk_hash_128(digest.data(), sd.data(), x.data(), xs);
   BOOST_TEST(digest != decltype(digest){});
 }
 
 BOOST_AUTO_TEST_CASE(test_zk_hash_192) {
-  std::array<uint8_t, (3 * 192 + 64) / 8> sd;
+  std::array<uint8_t, (3 * 192 + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
   std::array<bf192_t, xs + 1> x;
@@ -77,13 +77,13 @@ BOOST_AUTO_TEST_CASE(test_zk_hash_192) {
     x[i] = bf192::random().as_internal();
   }
 
-  std::array<uint8_t, 192 / 8> digest;
+  std::array<uint8_t, 192 / 8> digest{};
   zk_hash_192(digest.data(), sd.data(), x.data(), xs);
   BOOST_TEST(digest != decltype(digest){});
 }
 
 BOOST_AUTO_TEST_CASE(test_zk_hash_256) {
-  std::array<uint8_t, (3 * 256 + 64) / 8> sd;
+  std::array<uint8_t, (3 * 256 + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
   std::array<bf256_t, xs + 1> x;
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(test_zk_hash_256) {
     x[i] = bf256::random().as_internal();
   }
 
-  std::array<uint8_t, 256 / 8> digest;
+  std::array<uint8_t, 256 / 8> digest{};
   zk_hash_256(digest.data(), sd.data(), x.data(), xs);
   BOOST_TEST(digest != decltype(digest){});
 }
