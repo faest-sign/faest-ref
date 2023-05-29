@@ -1,6 +1,10 @@
 #include "../vole.h"
 #include "compat.h"
 
+static uint8_t rootKey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+                              0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+                              0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+
 int test_ChalDec() {
   faest_paramset_t params = faest_get_paramset(1);
   uint32_t k0             = params.faest_param.k0;
@@ -24,11 +28,6 @@ int test_ChalDec() {
 }
 
 int test_FAESTVoleCommit() {
-
-  uint8_t rootKey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
-                         0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
-                         0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
-
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
                                                    //   vec_com_t vecCom;
                                                    //   vec_com_rec_t vecComRec;
@@ -67,10 +66,6 @@ int test_FAESTVoleCommit() {
 }
 
 int test_FAESTVoleVerify() {
-  uint8_t rootKey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
-                         0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
-                         0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
-
   faest_paramset_t params = faest_get_paramset(FAEST_128S); // Just using the FAEST-128s
 
   uint32_t outlen      = 16;
@@ -93,6 +88,9 @@ int test_FAESTVoleVerify() {
 
   voleCommit(rootKey, outlen, &params, hcom, vecCom, c, u, v);
   free(u);
+  for (unsigned int i = 0; i != params.faest_param.tau - 1; ++i) {
+    free(c[i]);
+  }
   free(c);
 
   uint8_t** pdec  = malloc(params.faest_param.tau * sizeof(uint8_t*));
@@ -125,6 +123,17 @@ int test_FAESTVoleVerify() {
 
   voleReconstruct(chal, pdec, com_j, hcomRec, q, outlen, &params);
 
+  for (uint32_t i = 0; i < params.faest_param.tau; i++) {
+    free(com_j[i]);
+    free(pdec[i]);
+  }
+  free(com_j);
+  free(pdec);
+
+  free(chal);
+  free(q[0]);
+  free(q);
+
 #if 0
   for (uint z = 0; z < params.faest_param.t; z++) {
     printf("%d) printing vecCom.com / vecComRed.com\n", z);
@@ -152,18 +161,16 @@ int test_FAESTVoleVerify() {
   }
   printf("\n");
 #endif
-  if (memcmp(hcom, hcomRec, lambdaBytes) == 0) {
-    return 1;
-  }
-  return 0;
+
+  int ret = memcmp(hcom, hcomRec, 2 * lambdaBytes);
+
+  free(hcomRec);
+  free(hcom);
+
+  return ret == 0 ? 1 : 0;
 }
 
 int test_ConvertToVoleProver() {
-
-  uint8_t rootKey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
-                         0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
-                         0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
-
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
   // vec_com_rec_t vecComRec;
@@ -215,11 +222,6 @@ int test_ConvertToVoleProver() {
 }
 
 int test_ConvertToVoleVerifier() {
-
-  uint8_t rootKey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
-                         0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
-                         0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
-
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
   vec_com_t vecCom;
   vec_com_rec_t vecComRec;
