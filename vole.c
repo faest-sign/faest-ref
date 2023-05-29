@@ -141,19 +141,15 @@ void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint
   // Step: 1
   for (uint32_t i = 0; i < tau; i++) {
     // Step: 2
-    uint32_t N;
-    uint32_t depth;
-    if (i < tau0) {
-      depth = k0;
-      N     = (1 << k0);
-    } else {
-      depth = k1;
-      N     = (1 << k1);
-    }
+    uint32_t depth = i < tau0 ? k0 : k1;
+    uint32_t N     = 1 << depth;
 
+    // Step 3
     ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
+    // Step 4
     uint32_t idx = NumRec(depth, chalout);
 
+    // Step 5
     vec_com_rec_t vecComRec;
     vector_reconstruction(pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, &vecComRec);
 
@@ -191,10 +187,11 @@ static bool is_all_zeros(const uint8_t* array, size_t len) {
 void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
                    uint32_t numVoleInstances, uint32_t depth, uint32_t outLenBytes, uint8_t* u,
                    uint8_t* v) {
-  // (depth + 1) x numVoleInstances array of outLenBytes
-  uint8_t* r = malloc((depth + 1) * numVoleInstances * outLenBytes);
+  // (depth + 1) x numVoleInstances array of outLenBytes; but we only need to rows at a time
+  uint8_t* r = malloc(2 * numVoleInstances * outLenBytes);
 
-#define R(row, column) (r + ((row)*numVoleInstances + (column)) * outLenBytes)
+#define R(row, column) (r + (((row) % 2) * numVoleInstances + (column)) * outLenBytes)
+#define V(idx) (v + (idx)*outLenBytes)
 
   // Step: 2
   const bool sd_all_zeros = is_all_zeros(sd, lambdaBytes);
@@ -218,7 +215,7 @@ void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
   for (uint32_t j = 0; j < depth; j++) {
     uint32_t depthloop = (numVoleInstances >> (j + 1));
     for (uint32_t i = 0; i < depthloop; i++) {
-      xorUint8Arr(v + j * outLenBytes, R(j, 2 * i + 1), v + j * outLenBytes, outLenBytes);
+      xorUint8Arr(V(j), R(j, 2 * i + 1), V(j), outLenBytes);
       xorUint8Arr(R(j, 2 * i), R(j, 2 * i + 1), R(j + 1, i), outLenBytes);
     }
   }

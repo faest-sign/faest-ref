@@ -4,6 +4,7 @@
 
 #include "vole.h"
 #include "instances.hpp"
+#include "randomness.h"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
@@ -36,7 +37,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     hcomRec.resize(lambdaBytes * 2);
     u.resize(ell_hat_bytes);
     b.resize(MAX(params.faest_param.k0, params.faest_param.k1), 0);
-    chal.resize(lambdaBytes);
+    chal.resize(lambdaBytes, 0);
 
     std::vector<vec_com_t> vec_com;
     vec_com.resize(params.faest_param.tau);
@@ -89,6 +90,58 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
     delete[] q[0];
     delete[] v[0];
+  }
+}
+
+BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
+  BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
+    const faest_paramset_t params = faest_get_paramset(param_id);
+
+    const uint32_t lambda      = params.faest_param.lambda;
+    const uint32_t lambdaBytes = lambda / 8;
+    const uint32_t ell_hat =
+        params.faest_param.l + params.faest_param.lambda * 2 + params.faest_param.b;
+    const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
+    const unsigned int max_depth = std::max(params.faest_param.k0, params.faest_param.k1);
+    const unsigned int max_nodes = 1 << max_depth;
+
+    std::vector<uint8_t> sd, sdprime, u, v, q, chal_out, chal;
+    sd.resize(max_nodes * lambdaBytes);
+    rand_bytes(sd.data(), sd.size());
+    sdprime.resize(max_nodes * lambdaBytes, 0);
+    chal_out.resize(max_depth);
+    u.resize(ell_hat_bytes);
+    v.resize(ell_hat_bytes * max_depth);
+    q.resize(ell_hat_bytes * max_depth);
+    chal.resize(lambdaBytes);
+    rand_bytes(chal.data(), chal.size());
+
+    for (unsigned int i = 0; i != params.faest_param.tau; ++i) {
+      unsigned int depth =
+          i < params.faest_param.t0 ? params.faest_param.k0 : params.faest_param.k1;
+      unsigned int nodes = 1 << depth;
+
+      ConvertToVole(lambda, lambdaBytes, sd.data(), nodes, depth, ell_hat_bytes, u.data(),
+                    v.data());
+
+      ChalDec(chal.data(), i, params.faest_param.k0, params.faest_param.t0, params.faest_param.k1,
+              params.faest_param.t1, chal_out.data());
+      const auto idx = NumRec(depth, chal_out.data());
+      for (unsigned int j = 1; j != nodes; ++j) {
+        std::copy(&sd[(j ^ idx) * lambdaBytes], &sd[((j ^ idx) + 1) * lambdaBytes],
+                  &sdprime[j * lambdaBytes]);
+      }
+
+      ConvertToVole(lambda, lambdaBytes, sdprime.data(), nodes, depth, ell_hat_bytes, nullptr,
+                    q.data());
+
+      for (unsigned int j = 0; j != depth; ++j) {
+        for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
+          q[j * ell_hat_bytes + inner] ^= chal_out[j] * u[inner];
+        }
+      }
+      BOOST_TEST(q == v);
+    }
   }
 }
 
