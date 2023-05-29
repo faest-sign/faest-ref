@@ -29,8 +29,7 @@ int test_ChalDec() {
 
 int test_FAESTVoleCommit() {
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
-                                                   //   vec_com_t vecCom;
-                                                   //   vec_com_rec_t vecComRec;
+
   uint32_t outlen      = 16;
   uint32_t lambda      = params.faest_param.lambda;
   uint32_t lambdaBytes = lambda / 8;

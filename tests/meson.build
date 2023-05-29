@@ -30,7 +30,7 @@ test('vole', vole)
 # test('faest', faest)
 
 if boost_test.found()
-  test_sources = files('aes.cpp', 'extended_tests.cpp', 'instances.cpp', 'universal_hashing.cpp', 'vc.cpp')
+  test_sources = files('aes.cpp', 'extended_tests.cpp', 'instances.cpp', 'universal_hashing.cpp', 'vc.cpp', 'vole.cpp')
   test_deps = []
   if ntl.found()
     test_sources += files('fields.cpp')
