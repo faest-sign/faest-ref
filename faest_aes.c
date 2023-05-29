@@ -528,13 +528,13 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
   }
   uint32_t ix, ik, iy;
   for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c < 3; c++) {
+    for (uint32_t c = 0; c <= 3; c++) {
       ix                 = 128 * (j - 1) + 32 * c;
       ik                 = 128 * j + 32 * c;
       iy                 = 16 * j + 4 * c;
-      bf128_t* bf_x_hat  = malloc(sizeof(bf128_t) * 3);
-      bf128_t* bf_xk_hat = malloc(sizeof(bf128_t) * 3);
-      for (uint32_t r = 0; r < 3; r++) {
+      bf128_t* bf_x_hat  = malloc(sizeof(bf128_t) * 4);
+      bf128_t* bf_xk_hat = malloc(sizeof(bf128_t) * 4);
+      for (uint32_t r = 0; r <= 3; r++) {
         // Step: 12..13
         uint8_t* x_tmp = malloc(8 * lambdaBytes);
         memcpy(x_tmp, x + ((ix + 8 * R) * lambdaBytes), 8 * lambdaBytes);
