@@ -443,13 +443,13 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
     }
     uint32_t ix, ik, iy;
     for (uint32_t j = 1; j < R; j++) {
-      for (uint32_t c = 0; c < 3; c++) {
+      for (uint32_t c = 0; c <= 3; c++) {
         ix                 = 128 * (j - 1) + 32 * c;
         ik                 = 128 * j + 32 * c;
         iy                 = 16 * j + 4 * c;
-        bf128_t* bf_x_hat  = malloc(sizeof(bf128_t) * 3);
-        bf128_t* bf_xk_hat = malloc(sizeof(bf128_t) * 3);
-        for (uint32_t r = 0; r < 3; r++) {
+        bf128_t* bf_x_hat  = malloc(sizeof(bf128_t) * 4);
+        bf128_t* bf_xk_hat = malloc(sizeof(bf128_t) * 4);
+        for (uint32_t r = 0; r <= 3; r++) {
           // Step: 12..13
           uint8_t x_tmp[8];
           memcpy(x_tmp, x + (ix + (8 * R)), 8);
@@ -459,9 +459,10 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
           memcpy(xk_tmp, xk + (ix + 8 * R), 8);
           bf_xk_hat[r] = bf128_byte_combine(xk_tmp, true);
         }
-        bf8_t bf_one   = bf8_one();
-        bf8_t bf_two   = bf8_add(bf_one, bf_one);
-        bf8_t bf_three = bf8_add(bf_two, bf_one);
+        bf8_t bf_one = bf8_one();
+        // TODO
+        bf8_t bf_two   = 2;
+        bf8_t bf_three = 3;
         // Step : 14
         bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[0], bf128_from_bf8(bf_two)));
         bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[1], bf128_from_bf8(bf_three)));
@@ -545,9 +546,10 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
         bf_xk_hat[r] = bf128_byte_combine(xk_tmp, true);
         free(xk_tmp);
       }
-      bf8_t bf_one   = bf8_one();
-      bf8_t bf_two   = bf8_add(bf_one, bf_one);
-      bf8_t bf_three = bf8_add(bf_two, bf_one);
+      bf8_t bf_one = bf8_one();
+      // FIXME
+      bf8_t bf_two   = 2;
+      bf8_t bf_three = 3;
       // Step : 14
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[0], bf128_from_bf8(bf_two)));
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[1], bf128_from_bf8(bf_three)));
