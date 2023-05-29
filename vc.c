@@ -8,7 +8,6 @@
 
 #include "vc.h"
 #include "random_oracle.h"
-#include "tree.h"
 #include "compat.h"
 #include "aes.h"
 

@@ -1,12 +1,10 @@
 #ifndef FAEST_VC_H
 #define FAEST_VC_H
 
-#include <stdio.h>
 #include <stdint.h>
-#include <math.h>
-#include <stdlib.h>
 
 #include "instances.h"
+#include "tree.h"
 
 FAEST_BEGIN_C_DECL
 

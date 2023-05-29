@@ -12,6 +12,7 @@
 #include "universal_hashing.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 // TODO: Do not pass lambdaBytes everywhere, compute it in the function....
 

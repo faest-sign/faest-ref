@@ -8,7 +8,6 @@
 
 #include "vc.h"
 #include "fields.h"
-#include "tree.h"
 #include "compat.h"
 
 #include <array>

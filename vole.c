@@ -7,7 +7,6 @@
 #endif
 
 #include "vole.h"
-#include "tree.h"
 #include "aes.h"
 #include "utils.h"
 #include "random_oracle.h"
