@@ -89,7 +89,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   // Step: 3
   uint8_t* hcom     = malloc(lambdaBytes * 2);
   vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
-  uint8_t* u_       = malloc(l);
+  // TODO: shouldn't this be ell_hat_bytes?
+  uint8_t* u_ = malloc(l);
   // v has \hat \ell rows, \lambda columns, storing in column-major order
   uint8_t** v = malloc(lambda * sizeof(uint8_t*));
   v[0]        = malloc(lambda * ell_hat_bytes);
