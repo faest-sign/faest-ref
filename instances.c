@@ -4,11 +4,10 @@
 
 #if defined(HAVE_CONFIG_H)
 #include <config.h>
-#else
-#error "FIXME: Instances are currently only listed in config.h"
 #endif
 
 #include "instances.h"
+#include "parameters.h"
 
 const char* faest_get_param_name(faest_paramid_t paramid) {
   switch (paramid) {

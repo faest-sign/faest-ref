@@ -386,10 +386,11 @@ if get_option('EM-256').enabled()
 endif
 
 # also make data from all parameter sets available "globally"
+parameter_data = configuration_data()
 foreach parameter_set : parameter_sets
   parameter_set_prefix = 'FAEST_@0@'.format(parameter_set.get('PARAM'))
   foreach key : parameter_set.keys()
-    conf_data.set('@0@_@1@'.format(parameter_set_prefix, key), parameter_set.get(key))
+    parameter_data.set('@0@_@1@'.format(parameter_set_prefix, key), parameter_set.get(key))
   endforeach
 endforeach
 
@@ -416,6 +417,13 @@ config_header = configure_file(
   configuration: conf_data
 )
 defines += '-DHAVE_CONFIG_H'
+
+# generate parameters.h
+config_header = configure_file(
+  output: 'parameters.h',
+  output_format: 'c',
+  configuration: parameter_data
+)
 
 include_directories = [include_directories('.')]
 

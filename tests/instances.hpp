@@ -5,13 +5,8 @@
 #ifndef INSTANCES_HPP
 #define INSTANCES_HPP
 
-#if defined(HAVE_CONFIG_H)
-#include <config.h>
-#else
-#error "FIXME: Instances are currently only listed in config.h"
-#endif
-
 #include "instances.h"
+#include "parameters.h"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>

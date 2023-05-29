@@ -15,6 +15,7 @@
 #include "faest_@PARAM_L@.h"
 #include "owf.h"
 #include "randomness.h"
+#include "parameters.h"
 
 #include <string.h>
 
