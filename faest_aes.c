@@ -906,12 +906,13 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   memcpy(v_tilde, bf_v, Lke * lambdaBytes);
 
   // Step: 7
-  uint8_t* A0 = malloc((lambdaBytes * (Ske / 8)) + (2 * lambdaBytes * Senc) + lambdaBytes);
-  uint8_t* A1 = malloc((lambdaBytes * (Ske / 8)) + (2 * lambdaBytes * Senc) + lambdaBytes);
-  uint8_t* k  = malloc((R + 1) * 128);
-  uint8_t* vk = malloc(lambdaBytes * ((R + 1) * 128));
-  uint8_t* qk = malloc(lambdaBytes * ((R + 1) * 128));
-  uint8_t* B  = malloc(Ske * lambdaBytes * Nwd);
+  const unsigned int length_a = (Ske / 8) + (2 * Senc) + 1;
+  uint8_t* A0                 = malloc(lambdaBytes * length_a);
+  uint8_t* A1                 = malloc(lambdaBytes * length_a);
+  uint8_t* k                  = malloc((R + 1) * 128);
+  uint8_t* vk                 = malloc(lambdaBytes * ((R + 1) * 128));
+  uint8_t* qk                 = malloc(lambdaBytes * ((R + 1) * 128));
+  uint8_t* B                  = malloc(Ske * lambdaBytes * Nwd);
   aes_key_schedule_constraints(lambda, R, Nwd, Ske, Lke, w_tilde, v_tilde, 0, NULL, NULL, A0, A1, k,
                                vk, B, qk);
 
@@ -958,8 +959,8 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   bf128_t* bf_a0_vs_concat = malloc(sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
   memcpy(bf_a0_vs_concat, A0, sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
 
-  zk_hash_128(a_tilde, chall, bf_a1_us_concat, l / lambda);
-  zk_hash_128(b_tilde, chall, bf_a0_vs_concat, l / lambda);
+  zk_hash_128(a_tilde, chall, bf_a1_us_concat, length_a - 1);
+  zk_hash_128(b_tilde, chall, bf_a0_vs_concat, length_a - 1);
 
   free(A1);
   free(A0);
