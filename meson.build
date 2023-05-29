@@ -570,7 +570,7 @@ endforeach
 run_target('prepare_nist',
   command: [
     python,
-    files(join_paths(meson.project_source_root(), 'tools', 'prepare_nist.py')) + [meson.project_source_root(), meson.project_build_root(), 'submission'] + all_names
+    [join_paths(meson.project_source_root(), 'tools', 'prepare_nist.py'), meson.project_source_root(), meson.project_build_root(), join_paths(meson.project_build_root(), 'submission')] + all_names
   ]
 )
 
