@@ -45,7 +45,7 @@ uint8_t* aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uin
     bf8_t* bf_y = malloc(y_out_len);
     for (uint32_t i = 0; i < lambdaBytes; i++) {
       for (uint32_t j = 0; j < 8; j++) {
-        bf_y[(i * 8) + j] = bf8_from_bit(get_bit(x + i, j));
+        bf_y[(i * 8) + j] = bf8_from_bit(get_bit(x[i], j));
       }
     }
     // Step: 4
@@ -55,7 +55,7 @@ uint8_t* aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uin
     for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
       if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
         for (uint32_t i = (j * 32); i <= ((j * 32) + 31); i++) {
-          bf_y[i] = bf8_from_bit(get_bit(x + (i / 8), i % 8));
+          bf_y[i] = bf8_from_bit(get_bit(x[i / 8], i % 8));
         }
         i_wd += 32;
       } else {
@@ -76,7 +76,7 @@ uint8_t* aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uin
   bf128_t* bf_y = malloc(y_out_len);
   for (uint32_t i = 0; i < lambdaBytes; i++) {
     for (uint32_t j = 0; j < 8; j++) {
-      bf_y[(i * 8) + j] = bf128_from_bit(get_bit(x + i, j));
+      bf_y[(i * 8) + j] = bf128_from_bit(get_bit(x[i], j));
     }
   }
   // Step: 4
@@ -87,7 +87,7 @@ uint8_t* aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uin
     if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
 
       for (uint32_t i = (j * 32); i <= ((j * 32) + 31); i++) {
-        bf_y[i] = bf128_from_bit(get_bit(x + (i / 8), i % 8));
+        bf_y[i] = bf128_from_bit(get_bit(x[i / 8], i % 8));
       }
       i_wd += 32;
     } else {
@@ -140,27 +140,26 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
     bf8_t bf_minus_mkey = bf8_from_bit(1 - Mkey);
     bf8_t bf_minus_mtag = bf8_from_bit(1 - Mtag);
 
-    bf8_t* bf_x_tilde = malloc(8);
+    bf8_t bf_x_tilde[8];
 
     for (uint32_t j = 0; j < Ske; j++) {
       for (uint32_t i = 0; i < 8; i++) {
-        bf_x_tilde[i] = bf8_add(bf8_from_bit(get_bit(x + j, i)),
-                                bf8_from_bit(get_bit(xk + ((iwd + 8 * c) / 8), i)));
+        bf_x_tilde[i] = bf8_add(bf8_from_bit(get_bit(x[j], i)),
+                                bf8_from_bit(get_bit(xk[(iwd + 8 * c) / 8], i)));
       }
 
       if (Mtag == 0 && rmvRcon == true && c == 0) {
         uint8_t rcon = Rcon[ircon];
         ircon        = ircon + 1;
-        bf8_t* bf_r  = malloc(8);
+        bf8_t bf_r[8];
         for (uint32_t i = 0; i < 8; i++) {
           bf_r[i]       = bf8_from_bit(get_bit(rcon, i));
           bf_r[i]       = bf8_mul(bf_r[i], bf_minus_mkey);
           bf_x_tilde[i] = bf8_add(bf_x_tilde[i], bf_r[i]);
         }
-        free(bf_r);
       }
 
-      bf8_t* bf_y_tilde = malloc(8);
+      bf8_t bf_y_tilde[8];
 
       bf_y_tilde[7] = bf8_add(bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
                               bf8_mul(bf_minus_mtag, bf_minus_mkey));
@@ -189,14 +188,12 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
           }
         }
       }
-      free(bf_y_tilde);
     }
     uint8_t* y_out = malloc(y_out_len);
     for (uint32_t i = 0; i < y_out_len; i++) {
       bf8_store(y_out + i, bf_y[i]);
     }
     free(bf_y);
-    free(bf_x_tilde);
     return y_out;
   }
 
@@ -215,8 +212,8 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
   for (uint32_t j = 0; j < Ske; j++) {
 
     for (uint32_t i = 0; i < 8; i++) {
-      bf_x_tilde[i] = bf128_add(bf128_from_bit(get_bit(x + j, i)),
-                                bf128_from_bit(get_bit(xk + ((iwd + 8 * c) / 8), i)));
+      bf_x_tilde[i] = bf128_add(bf128_from_bit(get_bit(x[j], i)),
+                                bf128_from_bit(get_bit(xk[(iwd + 8 * c) / 8], i)));
     }
 
     if (Mtag == 0 && rmvRcon == true && c == 0) {
@@ -320,25 +317,21 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
       bf128_t* bf_v_w_dash_hat = malloc(sizeof(bf128_t) * 4);
       for (uint32_t r = 0; r <= 3; r++) {
         // Step: 10..11
-        uint8_t* k_tmp = malloc(8);
+        uint8_t k_tmp[8];
         memcpy(k_tmp, k + (iwd + 8 * r), 8);
         bf_k_hat[(r + 3) % 4] = bf128_byte_combine(k_tmp, true);
-        free(k_tmp);
 
-        uint8_t* v_k_tmp = malloc(8);
+        uint8_t v_k_tmp[8];
         memcpy(v_k_tmp, vk + (iwd + 8 * r), 8);
         bf_v_k_hat[(r + 3) % 4] = bf128_byte_combine(v_k_tmp, true);
-        free(v_k_tmp);
 
-        uint8_t* w_dash_tmp = malloc(8);
+        uint8_t w_dash_tmp[8];
         memcpy(w_dash_tmp, w_dash + (32 * j + 8 * r), 8);
         bf_w_dash_hat[r] = bf128_byte_combine(w_dash_tmp, true);
-        free(w_dash_tmp);
 
-        uint8_t* v_w_dash_tmp = malloc(8);
+        uint8_t v_w_dash_tmp[8];
         memcpy(v_w_dash_tmp, v_w_dash + (32 * j + 8 * r), 8);
         bf_v_w_dash_hat[r] = bf128_byte_combine(v_w_dash_tmp, true);
-        free(v_w_dash_tmp);
       }
       // Step: 13..17
       for (uint32_t r = 0; r <= 3; r++) {
@@ -392,7 +385,7 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
       bf_tmp = bf128_mul(bf_q_hat_k[r], bf_q_hat_w_dash[r]);
       bf_tmp = bf128_add(bf_tmp, bf128_mul(bf128_mul(bf128_from_bf8(bf8_one()), bf128_load(delta)),
                                            bf128_load(delta)));
-      bf128_store(B[4 * j + r], bf_tmp);
+      bf128_store(&B[4 * j + r], bf_tmp);
     }
     if (lambda == 192) {
       iwd = iwd + 192;
@@ -434,46 +427,41 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
 
     // STep: 2
     for (uint32_t i = 0; i < 16; i++) {
-      bf8_t* bf_xin = malloc(8);
+      bf8_t bf_xin[8];
       // STep: 3
       for (uint32_t j = 0; j < 8; j++) {
         // STep: 4
-        bf_xin[j] =
-            bf8_mul(bf8_mul(bf8_from_bit(get_bit(in + (8 * i), j)), bf_minus_mtag), bf_minus_mkey);
+        bf_xin[j] = bf8_mul(bf8_mul(bf8_from_bit(get_bit(in[i], j)), bf_minus_mtag), bf_minus_mkey);
       }
       // STep: 5
-      uint8_t* xin_tmp = malloc(8);
+      uint8_t xin_tmp[8];
       memcpy(xin_tmp, bf_xin, 8);
-      uint8_t* xk_tmp = malloc(8);
+      uint8_t xk_tmp[8];
       memcpy(xk_tmp, xk + (8 * i), 8);
       bf_y[i] = bf128_add(bf128_byte_combine(xin_tmp, true), bf128_byte_combine(xk_tmp, true));
-      free(bf_xin);
-      free(xin_tmp);
-      free(xk_tmp);
     }
     uint32_t ix, ik, iy;
     for (uint32_t j = 1; j < R; j++) {
-      for (uint32_t c = 0; c < 3; c++) {
+      for (uint32_t c = 0; c <= 3; c++) {
         ix                 = 128 * (j - 1) + 32 * c;
         ik                 = 128 * j + 32 * c;
         iy                 = 16 * j + 4 * c;
-        bf128_t* bf_x_hat  = malloc(sizeof(bf128_t) * 3);
-        bf128_t* bf_xk_hat = malloc(sizeof(bf128_t) * 3);
-        for (uint32_t r = 0; r < 3; r++) {
+        bf128_t* bf_x_hat  = malloc(sizeof(bf128_t) * 4);
+        bf128_t* bf_xk_hat = malloc(sizeof(bf128_t) * 4);
+        for (uint32_t r = 0; r <= 3; r++) {
           // Step: 12..13
-          uint8_t* x_tmp = malloc(8);
-          memcpy(x_tmp, x + (ix + (8 * R)), 8);
+          uint8_t x_tmp[8];
+          memcpy(x_tmp, x + (ix + (8 * R)) / 8, 8);
           bf_x_hat[r] = bf128_byte_combine(x_tmp, true);
-          free(x_tmp);
 
-          uint8_t* xk_tmp = malloc(8);
-          memcpy(xk_tmp, xk + (ix + 8 * R), 8);
+          uint8_t xk_tmp[8];
+          memcpy(xk_tmp, xk + (ix + 8 * R) / 8, 8);
           bf_xk_hat[r] = bf128_byte_combine(xk_tmp, true);
-          free(xk_tmp);
         }
-        bf8_t bf_one   = bf8_one();
-        bf8_t bf_two   = bf8_add(bf_one, bf_one);
-        bf8_t bf_three = bf8_add(bf_two, bf_one);
+        bf8_t bf_one = bf8_one();
+        // TODO
+        bf8_t bf_two   = 2;
+        bf8_t bf_three = 3;
         // Step : 14
         bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[0], bf128_from_bf8(bf_two)));
         bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[1], bf128_from_bf8(bf_three)));
@@ -524,7 +512,7 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
   for (uint32_t i = 0; i < 16; i++) {
     bf128_t* bf_xin = malloc(sizeof(bf128_t) * 8);
     for (uint32_t j = 0; j < 8; j++) {
-      bf_xin[j] = bf128_mul(bf128_mul(bf128_from_bit(get_bit(in + (8 * i), j)), bf_minus_mtag),
+      bf_xin[j] = bf128_mul(bf128_mul(bf128_from_bit(get_bit(in[i], j)), bf_minus_mtag),
                             bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey));
     }
     // STep: 5
@@ -539,13 +527,13 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
   }
   uint32_t ix, ik, iy;
   for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c < 3; c++) {
+    for (uint32_t c = 0; c <= 3; c++) {
       ix                 = 128 * (j - 1) + 32 * c;
       ik                 = 128 * j + 32 * c;
       iy                 = 16 * j + 4 * c;
-      bf128_t* bf_x_hat  = malloc(sizeof(bf128_t) * 3);
-      bf128_t* bf_xk_hat = malloc(sizeof(bf128_t) * 3);
-      for (uint32_t r = 0; r < 3; r++) {
+      bf128_t* bf_x_hat  = malloc(sizeof(bf128_t) * 4);
+      bf128_t* bf_xk_hat = malloc(sizeof(bf128_t) * 4);
+      for (uint32_t r = 0; r <= 3; r++) {
         // Step: 12..13
         uint8_t* x_tmp = malloc(8 * lambdaBytes);
         memcpy(x_tmp, x + ((ix + 8 * R) * lambdaBytes), 8 * lambdaBytes);
@@ -557,9 +545,10 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
         bf_xk_hat[r] = bf128_byte_combine(xk_tmp, true);
         free(xk_tmp);
       }
-      bf8_t bf_one   = bf8_one();
-      bf8_t bf_two   = bf8_add(bf_one, bf_one);
-      bf8_t bf_three = bf8_add(bf_two, bf_one);
+      bf8_t bf_one = bf8_one();
+      // FIXME
+      bf8_t bf_two   = 2;
+      bf8_t bf_three = 3;
       // Step : 14
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[0], bf128_from_bf8(bf_two)));
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[1], bf128_from_bf8(bf_three)));
@@ -627,21 +616,21 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
 
   if (m == 1) {
 
-    bf8_t* bf_x_tilde   = malloc(8);
-    bf8_t* bf_xout      = malloc(8);
+    bf8_t bf_x_tilde[8];
+    bf8_t bf_xout[8];
     bf8_t bf_minus_mtag = bf8_from_bit(1 - Mtag);
     bf8_t bf_minus_mkey = bf8_from_bit(1 - Mkey);
 
     // Step:2..4
     for (uint32_t j = 0; j < R; j++) {
-      for (uint32_t c = 0; c < 3; c++) {
-        for (uint32_t r = 0; r < 3; r++) {
+      for (uint32_t c = 0; c <= 3; c++) {
+        for (uint32_t r = 0; r <= 3; r++) {
           // Step: 5..6
           ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
           if (j < (R - 1)) {
             // Step: 7
             for (uint32_t i = 0; i < 8; i++) {
-              bf_x_tilde[i] = bf8_from_bit(get_bit(x + (ird / 8), i));
+              bf_x_tilde[i] = bf8_from_bit(get_bit(x[ird / 8], i));
             }
 
           } else {
@@ -651,25 +640,24 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
               bf_xout[i] =
                   bf8_mul(bf8_mul(bf8_from_bit(get_bit(out[(ird - 1152) / 8], i)), bf_minus_mtag),
                           bf_minus_mkey);
-              bf_x_tilde[i] = bf8_add(bf_xout[i], bf8_from_bit(get_bit(xk + (128 + ird) / 8, i)));
+              bf_x_tilde[i] = bf8_add(bf_xout[i], bf8_from_bit(get_bit(xk[(128 + ird) / 8], i)));
             }
           }
           // Step: 12..20
-          bf8_t* bf_y_tilde = malloc(8);
-          bf_y_tilde[7]     = bf8_add(bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
-                                      bf8_mul(bf_minus_mtag, bf_minus_mkey));
-          bf_y_tilde[6]     = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[1]);
-          bf_y_tilde[5]     = bf8_add(bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]),
-                                      bf8_mul(bf_minus_mtag, bf_minus_mkey));
-          bf_y_tilde[4]     = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[5]), bf_x_tilde[2]);
-          bf_y_tilde[3]     = bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[4]), bf_x_tilde[1]);
-          bf_y_tilde[2]     = bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[3]), bf_x_tilde[0]);
-          bf_y_tilde[1]     = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[2]);
-          bf_y_tilde[0]     = bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[1]);
+          bf8_t bf_y_tilde[8];
+          bf_y_tilde[7] = bf8_add(bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
+                                  bf8_mul(bf_minus_mtag, bf_minus_mkey));
+          bf_y_tilde[6] = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[1]);
+          bf_y_tilde[5] = bf8_add(bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]),
+                                  bf8_mul(bf_minus_mtag, bf_minus_mkey));
+          bf_y_tilde[4] = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[5]), bf_x_tilde[2]);
+          bf_y_tilde[3] = bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[4]), bf_x_tilde[1]);
+          bf_y_tilde[2] = bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[3]), bf_x_tilde[0]);
+          bf_y_tilde[1] = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[2]);
+          bf_y_tilde[0] = bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[1]);
 
           // Step: 21
           bf_y[16 * j + 4 * c + r] = bf128_byte_combine(bf_y_tilde, true);
-          free(bf_y_tilde);
         }
       }
     }
@@ -678,8 +666,6 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
       bf128_store(y_out + i, bf_y[idx]);
       idx++;
     }
-    free(bf_x_tilde);
-    free(bf_xout);
     free(bf_y);
     return 1;
   }
@@ -692,15 +678,15 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
 
   // STep: 2..4
   for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c < 3; c++) {
-      for (uint32_t r = 0; r < 3; r++) {
+    for (uint32_t c = 0; c <= 3; c++) {
+      for (uint32_t r = 0; r <= 3; r++) {
         // Step: 5
         ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
         // Step: 6
         if (j < (R - 1)) {
           // Step: 7
           for (uint32_t i = 0; i < 8; i++) {
-            bf_x_tilde[i] = bf128_from_bit(get_bit(x + (ird / 8), i));
+            bf_x_tilde[i] = bf128_from_bit(get_bit(x[ird / 8], i));
           }
         } else {
           // Step: 9
@@ -712,13 +698,12 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
             bf_xout[i] = bf128_mul(bf128_mul(bf128_load(out_zeros_concat), bf_minus_mtag),
                                    bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey));
             // Step: 11
-            bf_x_tilde[i] =
-                bf128_add(bf_xout[i], bf128_from_bit(get_bit(xk + ((128 + ird) / 8), i)));
+            bf_x_tilde[i] = bf128_add(bf_xout[i], bf128_from_bit(get_bit(xk[(128 + ird) / 8], i)));
             free(out_zeros_concat);
           }
         }
         // Step: 12
-        bf128_t* bf_y_tilde = malloc(8);
+        bf128_t bf_y_tilde[8];
         // STep: 13..20
         bf_y_tilde[7] = bf128_add(
             bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
@@ -737,7 +722,6 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
         uint8_t* y_tilde = malloc(lambdaBytes * 8);
         memcpy(y_tilde, bf_y_tilde, lambdaBytes * 8);
         bf_y[16 * j + 4 * c + r] = bf128_byte_combine(y_tilde, false);
-        free(bf_y_tilde);
         free(y_tilde);
       }
     }
@@ -946,7 +930,7 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   bf128_t bf_us = bf128_zero();
   bf128_t bf_vs = bf128_zero();
   for (uint32_t i = 0; i < lambda; i++) {
-    bf_us = bf128_add(bf_us, bf128_from_bf8(get_bit(u + ((i + l) / 8), (i + l) % 8)));
+    bf_us = bf128_add(bf_us, bf128_from_bf8(get_bit(u[(i + l) / 8], (i + l) % 8)));
     bf_vs = bf128_add(bf_vs, bf_v[l + i]);
   }
   free(bf_v);
