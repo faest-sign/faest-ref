@@ -624,8 +624,8 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
 
     // Step:2..4
     for (uint32_t j = 0; j < R; j++) {
-      for (uint32_t c = 0; c < 3; c++) {
-        for (uint32_t r = 0; r < 3; r++) {
+      for (uint32_t c = 0; c <= 3; c++) {
+        for (uint32_t r = 0; r <= 3; r++) {
           // Step: 5..6
           ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
           if (j < (R - 1)) {
@@ -679,8 +679,8 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
 
   // STep: 2..4
   for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c < 3; c++) {
-      for (uint32_t r = 0; r < 3; r++) {
+    for (uint32_t c = 0; c <= 3; c++) {
+      for (uint32_t r = 0; r <= 3; r++) {
         // Step: 5
         ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
         // Step: 6
