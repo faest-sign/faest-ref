@@ -718,7 +718,7 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
           }
         }
         // Step: 12
-        bf128_t* bf_y_tilde = malloc(8);
+        bf128_t bf_y_tilde[8];
         // STep: 13..20
         bf_y_tilde[7] = bf128_add(
             bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
@@ -737,7 +737,6 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
         uint8_t* y_tilde = malloc(lambdaBytes * 8);
         memcpy(y_tilde, bf_y_tilde, lambdaBytes * 8);
         bf_y[16 * j + 4 * c + r] = bf128_byte_combine(y_tilde, false);
-        free(bf_y_tilde);
         free(y_tilde);
       }
     }
