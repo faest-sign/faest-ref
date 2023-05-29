@@ -16,7 +16,6 @@
 typedef struct tree_t {
   size_t depth;      /* The depth of the tree */
   uint8_t** nodes;   /* The data for each node */
-  size_t dataSize;   /* The size data at each node, in bytes */
   uint8_t* haveNode; /* If we have the data (seed or hash) for node i, haveSeed[i] is 1 */
   uint8_t* exists;   /* Since the tree is not always complete, nodes marked 0 don't exist */
   size_t numNodes;   /* The total number of nodes in the tree */
@@ -42,37 +41,35 @@ static int isLeftChild(size_t node) {
   return (node % 2 == 1);
 }
 
-static tree_t* createTree(const faest_paramset_t* params, uint32_t num_nodes) {
-  tree_t* tree = malloc(sizeof(tree_t));
-
+static tree_t createTree(const faest_paramset_t* params, uint32_t num_nodes) {
+  tree_t tree;
   uint32_t lambdaBytes = params->faest_param.lambda / 8;
 
-  tree->depth = ceil_log2(num_nodes) + 1;
-  tree->numNodes =
-      ((1 << (tree->depth)) - 1) -
-      ((1 << (tree->depth - 1)) - num_nodes); /* Num nodes in complete - number of missing leaves */
-  tree->numLeaves = num_nodes;
-  tree->dataSize  = lambdaBytes;
-  tree->nodes     = malloc(tree->numNodes * sizeof(uint8_t*));
+  tree.depth = ceil_log2(num_nodes) + 1;
+  tree.numNodes =
+      ((1 << (tree.depth)) - 1) -
+      ((1 << (tree.depth - 1)) - num_nodes); /* Num nodes in complete - number of missing leaves */
+  tree.numLeaves = num_nodes;
+  tree.nodes     = malloc(tree.numNodes * sizeof(uint8_t*));
 
-  uint8_t* slab = calloc(tree->numNodes, lambdaBytes);
+  uint8_t* slab = calloc(tree.numNodes, lambdaBytes);
 
-  for (size_t i = 0; i < tree->numNodes; i++) {
-    tree->nodes[i] = slab;
+  for (size_t i = 0; i < tree.numNodes; i++) {
+    tree.nodes[i] = slab;
     slab += lambdaBytes;
   }
 
-  tree->haveNode = calloc(tree->numNodes, 1);
+  tree.haveNode = calloc(tree.numNodes, 1);
 
   /* Depending on the number of leaves, the tree may not be complete */
-  tree->exists = calloc(tree->numNodes, 1);
-  memset(tree->exists + tree->numNodes - tree->numLeaves, 1, tree->numLeaves); /* Set leaves */
-  for (int i = tree->numNodes - tree->numLeaves; i > 0; i--) {
-    if (exists(tree, 2 * i + 1) || exists(tree, 2 * i + 2)) {
-      tree->exists[i] = 1;
+  tree.exists = calloc(tree.numNodes, 1);
+  memset(tree.exists + tree.numNodes - tree.numLeaves, 1, tree.numLeaves); /* Set leaves */
+  for (int i = tree.numNodes - tree.numLeaves; i > 0; i--) {
+    if (exists(&tree, 2 * i + 1) || exists(&tree, 2 * i + 2)) {
+      tree.exists[i] = 1;
     }
   }
-  tree->exists[0] = 1;
+  tree.exists[0] = 1;
 
   return tree;
 }
@@ -133,15 +130,15 @@ static void expandSeeds(tree_t* tree, const faest_paramset_t* params) {
   free(out);
 }
 
-static tree_t* generateSeeds(const uint8_t* rootSeed, const faest_paramset_t* params,
-                             uint32_t numVoleInstances) {
+static tree_t generateSeeds(const uint8_t* rootSeed, const faest_paramset_t* params,
+                            uint32_t numVoleInstances) {
 
   uint32_t lambdaBytes = params->faest_param.lambda / 8;
-  tree_t* tree         = createTree(params, numVoleInstances);
+  tree_t tree          = createTree(params, numVoleInstances);
 
-  memcpy(tree->nodes[0], rootSeed, lambdaBytes);
-  tree->haveNode[0] = 1;
-  expandSeeds(tree, params);
+  memcpy(tree.nodes[0], rootSeed, lambdaBytes);
+  tree.haveNode[0] = 1;
+  expandSeeds(&tree, params);
 
 #if 0
   printTree("tree", tree);
@@ -198,21 +195,21 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, u
                        uint32_t lambdaBytes, vec_com_t* vecCom, uint32_t numVoleInstances) {
 
   // Generating the tree
-  tree_t* tree = generateSeeds(rootKey, params, numVoleInstances);
+  tree_t tree = generateSeeds(rootKey, params, numVoleInstances);
 
   // Initialzing stuff
   vecCom->h   = malloc(lambdaBytes * 2);
-  vecCom->k   = malloc(tree->numNodes * lambdaBytes);
+  vecCom->k   = malloc(tree.numNodes * lambdaBytes);
   vecCom->com = malloc(numVoleInstances * lambdaBytes * 2);
   vecCom->sd  = malloc(numVoleInstances * lambdaBytes);
 
   // Step: 1..3
-  for (uint32_t i = 0; i < tree->numNodes; i++) {
-    memcpy(vecCom->k + (i * lambdaBytes), tree->nodes[i], lambdaBytes);
+  for (uint32_t i = 0; i < tree.numNodes; i++) {
+    memcpy(vecCom->k + (i * lambdaBytes), tree.nodes[i], lambdaBytes);
   }
 
   // Step: 4..5
-  uint8_t** leaves = getLeaves(tree);
+  uint8_t** leaves = getLeaves(&tree);
   for (uint32_t i = 0; i < numVoleInstances; i++) {
     H0_context_t h0_ctx;
     H0_init(&h0_ctx, lambda);
@@ -220,7 +217,7 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, u
     H0_final(&h0_ctx, vecCom->sd + (i * lambdaBytes), lambdaBytes,
              vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
-  freeTree(tree);
+  freeTree(&tree);
 
   // Step: 6
   H1_context_t h1_ctx;
