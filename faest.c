@@ -391,7 +391,7 @@ int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
   const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
 
   // serialize c_i
-  for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
+  for (unsigned int i = 0; i < params->faest_param.tau - 1; ++i) {
     memcpy(dst, signature->c[i], ell_hat_bytes);
     dst += ell_hat_bytes;
   }
