@@ -386,22 +386,26 @@ if get_option('EM-256').enabled()
 endif
 
 # also make data from all parameter sets available "globally"
+parameter_data = configuration_data()
 foreach parameter_set : parameter_sets
   parameter_set_prefix = 'FAEST_@0@'.format(parameter_set.get('PARAM'))
   foreach key : parameter_set.keys()
-    conf_data.set('@0@_@1@'.format(parameter_set_prefix, key), parameter_set.get(key))
+    parameter_data.set('@0@_@1@'.format(parameter_set_prefix, key), parameter_set.get(key))
   endforeach
 endforeach
 
 # dependencies
-# for test vector generation
 openssl = dependency('openssl', required: false)
 boost_program_options = dependency('boost', required: false, modules: ['program_options'])
+
 build_dependencies = []
 if openssl.found()
   build_dependencies += [openssl]
   defines += '-DHAVE_OPENSSL'
 endif
+
+pymod = import('python')
+python = pymod.find_installation('python3', required: true)
 
 if host_machine.system() == 'windows'
   # require new enough Windows for bcrypt to be available
@@ -416,6 +420,13 @@ config_header = configure_file(
   configuration: conf_data
 )
 defines += '-DHAVE_CONFIG_H'
+
+# generate parameters.h
+config_header = configure_file(
+  output: 'parameters.h',
+  output_format: 'c',
+  configuration: parameter_data
+)
 
 include_directories = [include_directories('.')]
 
@@ -551,8 +562,16 @@ pkg.generate(
 )
 
 # SUPERCOP / NIST files
+all_names = []
 foreach parameter_set : parameter_sets
+  all_names += 'faest_@0@'.format(parameter_set.get('PARAM_L'))
   subdir('faest_@0@'.format(parameter_set.get('PARAM_L')))
 endforeach
+run_target('prepare_nist',
+  command: [
+    python,
+    files(join_paths(meson.project_source_root(), 'tools', 'prepare_nist.py')) + [meson.project_source_root(), meson.project_build_root(), 'submission'] + all_names
+  ]
+)
 
 subdir('tests')

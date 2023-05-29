@@ -18,7 +18,7 @@ headers = [
 
 libfaest_256s = static_library('faest_256s',
   sources,
-  dependencies: libfaest_dependency,
+  dependencies: libfaest_static_dependency,
   include_directories: include_directories,
   c_args: defines + c_flags
 )
@@ -38,10 +38,17 @@ if openssl.found()
 endif
 if boost_program_options.found()
   bench_sources = files(join_paths(meson.project_source_root(), 'tools', 'bench.cpp'))
-  bench = executable('feast_256s_bench', [sources] + faest_sources + bench_sources,
-    dependencies: [openssl, boost_program_options],
+  bench = executable('feast_256s_bench', bench_sources,
+    dependencies: [libfaest_256s_dependency, boost_program_options],
     include_directories: include_directories,
     c_args: defines + c_flags,
     cpp_args: defines + cpp_flags
   )
 endif
+test_sources = files(join_paths(meson.project_source_root(), 'tests', 'api_test.c'))
+faest_256s_test = executable('faest_256s_api_test', test_sources,
+  dependencies: [libfaest_256s_dependency],
+  include_directories: include_directories,
+  c_args: defines + c_flags,
+)
+test('faest_256s_api_test', faest_256s_test)
