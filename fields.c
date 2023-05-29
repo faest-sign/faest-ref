@@ -193,7 +193,7 @@ void bf128_store(uint8_t* dst, bf128_t src) {
 
 bf128_t bf128_rand() {
   bf128_t ret;
-  rand_bytes((uint8_t*)ret.values, sizeof(ret));
+  rand_bytes((uint8_t*)&ret, sizeof(ret));
   return ret;
 }
 
@@ -325,7 +325,7 @@ void bf192_store(uint8_t* dst, bf192_t src) {
 
 bf192_t bf192_rand() {
   bf192_t ret;
-  rand_bytes((uint8_t*)ret.values, sizeof(ret));
+  rand_bytes((uint8_t*)&ret, sizeof(ret));
   return ret;
 }
 
@@ -470,7 +470,7 @@ bf256_t bf256_one() {
 
 bf256_t bf256_rand() {
   bf256_t ret;
-  rand_bytes((uint8_t*)ret.values, sizeof(ret));
+  rand_bytes((uint8_t*)&ret, sizeof(ret));
   return ret;
 }
 
