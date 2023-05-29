@@ -18,12 +18,43 @@
 
 static uint8_t Rcon[10] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x26};
 
+static inline uint8_t get_bit_ptr(const uint8_t* in, unsigned int index) {
+  return (in[index / 8] >> (7 - index % 8)) & 1;
+}
+
+static inline void set_bit_ptr(uint8_t* dst, uint8_t in, unsigned int index) {
+  dst[index / 8] |= in << (7 - index % 8);
+}
+
 ATTR_CONST static inline bf8_t get_bit(bf8_t in, uint8_t index) {
   return (in >> index) & 0x01;
 }
 
 ATTR_CONST static inline bf8_t set_bit(bf8_t in, uint8_t index) {
   return (in << index);
+}
+
+static uint8_t** column_to_row_major_and_shrink_Q(uint8_t** q, unsigned int lambda,
+                                                  unsigned int ell) {
+  assert(lambda % 8 == 0);
+  const unsigned int lambda_bytes = lambda / 8;
+
+  // Q is \hat \ell times \lambda matrix over F_2
+  // q has \hat \ell rows, \lambda columns, storing in column-major order, new_q has \ell + \lambda
+  // rows and \lambda columns storing in row-major order
+  uint8_t** new_q = malloc((ell + lambda) * sizeof(uint8_t*));
+  new_q[0]        = malloc(lambda * (ell + lambda));
+  for (unsigned int i = 1; i < ell + lambda; ++i) {
+    new_q[i] = new_q[0] + i * lambda_bytes;
+  }
+
+  for (unsigned int row = 0; row != ell + lambda; ++row) {
+    for (unsigned int column = 0; column != lambda; ++column) {
+      set_bit_ptr(new_q[row], column, get_bit_ptr(q[column], row));
+    }
+  }
+
+  return new_q;
 }
 
 uint8_t* aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Lke,
@@ -991,6 +1022,8 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   uint8_t* delta   = malloc(16);
   memcpy(delta, chall_3, 16);
 
+  uint8_t** new_Q = column_to_row_major_and_shrink_Q(Q, lambda, l);
+
   // Step: 2
   // do nothing
 
@@ -1014,7 +1047,7 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
     for (uint32_t j = 0; j < kb; j++) {
       if (fancy_d[j] == 1) {
         for (uint32_t k = 0; k < l; k += 8) {
-          *(Q[i] + (j * lambdaBytes) + k) = *(Q[i] + (j * lambdaBytes) + k) ^ *(d + k);
+          *(new_Q[i] + (j * lambdaBytes) + k) = *(new_Q[i] + (j * lambdaBytes) + k) ^ *(d + k);
         }
       } else {
       }
@@ -1025,8 +1058,7 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   // Step: 11..12
   bf128_t* bf_q = malloc(sizeof(bf128_t) * (l + tau));
   for (uint32_t i = 0; i < l + tau; i++) {
-    bf_q[i] = bf128_load(Q[i]);
-    printf("%d \n", i);
+    bf_q[i] = bf128_load(new_Q[i]);
   }
 
   // Step: 13
