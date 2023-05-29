@@ -1,16 +1,19 @@
 import sys
 import shutil
+import subprocess
 from pathlib import Path
 
 
 def generate(
     project_root: Path, build_root: Path, target_root: Path, param_name: str
 ) -> None:
-    target = target_root / param_name
+    target = (target_root / "Reference_Implementation" / param_name).absolute()
+    target_kat = (target_root / "KAT" / param_name).absolute()
     print(
         f"Preparing {param_name}: root: {project_root}, build root: {build_root}, target: {target}"
     )
     target.mkdir(parents=True, exist_ok=True)
+    target_kat.mkdir(parents=True, exist_ok=True)
 
     target_sha3 = target / "sha3"
     target_sha3.mkdir(parents=True, exist_ok=True)
@@ -63,6 +66,11 @@ def generate(
         shutil.copy(tools_sources / tool_source, target_nist_kat)
     for tool_source in ("Makefile",):
         shutil.copy(tools_sources / tool_source, target)
+
+    # build and create KATs
+    subprocess.check_call(["make"], cwd=target)
+    subprocess.check_call(target_nist_kat / "PQCgenKAT_sign", cwd=target_kat)
+    subprocess.check_call(["make", "clean"], cwd=target)
 
 
 def main():
