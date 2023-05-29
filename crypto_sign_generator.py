@@ -39,7 +39,7 @@ headers = [
 
 libfaest_{param_name} = static_library('faest_{param_name}',
   sources,
-  dependencies: libfaest_dependency,
+  dependencies: libfaest_static_dependency,
   include_directories: include_directories,
   c_args: defines + c_flags
 )
@@ -59,13 +59,20 @@ if openssl.found()
 endif
 if boost_program_options.found()
   bench_sources = files(join_paths(meson.project_source_root(), 'tools', 'bench.cpp'))
-  bench = executable('feast_{param_name}_bench', [sources] + faest_sources + bench_sources,
-    dependencies: [openssl, boost_program_options],
+  bench = executable('feast_{param_name}_bench', bench_sources,
+    dependencies: [libfaest_{param_name}_dependency, boost_program_options],
     include_directories: include_directories,
     c_args: defines + c_flags,
     cpp_args: defines + cpp_flags
   )
 endif
+test_sources = files(join_paths(meson.project_source_root(), 'tests', 'api_test.c'))
+faest_{param_name}_test = executable('faest_{param_name}_api_test', test_sources,
+  dependencies: [libfaest_{param_name}_dependency],
+  include_directories: include_directories,
+  c_args: defines + c_flags,
+)
+test('faest_{param_name}_api_test', faest_{param_name}_test)
 """
         )
 
