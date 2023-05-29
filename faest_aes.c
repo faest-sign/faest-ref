@@ -57,9 +57,9 @@ static uint8_t** column_to_row_major_and_shrink_Q(uint8_t** q, unsigned int lamb
   return new_q;
 }
 
-uint8_t* aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Lke,
-                                  uint32_t m, const uint8_t* x, uint8_t Mtag, uint8_t Mkey,
-                                  const uint8_t* delta) {
+void aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Lke, uint32_t m,
+                              const uint8_t* x, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
+                              uint8_t* out) {
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
     return 0;
@@ -96,12 +96,11 @@ uint8_t* aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uin
       }
     }
 
-    uint8_t* y_out = malloc(y_out_len);
     for (uint32_t i = 0; i < y_out_len; i++) {
-      bf8_store(y_out + i, bf_y[i]);
+      bf8_store(out + i, bf_y[i]);
     }
     free(bf_y);
-    return y_out;
+    return;
   }
 
   bf128_t* bf_y = malloc(y_out_len);
@@ -128,14 +127,12 @@ uint8_t* aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uin
     }
   }
 
-  uint8_t* y_out = malloc(y_out_len);
-  uint32_t idx   = 0;
+  uint32_t idx = 0;
   for (uint32_t i = 0; i < y_out_len; i += lambdaBytes) {
-    bf128_store(y_out + i, bf_y[idx]);
+    bf128_store(out + i, bf_y[idx]);
     idx += 1;
   }
   free(bf_y);
-  return y_out;
 }
 
 uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Ske,
@@ -319,10 +316,10 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
 
   if (Mkey == 0) {
     // STep: 2
-    k = aes_key_schedule_forward(lambda, R, Nwd, Lke, 1, w, 0, 0, NULL);
+    aes_key_schedule_forward(lambda, R, Nwd, Lke, 1, w, 0, 0, NULL, k);
 
     // Step: 3
-    vk = aes_key_schedule_forward(lambda, R, Nwd, Lke, lambda, v, 1, 0, NULL);
+    aes_key_schedule_forward(lambda, R, Nwd, Lke, lambda, v, 1, 0, NULL, vk);
 
     // Step: 4
     uint8_t* w_lambda = malloc(w_len - lambdaByte);
@@ -386,7 +383,7 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
   }
 
   // Step: 19..20
-  qk = aes_key_schedule_forward(lambda, R, Nwd, Lke, lambda, q, 0, 1, delta);
+  aes_key_schedule_forward(lambda, R, Nwd, Lke, lambda, q, 0, 1, delta, qk);
   uint8_t* q_w_dash;
   uint8_t* q_lambda = malloc(q_len - lambdaByte);
   memcpy(q_lambda, q + lambdaByte, q_len - lambdaByte);
@@ -534,7 +531,7 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
 
   // Step: 2..4
   for (uint32_t i = 0; i < 16; i++) {
-    bf128_t* bf_xin = malloc(sizeof(bf128_t) * 8);
+    bf128_t bf_xin[8];
     for (uint32_t j = 0; j < 8; j++) {
       bf_xin[j] = bf128_mul(bf128_mul(bf128_from_bit(get_bit(in[i], j)), bf_minus_mtag),
                             bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey));
@@ -545,7 +542,6 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
     uint8_t* xk_tmp = malloc(lambdaBytes * 8);
     memcpy(xk_tmp, xk + (8 * i * lambdaBytes), lambdaBytes * 8);
     bf_y[i] = bf128_add(bf128_byte_combine(xin_tmp, false), bf128_byte_combine(xk_tmp, false));
-    free(bf_xin);
     free(xin_tmp);
     free(xk_tmp);
   }
