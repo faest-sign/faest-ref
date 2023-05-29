@@ -133,18 +133,3 @@ int rand_bytes(uint8_t* dst, size_t len) {
 #error "Unsupported OS! Please implement rand_bytes."
 #endif
 #endif
-
-int rand_bits(uint8_t* dst, size_t num_bits) {
-  const size_t num_bytes      = (num_bits + 7) / 8;
-  const size_t num_extra_bits = num_bits % 8;
-
-  if (rand_bytes(dst, num_bytes)) {
-    return -1;
-  }
-
-  if (num_extra_bits) {
-    dst[num_bytes - 1] &= UINT8_C(0xff) << (8 - num_extra_bits);
-  }
-
-  return 0;
-}
