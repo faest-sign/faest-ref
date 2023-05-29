@@ -285,21 +285,21 @@ void aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uin
     }
 
     // STep: 2
-    uint8_t *k, vk, w_dash, v_w_dash;
-    k = aes_key_schedule_forward(lambda, R, Nwd, Lke, 1, w, 0, 0, NULL);
+    uint8_t* k = aes_key_schedule_forward(lambda, R, Nwd, Lke, 1, w, 0, 0, NULL);
 
     // Step: 3
-    vk = aes_key_schedule_forward(lambda, R, Nwd, Lke, lambda, v, 1, 0, NULL);
+    uint8_t* vk = aes_key_schedule_forward(lambda, R, Nwd, Lke, lambda, v, 1, 0, NULL);
 
     // Step: 4
     uint8_t* w_lambda = malloc(w_len - lambdaByte);
     memcpy(w_lambda, w + lambdaByte, w_len - lambdaByte);
-    w_dash = aes_key_schedule_backward(lambda, R, Nwd, Ske, Lke, 1, w_lambda, k, 0, 0, NULL);
+    uint8_t* w_dash =
+        aes_key_schedule_backward(lambda, R, Nwd, Ske, Lke, 1, w_lambda, k, 0, 0, NULL);
 
     // Step: 5
     uint8_t* v_lambda = malloc(sizeof(v) - lambdaByte);
     memcpy(v_lambda, v + lambdaByte, sizeof(v) - lambdaByte);
-    v_w_dash =
+    uint8_t* v_w_dash =
         aes_key_schedule_backward(lambda, R, Nwd, Ske, Lke, lambda, v_lambda, vk, 1, 0, NULL);
 
     // TODO: correctly initilaized ??

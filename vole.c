@@ -219,7 +219,7 @@ void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
     uint32_t depthloop = (numVoleInstances >> (j + 1));
     for (uint32_t i = 0; i < depthloop; i++) {
       xorUint8Arr(v + j * outLenBytes, R(j, 2 * i + 1), v + j * outLenBytes, outLenBytes);
-      xorUint8Arr(R(j + 1, 2 * i), R(j, 2 * i), R(j + 1, i), outLenBytes);
+      xorUint8Arr(R(j, 2 * i), R(j, 2 * i + 1), R(j + 1, i), outLenBytes);
     }
   }
   // Step: 10

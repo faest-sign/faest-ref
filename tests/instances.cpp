@@ -1,4 +1,14 @@
-#include "../instances.c"
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
+#if defined(HAVE_CONFIG_H)
+#include <config.h>
+#else
+#error "FIXME: Instances are currently only listed in config.h"
+#endif
+
+#include "../instances.h"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
@@ -6,8 +16,14 @@
 
 namespace {
   constexpr faest_paramid_t all_parameters[] = {
-      FAEST_128S,    FAEST_128F,    FAEST_192S,    FAEST_192F,    FAEST_256S,    FAEST_256F,
-      FAEST_EM_128S, FAEST_EM_128F, FAEST_EM_192S, FAEST_EM_192F, FAEST_EM_256S, FAEST_EM_256F,
+      FAEST_128S,    FAEST_128F,    FAEST_192S,    FAEST_192F,
+      FAEST_256S,    FAEST_256F,    FAEST_EM_128S, FAEST_EM_128F,
+#if defined(HAVE_EM_192)
+      FAEST_EM_192S, FAEST_EM_192F,
+#endif
+#if defined(HAVE_EM_256)
+      FAEST_EM_256S, FAEST_EM_256F,
+#endif
   };
 } // namespace
 
