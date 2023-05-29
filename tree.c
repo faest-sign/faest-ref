@@ -158,6 +158,7 @@ void expandSeeds(tree_t* tree, const faest_paramset_t* params) {
       tree->haveNode[2 * i + 2] = 1;
     }
   }
+  free(out);
 }
 
 tree_t* generateSeeds(const uint8_t* rootSeed, const faest_paramset_t* params,

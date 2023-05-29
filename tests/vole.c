@@ -32,47 +32,76 @@ int test_FAESTVoleCommit() {
   faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
                                                    //   vec_com_t vecCom;
                                                    //   vec_com_rec_t vecComRec;
-  uint32_t outlen = 16;
+  uint32_t outlen      = 16;
+  uint32_t lambda      = params.faest_param.lambda;
+  uint32_t lambdaBytes = lambda / 8;
+  const uint32_t ell_hat =
+      params.faest_param.l + params.faest_param.lambda * 2 + params.faest_param.b;
+  const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
 
-  uint8_t* hcom     = malloc(params.faest_param.lambda / 8);
+  uint8_t* hcom     = malloc(lambdaBytes * 2);
   vec_com_t* vecCom = malloc(params.faest_param.tau * (sizeof(vec_com_t)));
-  uint8_t** c       = malloc((params.faest_param.tau * sizeof(uint8_t*)) - 1);
+  uint8_t** c       = calloc(params.faest_param.tau - 1, sizeof(uint8_t*));
   uint8_t* u        = malloc(outlen);
-  uint8_t** v       = malloc(params.faest_param.tau * sizeof(uint8_t*));
+  uint8_t** v       = malloc(lambda * sizeof(uint8_t*));
+  v[0]              = malloc(lambda * ell_hat_bytes);
+  for (unsigned int i = 1; i < lambda; ++i) {
+    v[i] = v[0] + i * ell_hat_bytes;
+  }
   voleCommit(rootKey, outlen, &params, hcom, vecCom, c, u, v);
+  free(v[0]);
+  free(v);
+  free(u);
+  for (unsigned int i = 0; i != params.faest_param.tau - 1; ++i) {
+    free(c[i]);
+  }
+  free(c);
+  for (unsigned int i = 0; i != params.faest_param.tau; ++i) {
+    vec_com_clear(&vecCom[i]);
+  }
+  free(vecCom);
+  free(hcom);
 
   // TODO: make tests !!
   return 1;
 }
 
 int test_FAESTVoleVerify() {
-
   uint8_t rootKey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
                          0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
                          0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
 
-  faest_paramset_t params = faest_get_paramset(1); // Just using the FAEST-128s
+  faest_paramset_t params = faest_get_paramset(FAEST_128S); // Just using the FAEST-128s
 
-  uint32_t outlen = 16;
-
+  uint32_t outlen      = 16;
   uint32_t lambda      = params.faest_param.lambda;
   uint32_t lambdaBytes = lambda / 8;
-  uint8_t* hcom        = malloc(lambdaBytes * 2);
-  vec_com_t* vecCom    = malloc(params.faest_param.tau * (sizeof(vec_com_t)));
-  uint8_t** c          = malloc((params.faest_param.tau * sizeof(uint8_t*)) - 1);
-  uint8_t* u           = malloc(outlen);
-  uint8_t** v          = malloc(params.faest_param.tau * sizeof(uint8_t*));
+  const uint32_t ell_hat =
+      params.faest_param.l + params.faest_param.lambda * 2 + params.faest_param.b;
+  const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
+
+  uint8_t* hcom     = malloc(lambdaBytes * 2);
+  vec_com_t* vecCom = malloc(params.faest_param.tau * (sizeof(vec_com_t)));
+  uint8_t** c       = malloc((params.faest_param.tau * sizeof(uint8_t*)) - 1);
+  uint8_t* u        = malloc(outlen);
+
+  uint8_t** v = malloc(lambda * sizeof(uint8_t*));
+  v[0]        = malloc(lambda * ell_hat_bytes);
+  for (unsigned int i = 1; i < lambda; ++i) {
+    v[i] = v[0] + i * ell_hat_bytes;
+  }
 
   voleCommit(rootKey, outlen, &params, hcom, vecCom, c, u, v);
+  free(u);
+  free(c);
 
-  // TODO: this shouldn't be here !!
   uint8_t** pdec  = malloc(params.faest_param.tau * sizeof(uint8_t*));
-  uint8_t** b     = malloc(params.faest_param.tau * sizeof(uint8_t*));
   uint8_t** com_j = malloc(params.faest_param.tau * sizeof(uint8_t*));
+  uint8_t* b      = calloc(MAX(params.faest_param.k0, params.faest_param.k1), 1);
 
-  uint32_t depth;
-  uint32_t numVoleInstances;
   for (uint32_t i = 0; i < params.faest_param.tau; i++) {
+    uint32_t depth;
+    uint32_t numVoleInstances;
     if (i < params.faest_param.t0) {
       depth            = params.faest_param.k0;
       numVoleInstances = 1 << depth;
@@ -80,22 +109,18 @@ int test_FAESTVoleVerify() {
       depth            = params.faest_param.k1;
       numVoleInstances = 1 << depth;
     }
-    b[i] = malloc(depth);
-    memset(b[i], 0, depth); // TODO: LOOKOUT !! always opening the first leaf for this test
     pdec[i]  = malloc(depth * lambdaBytes);
     com_j[i] = malloc(lambdaBytes * 2);
 
-    vector_open(vecCom[i].k, vecCom[i].com, b[i], pdec[i], com_j[i], numVoleInstances, lambdaBytes);
+    vector_open(vecCom[i].k, vecCom[i].com, b, pdec[i], com_j[i], numVoleInstances, lambdaBytes);
+    vec_com_clear(&vecCom[i]);
   }
+  free(vecCom);
+  free(b);
 
-  uint8_t* chal = malloc((params.faest_param.k0 * params.faest_param.t0) +
-                         (params.faest_param.k1 * params.faest_param.t1));
+  uint8_t* chal = calloc(lambdaBytes, 1);
   // TODO: LOOKOUT !! always setting it to 0s for testing
-  memset(chal, 0,
-         (params.faest_param.k0 * params.faest_param.t0) +
-             (params.faest_param.k1 * params.faest_param.t1));
-  uint8_t** q = malloc(params.faest_param.tau * sizeof(uint8_t*));
-
+  uint8_t** q      = v;
   uint8_t* hcomRec = malloc(lambdaBytes * 2);
 
   voleReconstruct(chal, pdec, com_j, hcomRec, q, outlen, &params);
