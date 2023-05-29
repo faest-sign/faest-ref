@@ -34,7 +34,7 @@ int aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Sen
                         const uint8_t* qk, const uint8_t* delta, uint8_t* A0, uint8_t* A1,
                         uint8_t* B);
 
-void aes_prove(const uint8_t* w, const uint8_t* u, const uint8_t** V, const uint8_t* in,
+void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde, uint8_t* b_tilde,
                const faest_paramset_t* params);
 
