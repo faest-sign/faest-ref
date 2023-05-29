@@ -906,8 +906,8 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   memcpy(v_tilde, bf_v, Lke * lambdaBytes);
 
   // Step: 7
-  uint8_t* A0 = malloc(Ske * lambdaBytes * Nwd);
-  uint8_t* A1 = malloc(Ske * lambdaBytes * Nwd);
+  uint8_t* A0 = malloc((lambdaBytes * (Ske / 8)) + (2 * lambdaBytes * Senc) + lambdaBytes);
+  uint8_t* A1 = malloc((lambdaBytes * (Ske / 8)) + (2 * lambdaBytes * Senc) + lambdaBytes);
   uint8_t* k  = malloc((R + 1) * 128);
   uint8_t* vk = malloc(lambdaBytes * ((R + 1) * 128));
   uint8_t* qk = malloc(lambdaBytes * ((R + 1) * 128));
@@ -923,35 +923,19 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   memcpy(w_tilde, bf_w + Lke, Lenc);
   memcpy(v_tilde, bf_v + Lke, Lenc * lambdaBytes);
 
-  // Step: 10
-  uint8_t* A0_tmp = malloc(Senc * lambdaBytes);
-  uint8_t* A1_tmp = malloc(Senc * lambdaBytes);
+  // Step: 10,11
   aes_enc_constraints(lambda, R, Lenc, Senc, in, out, w_tilde, v_tilde, k, vk, 0, NULL, NULL, NULL,
-                      A0_tmp, A1_tmp, B);
-
-  // Step: 11
-  A0 = realloc(A0, lambdaBytes * (Ske / 8) + (lambdaBytes * Senc));
-  A1 = realloc(A1, lambdaBytes * (Ske / 8) + (lambdaBytes * Senc));
-  memcpy(A0 + (lambdaBytes * (Ske / 8)), A0_tmp, lambdaBytes * Senc);
-  memcpy(A1 + (lambdaBytes * (Ske / 8)), A1_tmp, lambdaBytes * Senc);
-  free(A0_tmp);
-  free(A1_tmp);
+                      A0 + (lambdaBytes * (Ske / 8)), A1 + (lambdaBytes * (Ske / 8)), B);
 
   // Step: 12
   if (beta == 2) {
     // Step: 13
     memcpy(w_tilde, bf_w + Lke + Lenc, l - Lke + Lenc);
     memcpy(v_tilde, bf_v + (Lke + Lenc), l - Lke + Lenc);
-    // Step: 14
+    // Step: 14, 15
     aes_enc_constraints(lambda, R, Lenc, Senc, in + 16, out + 16, w_tilde, v_tilde, k, vk, 0, NULL,
-                        NULL, NULL, A0_tmp, A1_tmp, B);
-    // Step: 15
-    A0 = realloc(A0, (lambdaBytes * (Ske / 8)) + (2 * lambdaBytes * Senc));
-    A1 = realloc(A1, (lambdaBytes * (Ske / 8)) + (2 * lambdaBytes * Senc));
-    memcpy(A0 + (lambdaBytes * (Ske / 8)) + (lambdaBytes * Senc), A0_tmp, lambdaBytes * Senc);
-    memcpy(A1 + (lambdaBytes * (Ske / 8)) + (lambdaBytes * Senc), A1_tmp, lambdaBytes * Senc);
-    free(A0_tmp);
-    free(A1_tmp);
+                        NULL, NULL, A0 + (lambdaBytes * (Ske / 8)) + (lambdaBytes * Senc),
+                        A1 + (lambdaBytes * (Ske / 8)) + (lambdaBytes * Senc), B);
   }
   free(w_tilde);
   free(v_tilde);
@@ -966,27 +950,19 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   }
   free(bf_v);
 
-  uint32_t concat_len   = (lambdaBytes * (Ske / 8)) + (2 * lambdaBytes * Senc) + lambdaBytes;
-  uint8_t* a1_us_concat = malloc(concat_len);
-  uint8_t* a0_vs_concat = malloc(concat_len);
-
-  memcpy(a1_us_concat, A1, (lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc)));
-  memcpy(a0_vs_concat, A0, (lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc)));
-  memcpy(a1_us_concat + (lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc)), &bf_us,
-         lambdaBytes);
-  memcpy(a0_vs_concat + (lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc)), &bf_vs,
-         lambdaBytes);
+  memcpy(A1 + (lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc)), &bf_us, lambdaBytes);
+  memcpy(A0 + (lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc)), &bf_vs, lambdaBytes);
 
   bf128_t* bf_a1_us_concat = malloc(sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
-  memcpy(bf_a1_us_concat, a1_us_concat, sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
+  memcpy(bf_a1_us_concat, A1, sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
   bf128_t* bf_a0_vs_concat = malloc(sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
-  memcpy(bf_a0_vs_concat, a0_vs_concat, sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
+  memcpy(bf_a0_vs_concat, A0, sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
 
-  zk_hash_128(a_tilde, chall, bf_a1_us_concat, l);
-  zk_hash_128(b_tilde, chall, bf_a0_vs_concat, l);
+  zk_hash_128(a_tilde, chall, bf_a1_us_concat, l / lambda);
+  zk_hash_128(b_tilde, chall, bf_a0_vs_concat, l / lambda);
 
-  free(a1_us_concat);
-  free(a0_vs_concat);
+  free(A1);
+  free(A0);
 }
 
 uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8_t* chall_3,
