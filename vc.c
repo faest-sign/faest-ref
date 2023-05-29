@@ -83,7 +83,8 @@ static void freeTree(tree_t* tree) {
     free(tree->nodes);
     free(tree->haveNode);
     free(tree->exists);
-    free(tree);
+    // TODO: This free leads to some strange error !!
+    // free(tree);
   }
 }
 

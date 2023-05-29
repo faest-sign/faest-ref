@@ -121,7 +121,12 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
   const unsigned int xk_len      = (Lke / 8) * ((m + 7) / 8);
   const unsigned int y_out_len   = 8 * Ske * ((m + 7) / 8);
 
-  bf128_t bf_delta = bf128_load(delta);
+  bf128_t bf_delta;
+  if (delta == NULL) {
+    bf_delta = bf128_zero();
+  } else {
+    bf_delta = bf128_load(delta);
+  }
 
   // STep: 2
   if (m == 1) {
@@ -223,9 +228,9 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
         bf_r[i]                   = bf128_from_bf8(get_bit(r, i));
         bf128_t bf_zeros_r_concat = bf128_zero();
         bf_zeros_r_concat         = bf128_add(bf_r[i], bf_zeros_r_concat);
-        bf_r[i]                   = bf128_mul(bf_zeros_r_concat,
-                                              bf128_add(bf128_mul(bf_mkey, bf128_load(delta)), bf_minus_mkey));
-        bf_x_tilde[i]             = bf128_add(bf_x_tilde[i], bf_r[i]);
+        bf_r[i] =
+            bf128_mul(bf_zeros_r_concat, bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey));
+        bf_x_tilde[i] = bf128_add(bf_x_tilde[i], bf_r[i]);
       }
       free(bf_r);
     }
@@ -285,11 +290,6 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
   uint32_t delta_len  = lambdaByte;
 
   if (Mkey == 0) {
-    // If m == 1, Mkey should be 0, because we then cancel delta in line 10
-    if (Mkey != 0) {
-      return -1;
-    }
-
     // STep: 2
     k = aes_key_schedule_forward(lambda, R, Nwd, Lke, 1, w, 0, 0, NULL);
 
@@ -304,8 +304,8 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
     free(w_lambda);
 
     // Step: 5
-    uint8_t* v_lambda = malloc(sizeof(v) - lambdaByte);
-    memcpy(v_lambda, v + lambdaByte, sizeof(v) - lambdaByte);
+    uint8_t* v_lambda = malloc((Lke / 8) - lambdaByte);
+    memcpy(v_lambda, v + lambdaByte, (Lke / 8) - lambdaByte);
     uint8_t* v_w_dash =
         aes_key_schedule_backward(lambda, R, Nwd, Ske, Lke, lambda, v_lambda, vk, 1, 0, NULL);
     free(v_lambda);
@@ -318,7 +318,7 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
       bf128_t* bf_v_k_hat      = malloc(sizeof(bf128_t) * 4);
       bf128_t* bf_w_dash_hat   = malloc(sizeof(bf128_t) * 4);
       bf128_t* bf_v_w_dash_hat = malloc(sizeof(bf128_t) * 4);
-      for (uint32_t r = 0; r <= 3; r) {
+      for (uint32_t r = 0; r <= 3; r++) {
         // Step: 10..11
         uint8_t* k_tmp = malloc(8);
         memcpy(k_tmp, k + (iwd + 8 * r), 8);
@@ -341,12 +341,12 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
         free(v_w_dash_tmp);
       }
       // Step: 13..17
-      for (uint32_t r = 0; r <= 3; r) {
-        bf128_store(A0[4 * j + r], bf128_mul(bf_v_k_hat[r], bf_v_w_dash_hat[r]));
+      for (uint32_t r = 0; r <= 3; r++) {
+        bf128_store(A0 + ((4 * j + r) + lambdaByte), bf128_mul(bf_v_k_hat[r], bf_v_w_dash_hat[r]));
         bf128_add(bf128_add(bf128_mul(bf128_add(bf_k_hat[r], bf_v_k_hat[r]),
                                       bf128_add(bf_w_dash_hat[r], bf_v_w_dash_hat[r])),
                             bf128_from_bf8(bf8_one())),
-                  bf128_load(A0[4 * j + r]));
+                  bf128_load(A0 + ((4 * j + r) * lambdaByte)));
       }
       if (lambda == 192) {
         iwd = iwd + 192;
@@ -450,7 +450,7 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
       free(xk_tmp);
     }
     uint32_t ix, ik, iy;
-    for (uint32_t j = 0; j < R; j++) {
+    for (uint32_t j = 1; j < R; j++) {
       for (uint32_t c = 0; c < 3; c++) {
         ix                 = 128 * (j - 1) + 32 * c;
         ik                 = 128 * j + 32 * c;
@@ -460,7 +460,7 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
         for (uint32_t r = 0; r < 3; r++) {
           // Step: 12..13
           uint8_t* x_tmp = malloc(8);
-          memcpy(x_tmp, x + (ix + 8 * R), 8);
+          memcpy(x_tmp, x + (ix + (8 * R)), 8);
           bf_x_hat[r] = bf128_byte_combine(x_tmp, true);
           free(x_tmp);
 
@@ -889,18 +889,26 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   memcpy(v_tilde, bf_v, Lke * lambdaBytes);
 
   // Step: 7
-  uint8_t *A0, *A1, *k, *vk, *B, *qk;
+  uint8_t* A0 = malloc(Ske * lambdaBytes * Nwd);
+  uint8_t* A1 = malloc(Ske * lambdaBytes * Nwd);
+  uint8_t* k  = malloc((R + 1) * 128);
+  uint8_t* vk = malloc(lambdaBytes * ((R + 1) * 128));
+  uint8_t* qk = malloc(lambdaBytes * ((R + 1) * 128));
+  uint8_t* B  = malloc(Ske * lambdaBytes * Nwd);
   aes_key_schedule_constraints(lambda, R, Nwd, Ske, Lke, w_tilde, v_tilde, 0, NULL, NULL, A0, A1, k,
                                vk, B, qk);
 
   // Step: Skipping 8 in implementation
   // Step: 9
   uint32_t lByte_enc;
+  w_tilde = realloc(w_tilde, Lenc);
+  v_tilde = realloc(v_tilde, Lenc * lambdaBytes);
   memcpy(w_tilde, bf_w + Lke, Lenc);
   memcpy(v_tilde, bf_v + Lke, Lenc * lambdaBytes);
 
   // Step: 10
-  uint8_t *A0_tmp, *A1_tmp;
+  uint8_t* A0_tmp = malloc(Senc * lambdaBytes);
+  uint8_t* A1_tmp = malloc(Senc * lambdaBytes);
   aes_enc_constraints(lambda, R, Lenc, Senc, in, out, w_tilde, v_tilde, k, vk, 0, NULL, NULL, NULL,
                       A0_tmp, A1_tmp, B);
 

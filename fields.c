@@ -145,17 +145,17 @@ bf64_t bf64_from_bit(uint8_t bit) {
 
 // GF(2^128) implementation
 
-bf128_t bf128_byte_combine(uint8_t* x, uint8_t isBinary) {
+bf128_t bf128_byte_combine(const uint8_t* x, uint8_t isBinary) {
   bf128_t bf_out = bf128_zero();
 
   // True when F_2
   if (isBinary == 1) {
     for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf128_add(bf_out, bf128_from_bf8(bf8_load(x[i])));
+      bf_out = bf128_add(bf_out, bf128_from_bf8(bf8_load(x + i)));
     }
   } else {
     for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf128_add(bf_out, bf128_load(x[i * 16]));
+      bf_out = bf128_add(bf_out, bf128_load(x + (i * 16)));
     }
   }
   return bf_out;
@@ -276,16 +276,16 @@ bf128_t bf128_from_bit(uint8_t bit) {
 
 // GF(2^192) implementation
 
-bf192_t bf192_byte_combine(uint8_t* x, uint8_t isBinary) {
+bf192_t bf192_byte_combine(const uint8_t* x, uint8_t isBinary) {
   bf192_t bf_out = bf192_zero();
 
   if (isBinary == 1) {
     for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf192_add(bf_out, bf192_from_bf8(bf8_load(x[i])));
+      bf_out = bf192_add(bf_out, bf192_from_bf8(bf8_load(x + i)));
     }
   } else {
     for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf192_add(bf_out, bf192_load(x[i * 24]));
+      bf_out = bf192_add(bf_out, bf192_load(x + (i * 24)));
     }
   }
   return bf_out;
@@ -409,16 +409,16 @@ bf192_t bf192_from_bit(uint8_t bit) {
 
 // GF(2^256) implementation
 
-bf256_t bf256_byte_combine(uint8_t* x, uint8_t isBinary) {
+bf256_t bf256_byte_combine(const uint8_t* x, uint8_t isBinary) {
   bf256_t bf_out = bf256_zero();
 
   if (isBinary == 1) {
     for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf256_add(bf_out, bf256_from_bf8(bf8_load(x[i])));
+      bf_out = bf256_add(bf_out, bf256_from_bf8(bf8_load(x + i)));
     }
   } else {
     for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf256_add(bf_out, bf256_load(x[i * 24]));
+      bf_out = bf256_add(bf_out, bf256_load(x + (i * 24)));
     }
   }
   return bf_out;
