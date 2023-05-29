@@ -140,7 +140,7 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
     bf8_t bf_minus_mkey = bf8_from_bit(1 - Mkey);
     bf8_t bf_minus_mtag = bf8_from_bit(1 - Mtag);
 
-    bf8_t* bf_x_tilde = malloc(8);
+    bf8_t bf_x_tilde[8];
 
     for (uint32_t j = 0; j < Ske; j++) {
       for (uint32_t i = 0; i < 8; i++) {
@@ -151,16 +151,15 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
       if (Mtag == 0 && rmvRcon == true && c == 0) {
         uint8_t rcon = Rcon[ircon];
         ircon        = ircon + 1;
-        bf8_t* bf_r  = malloc(8);
+        bf8_t bf_r[8];
         for (uint32_t i = 0; i < 8; i++) {
           bf_r[i]       = bf8_from_bit(get_bit(rcon, i));
           bf_r[i]       = bf8_mul(bf_r[i], bf_minus_mkey);
           bf_x_tilde[i] = bf8_add(bf_x_tilde[i], bf_r[i]);
         }
-        free(bf_r);
       }
 
-      bf8_t* bf_y_tilde = malloc(8);
+      bf8_t bf_y_tilde[8];
 
       bf_y_tilde[7] = bf8_add(bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
                               bf8_mul(bf_minus_mtag, bf_minus_mkey));
@@ -189,14 +188,12 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
           }
         }
       }
-      free(bf_y_tilde);
     }
     uint8_t* y_out = malloc(y_out_len);
     for (uint32_t i = 0; i < y_out_len; i++) {
       bf8_store(y_out + i, bf_y[i]);
     }
     free(bf_y);
-    free(bf_x_tilde);
     return y_out;
   }
 
@@ -320,25 +317,21 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
       bf128_t* bf_v_w_dash_hat = malloc(sizeof(bf128_t) * 4);
       for (uint32_t r = 0; r <= 3; r++) {
         // Step: 10..11
-        uint8_t* k_tmp = malloc(8);
+        uint8_t k_tmp[8];
         memcpy(k_tmp, k + (iwd + 8 * r), 8);
         bf_k_hat[(r + 3) % 4] = bf128_byte_combine(k_tmp, true);
-        free(k_tmp);
 
-        uint8_t* v_k_tmp = malloc(8);
+        uint8_t v_k_tmp[8];
         memcpy(v_k_tmp, vk + (iwd + 8 * r), 8);
         bf_v_k_hat[(r + 3) % 4] = bf128_byte_combine(v_k_tmp, true);
-        free(v_k_tmp);
 
-        uint8_t* w_dash_tmp = malloc(8);
+        uint8_t w_dash_tmp[8];
         memcpy(w_dash_tmp, w_dash + (32 * j + 8 * r), 8);
         bf_w_dash_hat[r] = bf128_byte_combine(w_dash_tmp, true);
-        free(w_dash_tmp);
 
-        uint8_t* v_w_dash_tmp = malloc(8);
+        uint8_t v_w_dash_tmp[8];
         memcpy(v_w_dash_tmp, v_w_dash + (32 * j + 8 * r), 8);
         bf_v_w_dash_hat[r] = bf128_byte_combine(v_w_dash_tmp, true);
-        free(v_w_dash_tmp);
       }
       // Step: 13..17
       for (uint32_t r = 0; r <= 3; r++) {
@@ -434,7 +427,7 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
 
     // STep: 2
     for (uint32_t i = 0; i < 16; i++) {
-      bf8_t* bf_xin = malloc(8);
+      bf8_t bf_xin[8];
       // STep: 3
       for (uint32_t j = 0; j < 8; j++) {
         // STep: 4
@@ -442,14 +435,11 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
             bf8_mul(bf8_mul(bf8_from_bit(get_bit(in + (8 * i), j)), bf_minus_mtag), bf_minus_mkey);
       }
       // STep: 5
-      uint8_t* xin_tmp = malloc(8);
+      uint8_t xin_tmp[8];
       memcpy(xin_tmp, bf_xin, 8);
-      uint8_t* xk_tmp = malloc(8);
+      uint8_t xk_tmp[8];
       memcpy(xk_tmp, xk + (8 * i), 8);
       bf_y[i] = bf128_add(bf128_byte_combine(xin_tmp, true), bf128_byte_combine(xk_tmp, true));
-      free(bf_xin);
-      free(xin_tmp);
-      free(xk_tmp);
     }
     uint32_t ix, ik, iy;
     for (uint32_t j = 1; j < R; j++) {
@@ -461,15 +451,13 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
         bf128_t* bf_xk_hat = malloc(sizeof(bf128_t) * 3);
         for (uint32_t r = 0; r < 3; r++) {
           // Step: 12..13
-          uint8_t* x_tmp = malloc(8);
+          uint8_t x_tmp[8];
           memcpy(x_tmp, x + (ix + (8 * R)), 8);
           bf_x_hat[r] = bf128_byte_combine(x_tmp, true);
-          free(x_tmp);
 
-          uint8_t* xk_tmp = malloc(8);
+          uint8_t xk_tmp[8];
           memcpy(xk_tmp, xk + (ix + 8 * R), 8);
           bf_xk_hat[r] = bf128_byte_combine(xk_tmp, true);
-          free(xk_tmp);
         }
         bf8_t bf_one   = bf8_one();
         bf8_t bf_two   = bf8_add(bf_one, bf_one);
@@ -627,8 +615,8 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
 
   if (m == 1) {
 
-    bf8_t* bf_x_tilde   = malloc(8);
-    bf8_t* bf_xout      = malloc(8);
+    bf8_t bf_x_tilde[8];
+    bf8_t bf_xout[8];
     bf8_t bf_minus_mtag = bf8_from_bit(1 - Mtag);
     bf8_t bf_minus_mkey = bf8_from_bit(1 - Mkey);
 
@@ -655,21 +643,20 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
             }
           }
           // Step: 12..20
-          bf8_t* bf_y_tilde = malloc(8);
-          bf_y_tilde[7]     = bf8_add(bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
-                                      bf8_mul(bf_minus_mtag, bf_minus_mkey));
-          bf_y_tilde[6]     = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[1]);
-          bf_y_tilde[5]     = bf8_add(bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]),
-                                      bf8_mul(bf_minus_mtag, bf_minus_mkey));
-          bf_y_tilde[4]     = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[5]), bf_x_tilde[2]);
-          bf_y_tilde[3]     = bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[4]), bf_x_tilde[1]);
-          bf_y_tilde[2]     = bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[3]), bf_x_tilde[0]);
-          bf_y_tilde[1]     = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[2]);
-          bf_y_tilde[0]     = bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[1]);
+          bf8_t bf_y_tilde[8];
+          bf_y_tilde[7] = bf8_add(bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
+                                  bf8_mul(bf_minus_mtag, bf_minus_mkey));
+          bf_y_tilde[6] = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[1]);
+          bf_y_tilde[5] = bf8_add(bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]),
+                                  bf8_mul(bf_minus_mtag, bf_minus_mkey));
+          bf_y_tilde[4] = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[5]), bf_x_tilde[2]);
+          bf_y_tilde[3] = bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[4]), bf_x_tilde[1]);
+          bf_y_tilde[2] = bf8_add(bf8_add(bf_x_tilde[5], bf_x_tilde[3]), bf_x_tilde[0]);
+          bf_y_tilde[1] = bf8_add(bf8_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[2]);
+          bf_y_tilde[0] = bf8_add(bf8_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[1]);
 
           // Step: 21
           bf_y[16 * j + 4 * c + r] = bf128_byte_combine(bf_y_tilde, true);
-          free(bf_y_tilde);
         }
       }
     }
@@ -678,8 +665,6 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
       bf128_store(y_out + i, bf_y[idx]);
       idx++;
     }
-    free(bf_x_tilde);
-    free(bf_xout);
     free(bf_y);
     return 1;
   }
