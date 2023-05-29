@@ -160,7 +160,7 @@ void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint
     // Step: 6
     memset(sd, 0, lambdaBytes);
     for (uint32_t j = 1; j < N; j++) {
-      memcpy(sd + (j * lambdaBytes), vecComRec.k + ((j * lambdaBytes) ^ idx), lambdaBytes);
+      memcpy(sd + (j * lambdaBytes), vecComRec.k + (((j ^ idx) * lambdaBytes)), lambdaBytes);
     }
     H1_update(&h1_ctx, vecComRec.com, lambdaBytes * 2);
     vec_com_rec_clear(&vecComRec);
