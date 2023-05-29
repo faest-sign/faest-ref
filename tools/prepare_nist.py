@@ -77,13 +77,9 @@ def main():
     project_root = Path(sys.argv[1])
     build_root = Path(sys.argv[2])
     target_root = Path(sys.argv[3])
-    param_name = sys.argv[4]
-    if param_name == "all":
-        for bits in (128, 192, 256):
-            for t in ("s", "f"):
-                generate(project_root, build_root, target_root, f"faest_{bits}{t}")
-                generate(project_root, build_root, target_root, f"feast_em_{bits}{t}")
-    else:
+    param_names = sys.argv[4:]
+
+    for param_name in param_names:
         generate(project_root, build_root, target_root, param_name)
 
 

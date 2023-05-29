@@ -395,14 +395,17 @@ foreach parameter_set : parameter_sets
 endforeach
 
 # dependencies
-# for test vector generation
 openssl = dependency('openssl', required: false)
 boost_program_options = dependency('boost', required: false, modules: ['program_options'])
+
 build_dependencies = []
 if openssl.found()
   build_dependencies += [openssl]
   defines += '-DHAVE_OPENSSL'
 endif
+
+pymod = import('python')
+python = pymod.find_installation('python3', required: true)
 
 if host_machine.system() == 'windows'
   # require new enough Windows for bcrypt to be available
@@ -559,8 +562,16 @@ pkg.generate(
 )
 
 # SUPERCOP / NIST files
+all_names = []
 foreach parameter_set : parameter_sets
+  all_names += 'faest_@0@'.format(parameter_set.get('PARAM_L'))
   subdir('faest_@0@'.format(parameter_set.get('PARAM_L')))
 endforeach
+run_target('prepare_nist',
+  command: [
+    python,
+    files(join_paths(meson.project_source_root(), 'tools', 'prepare_nist.py')) + [meson.project_source_root(), meson.project_build_root(), 'submission'] + all_names
+  ]
+)
 
 subdir('tests')
