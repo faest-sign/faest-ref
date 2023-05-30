@@ -161,21 +161,16 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     v = new_v;
   }
 
-  uint8_t* u_ = malloc((l + lambda) / 8);
-  memcpy(u_, u, (l + lambda) / 8);
-
   // Step: 16
   uint8_t b_tilde[MAX_LAMBDA_BYTES];
-  aes_prove(w, u_, v, in, out, chall_2, signature->a_tilde, b_tilde, params);
+  aes_prove(w, u, v, in, out, chall_2, signature->a_tilde, b_tilde, params);
   free(v[0]);
   free(v);
   v = NULL;
-  free(u);
-  u = NULL;
   free(w);
   w = NULL;
-  free(u_);
-  u_ = NULL;
+  free(u);
+  u = NULL;
 
   // Step: 17
   {
