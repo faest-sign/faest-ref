@@ -149,7 +149,8 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
 
     // Step 5
     vec_com_rec_t vecComRec;
-    vector_reconstruction(iv, pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, &vecComRec);
+    vector_reconstruction(iv, pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, depth,
+                          &vecComRec);
 
     // Step: 6
     memset(sd, 0, lambdaBytes);
