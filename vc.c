@@ -307,7 +307,7 @@ int vector_verify(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b, u
   // Step: 2
   vector_reconstruction(pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, depth, &vecComRec);
 
-  // STep: 3
+  // Step: 3
   int ret = memcmp(vecComH, vecComRec.h, lambdaBytes * 2);
   if (!rec || ret) {
     vec_com_rec_clear(&vecComRec);

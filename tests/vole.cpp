@@ -81,10 +81,14 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       q[i] = q[0] + i * ell_hat_bytes;
     }
 
+    for (unsigned int i = 0; i < params.faest_param.tau - 1; ++i) {
+      c[i] = new uint8_t[ell_hat_bytes];
+    }
+
     voleCommit(rootKey.data(), ell_hat, &params, hcom.data(), vec_com.data(), c.data(), u.data(),
                v.data());
     for (unsigned int i = 0; i != params.faest_param.tau - 1; ++i) {
-      free(c[i]);
+      delete[] c[i];
     }
 
     for (uint32_t i = 0; i < params.faest_param.tau; i++) {

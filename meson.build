@@ -397,11 +397,18 @@ endforeach
 # dependencies
 openssl = dependency('openssl', required: false)
 boost_program_options = dependency('boost', required: false, modules: ['program_options'])
+valgrind = dependency('valgrind', required: get_option('valgrind'))
+valgrind_exec = find_program('valgrind', required: get_option('valgrind'))
 
 build_dependencies = []
 if openssl.found()
   build_dependencies += [openssl]
   defines += '-DHAVE_OPENSSL'
+endif
+
+valgrind_defines = []
+if valgrind.found() and valgrind_exec.found()
+  valgrind_defines += '-DWITH_VALGRIND'
 endif
 
 pymod = import('python')
@@ -519,9 +526,9 @@ endforeach
 # static faest library
 libfaest_static = static_library('faest',
   faest_sources,
-  dependencies: build_dependencies,
+  dependencies: build_dependencies + [valgrind],
   include_directories: include_directories,
-  c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT='],
+  c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT='] + valgrind_defines,
   install: true
 )
 libfaest_static_dependency = declare_dependency(

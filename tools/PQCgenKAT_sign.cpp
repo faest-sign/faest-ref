@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <boost/io/ios_state.hpp>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <iostream>

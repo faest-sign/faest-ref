@@ -68,11 +68,16 @@ if boost_program_options.found()
 endif
 test_sources = files(join_paths(meson.project_source_root(), 'tests', 'api_test.c'))
 faest_{param_name}_test = executable('faest_{param_name}_api_test', test_sources,
-  dependencies: [libfaest_{param_name}_dependency],
+  dependencies: [libfaest_{param_name}_dependency, valgrind],
   include_directories: include_directories,
-  c_args: defines + c_flags,
+  c_args: defines + c_flags + valgrind_defines,
 )
 test('faest_{param_name}_api_test', faest_{param_name}_test)
+if valgrind.found() and valgrind_exec.found()
+  test('faest_{param_name}_api_test_ct', valgrind_exec,
+    args: ['-q', '--error-exitcode=1', '--track-origins=yes', faest_{param_name}_test]
+  )
+endif
 """
         )
 
