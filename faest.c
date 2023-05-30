@@ -278,7 +278,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   mu = NULL;
 
   // Step: 8..14
-  uint8_t** q      = malloc(tau * sizeof(uint8_t*));
+  uint8_t** q = malloc(tau * sizeof(uint8_t*));
+  // TODO: is each uint8 a bit here ?
   q[0]             = malloc(lambda * ell_hat_bytes);
   uint8_t** Dtilde = malloc(tau * sizeof(uint8_t*));
   Dtilde[0]        = calloc(lambda, (lambdaBytes + UNIVERSAL_HASH_B));
@@ -354,6 +355,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   chal_1 = NULL;
 
   // Step 18
+  // TODO: Do we transpose and shorten here before passing to q ?
   uint8_t* b_tilde =
       aes_verify(signature->d, q, chal_2, signature->chall_3, signature->a_tilde, in, out, params);
 

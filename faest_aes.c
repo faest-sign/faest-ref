@@ -35,7 +35,7 @@ ATTR_CONST static inline bf8_t set_bit(bf8_t in, uint8_t index) {
 }
 
 static uint8_t** column_to_row_major_and_shrink_Q(uint8_t** q, unsigned int lambda,
-                                                  unsigned int ell) {
+                                                  unsigned int tau, unsigned int ell) {
   assert(lambda % 8 == 0);
   const unsigned int lambda_bytes = lambda / 8;
 
@@ -49,7 +49,8 @@ static uint8_t** column_to_row_major_and_shrink_Q(uint8_t** q, unsigned int lamb
   }
 
   for (unsigned int row = 0; row != ell + lambda; ++row) {
-    for (unsigned int column = 0; column != lambda; ++column) {
+    // TODO: I changed here to tau...
+    for (unsigned int column = 0; column != tau; ++column) {
       set_bit_ptr(new_q[row], column, get_bit_ptr(q[column], row));
     }
   }
@@ -1022,49 +1023,59 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   uint8_t* delta   = malloc(16);
   memcpy(delta, chall_3, 16);
 
-  uint8_t** new_Q = column_to_row_major_and_shrink_Q(Q, lambda, l);
-
   // Step: 2
   // do nothing
 
   // Step: 3
   // do nothing
 
-  // Step: v
-  uint32_t kb;
-  for (uint32_t i = 0; i < tau; i++) {
-    if (i < t0) {
-      kb = k0;
-    } else {
-      kb = k1;
-    }
-    // Step: 6
-    uint8_t* fancy_d = malloc(kb);
+  // Step: 4..10
+  // Doing when t0
+  for (uint32_t i = 0; i < t0; i++) {
+    uint8_t* fancy_d = malloc(k0);
     ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
-
-    // Step: 7..10
-    // TODO: STILL Unsure about this part ://
-    for (uint32_t j = 0; j < kb; j++) {
+    for (uint32_t j = 0; j < k0; j++) {
       if (fancy_d[j] == 1) {
-        for (uint32_t k = 0; k < l; k += 8) {
-          *(new_Q[i] + (j * lambdaBytes) + k) = *(new_Q[i] + (j * lambdaBytes) + k) ^ *(d + k);
+        for (uint32_t k = 0; k < ((l + 7) / 8); k++) {
+          *(Q[i] + (j * ((lambda + l) / 8)) + k) =
+              *(Q[i] + (j * ((lambda + l) / 8)) + k) ^ *(d + k);
         }
-      } else {
+      }
+    }
+    free(fancy_d);
+  }
+  // Dooing when t1
+  for (uint32_t i = 0; i < t1; i++) {
+    uint8_t* fancy_d = malloc(k1);
+    ChalDec(chall_3, (t0 + i), k0, t0, k1, t1, fancy_d);
+    for (uint32_t j = 0; j < k1; j++) {
+      if (fancy_d[j] == 1) {
+        for (uint32_t k = 0; k < ((l + 7) / 8); k++) {
+          *(Q[t0 + i] + (j * ((lambda + l) / 8)) + k) =
+              *(Q[t0 + i] + (j * ((lambda + l) / 8)) + k) ^ *(d + k);
+        }
       }
     }
     free(fancy_d);
   }
 
   // Step: 11..12
-  bf128_t* bf_q = malloc(sizeof(bf128_t) * (l + tau));
-  for (uint32_t i = 0; i < l + tau; i++) {
+  bf128_t* bf_q = malloc(sizeof(bf128_t) * (l + lambda));
+  // TODO: unsure if this is transposing correctly
+  uint8_t** new_Q = column_to_row_major_and_shrink_Q(Q, lambda, tau, l);
+  for (uint32_t i = 0; i < l + lambda; i++) {
     bf_q[i] = bf128_load(new_Q[i]);
   }
 
   // Step: 13
   uint8_t* q_lke = malloc(lambdaBytes * (Lke));
   memcpy(q_lke, bf_q, sizeof(bf128_t) * Lke);
-  uint8_t *A0, *A1, *k, *vk, *B_0, *qk;
+  uint8_t* A0  = malloc(Ske * lambdaBytes * Nwd);
+  uint8_t* A1  = malloc(Ske * lambdaBytes * Nwd);
+  uint8_t* k   = malloc((R + 1) * 128);
+  uint8_t* vk  = malloc(lambdaBytes * ((R + 1) * 128));
+  uint8_t* qk  = malloc(lambdaBytes * ((R + 1) * 128));
+  uint8_t* B_0 = malloc(Ske * lambdaBytes * Nwd);
   aes_key_schedule_constraints(lambda, R, Nwd, Ske, Lke, NULL, NULL, 1, q_lke, delta, A0, A1, k, vk,
                                B_0, qk);
   free(q_lke);
