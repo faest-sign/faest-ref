@@ -298,9 +298,13 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   printUint8Arr("verify chall 1", chall_1, (5 * lambdaBytes) + 8, 1);
 
   // Step: 8..14
-  uint8_t** q = malloc(tau * sizeof(uint8_t*));
+  uint8_t** q = malloc(lambda * sizeof(uint8_t*));
   // TODO: is each uint8 a bit here ?
-  q[0]             = malloc(lambda * ell_hat_bytes);
+  q[0] = malloc(lambda * ell_hat_bytes);
+  for (unsigned int i = 1; i < lambda; ++i) {
+    q[i] = q[0] + i * ell_hat_bytes;
+  }
+
   uint8_t** Dtilde = malloc(tau * sizeof(uint8_t*));
   Dtilde[0]        = calloc(lambda, (lambdaBytes + UNIVERSAL_HASH_B));
 
@@ -309,7 +313,6 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   for (uint32_t i = 0; i < tau; i++) {
     const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
     if (i < tau - 1) {
-      q[i + 1]      = q[i] + depth;
       Dtilde[i + 1] = Dtilde[i] + depth;
     }
 
