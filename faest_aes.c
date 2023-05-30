@@ -353,10 +353,11 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
       // Step: 13..17
       for (uint32_t r = 0; r <= 3; r++) {
         bf128_store(A0 + ((4 * j + r) + lambdaByte), bf128_mul(bf_v_k_hat[r], bf_v_w_dash_hat[r]));
-        bf128_add(bf128_add(bf128_mul(bf128_add(bf_k_hat[r], bf_v_k_hat[r]),
-                                      bf128_add(bf_w_dash_hat[r], bf_v_w_dash_hat[r])),
-                            bf128_from_bf8(bf8_one())),
-                  bf128_load(A0 + ((4 * j + r) * lambdaByte)));
+        bf128_store(A1 + ((4 * j + r) + lambdaByte),
+                    bf128_add(bf128_add(bf128_mul(bf128_add(bf_k_hat[r], bf_v_k_hat[r]),
+                                                  bf128_add(bf_w_dash_hat[r], bf_v_w_dash_hat[r])),
+                                        bf128_from_bf8(bf8_one())),
+                              bf128_load(A0 + ((4 * j + r) * lambdaByte))));
       }
       if (lambda == 192) {
         iwd = iwd + 192;
