@@ -302,22 +302,23 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
 
   uint8_t** Dtilde = malloc(tau * sizeof(uint8_t*));
   Dtilde[0]        = calloc(lambda, (lambdaBytes + UNIVERSAL_HASH_B));
+  for (unsigned int i = 1; i < lambda; ++i) {
+    Dtilde[i] = Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B);
+  }
 
   const unsigned int max_depth = MAX(params->faest_param.k0, params->faest_param.k0);
   uint8_t* delta               = malloc(max_depth);
+  unsigned int Dtilde_idx      = 0;
   for (uint32_t i = 0; i < tau; i++) {
     const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
-    if (i < tau - 1) {
-      Dtilde[i + 1] = Dtilde[i] + depth;
-    }
 
     // Step 11
     ChalDec(signature->chall_3, i, params->faest_param.k0, params->faest_param.t0,
             params->faest_param.k1, params->faest_param.t1, delta);
     // Step 16
-    for (unsigned int j = 0; j != depth; ++j) {
+    for (unsigned int j = 0; j != depth; ++j, ++Dtilde_idx) {
       if (delta[j]) {
-        memcpy(Dtilde[i] + j * utilde_bytes, signature->u_tilde, utilde_bytes);
+        memcpy(Dtilde[Dtilde_idx], signature->u_tilde, utilde_bytes);
       }
     }
 
@@ -348,8 +349,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       // Step 15
       vole_hash(Q_tilde, chall_1, q[0] + i * ell_hat_bytes, l, lambda);
       // Step 16
-      xorUint8Arr(Q_tilde, Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B), Q_tilde,
-                  lambdaBytes + UNIVERSAL_HASH_B);
+      xorUint8Arr(Q_tilde, Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     free(Q_tilde);
