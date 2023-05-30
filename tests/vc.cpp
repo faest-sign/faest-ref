@@ -14,6 +14,10 @@
 #include <boost/test/unit_test.hpp>
 #include <vector>
 
+namespace {
+  constexpr std::array<uint8_t, 16> iv{};
+}
+
 BOOST_AUTO_TEST_SUITE(vector_commitments)
 
 BOOST_AUTO_TEST_CASE(test_numrec_bitdec) {
@@ -63,7 +67,7 @@ BOOST_AUTO_TEST_CASE(test_vector_open_128) {
   uint32_t numVoleInstances = 16;
   uint32_t lambda           = params.faest_param.lambda;
   uint32_t lambdaBytes      = lambda / 8;
-  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
+  vector_commitment(rootKey, iv.data(), &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
 
   uint32_t leafIndex       = 7;
   constexpr uint32_t depth = 4;
@@ -99,7 +103,7 @@ BOOST_AUTO_TEST_CASE(test_vector_open_192) {
   uint32_t numVoleInstances = 16;
   uint32_t lambda           = params.faest_param.lambda;
   uint32_t lambdaBytes      = lambda / 8;
-  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
+  vector_commitment(rootKey, iv.data(), &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
 
   uint32_t leafIndex       = 10;
   constexpr uint32_t depth = 4;
@@ -136,7 +140,7 @@ BOOST_AUTO_TEST_CASE(test_vector_open_256) {
   uint32_t numVoleInstances = 16;
   uint32_t lambda           = params.faest_param.lambda;
   uint32_t lambdaBytes      = lambda / 8;
-  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
+  vector_commitment(rootKey, iv.data(), &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
 
   uint32_t leafIndex       = 7;
   constexpr uint32_t depth = 4;
@@ -172,7 +176,7 @@ BOOST_AUTO_TEST_CASE(test_vector_reconstruct_and_verify) {
   uint32_t numVoleInstances = 16;
   uint32_t lambda           = params.faest_param.lambda;
   uint32_t lambdaBytes      = lambda / 8;
-  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
+  vector_commitment(rootKey, iv.data(), &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
 
   uint32_t leafIndex       = 7;
   constexpr uint32_t depth = 4;
@@ -584,7 +588,7 @@ BOOST_AUTO_TEST_CASE(tv_faest_128f) {
   vec_com_t vecCom;
   const auto lambda      = params.faest_param.lambda;
   const auto lambdaBytes = lambda / 8;
-  vector_commitment(root_key_128.data(), &params, lambda, lambdaBytes, &vecCom, 16);
+  vector_commitment(root_key_128.data(), iv.data(), &params, lambda, lambdaBytes, &vecCom, 16);
   BOOST_TEST(memcmp(vecCom.com, com_128.data(), 16 * lambdaBytes * 2) == 0);
 
   const auto depth = ceil_log2(16);
@@ -615,7 +619,7 @@ BOOST_AUTO_TEST_CASE(tv_faest_192f) {
   vec_com_t vecCom;
   const auto lambda      = params.faest_param.lambda;
   const auto lambdaBytes = lambda / 8;
-  vector_commitment(root_key_192.data(), &params, lambda, lambdaBytes, &vecCom, 16);
+  vector_commitment(root_key_192.data(), iv.data(), &params, lambda, lambdaBytes, &vecCom, 16);
   BOOST_TEST(memcmp(vecCom.com, com_192.data(), 16 * lambdaBytes * 2) == 0);
 
   const auto depth = 4;
@@ -646,7 +650,7 @@ BOOST_AUTO_TEST_CASE(tv_faest_256f) {
   vec_com_t vecCom;
   const auto lambda      = params.faest_param.lambda;
   const auto lambdaBytes = lambda / 8;
-  vector_commitment(root_key_256.data(), &params, lambda, lambdaBytes, &vecCom, 32);
+  vector_commitment(root_key_256.data(), iv.data(), &params, lambda, lambdaBytes, &vecCom, 32);
   BOOST_TEST(memcmp(vecCom.com, com_256.data(), 32 * lambdaBytes * 2) == 0);
 
   const auto depth = ceil_log2(32);
