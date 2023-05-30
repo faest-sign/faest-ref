@@ -40,7 +40,7 @@ void aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_
                               uint8_t* out) {
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
-    return 0;
+    return;
   }
 
   const unsigned int lambdaBytes = lambda / 8;

@@ -40,7 +40,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk,
   const uint8_t* expected_output = pk + @PK_SIZE@ / 2;
 
   uint8_t output[@PK_SIZE@ / 2] = { 0 };
-  if (!faest_@PARAM_L@_owf(sk, input, output)) {
+  if (faest_@PARAM_L@_owf(sk, input, output)) {
     // zero bytes in SubBytes input
     return 1;
   }

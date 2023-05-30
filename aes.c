@@ -371,7 +371,7 @@ void prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uint64_
   case 192:
     cipher = EVP_aes_192_ctr();
     break;
-  case 128:
+  default:
     cipher = EVP_aes_128_ctr();
     break;
   }

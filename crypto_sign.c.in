@@ -39,7 +39,7 @@ int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned cha
                 unsigned long long mlen, const unsigned char* sk) {
   uint8_t pk[@PK_SIZE@];
   memcpy(PK_INPUT(pk), SK_INPUT(sk), @PK_SIZE@ / 2);
-  if (faest_@PARAM_L@_owf(SK_KEY(sk), PK_INPUT(pk), PK_OUTPUT(pk))) {
+  if (!faest_@PARAM_L@_owf(SK_KEY(sk), PK_INPUT(pk), PK_OUTPUT(pk))) {
     // invalid key
     return -1;
   }
@@ -47,12 +47,13 @@ int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned cha
   *smlen = mlen + FAEST_@PARAM@_SIGNATURE_SIZE;
   memmove(sm, m, mlen);
 
+  size_t signature_len = FAEST_@PARAM@_SIGNATURE_SIZE;
 #if defined(CRYPTO_DETERMINISTIC) && CRYPTO_DETERMINISTIC == 1
-  return faest_@PARAM_L@_sign(SK_KEY(sk), pk, sm, mlen, NULL, 0, sm + mlen, NULL);
+  return faest_@PARAM_L@_sign(SK_KEY(sk), pk, sm, mlen, NULL, 0, sm + mlen, &signature_len);
 #else
   uint8_t rho[FAEST_@PARAM@_LAMBDA / 8];
   rand_bytes(rho, sizeof(rho));
-  return faest_@PARAM_L@_sign(SK_KEY(sk), pk, sm, mlen, rho, sizeof(rho), sm + mlen, NULL);
+  return faest_@PARAM_L@_sign(SK_KEY(sk), pk, sm, mlen, rho, sizeof(rho), sm + mlen, &signature_len);
 #endif
 }
 

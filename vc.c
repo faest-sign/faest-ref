@@ -45,6 +45,7 @@ static int isLeftChild(size_t node) {
 }
 
 static tree_t createTree(const faest_paramset_t* params, uint32_t num_nodes) {
+  assert(num_nodes > 0);
   tree_t tree;
   uint32_t lambdaBytes = params->faest_param.lambda / 8;
 
