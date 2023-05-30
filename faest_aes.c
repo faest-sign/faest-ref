@@ -655,7 +655,6 @@ void aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Se
                          const uint8_t* k, const uint8_t* vk, uint8_t Mkey, const uint8_t* q,
                          const uint8_t* qk, const uint8_t* delta, uint8_t* A0, uint8_t* A1,
                          uint8_t* B) {
-
   uint32_t lambdaBytes = lambda / 8;
 
   if (Mkey == 0) {

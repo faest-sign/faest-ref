@@ -95,7 +95,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   uint8_t* u        = malloc(ell_hat_bytes);
   // v has \hat \ell rows, \lambda columns, storing in column-major order
   uint8_t** v = malloc(lambda * sizeof(uint8_t*));
-  v[0]        = malloc(lambda * ell_hat_bytes);
+  v[0]        = calloc(lambda, ell_hat_bytes);
   for (unsigned int i = 1; i < lambda; ++i) {
     v[i] = v[0] + i * ell_hat_bytes;
   }
@@ -254,7 +254,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   // Step: 5
   // q prime is a \hat \ell \times \lambda matrix
   uint8_t** qprime = malloc(lambda * sizeof(uint8_t*));
-  qprime[0]        = malloc(lambda * ell_hat_bytes);
+  qprime[0]        = calloc(lambda, ell_hat_bytes);
   for (unsigned int i = 1; i < lambda; ++i) {
     qprime[i] = qprime[0] + i * ell_hat_bytes;
   }
@@ -281,7 +281,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
 
   // Step: 8..14
   uint8_t** q = malloc(lambda * sizeof(uint8_t*));
-  q[0]        = malloc(lambda * ell_hat_bytes);
+  q[0]        = calloc(lambda, ell_hat_bytes);
   for (unsigned int i = 1; i < lambda; ++i) {
     q[i] = q[0] + i * ell_hat_bytes;
   }
