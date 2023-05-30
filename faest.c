@@ -132,7 +132,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     uint8_t* V_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
     for (unsigned int i = 0; i != lambda; ++i) {
       // Step 7
-      printUint8Arr("sign v[i]", v[i], lambdaBytes, 1);
+      // printUint8Arr("sign v[i]", v[i], lambdaBytes, 1);
       vole_hash(V_tilde, chall_1, v[i], l, lambda);
       // Step 8
       H1_update(&h1_ctx_1, V_tilde, lambdaBytes + UNIVERSAL_HASH_B);
@@ -142,7 +142,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     // Step: 8
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
-  printUint8Arr("sign h_v", h_v, lambdaBytes * 2, 1);
+  // printUint8Arr("sign h_v", h_v, lambdaBytes * 2, 1);
   // Step: 9
   const uint8_t* in  = pk;
   const uint8_t* out = pk + params->faest_param.pkSize / 2;
@@ -336,7 +336,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
 
     uint8_t* Q_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
     for (unsigned int i = 0; i != lambda; ++i) {
-      printUint8Arr("verify q[0]", q[0] + i * ell_hat_bytes, lambdaBytes, 1);
+      // printUint8Arr("verify q[0]", q[0] + i * ell_hat_bytes, lambdaBytes, 1);
       // Step 15
       vole_hash(Q_tilde, chall_1, q[i], l, lambda);
       // Step 16
@@ -352,7 +352,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   free(Dtilde);
   Dtilde = NULL;
 
-  printUint8Arr("verify h_v", h_v, lambdaBytes * 2, 1);
+  // printUint8Arr("verify h_v", h_v, lambdaBytes * 2, 1);
 
   // Step 17
   uint8_t* chall_2 = malloc(3 * lambdaBytes + 8);
