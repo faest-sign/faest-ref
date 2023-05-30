@@ -19,10 +19,6 @@
 
 // TODO: change q to Q where applicable
 
-static uint8_t prg_iv[16] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-};
-
 static inline uint8_t get_bit(const uint8_t* in, unsigned int index) {
   return (in[index / 8] >> (7 - index % 8)) & 1;
 }
@@ -67,7 +63,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
   const size_t utilde_bytes    = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
 
-  // Step: 1
+  // Step: 2
   uint8_t* mu = malloc(lambdaBytes * 2);
   {
     H1_context_t h1_ctx;
@@ -77,6 +73,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H1_final(&h1_ctx, mu, lambdaBytes * 2);
   }
 
+  // Step: 3
   uint8_t* rootkey = malloc(lambdaBytes);
   {
     H3_context_t h3_ctx;
@@ -86,7 +83,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     if (rho && rholen) {
       H3_update(&h3_ctx, rho, rholen);
     }
-    H3_final(&h3_ctx, rootkey, lambdaBytes);
+    H3_final(&h3_ctx, rootkey, lambdaBytes, signature->iv);
   }
 
   // Step: 3
@@ -99,7 +96,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   for (unsigned int i = 1; i < lambda; ++i) {
     v[i] = v[0] + i * ell_hat_bytes;
   }
-  voleCommit(rootkey, prg_iv, ell_hat, params, hcom, vecCom, signature->c, u, v);
+  voleCommit(rootkey, signature->iv, ell_hat, params, hcom, vecCom, signature->c, u, v);
   free(rootkey);
   rootkey = NULL;
 
@@ -259,8 +256,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     qprime[i] = qprime[0] + i * ell_hat_bytes;
   }
   uint8_t* hcom = malloc(lambdaBytes * 2);
-  voleReconstruct(prg_iv, signature->chall_3, signature->pdec, signature->com_j, hcom, qprime,
-                  ell_hat, params);
+  voleReconstruct(signature->iv, signature->chall_3, signature->pdec, signature->com_j, hcom,
+                  qprime, ell_hat, params);
 
   // Step: 5
   uint8_t* chall_1 = malloc((5 * lambdaBytes) + 8);
@@ -500,6 +497,10 @@ int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
   memcpy(dst, signature->chall_3, lambda_bytes);
   dst += lambda_bytes;
 
+  // serialize iv
+  memcpy(dst, signature->iv, sizeof(signature->iv));
+  dst += sizeof(signature->iv);
+
   *len = dst - old_dst;
   return 0;
 }
@@ -543,7 +544,10 @@ signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* pa
 
   // serialize chall_3
   memcpy(sig.chall_3, src, lambda_bytes);
-  // src += lambda_bytes;
+  src += lambda_bytes;
+
+  // serialize iv
+  memcpy(sig.iv, src, sizeof(sig.iv));
 
   return sig;
 }
