@@ -963,7 +963,7 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   // Step: 11..12
   bf128_t* bf_q = malloc(sizeof(bf128_t) * (l + lambda));
   // TODO: unsure if this is transposing correctly
-  uint8_t** new_Q = column_to_row_major_and_shrink_Q(Q, lambda, l);
+  uint8_t** new_Q = column_to_row_major_and_shrink_V(Q, lambda, l);
   for (uint32_t i = 0; i < l + lambda; i++) {
     bf_q[i] = bf128_load(new_Q[i]);
   }
