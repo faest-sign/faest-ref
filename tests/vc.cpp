@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(test_vector_reconstruct_and_verify) {
   vector_open(vecCom.k, vecCom.com, b, pdec.data(), com_j.data(), numVoleInstances, lambdaBytes);
 
   BOOST_TEST(vector_verify(pdec.data(), com_j.data(), b, lambda, lambdaBytes, numVoleInstances,
-                           nullptr, vecCom.h) == 1);
+                           depth, nullptr, vecCom.h) == 1);
 
   vec_com_clear(&vecCom);
 }
@@ -603,8 +603,8 @@ BOOST_AUTO_TEST_CASE(tv_faest_128f) {
                       depth * lambdaBytes) == 0);
     BOOST_TEST(
         memcmp(com_j.data(), com_j_128.data() + leafIndex * lambdaBytes * 2, lambdaBytes * 2) == 0);
-    BOOST_TEST(vector_verify(pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes, 16, nullptr,
-                             vecCom.h) == 1);
+    BOOST_TEST(vector_verify(pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes, 16, depth,
+                             nullptr, vecCom.h) == 1);
   }
 
   vec_com_clear(&vecCom);
@@ -634,8 +634,8 @@ BOOST_AUTO_TEST_CASE(tv_faest_192f) {
                       depth * lambdaBytes) == 0);
     BOOST_TEST(
         memcmp(com_j.data(), com_j_192.data() + leafIndex * lambdaBytes * 2, lambdaBytes * 2) == 0);
-    BOOST_TEST(vector_verify(pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes, 16, nullptr,
-                             vecCom.h) == 1);
+    BOOST_TEST(vector_verify(pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes, 16, depth,
+                             nullptr, vecCom.h) == 1);
   }
 
   vec_com_clear(&vecCom);
@@ -665,8 +665,8 @@ BOOST_AUTO_TEST_CASE(tv_faest_256f) {
                       depth * lambdaBytes) == 0);
     BOOST_TEST(
         memcmp(com_j.data(), com_j_256.data() + leafIndex * lambdaBytes * 2, lambdaBytes * 2) == 0);
-    BOOST_TEST(vector_verify(pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes, 32, nullptr,
-                             vecCom.h) == 1);
+    BOOST_TEST(vector_verify(pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes, 32, depth,
+                             nullptr, vecCom.h) == 1);
   }
 
   vec_com_clear(&vecCom);

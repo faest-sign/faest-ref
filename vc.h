@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "instances.h"
+#include "utils.h"
 
 FAEST_BEGIN_C_DECL
 
@@ -33,13 +34,13 @@ void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, u
 void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t* pdec,
                  uint8_t* com_j, uint32_t numVoleInstances, uint32_t lambdaBytes);
 
-void vector_reconstruction(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b,
+void vector_reconstruction(const uint8_t* cop, const uint8_t* com_j, const uint8_t* b,
                            uint32_t lambda, uint32_t lambdaBytes, uint32_t numVoleInstances,
-                           vec_com_rec_t* vecComRec);
+                           uint32_t depth, vec_com_rec_t* vecComRec);
 
 int vector_verify(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b, uint32_t lambda,
-                  uint32_t lambdaBytes, uint32_t numVoleInstances, vec_com_rec_t* rec,
-                  const uint8_t* vecComH);
+                  uint32_t lambdaBytes, uint32_t numVoleInstances, uint32_t depth,
+                  vec_com_rec_t* rec, const uint8_t* vecComH);
 
 void vec_com_clear(vec_com_t* com);
 void vec_com_rec_clear(vec_com_rec_t* rec);

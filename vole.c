@@ -97,7 +97,6 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
     for (unsigned int j = 0; j < depth; ++j, ++v_idx) {
       memcpy(v[v_idx], tmp_v + j * ellhatBytes, ellhatBytes);
     }
-
     // Step 12 (part)
     H1_update(&h1_ctx, vecCom[i].com, lambdaBytes * 2);
   }
@@ -150,17 +149,24 @@ void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint
 
     // Step 5
     vec_com_rec_t vecComRec;
-    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, &vecComRec);
+    vecComRec.h   = malloc(lambdaBytes * 2);
+    vecComRec.k   = calloc(getBinaryTreeNodeCount(N), lambdaBytes);
+    vecComRec.com = malloc(N * lambdaBytes * 2);
+    vecComRec.m   = malloc(N * lambdaBytes);
+    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, depth, &vecComRec);
 
     // Step: 6
     memset(sd, 0, lambdaBytes);
     for (uint32_t j = 1; j < N; j++) {
-      memcpy(sd + (j * lambdaBytes), vecComRec.k + (((j ^ idx) * lambdaBytes)), lambdaBytes);
+      // TODO: unsure what this xor does, removed it for now
+      memcpy(sd + (j * lambdaBytes), vecComRec.m + (lambdaBytes * j), lambdaBytes);
     }
+
     H1_update(&h1_ctx, vecComRec.com, lambdaBytes * 2);
     vec_com_rec_clear(&vecComRec);
     // Step: 7..8
     ConvertToVole(lambda, lambdaBytes, sd, true, N, depth, ellhatBytes, NULL, tmp_q);
+
     for (unsigned int j = 0; j < depth; ++j, ++q_idx) {
       memcpy(q[q_idx], tmp_q + j * ellhatBytes, ellhatBytes);
     }
