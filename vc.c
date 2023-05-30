@@ -249,6 +249,10 @@ void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t*
                            uint32_t numVoleInstances, uint32_t depth, vec_com_rec_t* vecComRec) {
   // Initializing
   uint64_t leafIndex = NumRec(depth, b);
+  vecComRec->h       = malloc(lambdaBytes * 2);
+  vecComRec->k       = calloc(getBinaryTreeNodeCount(numVoleInstances), lambdaBytes);
+  vecComRec->com     = malloc(numVoleInstances * lambdaBytes * 2);
+  vecComRec->m       = malloc(numVoleInstances * lambdaBytes);
 
   // Step: 3..9
   uint32_t a = 0;
