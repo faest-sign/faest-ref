@@ -195,41 +195,36 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   u_ = NULL;
 
   // Step: 17
-  uint8_t* chall_3 = malloc(lambdaBytes);
   {
     H2_context_t h2_ctx_2;
     H2_init(&h2_ctx_2, lambda);
     H2_update(&h2_ctx_2, chall_2, 3 * lambdaBytes + 8);
     H2_update(&h2_ctx_2, signature->a_tilde, lambdaBytes);
     H2_update(&h2_ctx_2, b_tilde, lambdaBytes);
-    H2_final(&h2_ctx_2, chall_3, lambdaBytes);
+    H2_final(&h2_ctx_2, signature->chall_3, lambdaBytes);
   }
   free(b_tilde);
   b_tilde = NULL;
   free(chall_2);
   chall_2 = NULL;
 
-  memcpy(signature->chall_3, chall_3, lambdaBytes);
-
-  printUint8Arr("sign chall 3", chall_3, lambdaBytes, 1);
+  printUint8Arr("sign chall 3", signature->chall_3, lambdaBytes, 1);
 
   // Step: 19..21
   uint8_t* s_ = malloc(MAX(params->faest_param.k0, params->faest_param.k1));
   for (uint32_t i = 0; i < tau; i++) {
     // Step 20
-    ChalDec(chall_3, i, params->faest_param.k0, params->faest_param.t0, params->faest_param.k1,
-            params->faest_param.t1, s_);
-    unsigned int num_vole_instances =
-        i < tau0 ? (1 << params->faest_param.k0) : (1 << params->faest_param.k1);
+    ChalDec(signature->chall_3, i, params->faest_param.k0, params->faest_param.t0,
+            params->faest_param.k1, params->faest_param.t1, s_);
     // Step 21
+    const unsigned int num_vole_instances =
+        i < tau0 ? (1 << params->faest_param.k0) : (1 << params->faest_param.k1);
     vector_open(vecCom[i].k, vecCom[i].com, s_, signature->pdec[i], signature->com_j[i],
                 num_vole_instances, lambdaBytes);
     vec_com_clear(&vecCom[i]);
   }
   free(s_);
   s_ = NULL;
-  free(chall_3);
-  chall_3 = NULL;
   free(vecCom);
   vecCom = NULL;
 }
