@@ -15,8 +15,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-// TODO: Do not pass lambdaBytes everywhere, compute it in the function....
-
 static uint8_t Rcon[10] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x26};
 
 ATTR_CONST static inline bf8_t get_bit(bf8_t in, uint8_t index) {
@@ -953,8 +951,7 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   }
 
   // Step: 11..12
-  bf128_t* bf_q = malloc(sizeof(bf128_t) * (l + lambda));
-  // TODO: unsure if this is transposing correctly
+  bf128_t* bf_q   = malloc(sizeof(bf128_t) * (l + lambda));
   uint8_t** new_Q = column_to_row_major_and_shrink_V(Q, lambda, l);
   for (uint32_t i = 0; i < l + lambda; i++) {
     bf_q[i] = bf128_load(new_Q[i]);

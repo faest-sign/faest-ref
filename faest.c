@@ -99,9 +99,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   free(rootkey);
   rootkey = NULL;
 
-  printUint8Arr("sign mu", mu, lambdaBytes * 2, 1);
-  printUint8Arr("sign hcom", hcom, lambdaBytes * 2, 1);
-
   // Step: 4
   uint8_t* chall_1 = malloc((5 * lambdaBytes) + 8);
   {
@@ -111,8 +108,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_update(&h2_ctx, hcom, lambdaBytes * 2);
     for (unsigned int i = 0; i < (tau - 1); ++i) {
       H2_update(&h2_ctx, signature->c[i], ell_hat_bytes);
-      // printf("%d ", i);
-      // printUint8Arr("sign signature.c", signature->c[i], ell_hat_bytes, 1);
     }
     H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
   }
@@ -120,8 +115,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   hcom = NULL;
   free(mu);
   mu = NULL;
-
-  printUint8Arr("sign chall 1", chall_1, (5 * lambdaBytes) + 8, 1);
 
   // Step: 6
   vole_hash(signature->u_tilde, chall_1, u, l, lambda);
@@ -135,8 +128,11 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     uint8_t* V_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
     for (unsigned int i = 0; i != lambda; ++i) {
       // Step 7
+      printUint8Arr("sign V", v[i], 5, 1);
       vole_hash(V_tilde, chall_1, v[i], l, lambda);
       // Step 8
+      // printf("%d ", i);
+      // printUint8Arr("sign V_tilde", V_tilde, lambdaBytes + UNIVERSAL_HASH_B, 1);
       H1_update(&h1_ctx_1, V_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     free(V_tilde);
@@ -151,6 +147,11 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   uint8_t* w = aes_extend_witness(sk, in, params);
   // Step: 11
   xorUint8Arr(w, u, signature->d, ell_bytes);
+
+  // printUint8Arr("sign chall 1", chall_1, (5 * lambdaBytes) + 8, 1);
+  // printUint8Arr("sign signature.u_tilde", signature->u_tilde, utilde_bytes, 1);
+  printUint8Arr("sign h_v", h_v, 2 * lambdaBytes, 1);
+  // printUint8Arr("sign signature.d", signature->d, ell_bytes, 1);
 
   // Step: 12
   uint8_t* chall_2 = malloc(3 * lambdaBytes + 8);
@@ -204,14 +205,11 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_update(&h2_ctx_2, b_tilde, lambdaBytes);
     H2_final(&h2_ctx_2, chall_3, lambdaBytes);
   }
+  memcpy(signature->chall_3, chall_3, lambdaBytes);
   free(b_tilde);
   b_tilde = NULL;
   free(chall_2);
   chall_2 = NULL;
-
-  memcpy(signature->chall_3, chall_3, lambdaBytes);
-
-  printUint8Arr("sign chall 3", chall_3, lambdaBytes, 1);
 
   // Step: 19..21
   uint8_t* s_ = malloc(MAX(params->faest_param.k0, params->faest_param.k1));
@@ -270,13 +268,9 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   }
   uint8_t* hcom = malloc(lambdaBytes * 2);
   {
-    printUint8Arr("verify chall 3", signature->chall_3, lambdaBytes, 1);
     voleReconstruct(signature->chall_3, signature->pdec, signature->com_j, hcom, qprime, ell_hat,
                     params);
   }
-
-  printUint8Arr("verify mu", mu, lambdaBytes * 2, 1);
-  printUint8Arr("verify hcom", hcom, lambdaBytes * 2, 1);
 
   // Step: 5
   uint8_t* chall_1 = malloc((5 * lambdaBytes) + 8);
@@ -287,15 +281,11 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     H2_update(&h2_ctx, hcom, lambdaBytes * 2);
     for (unsigned int i = 0; i < (tau - 1); ++i) {
       H2_update(&h2_ctx, signature->c[i], ell_hat_bytes);
-      // printf("%d ", i);
-      // printUint8Arr("verify signature.c", signature->c[i], ell_hat_bytes, 1);
     }
     H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
   }
   free(mu);
   mu = NULL;
-
-  printUint8Arr("verify chall 1", chall_1, (5 * lambdaBytes) + 8, 1);
 
   // Step: 8..14
   uint8_t** q = malloc(lambda * sizeof(uint8_t*));
@@ -350,11 +340,14 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
 
     uint8_t* Q_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
     for (unsigned int i = 0; i != lambda; ++i) {
+      printUint8Arr("verify Q", q[0] + i * ell_hat_bytes, 5, 1);
       // Step 15
       vole_hash(Q_tilde, chall_1, q[0] + i * ell_hat_bytes, l, lambda);
       // Step 16
       xorUint8Arr(Q_tilde, Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B), Q_tilde,
                   lambdaBytes + UNIVERSAL_HASH_B);
+      // printf("%d ", i);
+      // printUint8Arr("verify Q_tilde", Q_tilde, lambdaBytes + UNIVERSAL_HASH_B, 1);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     free(Q_tilde);
@@ -362,6 +355,11 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     // Step: 16
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
+
+  // printUint8Arr("verify chall 1", chall_1, (5 * lambdaBytes) + 8, 1);
+  // printUint8Arr("verify signature.u_tilde", signature->u_tilde, utilde_bytes, 1);
+  printUint8Arr("verify h_v", h_v, 2 * lambdaBytes, 1);
+  // printUint8Arr("verify signature.d", signature->d, ell_bytes, 1);
 
   // Step 17
   uint8_t* chall_2 = malloc(3 * lambdaBytes + 8);
