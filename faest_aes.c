@@ -6,6 +6,7 @@
 #include <config.h>
 #endif
 
+#include "faest.h"
 #include "faest_aes.h"
 #include "fields.h"
 #include "vole.h"
@@ -32,30 +33,6 @@ ATTR_CONST static inline bf8_t get_bit(bf8_t in, uint8_t index) {
 
 ATTR_CONST static inline bf8_t set_bit(bf8_t in, uint8_t index) {
   return (in << index);
-}
-
-static uint8_t** column_to_row_major_and_shrink_Q(uint8_t** q, unsigned int lambda,
-                                                  unsigned int tau, unsigned int ell) {
-  assert(lambda % 8 == 0);
-  const unsigned int lambda_bytes = lambda / 8;
-
-  // Q is \hat \ell times \lambda matrix over F_2
-  // q has \hat \ell rows, \lambda columns, storing in column-major order, new_q has \ell + \lambda
-  // rows and \lambda columns storing in row-major order
-  uint8_t** new_q = malloc((ell + lambda) * sizeof(uint8_t*));
-  new_q[0]        = malloc(lambda * (ell + lambda));
-  for (unsigned int i = 1; i < ell + lambda; ++i) {
-    new_q[i] = new_q[0] + i * lambda_bytes;
-  }
-
-  for (unsigned int row = 0; row != ell + lambda; ++row) {
-    // TODO: I changed here to tau...
-    for (unsigned int column = 0; column != tau; ++column) {
-      set_bit_ptr(new_q[row], column, get_bit_ptr(q[column], row));
-    }
-  }
-
-  return new_q;
 }
 
 void aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Lke, uint32_t m,
@@ -986,7 +963,7 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   // Step: 11..12
   bf128_t* bf_q = malloc(sizeof(bf128_t) * (l + lambda));
   // TODO: unsure if this is transposing correctly
-  uint8_t** new_Q = column_to_row_major_and_shrink_Q(Q, lambda, tau, l);
+  uint8_t** new_Q = column_to_row_major_and_shrink_Q(Q, lambda, l);
   for (uint32_t i = 0; i < l + lambda; i++) {
     bf_q[i] = bf128_load(new_Q[i]);
   }
