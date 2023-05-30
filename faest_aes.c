@@ -315,8 +315,8 @@ static void aes_key_schedule_constraints(const uint8_t* w, const uint8_t* v, con
     bf128_t bf_q_hat_w_dash[4];
     for (uint32_t r = 0; r <= 3; r++) {
       // Step: 25..26
-      bf_q_hat_k[(r + 3) % 4] = bf128_byte_combine_bits(qk[((iwd + 8 * r) / 8)]);
-      bf_q_hat_w_dash[r]      = bf128_byte_combine_bits(q_w_dash[(32 * j + 8 * r) / 8]);
+      bf_q_hat_k[(r + 3) % 4] = bf128_byte_combine(qk + ((iwd + 8 * r) * lambdaByte));
+      bf_q_hat_w_dash[r]      = bf128_byte_combine(q_w_dash + ((32 * j + 8 * r) * lambdaByte));
     }
     // STep: 27
     for (uint32_t r = 0; r <= 3; r++) {
