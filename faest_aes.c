@@ -700,9 +700,7 @@ void aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Se
     free(bf_vs_dash);
     free(bf_a0);
     free(bf_a1);
-
   } else {
-
     // Step: 11..12
     uint8_t* qs      = malloc(lambdaBytes * Senc);
     uint8_t* qs_dash = malloc(lambdaBytes * Senc);
@@ -877,8 +875,6 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   uint8_t* q_lke = malloc(lambdaBytes * (Lke));
   memcpy(q_lke, bf_q, sizeof(bf128_t) * Lke);
   const unsigned int length_a = (Ske / 8) + (beta * Senc) + 1;
-  uint8_t* A0                 = malloc(length_a * lambdaBytes);
-  uint8_t* A1                 = malloc(length_a * lambdaBytes);
   uint8_t* k                  = malloc((R + 1) * 128);
   uint8_t* vk                 = malloc(lambdaBytes * ((R + 1) * 128));
   uint8_t* qk                 = malloc(lambdaBytes * ((R + 1) * 128));
@@ -888,12 +884,11 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   free(q_lke);
 
   // Step: 14
-  uint8_t *A0_1 = A0 + (lambdaBytes * (Ske / 8)), *A1_1 = A1 + (lambdaBytes * (Ske / 8)),
-          *B_1        = B_0;
+  uint8_t* B_1        = B_0;
   uint8_t* q_lke_lenc = malloc(lambdaBytes * (Lenc - Lke));
   memcpy(q_lke_lenc, bf_q + Lke, sizeof(bf128_t) * (Lenc - Lke));
   aes_enc_constraints(lambda, R, Lenc, Senc, in, out, NULL, NULL, NULL, NULL, 1, q_lke_lenc, qk,
-                      delta, A0_1, A1_1, B_1);
+                      delta, NULL, NULL, B_1);
   free(q_lke_lenc);
 
   // STep: 15
@@ -908,11 +903,11 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
     B_len = 16 * R * 3;
     B     = malloc(B_len);
     // Step: 16
-    uint8_t *A0_2, *A1_2, *B_2;
+    uint8_t* B_2; // FIXME
     uint8_t* q_lke_enc_l = malloc(lambdaBytes * (l - (Lke + Lenc)));
     memcpy(q_lke_enc_l, bf_q + (Lke + Lenc), sizeof(bf128_t) * (l - Lenc - Lke));
     aes_enc_constraints(lambda, R, Lenc, Senc, in + 16, out + 16, NULL, NULL, NULL, NULL, 1,
-                        q_lke_enc_l, qk, delta, A0_2, A1_2, B_2);
+                        q_lke_enc_l, qk, delta, NULL, NULL, B_2);
     free(q_lke_enc_l);
     // Step: 17
     memcpy(B, B_0, (R * 16));
@@ -937,9 +932,7 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   free(b_qs_concat);
 
   bf128_t bf_qtilde = bf128_load(q_tilde);
-  free(q_tilde);
-  uint8_t* ret = malloc(sizeof(bf128_t));
-  bf128_store(ret, bf128_add(bf_qtilde, bf128_mul(bf128_load(a_tilde), bf128_load(delta))));
+  bf128_store(q_tilde, bf128_add(bf_qtilde, bf128_mul(bf128_load(a_tilde), bf128_load(delta))));
 
-  return ret;
+  return q_tilde;
 }
