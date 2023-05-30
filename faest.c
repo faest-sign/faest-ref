@@ -64,7 +64,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   const size_t utilde_bytes    = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
 
   // Step: 2
-  uint8_t* mu = malloc(lambdaBytes * 2);
+  uint8_t mu[MAX_LAMBDA_BYTES * 2];
   {
     H1_context_t h1_ctx;
     H1_init(&h1_ctx, lambda);
@@ -74,7 +74,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   }
 
   // Step: 3
-  uint8_t* rootkey = malloc(lambdaBytes);
+  uint8_t rootkey[MAX_LAMBDA_BYTES];
   {
     H3_context_t h3_ctx;
     H3_init(&h3_ctx, lambda);
@@ -87,7 +87,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   }
 
   // Step: 3
-  uint8_t* hcom     = malloc(lambdaBytes * 2);
+  uint8_t hcom[MAX_LAMBDA_BYTES];
   vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
   uint8_t* u        = malloc(ell_hat_bytes);
   // v has \hat \ell rows, \lambda columns, storing in column-major order
@@ -97,11 +97,9 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     v[i] = v[0] + i * ell_hat_bytes;
   }
   voleCommit(rootkey, signature->iv, ell_hat, params, hcom, vecCom, signature->c, u, v);
-  free(rootkey);
-  rootkey = NULL;
 
   // Step: 4
-  uint8_t* chall_1 = malloc((5 * lambdaBytes) + 8);
+  uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
   {
     H2_context_t h2_ctx;
     H2_init(&h2_ctx, lambda);
@@ -112,21 +110,17 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     }
     H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
   }
-  free(hcom);
-  hcom = NULL;
-  free(mu);
-  mu = NULL;
 
   // Step: 6
   vole_hash(signature->u_tilde, chall_1, u, l, lambda);
 
   // Step: 7 and 8
-  uint8_t* h_v = malloc(lambdaBytes * 2);
+  uint8_t h_v[MAX_LAMBDA_BYTES * 2];
   {
     H1_context_t h1_ctx_1;
     H1_init(&h1_ctx_1, lambda);
 
-    uint8_t* V_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
+    uint8_t V_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
     for (unsigned int i = 0; i != lambda; ++i) {
       // Step 7
       // printUint8Arr("sign v[i]", v[i], lambdaBytes, 1);
@@ -134,7 +128,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
       // Step 8
       H1_update(&h1_ctx_1, V_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
-    free(V_tilde);
 
     // Step: 8
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
@@ -149,7 +142,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   xorUint8Arr(w, u, signature->d, ell_bytes);
 
   // Step: 12
-  uint8_t* chall_2 = malloc(3 * lambdaBytes + 8);
+  uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
   {
     H2_context_t h2_ctx_1;
     H2_init(&h2_ctx_1, lambda);
@@ -159,10 +152,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_update(&h2_ctx_1, signature->d, ell_bytes);
     H2_final(&h2_ctx_1, chall_2, (3 * lambdaBytes) + 8);
   }
-  free(chall_1);
-  chall_1 = NULL;
-  free(h_v);
-  h_v = NULL;
 
   // Step: 14..15
   {
@@ -176,7 +165,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   memcpy(u_, u, (l + lambda) / 8);
 
   // Step: 16
-  uint8_t* b_tilde = malloc(lambdaBytes);
+  uint8_t b_tilde[MAX_LAMBDA_BYTES];
   aes_prove(w, u_, v, in, out, chall_2, signature->a_tilde, b_tilde, params);
   free(v[0]);
   free(v);
@@ -197,10 +186,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_update(&h2_ctx_2, b_tilde, lambdaBytes);
     H2_final(&h2_ctx_2, signature->chall_3, lambdaBytes);
   }
-  free(b_tilde);
-  b_tilde = NULL;
-  free(chall_2);
-  chall_2 = NULL;
 
   // Step: 19..21
   uint8_t* s_ = malloc(MAX(params->faest_param.k0, params->faest_param.k1));
@@ -239,7 +224,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   const uint8_t* out = pk + params->faest_param.pkSize / 2;
 
   // Step: 3
-  uint8_t* mu = malloc(lambdaBytes * 2);
+  uint8_t mu[MAX_LAMBDA_BYTES * 2];
   {
     H1_context_t h1_ctx;
     H1_init(&h1_ctx, lambda);
@@ -255,12 +240,12 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   for (unsigned int i = 1; i < lambda; ++i) {
     qprime[i] = qprime[0] + i * ell_hat_bytes;
   }
-  uint8_t* hcom = malloc(lambdaBytes * 2);
+  uint8_t hcom[MAX_LAMBDA_BYTES * 2];
   voleReconstruct(signature->iv, signature->chall_3, signature->pdec, signature->com_j, hcom,
                   qprime, ell_hat, params);
 
   // Step: 5
-  uint8_t* chall_1 = malloc((5 * lambdaBytes) + 8);
+  uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
   {
     H2_context_t h2_ctx;
     H2_init(&h2_ctx, lambda);
@@ -271,10 +256,6 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     }
     H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
   }
-  free(hcom);
-  hcom = NULL;
-  free(mu);
-  mu = NULL;
 
   // Step: 8..14
   uint8_t** q = malloc(lambda * sizeof(uint8_t*));
@@ -326,12 +307,12 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   qprime = NULL;
 
   // Step 15 and 16
-  uint8_t* h_v = malloc(lambdaBytes * 2);
+  uint8_t h_v[MAX_LAMBDA_BYTES * 2];
   {
     H1_context_t h1_ctx_1;
     H1_init(&h1_ctx_1, lambda);
 
-    uint8_t* Q_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
+    uint8_t Q_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
     for (unsigned int i = 0; i != lambda; ++i) {
       // printUint8Arr("verify q[0]", q[0] + i * ell_hat_bytes, lambdaBytes, 1);
       // Step 15
@@ -340,7 +321,6 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       xorUint8Arr(Q_tilde, Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
-    free(Q_tilde);
 
     // Step: 16
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
@@ -352,7 +332,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   // printUint8Arr("verify h_v", h_v, lambdaBytes * 2, 1);
 
   // Step 17
-  uint8_t* chall_2 = malloc(3 * lambdaBytes + 8);
+  uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
   {
     H2_context_t h2_ctx_1;
     H2_init(&h2_ctx_1, lambda);
@@ -362,10 +342,6 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     H2_update(&h2_ctx_1, signature->d, ell_bytes);
     H2_final(&h2_ctx_1, chall_2, (3 * lambdaBytes) + 8);
   }
-  free(h_v);
-  h_v = NULL;
-  free(chall_1);
-  chall_1 = NULL;
 
   // Step 18
   uint8_t* b_tilde =
@@ -375,7 +351,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   q = NULL;
 
   // Step: 20
-  uint8_t* chall_3 = malloc(lambdaBytes);
+  uint8_t chall_3[MAX_LAMBDA_BYTES];
   {
     H2_context_t h2_ctx_2;
     H2_init(&h2_ctx_2, lambda);
@@ -386,14 +362,9 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   }
   free(b_tilde);
   b_tilde = NULL;
-  free(chall_2);
-  chall_2 = NULL;
 
   // Step 21
-  int ret = memcmp(chall_3, signature->chall_3, lambdaBytes);
-  free(chall_3);
-
-  return ret == 0 ? 1 : 0;
+  return memcmp(chall_3, signature->chall_3, lambdaBytes) == 0 ? 1 : 0;
 }
 
 signature_t init_signature(const faest_paramset_t* params) {
