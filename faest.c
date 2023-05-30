@@ -399,53 +399,6 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   return ret == 0 ? 1 : 0;
 }
 
-int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
-                        const faest_paramset_t* params) {
-  uint8_t* const old_dst    = dst;
-  const unsigned int tau0   = params->faest_param.t0;
-  const size_t lambda_bytes = params->faest_param.lambda / 8;
-  const size_t ell_bytes    = (params->faest_param.l + 7) / 8;
-  const size_t ell_hat =
-      params->faest_param.l + params->faest_param.lambda * 2 + params->faest_param.b;
-  const size_t ell_hat_bytes = (ell_hat + 7) / 8;
-  const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
-
-  // serialize c_i
-  for (unsigned int i = 0; i < params->faest_param.tau - 1; ++i) {
-    memcpy(dst, signature->c[i], ell_hat_bytes);
-    dst += ell_hat_bytes;
-  }
-
-  // serialize u tilde
-  memcpy(dst, signature->u_tilde, utilde_bytes);
-  dst += utilde_bytes;
-
-  // serialize d
-  memcpy(dst, signature->d, ell_bytes);
-  dst += ell_bytes;
-
-  // serialize a tilde
-  memcpy(dst, signature->a_tilde, lambda_bytes);
-  dst += lambda_bytes;
-
-  // serialize pdec_i, com_i
-  for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
-    unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
-
-    memcpy(dst, signature->pdec[i], depth * lambda_bytes);
-    dst += depth * lambda_bytes;
-    memcpy(dst, signature->com_j[i], 2 * lambda_bytes);
-    dst += 2 * lambda_bytes;
-  }
-
-  // serialize chall_3
-  memcpy(dst, signature->chall_3, lambda_bytes);
-  dst += lambda_bytes;
-
-  *len = dst - old_dst;
-  return 0;
-}
-
 signature_t init_signature(const faest_paramset_t* params) {
   signature_t sig = {NULL};
 
@@ -504,6 +457,52 @@ void free_signature(signature_t sig, const faest_paramset_t* params) {
   }
 }
 
+int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
+                        const faest_paramset_t* params) {
+  uint8_t* const old_dst    = dst;
+  const unsigned int tau0   = params->faest_param.t0;
+  const size_t lambda_bytes = params->faest_param.lambda / 8;
+  const size_t ell_bytes    = (params->faest_param.l + 7) / 8;
+  const size_t ell_hat =
+      params->faest_param.l + params->faest_param.lambda * 2 + params->faest_param.b;
+  const size_t ell_hat_bytes = (ell_hat + 7) / 8;
+  const size_t utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
+
+  // serialize c_i
+  for (unsigned int i = 0; i < params->faest_param.tau - 1; ++i) {
+    memcpy(dst, signature->c[i], ell_hat_bytes);
+    dst += ell_hat_bytes;
+  }
+
+  // serialize u tilde
+  memcpy(dst, signature->u_tilde, utilde_bytes);
+  dst += utilde_bytes;
+
+  // serialize d
+  memcpy(dst, signature->d, ell_bytes);
+  dst += ell_bytes;
+
+  // serialize a tilde
+  memcpy(dst, signature->a_tilde, lambda_bytes);
+  dst += lambda_bytes;
+
+  // serialize pdec_i, com_i
+  for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
+    const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
+    memcpy(dst, signature->pdec[i], depth * lambda_bytes);
+    dst += depth * lambda_bytes;
+    memcpy(dst, signature->com_j[i], 2 * lambda_bytes);
+    dst += 2 * lambda_bytes;
+  }
+
+  // serialize chall_3
+  memcpy(dst, signature->chall_3, lambda_bytes);
+  dst += lambda_bytes;
+
+  *len = dst - old_dst;
+  return 0;
+}
+
 signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* params) {
   const unsigned int tau0   = params->faest_param.t0;
   const size_t lambda_bytes = params->faest_param.lambda / 8;
@@ -534,7 +533,7 @@ signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* pa
 
   // serialize pdec_i, com_i
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
-    unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
+    const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
     memcpy(sig.pdec[i], src, depth * lambda_bytes);
     src += depth * lambda_bytes;
     memcpy(sig.com_j[i], src, 2 * lambda_bytes);
@@ -543,7 +542,7 @@ signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* pa
 
   // serialize chall_3
   memcpy(sig.chall_3, src, lambda_bytes);
-  src += lambda_bytes;
+  // src += lambda_bytes;
 
   return sig;
 }
