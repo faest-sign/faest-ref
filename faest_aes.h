@@ -8,9 +8,9 @@
 
 #include "instances.h"
 
-uint8_t* aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Lke,
-                                  uint32_t m, const uint8_t* x, uint8_t Mtag, uint8_t Mkey,
-                                  const uint8_t* delta);
+void aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Lke, uint32_t m,
+                              const uint8_t* x, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
+                              uint8_t* out);
 
 uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Ske,
                                    uint8_t Lke, uint32_t m, const uint8_t* x, const uint8_t* xk,
