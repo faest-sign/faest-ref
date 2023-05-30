@@ -265,10 +265,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     qprime[i] = qprime[0] + i * ell_hat_bytes;
   }
   uint8_t* hcom = malloc(lambdaBytes * 2);
-  {
-    voleReconstruct(signature->chall_3, signature->pdec, signature->com_j, hcom, qprime, ell_hat,
-                    params);
-  }
+  voleReconstruct(signature->chall_3, signature->pdec, signature->com_j, hcom, qprime, ell_hat,
+                  params);
 
   // Step: 5
   uint8_t* chall_1 = malloc((5 * lambdaBytes) + 8);
@@ -282,6 +280,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     }
     H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
   }
+  free(hcom);
+  hcom = NULL;
   free(mu);
   mu = NULL;
 
@@ -329,6 +329,11 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       }
     }
   }
+  free(delta);
+  delta = NULL;
+  free(qprime[0]);
+  free(qprime);
+  qprime = NULL;
 
   // Step 15 and 16
   uint8_t* h_v = malloc(lambdaBytes * 2);
@@ -338,9 +343,9 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
 
     uint8_t* Q_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
     for (unsigned int i = 0; i != lambda; ++i) {
-      printUint8Arr("verify Q", q[0] + i * ell_hat_bytes, 5, 1);
+      printUint8Arr("verify Q", q[i], 5, 1);
       // Step 15
-      vole_hash(Q_tilde, chall_1, q[0] + i * ell_hat_bytes, l, lambda);
+      vole_hash(Q_tilde, chall_1, q[i], l, lambda);
       // Step 16
       xorUint8Arr(Q_tilde, Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
@@ -350,6 +355,9 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     // Step: 16
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
+  free(Dtilde[0]);
+  free(Dtilde);
+  Dtilde = NULL;
 
   // printUint8Arr("verify chall 1", chall_1, (5 * lambdaBytes) + 8, 1);
   // printUint8Arr("verify signature.u_tilde", signature->u_tilde, utilde_bytes, 1);
@@ -367,6 +375,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     H2_update(&h2_ctx_1, signature->d, ell_bytes);
     H2_final(&h2_ctx_1, chall_2, (3 * lambdaBytes) + 8);
   }
+  free(h_v);
+  h_v = NULL;
   free(chall_1);
   chall_1 = NULL;
 
@@ -376,6 +386,9 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   // TODO: Do we transpose and shorten here before passing to q ?
   uint8_t* b_tilde =
       aes_verify(signature->d, q, chall_2, signature->chall_3, signature->a_tilde, in, out, params);
+  free(q[0]);
+  free(q);
+  q = NULL;
 
   // Step: 20
   uint8_t* chall_3 = malloc(lambdaBytes);
@@ -400,7 +413,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
 }
 
 signature_t init_signature(const faest_paramset_t* params) {
-  signature_t sig = {NULL};
+  signature_t sig;
+  memset(&sig, 0, sizeof(sig));
 
   const unsigned int tau0   = params->faest_param.t0;
   const size_t lambda_bytes = params->faest_param.lambda / 8;

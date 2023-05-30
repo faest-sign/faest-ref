@@ -107,7 +107,6 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
   memcpy(u, ui[0], ellhatBytes);
   for (uint32_t i = 1; i < tau; i++) {
     // Step 11
-    c[i - 1] = malloc(ellhatBytes);
     xorUint8Arr(u, ui[i], c[i - 1], ellhatBytes);
   }
   free(ui[0]);
