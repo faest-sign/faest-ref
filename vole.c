@@ -136,6 +136,12 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
   H1_context_t h1_ctx;
   H1_init(&h1_ctx, lambda);
 
+  vec_com_rec_t vecComRec;
+  vecComRec.h   = malloc(lambdaBytes * 2);
+  vecComRec.k   = calloc(getBinaryTreeNodeCount(1 << MAX(k0, k1)), lambdaBytes);
+  vecComRec.com = malloc((1 << MAX(k0, k1)) * lambdaBytes * 2);
+  vecComRec.m   = malloc((1 << MAX(k0, k1)) * lambdaBytes);
+
   // Step: 1
   for (uint32_t i = 0; i < tau; i++) {
     // Step: 2
@@ -148,7 +154,6 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
     uint32_t idx = NumRec(depth, chalout);
 
     // Step 5
-    vec_com_rec_t vecComRec;
     vector_reconstruction(iv, pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, depth,
                           &vecComRec);
 
@@ -159,13 +164,14 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
     }
 
     H1_update(&h1_ctx, vecComRec.com, lambdaBytes * 2);
-    vec_com_rec_clear(&vecComRec);
+
     // Step: 7..8
     ConvertToVole(iv, sd, true, lambda, lambdaBytes, N, depth, ellhatBytes, NULL, tmp_q);
     for (unsigned int j = 0; j < depth; ++j, ++q_idx) {
       memcpy(q[q_idx], tmp_q + j * ellhatBytes, ellhatBytes);
     }
   }
+  vec_com_rec_clear(&vecComRec);
   free(tmp_q);
   free(chalout);
   free(sd);
