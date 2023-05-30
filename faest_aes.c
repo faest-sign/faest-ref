@@ -854,7 +854,7 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   memcpy(v_tilde, bf_v, Lke * lambdaBytes);
 
   // Step: 7
-  const unsigned int length_a = (Ske / 8) + (2 * Senc) + 1;
+  const unsigned int length_a = (Ske / 8) + (beta * Senc) + 1;
   uint8_t* A0                 = malloc(lambdaBytes * length_a);
   uint8_t* A1                 = malloc(lambdaBytes * length_a);
   uint8_t* k                  = malloc((R + 1) * 128);
@@ -899,13 +899,13 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   }
   free(bf_v);
 
-  memcpy(A1 + (lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc)), &bf_us, lambdaBytes);
-  memcpy(A0 + (lambdaBytes * (Ske / 8)) + (2 * (lambdaBytes * Senc)), &bf_vs, lambdaBytes);
+  memcpy(A1 + (lambdaBytes * (Ske / 8)) + (beta * (lambdaBytes * Senc)), &bf_us, lambdaBytes);
+  memcpy(A0 + (lambdaBytes * (Ske / 8)) + (beta * (lambdaBytes * Senc)), &bf_vs, lambdaBytes);
 
-  bf128_t* bf_a1_us_concat = malloc(sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
-  memcpy(bf_a1_us_concat, A1, sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
-  bf128_t* bf_a0_vs_concat = malloc(sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
-  memcpy(bf_a0_vs_concat, A0, sizeof(bf128_t) * ((Ske / 8) + (2 * Senc) + 1));
+  bf128_t* bf_a1_us_concat = malloc(sizeof(bf128_t) * ((Ske / 8) + (beta * Senc) + 1));
+  memcpy(bf_a1_us_concat, A1, sizeof(bf128_t) * ((Ske / 8) + (beta * Senc) + 1));
+  bf128_t* bf_a0_vs_concat = malloc(sizeof(bf128_t) * ((Ske / 8) + (beta * Senc) + 1));
+  memcpy(bf_a0_vs_concat, A0, sizeof(bf128_t) * ((Ske / 8) + (beta * Senc) + 1));
 
   zk_hash_128(a_tilde, chall, bf_a1_us_concat, length_a - 1);
   zk_hash_128(b_tilde, chall, bf_a0_vs_concat, length_a - 1);
