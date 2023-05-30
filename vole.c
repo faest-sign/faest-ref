@@ -155,8 +155,7 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
     // Step: 6
     memset(sd, 0, lambdaBytes);
     for (uint32_t j = 1; j < N; j++) {
-      // TODO: unsure what this xor does, removed it for now
-      memcpy(sd + (j * lambdaBytes), vecComRec.m + (lambdaBytes * j), lambdaBytes);
+      memcpy(sd + (j * lambdaBytes), vecComRec.m + (lambdaBytes * (j ^ idx)), lambdaBytes);
     }
 
     H1_update(&h1_ctx, vecComRec.com, lambdaBytes * 2);
