@@ -725,12 +725,11 @@ static void aes_enc_constraints(const uint8_t* in, const uint8_t* out, const uin
       bf_qs_dash[i] = bf128_load(qs_dash + idx);
       idx += lambdaBytes;
     }
-    bf128_t* bf_b = malloc(sizeof(bf128_t) * Senc);
     bf128_t minus_part =
         bf128_mul(bf128_mul(bf128_from_bf8(bf8_one()), bf128_load(delta)), bf128_load(delta));
     for (uint32_t j = 0; j < Senc; j++) {
-      bf_b[j] = bf128_add(bf128_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
-      bf128_store(B + (lambdaBytes * j), bf_b[j]);
+      bf128_t bf_b_j = bf128_add(bf128_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
+      bf128_store(B + (lambdaBytes * j), bf_b_j);
     }
     free(qs);
     free(qs_dash);
