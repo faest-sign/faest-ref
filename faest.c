@@ -39,7 +39,7 @@ uint8_t** column_to_row_major_and_shrink_V(uint8_t** v, unsigned int lambda, uns
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
   // rows and \lambda columns storing in row-major order
   uint8_t** new_v = malloc((ell + lambda) * sizeof(uint8_t*));
-  new_v[0]        = malloc(lambda * (ell + lambda));
+  new_v[0]        = calloc(lambda, (ell + lambda));
   for (unsigned int i = 1; i < ell + lambda; ++i) {
     new_v[i] = new_v[0] + i * lambda_bytes;
   }
