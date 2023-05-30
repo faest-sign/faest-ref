@@ -11,6 +11,7 @@
 #include "fields.h"
 #include "vole.h"
 #include "universal_hashing.h"
+#include "utils.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -34,9 +35,6 @@ void aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_
   }
 
   const unsigned int lambdaBytes = lambda / 8;
-  const unsigned int x_len       = (Lke / 8) * ((m + 7) / 8);
-  const unsigned int delta_len   = lambdaBytes;
-  const unsigned int xk_len      = (Lke / 8) * ((m + 7) / 8);
   const unsigned int y_out_len   = (R + 1) * 128 * ((m + 7) / 8);
 
   // Step: 2..3
@@ -112,9 +110,6 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
   }
 
   const unsigned int lambdaBytes = lambda / 8;
-  const unsigned int x_len       = (Lke / 8) * ((m + 7) / 8);
-  const unsigned int delta_len   = lambdaBytes;
-  const unsigned int xk_len      = (Lke / 8) * ((m + 7) / 8);
   const unsigned int y_out_len   = 8 * Ske * ((m + 7) / 8);
 
   bf128_t bf_delta;
@@ -132,9 +127,8 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
     bool rmvRcon   = true;
     uint32_t ircon = 0;
 
-    bf8_t bf_mkey       = bf8_from_bit(Mkey);
-    bf8_t bf_minus_mkey = bf8_from_bit(1 - Mkey);
-    bf8_t bf_minus_mtag = bf8_from_bit(1 - Mtag);
+    bf8_t bf_minus_mkey = bf8_from_bit(1 ^ Mkey);
+    bf8_t bf_minus_mtag = bf8_from_bit(1 ^ Mtag);
 
     bf8_t bf_x_tilde[8];
 
@@ -203,7 +197,7 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
   bf128_t bf_minus_mkey = bf128_from_bit(1 - Mkey);
   bf128_t bf_minus_mtag = bf128_from_bit(1 - Mtag);
 
-  bf128_t* bf_x_tilde = malloc(sizeof(bf128_t) * 8);
+  bf128_t bf_x_tilde[8];
 
   for (uint32_t j = 0; j < Ske; j++) {
 
@@ -267,7 +261,6 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
     idx += 1;
   }
   free(bf_y);
-  free(bf_x_tilde);
   return y_out;
 }
 
@@ -278,9 +271,7 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
                                  uint8_t* qk) {
   uint32_t lambdaByte = lambda / 8;
   uint32_t w_len      = Lke / 8;
-  uint32_t v_len      = lambdaByte * (Lke / 8);
   uint32_t q_len      = lambdaByte * (Lke / 8);
-  uint32_t delta_len  = lambdaByte;
 
   if (Mkey == 0) {
     // STep: 2
@@ -378,10 +369,6 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
                     const uint8_t* delta, uint8_t* y_out) {
 
   uint32_t lambdaBytes = lambda / 8;
-  uint32_t x_len       = lambdaBytes * (Lenc / 8);
-  uint32_t delta_len   = lambdaBytes;
-  uint32_t in_len      = 16;
-  uint32_t y_out_len   = lambdaBytes * R * 16;
 
   uint32_t bf_y_len = sizeof(bf128_t) * R * 16;
   bf128_t* bf_y     = malloc(bf_y_len);
@@ -396,8 +383,6 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
   }
 
   if (m == 1) {
-    bf8_t bf_minus_mtag = bf8_from_bit(1 - Mtag);
-    bf8_t bf_minus_mkey = bf8_from_bit(1 - Mkey);
 
     // STep: 2
     for (uint32_t i = 0; i < 16; i++) {
@@ -548,9 +533,6 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
                      const uint8_t* out, uint8_t* y_out) {
 
   uint32_t lambdaBytes = lambda / 8;
-  uint32_t x_len       = lambdaBytes * (Lenc / 8);
-  uint32_t delta_len   = lambdaBytes;
-  uint32_t out_len     = 16;
   uint32_t y_out_len   = lambdaBytes * R * 16;
 
   // Step: 1
@@ -685,22 +667,13 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
   return 1;
 }
 
-int aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Senc,
-                        const uint8_t* in, const uint8_t* out, const uint8_t* w, const uint8_t* v,
-                        const uint8_t* k, const uint8_t* vk, uint8_t Mkey, const uint8_t* q,
-                        const uint8_t* qk, const uint8_t* delta, uint8_t* A0, uint8_t* A1,
-                        uint8_t* B) {
+void aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Senc,
+                         const uint8_t* in, const uint8_t* out, const uint8_t* w, const uint8_t* v,
+                         const uint8_t* k, const uint8_t* vk, uint8_t Mkey, const uint8_t* q,
+                         const uint8_t* qk, const uint8_t* delta, uint8_t* A0, uint8_t* A1,
+                         uint8_t* B) {
 
   uint32_t lambdaBytes = lambda / 8;
-  uint32_t in_len      = 16;
-  uint32_t out_len     = 16;
-  uint32_t w_len       = Lenc;
-  uint32_t v_len       = Lenc;
-  uint32_t k_len       = (R + 1) * 128;
-  uint32_t vk_len      = ((R + 1) * 128) * lambdaBytes;
-  uint32_t q_len       = Lenc * lambdaBytes;
-  uint32_t qk_len      = ((R + 1) * 128) * lambdaBytes;
-  uint32_t delta_len   = lambdaBytes;
 
   if (Mkey == 0) {
     uint8_t* s       = malloc(lambdaBytes * Senc);
@@ -779,27 +752,16 @@ int aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Sen
 void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde, uint8_t* b_tilde,
                const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int tau    = params->faest_param.tau;
-  const unsigned int t0     = params->faest_param.t0;
-  const unsigned int k0     = params->faest_param.k0;
-  const unsigned int t1     = params->faest_param.t1;
-  const unsigned int k1     = params->faest_param.k1;
-  const unsigned int beta   = params->faest_param.beta;
-  const unsigned int l      = params->faest_param.l;
-  const unsigned int Lke    = params->faest_param.Lke;
-  const unsigned int Lenc   = params->faest_param.Lenc;
-  const unsigned int R      = params->cipher_param.numRounds;
-  const unsigned int C      = params->faest_param.c;
-  const unsigned int Nwd    = params->faest_param.Nwd;
-  const unsigned int Ske    = params->faest_param.Ske;
-  const unsigned int Senc   = params->faest_param.Senc;
-
-  uint32_t lambdaBytes = lambda / 8;
-  uint32_t w_len       = l;
-  uint32_t u_len       = lambda;
-  uint32_t in_len      = beta * 128;
-  uint32_t out_len     = beta * 128;
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int beta        = params->faest_param.beta;
+  const unsigned int l           = params->faest_param.l;
+  const unsigned int Lke         = params->faest_param.Lke;
+  const unsigned int Lenc        = params->faest_param.Lenc;
+  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int Nwd         = params->faest_param.Nwd;
+  const unsigned int Ske         = params->faest_param.Ske;
+  const unsigned int Senc        = params->faest_param.Senc;
+  const unsigned int lambdaBytes = lambda / 8;
 
   // Step: 1..2
   bf8_t* bf_w   = malloc(l);
@@ -833,7 +795,6 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
 
   // Step: Skipping 8 in implementation
   // Step: 9
-  uint32_t lByte_enc;
   w_tilde = realloc(w_tilde, Lenc);
   v_tilde = realloc(v_tilde, Lenc * lambdaBytes);
   memcpy(w_tilde, bf_w + Lke, Lenc);
@@ -884,35 +845,24 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
 uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8_t* chall_3,
                     const uint8_t* a_tilde, const uint8_t* in, const uint8_t* out,
                     const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int tau    = params->faest_param.tau;
-  const unsigned int t0     = params->faest_param.t0;
-  const unsigned int k0     = params->faest_param.k0;
-  const unsigned int t1     = params->faest_param.t1;
-  const unsigned int k1     = params->faest_param.k1;
-  const unsigned int beta   = params->faest_param.beta;
-  const unsigned int l      = params->faest_param.l;
-  const unsigned int Lke    = params->faest_param.Lke;
-  const unsigned int Lenc   = params->faest_param.Lenc;
-  const unsigned int R      = params->cipher_param.numRounds;
-  const unsigned int C      = params->faest_param.c;
-  const unsigned int Nwd    = params->faest_param.Nwd;
-  const unsigned int Ske    = params->faest_param.Ske;
-  const unsigned int Senc   = params->faest_param.Senc;
-
-  uint32_t lambdaBytes = lambda / 8;
-  uint32_t d_len       = l;
-  uint32_t Q_len       = l + lambda;
-  uint32_t Qi_len      = lambda;
-  uint32_t chall_2_len = 3 * lambda + 64;
-  uint32_t chall_3_len = lambda;
-  uint32_t in_len      = beta * 128;
-  uint32_t out_len     = beta * 128;
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int tau         = params->faest_param.tau;
+  const unsigned int t0          = params->faest_param.t0;
+  const unsigned int k0          = params->faest_param.k0;
+  const unsigned int t1          = params->faest_param.t1;
+  const unsigned int k1          = params->faest_param.k1;
+  const unsigned int beta        = params->faest_param.beta;
+  const unsigned int l           = params->faest_param.l;
+  const unsigned int Lke         = params->faest_param.Lke;
+  const unsigned int Lenc        = params->faest_param.Lenc;
+  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int Nwd         = params->faest_param.Nwd;
+  const unsigned int Ske         = params->faest_param.Ske;
+  const unsigned int Senc        = params->faest_param.Senc;
+  const unsigned int lambdaBytes = lambda / 8;
 
   // Step: 1
-  bf128_t bf_delta = bf128_load(chall_3);
-  uint8_t* delta   = malloc(16);
-  memcpy(delta, chall_3, 16);
+  const uint8_t* delta = chall_3;
 
   // Step: 2
   // do nothing
@@ -921,30 +871,13 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   // do nothing
 
   // Step: 4..10
-  // Doing when t0
-  for (uint32_t i = 0; i < t0; i++) {
-    uint8_t* fancy_d = malloc(k0);
+  for (uint32_t i = 0; i < tau; i++) {
+    unsigned int depth = i < t0 ? k0 : k1;
+    uint8_t* fancy_d   = malloc(depth);
     ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
-    for (uint32_t j = 0; j < k0; j++) {
+    for (uint32_t j = 0; j < depth; j++) {
       if (fancy_d[j] == 1) {
-        for (uint32_t k = 0; k < ((l + 7) / 8); k++) {
-          *(Q[i] + (j * ((lambda + l) / 8)) + k) =
-              *(Q[i] + (j * ((lambda + l) / 8)) + k) ^ *(d + k);
-        }
-      }
-    }
-    free(fancy_d);
-  }
-  // Dooing when t1
-  for (uint32_t i = 0; i < t1; i++) {
-    uint8_t* fancy_d = malloc(k1);
-    ChalDec(chall_3, (t0 + i), k0, t0, k1, t1, fancy_d);
-    for (uint32_t j = 0; j < k1; j++) {
-      if (fancy_d[j] == 1) {
-        for (uint32_t k = 0; k < ((l + 7) / 8); k++) {
-          *(Q[t0 + i] + (j * ((lambda + l) / 8)) + k) =
-              *(Q[t0 + i] + (j * ((lambda + l) / 8)) + k) ^ *(d + k);
-        }
+        xorUint8Arr(d, Q[i + j], Q[i + j], (l + 7) / 8);
       }
     }
     free(fancy_d);
@@ -960,18 +893,20 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   // Step: 13
   uint8_t* q_lke = malloc(lambdaBytes * (Lke));
   memcpy(q_lke, bf_q, sizeof(bf128_t) * Lke);
-  uint8_t* A0  = malloc(Ske * lambdaBytes * Nwd);
-  uint8_t* A1  = malloc(Ske * lambdaBytes * Nwd);
-  uint8_t* k   = malloc((R + 1) * 128);
-  uint8_t* vk  = malloc(lambdaBytes * ((R + 1) * 128));
-  uint8_t* qk  = malloc(lambdaBytes * ((R + 1) * 128));
-  uint8_t* B_0 = malloc(Ske * lambdaBytes * Nwd);
+  const unsigned int length_a = (Ske / 8) + (beta * Senc) + 1;
+  uint8_t* A0                 = malloc(length_a * lambdaBytes);
+  uint8_t* A1                 = malloc(length_a * lambdaBytes);
+  uint8_t* k                  = malloc((R + 1) * 128);
+  uint8_t* vk                 = malloc(lambdaBytes * ((R + 1) * 128));
+  uint8_t* qk                 = malloc(lambdaBytes * ((R + 1) * 128));
+  uint8_t* B_0                = malloc(Ske * lambdaBytes * Nwd);
   aes_key_schedule_constraints(lambda, R, Nwd, Ske, Lke, NULL, NULL, 1, q_lke, delta, A0, A1, k, vk,
                                B_0, qk);
   free(q_lke);
 
   // Step: 14
-  uint8_t *A0_1, *A1_1, *B_1;
+  uint8_t *A0_1 = A0 + (lambdaBytes * (Ske / 8)), *A1_1 = A1 + (lambdaBytes * (Ske / 8)),
+          *B_1        = B_0;
   uint8_t* q_lke_lenc = malloc(lambdaBytes * (Lenc - Lke));
   memcpy(q_lke_lenc, bf_q + Lke, sizeof(bf128_t) * (Lenc - Lke));
   aes_enc_constraints(lambda, R, Lenc, Senc, in, out, NULL, NULL, NULL, NULL, 1, q_lke_lenc, qk,
@@ -1023,6 +958,5 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   uint8_t* ret = malloc(sizeof(bf128_t));
   bf128_store(ret, bf128_add(bf_qtilde, bf128_mul(bf128_load(a_tilde), bf128_load(delta))));
 
-  free(delta);
   return ret;
 }
