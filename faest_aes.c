@@ -930,7 +930,7 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   // Step 19
   bf128_t* b_qs_concat = malloc(B_len + sizeof(bf128_t));
   memcpy(b_qs_concat, B, B_len);
-  memcpy(b_qs_concat + B_len, &bf_qs, sizeof(bf128_t));
+  memcpy(b_qs_concat + B_len / sizeof(bf128_t), &bf_qs, sizeof(bf128_t));
   uint8_t* q_tilde = malloc(lambdaBytes);
   zk_hash_128(q_tilde, chall_2, b_qs_concat, length_a - 1);
   free(B);
