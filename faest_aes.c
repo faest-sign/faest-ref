@@ -26,14 +26,17 @@ ATTR_CONST static inline bf8_t set_bit(bf8_t in, uint8_t index) {
   return (in << index);
 }
 
-void aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Lke, uint32_t m,
-                              const uint8_t* x, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
-                              uint8_t* out) {
+static void aes_key_schedule_forward(uint32_t m, const uint8_t* x, uint8_t Mtag, uint8_t Mkey,
+                                     const uint8_t* delta, uint8_t* out,
+                                     const faest_paramset_t* params) {
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
     return;
   }
 
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int Nwd         = params->faest_param.Nwd;
   const unsigned int lambdaBytes = lambda / 8;
   const unsigned int y_out_len   = (R + 1) * 128 * ((m + 7) / 8);
 
@@ -92,14 +95,16 @@ void aes_key_schedule_forward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_
   free(bf_y);
 }
 
-uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Ske,
-                                   uint8_t Lke, uint32_t m, const uint8_t* x, const uint8_t* xk,
-                                   uint8_t Mtag, uint8_t Mkey, const uint8_t* delta) {
+static uint8_t* aes_key_schedule_backward(uint32_t m, const uint8_t* x, const uint8_t* xk,
+                                          uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
+                                          const faest_paramset_t* params) {
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
     return NULL;
   }
 
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int Ske         = params->faest_param.Ske;
   const unsigned int lambdaBytes = lambda / 8;
   const unsigned int y_out_len   = 8 * Ske * ((m + 7) / 8);
 
@@ -247,34 +252,35 @@ uint8_t* aes_key_schedule_backward(uint32_t lambda, uint32_t R, uint32_t Nwd, ui
   return y_out;
 }
 
-int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint32_t Ske,
-                                 uint32_t Lke, const uint8_t* w, const uint8_t* v,
-                                 const uint8_t Mkey, const uint8_t* q, const uint8_t* delta,
-                                 uint8_t* A0, uint8_t* A1, uint8_t* k, uint8_t* vk, uint8_t* B,
-                                 uint8_t* qk) {
-  uint32_t lambdaByte = lambda / 8;
-  uint32_t w_len      = Lke / 8;
-  uint32_t q_len      = lambdaByte * (Lke / 8);
+static int aes_key_schedule_constraints(const uint8_t* w, const uint8_t* v, const uint8_t Mkey,
+                                        const uint8_t* q, const uint8_t* delta, uint8_t* A0,
+                                        uint8_t* A1, uint8_t* k, uint8_t* vk, uint8_t* B,
+                                        uint8_t* qk, const faest_paramset_t* params) {
+  const unsigned int lambda     = params->faest_param.lambda;
+  const unsigned int Lke        = params->faest_param.Lke;
+  const unsigned int Nwd        = params->faest_param.Nwd;
+  const unsigned int Ske        = params->faest_param.Ske;
+  const unsigned int lambdaByte = lambda / 8;
+  uint32_t w_len                = Lke / 8;
+  uint32_t q_len                = lambdaByte * (Lke / 8);
 
   if (Mkey == 0) {
     // STep: 2
-    aes_key_schedule_forward(lambda, R, Nwd, Lke, 1, w, 0, 0, NULL, k);
+    aes_key_schedule_forward(1, w, 0, 0, NULL, k, params);
 
     // Step: 3
-    aes_key_schedule_forward(lambda, R, Nwd, Lke, lambda, v, 1, 0, NULL, vk);
+    aes_key_schedule_forward(lambda, v, 1, 0, NULL, vk, params);
 
     // Step: 4
     uint8_t* w_lambda = malloc(w_len - lambdaByte);
     memcpy(w_lambda, w + lambdaByte, w_len - lambdaByte);
-    uint8_t* w_dash =
-        aes_key_schedule_backward(lambda, R, Nwd, Ske, Lke, 1, w_lambda, k, 0, 0, NULL);
+    uint8_t* w_dash = aes_key_schedule_backward(1, w_lambda, k, 0, 0, NULL, params);
     free(w_lambda);
 
     // Step: 5
     uint8_t* v_lambda = malloc((Lke / 8) - lambdaByte);
     memcpy(v_lambda, v + lambdaByte, (Lke / 8) - lambdaByte);
-    uint8_t* v_w_dash =
-        aes_key_schedule_backward(lambda, R, Nwd, Ske, Lke, lambda, v_lambda, vk, 1, 0, NULL);
+    uint8_t* v_w_dash = aes_key_schedule_backward(lambda, v_lambda, vk, 1, 0, NULL, params);
     free(v_lambda);
 
     // Step: 6..8
@@ -312,11 +318,10 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
   }
 
   // Step: 19..20
-  aes_key_schedule_forward(lambda, R, Nwd, Lke, lambda, q, 0, 1, delta, qk);
+  aes_key_schedule_forward(lambda, q, 0, 1, delta, qk, params);
   uint8_t* q_lambda = malloc(q_len - lambdaByte);
   memcpy(q_lambda, q + lambdaByte, q_len - lambdaByte);
-  uint8_t* q_w_dash =
-      aes_key_schedule_backward(lambda, R, Nwd, Ske, Lke, lambda, q_lambda, qk, 0, 1, delta);
+  uint8_t* q_w_dash = aes_key_schedule_backward(lambda, q_lambda, qk, 0, 1, delta, params);
   free(q_lambda);
 
   // Step 23..24
@@ -347,11 +352,12 @@ int aes_key_schedule_constraints(uint32_t lambda, uint32_t R, uint32_t Nwd, uint
   return 1;
 }
 
-int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, const uint8_t* x,
-                    const uint8_t* xk, const uint8_t* in, uint8_t Mtag, uint8_t Mkey,
-                    const uint8_t* delta, uint8_t* y_out) {
-
-  uint32_t lambdaBytes = lambda / 8;
+static int aes_enc_forward(uint32_t m, const uint8_t* x, const uint8_t* xk, const uint8_t* in,
+                           uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, uint8_t* y_out,
+                           const faest_paramset_t* params) {
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int lambdaBytes = lambda / 8;
 
   uint32_t bf_y_len = sizeof(bf128_t) * R * 16;
   bf128_t* bf_y     = malloc(bf_y_len);
@@ -511,12 +517,14 @@ int aes_enc_forward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, cons
   return 1;
 }
 
-int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, const uint8_t* x,
-                     const uint8_t* xk, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
-                     const uint8_t* out, uint8_t* y_out) {
+static int aes_enc_backward(uint32_t m, const uint8_t* x, const uint8_t* xk, uint8_t Mtag,
+                            uint8_t Mkey, const uint8_t* delta, const uint8_t* out, uint8_t* y_out,
+                            const faest_paramset_t* params) {
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int lambdaBytes = lambda / 8;
 
-  uint32_t lambdaBytes = lambda / 8;
-  uint32_t y_out_len   = lambdaBytes * R * 16;
+  uint32_t y_out_len = lambdaBytes * R * 16;
 
   // Step: 1
   uint32_t bf_y_len = sizeof(bf128_t) * R * 16;
@@ -650,22 +658,24 @@ int aes_enc_backward(uint32_t lambda, uint32_t R, uint32_t m, uint32_t Lenc, con
   return 1;
 }
 
-void aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Senc,
-                         const uint8_t* in, const uint8_t* out, const uint8_t* w, const uint8_t* v,
-                         const uint8_t* k, const uint8_t* vk, uint8_t Mkey, const uint8_t* q,
-                         const uint8_t* qk, const uint8_t* delta, uint8_t* A0, uint8_t* A1,
-                         uint8_t* B) {
-  uint32_t lambdaBytes = lambda / 8;
+static void aes_enc_constraints(const uint8_t* in, const uint8_t* out, const uint8_t* w,
+                                const uint8_t* v, const uint8_t* k, const uint8_t* vk, uint8_t Mkey,
+                                const uint8_t* q, const uint8_t* qk, const uint8_t* delta,
+                                uint8_t* A0, uint8_t* A1, uint8_t* B,
+                                const faest_paramset_t* params) {
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int Senc        = params->faest_param.Senc;
+  const unsigned int lambdaBytes = lambda / 8;
 
   if (Mkey == 0) {
     uint8_t* s       = malloc(lambdaBytes * Senc);
     uint8_t* vs      = malloc(lambdaBytes * Senc);
     uint8_t* s_dash  = malloc(lambdaBytes * Senc);
     uint8_t* vs_dash = malloc(lambdaBytes * Senc);
-    aes_enc_forward(lambda, R, 1, Lenc, w, k, in, 0, 0, NULL, s);
-    aes_enc_forward(lambda, R, lambda, Lenc, v, vk, in, 1, 0, NULL, vs);
-    aes_enc_backward(lambda, R, 1, Lenc, w, k, 0, 0, delta, out, s_dash);
-    aes_enc_backward(lambda, R, lambda, Lenc, v, vk, 1, 0, delta, out, vs_dash);
+    aes_enc_forward(1, w, k, in, 0, 0, NULL, s, params);
+    aes_enc_forward(lambda, v, vk, in, 1, 0, NULL, vs, params);
+    aes_enc_backward(1, w, k, 0, 0, delta, out, s_dash, params);
+    aes_enc_backward(lambda, v, vk, 1, 0, delta, out, vs_dash, params);
 
     bf128_t* bf_s       = malloc(sizeof(bf128_t) * Senc);
     bf128_t* bf_vs      = malloc(sizeof(bf128_t) * Senc);
@@ -703,8 +713,8 @@ void aes_enc_constraints(uint32_t lambda, uint32_t R, uint32_t Lenc, uint32_t Se
     // Step: 11..12
     uint8_t* qs      = malloc(lambdaBytes * Senc);
     uint8_t* qs_dash = malloc(lambdaBytes * Senc);
-    aes_enc_forward(lambda, R, lambda, Lenc, q, qk, in, 0, 1, delta, qs);
-    aes_enc_backward(lambda, R, lambda, Lenc, q, qk, 0, 1, delta, out, qs_dash);
+    aes_enc_forward(lambda, q, qk, in, 0, 1, delta, qs, params);
+    aes_enc_backward(lambda, q, qk, 0, 1, delta, out, qs_dash, params);
 
     // Step: 13..14
     bf128_t* bf_qs      = malloc(sizeof(bf128_t) * Senc);
@@ -738,7 +748,6 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   const unsigned int Lke         = params->faest_param.Lke;
   const unsigned int Lenc        = params->faest_param.Lenc;
   const unsigned int R           = params->cipher_param.numRounds;
-  const unsigned int Nwd         = params->faest_param.Nwd;
   const unsigned int Ske         = params->faest_param.Ske;
   const unsigned int Senc        = params->faest_param.Senc;
   const unsigned int lambdaBytes = lambda / 8;
@@ -769,8 +778,7 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   uint8_t* k                  = malloc((R + 1) * 128);
   uint8_t* vk                 = malloc(lambdaBytes * ((R + 1) * 128));
   uint8_t* qk                 = malloc(lambdaBytes * ((R + 1) * 128));
-  aes_key_schedule_constraints(lambda, R, Nwd, Ske, Lke, w_tilde, v_tilde, 0, NULL, NULL, A0, A1, k,
-                               vk, NULL, qk);
+  aes_key_schedule_constraints(w_tilde, v_tilde, 0, NULL, NULL, A0, A1, k, vk, NULL, qk, params);
 
   // Step: Skipping 8 in implementation
   // Step: 9
@@ -780,8 +788,8 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   memcpy(v_tilde, bf_v + Lke, Lenc * lambdaBytes);
 
   // Step: 10,11
-  aes_enc_constraints(lambda, R, Lenc, Senc, in, out, w_tilde, v_tilde, k, vk, 0, NULL, NULL, NULL,
-                      A0 + (lambdaBytes * Ske), A1 + (lambdaBytes * Ske), NULL);
+  aes_enc_constraints(in, out, w_tilde, v_tilde, k, vk, 0, NULL, NULL, NULL,
+                      A0 + (lambdaBytes * Ske), A1 + (lambdaBytes * Ske), NULL, params);
 
   // Step: 12
   if (beta == 2) {
@@ -789,9 +797,9 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
     memcpy(w_tilde, bf_w + Lke + Lenc, l - Lke + Lenc);
     memcpy(v_tilde, bf_v + (Lke + Lenc), l - Lke + Lenc);
     // Step: 14, 15
-    aes_enc_constraints(lambda, R, Lenc, Senc, in + 16, out + 16, w_tilde, v_tilde, k, vk, 0, NULL,
-                        NULL, NULL, A0 + lambdaBytes * (Ske + Senc),
-                        A1 + lambdaBytes * (Ske + Senc), NULL);
+    aes_enc_constraints(in + 16, out + 16, w_tilde, v_tilde, k, vk, 0, NULL, NULL, NULL,
+                        A0 + lambdaBytes * (Ske + Senc), A1 + lambdaBytes * (Ske + Senc), NULL,
+                        params);
   }
   free(w_tilde);
   free(v_tilde);
@@ -841,7 +849,6 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   const unsigned int Lke         = params->faest_param.Lke;
   const unsigned int Lenc        = params->faest_param.Lenc;
   const unsigned int R           = params->cipher_param.numRounds;
-  const unsigned int Nwd         = params->faest_param.Nwd;
   const unsigned int Ske         = params->faest_param.Ske;
   const unsigned int Senc        = params->faest_param.Senc;
   const unsigned int lambdaBytes = lambda / 8;
@@ -885,23 +892,22 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   uint8_t* vk                 = malloc(lambdaBytes * ((R + 1) * 128));
   uint8_t* qk                 = malloc(lambdaBytes * ((R + 1) * 128));
   uint8_t* B_0                = malloc(lambdaBytes * length_b);
-  aes_key_schedule_constraints(lambda, R, Nwd, Ske, Lke, NULL, NULL, 1, q_lke, delta, NULL, NULL, k,
-                               vk, B_0, qk);
+  aes_key_schedule_constraints(NULL, NULL, 1, q_lke, delta, NULL, NULL, k, vk, B_0, qk, params);
   free(q_lke);
 
   // Step: 14
   uint8_t* B_1        = B_0 + Ske * lambdaBytes;
   uint8_t* q_lke_lenc = malloc(lambdaBytes * (Lenc - Lke));
   memcpy(q_lke_lenc, bf_q + Lke, sizeof(bf128_t) * (Lenc - Lke));
-  aes_enc_constraints(lambda, R, Lenc, Senc, in, out, NULL, NULL, NULL, NULL, 1, q_lke_lenc, qk,
-                      delta, NULL, NULL, B_1);
+  aes_enc_constraints(in, out, NULL, NULL, NULL, NULL, 1, q_lke_lenc, qk, delta, NULL, NULL, B_1,
+                      params);
 
   if (beta == 2) {
     // Step: 18
     uint8_t* B_2 = B_0 + (Ske + Senc) * lambdaBytes;
     memcpy(q_lke_lenc, bf_q + (Lke + Lenc), sizeof(bf128_t) * (l - Lenc - Lke));
-    aes_enc_constraints(lambda, R, Lenc, Senc, in + 16, out + 16, NULL, NULL, NULL, NULL, 1,
-                        q_lke_lenc, qk, delta, NULL, NULL, B_2);
+    aes_enc_constraints(in + 16, out + 16, NULL, NULL, NULL, NULL, 1, q_lke_lenc, qk, delta, NULL,
+                        NULL, B_2, params);
   }
   free(q_lke_lenc);
 
