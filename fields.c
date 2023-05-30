@@ -143,7 +143,7 @@ static const uint8_t bf128_alpha[16] = {
 
 bf128_t bf128_byte_combine(const uint8_t* x) {
   bf128_t bf_out        = bf128_zero();
-  const bf128_t alpha   = bf128_load(&bf128_alpha);
+  const bf128_t alpha   = bf128_load(bf128_alpha);
   bf128_t running_alpha = alpha;
   for (uint32_t i = 0; i < 8; ++i, running_alpha = bf128_mul(running_alpha, alpha)) {
     const bf128_t xi = bf128_load(x + (7 - i) * 128 / 8);
@@ -154,7 +154,7 @@ bf128_t bf128_byte_combine(const uint8_t* x) {
 
 bf128_t bf128_byte_combine_bits(uint8_t x) {
   bf128_t bf_out        = bf128_zero();
-  const bf128_t alpha   = bf128_load(&bf128_alpha);
+  const bf128_t alpha   = bf128_load(bf128_alpha);
   bf128_t running_alpha = alpha;
   for (uint32_t i = 0; i < 8; ++i, running_alpha = bf128_mul(running_alpha, alpha)) {
     // TODO: check bit order
