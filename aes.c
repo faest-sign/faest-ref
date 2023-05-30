@@ -422,13 +422,13 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
 
   // Step 4
   for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
-    memcpy(w, round_keys.round_keys[i], sizeof(aes_word_t));
+    memcpy(w, round_keys.round_keys[i / 4][i % 4], sizeof(aes_word_t));
     w += sizeof(aes_word_t);
   }
 
-  // Step 6
+  // Step
   for (unsigned int j = 0, ik = params->faest_param.Nwd; j < S_ke / 4; ++j) {
-    memcpy(w, round_keys.round_keys[ik], sizeof(aes_word_t));
+    memcpy(w, round_keys.round_keys[ik / 4][ik % 4], sizeof(aes_word_t));
     w += sizeof(aes_word_t);
     ik += lambda == 192 ? 6 : 4;
   }

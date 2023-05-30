@@ -293,7 +293,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     q[i] = q[0] + i * ell_hat_bytes;
   }
 
-  uint8_t** Dtilde = malloc(tau * sizeof(uint8_t*));
+  uint8_t** Dtilde = malloc(lambda * sizeof(uint8_t*));
   Dtilde[0]        = calloc(lambda, (lambdaBytes + UNIVERSAL_HASH_B));
   for (unsigned int i = 1; i < lambda; ++i) {
     Dtilde[i] = Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B);
