@@ -327,38 +327,43 @@ void aes256_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const ui
   }
 }
 
-void prg(const uint8_t* key, uint8_t* iv, uint8_t* out, uint16_t seclvl, uint64_t outSizeBytes) {
+void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, uint16_t seclvl,
+         size_t outSizeBytes) {
 #if !defined(HAVE_OPENSSL)
+  uint8_t internal_iv[16];
+  memcpy(internal_iv, iv, sizeof(iv));
+
   aes_round_keys_t round_key;
-  aes_block_t state;
-  load_state(state, iv, 4);
 
   switch (seclvl) {
   case 256:
     aes256_init_round_keys(&round_key, key);
-    for (uint64_t i = 0; i < (outSizeBytes + 15) / 16; i++) {
-      load_state(state, iv, 4);
+    for (size_t i = 0; i < (outSizeBytes + 15) / 16; i++) {
+      aes_block_t state;
+      load_state(state, internal_iv, 4);
       aes_encrypt(&round_key, state, 4, 14);
       store_state(out + i * 16, state, 4);
-      aes_increment_iv(iv);
+      aes_increment_iv(internal_iv);
     }
     return;
   case 192:
     aes192_init_round_keys(&round_key, key);
-    for (uint64_t i = 0; i < (outSizeBytes + 15) / 16; i++) {
-      load_state(state, iv, 4);
+    for (size_t i = 0; i < (outSizeBytes + 15) / 16; i++) {
+      aes_block_t state;
+      load_state(state, internal_iv, 4);
       aes_encrypt(&round_key, state, 4, 12);
       store_state(out + i * 16, state, 4);
-      aes_increment_iv(iv);
+      aes_increment_iv(internal_iv);
     }
     return;
   default:
     aes128_init_round_keys(&round_key, key);
-    for (uint64_t i = 0; i < (outSizeBytes + 15) / 16; i++) {
-      load_state(state, iv, 4);
+    for (size_t i = 0; i < (outSizeBytes + 15) / 16; i++) {
+      aes_block_t state;
+      load_state(state, internal_iv, 4);
       aes_encrypt(&round_key, state, 4, 10);
       store_state(out + i * 16, state, 4);
-      aes_increment_iv(iv);
+      aes_increment_iv(internal_iv);
     }
     return;
   }
