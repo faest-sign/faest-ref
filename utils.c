@@ -11,8 +11,7 @@ void printHex(const char* s, const uint8_t* data, size_t len) {
 }
 
 int printUint8Arr(char* name, uint8_t* arr, uint32_t unitSize, uint32_t len) {
-  printf(name);
-  printf("\n");
+  printf("%s\n", name);
   for (uint32_t i = 0; i < len; i++) {
     for (uint32_t j = 0; j < unitSize; j++) {
       printf("%.2x ", *(arr + (i * unitSize) + j));

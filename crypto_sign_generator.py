@@ -73,6 +73,11 @@ faest_{param_name}_test = executable('faest_{param_name}_api_test', test_sources
   c_args: defines + c_flags,
 )
 test('faest_{param_name}_api_test', faest_{param_name}_test)
+if valgrind.found() and valgrind_exec.found()
+  test('faest_{param_name}_api_test_ct', valgrind_exec,
+    args: ['-q', '--error-exitcode=1', '--track-origins=yes', faest_{param_name}_test]
+  )
+endif
 """
         )
 

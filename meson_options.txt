@@ -14,3 +14,8 @@ option('EM-256',
   value: 'disabled',
   description: 'Enable EM-256 variants (not implemented)'
 )
+option('valgrind',
+  type: 'feature',
+  value: 'disabled',
+  description: 'Use valgrind for timing checks'
+)

@@ -52,3 +52,8 @@ faest_256f_test = executable('faest_256f_api_test', test_sources,
   c_args: defines + c_flags,
 )
 test('faest_256f_api_test', faest_256f_test)
+if valgrind.found() and valgrind_exec.found()
+  test('faest_256f_api_test_ct', valgrind_exec,
+    args: ['-q', '--error-exitcode=1', '--track-origins=yes', faest_256f_test]
+  )
+endif
