@@ -145,7 +145,7 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
           i < params.faest_param.t0 ? params.faest_param.k0 : params.faest_param.k1;
       unsigned int nodes = 1 << depth;
 
-      ConvertToVole(lambda, lambdaBytes, sd.data(), nodes, depth, ell_hat_bytes, u.data(),
+      ConvertToVole(lambda, lambdaBytes, sd.data(), false, nodes, depth, ell_hat_bytes, u.data(),
                     v.data());
 
       ChalDec(chal.data(), i, params.faest_param.k0, params.faest_param.t0, params.faest_param.k1,
@@ -156,7 +156,7 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
                   &sdprime[j * lambdaBytes]);
       }
 
-      ConvertToVole(lambda, lambdaBytes, sdprime.data(), nodes, depth, ell_hat_bytes, nullptr,
+      ConvertToVole(lambda, lambdaBytes, sdprime.data(), true, nodes, depth, ell_hat_bytes, nullptr,
                     q.data());
 
       for (unsigned int j = 0; j != depth; ++j) {
