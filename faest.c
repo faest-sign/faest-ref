@@ -276,6 +276,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
             params->faest_param.k1, params->faest_param.t1, delta);
     // Step 16
     for (unsigned int j = 0; j != depth; ++j, ++Dtilde_idx) {
+      // TODO: get rid of this branch
       if (delta[j]) {
         memcpy(Dtilde[Dtilde_idx], signature->u_tilde, utilde_bytes);
       }
@@ -287,6 +288,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     } else {
       // Step 14
       for (uint32_t d = 0; d < depth; d++) {
+        // TODO: get rid of these branches
         if (delta[d]) {
           xorUint8Arr(qprime[i + d], signature->c[i - 1], q[i + d], ell_hat_bytes);
         } else {
