@@ -196,38 +196,36 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   u_ = NULL;
 
   // Step: 17
-  uint8_t* chall_3 = malloc(lambdaBytes);
   {
     H2_context_t h2_ctx_2;
     H2_init(&h2_ctx_2, lambda);
     H2_update(&h2_ctx_2, chall_2, 3 * lambdaBytes + 8);
     H2_update(&h2_ctx_2, signature->a_tilde, lambdaBytes);
     H2_update(&h2_ctx_2, b_tilde, lambdaBytes);
-    H2_final(&h2_ctx_2, chall_3, lambdaBytes);
+    H2_final(&h2_ctx_2, signature->chall_3, lambdaBytes);
   }
-  memcpy(signature->chall_3, chall_3, lambdaBytes);
   free(b_tilde);
   b_tilde = NULL;
   free(chall_2);
   chall_2 = NULL;
 
+  printUint8Arr("sign chall 3", signature->chall_3, lambdaBytes, 1);
+
   // Step: 19..21
   uint8_t* s_ = malloc(MAX(params->faest_param.k0, params->faest_param.k1));
   for (uint32_t i = 0; i < tau; i++) {
     // Step 20
-    ChalDec(chall_3, i, params->faest_param.k0, params->faest_param.t0, params->faest_param.k1,
-            params->faest_param.t1, s_);
-    unsigned int num_vole_instances =
-        i < tau0 ? (1 << params->faest_param.k0) : (1 << params->faest_param.k1);
+    ChalDec(signature->chall_3, i, params->faest_param.k0, params->faest_param.t0,
+            params->faest_param.k1, params->faest_param.t1, s_);
     // Step 21
+    const unsigned int num_vole_instances =
+        i < tau0 ? (1 << params->faest_param.k0) : (1 << params->faest_param.k1);
     vector_open(vecCom[i].k, vecCom[i].com, s_, signature->pdec[i], signature->com_j[i],
                 num_vole_instances, lambdaBytes);
     vec_com_clear(&vecCom[i]);
   }
   free(s_);
   s_ = NULL;
-  free(chall_3);
-  chall_3 = NULL;
   free(vecCom);
   vecCom = NULL;
 }
@@ -297,22 +295,23 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
 
   uint8_t** Dtilde = malloc(tau * sizeof(uint8_t*));
   Dtilde[0]        = calloc(lambda, (lambdaBytes + UNIVERSAL_HASH_B));
+  for (unsigned int i = 1; i < lambda; ++i) {
+    Dtilde[i] = Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B);
+  }
 
   const unsigned int max_depth = MAX(params->faest_param.k0, params->faest_param.k0);
   uint8_t* delta               = malloc(max_depth);
+  unsigned int Dtilde_idx      = 0;
   for (uint32_t i = 0; i < tau; i++) {
     const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
-    if (i < tau - 1) {
-      Dtilde[i + 1] = Dtilde[i] + depth;
-    }
 
     // Step 11
     ChalDec(signature->chall_3, i, params->faest_param.k0, params->faest_param.t0,
             params->faest_param.k1, params->faest_param.t1, delta);
     // Step 16
-    for (unsigned int j = 0; j != depth; ++j) {
+    for (unsigned int j = 0; j != depth; ++j, ++Dtilde_idx) {
       if (delta[j]) {
-        memcpy(Dtilde[i] + j * utilde_bytes, signature->u_tilde, utilde_bytes);
+        memcpy(Dtilde[Dtilde_idx], signature->u_tilde, utilde_bytes);
       }
     }
 
@@ -344,10 +343,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       // Step 15
       vole_hash(Q_tilde, chall_1, q[0] + i * ell_hat_bytes, l, lambda);
       // Step 16
-      xorUint8Arr(Q_tilde, Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B), Q_tilde,
-                  lambdaBytes + UNIVERSAL_HASH_B);
-      // printf("%d ", i);
-      // printUint8Arr("verify Q_tilde", Q_tilde, lambdaBytes + UNIVERSAL_HASH_B, 1);
+      xorUint8Arr(Q_tilde, Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     free(Q_tilde);
