@@ -778,7 +778,9 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   uint8_t* k                  = malloc((R + 1) * 128);
   uint8_t* vk                 = malloc(lambdaBytes * ((R + 1) * 128));
   uint8_t* qk                 = malloc(lambdaBytes * ((R + 1) * 128));
-  aes_key_schedule_constraints(w_tilde, v_tilde, 0, NULL, NULL, A0, A1, k, vk, NULL, qk, params);
+  if (Lke > 0) {
+    aes_key_schedule_constraints(w_tilde, v_tilde, 0, NULL, NULL, A0, A1, k, vk, NULL, qk, params);
+  }
 
   // Step: Skipping 8 in implementation
   // Step: 9
@@ -892,7 +894,9 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   uint8_t* vk                 = malloc(lambdaBytes * ((R + 1) * 128));
   uint8_t* qk                 = malloc(lambdaBytes * ((R + 1) * 128));
   uint8_t* B_0                = malloc(lambdaBytes * length_b);
-  aes_key_schedule_constraints(NULL, NULL, 1, q_lke, delta, NULL, NULL, k, vk, B_0, qk, params);
+  if (Lke > 0) {
+    aes_key_schedule_constraints(NULL, NULL, 1, q_lke, delta, NULL, NULL, k, vk, B_0, qk, params);
+  }
   free(q_lke);
 
   // Step: 14
