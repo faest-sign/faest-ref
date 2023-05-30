@@ -19,14 +19,6 @@
 
 static uint8_t Rcon[10] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x26};
 
-static inline uint8_t get_bit_ptr(const uint8_t* in, unsigned int index) {
-  return (in[index / 8] >> (7 - index % 8)) & 1;
-}
-
-static inline void set_bit_ptr(uint8_t* dst, uint8_t in, unsigned int index) {
-  dst[index / 8] |= in << (7 - index % 8);
-}
-
 ATTR_CONST static inline bf8_t get_bit(bf8_t in, uint8_t index) {
   return (in >> index) & 0x01;
 }

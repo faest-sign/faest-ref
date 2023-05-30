@@ -99,7 +99,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   free(rootkey);
   rootkey = NULL;
 
-  // DEBUG
   printUint8Arr("sign mu", mu, lambdaBytes * 2, 1);
   printUint8Arr("sign hcom", hcom, lambdaBytes * 2, 1);
 
@@ -112,9 +111,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_update(&h2_ctx, hcom, lambdaBytes * 2);
     for (unsigned int i = 0; i < (tau - 1); ++i) {
       H2_update(&h2_ctx, signature->c[i], ell_hat_bytes);
-      // DEBUG
-      printf("%d ", i);
-      printUint8Arr("sign signature.c", signature->c[i], ell_hat_bytes, 1);
+      // printf("%d ", i);
+      // printUint8Arr("sign signature.c", signature->c[i], ell_hat_bytes, 1);
     }
     H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
   }
@@ -123,7 +121,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   free(mu);
   mu = NULL;
 
-  // DEBUG
   printUint8Arr("sign chall 1", chall_1, (5 * lambdaBytes) + 8, 1);
 
   // Step: 6
@@ -171,6 +168,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   free(h_v);
   h_v = NULL;
 
+  printUint8Arr("sign chall 2", chall_2, (3 * lambdaBytes) + 8, 1);
+
   // Step: 14..15
   {
     uint8_t** new_v = column_to_row_major_and_shrink_V(v, lambda, l);
@@ -209,6 +208,10 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   b_tilde = NULL;
   free(chall_2);
   chall_2 = NULL;
+
+  memcpy(signature->chall_3, chall_3, lambdaBytes);
+
+  printUint8Arr("sign chall 3", chall_3, lambdaBytes, 1);
 
   // Step: 19..21
   uint8_t* s_ = malloc(MAX(params->faest_param.k0, params->faest_param.k1));
@@ -267,11 +270,11 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   }
   uint8_t* hcom = malloc(lambdaBytes * 2);
   {
+    printUint8Arr("verify chall 3", signature->chall_3, lambdaBytes, 1);
     voleReconstruct(signature->chall_3, signature->pdec, signature->com_j, hcom, qprime, ell_hat,
                     params);
   }
 
-  // DEBUG
   printUint8Arr("verify mu", mu, lambdaBytes * 2, 1);
   printUint8Arr("verify hcom", hcom, lambdaBytes * 2, 1);
 
@@ -284,16 +287,14 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     H2_update(&h2_ctx, hcom, lambdaBytes * 2);
     for (unsigned int i = 0; i < (tau - 1); ++i) {
       H2_update(&h2_ctx, signature->c[i], ell_hat_bytes);
-      // DEBUG
-      printf("%d ", i);
-      printUint8Arr("verify signature.c", signature->c[i], ell_hat_bytes, 1);
+      // printf("%d ", i);
+      // printUint8Arr("verify signature.c", signature->c[i], ell_hat_bytes, 1);
     }
     H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
   }
   free(mu);
   mu = NULL;
 
-  // DEBUG
   printUint8Arr("verify chall 1", chall_1, (5 * lambdaBytes) + 8, 1);
 
   // Step: 8..14
@@ -375,6 +376,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   }
   free(chall_1);
   chall_1 = NULL;
+
+  printUint8Arr("verify chall 2", chall_2, (3 * lambdaBytes) + 8, 1);
 
   // Step 18
   // TODO: Do we transpose and shorten here before passing to q ?
