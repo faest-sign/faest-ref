@@ -28,6 +28,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
     done = faest_@PARAM_L@_owf(sk, input, output);
   }
 
+  faest_declassify(pk, @PK_SIZE@);
   return 0;
 }
 
