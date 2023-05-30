@@ -18,7 +18,8 @@ namespace {
       0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
       0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
   };
-}
+  constexpr std::array<uint8_t, 16> iv{};
+} // namespace
 
 BOOST_AUTO_TEST_SUITE(vole)
 
@@ -85,8 +86,8 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       c[i] = new uint8_t[ell_hat_bytes];
     }
 
-    voleCommit(rootKey.data(), ell_hat, &params, hcom.data(), vec_com.data(), c.data(), u.data(),
-               v.data());
+    voleCommit(rootKey.data(), iv.data(), ell_hat, &params, hcom.data(), vec_com.data(), c.data(),
+               u.data(), v.data());
     for (unsigned int i = 0; i != params.faest_param.tau - 1; ++i) {
       delete[] c[i];
     }
@@ -104,8 +105,8 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       vec_com_clear(&vec_com[i]);
     }
 
-    voleReconstruct(chal.data(), pdec.data(), com_j.data(), hcomRec.data(), q.data(), ell_hat,
-                    &params);
+    voleReconstruct(iv.data(), chal.data(), pdec.data(), com_j.data(), hcomRec.data(), q.data(),
+                    ell_hat, &params);
     BOOST_TEST(hcom == hcomRec);
     for (unsigned int i = 0; i < lambda; ++i) {
       // they should not be the same
@@ -149,8 +150,8 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
           i < params.faest_param.t0 ? params.faest_param.k0 : params.faest_param.k1;
       unsigned int nodes = 1 << depth;
 
-      ConvertToVole(lambda, lambdaBytes, sd.data(), false, nodes, depth, ell_hat_bytes, u.data(),
-                    v.data());
+      ConvertToVole(iv.data(), sd.data(), false, lambda, lambdaBytes, nodes, depth, ell_hat_bytes,
+                    u.data(), v.data());
 
       ChalDec(chal.data(), i, params.faest_param.k0, params.faest_param.t0, params.faest_param.k1,
               params.faest_param.t1, chal_out.data());
@@ -160,8 +161,8 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
                   &sdprime[j * lambdaBytes]);
       }
 
-      ConvertToVole(lambda, lambdaBytes, sdprime.data(), true, nodes, depth, ell_hat_bytes, nullptr,
-                    q.data());
+      ConvertToVole(iv.data(), sdprime.data(), true, lambda, lambdaBytes, nodes, depth,
+                    ell_hat_bytes, nullptr, q.data());
 
       for (unsigned int j = 0; j != depth; ++j) {
         for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {

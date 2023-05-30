@@ -1,9 +1,14 @@
 #include "../vole.h"
 #include "compat.h"
 
-static uint8_t rootKey[32] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
-                              0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
-                              0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+static uint8_t rootKey[32] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+};
+
+static uint8_t prg_iv[16] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
 
 int test_ChalDec() {
   faest_paramset_t params = faest_get_paramset(1);
@@ -46,7 +51,7 @@ int test_FAESTVoleCommit() {
   for (unsigned int i = 1; i < lambda; ++i) {
     v[i] = v[0] + i * ell_hat_bytes;
   }
-  voleCommit(rootKey, outlen, &params, hcom, vecCom, c, u, v);
+  voleCommit(rootKey, prg_iv, outlen, &params, hcom, vecCom, c, u, v);
   free(v[0]);
   free(v);
   free(u);
@@ -85,7 +90,7 @@ int test_FAESTVoleVerify() {
     v[i] = v[0] + i * ell_hat_bytes;
   }
 
-  voleCommit(rootKey, outlen, &params, hcom, vecCom, c, u, v);
+  voleCommit(rootKey, prg_iv, outlen, &params, hcom, vecCom, c, u, v);
   free(u);
   for (unsigned int i = 0; i != params.faest_param.tau - 1; ++i) {
     free(c[i]);
@@ -120,7 +125,7 @@ int test_FAESTVoleVerify() {
   uint8_t** q      = v;
   uint8_t* hcomRec = malloc(lambdaBytes * 2);
 
-  voleReconstruct(chal, pdec, com_j, hcomRec, q, outlen, &params);
+  voleReconstruct(prg_iv, chal, pdec, com_j, hcomRec, q, outlen, &params);
 
   for (uint32_t i = 0; i < params.faest_param.tau; i++) {
     free(com_j[i]);
@@ -176,7 +181,7 @@ int test_ConvertToVoleProver() {
   uint32_t numVoleInstances = (1 << params.faest_param.k0);
   uint32_t lambda           = params.faest_param.lambda;
   uint32_t lambdaBytes      = lambda / 8;
-  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
+  vector_commitment(rootKey, prg_iv, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
 
   uint32_t leafIndex = 7;
   uint32_t depth     = ceil_log2(numVoleInstances);
@@ -190,7 +195,8 @@ int test_ConvertToVoleProver() {
   uint32_t outlen = 16;
   uint8_t* u      = malloc(outlen);
   uint8_t* v      = malloc(outlen * depth);
-  ConvertToVole(lambda, lambdaBytes, vecCom.sd, false, numVoleInstances, depth, outlen, u, v);
+  ConvertToVole(prg_iv, vecCom.sd, false, lambda, lambdaBytes, numVoleInstances, depth, outlen, u,
+                v);
 
 // TODO: write better test cases : )
 #if 0
@@ -227,7 +233,7 @@ int test_ConvertToVoleVerifier() {
   uint32_t numVoleInstances = (1 << params.faest_param.k0);
   uint32_t lambda           = params.faest_param.lambda;
   uint32_t lambdaBytes      = lambda / 8;
-  vector_commitment(rootKey, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
+  vector_commitment(rootKey, prg_iv, &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
 
   uint32_t leafIndex = 7;
   uint32_t depth     = ceil_log2(numVoleInstances);
@@ -238,12 +244,14 @@ int test_ConvertToVoleVerifier() {
   uint8_t* com_j = malloc(lambdaBytes * 2);
   vector_open(vecCom.k, vecCom.com, b, pdec, com_j, numVoleInstances, lambdaBytes);
 
-  vector_verify(pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, &vecComRec, vecCom.h);
+  vector_verify(prg_iv, pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, &vecComRec,
+                vecCom.h);
 
   uint32_t outlen = 16;
   uint8_t* v      = malloc(outlen * depth);
   // TODO: we do not input veccomRec.m but instead something else defined in
-  ConvertToVole(lambda, lambdaBytes, vecComRec.m, true, numVoleInstances, depth, outlen, NULL, v);
+  ConvertToVole(prg_iv, vecComRec.m, true, lambda, lambdaBytes, numVoleInstances, depth, outlen,
+                NULL, v);
 
 // TODO: write better test cases : )
 #if 0

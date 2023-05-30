@@ -51,8 +51,9 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
   return 1;
 }
 
-void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t* params,
-                uint8_t* hcom, vec_com_t* vecCom, uint8_t** c, uint8_t* u, uint8_t** v) {
+void voleCommit(const uint8_t* rootKey, const uint8_t* iv, uint32_t ellhat,
+                const faest_paramset_t* params, uint8_t* hcom, vec_com_t* vecCom, uint8_t** c,
+                uint8_t* u, uint8_t** v) {
   uint32_t lambda      = params->faest_param.lambda;
   uint32_t lambdaBytes = lambda / 8;
   uint32_t ellhatBytes = (ellhat + 7) / 8;
@@ -65,8 +66,6 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
   ui[0]        = malloc(tau * ellhatBytes);
 
   // Step 1
-  uint8_t iv[16]         = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   uint8_t* expanded_keys = malloc(tau * lambdaBytes);
   prg(rootKey, iv, expanded_keys, lambda, lambdaBytes * tau);
 
@@ -90,9 +89,11 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
     ui[i] = ui[0] + i * ellhatBytes;
 
     // Step 5
-    vector_commitment(expanded_keys + i * lambdaBytes, params, lambda, lambdaBytes, &vecCom[i], N);
+    vector_commitment(expanded_keys + i * lambdaBytes, iv, params, lambda, lambdaBytes, &vecCom[i],
+                      N);
     // Step 6
-    ConvertToVole(lambda, lambdaBytes, vecCom[i].sd, false, N, depth, ellhatBytes, ui[i], tmp_v);
+    ConvertToVole(iv, vecCom[i].sd, false, lambda, lambdaBytes, N, depth, ellhatBytes, ui[i],
+                  tmp_v);
     // Step 7 (and parts of 8)
     for (unsigned int j = 0; j < depth; ++j, ++v_idx) {
       memcpy(v[v_idx], tmp_v + j * ellhatBytes, ellhatBytes);
@@ -116,8 +117,8 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
   H1_final(&h1_ctx, hcom, lambdaBytes * 2);
 }
 
-void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint8_t* hcom,
-                     uint8_t** q, uint32_t ellhat, const faest_paramset_t* params) {
+void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, uint8_t** com_j,
+                     uint8_t* hcom, uint8_t** q, uint32_t ellhat, const faest_paramset_t* params) {
   uint32_t lambda      = params->faest_param.lambda;
   uint32_t lambdaBytes = lambda / 8;
   uint32_t ellhatBytes = (ellhat + 7) / 8;
@@ -149,7 +150,7 @@ void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint
 
     // Step 5
     vec_com_rec_t vecComRec;
-    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, &vecComRec);
+    vector_reconstruction(iv, pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, &vecComRec);
 
     // Step: 6
     memset(sd, 0, lambdaBytes);
@@ -159,7 +160,7 @@ void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint
     H1_update(&h1_ctx, vecComRec.com, lambdaBytes * 2);
     vec_com_rec_clear(&vecComRec);
     // Step: 7..8
-    ConvertToVole(lambda, lambdaBytes, sd, true, N, depth, ellhatBytes, NULL, tmp_q);
+    ConvertToVole(iv, sd, true, lambda, lambdaBytes, N, depth, ellhatBytes, NULL, tmp_q);
     for (unsigned int j = 0; j < depth; ++j, ++q_idx) {
       memcpy(q[q_idx], tmp_q + j * ellhatBytes, ellhatBytes);
     }
@@ -172,9 +173,9 @@ void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint
   H1_final(&h1_ctx, hcom, lambdaBytes * 2);
 }
 
-void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd, bool sd0_bot,
-                   uint32_t numVoleInstances, uint32_t depth, uint32_t outLenBytes, uint8_t* u,
-                   uint8_t* v) {
+void ConvertToVole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, uint32_t lambda,
+                   uint32_t lambdaBytes, uint32_t numVoleInstances, uint32_t depth,
+                   uint32_t outLenBytes, uint8_t* u, uint8_t* v) {
   // (depth + 1) x numVoleInstances array of outLenBytes; but we only need to rows at a time
   uint8_t* r = malloc(2 * numVoleInstances * outLenBytes);
 
@@ -185,15 +186,11 @@ void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd, boo
   if (sd0_bot) {
     memset(r, 0, outLenBytes);
   } else {
-    uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     prg(sd, iv, R(0, 0), lambda, outLenBytes);
   }
 
   // Step: 3..4
   for (uint32_t i = 1; i < numVoleInstances; i++) {
-    uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     prg(sd + (lambdaBytes * i), iv, R(0, i), lambda, outLenBytes);
   }
 

@@ -96,7 +96,7 @@ static size_t getParent(size_t node) {
   return (node - 2) / 2;
 }
 
-static void expandSeeds(tree_t* tree, const faest_paramset_t* params) {
+static void expandSeeds(tree_t* tree, const uint8_t* iv, const faest_paramset_t* params) {
   uint32_t lambdaBytes = params->faest_param.lambda / 8;
 
   uint8_t out[2 * MAX_SEED_SIZE];
@@ -111,12 +111,6 @@ static void expandSeeds(tree_t* tree, const faest_paramset_t* params) {
       continue;
     }
 
-    // Always statring with zeor IV ?
-    uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-    // Here we use the AES ctr PRG to get the nodes, starting from root and
-    // assign it to the tree
     prg(tree->nodes[i], iv, out, params->faest_param.lambda, params->faest_param.lambda / 4);
 
     if (!tree->haveNode[2 * i + 1]) {
@@ -132,15 +126,15 @@ static void expandSeeds(tree_t* tree, const faest_paramset_t* params) {
   }
 }
 
-static tree_t generateSeeds(const uint8_t* rootSeed, const faest_paramset_t* params,
-                            uint32_t numVoleInstances) {
+static tree_t generateSeeds(const uint8_t* rootSeed, const uint8_t* iv,
+                            const faest_paramset_t* params, uint32_t numVoleInstances) {
 
   uint32_t lambdaBytes = params->faest_param.lambda / 8;
   tree_t tree          = createTree(params, numVoleInstances);
 
   memcpy(tree.nodes[0], rootSeed, lambdaBytes);
   tree.haveNode[0] = 1;
-  expandSeeds(&tree, params);
+  expandSeeds(&tree, iv, params);
 
 #if 0
   printTree("tree", tree);
@@ -193,11 +187,12 @@ uint64_t NumRec(uint32_t depth, const uint8_t* bi) {
   return out;
 }
 
-void vector_commitment(const uint8_t* rootKey, const faest_paramset_t* params, uint32_t lambda,
-                       uint32_t lambdaBytes, vec_com_t* vecCom, uint32_t numVoleInstances) {
+void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
+                       uint32_t lambda, uint32_t lambdaBytes, vec_com_t* vecCom,
+                       uint32_t numVoleInstances) {
 
   // Generating the tree
-  tree_t tree = generateSeeds(rootKey, params, numVoleInstances);
+  tree_t tree = generateSeeds(rootKey, iv, params, numVoleInstances);
 
   // Initialzing stuff
   vecCom->h   = malloc(lambdaBytes * 2);
@@ -249,9 +244,9 @@ void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t
   memcpy(com_j, com + (leafIndex * lambdaBytes * 2), lambdaBytes * 2);
 }
 
-void vector_reconstruction(const uint8_t* cop, const uint8_t* com_j, const uint8_t* b,
-                           uint32_t lambda, uint32_t lambdaBytes, uint32_t numVoleInstances,
-                           vec_com_rec_t* vecComRec) {
+void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t* com_j,
+                           const uint8_t* b, uint32_t lambda, uint32_t lambdaBytes,
+                           uint32_t numVoleInstances, vec_com_rec_t* vecComRec) {
   // Initializing
   uint8_t depth      = ceil_log2(numVoleInstances);
   uint64_t leafIndex = NumRec(depth, b);
@@ -273,8 +268,6 @@ void vector_reconstruction(const uint8_t* cop, const uint8_t* com_j, const uint8
       if (j == a) {
         continue;
       }
-      uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
       prg(vecComRec->k + (lambdaBytes * getNodeIndex(i - 1, j)), iv, out, lambda, lambdaBytes * 2);
       memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * j)), out, lambdaBytes);
@@ -304,13 +297,13 @@ void vector_reconstruction(const uint8_t* cop, const uint8_t* com_j, const uint8
   H1_final(&h1_ctx, vecComRec->h, lambdaBytes * 2);
 }
 
-int vector_verify(const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b, uint32_t lambda,
-                  uint32_t lambdaBytes, uint32_t numVoleInstances, vec_com_rec_t* rec,
-                  const uint8_t* vecComH) {
+int vector_verify(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b,
+                  uint32_t lambda, uint32_t lambdaBytes, uint32_t numVoleInstances,
+                  vec_com_rec_t* rec, const uint8_t* vecComH) {
   vec_com_rec_t vecComRec;
 
   // Step: 2
-  vector_reconstruction(pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, &vecComRec);
+  vector_reconstruction(iv, pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, &vecComRec);
 
   // Step: 3
   int ret = memcmp(vecComH, vecComRec.h, lambdaBytes * 2);
