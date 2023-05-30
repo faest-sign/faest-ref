@@ -72,7 +72,7 @@ bf8_t bf8_inv(bf8_t in) {
 }
 
 bf8_t bf8_from_bit(uint8_t bit) {
-  return bit;
+  return bit & 1;
 }
 
 // GF(2^64) implementation
@@ -132,23 +132,30 @@ bf64_t bf64_inv(bf64_t in) {
 }
 
 bf64_t bf64_from_bit(uint8_t bit) {
-  return bit;
+  return bit & 1;
 }
 
 // GF(2^128) implementation
 
-bf128_t bf128_byte_combine(const uint8_t* x, uint8_t isBinary) {
-  bf128_t bf_out = bf128_zero();
+bf128_t bf128_byte_combine(const uint8_t* x) {
+  bf128_t bf_out        = bf128_zero();
+  const bf128_t alpha   = bf128_from_bf64(0x100);
+  bf128_t running_alpha = alpha;
+  for (uint32_t i = 0; i < 8; ++i, running_alpha = bf128_mul(running_alpha, alpha)) {
+    const bf128_t xi = bf128_load(x + (7 - i) * 128 / 8);
+    bf_out           = bf128_add(bf_out, bf128_mul(xi, running_alpha));
+  }
+  return bf_out;
+}
 
-  // True when F_2
-  if (isBinary == 1) {
-    for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf128_add(bf_out, bf128_from_bf8(bf8_load(x + i)));
-    }
-  } else {
-    for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf128_add(bf_out, bf128_load(x + (i * 16)));
-    }
+bf128_t bf128_byte_combine_bits(uint8_t x) {
+  bf128_t bf_out        = bf128_zero();
+  const bf128_t alpha   = bf128_from_bf64(0x100);
+  bf128_t running_alpha = alpha;
+  for (uint32_t i = 0; i < 8; ++i, running_alpha = bf128_mul(running_alpha, alpha)) {
+    // TODO: check bit order
+    const bf128_t xi = bf128_from_bit(x >> i);
+    bf_out           = bf128_add(bf_out, bf128_mul(xi, running_alpha));
   }
   return bf_out;
 }
@@ -259,22 +266,30 @@ bf128_t bf128_inv(bf128_t in) {
 }
 
 bf128_t bf128_from_bit(uint8_t bit) {
-  return bf128_from_bf8(bit);
+  return bf128_from_bf8(bit & 1);
 }
 
 // GF(2^192) implementation
 
-bf192_t bf192_byte_combine(const uint8_t* x, uint8_t isBinary) {
-  bf192_t bf_out = bf192_zero();
+bf192_t bf192_byte_combine(const uint8_t* x) {
+  bf192_t bf_out        = bf192_zero();
+  const bf192_t alpha   = bf192_from_bf64(0x100);
+  bf192_t running_alpha = alpha;
+  for (uint32_t i = 0; i < 8; ++i, running_alpha = bf192_mul(running_alpha, alpha)) {
+    const bf192_t xi = bf192_load(x + (7 - i) * 192 / 8);
+    bf_out           = bf192_add(bf_out, bf192_mul(xi, running_alpha));
+  }
+  return bf_out;
+}
 
-  if (isBinary == 1) {
-    for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf192_add(bf_out, bf192_from_bf8(bf8_load(x + i)));
-    }
-  } else {
-    for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf192_add(bf_out, bf192_load(x + (i * 24)));
-    }
+bf192_t bf192_byte_combine_bits(uint8_t x) {
+  bf192_t bf_out        = bf192_zero();
+  const bf192_t alpha   = bf192_from_bf64(0x100);
+  bf192_t running_alpha = alpha;
+  for (uint32_t i = 0; i < 8; ++i, running_alpha = bf192_mul(running_alpha, alpha)) {
+    // TODO: check bit order
+    const bf192_t xi = bf192_from_bit(x >> i);
+    bf_out           = bf192_add(bf_out, bf192_mul(xi, running_alpha));
   }
   return bf_out;
 }
@@ -388,22 +403,30 @@ bf192_t bf192_inv(bf192_t in) {
 }
 
 bf192_t bf192_from_bit(uint8_t bit) {
-  return bf192_from_bf8(bit);
+  return bf192_from_bf8(bit & 1);
 }
 
 // GF(2^256) implementation
 
-bf256_t bf256_byte_combine(const uint8_t* x, uint8_t isBinary) {
-  bf256_t bf_out = bf256_zero();
+bf256_t bf256_byte_combine(const uint8_t* x) {
+  bf256_t bf_out        = bf256_zero();
+  const bf256_t alpha   = bf256_from_bf64(0x100);
+  bf256_t running_alpha = alpha;
+  for (uint32_t i = 0; i < 8; ++i, running_alpha = bf256_mul(running_alpha, alpha)) {
+    const bf256_t xi = bf256_load(x + (7 - i) * 256 / 8);
+    bf_out           = bf256_add(bf_out, bf256_mul(xi, running_alpha));
+  }
+  return bf_out;
+}
 
-  if (isBinary == 1) {
-    for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf256_add(bf_out, bf256_from_bf8(bf8_load(x + i)));
-    }
-  } else {
-    for (uint32_t i = 0; i < 8; i++) {
-      bf_out = bf256_add(bf_out, bf256_load(x + (i * 24)));
-    }
+bf256_t bf256_byte_combine_bits(uint8_t x) {
+  bf256_t bf_out        = bf256_zero();
+  const bf256_t alpha   = bf256_from_bf64(0x100);
+  bf256_t running_alpha = alpha;
+  for (uint32_t i = 0; i < 8; ++i, running_alpha = bf256_mul(running_alpha, alpha)) {
+    // TODO: check bit order
+    const bf256_t xi = bf256_from_bit(x >> i);
+    bf_out           = bf256_add(bf_out, bf256_mul(xi, running_alpha));
   }
   return bf_out;
 }
@@ -521,5 +544,5 @@ bf256_t bf256_inv(bf256_t in) {
 }
 
 bf256_t bf256_from_bit(uint8_t bit) {
-  return bf256_from_bf8(bit);
+  return bf256_from_bf8(bit & 1);
 }
