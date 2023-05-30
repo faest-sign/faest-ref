@@ -322,10 +322,9 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       // Step 14
       for (uint32_t d = 0; d < depth; d++) {
         if (delta[d]) {
-          xorUint8Arr(qprime[i] + d * ell_hat_bytes, signature->c[i - 1], q[i] + d * ell_hat_bytes,
-                      ell_hat_bytes);
+          xorUint8Arr(qprime[i + d], signature->c[i - 1], q[i + d], ell_hat_bytes);
         } else {
-          memcpy(q[i] + d * ell_hat_bytes, qprime[i] + d * ell_hat_bytes, ell_hat_bytes);
+          memcpy(q[i + d], qprime[i + d], ell_hat_bytes);
         }
       }
     }
