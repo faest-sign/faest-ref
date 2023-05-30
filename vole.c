@@ -92,7 +92,7 @@ void voleCommit(const uint8_t* rootKey, uint32_t ellhat, const faest_paramset_t*
     // Step 5
     vector_commitment(expanded_keys + i * lambdaBytes, params, lambda, lambdaBytes, &vecCom[i], N);
     // Step 6
-    ConvertToVole(lambda, lambdaBytes, vecCom[i].sd, N, depth, ellhatBytes, ui[i], tmp_v);
+    ConvertToVole(lambda, lambdaBytes, vecCom[i].sd, false, N, depth, ellhatBytes, ui[i], tmp_v);
     // Step 7 (and parts of 8)
     for (unsigned int j = 0; j < depth; ++j, ++v_idx) {
       memcpy(v[v_idx], tmp_v + j * ellhatBytes, ellhatBytes);
@@ -160,7 +160,7 @@ void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint
     H1_update(&h1_ctx, vecComRec.com, lambdaBytes * 2);
     vec_com_rec_clear(&vecComRec);
     // Step: 7..8
-    ConvertToVole(lambda, lambdaBytes, sd, N, depth, ellhatBytes, NULL, tmp_q);
+    ConvertToVole(lambda, lambdaBytes, sd, true, N, depth, ellhatBytes, NULL, tmp_q);
     for (unsigned int j = 0; j < depth; ++j, ++q_idx) {
       memcpy(q[q_idx], tmp_q + j * ellhatBytes, ellhatBytes);
     }
@@ -173,17 +173,7 @@ void voleReconstruct(const uint8_t* chall, uint8_t** pdec, uint8_t** com_j, uint
   H1_final(&h1_ctx, hcom, lambdaBytes * 2);
 }
 
-static bool is_all_zeros(const uint8_t* array, size_t len) {
-  for (size_t idx = 0; idx != len; ++idx) {
-    if (array[idx]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
+void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd, bool sd0_bot,
                    uint32_t numVoleInstances, uint32_t depth, uint32_t outLenBytes, uint8_t* u,
                    uint8_t* v) {
   // (depth + 1) x numVoleInstances array of outLenBytes; but we only need to rows at a time
@@ -193,8 +183,7 @@ void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
 #define V(idx) (v + (idx)*outLenBytes)
 
   // Step: 2
-  const bool sd_all_zeros = is_all_zeros(sd, lambdaBytes);
-  if (sd_all_zeros) {
+  if (sd0_bot) {
     memset(r, 0, outLenBytes);
   } else {
     uint8_t iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -219,7 +208,7 @@ void ConvertToVole(uint32_t lambda, uint32_t lambdaBytes, const uint8_t* sd,
     }
   }
   // Step: 10
-  if (sd_all_zeros == false && u != NULL) {
+  if (!sd0_bot && u != NULL) {
     memcpy(u, R(depth, 0), outLenBytes);
   }
   free(r);
