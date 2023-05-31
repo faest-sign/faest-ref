@@ -15,12 +15,15 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
     const auto param        = faest_get_paramset(param_id);
     const auto& faest_param = param.faest_param;
 
+    BOOST_TEST(faest_param.lambda <= MAX_LAMBDA);
     BOOST_TEST(faest_param.lambda ==
                faest_param.k0 * faest_param.t0 + faest_param.k1 * faest_param.t1);
     BOOST_TEST(faest_param.k0 == std::ceil((float)faest_param.lambda / faest_param.tau));
     BOOST_TEST(faest_param.k1 == std::floor((float)faest_param.lambda / faest_param.tau));
     BOOST_TEST(faest_param.t0 == faest_param.lambda % faest_param.tau);
     BOOST_TEST(faest_param.t1 == faest_param.tau - (faest_param.lambda % faest_param.tau));
+    BOOST_TEST(faest_param.Lke % 8 == 0);
+    BOOST_TEST(faest_param.Lenc % 8 == 0);
 
     BOOST_TEST(
         (faest_param.lambda == 128 || faest_param.lambda == 192 || faest_param.lambda == 256));

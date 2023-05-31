@@ -11,7 +11,9 @@
 #include <stdint.h>
 FAEST_BEGIN_C_DECL
 
-// TODO - Add paramset struct faest_param_t here, containing faest_L1, faest_L3, faest_L5.... ?
+#define MAX_LAMBDA 256
+#define MAX_LAMBDA_BYTES (MAX_LAMBDA * 2)
+
 typedef enum faest_paramid_t {
   PARAMETER_SET_INVALID   = 0,
   FAEST_128S              = 1,

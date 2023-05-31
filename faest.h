@@ -16,6 +16,7 @@ typedef struct signature_t {
   uint8_t** pdec;
   uint8_t** com_j;
   uint8_t* chall_3;
+  uint8_t iv[16];
 } signature_t;
 
 uint8_t** column_to_row_major_and_shrink_V(uint8_t** v, unsigned int lambda, unsigned int ell);
