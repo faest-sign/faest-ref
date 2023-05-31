@@ -533,9 +533,9 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
     return;
   }
 
-  bf128_t bf_minus_mtag = bf128_from_bit(1 - Mtag);
-  bf128_t bf_minus_mkey = bf128_from_bit(1 - Mkey);
-  bf128_t bf_mkey       = bf128_from_bit(Mkey);
+  const bf128_t factor =
+      bf128_mul(bf128_from_bit(1 ^ Mtag),
+                bf128_add(bf128_mul(bf128_from_bit(Mkey), bf_delta), bf128_from_bit(1 ^ Mkey)));
 
   // STep: 2..4
   for (uint32_t j = 0; j < R; j++) {
@@ -557,22 +557,19 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
             // Step: 10
             // TODO: check 0 extension
             bf_xout[i] = bf128_from_bit(get_bit(out[(ird - 1152) / 8], i));
-            bf_xout[i] = bf128_mul(bf128_mul(bf_xout[i], bf_minus_mtag),
-                                   bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey));
+            bf_xout[i] = bf128_mul(bf_xout[i], factor);
             // Step: 11
-            bf_x_tilde[i] = bf128_add(bf_xout[i], bf_xk[128 + ird]);
+            bf_x_tilde[i] = bf128_add(bf_xout[i], bf_xk[128 + ird + i]);
           }
         }
         // Step: 12
         bf128_t bf_y_tilde[8];
         // STep: 13..20
-        bf_y_tilde[7] = bf128_add(
-            bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
-            bf128_mul(bf_minus_mtag, bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey)));
+        bf_y_tilde[7] =
+            bf128_add(bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]), factor);
         bf_y_tilde[6] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[1]);
-        bf_y_tilde[5] = bf128_add(
-            bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]),
-            bf128_mul(bf_minus_mtag, bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey)));
+        bf_y_tilde[5] =
+            bf128_add(bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]), factor);
         bf_y_tilde[4] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[5]), bf_x_tilde[2]);
         bf_y_tilde[3] = bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[4]), bf_x_tilde[1]);
         bf_y_tilde[2] = bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[3]), bf_x_tilde[0]);
