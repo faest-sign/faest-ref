@@ -276,10 +276,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
             params->faest_param.k1, params->faest_param.t1, delta);
     // Step 16
     for (unsigned int j = 0; j != depth; ++j, ++Dtilde_idx) {
-      // TODO: get rid of this branch
-      if (delta[j]) {
-        memcpy(Dtilde[Dtilde_idx], signature->u_tilde, utilde_bytes);
-      }
+      maskedXorUint8Arr(Dtilde[Dtilde_idx], signature->u_tilde, Dtilde[Dtilde_idx], delta[j],
+                        utilde_bytes);
     }
 
     if (i == 0) {
@@ -288,13 +286,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       q_idx += depth;
     } else {
       // Step 14
-      for (uint32_t d = 0; d < depth; ++d, ++q_idx) {
-        // TODO: get rid of these branches
-        if (delta[d]) {
-          xorUint8Arr(qprime[q_idx], signature->c[i - 1], q[q_idx], ell_hat_bytes);
-        } else {
-          memcpy(q[q_idx], qprime[q_idx], ell_hat_bytes);
-        }
+      for (unsigned int d = 0; d < depth; ++d, ++q_idx) {
+        maskedXorUint8Arr(qprime[q_idx], signature->c[i - 1], q[q_idx], delta[d], ell_hat_bytes);
       }
     }
   }
