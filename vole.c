@@ -62,8 +62,7 @@ void voleCommit(const uint8_t* rootKey, const uint8_t* iv, uint32_t ellhat,
   uint32_t k0          = params->faest_param.k0;
   uint32_t k1          = params->faest_param.k1;
 
-  uint8_t** ui = malloc(tau * sizeof(uint8_t*));
-  ui[0]        = malloc(tau * ellhatBytes);
+  uint8_t* ui = malloc(tau * ellhatBytes);
 
   // Step 1
   uint8_t* expanded_keys = malloc(tau * lambdaBytes);
@@ -86,30 +85,28 @@ void voleCommit(const uint8_t* rootKey, const uint8_t* iv, uint32_t ellhat,
       N     = 1 << k1;
       depth = k1;
     }
-    ui[i] = ui[0] + i * ellhatBytes;
 
     // Step 5
     vector_commitment(expanded_keys + i * lambdaBytes, iv, params, lambda, lambdaBytes, &vecCom[i],
                       N);
     // Step 6
-    ConvertToVole(iv, vecCom[i].sd, false, lambda, lambdaBytes, N, depth, ellhatBytes, ui[i],
-                  tmp_v);
+    ConvertToVole(iv, vecCom[i].sd, false, lambda, lambdaBytes, N, depth, ellhatBytes,
+                  ui + i * ellhatBytes, tmp_v);
     // Step 7 (and parts of 8)
     for (unsigned int j = 0; j < depth; ++j, ++v_idx) {
       memcpy(v[v_idx], tmp_v + j * ellhatBytes, ellhatBytes);
     }
     // Step 12 (part)
-    H1_update(&h1_ctx, vecCom[i].com, lambdaBytes * 2);
+    H1_update(&h1_ctx, vecCom[i].h, lambdaBytes * 2);
   }
   free(tmp_v);
   free(expanded_keys);
   // Step 9
-  memcpy(u, ui[0], ellhatBytes);
+  memcpy(u, ui, ellhatBytes);
   for (uint32_t i = 1; i < tau; i++) {
     // Step 11
-    xorUint8Arr(u, ui[i], c[i - 1], ellhatBytes);
+    xorUint8Arr(u, ui + i * ellhatBytes, c[i - 1], ellhatBytes);
   }
-  free(ui[0]);
   free(ui);
 
   // Step 12: Generating final commitment from all the com commitments
@@ -163,7 +160,7 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
       memcpy(sd + (j * lambdaBytes), vecComRec.m + (lambdaBytes * (j ^ idx)), lambdaBytes);
     }
 
-    H1_update(&h1_ctx, vecComRec.com, lambdaBytes * 2);
+    H1_update(&h1_ctx, vecComRec.h, lambdaBytes * 2);
 
     // Step: 7..8
     ConvertToVole(iv, sd, true, lambda, lambdaBytes, N, depth, ellhatBytes, NULL, tmp_q);
