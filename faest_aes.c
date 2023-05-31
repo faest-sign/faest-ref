@@ -379,7 +379,7 @@ static int aes_enc_forward(uint32_t m, const uint8_t* x, const uint8_t* xk, cons
         for (uint32_t r = 0; r <= 3; r++) {
           // Step: 12..13
           bf_x_hat[r]  = bf128_byte_combine_bits(x[(ix + 8 * R) / 8]);
-          bf_xk_hat[r] = bf128_byte_combine_bits(xk[(ix + 8 * R) / 8]);
+          bf_xk_hat[r] = bf128_byte_combine_bits(xk[(ik + 8 * R) / 8]);
         }
         bf128_t bf_one   = bf128_one();
         bf128_t bf_two   = bf128_from_bf8(2);
@@ -457,7 +457,7 @@ static int aes_enc_forward(uint32_t m, const uint8_t* x, const uint8_t* xk, cons
         free(x_tmp);
 
         uint8_t* xk_tmp = malloc(8 * lambdaBytes);
-        memcpy(xk_tmp, xk + ((ix + 8 * R) / 8 * lambdaBytes), 8 * lambdaBytes);
+        memcpy(xk_tmp, xk + ((ik + 8 * R) / 8 * lambdaBytes), 8 * lambdaBytes);
         bf_xk_hat[r] = bf128_byte_combine(xk_tmp);
         free(xk_tmp);
       }
