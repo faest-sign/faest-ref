@@ -55,9 +55,8 @@ static void aes_key_schedule_forward(uint32_t m, const uint8_t* x, uint8_t Mtag,
         i_wd += 32;
       } else {
         for (uint32_t i = 0; i < 32; i += 8) {
-          out[(32 * j + i) / 8] |= set_bit(get_bit(out[(32 * (j - Nwd) + i) / 8], i % 8) ^
-                                               get_bit(out[(32 * (j - 1) + i) / 8], i % 8),
-                                           i % 8);
+          // bit spliced
+          out[(32 * j + i) / 8] |= out[(32 * (j - Nwd) + i) / 8] ^ out[(32 * (j - 1) + i) / 8];
         }
       }
     }
