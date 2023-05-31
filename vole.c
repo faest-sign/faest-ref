@@ -178,15 +178,13 @@ void ConvertToVole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, uint32_t 
                    uint32_t lambdaBytes, uint32_t numVoleInstances, uint32_t depth,
                    uint32_t outLenBytes, uint8_t* u, uint8_t* v) {
   // (depth + 1) x numVoleInstances array of outLenBytes; but we only need to rows at a time
-  uint8_t* r = malloc(2 * numVoleInstances * outLenBytes);
+  uint8_t* r = calloc(2 * numVoleInstances, outLenBytes);
 
 #define R(row, column) (r + (((row) % 2) * numVoleInstances + (column)) * outLenBytes)
 #define V(idx) (v + (idx)*outLenBytes)
 
   // Step: 2
-  if (sd0_bot) {
-    memset(r, 0, outLenBytes);
-  } else {
+  if (!sd0_bot) {
     prg(sd, iv, R(0, 0), lambda, outLenBytes);
   }
 

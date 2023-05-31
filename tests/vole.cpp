@@ -164,10 +164,9 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
     const unsigned int max_depth     = std::max(params.faest_param.k0, params.faest_param.k1);
     const unsigned int max_nodes     = 1 << max_depth;
 
-    std::vector<uint8_t> sd, sdprime, u, v, q, chal_out, chal;
+    std::vector<uint8_t> sd, u, v, q, chal_out, chal;
     sd.resize(max_nodes * lambdaBytes);
     rand_bytes(sd.data(), sd.size());
-    sdprime.resize(max_nodes * lambdaBytes, 0);
     chal_out.resize(max_depth);
     u.resize(ell_hat_bytes);
     v.resize(ell_hat_bytes * max_depth);
@@ -186,6 +185,8 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
       ChalDec(chal.data(), i, params.faest_param.k0, params.faest_param.t0, params.faest_param.k1,
               params.faest_param.t1, chal_out.data());
       const auto idx = NumRec(depth, chal_out.data());
+      std::vector<uint8_t> sdprime;
+      sdprime.resize(max_nodes * lambdaBytes, 0);
       for (unsigned int j = 1; j != nodes; ++j) {
         std::copy(&sd[(j ^ idx) * lambdaBytes], &sd[((j ^ idx) + 1) * lambdaBytes],
                   &sdprime[j * lambdaBytes]);
@@ -195,8 +196,11 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
                     ell_hat_bytes, nullptr, q.data());
 
       for (unsigned int j = 0; j != depth; ++j) {
-        for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
-          q[j * ell_hat_bytes + inner] ^= chal_out[j] * u[inner];
+        BOOST_TEST((chal_out[j] == 0 || chal_out[j] == 1));
+        if (chal_out[j]) {
+          for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
+            q[j * ell_hat_bytes + inner] ^= u[inner];
+          }
         }
       }
       BOOST_TEST(q == v);
