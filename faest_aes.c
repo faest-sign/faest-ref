@@ -378,8 +378,8 @@ static int aes_enc_forward(uint32_t m, const uint8_t* x, const uint8_t* xk, cons
         bf128_t bf_xk_hat[4];
         for (uint32_t r = 0; r <= 3; r++) {
           // Step: 12..13
-          bf_x_hat[r]  = bf128_byte_combine_bits(x[(ix + 8 * R) / 8]);
-          bf_xk_hat[r] = bf128_byte_combine_bits(xk[(ik + 8 * R) / 8]);
+          bf_x_hat[r]  = bf128_byte_combine_bits(x[(ix + 8 * r) / 8]);
+          bf_xk_hat[r] = bf128_byte_combine_bits(xk[(ik + 8 * r) / 8]);
         }
         bf128_t bf_one   = bf128_one();
         bf128_t bf_two   = bf128_from_bf8(2);
@@ -452,12 +452,12 @@ static int aes_enc_forward(uint32_t m, const uint8_t* x, const uint8_t* xk, cons
         // Step: 12..13
         // FIXME: this looks bogus
         uint8_t* x_tmp = malloc(8 * lambdaBytes);
-        memcpy(x_tmp, x + ((ix + 8 * R) / 8 * lambdaBytes), 8 * lambdaBytes);
+        memcpy(x_tmp, x + ((ix + 8 * r) / 8 * lambdaBytes), 8 * lambdaBytes);
         bf_x_hat[r] = bf128_byte_combine(x_tmp);
         free(x_tmp);
 
         uint8_t* xk_tmp = malloc(8 * lambdaBytes);
-        memcpy(xk_tmp, xk + ((ik + 8 * R) / 8 * lambdaBytes), 8 * lambdaBytes);
+        memcpy(xk_tmp, xk + ((ik + 8 * r) / 8 * lambdaBytes), 8 * lambdaBytes);
         bf_xk_hat[r] = bf128_byte_combine(xk_tmp);
         free(xk_tmp);
       }
@@ -748,45 +748,33 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   // do nothing
 
   // Step: 6
-  uint8_t* w_tilde = malloc(Lke);
-  uint8_t* v_tilde = malloc(Lke * lambdaBytes);
-  memcpy(w_tilde, bf_w, Lke);
-  memcpy(v_tilde, bf_v, Lke * lambdaBytes);
 
   // Step: 7
   const unsigned int length_a = Ske + (beta * Senc) + 1;
   uint8_t* A0                 = malloc(lambdaBytes * length_a);
   uint8_t* A1                 = malloc(lambdaBytes * length_a);
-  uint8_t* k                  = malloc((R + 1) * 128);
-  uint8_t* vk                 = malloc(lambdaBytes * ((R + 1) * 128));
-  uint8_t* qk                 = malloc(lambdaBytes * ((R + 1) * 128));
+  uint8_t* k  = malloc((R + 1) * 128);
+  uint8_t* vk = malloc(lambdaBytes * ((R + 1) * 128));
+  uint8_t* qk = malloc(lambdaBytes * ((R + 1) * 128));
   if (Lke > 0) {
-    aes_key_schedule_constraints(w_tilde, v_tilde, 0, NULL, NULL, A0, A1, k, vk, NULL, qk, params);
+    aes_key_schedule_constraints(w, V[0], 0, NULL, NULL, A0, A1, k, vk, NULL, qk, params);
   }
 
   // Step: Skipping 8 in implementation
   // Step: 9
-  w_tilde = realloc(w_tilde, Lenc);
-  v_tilde = realloc(v_tilde, Lenc * lambdaBytes);
-  memcpy(w_tilde, bf_w + Lke, Lenc);
-  memcpy(v_tilde, bf_v + Lke, Lenc * lambdaBytes);
 
   // Step: 10,11
-  aes_enc_constraints(in, out, w_tilde, v_tilde, k, vk, 0, NULL, NULL, NULL,
+  aes_enc_constraints(in, out, w + Lke / 8, V[Lke], k, vk, 0, NULL, NULL, NULL,
                       A0 + (lambdaBytes * Ske), A1 + (lambdaBytes * Ske), NULL, params);
 
   // Step: 12
   if (beta == 2) {
     // Step: 13
-    memcpy(w_tilde, bf_w + Lke + Lenc, l - Lke + Lenc);
-    memcpy(v_tilde, bf_v + (Lke + Lenc), l - Lke + Lenc);
     // Step: 14, 15
-    aes_enc_constraints(in + 16, out + 16, w_tilde, v_tilde, k, vk, 0, NULL, NULL, NULL,
-                        A0 + lambdaBytes * (Ske + Senc), A1 + lambdaBytes * (Ske + Senc), NULL,
-                        params);
+    aes_enc_constraints(in + 16, out + 16, w + (Lke + Lenc) / 8, V[Lke + Lenc], k, vk, 0, NULL,
+                        NULL, NULL, A0 + lambdaBytes * (Ske + Senc),
+                        A1 + lambdaBytes * (Ske + Senc), NULL, params);
   }
-  free(w_tilde);
-  free(v_tilde);
   free(bf_w);
   free(qk);
   free(vk);
