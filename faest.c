@@ -265,7 +265,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     Dtilde[i] = Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B);
   }
 
-  const unsigned int max_depth = MAX(params->faest_param.k0, params->faest_param.k0);
+  const unsigned int max_depth = MAX(params->faest_param.k0, params->faest_param.k1);
   uint8_t* delta               = malloc(max_depth);
   unsigned int Dtilde_idx      = 0;
   for (uint32_t i = 0; i < tau; i++) {
