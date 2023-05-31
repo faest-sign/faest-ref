@@ -53,7 +53,34 @@ if boost_test.found()
     include_directories: include_directories,
     cpp_args: defines + cpp_flags + ['-DBOOST_TEST_DYN_LINK'],
   )
-  test('extended_tests', extended_tests,
+  test('AES', extended_tests,
+    args: ['-t', 'aes'],
     timeout: 600,
   )
+  test('AES prove', extended_tests,
+    args: ['-t', 'test_aes_prove'],
+    timeout: 600,
+  )
+  test('Instances', extended_tests,
+    args: ['-t', 'instances'],
+    timeout: 600,
+  )
+  test('Universal hashing', extended_tests,
+    args: ['-t', 'universal_hashing'],
+    timeout: 600,
+  )
+  test('Vector commitments', extended_tests,
+    args: ['-t', 'vector_commitments'],
+    timeout: 600,
+  )
+  test('VOLE', extended_tests,
+    args: ['-t', 'vole'],
+    timeout: 600,
+  )
+  if ntl.found()
+    test('Fields', extended_tests,
+      args: ['-t', 'fields'],
+      timeout: 600,
+    )
+  endif
 endif
