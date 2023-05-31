@@ -694,6 +694,9 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   zk_hash_128(a_tilde, chall, A1, length_a - 1);
   zk_hash_128(b_tilde, chall, A0, length_a - 1);
 
+  printUint8Arr("a_tilde", a_tilde, 16, 1);
+  printUint8Arr("b_tilde", b_tilde, 16, 1);
+
   free(A0);
   free(A1);
 }
@@ -778,6 +781,9 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
 
   bf128_t bf_qtilde = bf128_load(q_tilde);
   bf128_store(q_tilde, bf128_add(bf_qtilde, bf128_mul(bf128_load(a_tilde), bf128_load(delta))));
+
+  printUint8Arr("a_tilde", a_tilde, 16, 1);
+  printUint8Arr("b_tilde", q_tilde, 16, 1);
 
   return q_tilde;
 }
