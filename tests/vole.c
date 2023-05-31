@@ -1,4 +1,5 @@
-#include "../vole.h"
+#include "vole.h"
+#include "universal_hashing.h"
 #include "compat.h"
 
 static uint8_t rootKey[32] = {
@@ -39,7 +40,7 @@ int test_FAESTVoleCommit() {
   uint32_t lambda      = params.faest_param.lambda;
   uint32_t lambdaBytes = lambda / 8;
   const uint32_t ell_hat =
-      params.faest_param.l + params.faest_param.lambda * 2 + params.faest_param.b;
+      params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
 
   uint8_t* hcom     = malloc(lambdaBytes * 2);
@@ -76,7 +77,7 @@ int test_FAESTVoleVerify() {
   uint32_t lambda      = params.faest_param.lambda;
   uint32_t lambdaBytes = lambda / 8;
   const uint32_t ell_hat =
-      params.faest_param.l + params.faest_param.lambda * 2 + params.faest_param.b;
+      params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
 
   uint8_t* hcom     = malloc(lambdaBytes * 2);
