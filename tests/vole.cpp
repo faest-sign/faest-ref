@@ -97,7 +97,6 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
     voleCommit(rootKey.data(), iv.data(), ell_hat, &params, hcom.data(), vec_com.data(), c.data(),
                u.data(), v.data());
-    delete[] c[0];
 
     unsigned int running_idx = 0;
     for (uint32_t i = 0; i < params.faest_param.tau; i++) {
@@ -127,16 +126,14 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
         for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
           if (b[j]) {
-            BOOST_TEST((q[running_idx][inner] ^ u[inner]) == v[running_idx][inner],
-                       "failed with delta: " << (unsigned int)b[j] << " running_idx: "
-                                             << running_idx << " inner: " << inner
-                                             << " q: " << (unsigned int)q[running_idx][inner]
-                                             << " v: " << (unsigned int)v[running_idx][inner]
-                                             << " u: " << (unsigned int)u[inner]);
+              // need to correct the vole correlation
+              if (i > 0) {
+                BOOST_TEST((q[(running_idx)][inner] ^ c[i-1][inner] ^ u[inner]) == v[(running_idx)][inner]);
+              } else {
+                BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
+              }
           } else {
-            BOOST_TEST(q[(running_idx)][inner] == q[(running_idx)][inner],
-                       "failed with delta: " << (unsigned int)b[j] << " running_idx: "
-                                             << running_idx << " inner: " << inner);
+            BOOST_TEST(q[(running_idx)][inner] == v[(running_idx)][inner]);
           }
         }
       }
@@ -149,6 +146,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
     delete[] q[0];
     delete[] v[0];
+    delete[] c[0];
   }
 }
 
