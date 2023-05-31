@@ -264,11 +264,12 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     Dtilde[i] = Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B);
   }
 
-  const unsigned int max_depth = MAX(params->faest_param.k0, params->faest_param.k1);
+  const unsigned int max_depth = MAX(k0, k1);
   uint8_t* delta               = malloc(max_depth);
   unsigned int Dtilde_idx      = 0;
+  unsigned int q_idx           = 0;
   for (uint32_t i = 0; i < tau; i++) {
-    const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
+    const unsigned int depth = i < tau0 ? k0 : k1;
 
     // Step 11
     ChalDec(signature->chall_3, i, params->faest_param.k0, params->faest_param.t0,
@@ -283,29 +284,16 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
 
     if (i == 0) {
       // Step 8
-      memcpy(q[i], qprime[i], ell_hat_bytes * depth);
+      memcpy(q[q_idx], qprime[q_idx], ell_hat_bytes * depth);
+      q_idx += depth;
     } else {
-      if (i < tau0) {
-        // Step 14
-        for (uint32_t d = 0; d < depth; d++) {
-          // TODO: get rid of these branches
-          if (delta[d]) {
-            xorUint8Arr(qprime[(i * k0) + d], signature->c[i - 1], q[(i * k0) + d], ell_hat_bytes);
-          } else {
-            memcpy(q[(i * k0) + d], qprime[(i * k0) + d], ell_hat_bytes);
-          }
-        }
-      } else {
-        // Step 14
-        for (uint32_t d = 0; d < depth; d++) {
-          // TODO: get rid of these branches
-          if (delta[d]) {
-            xorUint8Arr(qprime[(tau0 * k0) + ((i - tau0) * k1) + d], signature->c[i - 1],
-                        q[(tau0 * k0) + ((i - tau0) * k1) + d], ell_hat_bytes);
-          } else {
-            memcpy(q[(tau0 * k0) + ((i - tau0) * k1) + d],
-                   qprime[(tau0 * k0) + ((i - tau0) * k1) + d], ell_hat_bytes);
-          }
+      // Step 14
+      for (uint32_t d = 0; d < depth; ++d, ++q_idx) {
+        // TODO: get rid of these branches
+        if (delta[d]) {
+          xorUint8Arr(qprime[q_idx], signature->c[i - 1], q[q_idx], ell_hat_bytes);
+        } else {
+          memcpy(q[q_idx], qprime[q_idx], ell_hat_bytes);
         }
       }
     }
