@@ -296,6 +296,9 @@ static void aes_key_schedule_constraints(const uint8_t* w, const bf128_t* v, con
       }
       // Step: 13..17
       for (uint32_t r = 0; r <= 3; r++) {
+        // check that the constraint actually holds
+        bf128_t should_be_zero = bf128_add(bf128_mul(bf_k_hat[r], bf_w_dash_hat[r]), bf128_one());
+        assert(should_be_zero.values[0] == 0 && should_be_zero.values[1] == 0);
         A0[4 * j + r] = bf128_mul(bf_v_k_hat[r], bf_v_w_dash_hat[r]);
         A1[4 * j + r] =
             bf128_add(bf128_add(bf128_mul(bf128_add(bf_k_hat[r], bf_v_k_hat[r]),
@@ -589,6 +592,9 @@ static void aes_enc_constraints(const uint8_t* in, const uint8_t* out, const uin
     aes_enc_backward(lambda, NULL, v, NULL, vk, 1, 0, NULL, out, vs_dash, params);
 
     for (uint32_t j = 0; j < Senc; j++) {
+      // check that the constraint actually holds
+      bf128_t should_be_zero = bf128_add(bf128_mul(s[j], s_dash[j]), bf128_one());
+      assert(should_be_zero.values[0] == 0 && should_be_zero.values[1] == 0);
       A0[j] = bf128_mul(vs[j], vs_dash[j]);
       A1[j] = bf128_add(
           bf128_add(bf128_mul(bf128_add(s[j], vs[j]), bf128_add(s_dash[j], vs_dash[j])), A0[j]),
