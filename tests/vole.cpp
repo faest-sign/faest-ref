@@ -128,9 +128,16 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
         for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
           if (b[j]) {
-            BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
+            BOOST_TEST((q[running_idx][inner] ^ u[inner]) == v[running_idx][inner],
+                       "failed with delta: " << (unsigned int)b[j] << " running_idx: "
+                                             << running_idx << " inner: " << inner
+                                             << " q: " << (unsigned int)q[running_idx][inner]
+                                             << " v: " << (unsigned int)v[running_idx][inner]
+                                             << " u: " << (unsigned int)u[inner]);
           } else {
-            BOOST_TEST(q[(running_idx)][inner] == q[(running_idx)][inner]);
+            BOOST_TEST(q[(running_idx)][inner] == q[(running_idx)][inner],
+                       "failed with delta: " << (unsigned int)b[j] << " running_idx: "
+                                             << running_idx << " inner: " << inner);
           }
         }
       }

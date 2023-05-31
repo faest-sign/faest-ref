@@ -144,6 +144,7 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
     ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
     // Step 4
     uint32_t idx = NumRec(depth, chalout);
+    assert(idx < N);
 
     // Step 5
     vector_reconstruction(iv, pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, depth,
