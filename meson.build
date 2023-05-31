@@ -7,7 +7,6 @@ project('faest-ref', ['c', 'cpp'],
     'warning_level=3',
     'b_lto=true',
     'b_ndebug=if-release',
-    'b_sanitize=address',
   ],
 )
 

@@ -19,36 +19,6 @@
 
 // TODO: change q to Q where applicable
 
-static inline uint8_t get_bit(const uint8_t* in, unsigned int index) {
-  return (in[index / 8] >> (7 - index % 8)) & 1;
-}
-
-static inline void set_bit(uint8_t* dst, uint8_t in, unsigned int index) {
-  dst[index / 8] |= in << (7 - index % 8);
-}
-
-uint8_t** column_to_row_major_and_shrink_V(uint8_t** v, unsigned int lambda, unsigned int ell) {
-  assert(lambda % 8 == 0);
-  const unsigned int lambda_bytes = lambda / 8;
-
-  // V is \hat \ell times \lambda matrix over F_2
-  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
-  // rows and \lambda columns storing in row-major order
-  uint8_t** new_v = malloc((ell + lambda) * sizeof(uint8_t*));
-  new_v[0]        = calloc(lambda, (ell + lambda));
-  for (unsigned int i = 1; i < ell + lambda; ++i) {
-    new_v[i] = new_v[0] + i * lambda_bytes;
-  }
-
-  for (unsigned int row = 0; row != ell + lambda; ++row) {
-    for (unsigned int column = 0; column != lambda; ++column) {
-      set_bit(new_v[row], get_bit(v[column], row), column);
-    }
-  }
-
-  return new_v;
-}
-
 void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* pk,
           const uint8_t* rho, size_t rholen, const faest_paramset_t* params,
           signature_t* signature) {
@@ -151,12 +121,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   }
 
   // Step: 14..15
-  {
-    uint8_t** new_v = column_to_row_major_and_shrink_V(V, lambda, l);
-    free(V[0]);
-    free(V);
-    V = new_v;
-  }
+  // transpose is computed in aes_prove
 
   // Step: 16
   uint8_t b_tilde[MAX_LAMBDA_BYTES];

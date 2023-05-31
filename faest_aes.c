@@ -26,6 +26,31 @@ ATTR_CONST static inline bf8_t set_bit(bf8_t in, uint8_t index) {
   return (in << index);
 }
 
+static inline uint8_t ptr_get_bit(const uint8_t* in, unsigned int index) {
+  return (in[index / 8] >> (index % 8)) & 1;
+}
+
+static inline void ptr_set_bit(uint8_t* dst, uint8_t in, unsigned int index) {
+  dst[index / 8] |= in << (index % 8);
+}
+
+static bf128_t* column_to_row_major_and_shrink_V(uint8_t** v, unsigned int ell) {
+  // V is \hat \ell times \lambda matrix over F_2
+  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
+  // rows and \lambda columns storing in row-major order
+  bf128_t* new_v = malloc((ell + sizeof(bf128_t) * 8) * sizeof(bf128_t));
+  for (unsigned int row = 0; row != ell + sizeof(bf128_t) * 8; ++row) {
+    uint8_t new_row[sizeof(bf128_t)];
+    memset(new_row, 0, sizeof(new_row));
+    for (unsigned int column = 0; column != sizeof(bf128_t) * 8; ++column) {
+      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
+    }
+    new_v[row] = bf128_load(new_row);
+  }
+
+  return new_v;
+}
+
 static void aes_key_schedule_forward(uint32_t m, const uint8_t* x, const bf128_t* v, uint8_t Mtag,
                                      uint8_t Mkey, const uint8_t* delta, uint8_t* out,
                                      bf128_t* bf_out, const faest_paramset_t* params) {
@@ -620,11 +645,7 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   const unsigned int Senc   = params->faest_param.Senc;
 
   // Step: 1..2
-  // TODO: make column_to_major_ ... output this
-  bf128_t* bf_v = malloc((l + lambda) * sizeof(bf128_t));
-  for (uint32_t i = 0; i < l + lambda; i++) {
-    bf_v[i] = bf128_load(V[i]);
-  }
+  bf128_t* bf_v = column_to_row_major_and_shrink_V(V, l);
 
   // Step: 3..4
   // do nothing
@@ -723,13 +744,7 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   }
 
   // Step: 11..12
-  bf128_t* bf_q   = malloc(sizeof(bf128_t) * (l + lambda));
-  uint8_t** new_Q = column_to_row_major_and_shrink_V(Q, lambda, l);
-  for (uint32_t i = 0; i < l + lambda; i++) {
-    bf_q[i] = bf128_load(new_Q[i]);
-  }
-  free(new_Q[0]);
-  free(new_Q);
+  bf128_t* bf_q = column_to_row_major_and_shrink_V(Q, l);
 
   // Step: 13
   const unsigned int length_b = Ske + (beta * Senc) + 1;
