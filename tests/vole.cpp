@@ -5,6 +5,7 @@
 #include "vole.h"
 #include "instances.hpp"
 #include "randomness.h"
+#include "universal_hashing.h"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
@@ -62,7 +63,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     const unsigned int lambda      = params.faest_param.lambda;
     const unsigned int lambdaBytes = lambda / 8;
     const unsigned int ell_hat =
-        params.faest_param.l + params.faest_param.lambda * 2 + params.faest_param.b;
+        params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
 
     std::vector<uint8_t> hcom, hcomRec, u, b, chal;
@@ -126,12 +127,13 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
         for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
           if (b[j]) {
-              // need to correct the vole correlation
-              if (i > 0) {
-                BOOST_TEST((q[(running_idx)][inner] ^ c[i-1][inner] ^ u[inner]) == v[(running_idx)][inner]);
-              } else {
-                BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
-              }
+            // need to correct the vole correlation
+            if (i > 0) {
+              BOOST_TEST((q[(running_idx)][inner] ^ c[i - 1][inner] ^ u[inner]) ==
+                         v[(running_idx)][inner]);
+            } else {
+              BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
+            }
           } else {
             BOOST_TEST(q[(running_idx)][inner] == v[(running_idx)][inner]);
           }
@@ -156,7 +158,7 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
     const unsigned int lambda      = params.faest_param.lambda;
     const unsigned int lambdaBytes = lambda / 8;
     const unsigned int ell_hat =
-        params.faest_param.l + params.faest_param.lambda * 2 + params.faest_param.b;
+        params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const unsigned int max_depth     = std::max(params.faest_param.k0, params.faest_param.k1);
     const unsigned int max_nodes     = 1 << max_depth;
