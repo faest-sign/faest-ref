@@ -601,8 +601,8 @@ static void aes_enc_constraints(const uint8_t* in, const uint8_t* out, const uin
     bf128_t* vs_dash = malloc(sizeof(bf128_t) * Senc);
     aes_enc_forward(1, w, NULL, k, NULL, in, 0, 0, NULL, s, params);
     aes_enc_forward(lambda, NULL, v, NULL, vk, in, 1, 0, NULL, vs, params);
-    aes_enc_backward(1, w, NULL, k, NULL, 0, 0, delta, out, s_dash, params);
-    aes_enc_backward(lambda, NULL, v, NULL, vk, 1, 0, delta, out, vs_dash, params);
+    aes_enc_backward(1, w, NULL, k, NULL, 0, 0, NULL, out, s_dash, params);
+    aes_enc_backward(lambda, NULL, v, NULL, vk, 1, 0, NULL, out, vs_dash, params);
 
     for (uint32_t j = 0; j < Senc; j++) {
       A0[j] = bf128_mul(vs[j], vs_dash[j]);
