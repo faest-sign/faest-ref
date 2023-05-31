@@ -446,9 +446,8 @@ static void aes_enc_forward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, c
         bf_xk_hat[r] = bf128_byte_combine(bf_xk + (ik + 8 * r));
       }
       bf128_t bf_one = bf128_one();
-      // FIXME
-      bf128_t bf_two   = bf128_from_bf64(2);
-      bf128_t bf_three = bf128_from_bf64(3);
+      bf128_t bf_two   = bf128_byte_combine_bits(2);
+      bf128_t bf_three = bf128_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf128_add(bf_xk_hat[0], bf128_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[1], bf_three));
