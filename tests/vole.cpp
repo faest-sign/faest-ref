@@ -72,6 +72,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     b.resize(MAX(params.faest_param.k0, params.faest_param.k1), 0);
     chal.resize(lambdaBytes);
     rand_bytes(chal.data(), chal.size());
+    chal[0] = 0;
 
     std::vector<vec_com_t> vec_com;
     vec_com.resize(params.faest_param.tau);
