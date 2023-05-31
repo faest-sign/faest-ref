@@ -2236,8 +2236,9 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
     q[i] = q[0] + i * ell_hat_bytes;
   }
 
-  for (unsigned int i = 0; i < params.faest_param.tau - 1; ++i) {
-    c[i] = new uint8_t[ell_hat_bytes];
+  c[0] = new uint8_t[(params.faest_param.tau - 1) * ell_hat_bytes];
+  for (unsigned int i = 1; i < params.faest_param.tau - 1; ++i) {
+    c[i] = c[0] + i * ell_hat_bytes;
   }
 
   constexpr std::array<uint8_t, 16> iv{};
@@ -2246,13 +2247,13 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
   BOOST_TEST(hcom.size() == hcom_128s.size());
   BOOST_TEST(lambda * ell_hat_bytes == v_128s.size());
   BOOST_TEST(u.size() == u_128s.size());
+  BOOST_TEST(ell_hat_bytes * (params.faest_param.tau - 1) == corrections_128s.size());
   BOOST_TEST(std::equal(hcom.begin(), hcom.end(), hcom_128s.begin()));
   BOOST_TEST(std::equal(v_128s.begin(), v_128s.end(), v[0]));
   BOOST_TEST(std::equal(u_128s.begin(), u_128s.end(), u.begin()));
+  BOOST_TEST(std::equal(corrections_128s.begin(), corrections_128s.end(), c[0]));
 
-  for (unsigned int i = 0; i != params.faest_param.tau - 1; ++i) {
-    delete[] c[i];
-  }
+  delete[] c[0];
 
   for (uint32_t i = 0; i < params.faest_param.tau; i++) {
     const uint32_t depth =
