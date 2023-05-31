@@ -21,7 +21,6 @@ static const bf8_t Rcon[30] = {
     0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
 };
 
-
 ATTR_CONST static inline bf8_t get_bit(bf8_t in, uint8_t index) {
   return (in >> index) & 0x01;
 }
@@ -324,7 +323,6 @@ static void aes_key_schedule_constraints(const uint8_t* w, const bf128_t* v, con
   }
 
   // Step: 19..20
-  // FIXME
   aes_key_schedule_forward(lambda, NULL, q, 0, 1, delta, NULL, qk, params);
   bf128_t* q_w_dash = malloc(Ske * 8 * sizeof(bf128_t));
   aes_key_schedule_backward(lambda, NULL, &q[lambda], NULL, qk, 0, 1, delta, NULL, q_w_dash,
