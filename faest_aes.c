@@ -40,7 +40,8 @@ static void aes_key_schedule_forward(uint32_t m, const uint8_t* x, uint8_t Mtag,
   const unsigned int lambdaBytes = lambda / 8;
 
   if (m == 1) {
-    const unsigned int out_len = (R + 1) * 128 / 8 + lambdaBytes;
+    const unsigned int out_len = (R + 1) * 128 / 8;
+
     // Step 3
     memcpy(out, x, lambdaBytes);
     memset(out + lambdaBytes, 0, out_len - lambdaBytes);
@@ -746,7 +747,7 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   const unsigned int length_a = Ske + (beta * Senc) + 1;
   uint8_t* A0                 = malloc(lambdaBytes * length_a);
   uint8_t* A1                 = malloc(lambdaBytes * length_a);
-  uint8_t* k  = malloc((R + 1) * 128);
+  uint8_t* k  = malloc((R + 1) * 128 / 8);
   uint8_t* vk = malloc(lambdaBytes * ((R + 1) * 128));
   uint8_t* qk = malloc(lambdaBytes * ((R + 1) * 128));
   if (Lke > 0) {
