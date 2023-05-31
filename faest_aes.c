@@ -77,7 +77,7 @@ static void aes_key_schedule_forward(uint32_t m, const uint8_t* x, const bf128_t
   for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
     if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
       for (uint32_t i = (j * 32); i <= ((j * 32) + 31); i++) {
-        bf_out[i] = v[i];
+        bf_out[i] = v[i_wd + i];
       }
       i_wd += 32;
     } else {
@@ -181,7 +181,7 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
     // Step 7
     bf128_t bf_x_tilde[8];
     for (uint32_t i = 0; i < 8; i++) {
-      bf_x_tilde[i] = bf128_add(v[8 * j + i], Vk[8 * j + i]);
+      bf_x_tilde[i] = bf128_add(v[8 * j + i], Vk[iwd + 8 * c + i]);
     }
 
     if (Mtag == 0 && rmvRcon == true && c == 0) {
