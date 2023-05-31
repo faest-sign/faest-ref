@@ -253,7 +253,6 @@ void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t*
 
   // Step: 3..9
   uint32_t a = 0;
-  uint8_t out[2 * MAX_SEED_SIZE];
   for (uint32_t i = 1; i <= depth; i++) {
     memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * a + !b[depth - i])),
            cop + (lambdaBytes * (i - 1)), lambdaBytes);
@@ -265,6 +264,7 @@ void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t*
         continue;
       }
 
+      uint8_t out[2 * MAX_SEED_SIZE];
       prg(vecComRec->k + (lambdaBytes * getNodeIndex(i - 1, j)), iv, out, lambda, lambdaBytes * 2);
       memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * j)), out, lambdaBytes);
       memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, (2 * j) + 1)), out + lambdaBytes,
