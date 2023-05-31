@@ -64,8 +64,6 @@ static void aes_key_schedule_forward(uint32_t m, const uint8_t* x, const bf128_t
     return;
   }
 
-  const unsigned int y_out_len = (R + 1) * 128;
-
   for (uint32_t i = 0; i < lambdaBytes; i++) {
     for (uint32_t j = 0; j < 8; j++) {
       bf_out[(i * 8) + j] = v[i * 8 + j];
@@ -99,9 +97,8 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
     return;
   }
 
-  const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int Ske         = params->faest_param.Ske;
-  const unsigned int lambdaBytes = lambda / 8;
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Ske    = params->faest_param.Ske;
 
   // STep: 2
   if (m == 1) {
@@ -331,11 +328,7 @@ static void aes_key_schedule_constraints(const uint8_t* w, const bf128_t* v, con
 static void aes_enc_forward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, const uint8_t* xk,
                             const bf128_t* bf_xk, const uint8_t* in, uint8_t Mtag, uint8_t Mkey,
                             const uint8_t* delta, bf128_t* bf_y, const faest_paramset_t* params) {
-  const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int R           = params->cipher_param.numRounds;
-  const unsigned int lambdaBytes = lambda / 8;
-
-  uint32_t bf_y_len = sizeof(bf128_t) * R * 16;
+  const unsigned int R = params->cipher_param.numRounds;
 
   bf128_t bf_delta;
   if (delta == NULL) {
@@ -462,15 +455,9 @@ static void aes_enc_forward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, c
 static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, const uint8_t* xk,
                              const bf128_t* bf_xk, uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
                              const uint8_t* out, bf128_t* y_out, const faest_paramset_t* params) {
-  const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int R           = params->cipher_param.numRounds;
-  const unsigned int lambdaBytes = lambda / 8;
-
-  uint32_t y_out_len = lambdaBytes * R * 16;
+  const unsigned int R = params->cipher_param.numRounds;
 
   // Step: 1
-  uint32_t bf_y_len = sizeof(bf128_t) * R * 16;
-
   bf128_t bf_delta;
   if (delta == NULL) {
     bf_delta = bf128_zero();
@@ -580,9 +567,8 @@ static void aes_enc_constraints(const uint8_t* in, const uint8_t* out, const uin
                                 const bf128_t* q, const bf128_t* qk, const uint8_t* delta,
                                 bf128_t* A0, bf128_t* A1, bf128_t* B,
                                 const faest_paramset_t* params) {
-  const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int Senc        = params->faest_param.Senc;
-  const unsigned int lambdaBytes = lambda / 8;
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Senc   = params->faest_param.Senc;
 
   if (Mkey == 0) {
     bf128_t* s       = malloc(sizeof(bf128_t) * Senc);
@@ -600,6 +586,11 @@ static void aes_enc_constraints(const uint8_t* in, const uint8_t* out, const uin
           bf128_add(bf128_mul(bf128_add(s[j], vs[j]), bf128_add(s_dash[j], vs_dash[j])), A0[j]),
           bf128_one());
     }
+
+    free(vs_dash);
+    free(s_dash);
+    free(vs);
+    free(s);
   } else {
     // Step: 11..12
     bf128_t* qs      = malloc(sizeof(bf128_t) * Senc);
@@ -620,15 +611,14 @@ static void aes_enc_constraints(const uint8_t* in, const uint8_t* out, const uin
 void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde, uint8_t* b_tilde,
                const faest_paramset_t* params) {
-  const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int beta        = params->faest_param.beta;
-  const unsigned int l           = params->faest_param.l;
-  const unsigned int Lke         = params->faest_param.Lke;
-  const unsigned int Lenc        = params->faest_param.Lenc;
-  const unsigned int R           = params->cipher_param.numRounds;
-  const unsigned int Ske         = params->faest_param.Ske;
-  const unsigned int Senc        = params->faest_param.Senc;
-  const unsigned int lambdaBytes = lambda / 8;
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int beta   = params->faest_param.beta;
+  const unsigned int l      = params->faest_param.l;
+  const unsigned int Lke    = params->faest_param.Lke;
+  const unsigned int Lenc   = params->faest_param.Lenc;
+  const unsigned int R      = params->cipher_param.numRounds;
+  const unsigned int Ske    = params->faest_param.Ske;
+  const unsigned int Senc   = params->faest_param.Senc;
 
   // Step: 1..2
   // TODO: make column_to_major_ ... output this
