@@ -316,7 +316,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   b_tilde = NULL;
 
   // Step 21
-  return memcmp(chall_3, signature->chall_3, lambdaBytes) == 0 ? 1 : 0;
+  return memcmp(chall_3, signature->chall_3, lambdaBytes) == 0 ? 0 : -1;
 }
 
 signature_t init_signature(const faest_paramset_t* params) {
