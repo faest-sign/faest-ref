@@ -25,6 +25,7 @@ test('vole', vole)
 if boost_test.found()
   test_sources = files(
     'aes.cpp',
+    'aes_prove.cpp',
     'extended_tests.cpp',
     'instances.cpp',
     'universal_hashing.cpp',
