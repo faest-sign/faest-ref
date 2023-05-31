@@ -42,7 +42,7 @@ uint8_t** column_to_row_major_and_shrink_V(uint8_t** v, unsigned int lambda, uns
 
   for (unsigned int row = 0; row != ell + lambda; ++row) {
     for (unsigned int column = 0; column != lambda; ++column) {
-      set_bit(new_v[row], column, get_bit(v[column], row));
+      set_bit(new_v[row], get_bit(v[column], row), column);
     }
   }
 
