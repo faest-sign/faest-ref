@@ -272,7 +272,6 @@ static void aes_key_schedule_constraints(const uint8_t* w, const bf128_t* v, con
       }
       // Step: 13..17
       for (uint32_t r = 0; r <= 3; r++) {
-        printf("Writing A0 and A1 %u\n", 4 * j + r);
         A0[4 * j + r] = bf128_mul(bf_v_k_hat[r], bf_v_w_dash_hat[r]);
         A1[4 * j + r] =
             bf128_add(bf128_add(bf128_mul(bf128_add(bf_k_hat[r], bf_v_k_hat[r]),
