@@ -143,6 +143,7 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
         uint8_t r    = 0;
         for (uint32_t i = 0; i < 8; i++) {
           // Step 12; delta is always 0
+          // TODO bit slice
           r |= set_bit(get_bit(rcon, i) & (1 ^ Mkey), i);
         }
         // Step 13 (bit sliced)
@@ -217,7 +218,10 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
       bf128_t bf_r[8];
       for (uint32_t i = 0; i < 8; i++) {
         // Step 12
-        bf_r[i] = bf128_from_bit(get_bit(r, i));
+        uint8_t tmp[sizeof(bf128_t)] = {0};
+        ptr_set_bit(tmp, get_bit(r, i), sizeof(bf128_t) * 8 - 1);
+
+        bf_r[i] = bf128_load(tmp);
         bf_r[i] = bf128_mul(bf_r[i], bf_mkey_times_delta);
         // Step 13
         bf_x_tilde[i] = bf128_add(bf_x_tilde[i], bf_r[i]);
@@ -481,14 +485,6 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
                              const uint8_t* out, bf128_t* y_out, const faest_paramset_t* params) {
   const unsigned int R = params->cipher_param.numRounds;
 
-  // Step: 1
-  bf128_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf128_zero();
-  } else {
-    bf_delta = bf128_load(delta);
-  }
-
   if (m == 1) {
     uint8_t xtilde;
     // Step:2..4
@@ -506,6 +502,7 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
             for (uint32_t i = 0; i < 8; i++) {
               // Step: 10..11
               // delta is always \bot if called with m == 1
+              // TODO bit splice
               xout |= set_bit(get_bit(out[(ird - 1152) / 8], i) & (1 ^ Mtag) & (1 ^ Mkey), i);
             }
             xtilde = xout ^ xk[(128 + ird) / 8];
@@ -531,6 +528,14 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
       }
     }
     return;
+  }
+
+  // Step: 1
+  bf128_t bf_delta;
+  if (delta == NULL) {
+    bf_delta = bf128_zero();
+  } else {
+    bf_delta = bf128_load(delta);
   }
 
   const bf128_t factor =
