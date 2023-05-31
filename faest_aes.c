@@ -145,23 +145,17 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
       if (Mtag == 0 && rmvRcon == true && c == 0) {
         uint8_t rcon = Rcon[ircon];
         ircon        = ircon + 1;
-        uint8_t r    = 0;
-        for (uint32_t i = 0; i < 8; i++) {
-          // Step 12; delta is always 0
-          // TODO bit slice
-          r |= set_bit(get_bit(rcon, i) & (1 ^ Mkey), i);
-        }
-        // Step 13 (bit sliced)
-        x_tilde ^= r;
+        // Steps 12 and 13, bitsliced; delta is always 0
+        x_tilde ^= rcon;
       }
 
       // Step: 15..19
       uint8_t y_tilde = 0;
       for (uint32_t i = 0; i < 8; ++i) {
-        y_tilde |= set_bit(get_bit(x_tilde, (i + 7) % 8) ^ get_bit(x_tilde, (i + 5) % 8) ^ get_bit(x_tilde, (i + 2) % 8), i);
+        y_tilde ^= set_bit(get_bit(x_tilde, (i + 7) % 8) ^ get_bit(x_tilde, (i + 5) % 8) ^ get_bit(x_tilde, (i + 2) % 8), i);
       }
-      y_tilde |= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-      y_tilde |= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
+      y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
+      y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
 
       // Step: 19
       out[j] = y_tilde;
@@ -508,10 +502,10 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
           // Step: 12..17
           uint8_t ytilde = 0;
           for (uint32_t i = 0; i < 8; ++i) {
-            ytilde |= set_bit(get_bit(xtilde, (i + 7) % 8) ^ get_bit(xtilde, (i + 5) % 8) ^ get_bit(xtilde, (i + 2) % 8), i);
+            ytilde ^= set_bit(get_bit(xtilde, (i + 7) % 8) ^ get_bit(xtilde, (i + 5) % 8) ^ get_bit(xtilde, (i + 2) % 8), i);
           }
-          ytilde |= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-          ytilde |= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
+          ytilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
+          ytilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
 
           // Step: 18
           y_out[16 * j + 4 * c + r] = bf128_byte_combine_bits(ytilde);
