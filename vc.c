@@ -211,6 +211,7 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
     H0_context_t h0_ctx;
     H0_init(&h0_ctx, lambda);
     H0_update(&h0_ctx, leaves[i], lambdaBytes);
+    H0_update(&h0_ctx, iv, sizeof(iv));
     H0_final(&h0_ctx, vecCom->sd + (i * lambdaBytes), lambdaBytes,
              vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
