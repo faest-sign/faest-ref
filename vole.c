@@ -75,16 +75,9 @@ void voleCommit(const uint8_t* rootKey, const uint8_t* iv, uint32_t ellhat,
   uint8_t* tmp_v     = malloc(ellhatBytes * MAX(k0, k1));
   unsigned int v_idx = 0;
   for (uint32_t i = 0; i < tau; i++) {
-    uint32_t N;
-    uint32_t depth;
     // Step 4
-    if (i < tau0) {
-      N     = 1 << k0;
-      depth = k0;
-    } else {
-      N     = 1 << k1;
-      depth = k1;
-    }
+    uint32_t depth = i < tau0 ? k0 : k1;
+    uint32_t N     = 1 << depth;
 
     // Step 5
     vector_commitment(expanded_keys + i * lambdaBytes, iv, params, lambda, lambdaBytes, &vecCom[i],
@@ -124,7 +117,9 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
   uint32_t k0          = params->faest_param.k0;
   uint32_t k1          = params->faest_param.k1;
 
-  uint8_t* sd        = malloc((1 << MAX(k0, k1)) * lambdaBytes);
+  uint8_t* sd = malloc((1 << MAX(k0, k1)) * lambdaBytes);
+  memset(sd, 0, lambdaBytes);
+
   uint8_t* chalout   = malloc(MAX(k0, k1));
   uint8_t* tmp_q     = malloc(ellhatBytes * MAX(k0, k1));
   unsigned int q_idx = 0;
@@ -137,7 +132,7 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
   vecComRec.h   = malloc(lambdaBytes * 2);
   vecComRec.k   = calloc(getBinaryTreeNodeCount(1 << MAX(k0, k1)), lambdaBytes);
   vecComRec.com = malloc((1 << MAX(k0, k1)) * lambdaBytes * 2);
-  vecComRec.m   = malloc((1 << MAX(k0, k1)) * lambdaBytes);
+  vecComRec.s   = malloc((1 << MAX(k0, k1)) * lambdaBytes);
 
   // Step: 1
   for (uint32_t i = 0; i < tau; i++) {
@@ -155,18 +150,19 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
                           &vecComRec);
 
     // Step: 6
-    memset(sd, 0, lambdaBytes);
     for (uint32_t j = 1; j < N; j++) {
-      memcpy(sd + (j * lambdaBytes), vecComRec.m + (lambdaBytes * (j ^ idx)), lambdaBytes);
+      memcpy(sd + j * lambdaBytes, vecComRec.s + (lambdaBytes * (j ^ idx)), lambdaBytes);
     }
-
-    H1_update(&h1_ctx, vecComRec.h, lambdaBytes * 2);
 
     // Step: 7..8
     ConvertToVole(iv, sd, true, lambda, lambdaBytes, N, depth, ellhatBytes, NULL, tmp_q);
     for (unsigned int j = 0; j < depth; ++j, ++q_idx) {
+      // TODO: get rid of this memcpy
       memcpy(q[q_idx], tmp_q + j * ellhatBytes, ellhatBytes);
     }
+
+    // Step 9
+    H1_update(&h1_ctx, vecComRec.h, lambdaBytes * 2);
   }
   vec_com_rec_clear(&vecComRec);
   free(tmp_q);
