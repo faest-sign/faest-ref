@@ -130,6 +130,8 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
 
   // STep: 2
   if (m == 1) {
+    assert(delta == NULL);
+
     uint32_t iwd   = 0;
     uint32_t c     = 0;
     bool rmvRcon   = true;
@@ -273,6 +275,8 @@ static void aes_key_schedule_constraints(const uint8_t* w, const bf128_t* v, con
   const unsigned int lambdaByte = lambda / 8;
 
   if (Mkey == 0) {
+    assert(delta == NULL);
+
     // Step: 2
     aes_key_schedule_forward(1, w, NULL, 0, 0, NULL, k, NULL, params);
 
@@ -321,6 +325,8 @@ static void aes_key_schedule_constraints(const uint8_t* w, const bf128_t* v, con
     free(w_dash);
     return;
   }
+
+  assert(delta);
 
   // Step: 19..20
   aes_key_schedule_forward(lambda, NULL, q, 0, 1, delta, NULL, qk, params);
