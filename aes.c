@@ -416,9 +416,11 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   case FAEST_EM_192F:
   case FAEST_EM_192S:
     block_words = 6;
+    break;
   case FAEST_EM_256F:
   case FAEST_EM_256S:
     block_words = 8;
+    break;
   default:
     block_words = 4;
   }
