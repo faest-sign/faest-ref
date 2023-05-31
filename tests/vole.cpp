@@ -23,6 +23,13 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(vole)
 
+BOOST_AUTO_TEST_CASE(chal_dec_base) {
+  uint8_t chal      = 0x42;
+  uint8_t chal_b[8] = {0};
+  ChalDec(&chal, 0, 8, 1, 0, 0, chal_b);
+  BOOST_TEST(NumRec(8, chal_b) == chal);
+}
+
 BOOST_DATA_TEST_CASE(chal_dec, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const faest_paramset_t params  = faest_get_paramset(param_id);
@@ -63,7 +70,8 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     hcomRec.resize(lambdaBytes * 2);
     u.resize(ell_hat_bytes);
     b.resize(MAX(params.faest_param.k0, params.faest_param.k1), 0);
-    chal.resize(lambdaBytes, 0);
+    chal.resize(lambdaBytes);
+    rand_bytes(chal.data(), chal.size());
 
     std::vector<vec_com_t> vec_com;
     vec_com.resize(params.faest_param.tau);
@@ -82,16 +90,16 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       q[i] = q[0] + i * ell_hat_bytes;
     }
 
-    for (unsigned int i = 0; i < params.faest_param.tau - 1; ++i) {
-      c[i] = new uint8_t[ell_hat_bytes];
+    c[0] = new uint8_t[(params.faest_param.tau - 1) * ell_hat_bytes];
+    for (unsigned int i = 1; i < params.faest_param.tau - 1; ++i) {
+      c[i] = c[0] + i * ell_hat_bytes;
     }
 
     voleCommit(rootKey.data(), iv.data(), ell_hat, &params, hcom.data(), vec_com.data(), c.data(),
                u.data(), v.data());
-    for (unsigned int i = 0; i != params.faest_param.tau - 1; ++i) {
-      delete[] c[i];
-    }
+    delete[] c[0];
 
+    unsigned int running_idx = 0;
     for (uint32_t i = 0; i < params.faest_param.tau; i++) {
       const uint32_t depth =
           (i < params.faest_param.t0) ? params.faest_param.k0 : params.faest_param.k1;
@@ -100,6 +108,8 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       pdec[i]  = new uint8_t[depth * lambdaBytes];
       com_j[i] = new uint8_t[lambdaBytes * 2];
 
+      ChalDec(chal.data(), i, params.faest_param.k0, params.faest_param.t0, params.faest_param.k1,
+              params.faest_param.t1, b.data());
       vector_open(vec_com[i].k, vec_com[i].com, b.data(), pdec[i], com_j[i], numVoleInstances,
                   lambdaBytes);
       vec_com_clear(&vec_com[i]);
@@ -108,9 +118,21 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     voleReconstruct(iv.data(), chal.data(), pdec.data(), com_j.data(), hcomRec.data(), q.data(),
                     ell_hat, &params);
     BOOST_TEST(hcom == hcomRec);
-    for (unsigned int i = 0; i < lambda; ++i) {
-      // should they be the same?
-      // BOOST_TEST(std::memcmp(v[i], q[i], ell_hat_bytes) == 0);
+    for (unsigned int i = 0; i < params.faest_param.tau; ++i) {
+      const uint32_t depth =
+          (i < params.faest_param.t0) ? params.faest_param.k0 : params.faest_param.k1;
+
+      ChalDec(chal.data(), i, params.faest_param.k0, params.faest_param.t0, params.faest_param.k1,
+              params.faest_param.t1, b.data());
+      for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
+        for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
+          if (b[j]) {
+            BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
+          } else {
+            BOOST_TEST(q[(running_idx)][inner] == q[(running_idx)][inner]);
+          }
+        }
+      }
     }
 
     for (uint32_t i = 0; i < params.faest_param.tau; i++) {
