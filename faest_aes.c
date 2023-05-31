@@ -40,9 +40,10 @@ static void aes_key_schedule_forward(uint32_t m, const uint8_t* x, uint8_t Mtag,
   const unsigned int lambdaBytes = lambda / 8;
 
   if (m == 1) {
+    const unsigned int out_len = (R + 1) * 128 / 8 + lambdaBytes;
     // Step 3
     memcpy(out, x, lambdaBytes);
-    memset(out + lambdaBytes, 0, (R + 1) * 128 / 8 - lambdaBytes);
+    memset(out + lambdaBytes, 0, out_len - lambdaBytes);
 
     // Step: 4
     uint32_t i_wd = lambda;
@@ -250,12 +251,9 @@ static void aes_key_schedule_constraints(const uint8_t* w, const uint8_t* v, con
                                          uint8_t* A1, uint8_t* k, uint8_t* vk, uint8_t* B,
                                          uint8_t* qk, const faest_paramset_t* params) {
   const unsigned int lambda     = params->faest_param.lambda;
-  const unsigned int Lke        = params->faest_param.Lke;
   const unsigned int Nwd        = params->faest_param.Nwd;
   const unsigned int Ske        = params->faest_param.Ske;
   const unsigned int lambdaByte = lambda / 8;
-  uint32_t w_len                = Lke / 8;
-  uint32_t q_len                = lambdaByte * (Lke / 8);
 
   if (Mkey == 0) {
     // STep: 2
@@ -344,8 +342,6 @@ static int aes_enc_forward(uint32_t m, const uint8_t* x, const uint8_t* xk, cons
 
   uint32_t bf_y_len = sizeof(bf128_t) * R * 16;
   bf128_t* bf_y     = malloc(bf_y_len);
-
-  uint32_t ird;
 
   bf128_t bf_delta;
   if (delta == NULL) {
@@ -512,7 +508,6 @@ static int aes_enc_backward(uint32_t m, const uint8_t* x, const uint8_t* xk, uin
   uint32_t bf_y_len = sizeof(bf128_t) * R * 16;
   bf128_t* bf_y     = malloc(bf_y_len);
 
-  uint32_t ird;
 
   bf128_t bf_delta;
   if (delta == NULL) {
@@ -528,7 +523,7 @@ static int aes_enc_backward(uint32_t m, const uint8_t* x, const uint8_t* xk, uin
       for (uint32_t c = 0; c <= 3; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
           // Step: 5..6
-          ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+          unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
           if (j < (R - 1)) {
             // Step: 7
             xtilde = x[ird / 8];
@@ -582,7 +577,7 @@ static int aes_enc_backward(uint32_t m, const uint8_t* x, const uint8_t* xk, uin
     for (uint32_t c = 0; c <= 3; c++) {
       for (uint32_t r = 0; r <= 3; r++) {
         // Step: 5
-        ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+        unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
         // Step: 6
         if (j < (R - 1)) {
           // Step: 7
