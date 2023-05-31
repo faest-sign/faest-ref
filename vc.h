@@ -19,7 +19,7 @@ typedef struct vec_com_rec_t {
   uint8_t* h;
   uint8_t* k;
   uint8_t* com;
-  uint8_t* m;
+  uint8_t* s;
 } vec_com_rec_t;
 
 uint64_t getBinaryTreeNodeCount(uint32_t numVoleInstances);

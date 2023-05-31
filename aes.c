@@ -22,7 +22,8 @@
 
 static const bf8_t round_constants[30] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
-    0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91};
+    0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
+};
 
 ATTR_CONST static inline bf8_t get_bit(bf8_t in, uint8_t index) {
   return (in >> index) & 0x01;
@@ -400,7 +401,6 @@ void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, uint16_t seclvl,
 #endif
 }
 
-// TODO: add support for Rijndael
 uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_paramset_t* params) {
   const unsigned int lambda     = params->faest_param.lambda;
   const unsigned int l          = params->faest_param.l;
@@ -411,15 +411,36 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   uint8_t* w           = malloc((l + 7) / 8);
   uint8_t* const w_out = w;
 
+  unsigned int block_words;
+  switch (params->faest_paramid) {
+  case FAEST_EM_192F:
+  case FAEST_EM_192S:
+    block_words = 6;
+    break;
+  case FAEST_EM_256F:
+  case FAEST_EM_256S:
+    block_words = 8;
+    break;
+  default:
+    block_words = 4;
+  }
+
   // Step 3
   aes_round_keys_t round_keys;
-  const unsigned int block_words = 4;
   switch (lambda) {
   case 256:
-    aes256_init_round_keys(&round_keys, key);
+    if (block_words == 8) {
+      rijndael256_init_round_keys(&round_keys, key);
+    } else {
+      aes256_init_round_keys(&round_keys, key);
+    }
     break;
   case 192:
-    aes192_init_round_keys(&round_keys, key);
+    if (block_words == 6) {
+      rijndael192_init_round_keys(&round_keys, key);
+    } else {
+      aes192_init_round_keys(&round_keys, key);
+    }
     break;
   default:
     aes128_init_round_keys(&round_keys, key);
@@ -433,7 +454,8 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   }
 
   // Step
-  if (L_ke > 0) { // Key schedule constraints only needed for normal AES, not EM variant.
+  if (L_ke > 0) {
+    // Key schedule constraints only needed for normal AES, not EM variant.
     for (unsigned int j = 0, ik = params->faest_param.Nwd; j < S_ke / 4; ++j) {
       memcpy(w, round_keys.round_keys[ik / 4][ik % 4], sizeof(aes_word_t));
       w += sizeof(aes_word_t);
@@ -442,7 +464,7 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   }
 
   // Step 10
-  for (unsigned b = 0; b < params->faest_param.beta; ++b, in += 16) {
+  for (unsigned b = 0; b < params->faest_param.beta; ++b, in += sizeof(aes_word_t) * block_words) {
     // Step 12
     aes_block_t state;
     load_state(state, in, block_words);

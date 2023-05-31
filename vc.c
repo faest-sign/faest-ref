@@ -211,6 +211,7 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
     H0_context_t h0_ctx;
     H0_init(&h0_ctx, lambda);
     H0_update(&h0_ctx, leaves[i], lambdaBytes);
+    H0_update(&h0_ctx, iv, 16);
     H0_final(&h0_ctx, vecCom->sd + (i * lambdaBytes), lambdaBytes,
              vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
@@ -280,7 +281,8 @@ void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t*
       H0_context_t h0_ctx;
       H0_init(&h0_ctx, lambda);
       H0_update(&h0_ctx, vecComRec->k + (getNodeIndex(depth, j) * lambdaBytes), lambdaBytes);
-      H0_final(&h0_ctx, vecComRec->m + (lambdaBytes * j), lambdaBytes,
+      H0_update(&h0_ctx, iv, 16);
+      H0_final(&h0_ctx, vecComRec->s + (lambdaBytes * j), lambdaBytes,
                vecComRec->com + (lambdaBytes * 2 * j), lambdaBytes * 2);
     }
   }
@@ -299,7 +301,7 @@ int vector_verify(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j, 
   vecComRec.h   = malloc(lambdaBytes * 2);
   vecComRec.k   = calloc(getBinaryTreeNodeCount(numVoleInstances), lambdaBytes);
   vecComRec.com = malloc(numVoleInstances * lambdaBytes * 2);
-  vecComRec.m   = malloc(numVoleInstances * lambdaBytes);
+  vecComRec.s   = malloc(numVoleInstances * lambdaBytes);
 
   // Step: 2
   vector_reconstruction(iv, pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, depth,
@@ -329,7 +331,7 @@ void vec_com_clear(vec_com_t* com) {
 }
 
 void vec_com_rec_clear(vec_com_rec_t* rec) {
-  free(rec->m);
+  free(rec->s);
   free(rec->com);
   free(rec->k);
   free(rec->h);

@@ -16,7 +16,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-static uint8_t Rcon[10] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x26};
+static const bf8_t Rcon[30] = {
+    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
+    0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
+};
 
 ATTR_CONST static inline bf8_t get_bit(bf8_t in, uint8_t index) {
   return (in >> index) & 0x01;
@@ -127,6 +130,8 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
 
   // STep: 2
   if (m == 1) {
+    assert(delta == NULL);
+
     uint32_t iwd   = 0;
     uint32_t c     = 0;
     bool rmvRcon   = true;
@@ -143,6 +148,7 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
         uint8_t r    = 0;
         for (uint32_t i = 0; i < 8; i++) {
           // Step 12; delta is always 0
+          // TODO bit slice
           r |= set_bit(get_bit(rcon, i) & (1 ^ Mkey), i);
         }
         // Step 13 (bit sliced)
@@ -217,7 +223,10 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
       bf128_t bf_r[8];
       for (uint32_t i = 0; i < 8; i++) {
         // Step 12
-        bf_r[i] = bf128_from_bit(get_bit(r, i));
+        uint8_t tmp[sizeof(bf128_t)] = {0};
+        ptr_set_bit(tmp, get_bit(r, i), sizeof(bf128_t) * 8 - 1);
+
+        bf_r[i] = bf128_load(tmp);
         bf_r[i] = bf128_mul(bf_r[i], bf_mkey_times_delta);
         // Step 13
         bf_x_tilde[i] = bf128_add(bf_x_tilde[i], bf_r[i]);
@@ -266,6 +275,8 @@ static void aes_key_schedule_constraints(const uint8_t* w, const bf128_t* v, con
   const unsigned int lambdaByte = lambda / 8;
 
   if (Mkey == 0) {
+    assert(delta == NULL);
+
     // Step: 2
     aes_key_schedule_forward(1, w, NULL, 0, 0, NULL, k, NULL, params);
 
@@ -315,8 +326,9 @@ static void aes_key_schedule_constraints(const uint8_t* w, const bf128_t* v, con
     return;
   }
 
+  assert(delta);
+
   // Step: 19..20
-  // FIXME
   aes_key_schedule_forward(lambda, NULL, q, 0, 1, delta, NULL, qk, params);
   bf128_t* q_w_dash = malloc(Ske * 8 * sizeof(bf128_t));
   aes_key_schedule_backward(lambda, NULL, &q[lambda], NULL, qk, 0, 1, delta, NULL, q_w_dash,
@@ -481,14 +493,6 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
                              const uint8_t* out, bf128_t* y_out, const faest_paramset_t* params) {
   const unsigned int R = params->cipher_param.numRounds;
 
-  // Step: 1
-  bf128_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf128_zero();
-  } else {
-    bf_delta = bf128_load(delta);
-  }
-
   if (m == 1) {
     uint8_t xtilde;
     // Step:2..4
@@ -506,6 +510,7 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
             for (uint32_t i = 0; i < 8; i++) {
               // Step: 10..11
               // delta is always \bot if called with m == 1
+              // TODO bit splice
               xout |= set_bit(get_bit(out[(ird - 1152) / 8], i) & (1 ^ Mtag) & (1 ^ Mkey), i);
             }
             xtilde = xout ^ xk[(128 + ird) / 8];
@@ -533,9 +538,17 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
     return;
   }
 
-  bf128_t bf_minus_mtag = bf128_from_bit(1 - Mtag);
-  bf128_t bf_minus_mkey = bf128_from_bit(1 - Mkey);
-  bf128_t bf_mkey       = bf128_from_bit(Mkey);
+  // Step: 1
+  bf128_t bf_delta;
+  if (delta == NULL) {
+    bf_delta = bf128_zero();
+  } else {
+    bf_delta = bf128_load(delta);
+  }
+
+  const bf128_t factor =
+      bf128_mul(bf128_from_bit(1 ^ Mtag),
+                bf128_add(bf128_mul(bf128_from_bit(Mkey), bf_delta), bf128_from_bit(1 ^ Mkey)));
 
   // STep: 2..4
   for (uint32_t j = 0; j < R; j++) {
@@ -557,22 +570,19 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
             // Step: 10
             // TODO: check 0 extension
             bf_xout[i] = bf128_from_bit(get_bit(out[(ird - 1152) / 8], i));
-            bf_xout[i] = bf128_mul(bf128_mul(bf_xout[i], bf_minus_mtag),
-                                   bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey));
+            bf_xout[i] = bf128_mul(bf_xout[i], factor);
             // Step: 11
-            bf_x_tilde[i] = bf128_add(bf_xout[i], bf_xk[128 + ird]);
+            bf_x_tilde[i] = bf128_add(bf_xout[i], bf_xk[128 + ird + i]);
           }
         }
         // Step: 12
         bf128_t bf_y_tilde[8];
         // STep: 13..20
-        bf_y_tilde[7] = bf128_add(
-            bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
-            bf128_mul(bf_minus_mtag, bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey)));
+        bf_y_tilde[7] =
+            bf128_add(bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]), factor);
         bf_y_tilde[6] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[1]);
-        bf_y_tilde[5] = bf128_add(
-            bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]),
-            bf128_mul(bf_minus_mtag, bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey)));
+        bf_y_tilde[5] =
+            bf128_add(bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]), factor);
         bf_y_tilde[4] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[5]), bf_x_tilde[2]);
         bf_y_tilde[3] = bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[4]), bf_x_tilde[1]);
         bf_y_tilde[2] = bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[3]), bf_x_tilde[0]);

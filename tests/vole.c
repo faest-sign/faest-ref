@@ -250,7 +250,7 @@ int test_ConvertToVoleVerifier() {
   uint32_t outlen = 16;
   uint8_t* v      = malloc(outlen * depth);
   // TODO: we do not input veccomRec.m but instead something else defined in
-  ConvertToVole(prg_iv, vecComRec.m, true, lambda, lambdaBytes, numVoleInstances, depth, outlen,
+  ConvertToVole(prg_iv, vecComRec.s, true, lambda, lambdaBytes, numVoleInstances, depth, outlen,
                 NULL, v);
 
 // TODO: write better test cases : )
