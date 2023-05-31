@@ -210,11 +210,7 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
       bf128_t bf_r[8];
       for (uint32_t i = 0; i < 8; i++) {
         // Step 12
-        uint8_t tmp[sizeof(bf128_t)] = {0};
-        ptr_set_bit(tmp, get_bit(r, i), sizeof(bf128_t) * 8 - 1);
-
-        bf_r[i] = bf128_load(tmp);
-        bf_r[i] = bf128_mul(bf_r[i], bf_mkey_times_delta);
+        bf_r[i] = bf128_mul(bf128_from_bit(get_bit(r, i)), bf_mkey_times_delta);
         // Step 13
         bf_x_tilde[i] = bf128_add(bf_x_tilde[i], bf_r[i]);
       }
