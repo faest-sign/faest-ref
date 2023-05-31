@@ -355,8 +355,7 @@ static int aes_enc_forward(uint32_t m, const uint8_t* x, const uint8_t* xk, cons
   }
 
   if (m == 1) {
-
-    // STep: 2
+    // Step: 2
     for (uint32_t i = 0; i < 16; i++) {
       uint8_t xin = 0;
       // STep: 3
