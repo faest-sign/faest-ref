@@ -330,8 +330,7 @@ static void aes_key_schedule_constraints(const uint8_t* w, const bf128_t* v, con
     // STep: 27
     for (uint32_t r = 0; r <= 3; r++) {
       bf128_t bf_tmp = bf128_mul(bf_q_hat_k[r], bf_q_hat_w_dash[r]);
-      B[4 * j + r] =
-          bf128_add(bf_tmp, bf128_mul(bf128_mul(bf128_from_bf8(bf8_one()), bf_delta), bf_delta));
+      B[4 * j + r] = bf128_add(bf_tmp, bf128_mul(bf_delta, bf_delta));
     }
     if (lambda == 192) {
       iwd = iwd + 192;
@@ -603,7 +602,7 @@ static void aes_enc_constraints(const uint8_t* in, const uint8_t* out, const uin
     aes_enc_backward(lambda, NULL, q, NULL, qk, 0, 1, delta, out, qs_dash, params);
 
     // Step: 13..14
-    bf128_t minus_part = bf128_mul(bf128_mul(bf128_one(), bf128_load(delta)), bf128_load(delta));
+    bf128_t minus_part = bf128_mul(bf128_load(delta), bf128_load(delta));
     for (uint32_t j = 0; j < Senc; j++) {
       B[j] = bf128_add(bf128_mul(qs[j], qs_dash[j]), minus_part);
     }
