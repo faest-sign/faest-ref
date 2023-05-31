@@ -104,10 +104,9 @@ static void aes_key_schedule_forward(uint32_t m, const uint8_t* x, const bf128_t
   // Step: 5..10
   for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
     if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
-      for (uint32_t i = (j * 32); i <= ((j * 32) + 31); i++) {
-        bf_out[i] = v[i_wd + i];
+      for (uint32_t i = (j * 32); i <= ((j * 32) + 31); i++, i_wd++) {
+        bf_out[i] = v[i_wd];
       }
-      i_wd += 32;
     } else {
       for (uint32_t i = 0; i < 32; i++) {
         bf_out[(32 * j) + i] = bf128_add(bf_out[32 * (j - Nwd) + i], bf_out[32 * (j - 1) + i]);
