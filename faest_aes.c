@@ -155,24 +155,17 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
         x_tilde ^= r;
       }
 
-      // Step: 15..23
+      // Step: 15..19
       uint8_t y_tilde = 0;
-      y_tilde |= set_bit(get_bit(x_tilde, 5) ^ get_bit(x_tilde, 2) ^ get_bit(x_tilde, 0) ^
-                             ((1 ^ Mtag) & (1 ^ Mkey)),
-                         7);
-      y_tilde |= set_bit(get_bit(x_tilde, 7) ^ get_bit(x_tilde, 4) ^ get_bit(x_tilde, 1), 6);
-      y_tilde |= set_bit(get_bit(x_tilde, 6) ^ get_bit(x_tilde, 3) ^ get_bit(x_tilde, 0) ^
-                             ((1 ^ Mtag) & (1 ^ Mkey)),
-                         5);
-      y_tilde |= set_bit(get_bit(x_tilde, 7) ^ get_bit(x_tilde, 5) ^ get_bit(x_tilde, 2), 4);
-      y_tilde |= set_bit(get_bit(x_tilde, 6) ^ get_bit(x_tilde, 4) ^ get_bit(x_tilde, 1), 3);
-      y_tilde |= set_bit(get_bit(x_tilde, 5) ^ get_bit(x_tilde, 3) ^ get_bit(x_tilde, 0), 2);
-      y_tilde |= set_bit(get_bit(x_tilde, 7) ^ get_bit(x_tilde, 4) ^ get_bit(x_tilde, 2), 1);
-      y_tilde |= set_bit(get_bit(x_tilde, 6) ^ get_bit(x_tilde, 3) ^ get_bit(x_tilde, 1), 0);
+      for (uint32_t i = 0; i < 8; ++i) {
+        y_tilde |= set_bit(get_bit(x_tilde, (i + 7) % 8) ^ get_bit(x_tilde, (i + 5) % 8) ^ get_bit(x_tilde, (i + 2) % 8), i);
+      }
+      y_tilde |= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
+      y_tilde |= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
 
-      // Step: 23
+      // Step: 19
       out[j] = y_tilde;
-      // Step: 24
+      // Step: 20
       c = c + 1;
 
       if (c == 4) {
@@ -234,16 +227,11 @@ static void aes_key_schedule_backward(uint32_t m, const uint8_t* x, const bf128_
     }
 
     bf128_t bf_y_tilde[8];
-    bf_y_tilde[7] = bf128_add(bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]),
-                              bf128_mul(bf_minus_mtag, bf_mkey_times_delta));
-    bf_y_tilde[6] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[1]);
-    bf_y_tilde[5] = bf128_add(bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]),
-                              bf128_mul(bf_minus_mtag, bf_mkey_times_delta));
-    bf_y_tilde[4] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[5]), bf_x_tilde[2]);
-    bf_y_tilde[3] = bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[4]), bf_x_tilde[1]);
-    bf_y_tilde[2] = bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[3]), bf_x_tilde[0]);
-    bf_y_tilde[1] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[2]);
-    bf_y_tilde[0] = bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[1]);
+    for (uint32_t i = 0; i < 8; ++i) {
+      bf_y_tilde[i] = bf128_add(bf128_add(bf_x_tilde[(i + 7) % 8], bf_x_tilde[(i + 5) % 8]), bf_x_tilde[(i + 2) % 8]);
+    }
+    bf_y_tilde[0] = bf128_add(bf_y_tilde[0], bf128_mul(bf_minus_mtag, bf_mkey_times_delta));
+    bf_y_tilde[2] = bf128_add(bf_y_tilde[2], bf128_mul(bf_minus_mtag, bf_mkey_times_delta));
 
     // TODO: get rid of this copy
     for (uint32_t i = 0; i < 8; i++) {
@@ -515,22 +503,15 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
             }
             xtilde = xout ^ xk[(128 + ird) / 8];
           }
-          // Step: 12..20
+          // Step: 12..17
           uint8_t ytilde = 0;
-          ytilde |= set_bit(get_bit(xtilde, 5) ^ get_bit(xtilde, 2) ^ get_bit(xtilde, 0) ^
-                                ((1 ^ Mtag) & (1 ^ Mkey)),
-                            7);
-          ytilde |= set_bit(get_bit(xtilde, 7) ^ get_bit(xtilde, 4) ^ get_bit(xtilde, 1), 6);
-          ytilde |= set_bit(get_bit(xtilde, 6) ^ get_bit(xtilde, 3) ^ get_bit(xtilde, 0) ^
-                                ((1 ^ Mtag) & (1 ^ Mkey)),
-                            5);
-          ytilde |= set_bit(get_bit(xtilde, 7) ^ get_bit(xtilde, 5) ^ get_bit(xtilde, 2), 4);
-          ytilde |= set_bit(get_bit(xtilde, 6) ^ get_bit(xtilde, 4) ^ get_bit(xtilde, 1), 3);
-          ytilde |= set_bit(get_bit(xtilde, 5) ^ get_bit(xtilde, 3) ^ get_bit(xtilde, 0), 2);
-          ytilde |= set_bit(get_bit(xtilde, 7) ^ get_bit(xtilde, 4) ^ get_bit(xtilde, 2), 1);
-          ytilde |= set_bit(get_bit(xtilde, 6) ^ get_bit(xtilde, 3) ^ get_bit(xtilde, 1), 0);
+          for (uint32_t i = 0; i < 8; ++i) {
+            ytilde |= set_bit(get_bit(xtilde, (i + 7) % 8) ^ get_bit(xtilde, (i + 5) % 8) ^ get_bit(xtilde, (i + 2) % 8), i);
+          }
+          ytilde |= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
+          ytilde |= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
 
-          // Step: 21
+          // Step: 18
           y_out[16 * j + 4 * c + r] = bf128_byte_combine_bits(ytilde);
         }
       }
@@ -565,31 +546,25 @@ static void aes_enc_backward(uint32_t m, const uint8_t* x, const bf128_t* bf_x, 
           }
         } else {
           bf128_t bf_xout[8];
-          // Step: 9
+          // Step: 10
           for (uint32_t i = 0; i < 8; i++) {
-            // Step: 10
+            // Step: 11
             // TODO: check 0 extension
             bf_xout[i] = bf128_from_bit(get_bit(out[(ird - 1152) / 8], i));
             bf_xout[i] = bf128_mul(bf_xout[i], factor);
-            // Step: 11
+            // Step: 12
             bf_x_tilde[i] = bf128_add(bf_xout[i], bf_xk[128 + ird + i]);
           }
         }
-        // Step: 12
+        // STep: 13..17
         bf128_t bf_y_tilde[8];
-        // STep: 13..20
-        bf_y_tilde[7] =
-            bf128_add(bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[2]), bf_x_tilde[0]), factor);
-        bf_y_tilde[6] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[1]);
-        bf_y_tilde[5] =
-            bf128_add(bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[0]), factor);
-        bf_y_tilde[4] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[5]), bf_x_tilde[2]);
-        bf_y_tilde[3] = bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[4]), bf_x_tilde[1]);
-        bf_y_tilde[2] = bf128_add(bf128_add(bf_x_tilde[5], bf_x_tilde[3]), bf_x_tilde[0]);
-        bf_y_tilde[1] = bf128_add(bf128_add(bf_x_tilde[7], bf_x_tilde[4]), bf_x_tilde[2]);
-        bf_y_tilde[0] = bf128_add(bf128_add(bf_x_tilde[6], bf_x_tilde[3]), bf_x_tilde[1]);
+        for (uint32_t i = 0; i < 8; ++i) {
+          bf_y_tilde[i] = bf128_add(bf128_add(bf_x_tilde[(i + 7) % 8], bf_x_tilde[(i + 5) % 8]), bf_x_tilde[(i + 2) % 8]);
+        }
+        bf_y_tilde[0] = bf128_add(bf_y_tilde[0], factor);
+        bf_y_tilde[2] = bf128_add(bf_y_tilde[2], factor);
 
-        // Step: 22
+        // Step: 18
         y_out[16 * j + 4 * c + r] = bf128_byte_combine(bf_y_tilde);
       }
     }
