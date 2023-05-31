@@ -336,11 +336,11 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
 
     uint8_t* Q_tilde = malloc(lambdaBytes + UNIVERSAL_HASH_B);
     for (unsigned int i = 0; i != lambda; ++i) {
-      // printUint8Arr("verify q[0]", q[0] + i * ell_hat_bytes, lambdaBytes, 1);
       // Step 15
       vole_hash(Q_tilde, chall_1, q[i], l, lambda);
       // Step 16
       xorUint8Arr(Q_tilde, Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
+      // printUint8Arr("verify Q_tilde", Q_tilde, lambdaBytes, 1);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     free(Q_tilde);
