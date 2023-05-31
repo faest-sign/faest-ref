@@ -272,6 +272,15 @@ bf128_t bf128_from_bit(uint8_t bit) {
   return bf128_from_bf8(bit & 1);
 }
 
+bf128_t bf128_sum_poly(const bf128_t* xs) {
+  bf128_t ret   = bf128_zero();
+  bf128_t alpha = bf128_from_bf64(1);
+  for (size_t i = 0; i < 128; ++i, alpha = bf128_shift_left_1(alpha)) {
+    ret = bf128_add(ret, bf128_mul(alpha, xs[i]));
+  }
+  return ret;
+}
+
 // GF(2^192) implementation
 
 static const uint8_t bf192_alpha[24] = {
@@ -411,6 +420,15 @@ bf192_t bf192_inv(bf192_t in) {
 
 bf192_t bf192_from_bit(uint8_t bit) {
   return bf192_from_bf8(bit & 1);
+}
+
+bf192_t bf192_sum_poly(const bf192_t* xs) {
+  bf192_t ret   = bf192_zero();
+  bf192_t alpha = bf192_from_bf64(1);
+  for (size_t i = 0; i < 192; ++i, alpha = bf192_shift_left_1(alpha)) {
+    ret = bf192_add(ret, bf192_mul(alpha, xs[i]));
+  }
+  return ret;
 }
 
 // GF(2^256) implementation
@@ -556,4 +574,13 @@ bf256_t bf256_inv(bf256_t in) {
 
 bf256_t bf256_from_bit(uint8_t bit) {
   return bf256_from_bf8(bit & 1);
+}
+
+bf256_t bf256_sum_poly(const bf256_t* xs) {
+  bf256_t ret   = bf256_zero();
+  bf256_t alpha = bf256_from_bf64(1);
+  for (size_t i = 0; i < 256; ++i, alpha = bf256_shift_left_1(alpha)) {
+    ret = bf256_add(ret, bf256_mul(alpha, xs[i]));
+  }
+  return ret;
 }

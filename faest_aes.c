@@ -635,14 +635,13 @@ static void aes_enc_constraints(const uint8_t* in, const uint8_t* out, const uin
 void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde, uint8_t* b_tilde,
                const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int beta   = params->faest_param.beta;
-  const unsigned int l      = params->faest_param.l;
-  const unsigned int Lke    = params->faest_param.Lke;
-  const unsigned int Lenc   = params->faest_param.Lenc;
-  const unsigned int R      = params->cipher_param.numRounds;
-  const unsigned int Ske    = params->faest_param.Ske;
-  const unsigned int Senc   = params->faest_param.Senc;
+  const unsigned int beta = params->faest_param.beta;
+  const unsigned int l    = params->faest_param.l;
+  const unsigned int Lke  = params->faest_param.Lke;
+  const unsigned int Lenc = params->faest_param.Lenc;
+  const unsigned int R    = params->cipher_param.numRounds;
+  const unsigned int Ske  = params->faest_param.Ske;
+  const unsigned int Senc = params->faest_param.Senc;
 
   // Step: 1..2
   bf128_t* bf_v = column_to_row_major_and_shrink_V(V, l);
@@ -685,12 +684,8 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   free(k);
 
   // Step: 16..18
-  bf128_t bf_us = bf128_zero();
-  bf128_t bf_vs = bf128_zero();
-  for (uint32_t i = 0; i < lambda; i++) {
-    bf_us = bf128_add(bf_us, bf128_from_bf8(get_bit(u[(i + l) / 8], (i + l) % 8)));
-    bf_vs = bf128_add(bf_vs, bf_v[l + i]);
-  }
+  bf128_t bf_us = bf128_load(u + l / 8);
+  bf128_t bf_vs = bf128_sum_poly(bf_v + l);
   free(bf_v);
 
   A1[length_a - 1] = bf_us;
@@ -772,10 +767,7 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   free(k);
 
   // Step: 20
-  bf128_t bf_qs = bf128_zero();
-  for (uint32_t i = 0; i < l + lambda; i++) {
-    bf_qs = bf128_add(bf_qs, bf_q[i]);
-  }
+  bf128_t bf_qs = bf128_sum_poly(bf_q + l);
   free(bf_q);
 
   // Step 21
