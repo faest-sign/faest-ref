@@ -711,13 +711,13 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   // do nothing
 
   // Step: 4..10
-  for (uint32_t i = 0; i < tau; i++) {
+  for (uint32_t i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t* fancy_d   = malloc(depth);
     ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
-    for (uint32_t j = 0; j < depth; j++) {
+    for (uint32_t j = 0; j < depth; j++, ++col) {
       if (fancy_d[j] == 1) {
-        xorUint8Arr(d, Q[i + j], Q[i + j], (l + 7) / 8);
+        xorUint8Arr(d, Q[col], Q[col], (l + 7) / 8);
       }
     }
     free(fancy_d);
