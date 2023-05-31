@@ -91,12 +91,12 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
   uint8_t* u        = malloc(ell_hat_bytes);
   // v has \hat \ell rows, \lambda columns, storing in column-major order
-  uint8_t** v = malloc(lambda * sizeof(uint8_t*));
-  v[0]        = calloc(lambda, ell_hat_bytes);
+  uint8_t** V = malloc(lambda * sizeof(uint8_t*));
+  V[0]        = calloc(lambda, ell_hat_bytes);
   for (unsigned int i = 1; i < lambda; ++i) {
-    v[i] = v[0] + i * ell_hat_bytes;
+    V[i] = V[0] + i * ell_hat_bytes;
   }
-  voleCommit(rootkey, signature->iv, ell_hat, params, hcom, vecCom, signature->c, u, v);
+  voleCommit(rootkey, signature->iv, ell_hat, params, hcom, vecCom, signature->c, u, V);
 
   // Step: 4
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
@@ -123,16 +123,13 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     uint8_t V_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
     for (unsigned int i = 0; i != lambda; ++i) {
       // Step 7
-      // printUint8Arr("sign v[i]", v[i], lambdaBytes, 1);
-      vole_hash(V_tilde, chall_1, v[i], l, lambda);
+      vole_hash(V_tilde, chall_1, V[i], l, lambda);
       // Step 8
       H1_update(&h1_ctx_1, V_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
-
     // Step: 8
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
-  // printUint8Arr("sign h_v", h_v, lambdaBytes * 2, 1);
   // Step: 9
   const uint8_t* in  = pk;
   const uint8_t* out = pk + params->faest_param.pkSize / 2;
@@ -155,18 +152,18 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 
   // Step: 14..15
   {
-    uint8_t** new_v = column_to_row_major_and_shrink_V(v, lambda, l);
-    free(v[0]);
-    free(v);
-    v = new_v;
+    uint8_t** new_v = column_to_row_major_and_shrink_V(V, lambda, l);
+    free(V[0]);
+    free(V);
+    V = new_v;
   }
 
   // Step: 16
   uint8_t b_tilde[MAX_LAMBDA_BYTES];
-  aes_prove(w, u, v, in, out, chall_2, signature->a_tilde, b_tilde, params);
-  free(v[0]);
-  free(v);
-  v = NULL;
+  aes_prove(w, u, V, in, out, chall_2, signature->a_tilde, b_tilde, params);
+  free(V[0]);
+  free(V);
+  V = NULL;
   free(w);
   w = NULL;
   free(u);
@@ -213,6 +210,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       params->faest_param.l + params->faest_param.lambda * 2 + params->faest_param.b;
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
   const unsigned int utilde_bytes  = (params->faest_param.lambda + params->faest_param.b + 7) / 8;
+  const unsigned int k0            = params->faest_param.k0;
+  const unsigned int k1            = params->faest_param.k1;
 
   // Step: 2
   const uint8_t* in  = pk;
@@ -282,17 +281,31 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       }
     }
 
-    if (!i) {
+    if (i == 0) {
       // Step 8
       memcpy(q[i], qprime[i], ell_hat_bytes * depth);
     } else {
-      // Step 14
-      for (uint32_t d = 0; d < depth; d++) {
-        // TODO: get rid of these branches
-        if (delta[d]) {
-          xorUint8Arr(qprime[i + d], signature->c[i - 1], q[i + d], ell_hat_bytes);
-        } else {
-          memcpy(q[i + d], qprime[i + d], ell_hat_bytes);
+      if (i < tau0) {
+        // Step 14
+        for (uint32_t d = 0; d < depth; d++) {
+          // TODO: get rid of these branches
+          if (delta[d]) {
+            xorUint8Arr(qprime[(i * k0) + d], signature->c[i - 1], q[(i * k0) + d], ell_hat_bytes);
+          } else {
+            memcpy(q[(i * k0) + d], qprime[(i * k0) + d], ell_hat_bytes);
+          }
+        }
+      } else {
+        // Step 14
+        for (uint32_t d = 0; d < depth; d++) {
+          // TODO: get rid of these branches
+          if (delta[d]) {
+            xorUint8Arr(qprime[(tau0 * k0) + ((i - tau0) * k1) + d], signature->c[i - 1],
+                        q[(tau0 * k0) + ((i - tau0) * k1) + d], ell_hat_bytes);
+          } else {
+            memcpy(q[(tau0 * k0) + ((i - tau0) * k1) + d],
+                   qprime[(tau0 * k0) + ((i - tau0) * k1) + d], ell_hat_bytes);
+          }
         }
       }
     }
@@ -315,18 +328,14 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
       vole_hash(Q_tilde, chall_1, q[i], l, lambda);
       // Step 16
       xorUint8Arr(Q_tilde, Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
-      // printUint8Arr("verify Q_tilde", Q_tilde, lambdaBytes, 1);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
-
     // Step: 16
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
   free(Dtilde[0]);
   free(Dtilde);
   Dtilde = NULL;
-
-  // printUint8Arr("verify h_v", h_v, lambdaBytes * 2, 1);
 
   // Step 17
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];

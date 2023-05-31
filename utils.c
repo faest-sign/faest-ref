@@ -18,7 +18,6 @@ int printUint8Arr(char* name, uint8_t* arr, uint32_t unitSize, uint32_t len) {
     }
     printf("\n");
   }
-  printf("\n");
   return 1;
 }
 
