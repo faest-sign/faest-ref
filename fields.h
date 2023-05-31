@@ -46,7 +46,7 @@ ATTR_CONST bf64_t bf64_mul(bf64_t lhs, bf64_t rhs);
 ATTR_CONST bf64_t bf64_inv(bf64_t lhs);
 ATTR_CONST bf64_t bf64_from_bit(uint8_t bit);
 
-bf128_t bf128_byte_combine(const uint8_t* x);
+bf128_t bf128_byte_combine(const bf128_t* x);
 bf128_t bf128_byte_combine_bits(uint8_t x);
 bf128_t bf128_load(const uint8_t* src);
 ATTR_CONST bf128_t bf128_from_bf64(bf64_t src);
@@ -60,7 +60,7 @@ ATTR_CONST bf128_t bf128_mul(bf128_t lhs, bf128_t rhs);
 ATTR_CONST bf128_t bf128_inv(bf128_t lhs);
 ATTR_CONST bf128_t bf128_from_bit(uint8_t bit);
 
-bf192_t bf192_byte_combine(const uint8_t* x);
+bf192_t bf192_byte_combine(const bf192_t* x);
 bf192_t bf192_byte_combine_bits(uint8_t x);
 bf192_t bf192_load(const uint8_t* src);
 ATTR_CONST bf192_t bf192_from_bf64(bf64_t src);
@@ -74,7 +74,7 @@ ATTR_CONST bf192_t bf192_mul(bf192_t lhs, bf192_t rhs);
 ATTR_CONST bf192_t bf192_inv(bf192_t lhs);
 ATTR_CONST bf192_t bf192_from_bit(uint8_t bit);
 
-bf256_t bf256_byte_combine(const uint8_t* x);
+bf256_t bf256_byte_combine(const bf256_t* x);
 bf256_t bf256_byte_combine_bits(uint8_t x);
 bf256_t bf256_load(const uint8_t* src);
 ATTR_CONST bf256_t bf256_from_bf64(bf64_t src);
