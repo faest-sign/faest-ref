@@ -325,7 +325,7 @@ void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, uint16_t seclvl,
          size_t outSizeBytes) {
 #if !defined(HAVE_OPENSSL)
   uint8_t internal_iv[16];
-  memcpy(internal_iv, iv, sizeof(iv));
+  memcpy(internal_iv, iv, sizeof(internal_iv));
 
   aes_round_keys_t round_key;
 
