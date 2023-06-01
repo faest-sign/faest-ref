@@ -16,16 +16,6 @@
 
 // TODO: Do not pass lambdaBytes everywhere, compute it in the function....
 
-static inline uint8_t get_bit(const uint8_t* in, unsigned int index) {
-  return (in[index / 8] >> (index % 8)) & 1;
-}
-
-#if 0
-static inline void set_bit(uint8_t* dst, uint8_t in, unsigned int index) {
-  dst[index / 8] |= in << (index % 8);
-}
-#endif
-
 int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t0, unsigned int k1,
             unsigned int t1, uint8_t* chalout) {
   if (i >= t0 + t1) {
@@ -46,7 +36,7 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
   assert(hi - lo == k0 || hi - lo == k1);
   for (unsigned int j = lo; j < hi; ++j) {
     // set_bit(chalout, i - lo, get_bit(chal, i));
-    chalout[j - lo] = get_bit(chal, j);
+    chalout[j - lo] = ptr_get_bit(chal, j);
   }
   return 1;
 }

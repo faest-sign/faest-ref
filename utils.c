@@ -34,8 +34,3 @@ void maskedXorUint8Arr(const uint8_t* a, const uint8_t* b, uint8_t* out, uint8_t
     out[i] = a[i] ^ (b[i] & mask);
   }
 }
-
-uint8_t getBit(const uint8_t* src, uint32_t idx) {
-  // return (*src & (1 << (7 - idx))) >> (7 - idx);
-  return (*src >> idx) & 1;
-}

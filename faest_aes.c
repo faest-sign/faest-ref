@@ -21,22 +21,6 @@ static const bf8_t Rcon[30] = {
     0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
 };
 
-ATTR_CONST static inline bf8_t get_bit(bf8_t in, uint8_t index) {
-  return (in >> index) & 0x01;
-}
-
-ATTR_CONST static inline bf8_t set_bit(bf8_t in, uint8_t index) {
-  return (in << index);
-}
-
-static inline uint8_t ptr_get_bit(const uint8_t* in, unsigned int index) {
-  return (in[index / 8] >> (index % 8)) & 1;
-}
-
-static inline void ptr_set_bit(uint8_t* dst, uint8_t in, unsigned int index) {
-  dst[index / 8] |= in << (index % 8);
-}
-
 static bf128_t* column_to_row_major_and_shrink_V_128(uint8_t** v, unsigned int ell) {
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
