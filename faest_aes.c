@@ -527,7 +527,8 @@ static void aes_enc_backward_128(uint32_t m, const uint8_t* x, const bf128_t* bf
               // Step: 10..11
               // delta is always \bot if called with m == 1
               // TODO bit splice
-              xout |= set_bit(get_bit(out[(ird - 1152) / 8], i) & (1 ^ Mtag) & (1 ^ Mkey), i);
+              xout |=
+                  set_bit(get_bit(out[(ird - 128 * (R - 1)) / 8], i) & (1 ^ Mtag) & (1 ^ Mkey), i);
             }
             xtilde = xout ^ xk[(128 + ird) / 8];
           }
@@ -580,7 +581,7 @@ static void aes_enc_backward_128(uint32_t m, const uint8_t* x, const bf128_t* bf
           for (uint32_t i = 0; i < 8; i++) {
             // Step: 11
             // TODO: check 0 extension
-            bf_xout[i] = bf128_from_bit(get_bit(out[(ird - 1152) / 8], i));
+            bf_xout[i] = bf128_from_bit(get_bit(out[(ird - 128 * (R - 1)) / 8], i));
             bf_xout[i] = bf128_mul(bf_xout[i], factor);
             // Step: 12
             bf_x_tilde[i] = bf128_add(bf_xout[i], bf_xk[128 + ird + i]);
