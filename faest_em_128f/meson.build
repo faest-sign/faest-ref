@@ -68,3 +68,13 @@ if valgrind_exec.found()
     build_by_default: false,
   )
 endif
+bench_sources = files(
+  join_paths(meson.project_source_root(), 'tools', 'bench_c2.cpp'),
+  join_paths(meson.project_source_root(), 'catch2', 'extras', 'catch_amalgamated.cpp'),
+)
+bench_catch = executable('feast_em_128f_bench_c2', bench_sources,
+  dependencies: [libfaest_em_128f_dependency, boost_program_options],
+  include_directories: include_directories + [include_directories(join_paths('..', 'catch2', 'extras'))],
+  c_args: defines + c_flags,
+  cpp_args: defines + cpp_flags
+)
