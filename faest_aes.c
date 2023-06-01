@@ -144,8 +144,6 @@ static void aes_key_schedule_backward_128(uint32_t m, const uint8_t* x, const bf
 
   // STep: 2
   if (m == 1) {
-    assert(delta == NULL);
-
     uint32_t iwd   = 0;
     uint32_t c     = 0;
     bool rmvRcon   = true;
@@ -265,8 +263,6 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
   const unsigned int lambdaByte = lambda / 8;
 
   if (Mkey == 0) {
-    assert(delta == NULL);
-
     // Step: 2
     aes_key_schedule_forward_128(1, w, NULL, 0, 0, NULL, k, NULL, params);
 
@@ -319,8 +315,6 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
     free(w_dash);
     return;
   }
-
-  assert(delta);
 
   // Step: 19..20
   aes_key_schedule_forward_128(lambda, NULL, q, 0, 1, delta, NULL, qk, params);
@@ -831,8 +825,6 @@ static void aes_key_schedule_backward_192(uint32_t m, const uint8_t* x, const bf
 
   // STep: 2
   if (m == 1) {
-    assert(delta == NULL);
-
     uint32_t iwd   = 0;
     uint32_t c     = 0;
     bool rmvRcon   = true;
@@ -951,8 +943,6 @@ static void aes_key_schedule_constraints_192(const uint8_t* w, const bf192_t* v,
   const unsigned int lambdaByte = lambda / 8;
 
   if (Mkey == 0) {
-    assert(delta == NULL);
-
     // Step: 2
     aes_key_schedule_forward_192(1, w, NULL, 0, 0, NULL, k, NULL, params);
 
@@ -1006,8 +996,6 @@ static void aes_key_schedule_constraints_192(const uint8_t* w, const bf192_t* v,
     free(w_dash);
     return;
   }
-
-  assert(delta);
 
   // Step: 19..20
   aes_key_schedule_forward_192(lambda, NULL, q, 0, 1, delta, NULL, qk, params);
@@ -1520,8 +1508,6 @@ static void aes_key_schedule_backward_256(uint32_t m, const uint8_t* x, const bf
 
   // STep: 2
   if (m == 1) {
-    assert(delta == NULL);
-
     uint32_t iwd   = 0;
     uint32_t c     = 0;
     bool rmvRcon   = true;
@@ -1643,8 +1629,6 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
   bool rotate_word = true;
 
   if (Mkey == 0) {
-    assert(delta == NULL);
-
     // Step: 2
     aes_key_schedule_forward_256(1, w, NULL, 0, 0, NULL, k, NULL, params);
 
@@ -1708,8 +1692,6 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
     free(w_dash);
     return;
   }
-
-  assert(delta);
 
   // Step: 19..20
   aes_key_schedule_forward_256(lambda, NULL, q, 0, 1, delta, NULL, qk, params);
@@ -2498,7 +2480,7 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   free(A1);
 }
 
-static uint8_t* rm_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
+static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                               const uint8_t* out, const faest_paramset_t* params) {
   const unsigned int lambda      = params->faest_param.lambda;
