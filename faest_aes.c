@@ -2628,5 +2628,5 @@ void em_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in
 uint8_t* em_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8_t* chall_3,
                    const uint8_t* a_tilde, const uint8_t* in, const uint8_t* out,
                    const faest_paramset_t* params) {
-  return aes_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+  return em_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
 }
