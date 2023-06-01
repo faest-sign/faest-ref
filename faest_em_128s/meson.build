@@ -54,7 +54,8 @@ faest_em_128s_test = executable('faest_em_128s_api_test', test_sources,
 test('faest_em_128s_api_test', faest_em_128s_test)
 if valgrind.found() and valgrind_exec.found()
   test('faest_em_128s_api_test_ct', valgrind_exec,
-    args: ['-q', '--error-exitcode=1', '--track-origins=yes', faest_em_128s_test]
+    args: ['-q', '--error-exitcode=1', '--track-origins=yes', faest_em_128s_test],
+    timeout: 600,
   )
 endif
 if valgrind_exec.found()
