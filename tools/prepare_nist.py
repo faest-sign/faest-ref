@@ -3,6 +3,7 @@
 import sys
 import shutil
 import subprocess
+import os
 from pathlib import Path
 
 
@@ -70,7 +71,11 @@ def generate(
         shutil.copy(tools_sources / tool_source, target)
 
     # build and create KATs
-    subprocess.check_call(["make"], cwd=target)
+    cpu_count = os.cpu_count()
+    subprocess.check_call(
+        ["make"] if cpu_count is None else ["make", "-j", str(max(2, cpu_count - 1))],
+        cwd=target,
+    )
     subprocess.check_call(target_nist_kat / "PQCgenKAT_sign", cwd=target_kat)
     subprocess.check_call(["make", "clean"], cwd=target)
 
