@@ -71,11 +71,13 @@ def generate(
         shutil.copy(tools_sources / tool_source, target)
 
     # build and create KATs
+    print(f"Building {param_name}")
     cpu_count = os.cpu_count()
     subprocess.check_call(
         ["make"] if cpu_count is None else ["make", "-j", str(max(2, cpu_count - 1))],
         cwd=target,
     )
+    print(f"Generating KATs for {param_name}")
     subprocess.check_call(target_nist_kat / "PQCgenKAT_sign", cwd=target_kat)
     subprocess.check_call(["make", "clean"], cwd=target)
 
