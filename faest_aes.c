@@ -2744,7 +2744,7 @@ static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   uint8_t* x = malloc(lambda * (R + 1) / 8);
   {
     aes_round_keys_t round_keys;
-    aes128_init_round_keys(&round_keys, in);
+    aes192_init_round_keys(&round_keys, in);
     uint8_t* tmp_x = x;
     for (unsigned int r = 0; r != R + 1; ++r) {
       for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
