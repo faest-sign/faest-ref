@@ -2228,9 +2228,9 @@ static uint8_t* aes_verify_256(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
 
 // EM-128
 
-static void em_enc_forward_128(uint32_t m, const uint8_t* z, const uint8_t* x, const bf128_t* bf_x,
-                               const uint8_t* xk, const bf128_t* bf_xk, const uint8_t* in,
-                               uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* bf_y,
+static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z, const uint8_t* x,
+                               const bf128_t* bf_x, uint8_t Mtag, uint8_t Mkey,
+                               const uint8_t* delta, bf128_t* bf_y,
                                const faest_paramset_t* params) {
 
   const unsigned int R = params->cipher_param.numRounds;
@@ -2351,8 +2351,8 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const uint8_t* x, c
 }
 
 static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z, const uint8_t* x,
-                                const bf128_t* bf_x, uint8_t Mtag, uint8_t Mkey,
-                                const uint8_t* delta, const uint8_t* z_out, bf128_t* y_out,
+                                const bf128_t* bf_x, const uint8_t* z_out, const bf128_t* bf_z_out,
+                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* y_out,
                                 const faest_paramset_t* params) {
   const unsigned int R = params->cipher_param.numRounds;
 
@@ -2455,6 +2455,84 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
         y_out[16 * j + 4 * c + r] = bf128_byte_combine(bf_y_tilde);
       }
     }
+  }
+}
+
+static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const uint8_t* w,
+                                   const bf128_t* bf_v, uint8_t Mkey, const bf128_t* bf_q,
+                                   const uint8_t* delta, bf128_t* A0, bf128_t* A1, bf128_t* B,
+                                   const faest_paramset_t* params) {
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Senc   = params->faest_param.Senc;
+  const unsigned int R      = params->faest_param.R;
+
+  if (Mkey == 0) {
+
+    uint8_t* xx = malloc(128 * (R + 1));
+    for (uint32_t i = 0; i < (128 * (R + 1)); i++) {
+      xx[i] = x[i];
+    }
+
+    uint8_t* w_out    = malloc(lambda);
+    bf128_t* bf_v_out = malloc(sizeof(bf128_t) * lambda);
+
+    for (uint32_t i = 0; i < lambda; i++) {
+      w_out[i] = out[i] ^ w[i];
+    }
+    memcpy(bf_v_out, bf_v, sizeof(bf128_t) * lambda);
+
+    bf128_t* bf_s       = malloc(sizeof(bf128_t) * Senc);
+    bf128_t* bf_vs      = malloc(sizeof(bf128_t) * Senc);
+    bf128_t* bf_s_dash  = malloc(sizeof(bf128_t) * Senc);
+    bf128_t* bf_vs_dash = malloc(sizeof(bf128_t) * Senc);
+    em_enc_forward_128(1, w, NULL, xx, NULL, 0, 0, NULL, bf_s, params);
+    bf128_t bf_zero = bf128_zero();
+    em_enc_forward_128(lambda, NULL, bf_v, NULL, &bf_zero, 1, 0, NULL, bf_vs, params);
+    em_enc_backward_128(1, w, NULL, xx, NULL, w_out, NULL, 0, 0, NULL, bf_s_dash, params);
+    em_enc_backward_128(lambda, NULL, bf_v, NULL, &bf_zero, NULL, bf_v_out, 1, 0, NULL, bf_vs_dash,
+                        params);
+
+    for (uint32_t j = 0; j < Senc; j++) {
+      // check that the constraint actually holds
+      bf128_t should_be_zero = bf128_add(bf128_mul(bf_s[j], bf_s_dash[j]), bf128_one());
+      assert(should_be_zero.values[0] == 0 && should_be_zero.values[1] == 0);
+      A0[j] = bf128_mul(bf_vs[j], bf_vs_dash[j]);
+      A1[j] = bf128_add(
+          bf128_add(bf128_mul(bf128_add(bf_s[j], bf_vs[j]), bf128_add(bf_s_dash[j], bf_vs_dash[j])),
+                    A0[j]),
+          bf128_one());
+    }
+    free(bf_vs_dash);
+    free(bf_s_dash);
+    free(bf_vs);
+    free(bf_s);
+  } else {
+
+    bf128_t* bf_x = malloc(sizeof(bf128_t) * 128 * (R + 1));
+    for (uint32_t i = 0; i < (128 * (R + 1)); i++) {
+      bf_x[i] = bf128_mul(bf128_from_bf8(bf8_load(x[i])), bf128_load(delta));
+    }
+
+    bf128_t* bf_q_out = malloc(sizeof(bf128_t) * lambda);
+    for (uint32_t i = 0; i < lambda; i++) {
+      bf_q_out[i] =
+          bf128_add(bf128_mul(bf128_from_bf8(bf8_load(out[i])), bf128_load(delta)), bf_q[i]);
+    }
+
+    bf128_t* bf_qs      = malloc(sizeof(bf128_t) * Senc);
+    bf128_t* bf_qs_dash = malloc(sizeof(bf128_t) * Senc);
+
+    em_enc_forward_128(lambda, NULL, bf_q, NULL, bf_x, 0, 1, delta, bf_qs, params);
+    em_enc_backward_128(lambda, NULL, bf_q, NULL, bf_x, NULL, bf_q_out, 0, 1, delta, bf_qs_dash,
+                        params);
+
+    // Step: 13..14
+    bf128_t minus_part = bf128_mul(bf128_load(delta), bf128_load(delta));
+    for (uint32_t j = 0; j < Senc; j++) {
+      B[j] = bf128_add(bf128_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
+    }
+    free(bf_qs);
+    free(bf_qs_dash);
   }
 }
 
