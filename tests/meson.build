@@ -83,4 +83,10 @@ if boost_test.found()
       timeout: 600,
     )
   endif
+  foreach parameter_set : parameter_sets
+    test('FAEST_@0@'.format(parameter_set.get('PARAM')), extended_tests,
+      args: ['-t', 'faest_@0@'.format(parameter_set.get('PARAM_L'))],
+      timeout: 600,
+    )
+  endforeach
 endif
