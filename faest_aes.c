@@ -2384,16 +2384,18 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
     free(bf_vs);
     free(bf_s);
   } else {
+    // Step: 18, 19
     const bf128_t bf_delta = bf128_load(delta);
     bf128_t* bf_x          = malloc(sizeof(bf128_t) * 128 * (R + 1));
     for (uint32_t i = 0; i < (128 * (R + 1)); i++) {
       bf_x[i] = bf128_mul(bf128_from_bit(ptr_get_bit(x, i)), bf_delta);
     }
 
+    // Step 21
     bf128_t* bf_q_out = malloc(sizeof(bf128_t) * lambda);
     for (uint32_t i = 0; i < lambda; i++) {
       bf_q_out[i] =
-          bf128_add(bf128_mul(bf128_from_bf8(ptr_get_bit(x, i)), bf128_load(delta)), bf_q[i]);
+          bf128_add(bf128_mul(bf128_from_bf8(ptr_get_bit(out, i)), bf128_load(delta)), bf_q[i]);
     }
 
     bf128_t* bf_qs      = malloc(sizeof(bf128_t) * Senc);
