@@ -2118,8 +2118,8 @@ static uint8_t* aes_verify_256(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
 
 static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z, const uint8_t* x,
                                const bf128_t* bf_x, uint8_t FAEST_UNUSED(Mtag),
-                               uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta), bf128_t* bf_y,
-                               const faest_paramset_t* params) {
+                               uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta),
+                               bf128_t* bf_y, const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   if (m == 1) {
@@ -2356,15 +2356,14 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
     // Step: 18, 19
     const bf128_t bf_delta = bf128_load(delta);
     bf128_t* bf_x          = malloc(sizeof(bf128_t) * 128 * (R + 1));
-    for (uint32_t i = 0; i < (128 * (R + 1)); i++) {
+    for (uint32_t i = 0; i < 128 * (R + 1); i++) {
       bf_x[i] = bf128_mul(bf128_from_bit(ptr_get_bit(x, i)), bf_delta);
     }
 
     // Step 21
     bf128_t* bf_q_out = malloc(sizeof(bf128_t) * lambda);
     for (uint32_t i = 0; i < lambda; i++) {
-      bf_q_out[i] =
-          bf128_add(bf128_mul(bf128_from_bf8(ptr_get_bit(out, i)), bf128_load(delta)), bf_q[i]);
+      bf_q_out[i] = bf128_add(bf128_mul(bf128_from_bf8(ptr_get_bit(out, i)), bf_delta), bf_q[i]);
     }
 
     bf128_t* bf_qs      = malloc(sizeof(bf128_t) * Senc);
