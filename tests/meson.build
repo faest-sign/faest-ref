@@ -29,6 +29,7 @@ if boost_test.found()
     'extended_tests.cpp',
     'instances.cpp',
     'universal_hashing.cpp',
+    'test_faest_tvs.cpp',
     'vc.cpp',
     'vole.cpp',
     'vole_tvs.cpp',
