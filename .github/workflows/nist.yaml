@@ -8,7 +8,7 @@ env:
 
 jobs:
   build:
-    name: Test on Ubuntu with gcc
+    name: Build submission package
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
@@ -16,13 +16,12 @@ jobs:
       run: |
         sudo apt-get -q update
         sudo apt-get -q -y install meson ninja-build
-    - name: Build and package
-      uses: BSFishy/meson-build@v1.0.3
-      with:
-        setup-options: -DEM-128=disabled
-        action: prepare_nist
-        directory: build
-        options: --verbose
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        meson .. -DEM-128=disabled
+        ninja prepare_nist
     - name: Upload NIST submission package
       uses: actions/upload-artifact@v3
       with:
