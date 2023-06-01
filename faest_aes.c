@@ -2675,6 +2675,7 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int Senc   = params->faest_param.Senc;
   const unsigned int R      = params->faest_param.R;
+  const unsigned int Nst    = params->faest_param.Nwd;
 
   if (Mkey == 0) {
     // Step 6
@@ -2706,8 +2707,8 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
   } else {
     // Step: 18, 19
     const bf192_t bf_delta = bf192_load(delta);
-    bf192_t* bf_x          = malloc(sizeof(bf192_t) * 128 * (R + 1));
-    for (uint32_t i = 0; i < 128 * (R + 1); i++) {
+    bf192_t* bf_x          = malloc(sizeof(bf192_t) * 32 * Nst * (R + 1));
+    for (uint32_t i = 0; i < 32 * Nst * (R + 1); i++) {
       bf_x[i] = bf192_mul(bf192_from_bit(ptr_get_bit(x, i)), bf_delta);
     }
 
