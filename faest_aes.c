@@ -2383,7 +2383,7 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
 static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                          uint8_t* b_tilde, const faest_paramset_t* params) {
-  const unsigned int ell    = params->faest_param.l;
+  const unsigned int Lenc   = params->faest_param.Lenc;
   const unsigned int R      = params->faest_param.R;
   const unsigned int Senc   = params->faest_param.Senc;
   const unsigned int lambda = params->faest_param.lambda;
@@ -2402,7 +2402,7 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
     }
   }
 
-  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, ell);
+  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, Lenc);
 
   const unsigned int length_a = Senc + 1;
   bf128_t* A0                 = malloc(sizeof(bf128_t) * length_a);
@@ -2410,8 +2410,8 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   em_enc_constraints_128(out, x, w, bf_v, 0, NULL, NULL, A0, A1, NULL, params);
   free(x);
 
-  A1[length_a - 1] = bf128_load(u + ell / 8);
-  A0[length_a - 1] = bf128_sum_poly(bf_v + ell);
+  A1[length_a - 1] = bf128_load(u + Lenc / 8);
+  A0[length_a - 1] = bf128_sum_poly(bf_v + Lenc);
   free(bf_v);
 
   zk_hash_128(a_tilde, chall, A1, length_a - 1);
@@ -2430,7 +2430,7 @@ static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   const unsigned int k0          = params->faest_param.k0;
   const unsigned int t1          = params->faest_param.t1;
   const unsigned int k1          = params->faest_param.k1;
-  const unsigned int l           = params->faest_param.l;
+  const unsigned int Lenc        = params->faest_param.Lenc;
   const unsigned int R           = params->faest_param.R;
   const unsigned int Senc        = params->faest_param.Senc;
   const unsigned int lambdaBytes = lambda / 8;
@@ -2443,12 +2443,12 @@ static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
     ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
     for (uint32_t j = 0; j < depth; j++, ++col) {
       if (fancy_d[j] == 1) {
-        xorUint8Arr(d, Q[col], Q[col], (l + 7) / 8);
+        xorUint8Arr(d, Q[col], Q[col], (Lenc + 7) / 8);
       }
     }
   }
 
-  bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, l);
+  bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, Lenc);
 
   // copy expanded key in to an array
   uint8_t* x = malloc(lambda * (R + 1) / 8);
@@ -2470,7 +2470,7 @@ static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   em_enc_constraints_128(out, x, NULL, NULL, 1, bf_q, delta, NULL, NULL, B, params);
   free(x);
 
-  B[length_b - 1] = bf128_sum_poly(bf_q + l);
+  B[length_b - 1] = bf128_sum_poly(bf_q + Lenc);
   free(bf_q);
 
   uint8_t* q_tilde = malloc(lambdaBytes);
