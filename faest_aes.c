@@ -2517,18 +2517,21 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
       return aes_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     } else {
       // TODO: EM variant
+      return NULL;
     }
   case 192:
     if (params->faest_param.Lke) {
       return aes_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     } else {
       // TODO: EM variant
+      return NULL;
     }
   default:
     if (params->faest_param.Lke) {
       return aes_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     } else {
       // TODO: EM variant
+      return NULL;
     }
   }
 }
