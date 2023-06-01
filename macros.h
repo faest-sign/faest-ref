@@ -80,6 +80,13 @@
 #define ASSUME(p) (void)(p)
 #endif
 
+/* unused attributed */
+#if defined(__GNUC__) || __has_attribute(unused)
+#define FAEST_UNUSED(x) UNUSED_##x __attribute__((unused))
+#else
+#define FAEST_UNUSED(x) x
+#endif
+
 /* nonnull attribute */
 #if GNUC_CHECK(3, 3) || __has_attribute(nonnull)
 #define ATTR_NONNULL __attribute__((nonnull))

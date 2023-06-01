@@ -2139,17 +2139,10 @@ static uint8_t* aes_verify_256(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
 // EM-128
 
 static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z, const uint8_t* x,
-                               const bf128_t* bf_x, uint8_t Mtag, uint8_t Mkey,
-                               const uint8_t* delta, bf128_t* bf_y,
+                               const bf128_t* bf_x, uint8_t FAEST_UNUSED(Mtag),
+                               uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta), bf128_t* bf_y,
                                const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
-
-  bf128_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf128_zero();
-  } else {
-    bf_delta = bf128_load(delta);
-  }
 
   if (m == 1) {
     // Step: 2
@@ -2416,24 +2409,22 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
 static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                          uint8_t* b_tilde, const faest_paramset_t* params) {
-  const unsigned int beta   = params->faest_param.beta;
   const unsigned int ell    = params->faest_param.l;
   const unsigned int R      = params->faest_param.R;
-  const unsigned int Ske    = params->faest_param.Ske;
   const unsigned int Senc   = params->faest_param.Senc;
   const unsigned int lambda = params->faest_param.lambda;
 
-  aes_round_keys_t round_keys;
-  aes128_init_round_keys(&round_keys, in);
-
-  // fix size
-  uint8_t* x     = malloc(128 * (R + 1) / 8);
-  uint8_t* tmp_x = x;
-  for (unsigned int r = 0; r != R + 1; ++r) {
-    // FIXME: 4 -> num key words
-    for (unsigned int i = 0; i != 4; ++i) {
-      memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
-      tmp_x += sizeof(aes_word_t);
+  // copy expanded key in to an array
+  uint8_t* x = malloc(lambda * (R + 1) / 8);
+  {
+    aes_round_keys_t round_keys;
+    aes128_init_round_keys(&round_keys, in);
+    uint8_t* tmp_x = x;
+    for (unsigned int r = 0; r != R + 1; ++r) {
+      for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
+        memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
+        tmp_x += sizeof(aes_word_t);
+      }
     }
   }
 
@@ -2467,7 +2458,6 @@ static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   const unsigned int k1          = params->faest_param.k1;
   const unsigned int l           = params->faest_param.l;
   const unsigned int R           = params->faest_param.R;
-  const unsigned int Ske         = params->faest_param.Ske;
   const unsigned int Senc        = params->faest_param.Senc;
   const unsigned int lambdaBytes = lambda / 8;
 
@@ -2489,17 +2479,17 @@ static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
 
   bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, l);
 
-  aes_round_keys_t round_keys;
-  aes128_init_round_keys(&round_keys, in);
-
-  // FIXME
-  uint8_t* x     = malloc(128 * (R + 1) / 8);
-  uint8_t* tmp_x = x;
-  for (unsigned int r = 0; r != R + 1; ++r) {
-    // FIXME: 4 -> num key words
-    for (unsigned int i = 0; i != 4; ++i) {
-      memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
-      tmp_x += sizeof(aes_word_t);
+  // copy expanded key in to an array
+  uint8_t* x = malloc(lambda * (R + 1) / 8);
+  {
+    aes_round_keys_t round_keys;
+    aes128_init_round_keys(&round_keys, in);
+    uint8_t* tmp_x = x;
+    for (unsigned int r = 0; r != R + 1; ++r) {
+      for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
+        memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
+        tmp_x += sizeof(aes_word_t);
+      }
     }
   }
 
