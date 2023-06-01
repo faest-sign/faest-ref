@@ -128,7 +128,7 @@ int main() {
     fp_rsp << "smlen = " << smlen << "\n";
     fp_rsp << "sm = ";
     print_hex(fp_rsp, sm.begin(), sm.end());
-    fp_rsp << "\n";
+    fp_rsp << "\n\n";
 
     std::vector<uint8_t> msg1;
     msg1.resize(msg.size());
