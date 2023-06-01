@@ -2487,13 +2487,25 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
                const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
-    aes_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    if (params->faest_param.Lke) {
+      aes_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    } else {
+      // TODO: EM variant
+    }
     break;
   case 192:
-    aes_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    if (params->faest_param.Lke) {
+      aes_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    } else {
+      // TOD: EM variant
+    }
     break;
   default:
-    aes_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    if (params->faest_param.Lke) {
+      aes_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    } else {
+      // TODO: EM variant
+    }
   }
 }
 
@@ -2502,10 +2514,22 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
                     const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
-    return aes_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    if (params->faest_param.Lke) {
+      return aes_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    } else {
+      // TODO: EM variant
+    }
   case 192:
-    return aes_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    if (params->faest_param.Lke) {
+      return aes_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    } else {
+      // TODO: EM variant
+    }
   default:
-    return aes_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    if (params->faest_param.Lke) {
+      return aes_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    } else {
+      // TODO: EM variant
+    }
   }
 }
