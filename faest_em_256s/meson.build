@@ -57,3 +57,13 @@ if valgrind.found() and valgrind_exec.found()
     args: ['-q', '--error-exitcode=1', '--track-origins=yes', faest_em_256s_test]
   )
 endif
+if valgrind_exec.found()
+  custom_target('faest_em_256s_memory_usage',
+    command: [valgrind_exec, '-q', '--error-exitcode=1', '--tool=massif', '--stacks=yes', '--massif-out-file=@OUTPUT@', faest_em_256s_test],
+    output: 'faest_em_256s.massif',
+    depends: [faest_em_256s_test],
+    install: false,
+    build_always_stale: true,
+    build_by_default: false,
+  )
+endif

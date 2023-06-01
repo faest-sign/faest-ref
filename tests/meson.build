@@ -8,13 +8,6 @@ hash_shake = executable('test_hash_shake', files('hash_shake.c'),
 )
 test('hash_shake', hash_shake)
 
-vole = executable('vole', files('vole.c'),
-  dependencies: [libfaest_static_dependency],
-  include_directories: include_directories,
-  c_args: defines + c_flags,
-)
-test('vole', vole)
-
 # faest = executable('faest', files('faest.c'),
 #   dependencies: [libfaest_static_dependency],
 #   include_directories: include_directories,

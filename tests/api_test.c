@@ -24,7 +24,7 @@
 int main(void) {
   unsigned char pk[CRYPTO_PUBLICKEYBYTES]          = {0};
   unsigned char sk[CRYPTO_SECRETKEYBYTES]          = {0};
-  const unsigned char message[50]                  = {0};
+  const unsigned char message[32]                  = {0};
   unsigned char omessage[sizeof(message)]          = {0};
   unsigned char sm[sizeof(message) + CRYPTO_BYTES] = {0};
 
