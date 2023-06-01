@@ -2533,6 +2533,105 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
   }
 }
 
+static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
+                         const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
+                         uint8_t* b_tilde, const faest_paramset_t* params) {
+  const unsigned int beta   = params->faest_param.beta;
+  const unsigned int elll   = params->faest_param.l;
+  const unsigned int Lke    = params->faest_param.Lke;
+  const unsigned int Lenc   = params->faest_param.Lenc;
+  const unsigned int R      = params->cipher_param.numRounds;
+  const unsigned int Ske    = params->faest_param.Ske;
+  const unsigned int Senc   = params->faest_param.Senc;
+  const unsigned int lambda = params->faest_param.lambda;
+
+  aes_round_keys_t* x = malloc(sizeof(aes_round_keys_t));
+  expand_key(x, in, 4, 4, 10);
+  uint8_t* k = malloc(sizeof(aes_round_keys_t));
+  memcpy(k, x, sizeof(aes_round_keys_t));
+
+  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, elll);
+
+  const unsigned int length_a = Ske + (beta * Senc) + 1;
+  bf128_t* A0                 = malloc(sizeof(bf128_t) * length_a);
+  bf128_t* A1                 = malloc(sizeof(bf128_t) * length_a);
+  em_enc_constraints_128(out, k, w, bf_v, 0, NULL, NULL, A0, A1, NULL, params);
+
+  A1[length_a - 1] = bf128_load(u + elll / 8);
+  A0[length_a - 1] = bf128_sum_poly(bf_v + elll);
+  free(bf_v);
+
+  zk_hash_128(a_tilde, chall, A1, length_a - 1);
+  zk_hash_128(b_tilde, chall, A0, length_a - 1);
+
+  free(A0);
+  free(A1);
+}
+
+static uint8_t* rm_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
+                              const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
+                              const uint8_t* out, const faest_paramset_t* params) {
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int tau         = params->faest_param.tau;
+  const unsigned int t0          = params->faest_param.t0;
+  const unsigned int k0          = params->faest_param.k0;
+  const unsigned int t1          = params->faest_param.t1;
+  const unsigned int k1          = params->faest_param.k1;
+  const unsigned int beta        = params->faest_param.beta;
+  const unsigned int l           = params->faest_param.l;
+  const unsigned int Lke         = params->faest_param.Lke;
+  const unsigned int Lenc        = params->faest_param.Lenc;
+  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int Ske         = params->faest_param.Ske;
+  const unsigned int Senc        = params->faest_param.Senc;
+  const unsigned int lambdaBytes = lambda / 8;
+
+  const uint8_t* delta = chall_3;
+
+  for (uint32_t i = 0, col = 0; i < tau; i++) {
+
+    unsigned int depth = i < t0 ? k0 : k1;
+
+    uint8_t* fancy_d = malloc(depth);
+
+    ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
+
+    for (uint32_t j = 0; j < depth; j++, ++col) {
+
+      if (fancy_d[j] == 1) {
+
+        xorUint8Arr(d, Q[col], Q[col], (l + 7) / 8);
+      }
+    }
+
+    free(fancy_d);
+  }
+
+  bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, Lenc);
+
+  aes_round_keys_t* x = malloc(sizeof(aes_round_keys_t));
+  expand_key(x, in, 4, 4, 10);
+  uint8_t* k = malloc(sizeof(aes_round_keys_t));
+  memcpy(k, x, sizeof(aes_round_keys_t));
+
+  const unsigned int length_b = Ske + (beta * Senc) + 1;
+  bf128_t* B                  = malloc(sizeof(bf128_t) * length_b);
+
+  em_enc_constraints_128(out, k, NULL, NULL, 1, bf_q, delta, NULL, NULL, B, params);
+
+  B[length_b - 1] = bf128_sum_poly(bf_q + l);
+  free(bf_q);
+
+  uint8_t* q_tilde = malloc(lambdaBytes);
+  zk_hash_128(q_tilde, chall_2, B, length_b - 1);
+  free(B);
+
+  bf128_t bf_qtilde = bf128_load(q_tilde);
+  bf128_store(q_tilde, bf128_add(bf_qtilde, bf128_mul(bf128_load(a_tilde), bf128_load(delta))));
+
+  return q_tilde;
+}
+
 // dispatchers
 
 void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
@@ -2561,4 +2660,16 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
   default:
     return aes_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
   }
+}
+
+void em_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
+              const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde, uint8_t* b_tilde,
+              const faest_paramset_t* params) {
+  em_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+}
+
+uint8_t* em_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8_t* chall_3,
+                   const uint8_t* a_tilde, const uint8_t* in, const uint8_t* out,
+                   const faest_paramset_t* params) {
+  return aes_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
 }

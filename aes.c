@@ -153,8 +153,8 @@ static void rot_word(bf8_t* words) {
   words[3]  = tmp;
 }
 
-static int expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
-                      unsigned int block_words, unsigned int num_rounds) {
+int expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
+               unsigned int block_words, unsigned int num_rounds) {
   int ret = 0;
 
   for (unsigned int k = 0; k < key_words; k++) {

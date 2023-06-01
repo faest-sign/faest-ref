@@ -59,6 +59,9 @@ void aes_increment_iv(uint8_t* iv);
 void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, uint16_t seclvl, size_t outSizeBytes);
 uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_paramset_t* params);
 
+int expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
+               unsigned int block_words, unsigned int num_rounds);
+
 FAEST_END_C_DECL
 
 #endif
