@@ -15,13 +15,6 @@
 #include <vector>
 #include <boost/test/unit_test.hpp>
 
-#define FAEST_VARIANT_128s 1
-#define FAEST_VARIANT_128f 2
-#define FAEST_VARIANT_192s 3
-#define FAEST_VARIANT_192f 4
-#define FAEST_VARIANT_256s 5
-#define FAEST_VARIANT_256f 6
-
 namespace {
   // clang-format off
   constexpr std::size_t public_key_size = FAEST_@PARAM@_PUBLIC_KEY_SIZE;
@@ -86,13 +79,6 @@ BOOST_AUTO_TEST_CASE(test_rand_verify_fails) {
   // clang-format on
 }
 
-#if (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_128s) || \
-    (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_128f) || \
-    (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_192s) || \
-    (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_192f) || \
-    (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_256s) || \
-    (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_256f)
-
 BOOST_AUTO_TEST_CASE(test_sign_tv) {
     namespace tv = faest_tvs::faest_@PARAM_L@_tvs;
     using faest_tvs::message;
@@ -116,6 +102,5 @@ BOOST_AUTO_TEST_CASE(test_sign_tv) {
   // printHex("opt", tv::signature.data(), tv::signature.size());
   // printHex("ref", sig.data(), sig.size());
 }
-#endif
 
 BOOST_AUTO_TEST_SUITE_END()
