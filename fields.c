@@ -81,7 +81,7 @@ bf64_t bf64_load(const uint8_t* src) {
   bf64_t ret;
   memcpy(&ret, src, sizeof(ret));
 #if defined(FAEST_IS_BIG_ENDIAN)
-  ret = be64toh(ret);
+  ret = le64toh(ret);
 #endif
   return ret;
 }
