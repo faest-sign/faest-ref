@@ -6,6 +6,8 @@
 
 #include "compat.h"
 
+FAEST_BEGIN_C_DECL
+
 void printHex(const char* s, const uint8_t* data, size_t len);
 
 void xorUint8Arr(const uint8_t* a, const uint8_t* b, uint8_t* out, size_t len);
@@ -15,5 +17,7 @@ void maskedXorUint8Arr(const uint8_t* a, const uint8_t* b, uint8_t* out, uint8_t
 int printUint8Arr(char* name, uint8_t* arr, uint32_t unitSize, uint32_t len);
 
 uint8_t getBit(const uint8_t* src, uint32_t idx);
+
+FAEST_END_C_DECL
 
 #endif

@@ -7,6 +7,7 @@ project('faest-ref', ['c', 'cpp'],
     'warning_level=3',
     'b_lto=true',
     'b_ndebug=if-release',
+    'b_sanitize=address',
   ],
 )
 
@@ -137,9 +138,9 @@ param_em_128s.set('Ske', 0)
 param_em_128s.set('R', 10)
 param_em_128s.set('Senc', 160)
 param_em_128s.set('BETA', 1)
-param_em_128s.set('L', 1280)
+param_em_128s.set('L', 1408)
 param_em_128s.set('Lke', 0)
-param_em_128s.set('Lenc', 1152)
+param_em_128s.set('Lenc', 1280)
 param_em_128s.set('C', 200)
 param_em_128s.set('TAU', 11)
 param_em_128s.set('K0', 12)
@@ -162,9 +163,9 @@ param_em_128f.set('Ske', 0)
 param_em_128f.set('R', 10)
 param_em_128f.set('Senc', 160)
 param_em_128f.set('BETA', 1)
-param_em_128f.set('L', 1280)
+param_em_128f.set('L', 1408)
 param_em_128f.set('Lke', 0)
-param_em_128f.set('Lenc', 1152)
+param_em_128f.set('Lenc', 1280)
 param_em_128f.set('C', 200)
 param_em_128f.set('TAU', 16)
 param_em_128f.set('K0', 8)

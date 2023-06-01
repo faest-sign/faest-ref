@@ -25,9 +25,11 @@ test('vole', vole)
 if boost_test.found()
   test_sources = files(
     'aes.cpp',
+    'aes_prove.cpp',
     'extended_tests.cpp',
     'instances.cpp',
     'universal_hashing.cpp',
+    'test_faest_tvs.cpp',
     'vc.cpp',
     'vole.cpp',
     'vole_tvs.cpp',
@@ -51,7 +53,40 @@ if boost_test.found()
     include_directories: include_directories,
     cpp_args: defines + cpp_flags + ['-DBOOST_TEST_DYN_LINK'],
   )
-  test('extended_tests', extended_tests,
+  test('AES', extended_tests,
+    args: ['-t', 'aes'],
     timeout: 600,
   )
+  test('AES prove', extended_tests,
+    args: ['-t', 'test_aes_prove'],
+    timeout: 600,
+  )
+  test('Instances', extended_tests,
+    args: ['-t', 'instances'],
+    timeout: 600,
+  )
+  test('Universal hashing', extended_tests,
+    args: ['-t', 'universal_hashing'],
+    timeout: 600,
+  )
+  test('Vector commitments', extended_tests,
+    args: ['-t', 'vector_commitments'],
+    timeout: 600,
+  )
+  test('VOLE', extended_tests,
+    args: ['-t', 'vole'],
+    timeout: 600,
+  )
+  if ntl.found()
+    test('Fields', extended_tests,
+      args: ['-t', 'fields'],
+      timeout: 600,
+    )
+  endif
+  foreach parameter_set : parameter_sets
+    test('FAEST_@0@'.format(parameter_set.get('PARAM')), extended_tests,
+      args: ['-t', 'faest_@0@'.format(parameter_set.get('PARAM_L'))],
+      timeout: 600,
+    )
+  endforeach
 endif

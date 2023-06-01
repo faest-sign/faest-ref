@@ -8,10 +8,19 @@
 
 #include "faest_@PARAM_L@.h"
 #include "randomness.h"
+#include "test_faest_tvs.hpp"
+#include "utils.h"
 
 #include <array>
 #include <vector>
 #include <boost/test/unit_test.hpp>
+
+#define FAEST_VARIANT_128s 1
+#define FAEST_VARIANT_128f 2
+#define FAEST_VARIANT_192s 3
+#define FAEST_VARIANT_192f 4
+#define FAEST_VARIANT_256s 5
+#define FAEST_VARIANT_256f 6
 
 namespace {
   // clang-format off
@@ -73,8 +82,40 @@ BOOST_AUTO_TEST_CASE(test_rand_verify_fails) {
   rand_bytes(msg.data(), msg.size());
 
   // clang-format off
-  BOOST_TEST(faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size()));
+  BOOST_TEST(faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size()) == -1);
   // clang-format on
 }
+
+#if (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_128s) || \
+    (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_128f) || \
+    (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_192s) || \
+    (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_192f) || \
+    (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_256s) || \
+    (FAEST_VARIANT_@PARAM_L@ == FAEST_VARIANT_256f)
+
+BOOST_AUTO_TEST_CASE(test_sign_tv) {
+    namespace tv = faest_tvs::faest_@PARAM_L@_tvs;
+    using faest_tvs::message;
+
+    // BOOST_TEST( tv::packed_sk.size() == private_key_size );
+    BOOST_TEST( tv::packed_pk.size() == public_key_size );
+    BOOST_TEST( tv::signature.size() == signature_size );
+  std::array<uint8_t, signature_size> sig;
+
+
+  size_t sig_size = signature_size;
+  // clang-format off
+  BOOST_TEST(faest_@PARAM_L@_sign(tv::packed_sk.data() + public_key_size / 2, tv::packed_pk.data(),
+              reinterpret_cast<const uint8_t*>(message.data()), message.size(),
+              tv::randomness.data(), tv::randomness.size(), sig.data(), &sig_size) == 0);
+  BOOST_TEST( sig == tv::signature );
+  BOOST_TEST(faest_@PARAM_L@_verify(tv::packed_pk.data(),
+              reinterpret_cast<const uint8_t*>(message.data()), message.size(), tv::signature.data(), tv::signature.size()) == 0);
+  // clang-format on
+
+  // printHex("opt", tv::signature.data(), tv::signature.size());
+  // printHex("ref", sig.data(), sig.size());
+}
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()

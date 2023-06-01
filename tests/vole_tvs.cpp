@@ -5,6 +5,7 @@
 #include "vole.h"
 #include "instances.hpp"
 #include "randomness.h"
+#include "universal_hashing.h"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
@@ -4209,7 +4210,7 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
   const unsigned int lambda      = params.faest_param.lambda;
   const unsigned int lambdaBytes = lambda / 8;
   const unsigned int ell_hat =
-      params.faest_param.l + params.faest_param.lambda * 2 + params.faest_param.b;
+      params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
 
   std::vector<uint8_t> hcom, hcomRec, u, b, chal;
@@ -4225,7 +4226,7 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
     const uint32_t depth =
         (i < params.faest_param.t0) ? params.faest_param.k0 : params.faest_param.k1;
     for (unsigned int j = 0; j < depth; ++j, ++bit_index) {
-      chal[bit_index / 8] ^= ((0x42 % (1 << depth)) >> j) << (bit_index % 8);
+      chal[bit_index / 8] ^= (((42 % (1 << depth)) & 1) >> j) << (bit_index % 8);
     }
   }
 
