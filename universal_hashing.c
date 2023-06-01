@@ -29,7 +29,7 @@ static bf64_t compute_h1(const uint8_t* t, const uint8_t* x, unsigned int lambda
   for (; i < lambdaBytes; i += 8, running_t = bf64_mul(running_t, b_t)) {
     h1 = bf64_add(h1, bf64_mul(running_t, bf64_load(tmp + (lambdaBytes - i - 8))));
   }
-  for (; i < length_lambda * lambdaBytes; i += 64, running_t = bf64_mul(running_t, b_t)) {
+  for (; i < length_lambda * lambdaBytes; i += 8, running_t = bf64_mul(running_t, b_t)) {
     h1 = bf64_add(h1, bf64_mul(running_t, bf64_load(x + (length_lambda * lambdaBytes - i - 8))));
   }
 
