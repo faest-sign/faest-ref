@@ -1636,6 +1636,16 @@ BOOST_AUTO_TEST_CASE(test_bf256_tv) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_zero) {
+  BOOST_TEST(bf128{bf128_byte_combine_bits(0)} == bf128::zero());
+
+  std::array<bf128_t, 8> all_zeroes;
+  for (auto& x : all_zeroes) {
+    x = bf128_zero();
+  }
+  BOOST_TEST(bf128{bf128_byte_combine(all_zeroes.data())} == bf128::zero());
+}
+
 BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_bits) {
   const auto& inputs = poly128_from_8_poly1_input;
   const auto& outputs = poly128_from_8_poly1_output;
