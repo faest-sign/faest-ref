@@ -1,0 +1,31 @@
+name: NIST submission package
+
+on:
+  push:
+
+env:
+  VERBOSE: 1
+
+jobs:
+  build:
+    name: Test on Ubuntu with gcc
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Linux dependencies
+      run: |
+        sudo apt-get -q update
+        sudo apt-get -q -y install meson ninja-build
+    - name: Build and package
+      uses: BSFishy/meson-build@v1.0.3
+      with:
+        setup-options: -DEM-128=disabled
+        action: prepare_nist
+        directory: build
+        options: --verbose
+    - name: Upload NIST submission package
+      uses: actions/upload-artifact@v3
+      with:
+        name: faest-submission-package
+        path: build/submission/
+
