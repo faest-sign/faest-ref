@@ -67,6 +67,8 @@ FAEST_END_C_DECL
 #include "endian_compat.h"
 
 #if defined(HAVE_TIMINGSAFE_BCMP)
+#include <string.h>
+
 #define faest_timingsafe_bcmp(a, b, len) timingsafe_bcmp((a), (b), (len))
 #else
 FAEST_BEGIN_C_DECL
