@@ -1,8 +1,9 @@
 CC?=gcc
 CXX?=g++
-CFLAGS+=-g -O3 -std=c11
-CXXFLAGS+=-g -O3 -std=c++17
+CFLAGS+=-g -O3 -std=gnu11
+CXXFLAGS+=-g -O3 -std=gnu++17
 CPPFLAGS+=-I. -Isha3 -DNDEBUG -DHAVE_OPENSSL
+# TODO: set -DHAVE_EM_128 ...
 
 SOURCES=$(filter-out randomness.c,$(wildcard *.c)) $(wildcard sha3/*.c) $(wildcard sha3/*.s)
 EXECUTABLE_APITEST=tests/api_test
@@ -31,4 +32,9 @@ $(EXECUTABLE_NISTKAT): $(addsuffix .o, $(NISTKAT_SOURCES)) $(LIBFAEST) randomnes
 	$(CXX) $(CPPFLAGS) $(LDFLAGS) $^ -lcrypto -o $@
 
 clean:
-	rm -f $(wildcard *.o) $(wildcard sha3/*.o) $(LIBFAEST) $(EXECUTABLE_APITEST) $(EXECUTABLE_NISTKAT)
+	rm -f \
+		$(wildcard *.o) \
+		$(wildcard sha3/*.o) \
+		$(wildcard NIST-KATs/*.o) \
+		$(wildcard tests/*.o) \
+		$(LIBFAEST) $(EXECUTABLE_APITEST) $(EXECUTABLE_NISTKAT)
