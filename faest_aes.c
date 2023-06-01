@@ -81,7 +81,7 @@ static void aes_key_schedule_forward_128(uint32_t m, const uint8_t* x, const bf1
   }
 
   const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int R           = params->faest_param.R;
   const unsigned int Nwd         = params->faest_param.Nwd;
   const unsigned int lambdaBytes = lambda / 8;
 
@@ -2255,7 +2255,7 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
                                 const bf128_t* bf_x, const uint8_t* z_out, const bf128_t* bf_z_out,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* y_out,
                                 const faest_paramset_t* params) {
-  const unsigned int R = params->cipher_param.numRounds;
+  const unsigned int R = params->faest_param.R;
 
   if (m == 1) {
     uint8_t z_tilde;
@@ -2419,7 +2419,7 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
                          uint8_t* b_tilde, const faest_paramset_t* params) {
   const unsigned int beta   = params->faest_param.beta;
   const unsigned int ell    = params->faest_param.l;
-  const unsigned int R      = params->cipher_param.numRounds;
+  const unsigned int R      = params->faest_param.R;
   const unsigned int Ske    = params->faest_param.Ske;
   const unsigned int Senc   = params->faest_param.Senc;
   const unsigned int lambda = params->faest_param.lambda;
@@ -2467,7 +2467,7 @@ static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   const unsigned int t1          = params->faest_param.t1;
   const unsigned int k1          = params->faest_param.k1;
   const unsigned int l           = params->faest_param.l;
-  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int R           = params->faest_param.R;
   const unsigned int Ske         = params->faest_param.Ske;
   const unsigned int Senc        = params->faest_param.Senc;
   const unsigned int lambdaBytes = lambda / 8;
