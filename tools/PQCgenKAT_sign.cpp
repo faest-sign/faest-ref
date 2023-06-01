@@ -22,7 +22,7 @@ namespace {
   template <typename Iterator>
   void print_hex(std::ostream& os, Iterator begin, Iterator end) {
     std::ios_base::fmtflags flags{os.flags()};
-    os << std::hex << std::setfill('0');
+    os << std::uppercase << std::hex << std::setfill('0');
     std::for_each(begin, end, [&](unsigned int c) { os << std::setw(2) << c; });
     os.flags(flags);
   }
@@ -128,7 +128,7 @@ int main() {
     fp_rsp << "smlen = " << smlen << "\n";
     fp_rsp << "sm = ";
     print_hex(fp_rsp, sm.begin(), sm.end());
-    fp_rsp << "\n";
+    fp_rsp << "\n\n";
 
     std::vector<uint8_t> msg1;
     msg1.resize(msg.size());

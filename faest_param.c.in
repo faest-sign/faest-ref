@@ -18,13 +18,16 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
     return -1;
   }
 
+  uint8_t randomness[@PK_SIZE@ / 2 + FAEST_@PARAM@_PRIVATE_KEY_SIZE];
+
   uint8_t* input = pk;
   uint8_t* output = pk + @PK_SIZE@ / 2;
 
   bool done = false;
   while (!done) {
-    rand_bytes(input, @PK_SIZE@ / 2);
-    rand_bytes(sk, FAEST_@PARAM@_PRIVATE_KEY_SIZE);
+    rand_bytes(randomness, @PK_SIZE@ / 2 + FAEST_@PARAM@_PRIVATE_KEY_SIZE);
+    memcpy(input, randomness, @PK_SIZE@ / 2);
+    memcpy(sk, randomness + @PK_SIZE@ / 2, FAEST_@PARAM@_PRIVATE_KEY_SIZE);
     done = faest_@PARAM_L@_owf(sk, input, output);
   }
 
