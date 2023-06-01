@@ -67,7 +67,6 @@ void voleCommit(const uint8_t* rootKey, const uint8_t* iv, uint32_t ellhat,
   // Step 1
   uint8_t* expanded_keys = malloc(tau * lambdaBytes);
   prg(rootKey, iv, expanded_keys, lambda, lambdaBytes * tau);
-  printHex("roots", expanded_keys, tau * lambdaBytes);
 
   // for Step 12
   H1_context_t h1_ctx;
@@ -105,7 +104,6 @@ void voleCommit(const uint8_t* rootKey, const uint8_t* iv, uint32_t ellhat,
 
   // Step 12: Generating final commitment from all the com commitments
   H1_final(&h1_ctx, hcom, lambdaBytes * 2);
-  printHex("hcom", hcom, lambdaBytes * 2);
 }
 
 void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, uint8_t** com_j,
