@@ -393,7 +393,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes128) {
   BOOST_TEST(extended_witness == aes_ctr_128_tv::expected_extended_witness);
 }
 
-#if defined(HAVE_EM_128)
 BOOST_AUTO_TEST_CASE(test_extend_witness_aes_em128) {
   std::array<uint8_t, 160> extended_witness = {};
   faest_paramset_t params = faest_get_paramset(FAEST_EM_128S); // Just using the FAEST-128s
@@ -404,7 +403,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes_em128) {
 
   BOOST_TEST(extended_witness == aes_em_128_tv::expected_extended_witness);
 }
-#endif
 
 BOOST_AUTO_TEST_CASE(test_extend_witness_aes192) {
   std::array<uint8_t, 408> extended_witness = {};

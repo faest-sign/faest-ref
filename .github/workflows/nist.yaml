@@ -20,7 +20,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        meson .. -DEM-128=disabled
+        meson ..
         ninja prepare_nist
     - name: Upload NIST submission package
       uses: actions/upload-artifact@v3

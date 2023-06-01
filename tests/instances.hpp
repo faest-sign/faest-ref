@@ -17,10 +17,8 @@ constexpr faest_paramid_t aes_ctr_instances[] = {
 };
 
 constexpr faest_paramid_t all_parameters[] = {
-    FAEST_128S,    FAEST_128F,    FAEST_192S, FAEST_192F, FAEST_256S, FAEST_256F,
-#if defined(HAVE_EM_128)
-    FAEST_EM_128S, FAEST_EM_128F,
-#endif
+    FAEST_128S,    FAEST_128F,    FAEST_192S,    FAEST_192F,
+    FAEST_256S,    FAEST_256F,    FAEST_EM_128S, FAEST_EM_128F,
 #if defined(HAVE_EM_192)
     FAEST_EM_192S, FAEST_EM_192F,
 #endif
