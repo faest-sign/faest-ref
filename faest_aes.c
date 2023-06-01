@@ -1700,6 +1700,8 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
   const unsigned int Ske        = params->faest_param.Ske;
   const unsigned int lambdaByte = lambda / 8;
 
+  bool rotate_word = true;
+
   if (Mkey == 0) {
     assert(delta == NULL);
 
@@ -1728,10 +1730,17 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
       bf256_t bf_v_w_dash_hat[4];
       for (uint32_t r = 0; r <= 3; r++) {
         // Step: 10..11
-        bf_k_hat[(r + 3) % 4]   = bf256_byte_combine_bits(k[(iwd + 8 * r) / 8]);
-        bf_v_k_hat[(r + 3) % 4] = bf256_byte_combine(vk + (iwd + 8 * r));
-        bf_w_dash_hat[r]        = bf256_byte_combine_bits(w_dash[(32 * j + 8 * r) / 8]);
-        bf_v_w_dash_hat[r]      = bf256_byte_combine(v_w_dash + (32 * j + 8 * r));
+        if (rotate_word) { 
+            bf_k_hat[(r + 3) % 4]   = bf256_byte_combine_bits(k[(iwd + 8 * r) / 8]);
+            bf_v_k_hat[(r + 3) % 4] = bf256_byte_combine(vk + (iwd + 8 * r));
+            bf_w_dash_hat[r]        = bf256_byte_combine_bits(w_dash[(32 * j + 8 * r) / 8]);
+            bf_v_w_dash_hat[r]      = bf256_byte_combine(v_w_dash + (32 * j + 8 * r));
+        } else {
+            bf_k_hat[r]   = bf256_byte_combine_bits(k[(iwd + 8 * r) / 8]);
+            bf_v_k_hat[r] = bf256_byte_combine(vk + (iwd + 8 * r));
+            bf_w_dash_hat[r]        = bf256_byte_combine_bits(w_dash[(32 * j + 8 * r) / 8]);
+            bf_v_w_dash_hat[r]      = bf256_byte_combine(v_w_dash + (32 * j + 8 * r));
+        }
       }
       // Step: 13..17
       for (uint32_t r = 0; r <= 3; r++) {
@@ -1750,6 +1759,9 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
         iwd = iwd + 192;
       } else {
         iwd = iwd + 128;
+        if (lambda == 256) {
+            rotate_word = !rotate_word;
+        }
       }
     }
     free(v_w_dash);
@@ -1774,8 +1786,13 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
     bf256_t bf_q_hat_w_dash[4];
     for (uint32_t r = 0; r <= 3; r++) {
       // Step: 25..26
-      bf_q_hat_k[(r + 3) % 4] = bf256_byte_combine(qk + ((iwd + 8 * r)));
-      bf_q_hat_w_dash[r]      = bf256_byte_combine(q_w_dash + ((32 * j + 8 * r)));
+        if (rotate_word) { 
+          bf_q_hat_k[(r + 3) % 4] = bf256_byte_combine(qk + ((iwd + 8 * r)));
+          bf_q_hat_w_dash[r]      = bf256_byte_combine(q_w_dash + ((32 * j + 8 * r)));
+        } else {
+          bf_q_hat_k[r] = bf256_byte_combine(qk + ((iwd + 8 * r)));
+          bf_q_hat_w_dash[r]      = bf256_byte_combine(q_w_dash + ((32 * j + 8 * r)));
+        }
     }
     // STep: 27
     for (uint32_t r = 0; r <= 3; r++) {
@@ -1786,6 +1803,9 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
       iwd = iwd + 192;
     } else {
       iwd = iwd + 128;
+      if (lambda == 256) {
+          rotate_word = !rotate_word;
+      }
     }
   }
   free(q_w_dash);
