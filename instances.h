@@ -13,6 +13,7 @@ FAEST_BEGIN_C_DECL
 
 #define MAX_LAMBDA 256
 #define MAX_LAMBDA_BYTES (MAX_LAMBDA / 8)
+#define MAX_DEPTH 12
 
 typedef enum faest_paramid_t {
   PARAMETER_SET_INVALID   = 0,
