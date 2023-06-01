@@ -2145,13 +2145,6 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
 
   const unsigned int R = params->cipher_param.numRounds;
 
-  bf128_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf128_zero();
-  } else {
-    bf_delta = bf128_load(delta);
-  }
-
   if (m == 1) {
     // Step: 2
     for (uint32_t j = 0; j < 16; j++) {
