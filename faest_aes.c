@@ -2158,20 +2158,14 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
       bf_y[j] = bf128_add(bf128_byte_combine_bits(z[j]), bf128_byte_combine_bits(x[j]));
     }
 
-    uint32_t i, iy;
-
     for (uint32_t j = 1; j < R; j++) {
-
       for (uint32_t c = 0; c <= 3; c++) {
-
-        i  = 128 * j + 32 * c;
-        iy = 16 * j + 4 * c;
+        unsigned int i  = 128 * j + 32 * c;
+        unsigned int iy = 16 * j + 4 * c;
 
         bf128_t bf_x_hat[4];
         bf128_t bf_z_hat[4];
-
         for (uint32_t r = 0; r <= 3; r++) {
-
           // Step: 12..13
           bf_z_hat[r] = bf128_byte_combine_bits(z[(i + 8 * r) / 8]);
           bf_x_hat[r] = bf128_byte_combine_bits(x[(i + 8 * r) / 8]);
@@ -2271,23 +2265,15 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
     uint8_t z_tilde;
 
     for (uint32_t j = 0; j < R; j++) {
-
       for (uint32_t c = 0; c <= 3; c++) {
-
         for (uint32_t r = 0; r <= 3; r++) {
-
           unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
 
           if (j < (R - 1)) {
-
             z_tilde = z[ird / 8];
-
           } else {
-
             uint8_t z_tilde_out = 0;
-
             for (uint32_t i = 0; i < 8; i++) {
-
               // delta is always \bot if called with m == 1
               // TODO bit splice
               z_tilde_out |= set_bit(get_bit(z_out[(ird - 128 * (R - 1)) / 8], i), i);
@@ -2296,7 +2282,6 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
           }
 
           uint8_t y_tilde = 0;
-
           for (uint32_t i = 0; i < 8; ++i) {
             y_tilde ^= set_bit(get_bit(z_tilde, (i + 7) % 8) ^ get_bit(z_tilde, (i + 5) % 8) ^
                                    get_bit(z_tilde, (i + 2) % 8),
