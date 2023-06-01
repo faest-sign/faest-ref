@@ -290,7 +290,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   {
     H2_context_t h2_ctx_1;
     H2_init(&h2_ctx_1, lambda);
-    H2_update(&h2_ctx_1, chall_1, lambdaBytes);
+    H2_update(&h2_ctx_1, chall_1, (5 * lambdaBytes) + 8);
     H2_update(&h2_ctx_1, signature->u_tilde, utilde_bytes);
     H2_update(&h2_ctx_1, h_v, 2 * lambdaBytes);
     H2_update(&h2_ctx_1, signature->d, ell_bytes);
