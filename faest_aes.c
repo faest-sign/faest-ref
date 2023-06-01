@@ -2276,7 +2276,7 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
             for (uint32_t i = 0; i < 8; i++) {
               // delta is always \bot if called with m == 1
               // TODO bit splice
-              z_tilde_out |= set_bit(get_bit(z_out[(ird - 128 * (R - 1)) / 8], i), i);
+              z_tilde_out |= set_bit(get_bit(z_out[(ird - 128 * j) / 8], i), i);
             }
             z_tilde = z_tilde_out ^ x[(128 + ird) / 8];
           }
