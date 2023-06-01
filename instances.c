@@ -50,22 +50,6 @@ int faest_check_paramset(faest_paramset_t* paramset) {
   return -1;
 }
 
-// keySize, blockSize, numRounds, numSboxes, stateSizeBits, stateSizeBytes, stateSizeWords
-#define AES_128_PARAMS                                                                             \
-  { 16, 16, 10, 200, 128, 16, 4 }
-#define AES_192_PARAMS                                                                             \
-  { 24, 16, 12, 220, 128, 16, 4 }
-#define AES_256_PARAMS                                                                             \
-  { 32, 16, 14, 240, 128, 16, 4 }
-#define AES_EM_128_PARAMS                                                                          \
-  { 16, 16, 10, 200, 128, 16, 4 }
-#define AES_EM_192_PARAMS                                                                          \
-  { 24, 24, 12, 220, 192, 24, 6 }
-#define AES_EM_256_PARAMS                                                                          \
-  { 32, 32, 14, 240, 256, 32, 8 }
-#define AES_INVALID_PARAMS                                                                         \
-  { 0, 0, 0, 0, 0, 0, 0 }
-
 // TODO: Finilize the params in the end
 #define FAEST_128S_PARAMS                                                                          \
   {                                                                                                \
@@ -161,30 +145,33 @@ int faest_check_paramset(faest_paramset_t* paramset) {
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
 static const faest_paramset_t faestInstances[PARAMETER_SET_MAX_INDEX] = {
-    {AES_INVALID_PARAMS, FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
-    {AES_128_PARAMS, FAEST_128S_PARAMS, FAEST_128S},
-    {AES_128_PARAMS, FAEST_128F_PARAMS, FAEST_128F},
-    {AES_192_PARAMS, FAEST_192S_PARAMS, FAEST_192S},
-    {AES_192_PARAMS, FAEST_192F_PARAMS, FAEST_192F},
-    {AES_256_PARAMS, FAEST_256S_PARAMS, FAEST_256S},
-    {AES_256_PARAMS, FAEST_256F_PARAMS, FAEST_256F},
+    {FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
+    {FAEST_128S_PARAMS, FAEST_128S},
+    {FAEST_128F_PARAMS, FAEST_128F},
+    {FAEST_192S_PARAMS, FAEST_192S},
+    {FAEST_192F_PARAMS, FAEST_192F},
+    {FAEST_256S_PARAMS, FAEST_256S},
+    {FAEST_256F_PARAMS, FAEST_256F},
 #if defined(HAVE_EM_128)
-    {AES_EM_128_PARAMS, FAEST_EM_128S_PARAMS, FAEST_EM_128S},
-    {AES_EM_128_PARAMS, FAEST_EM_128F_PARAMS, FAEST_EM_128F},
+    {FAEST_EM_128S_PARAMS, FAEST_EM_128S},
+    {FAEST_EM_128F_PARAMS, FAEST_EM_128F},
+#else
+    {FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
+    {FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
 #endif
 #if defined(HAVE_EM_192)
-    {AES_EM_192_PARAMS, FAEST_EM_192S_PARAMS, FAEST_EM_192S},
-    {AES_EM_192_PARAMS, FAEST_EM_192F_PARAMS, FAEST_EM_192F},
+    {FAEST_EM_192S_PARAMS, FAEST_EM_192S},
+    {FAEST_EM_192F_PARAMS, FAEST_EM_192F},
 #else
-    {AES_INVALID_PARAMS, FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
-    {AES_INVALID_PARAMS, FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
+    {FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
+    {FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
 #endif
 #if defined(HAVE_EM_256)
-    {AES_EM_256_PARAMS, FAEST_EM_256S_PARAMS, FAEST_EM_256S},
-    {AES_EM_256_PARAMS, FAEST_EM_256F_PARAMS, FAEST_EM_256F},
+    {AFAEST_EM_256S_PARAMS, FAEST_EM_256S},
+    {AFAEST_EM_256F_PARAMS, FAEST_EM_256F},
 #else
-    {AES_INVALID_PARAMS, FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
-    {AES_INVALID_PARAMS, FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
+    {FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
+    {FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
 #endif
 };
 
