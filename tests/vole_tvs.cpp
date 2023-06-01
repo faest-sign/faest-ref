@@ -4226,7 +4226,7 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
     const uint32_t depth =
         (i < params.faest_param.t0) ? params.faest_param.k0 : params.faest_param.k1;
     for (unsigned int j = 0; j < depth; ++j, ++bit_index) {
-      chal[bit_index / 8] ^= ((0x42 % (1 << depth)) >> j) << (bit_index % 8);
+      chal[bit_index / 8] ^= (((42 % (1 << depth)) & 1) >> j) << (bit_index % 8);
     }
   }
 
