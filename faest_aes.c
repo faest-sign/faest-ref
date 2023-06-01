@@ -2407,7 +2407,7 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
     free(bf_q_out);
 
     // Step: 13..14
-    bf128_t minus_part = bf128_mul(bf128_load(delta), bf128_load(delta));
+    bf128_t minus_part = bf128_mul(bf_delta, bf_delta);
     for (uint32_t j = 0; j < Senc; j++) {
       B[j] = bf128_add(bf128_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
     }
@@ -2435,7 +2435,6 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   uint8_t* x     = malloc(128 * (R + 1) / 8);
   uint8_t* tmp_x = x;
   for (unsigned int r = 0; r != R; ++r) {
-    const aes_round_key_t* rk = &round_keys.round_keys[r];
     // FIXME: 4 -> num key words
     for (unsigned int i = 0; i != 4; ++i) {
       memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
@@ -2505,7 +2504,6 @@ static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   uint8_t* x     = malloc(128 * (R + 1) / 8);
   uint8_t* tmp_x = x;
   for (unsigned int r = 0; r != R; ++r) {
-    const aes_round_key_t* rk = &round_keys.round_keys[r];
     // FIXME: 4 -> num key words
     for (unsigned int i = 0; i != 4; ++i) {
       memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
@@ -2513,7 +2511,7 @@ static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
     }
   }
 
-  const unsigned int length_b = Ske + (beta * Senc) + 1;
+  const unsigned int length_b = Senc + 1;
   bf128_t* B                  = malloc(sizeof(bf128_t) * length_b);
 
   em_enc_constraints_128(out, x, NULL, NULL, 1, bf_q, delta, NULL, NULL, B, params);
@@ -2543,6 +2541,7 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
       aes_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde, params);
     } else {
       // TODO: EM variant
+      assert(false);
     }
     break;
   case 192:
@@ -2550,6 +2549,7 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
       aes_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde, params);
     } else {
       // TOD: EM variant
+      assert(false);
     }
     break;
   default:
@@ -2570,6 +2570,7 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
       return aes_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     } else {
       // TODO: EM variant
+      assert(false);
       return NULL;
     }
   case 192:
@@ -2577,6 +2578,7 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
       return aes_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     } else {
       // TODO: EM variant
+      assert(false);
       return NULL;
     }
   default:
