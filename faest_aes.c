@@ -2211,28 +2211,27 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
 
   // Step: 2
   for (uint32_t j = 0; j < 16; j++) {
-    // x is always 0
     bf_y[j] = bf128_byte_combine(bf_z + 8 * j);
+    if (bf_x) {
+      bf_y[j] = bf128_add(bf_y[j], bf128_byte_combine(bf_x + 8 * j));
+    }
   }
 
-  uint32_t i, iy;
-
   for (uint32_t j = 1; j < R; j++) {
-
     for (uint32_t c = 0; c <= 3; c++) {
-
-      i  = 128 * j + 32 * c;
-      iy = 16 * j + 4 * c;
+      unsigned int i  = 128 * j + 32 * c;
+      unsigned int iy = 16 * j + 4 * c;
 
       bf128_t bf_x_hat[4];
       bf128_t bf_z_hat[4];
-
       for (uint32_t r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_z_hat[r] = bf128_byte_combine(bf_z + (i + 8 * r));
-        // x is always zer0
-        // bf_x_hat[r] = bf128_byte_combine(bf_x + (i + 8 * r));
-        bf_x_hat[r] = bf128_zero();
+        if (bf_x) {
+          bf_x_hat[r] = bf128_byte_combine(bf_x + (i + 8 * r));
+        } else {
+          bf_x_hat[r] = bf128_zero();
+        }
       }
 
       bf128_t bf_one   = bf128_one();
@@ -2341,8 +2340,10 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
           for (uint32_t i = 0; i < 8; ++i) {
             bf_z_tilde_out[i] = bf_z_out[ird - 128 * j + i];
             // Step: 12
-            // x is always 0
             bf_z_tilde[i] = bf_z_tilde_out[i];
+            if (bf_x) {
+              bf_z_tilde[i] = bf128_add(bf_z_tilde[i], bf_x[128 + ird + i]);
+            }
           }
         }
 
