@@ -2383,6 +2383,7 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
     free(bf_s_dash);
     free(bf_vs);
     free(bf_s);
+    free(w_out);
   } else {
     // Step: 18, 19
     const bf128_t bf_delta = bf128_load(delta);
@@ -2400,10 +2401,10 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
 
     bf128_t* bf_qs      = malloc(sizeof(bf128_t) * Senc);
     bf128_t* bf_qs_dash = malloc(sizeof(bf128_t) * Senc);
-
     em_enc_forward_128(lambda, NULL, bf_q, NULL, bf_x, 0, 1, delta, bf_qs, params);
     em_enc_backward_128(lambda, NULL, bf_q, NULL, bf_x, NULL, bf_q_out, 0, 1, delta, bf_qs_dash,
                         params);
+    free(bf_q_out);
 
     // Step: 13..14
     bf128_t minus_part = bf128_mul(bf128_load(delta), bf128_load(delta));
@@ -2435,7 +2436,7 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   uint8_t* tmp_x = x;
   for (unsigned int r = 0; r != R; ++r) {
     const aes_round_key_t* rk = &round_keys.round_keys[r];
-    // FIXME
+    // FIXME: 4 -> num key words
     for (unsigned int i = 0; i != 4; ++i) {
       memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
       tmp_x += sizeof(aes_word_t);
@@ -2448,6 +2449,7 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   bf128_t* A0                 = malloc(sizeof(bf128_t) * length_a);
   bf128_t* A1                 = malloc(sizeof(bf128_t) * length_a);
   em_enc_constraints_128(out, x, w, bf_v, 0, NULL, NULL, A0, A1, NULL, params);
+  free(x);
 
   A1[length_a - 1] = bf128_load(u + Lenc / 8);
   A0[length_a - 1] = bf128_sum_poly(bf_v + Lenc);
@@ -2481,17 +2483,12 @@ static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   const uint8_t* delta = chall_3;
 
   for (uint32_t i = 0, col = 0; i < tau; i++) {
-
     unsigned int depth = i < t0 ? k0 : k1;
 
     uint8_t* fancy_d = malloc(depth);
-
     ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
-
     for (uint32_t j = 0; j < depth; j++, ++col) {
-
       if (fancy_d[j] == 1) {
-
         xorUint8Arr(d, Q[col], Q[col], (l + 7) / 8);
       }
     }
@@ -2501,15 +2498,26 @@ static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
 
   bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, Lenc);
 
-  aes_round_keys_t* x = malloc(sizeof(aes_round_keys_t));
-  expand_key(x, in, 4, 4, 10);
-  uint8_t* k = malloc(sizeof(aes_round_keys_t));
-  memcpy(k, x, sizeof(aes_round_keys_t));
+  aes_round_keys_t round_keys;
+  aes128_init_round_keys(&round_keys, in);
+
+  // fix size
+  uint8_t* x     = malloc(128 * (R + 1) / 8);
+  uint8_t* tmp_x = x;
+  for (unsigned int r = 0; r != R; ++r) {
+    const aes_round_key_t* rk = &round_keys.round_keys[r];
+    // FIXME: 4 -> num key words
+    for (unsigned int i = 0; i != 4; ++i) {
+      memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
+      tmp_x += sizeof(aes_word_t);
+    }
+  }
 
   const unsigned int length_b = Ske + (beta * Senc) + 1;
   bf128_t* B                  = malloc(sizeof(bf128_t) * length_b);
 
-  em_enc_constraints_128(out, k, NULL, NULL, 1, bf_q, delta, NULL, NULL, B, params);
+  em_enc_constraints_128(out, x, NULL, NULL, 1, bf_q, delta, NULL, NULL, B, params);
+  free(x);
 
   B[length_b - 1] = bf128_sum_poly(bf_q + l);
   free(bf_q);
