@@ -1,7 +1,6 @@
 
 #include <algorithm>
 #include <array>
-#include <boost/io/ios_state.hpp>
 #include <cstdint>
 #include <fstream>
 #include <iomanip>
@@ -22,9 +21,10 @@ extern "C" {
 namespace {
   template <typename Iterator>
   void print_hex(std::ostream& os, Iterator begin, Iterator end) {
-    boost::io::ios_flags_saver ifs{os};
+    std::ios_base::fmtflags flags{os.flags()};
     os << std::hex << std::setfill('0');
     std::for_each(begin, end, [&](unsigned int c) { os << std::setw(2) << c; });
+    os.flags(flags);
   }
 
   constexpr size_t num_tvs = 100;
