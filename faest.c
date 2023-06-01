@@ -140,9 +140,9 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   }
 
   // Step: 19..21
-  uint8_t* s_ = malloc(MAX(params->faest_param.k0, params->faest_param.k1));
   for (uint32_t i = 0; i < tau; i++) {
     // Step 20
+    uint8_t s_[MAX_DEPTH];
     ChalDec(signature->chall_3, i, params->faest_param.k0, params->faest_param.t0,
             params->faest_param.k1, params->faest_param.t1, s_);
     // Step 21
@@ -152,8 +152,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
                 num_vole_instances, lambdaBytes);
     vec_com_clear(&vecCom[i]);
   }
-  free(s_);
-  s_ = NULL;
   free(vecCom);
   vecCom = NULL;
 }
@@ -225,13 +223,13 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     Dtilde[i] = Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B);
   }
 
-  uint8_t delta[MAX_DEPTH];
   unsigned int Dtilde_idx = 0;
   unsigned int q_idx      = 0;
   for (uint32_t i = 0; i < tau; i++) {
     const unsigned int depth = i < tau0 ? k0 : k1;
 
     // Step 11
+    uint8_t delta[MAX_DEPTH];
     ChalDec(signature->chall_3, i, params->faest_param.k0, params->faest_param.t0,
             params->faest_param.k1, params->faest_param.t1, delta);
     // Step 16

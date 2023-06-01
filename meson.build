@@ -75,8 +75,6 @@ conf_data.set('HAVE_TIMINGSAFE_BCMP', cc.has_header_symbol('string.h', 'timingsa
 # After changing the parameter sets, be sure to run crypto_sign_generator.py to create the corresponding meson files.
 parameter_sets = []
 
-# TODO: Are the other params same in EM mode (table.1)?
-
 # parameter set: FAEST-128s
 param_128s = configuration_data()
 param_128s.set('PARAM', '128S')

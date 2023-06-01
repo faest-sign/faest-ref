@@ -110,7 +110,6 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
   uint8_t* sd = malloc((1 << MAX(k0, k1)) * lambdaBytes);
   memset(sd, 0, lambdaBytes);
 
-  uint8_t* chalout   = malloc(MAX(k0, k1));
   uint8_t* tmp_q     = malloc(ellhatBytes * MAX(k0, k1));
   unsigned int q_idx = 0;
 
@@ -131,6 +130,7 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
     uint32_t N     = 1 << depth;
 
     // Step 3
+    uint8_t chalout[MAX_DEPTH];
     ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
     // Step 4
     uint32_t idx = NumRec(depth, chalout);
@@ -157,7 +157,6 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, ui
   }
   vec_com_rec_clear(&vecComRec);
   free(tmp_q);
-  free(chalout);
   free(sd);
 
   // Step: 9
