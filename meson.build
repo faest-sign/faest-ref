@@ -7,7 +7,6 @@ project('faest-ref', ['c', 'cpp'],
     'warning_level=3',
     'b_lto=true',
     'b_ndebug=if-release',
-    'b_sanitize=address',
   ],
 )
 
@@ -128,55 +127,59 @@ param_128f.set('PK_SIZE', 32)
 param_128f.set('SK_SIZE', 16)
 parameter_sets += param_128f
 
-# parameter set: FAEST-EM-128s
-param_em_128s = configuration_data()
-param_em_128s.set('PARAM', 'EM_128S')
-param_em_128s.set('PARAM_L', 'em_128s')
-param_em_128s.set('LAMBDA', 128)
-param_em_128s.set('Nwd', 4)
-param_em_128s.set('Ske', 0)
-param_em_128s.set('R', 10)
-param_em_128s.set('Senc', 160)
-param_em_128s.set('BETA', 1)
-param_em_128s.set('L', 1408)
-param_em_128s.set('Lke', 0)
-param_em_128s.set('Lenc', 1280)
-param_em_128s.set('C', 200)
-param_em_128s.set('TAU', 11)
-param_em_128s.set('K0', 12)
-param_em_128s.set('K1', 11)
-param_em_128s.set('T0', 7)
-param_em_128s.set('T1', 4)
-param_em_128s.set('B', 16)
-param_em_128s.set('SIG_SIZE', 4566)
-param_em_128s.set('PK_SIZE', 32)
-param_em_128s.set('SK_SIZE', 16)
-parameter_sets += param_em_128s
+if get_option('EM-128').enabled()
+  defines += ['-DHAVE_EM_128']
 
-# parameter set: FAEST-EM-128f
-param_em_128f = configuration_data()
-param_em_128f.set('PARAM', 'EM_128F')
-param_em_128f.set('PARAM_L', 'em_128f')
-param_em_128f.set('LAMBDA', 128)
-param_em_128f.set('Nwd', 4)
-param_em_128f.set('Ske', 0)
-param_em_128f.set('R', 10)
-param_em_128f.set('Senc', 160)
-param_em_128f.set('BETA', 1)
-param_em_128f.set('L', 1408)
-param_em_128f.set('Lke', 0)
-param_em_128f.set('Lenc', 1280)
-param_em_128f.set('C', 200)
-param_em_128f.set('TAU', 16)
-param_em_128f.set('K0', 8)
-param_em_128f.set('K1', 8)
-param_em_128f.set('T0', 0)
-param_em_128f.set('T1', 16)
-param_em_128f.set('B', 16)
-param_em_128f.set('SIG_SIZE', 5696)
-param_em_128f.set('PK_SIZE', 32)
-param_em_128f.set('SK_SIZE', 16)
-parameter_sets += param_em_128f
+  # parameter set: FAEST-EM-128s
+  param_em_128s = configuration_data()
+  param_em_128s.set('PARAM', 'EM_128S')
+  param_em_128s.set('PARAM_L', 'em_128s')
+  param_em_128s.set('LAMBDA', 128)
+  param_em_128s.set('Nwd', 4)
+  param_em_128s.set('Ske', 0)
+  param_em_128s.set('R', 10)
+  param_em_128s.set('Senc', 160)
+  param_em_128s.set('BETA', 1)
+  param_em_128s.set('L', 1408)
+  param_em_128s.set('Lke', 0)
+  param_em_128s.set('Lenc', 1280)
+  param_em_128s.set('C', 200)
+  param_em_128s.set('TAU', 11)
+  param_em_128s.set('K0', 12)
+  param_em_128s.set('K1', 11)
+  param_em_128s.set('T0', 7)
+  param_em_128s.set('T1', 4)
+  param_em_128s.set('B', 16)
+  param_em_128s.set('SIG_SIZE', 4566)
+  param_em_128s.set('PK_SIZE', 32)
+  param_em_128s.set('SK_SIZE', 16)
+  parameter_sets += param_em_128s
+
+  # parameter set: FAEST-EM-128f
+  param_em_128f = configuration_data()
+  param_em_128f.set('PARAM', 'EM_128F')
+  param_em_128f.set('PARAM_L', 'em_128f')
+  param_em_128f.set('LAMBDA', 128)
+  param_em_128f.set('Nwd', 4)
+  param_em_128f.set('Ske', 0)
+  param_em_128f.set('R', 10)
+  param_em_128f.set('Senc', 160)
+  param_em_128f.set('BETA', 1)
+  param_em_128f.set('L', 1408)
+  param_em_128f.set('Lke', 0)
+  param_em_128f.set('Lenc', 1280)
+  param_em_128f.set('C', 200)
+  param_em_128f.set('TAU', 16)
+  param_em_128f.set('K0', 8)
+  param_em_128f.set('K1', 8)
+  param_em_128f.set('T0', 0)
+  param_em_128f.set('T1', 16)
+  param_em_128f.set('B', 16)
+  param_em_128f.set('SIG_SIZE', 5696)
+  param_em_128f.set('PK_SIZE', 32)
+  param_em_128f.set('SK_SIZE', 16)
+  parameter_sets += param_em_128f
+endif
 
 # parameter set: FAEST-192s
 param_192s = configuration_data()
