@@ -57,7 +57,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   }
 
   // Step: 3
-  uint8_t hcom[MAX_LAMBDA_BYTES];
+  uint8_t hcom[MAX_LAMBDA_BYTES * 2];
   vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
   uint8_t* u        = malloc(ell_hat_bytes);
   // v has \hat \ell rows, \lambda columns, storing in column-major order
