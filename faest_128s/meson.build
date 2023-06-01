@@ -29,7 +29,7 @@ libfaest_128s_dependency = declare_dependency(
 )
 if openssl.found()
   tv_sources = files(join_paths(meson.project_source_root(), 'tools', 'rng.c'), join_paths(meson.project_source_root(), 'tools', 'PQCgenKAT_sign.cpp'))
-  test_vector_generator = executable('feast_128s_test_vectors', [sources] + faest_sources + tv_sources,
+  test_vector_generator = executable('faest_128s_test_vectors', [sources] + faest_sources + tv_sources,
     dependencies: [openssl],
     include_directories: include_directories,
     c_args: defines + c_flags + ['-DHAVE_RANDOMBYTES'],
@@ -38,7 +38,7 @@ if openssl.found()
 endif
 if boost_program_options.found()
   bench_sources = files(join_paths(meson.project_source_root(), 'tools', 'bench.cpp'))
-  bench = executable('feast_128s_bench', bench_sources,
+  bench = executable('faest_128s_bench', bench_sources,
     dependencies: [libfaest_128s_dependency, boost_program_options],
     include_directories: include_directories,
     c_args: defines + c_flags,
@@ -72,7 +72,7 @@ bench_sources = files(
   join_paths(meson.project_source_root(), 'tools', 'bench_c2.cpp'),
   join_paths(meson.project_source_root(), 'catch2', 'extras', 'catch_amalgamated.cpp'),
 )
-bench_catch = executable('feast_128s_bench_c2', bench_sources,
+bench_catch = executable('faest_128s_bench_c2', bench_sources,
   dependencies: [libfaest_128s_dependency, boost_program_options],
   include_directories: include_directories + [include_directories(join_paths('..', 'catch2', 'extras'))],
   c_args: defines + c_flags,
