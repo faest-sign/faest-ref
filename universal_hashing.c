@@ -161,7 +161,7 @@ void zk_hash_128(uint8_t* h, const uint8_t* sd, const bf128_t* x, unsigned int e
   bf128_t h0        = bf128_zero();
   bf128_t h1        = bf128_zero();
   for (unsigned int i = 0; i != ell;
-       ++i, running_s = bf128_mul(running_s, b_s), running_s = bf128_mul(running_t, b_t)) {
+       ++i, running_s = bf128_mul(running_s, b_s), running_t = bf128_mul(running_t, b_t)) {
     h0 = bf128_add(h0, bf128_mul(running_s, x[ell - 1 - i]));
     h1 = bf128_add(h1, bf128_mul(running_t, x[ell - 1 - i]));
   }
@@ -184,7 +184,7 @@ void zk_hash_192(uint8_t* h, const uint8_t* sd, const bf192_t* x, unsigned int e
   bf192_t h0        = bf192_zero();
   bf192_t h1        = bf192_zero();
   for (unsigned int i = 0; i != ell;
-       ++i, running_s = bf192_mul(running_s, b_s), running_s = bf192_mul(running_t, b_t)) {
+       ++i, running_s = bf192_mul(running_s, b_s), running_t = bf192_mul(running_t, b_t)) {
     h0 = bf192_add(h0, bf192_mul(running_s, x[ell - 1 - i]));
     h1 = bf192_add(h1, bf192_mul(running_t, x[ell - 1 - i]));
   }
@@ -207,7 +207,7 @@ void zk_hash_256(uint8_t* h, const uint8_t* sd, const bf256_t* x, unsigned int e
   bf256_t h0        = bf256_zero();
   bf256_t h1        = bf256_zero();
   for (unsigned int i = 0; i != ell;
-       ++i, running_s = bf256_mul(running_s, b_s), running_s = bf256_mul(running_t, b_t)) {
+       ++i, running_s = bf256_mul(running_s, b_s), running_t = bf256_mul(running_t, b_t)) {
     h0 = bf256_add(h0, bf256_mul(running_s, x[ell - 1 - i]));
     h1 = bf256_add(h1, bf256_mul(running_t, x[ell - 1 - i]));
   }
