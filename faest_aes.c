@@ -209,12 +209,7 @@ static void aes_key_schedule_backward_128(uint32_t m, const uint8_t* x, const bf
     return;
   }
 
-  bf128_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf128_zero();
-  } else {
-    bf_delta = bf128_load(delta);
-  }
+  const bf128_t bf_delta = delta ? bf128_load(delta) : bf128_zero();
 
   uint32_t iwd   = 0;
   uint32_t c     = 0;
@@ -381,13 +376,6 @@ static void aes_enc_forward_128(uint32_t m, const uint8_t* x, const bf128_t* bf_
                                 const faest_paramset_t* params) {
   const unsigned int R = params->cipher_param.numRounds;
 
-  bf128_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf128_zero();
-  } else {
-    bf_delta = bf128_load(delta);
-  }
-
   if (m == 1) {
     // Step: 2
     for (uint32_t i = 0; i < 16; i++) {
@@ -445,9 +433,10 @@ static void aes_enc_forward_128(uint32_t m, const uint8_t* x, const bf128_t* bf_
     return;
   }
 
-  bf128_t bf_minus_mtag = bf128_from_bit(1 ^ Mtag);
-  bf128_t bf_minus_mkey = bf128_from_bit(1 ^ Mkey);
-  bf128_t bf_mkey       = bf128_from_bit(Mkey);
+  const bf128_t bf_delta      = delta ? bf128_load(delta) : bf128_zero();
+  const bf128_t bf_minus_mtag = bf128_from_bit(1 ^ Mtag);
+  const bf128_t bf_minus_mkey = bf128_from_bit(1 ^ Mkey);
+  const bf128_t bf_mkey       = bf128_from_bit(Mkey);
 
   // Step: 2..4
   for (uint32_t i = 0; i < 16; i++) {
@@ -550,13 +539,7 @@ static void aes_enc_backward_128(uint32_t m, const uint8_t* x, const bf128_t* bf
   }
 
   // Step: 1
-  bf128_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf128_zero();
-  } else {
-    bf_delta = bf128_load(delta);
-  }
-
+  const bf128_t bf_delta = delta ? bf128_load(delta) : bf128_zero();
   const bf128_t factor =
       bf128_mul(bf128_from_bit(1 ^ Mtag),
                 bf128_add(bf128_mul(bf128_from_bit(Mkey), bf_delta), bf128_from_bit(1 ^ Mkey)));
@@ -913,17 +896,11 @@ static void aes_key_schedule_backward_192(uint32_t m, const uint8_t* x, const bf
     return;
   }
 
-  bf192_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf192_zero();
-  } else {
-    bf_delta = bf192_load(delta);
-  }
-
-  uint32_t iwd   = 0;
-  uint32_t c     = 0;
-  bool rmvRcon   = true;
-  uint32_t ircon = 0;
+  const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
+  uint32_t iwd           = 0;
+  uint32_t c             = 0;
+  bool rmvRcon           = true;
+  uint32_t ircon         = 0;
 
   bf192_t bf_mkey             = bf192_from_bit(Mkey);
   bf192_t bf_minus_mkey       = bf192_from_bit(1 ^ Mkey);
@@ -1086,13 +1063,6 @@ static void aes_enc_forward_192(uint32_t m, const uint8_t* x, const bf192_t* bf_
                                 const faest_paramset_t* params) {
   const unsigned int R = params->cipher_param.numRounds;
 
-  bf192_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf192_zero();
-  } else {
-    bf_delta = bf192_load(delta);
-  }
-
   if (m == 1) {
     // Step: 2
     for (uint32_t i = 0; i < 16; i++) {
@@ -1150,9 +1120,10 @@ static void aes_enc_forward_192(uint32_t m, const uint8_t* x, const bf192_t* bf_
     return;
   }
 
-  bf192_t bf_minus_mtag = bf192_from_bit(1 ^ Mtag);
-  bf192_t bf_minus_mkey = bf192_from_bit(1 ^ Mkey);
-  bf192_t bf_mkey       = bf192_from_bit(Mkey);
+  const bf192_t bf_delta      = delta ? bf192_load(delta) : bf192_zero();
+  const bf192_t bf_minus_mtag = bf192_from_bit(1 ^ Mtag);
+  const bf192_t bf_minus_mkey = bf192_from_bit(1 ^ Mkey);
+  const bf192_t bf_mkey       = bf192_from_bit(Mkey);
 
   // Step: 2..4
   for (uint32_t i = 0; i < 16; i++) {
@@ -1255,13 +1226,7 @@ static void aes_enc_backward_192(uint32_t m, const uint8_t* x, const bf192_t* bf
   }
 
   // Step: 1
-  bf192_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf192_zero();
-  } else {
-    bf_delta = bf192_load(delta);
-  }
-
+  const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
   const bf192_t factor =
       bf192_mul(bf192_from_bit(1 ^ Mtag),
                 bf192_add(bf192_mul(bf192_from_bit(Mkey), bf_delta), bf192_from_bit(1 ^ Mkey)));
@@ -1621,21 +1586,15 @@ static void aes_key_schedule_backward_256(uint32_t m, const uint8_t* x, const bf
     return;
   }
 
-  bf256_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf256_zero();
-  } else {
-    bf_delta = bf256_load(delta);
-  }
-
   uint32_t iwd   = 0;
   uint32_t c     = 0;
   bool rmvRcon   = true;
   uint32_t ircon = 0;
 
-  bf256_t bf_mkey             = bf256_from_bit(Mkey);
-  bf256_t bf_minus_mkey       = bf256_from_bit(1 ^ Mkey);
-  bf256_t bf_minus_mtag       = bf256_from_bit(1 ^ Mtag);
+  const bf256_t bf_delta      = delta ? bf256_load(delta) : bf256_zero();
+  const bf256_t bf_mkey       = bf256_from_bit(Mkey);
+  const bf256_t bf_minus_mkey = bf256_from_bit(1 ^ Mkey);
+  const bf256_t bf_minus_mtag = bf256_from_bit(1 ^ Mtag);
   bf256_t bf_mkey_times_delta = bf256_mul(bf_mkey, bf_delta);
   bf_mkey_times_delta         = bf256_add(bf_mkey_times_delta, bf_minus_mkey);
 
@@ -1814,13 +1773,6 @@ static void aes_enc_forward_256(uint32_t m, const uint8_t* x, const bf256_t* bf_
                                 const faest_paramset_t* params) {
   const unsigned int R = params->cipher_param.numRounds;
 
-  bf256_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf256_zero();
-  } else {
-    bf_delta = bf256_load(delta);
-  }
-
   if (m == 1) {
     // Step: 2
     for (uint32_t i = 0; i < 16; i++) {
@@ -1878,9 +1830,10 @@ static void aes_enc_forward_256(uint32_t m, const uint8_t* x, const bf256_t* bf_
     return;
   }
 
-  bf256_t bf_minus_mtag = bf256_from_bit(1 ^ Mtag);
-  bf256_t bf_minus_mkey = bf256_from_bit(1 ^ Mkey);
-  bf256_t bf_mkey       = bf256_from_bit(Mkey);
+  const bf256_t bf_delta      = delta ? bf256_load(delta) : bf256_zero();
+  const bf256_t bf_minus_mtag = bf256_from_bit(1 ^ Mtag);
+  const bf256_t bf_minus_mkey = bf256_from_bit(1 ^ Mkey);
+  const bf256_t bf_mkey       = bf256_from_bit(Mkey);
 
   // Step: 2..4
   for (uint32_t i = 0; i < 16; i++) {
@@ -1983,13 +1936,7 @@ static void aes_enc_backward_256(uint32_t m, const uint8_t* x, const bf256_t* bf
   }
 
   // Step: 1
-  bf256_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf256_zero();
-  } else {
-    bf_delta = bf256_load(delta);
-  }
-
+  const bf256_t bf_delta = delta ? bf256_load(delta) : bf256_zero();
   const bf256_t factor =
       bf256_mul(bf256_from_bit(1 ^ Mtag),
                 bf256_add(bf256_mul(bf256_from_bit(Mkey), bf_delta), bf256_from_bit(1 ^ Mkey)));
