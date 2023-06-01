@@ -35,8 +35,7 @@ void maskedXorUint8Arr(const uint8_t* a, const uint8_t* b, uint8_t* out, uint8_t
   }
 }
 
-// TODO: hopefully takes care of the endianness
 uint8_t getBit(const uint8_t* src, uint32_t idx) {
   // return (*src & (1 << (7 - idx))) >> (7 - idx);
-  return (*src >> (7 - idx)) & 1;
+  return (*src >> idx) & 1;
 }
