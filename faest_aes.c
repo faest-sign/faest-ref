@@ -2472,24 +2472,25 @@ static uint8_t* em_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   return q_tilde;
 }
 
-// EM-129
+// EM-192
 
 static void em_enc_forward_192(uint32_t m, const uint8_t* z, const bf192_t* bf_z, const uint8_t* x,
                                const bf192_t* bf_x, uint8_t FAEST_UNUSED(Mtag),
                                uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta),
                                bf192_t* bf_y, const faest_paramset_t* params) {
-  const unsigned int R = params->faest_param.R;
+  const unsigned int R   = params->faest_param.R;
+  const unsigned int Nst = params->faest_param.Nwd;
 
   if (m == 1) {
     // Step: 2
-    for (uint32_t j = 0; j < 16; j++) {
+    for (uint32_t j = 0; j < 4 * Nst; j++) {
       bf_y[j] = bf192_add(bf192_byte_combine_bits(z[j]), bf192_byte_combine_bits(x[j]));
     }
 
     for (uint32_t j = 1; j < R; j++) {
-      for (uint32_t c = 0; c <= 3; c++) {
-        unsigned int i  = 128 * j + 32 * c;
-        unsigned int iy = 16 * j + 4 * c;
+      for (uint32_t c = 0; c < Nst; c++) {
+        unsigned int i  = 32 * Nst * j + 32 * c;
+        unsigned int iy = 4 * Nst * j + 4 * c;
 
         bf192_t bf_x_hat[4];
         bf192_t bf_z_hat[4];
@@ -2528,7 +2529,7 @@ static void em_enc_forward_192(uint32_t m, const uint8_t* z, const bf192_t* bf_z
   }
 
   // Step: 2
-  for (uint32_t j = 0; j < 16; j++) {
+  for (uint32_t j = 0; j < 4 * Nst; j++) {
     bf_y[j] = bf192_byte_combine(bf_z + 8 * j);
     if (bf_x) {
       bf_y[j] = bf192_add(bf_y[j], bf192_byte_combine(bf_x + 8 * j));
@@ -2536,9 +2537,9 @@ static void em_enc_forward_192(uint32_t m, const uint8_t* z, const bf192_t* bf_z
   }
 
   for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      unsigned int i  = 128 * j + 32 * c;
-      unsigned int iy = 16 * j + 4 * c;
+    for (uint32_t c = 0; c < Nst; c++) {
+      unsigned int i  = 32 * Nst * j + 32 * c;
+      unsigned int iy = 4 * Nst * j + 4 * c;
 
       bf192_t bf_x_hat[4];
       bf192_t bf_z_hat[4];
