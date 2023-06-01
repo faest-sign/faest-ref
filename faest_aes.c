@@ -2369,6 +2369,7 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
     }
     free(bf_qs);
     free(bf_qs_dash);
+    free(bf_x);
   }
 }
 
