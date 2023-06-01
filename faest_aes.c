@@ -2228,18 +2228,18 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
     for (uint32_t j = 0; j < R; j++) {
       for (uint32_t c = 0; c <= 3; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
-          unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+          unsigned int ird = 128 + (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
           uint8_t z_tilde  = 0;
           if (j < (R - 1)) {
             z_tilde = z[ird / 8];
           } else {
-            uint8_t z_tilde_out = 0;
-            for (uint32_t i = 0; i < 8; i++) {
-              // delta is always \bot if called with m == 1
-              // TODO bit splice
-              z_tilde_out |= set_bit(get_bit(z_out[(ird - 128 * j) / 8], i), i);
-            }
-            z_tilde = z_tilde_out ^ x[(128 + ird) / 8];
+            // uint8_t z_tilde_out = 0;
+            // for (uint32_t i = 0; i < 8; i++) {
+            // delta is always \bot if called with m == 1
+            // TODO bit splice
+            // z_tilde_out |= set_bit(get_bit(z_out[(ird - 128 * j) / 8], i), i);
+            // }
+            z_tilde = z_out[(ird - 128 * (j + 1)) / 8] ^ x[(128 + ird - 128) / 8];
           }
 
           uint8_t y_tilde = 0;
@@ -2270,7 +2270,7 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
     for (uint32_t c = 0; c <= 3; c++) {
       for (uint32_t r = 0; r <= 3; r++) {
         bf128_t bf_z_tilde[8];
-        unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+        unsigned int ird = 128 + (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
 
         if (j < (R - 1)) {
           // TODO: memcpy
@@ -2280,11 +2280,11 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
         } else {
           bf128_t bf_z_tilde_out[8];
           for (uint32_t i = 0; i < 8; ++i) {
-            bf_z_tilde_out[i] = bf_z_out[ird - 128 * j + i];
+            bf_z_tilde_out[i] = bf_z_out[ird - 128 * (j + 1) + i];
             // Step: 12
             bf_z_tilde[i] = bf_z_tilde_out[i];
             if (bf_x) {
-              bf_z_tilde[i] = bf128_add(bf_z_tilde[i], bf_x[128 + ird + i]);
+              bf_z_tilde[i] = bf128_add(bf_z_tilde[i], bf_x[ird + i]);
             }
           }
         }
