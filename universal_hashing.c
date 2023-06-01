@@ -23,10 +23,10 @@ static bf64_t compute_h1(const uint8_t* t, const uint8_t* x, unsigned int lambda
   uint8_t tmp[MAX_LAMBDA_BYTES] = {0};
   memcpy(tmp, x + (length_lambda - 1) * lambdaBytes,
          (ell + lambda) % lambda == 0 ? lambdaBytes : ((ell + lambda) % lambda) / 8);
-  bf64_t h1 = bf64_load(tmp);
 
+  bf64_t h1 = bf64_zero();
   bf64_t running_t = bf64_one();
-  unsigned int i;
+  unsigned int i = 0;
   for (; i < lambdaBytes; i += 8, running_t = bf64_mul(running_t, b_t)) {
     h1 = bf64_add(h1, bf64_mul(running_t, bf64_load(tmp + (lambdaBytes - i - 8))));
   }
