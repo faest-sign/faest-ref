@@ -43,8 +43,7 @@ static bf128_t* column_to_row_major_and_shrink_V_128(uint8_t** v, unsigned int e
   // rows and \lambda columns storing in row-major order
   bf128_t* new_v = malloc((ell + sizeof(bf128_t) * 8) * sizeof(bf128_t));
   for (unsigned int row = 0; row != ell + sizeof(bf128_t) * 8; ++row) {
-    uint8_t new_row[sizeof(bf128_t)];
-    memset(new_row, 0, sizeof(new_row));
+    uint8_t new_row[sizeof(bf128_t)] = {0};
     for (unsigned int column = 0; column != sizeof(bf128_t) * 8; ++column) {
       ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
     }
@@ -60,8 +59,7 @@ static bf192_t* column_to_row_major_and_shrink_V_192(uint8_t** v, unsigned int e
   // rows and \lambda columns storing in row-major order
   bf192_t* new_v = malloc((ell + sizeof(bf192_t) * 8) * sizeof(bf192_t));
   for (unsigned int row = 0; row != ell + sizeof(bf192_t) * 8; ++row) {
-    uint8_t new_row[sizeof(bf192_t)];
-    memset(new_row, 0, sizeof(new_row));
+    uint8_t new_row[sizeof(bf192_t)] = {0};
     for (unsigned int column = 0; column != sizeof(bf192_t) * 8; ++column) {
       ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
     }
@@ -77,8 +75,7 @@ static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int e
   // rows and \lambda columns storing in row-major order
   bf256_t* new_v = malloc((ell + sizeof(bf256_t) * 8) * sizeof(bf256_t));
   for (unsigned int row = 0; row != ell + sizeof(bf256_t) * 8; ++row) {
-    uint8_t new_row[sizeof(bf256_t)];
-    memset(new_row, 0, sizeof(new_row));
+    uint8_t new_row[sizeof(bf256_t)] = {0};
     for (unsigned int column = 0; column != sizeof(bf256_t) * 8; ++column) {
       ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
     }
