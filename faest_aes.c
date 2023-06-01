@@ -2350,6 +2350,114 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const uint8_t* x, c
   }
 }
 
+static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z, const uint8_t* x,
+                                const bf128_t* bf_x, uint8_t Mtag, uint8_t Mkey,
+                                const uint8_t* delta, const uint8_t* z_out, bf128_t* y_out,
+                                const faest_paramset_t* params) {
+  const unsigned int R = params->cipher_param.numRounds;
+
+  if (m == 1) {
+    uint8_t z_tilde;
+
+    for (uint32_t j = 0; j < R; j++) {
+
+      for (uint32_t c = 0; c <= 3; c++) {
+
+        for (uint32_t r = 0; r <= 3; r++) {
+
+          unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+
+          if (j < (R - 1)) {
+
+            z_tilde = z[ird / 8];
+
+          } else {
+
+            uint8_t z_tilde_out = 0;
+
+            for (uint32_t i = 0; i < 8; i++) {
+
+              // delta is always \bot if called with m == 1
+              // TODO bit splice
+              z_tilde_out |= set_bit(get_bit(z_out[(ird - 128 * (R - 1)) / 8], i), i);
+            }
+            z_tilde = z_tilde_out ^ x[(128 + ird) / 8];
+          }
+
+          uint8_t y_tilde = 0;
+
+          for (uint32_t i = 0; i < 8; ++i) {
+            y_tilde ^= set_bit(get_bit(z_tilde, (i + 7) % 8) ^ get_bit(z_tilde, (i + 5) % 8) ^
+                                   get_bit(z_tilde, (i + 2) % 8),
+                               i);
+          }
+          y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
+          y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
+
+          // Step: 18
+          y_out[16 * j + 4 * c + r] = bf128_byte_combine_bits(y_tilde);
+        }
+      }
+    }
+    return;
+  }
+
+  // Step: 1
+  bf128_t bf_delta;
+  if (delta == NULL) {
+    bf_delta = bf128_zero();
+  } else {
+    bf_delta = bf128_load(delta);
+  }
+
+  const bf128_t factor =
+      bf128_mul(bf128_from_bit(1 ^ Mtag),
+                bf128_add(bf128_mul(bf128_from_bit(Mkey), bf_delta), bf128_from_bit(1 ^ Mkey)));
+
+  for (uint32_t j = 0; j < R; j++) {
+
+    for (uint32_t c = 0; c <= 3; c++) {
+
+      for (uint32_t r = 0; r <= 3; r++) {
+
+        bf128_t bf_z_tilde[8];
+
+        unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+
+        if (j < (R - 1)) {
+
+          for (uint32_t i = 0; i < 8; i++) {
+            bf_z_tilde[i] = bf_z[ird + i];
+          }
+
+        } else {
+          bf128_t bf_z_tilde_out[8];
+
+          for (uint32_t i = 0; i < 8; ++i) {
+
+            bf_z_tilde_out[i] = bf128_from_bit(get_bit(z_out[(ird - 128 * (R - 1)) / 8], i));
+            bf_z_tilde_out[i] = bf128_mul(bf_z_tilde_out[i], factor);
+            // Step: 12
+            bf_z_tilde[i] = bf128_add(bf_z_tilde_out[i], bf_x[128 + ird + i]);
+          }
+        }
+
+        bf128_t bf_y_tilde[8];
+
+        for (uint32_t i = 0; i < 8; ++i) {
+          bf_y_tilde[i] = bf128_add(bf128_add(bf_z_tilde[(i + 7) % 8], bf_z_tilde[(i + 5) % 8]),
+                                    bf_z_tilde[(i + 2) % 8]);
+        }
+        bf_y_tilde[0] = bf128_add(bf_y_tilde[0], factor);
+        bf_y_tilde[2] = bf128_add(bf_y_tilde[2], factor);
+
+        // Step: 18
+        y_out[16 * j + 4 * c + r] = bf128_byte_combine(bf_y_tilde);
+      }
+    }
+  }
+}
+
 // dispatchers
 
 void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
