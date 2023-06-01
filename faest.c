@@ -13,12 +13,6 @@
 #include "random_oracle.h"
 #include "utils.h"
 
-// TODO: TEST EVERYTHING HERE !!!
-
-// TODO: Do not pass lambdaBytes everywhere, compute it in the function....
-
-// TODO: change q to Q where applicable
-
 void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* pk,
           const uint8_t* rho, size_t rholen, const faest_paramset_t* params,
           signature_t* signature) {
