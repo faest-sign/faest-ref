@@ -9,6 +9,7 @@
 #include "faest_@PARAM_L@.h"
 #include "randomness.h"
 #include "test_faest_tvs.hpp"
+#include "utils.h"
 
 #include <array>
 #include <vector>
@@ -102,15 +103,18 @@ BOOST_AUTO_TEST_CASE(test_sign_tv) {
   std::array<uint8_t, signature_size> sig;
 
 
-  size_t sig_size = 0;
+  size_t sig_size = signature_size;
   // clang-format off
   BOOST_TEST(faest_@PARAM_L@_sign(tv::packed_sk.data() + public_key_size / 2, tv::packed_pk.data(),
               reinterpret_cast<const uint8_t*>(message.data()), message.size(),
               tv::randomness.data(), tv::randomness.size(), sig.data(), &sig_size) == 0);
   BOOST_TEST( sig == tv::signature );
   BOOST_TEST(faest_@PARAM_L@_verify(tv::packed_pk.data(),
-              reinterpret_cast<const uint8_t*>(message.data()), message.size(), sig.data(), sig.size()) == 0);
+              reinterpret_cast<const uint8_t*>(message.data()), message.size(), tv::signature.data(), tv::signature.size()) == 0);
   // clang-format on
+
+  printHex("opt", tv::signature.data(), tv::signature.size());
+  printHex("ref", sig.data(), sig.size());
 }
 #endif
 
