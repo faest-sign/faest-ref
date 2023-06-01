@@ -113,8 +113,8 @@ BOOST_AUTO_TEST_CASE(test_sign_tv) {
               reinterpret_cast<const uint8_t*>(message.data()), message.size(), tv::signature.data(), tv::signature.size()) == 0);
   // clang-format on
 
-  printHex("opt", tv::signature.data(), tv::signature.size());
-  printHex("ref", sig.data(), sig.size());
+  // printHex("opt", tv::signature.data(), tv::signature.size());
+  // printHex("ref", sig.data(), sig.size());
 }
 #endif
 

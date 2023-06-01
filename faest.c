@@ -42,6 +42,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H1_update(&h1_ctx, msg, msglen);
     H1_final(&h1_ctx, mu, lambdaBytes * 2);
   }
+  printHex("mu", mu, lambdaBytes * 2);
 
   // Step: 3
   uint8_t rootkey[MAX_LAMBDA_BYTES];
@@ -66,7 +67,11 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   for (unsigned int i = 1; i < lambda; ++i) {
     V[i] = V[0] + i * ell_hat_bytes;
   }
+  printHex("seed", rootkey, lambdaBytes);
+  printHex("iv", signature->iv, 16);
   voleCommit(rootkey, signature->iv, ell_hat, params, hcom, vecCom, signature->c, u, V);
+  printHex("u[:128]", u, 16);
+  printHex("v[:128]", V[0], 16);
 
   // Step: 4
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
@@ -81,6 +86,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_update(&h2_ctx, signature->iv, sizeof(signature->iv));
     H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
   }
+  printHex("chall_1", chall_1, (5 * lambdaBytes) + 8);
 
   // Step: 6
   vole_hash(signature->u_tilde, chall_1, u, l, lambda);
@@ -114,12 +120,13 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   {
     H2_context_t h2_ctx_1;
     H2_init(&h2_ctx_1, lambda);
-    H2_update(&h2_ctx_1, chall_1, lambdaBytes);
-    H2_update(&h2_ctx_1, signature->u_tilde, utilde_bytes);
-    H2_update(&h2_ctx_1, h_v, 2 * lambdaBytes);
+    H2_update(&h2_ctx_1, chall_1, (5 * lambdaBytes) + 8);
+    /* H2_update(&h2_ctx_1, signature->u_tilde, utilde_bytes); */
+    /* H2_update(&h2_ctx_1, h_v, 2 * lambdaBytes); */
     H2_update(&h2_ctx_1, signature->d, ell_bytes);
     H2_final(&h2_ctx_1, chall_2, (3 * lambdaBytes) + 8);
   }
+  printHex("chall_2", chall_2, (3 * lambdaBytes) + 8);
 
   // Step: 14..15
   // transpose is computed in aes_prove
@@ -127,6 +134,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   // Step: 16
   uint8_t b_tilde[MAX_LAMBDA_BYTES];
   aes_prove(w, u, V, in, out, chall_2, signature->a_tilde, b_tilde, params);
+  printHex("a_tilde", signature->a_tilde, lambdaBytes);
+  printHex("b_tilde", b_tilde, lambdaBytes);
   free(V[0]);
   free(V);
   V = NULL;
@@ -144,6 +153,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     H2_update(&h2_ctx_2, b_tilde, lambdaBytes);
     H2_final(&h2_ctx_2, signature->chall_3, lambdaBytes);
   }
+  printHex("chall_3", signature->chall_3, lambdaBytes);
 
   // Step: 19..21
   uint8_t* s_ = malloc(MAX(params->faest_param.k0, params->faest_param.k1));

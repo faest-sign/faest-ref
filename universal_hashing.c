@@ -6,6 +6,7 @@
 #include <config.h>
 #endif
 
+#include "instances.h"
 #include "universal_hashing.h"
 #include "utils.h"
 

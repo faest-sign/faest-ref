@@ -224,6 +224,7 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
     H1_update(&h1_ctx, vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
   H1_final(&h1_ctx, vecCom->h, lambdaBytes * 2);
+  /* printHex("hashed_leaves", vecCom->com, 1 << 10); */
 }
 
 void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t* cop,

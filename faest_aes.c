@@ -669,6 +669,9 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
   A1[length_a - 1] = bf_us;
   A0[length_a - 1] = bf_vs;
 
+  printHex("A1", (uint8_t*)A1, 256);
+  printHex("A0", (uint8_t*)A0, 256);
+
   zk_hash_128(a_tilde, chall, A1, length_a - 1);
   zk_hash_128(b_tilde, chall, A0, length_a - 1);
 
