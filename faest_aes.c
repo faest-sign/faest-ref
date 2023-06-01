@@ -352,7 +352,7 @@ static void aes_enc_forward_128(uint32_t m, const uint8_t* x, const bf128_t* bf_
                                 const uint8_t* xk, const bf128_t* bf_xk, const uint8_t* in,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* bf_y,
                                 const faest_paramset_t* params) {
-  const unsigned int R = params->cipher_param.numRounds;
+  const unsigned int R = params->faest_param.R;
 
   if (m == 1) {
     // Step: 2
@@ -473,7 +473,7 @@ static void aes_enc_backward_128(uint32_t m, const uint8_t* x, const bf128_t* bf
                                  const uint8_t* xk, const bf128_t* bf_xk, uint8_t Mtag,
                                  uint8_t Mkey, const uint8_t* delta, const uint8_t* out,
                                  bf128_t* y_out, const faest_paramset_t* params) {
-  const unsigned int R = params->cipher_param.numRounds;
+  const unsigned int R = params->faest_param.R;
 
   if (m == 1) {
     uint8_t xtilde;
@@ -619,7 +619,7 @@ static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   const unsigned int l    = params->faest_param.l;
   const unsigned int Lke  = params->faest_param.Lke;
   const unsigned int Lenc = params->faest_param.Lenc;
-  const unsigned int R    = params->cipher_param.numRounds;
+  const unsigned int R    = params->faest_param.R;
   const unsigned int Ske  = params->faest_param.Ske;
   const unsigned int Senc = params->faest_param.Senc;
 
@@ -683,7 +683,7 @@ static uint8_t* aes_verify_128(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   const unsigned int l           = params->faest_param.l;
   const unsigned int Lke         = params->faest_param.Lke;
   const unsigned int Lenc        = params->faest_param.Lenc;
-  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int R           = params->faest_param.R;
   const unsigned int Ske         = params->faest_param.Ske;
   const unsigned int Senc        = params->faest_param.Senc;
   const unsigned int lambdaBytes = lambda / 8;
@@ -762,7 +762,7 @@ static void aes_key_schedule_forward_192(uint32_t m, const uint8_t* x, const bf1
   }
 
   const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int R           = params->faest_param.R;
   const unsigned int Nwd         = params->faest_param.Nwd;
   const unsigned int lambdaBytes = lambda / 8;
 
@@ -1033,7 +1033,7 @@ static void aes_enc_forward_192(uint32_t m, const uint8_t* x, const bf192_t* bf_
                                 const uint8_t* xk, const bf192_t* bf_xk, const uint8_t* in,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf192_t* bf_y,
                                 const faest_paramset_t* params) {
-  const unsigned int R = params->cipher_param.numRounds;
+  const unsigned int R = params->faest_param.R;
 
   if (m == 1) {
     // Step: 2
@@ -1154,7 +1154,7 @@ static void aes_enc_backward_192(uint32_t m, const uint8_t* x, const bf192_t* bf
                                  const uint8_t* xk, const bf192_t* bf_xk, uint8_t Mtag,
                                  uint8_t Mkey, const uint8_t* delta, const uint8_t* out,
                                  bf192_t* y_out, const faest_paramset_t* params) {
-  const unsigned int R = params->cipher_param.numRounds;
+  const unsigned int R = params->faest_param.R;
 
   if (m == 1) {
     uint8_t xtilde;
@@ -1301,7 +1301,7 @@ static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   const unsigned int l    = params->faest_param.l;
   const unsigned int Lke  = params->faest_param.Lke;
   const unsigned int Lenc = params->faest_param.Lenc;
-  const unsigned int R    = params->cipher_param.numRounds;
+  const unsigned int R    = params->faest_param.R;
   const unsigned int Ske  = params->faest_param.Ske;
   const unsigned int Senc = params->faest_param.Senc;
 
@@ -1365,7 +1365,7 @@ static uint8_t* aes_verify_192(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   const unsigned int l           = params->faest_param.l;
   const unsigned int Lke         = params->faest_param.Lke;
   const unsigned int Lenc        = params->faest_param.Lenc;
-  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int R           = params->faest_param.R;
   const unsigned int Ske         = params->faest_param.Ske;
   const unsigned int Senc        = params->faest_param.Senc;
   const unsigned int lambdaBytes = lambda / 8;
@@ -1444,7 +1444,7 @@ static void aes_key_schedule_forward_256(uint32_t m, const uint8_t* x, const bf2
   }
 
   const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int R           = params->faest_param.R;
   const unsigned int Nwd         = params->faest_param.Nwd;
   const unsigned int lambdaBytes = lambda / 8;
 
@@ -1737,7 +1737,7 @@ static void aes_enc_forward_256(uint32_t m, const uint8_t* x, const bf256_t* bf_
                                 const uint8_t* xk, const bf256_t* bf_xk, const uint8_t* in,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf256_t* bf_y,
                                 const faest_paramset_t* params) {
-  const unsigned int R = params->cipher_param.numRounds;
+  const unsigned int R = params->faest_param.R;
 
   if (m == 1) {
     // Step: 2
@@ -1858,7 +1858,7 @@ static void aes_enc_backward_256(uint32_t m, const uint8_t* x, const bf256_t* bf
                                  const uint8_t* xk, const bf256_t* bf_xk, uint8_t Mtag,
                                  uint8_t Mkey, const uint8_t* delta, const uint8_t* out,
                                  bf256_t* y_out, const faest_paramset_t* params) {
-  const unsigned int R = params->cipher_param.numRounds;
+  const unsigned int R = params->faest_param.R;
 
   if (m == 1) {
     uint8_t xtilde;
@@ -2005,7 +2005,7 @@ static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   const unsigned int l    = params->faest_param.l;
   const unsigned int Lke  = params->faest_param.Lke;
   const unsigned int Lenc = params->faest_param.Lenc;
-  const unsigned int R    = params->cipher_param.numRounds;
+  const unsigned int R    = params->faest_param.R;
   const unsigned int Ske  = params->faest_param.Ske;
   const unsigned int Senc = params->faest_param.Senc;
 
@@ -2069,7 +2069,7 @@ static uint8_t* aes_verify_256(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   const unsigned int l           = params->faest_param.l;
   const unsigned int Lke         = params->faest_param.Lke;
   const unsigned int Lenc        = params->faest_param.Lenc;
-  const unsigned int R           = params->cipher_param.numRounds;
+  const unsigned int R           = params->faest_param.R;
   const unsigned int Ske         = params->faest_param.Ske;
   const unsigned int Senc        = params->faest_param.Senc;
   const unsigned int lambdaBytes = lambda / 8;
@@ -2142,8 +2142,7 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
                                const bf128_t* bf_x, uint8_t Mtag, uint8_t Mkey,
                                const uint8_t* delta, bf128_t* bf_y,
                                const faest_paramset_t* params) {
-
-  const unsigned int R = params->cipher_param.numRounds;
+  const unsigned int R = params->faest_param.R;
 
   bf128_t bf_delta;
   if (delta == NULL) {

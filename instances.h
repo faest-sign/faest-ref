@@ -31,17 +31,6 @@ typedef enum faest_paramid_t {
   PARAMETER_SET_MAX_INDEX = 13
 } faest_paramid_t;
 
-// Param for the cipher that is used,, AES in this case
-typedef struct cipher_param_t {
-  uint32_t keySize;
-  uint32_t blockSize;
-  uint32_t numRounds;
-  uint32_t numSboxes;
-  uint32_t stateSizeBits;
-  uint32_t stateSizeBytes;
-  uint32_t stateSizeWords;
-} cipher_param_t;
-
 typedef struct faest_param_t {
   uint32_t lambda;
   uint32_t Nwd;
@@ -67,7 +56,6 @@ typedef struct faest_param_t {
 // TODO - Add paramset struct paramset_t here, containing numround, numsbox, seedSizeBytes,
 // digestSizeBytes.... ?
 typedef struct faest_paramset_t {
-  cipher_param_t cipher_param;
   faest_param_t faest_param;
   faest_paramid_t faest_paramid;
 } faest_paramset_t;
