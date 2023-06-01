@@ -1,7 +1,7 @@
 CC?=gcc
 CXX?=g++
-CFLAGS+=-g -O3 -std=gnu11
-CXXFLAGS+=-g -O3 -std=gnu++17
+CFLAGS+=-g -O3 -std=gnu11 -march=native
+CXXFLAGS+=-g -O3 -std=gnu++17 -march=native
 CPPFLAGS+=-I. -Isha3 -DNDEBUG -DHAVE_OPENSSL
 # TODO: set -DHAVE_EM_128 ...
 
