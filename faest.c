@@ -78,6 +78,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     for (unsigned int i = 0; i < (tau - 1); ++i) {
       H2_update(&h2_ctx, signature->c[i], ell_hat_bytes);
     }
+    H2_update(&h2_ctx, signature->iv, sizeof(signature->iv));
     H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
   }
 
@@ -213,6 +214,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
     for (unsigned int i = 0; i < (tau - 1); ++i) {
       H2_update(&h2_ctx, signature->c[i], ell_hat_bytes);
     }
+    H2_update(&h2_ctx, signature->iv, sizeof(signature->iv));
     H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
   }
 
