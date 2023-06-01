@@ -2225,13 +2225,11 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
   const unsigned int R = params->faest_param.R;
 
   if (m == 1) {
-    uint8_t z_tilde;
-
     for (uint32_t j = 0; j < R; j++) {
       for (uint32_t c = 0; c <= 3; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
           unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
-
+          uint8_t z_tilde  = 0;
           if (j < (R - 1)) {
             z_tilde = z[ird / 8];
           } else {
@@ -2263,13 +2261,7 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
   }
 
   // Step: 1
-  bf128_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf128_zero();
-  } else {
-    bf_delta = bf128_load(delta);
-  }
-
+  const bf128_t bf_delta = delta ? bf128_load(delta) : bf128_zero();
   const bf128_t factor =
       bf128_mul(bf128_from_bit(1 ^ Mtag),
                 bf128_add(bf128_mul(bf128_from_bit(Mkey), bf_delta), bf128_from_bit(1 ^ Mkey)));
