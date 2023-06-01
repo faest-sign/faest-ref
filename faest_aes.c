@@ -2261,10 +2261,9 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
       bf128_t bf_z_hat[4];
 
       for (uint32_t r = 0; r <= 3; r++) {
-
         // Step: 12..13
-        bf_z_hat[r] = bf128_byte_combine(z[(i + 8 * r) / 8]);
-        bf_x_hat[r] = bf128_byte_combine(x[(i + 8 * r) / 8]);
+        bf_z_hat[r] = bf128_byte_combine_bits(z[(i + 8 * r) / 8]);
+        bf_x_hat[r] = bf128_byte_combine_bits(x[(i + 8 * r) / 8]);
       }
 
       bf128_t bf_one   = bf128_one();
@@ -2454,13 +2453,13 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
 
     bf128_t* bf_x = malloc(sizeof(bf128_t) * 128 * (R + 1));
     for (uint32_t i = 0; i < (128 * (R + 1)); i++) {
-      bf_x[i] = bf128_mul(bf128_from_bf8(bf8_load(x[i])), bf128_load(delta));
+      bf_x[i] = bf128_mul(bf128_from_bit(ptr_get_bit(x, i)), bf128_load(delta));
     }
 
     bf128_t* bf_q_out = malloc(sizeof(bf128_t) * lambda);
     for (uint32_t i = 0; i < lambda; i++) {
       bf_q_out[i] =
-          bf128_add(bf128_mul(bf128_from_bf8(bf8_load(out[i])), bf128_load(delta)), bf_q[i]);
+          bf128_add(bf128_mul(bf128_from_bf8(ptr_get_bit(x, i)), bf128_load(delta)), bf_q[i]);
     }
 
     bf128_t* bf_qs      = malloc(sizeof(bf128_t) * Senc);
