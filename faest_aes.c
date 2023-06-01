@@ -21,22 +21,6 @@ static const bf8_t Rcon[30] = {
     0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
 };
 
-ATTR_CONST static inline bf8_t get_bit(bf8_t in, uint8_t index) {
-  return (in >> index) & 0x01;
-}
-
-ATTR_CONST static inline bf8_t set_bit(bf8_t in, uint8_t index) {
-  return (in << index);
-}
-
-static inline uint8_t ptr_get_bit(const uint8_t* in, unsigned int index) {
-  return (in[index / 8] >> (index % 8)) & 1;
-}
-
-static inline void ptr_set_bit(uint8_t* dst, uint8_t in, unsigned int index) {
-  dst[index / 8] |= in << (index % 8);
-}
-
 static bf128_t* column_to_row_major_and_shrink_V_128(uint8_t** v, unsigned int ell) {
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
@@ -209,12 +193,7 @@ static void aes_key_schedule_backward_128(uint32_t m, const uint8_t* x, const bf
     return;
   }
 
-  bf128_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf128_zero();
-  } else {
-    bf_delta = bf128_load(delta);
-  }
+  const bf128_t bf_delta = delta ? bf128_load(delta) : bf128_zero();
 
   uint32_t iwd   = 0;
   uint32_t c     = 0;
@@ -381,13 +360,6 @@ static void aes_enc_forward_128(uint32_t m, const uint8_t* x, const bf128_t* bf_
                                 const faest_paramset_t* params) {
   const unsigned int R = params->cipher_param.numRounds;
 
-  bf128_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf128_zero();
-  } else {
-    bf_delta = bf128_load(delta);
-  }
-
   if (m == 1) {
     // Step: 2
     for (uint32_t i = 0; i < 16; i++) {
@@ -445,9 +417,10 @@ static void aes_enc_forward_128(uint32_t m, const uint8_t* x, const bf128_t* bf_
     return;
   }
 
-  bf128_t bf_minus_mtag = bf128_from_bit(1 ^ Mtag);
-  bf128_t bf_minus_mkey = bf128_from_bit(1 ^ Mkey);
-  bf128_t bf_mkey       = bf128_from_bit(Mkey);
+  const bf128_t bf_delta      = delta ? bf128_load(delta) : bf128_zero();
+  const bf128_t bf_minus_mtag = bf128_from_bit(1 ^ Mtag);
+  const bf128_t bf_minus_mkey = bf128_from_bit(1 ^ Mkey);
+  const bf128_t bf_mkey       = bf128_from_bit(Mkey);
 
   // Step: 2..4
   for (uint32_t i = 0; i < 16; i++) {
@@ -550,13 +523,7 @@ static void aes_enc_backward_128(uint32_t m, const uint8_t* x, const bf128_t* bf
   }
 
   // Step: 1
-  bf128_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf128_zero();
-  } else {
-    bf_delta = bf128_load(delta);
-  }
-
+  const bf128_t bf_delta = delta ? bf128_load(delta) : bf128_zero();
   const bf128_t factor =
       bf128_mul(bf128_from_bit(1 ^ Mtag),
                 bf128_add(bf128_mul(bf128_from_bit(Mkey), bf_delta), bf128_from_bit(1 ^ Mkey)));
@@ -913,17 +880,11 @@ static void aes_key_schedule_backward_192(uint32_t m, const uint8_t* x, const bf
     return;
   }
 
-  bf192_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf192_zero();
-  } else {
-    bf_delta = bf192_load(delta);
-  }
-
-  uint32_t iwd   = 0;
-  uint32_t c     = 0;
-  bool rmvRcon   = true;
-  uint32_t ircon = 0;
+  const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
+  uint32_t iwd           = 0;
+  uint32_t c             = 0;
+  bool rmvRcon           = true;
+  uint32_t ircon         = 0;
 
   bf192_t bf_mkey             = bf192_from_bit(Mkey);
   bf192_t bf_minus_mkey       = bf192_from_bit(1 ^ Mkey);
@@ -1086,13 +1047,6 @@ static void aes_enc_forward_192(uint32_t m, const uint8_t* x, const bf192_t* bf_
                                 const faest_paramset_t* params) {
   const unsigned int R = params->cipher_param.numRounds;
 
-  bf192_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf192_zero();
-  } else {
-    bf_delta = bf192_load(delta);
-  }
-
   if (m == 1) {
     // Step: 2
     for (uint32_t i = 0; i < 16; i++) {
@@ -1150,9 +1104,10 @@ static void aes_enc_forward_192(uint32_t m, const uint8_t* x, const bf192_t* bf_
     return;
   }
 
-  bf192_t bf_minus_mtag = bf192_from_bit(1 ^ Mtag);
-  bf192_t bf_minus_mkey = bf192_from_bit(1 ^ Mkey);
-  bf192_t bf_mkey       = bf192_from_bit(Mkey);
+  const bf192_t bf_delta      = delta ? bf192_load(delta) : bf192_zero();
+  const bf192_t bf_minus_mtag = bf192_from_bit(1 ^ Mtag);
+  const bf192_t bf_minus_mkey = bf192_from_bit(1 ^ Mkey);
+  const bf192_t bf_mkey       = bf192_from_bit(Mkey);
 
   // Step: 2..4
   for (uint32_t i = 0; i < 16; i++) {
@@ -1255,13 +1210,7 @@ static void aes_enc_backward_192(uint32_t m, const uint8_t* x, const bf192_t* bf
   }
 
   // Step: 1
-  bf192_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf192_zero();
-  } else {
-    bf_delta = bf192_load(delta);
-  }
-
+  const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
   const bf192_t factor =
       bf192_mul(bf192_from_bit(1 ^ Mtag),
                 bf192_add(bf192_mul(bf192_from_bit(Mkey), bf_delta), bf192_from_bit(1 ^ Mkey)));
@@ -1621,21 +1570,15 @@ static void aes_key_schedule_backward_256(uint32_t m, const uint8_t* x, const bf
     return;
   }
 
-  bf256_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf256_zero();
-  } else {
-    bf_delta = bf256_load(delta);
-  }
-
   uint32_t iwd   = 0;
   uint32_t c     = 0;
   bool rmvRcon   = true;
   uint32_t ircon = 0;
 
-  bf256_t bf_mkey             = bf256_from_bit(Mkey);
-  bf256_t bf_minus_mkey       = bf256_from_bit(1 ^ Mkey);
-  bf256_t bf_minus_mtag       = bf256_from_bit(1 ^ Mtag);
+  const bf256_t bf_delta      = delta ? bf256_load(delta) : bf256_zero();
+  const bf256_t bf_mkey       = bf256_from_bit(Mkey);
+  const bf256_t bf_minus_mkey = bf256_from_bit(1 ^ Mkey);
+  const bf256_t bf_minus_mtag = bf256_from_bit(1 ^ Mtag);
   bf256_t bf_mkey_times_delta = bf256_mul(bf_mkey, bf_delta);
   bf_mkey_times_delta         = bf256_add(bf_mkey_times_delta, bf_minus_mkey);
 
@@ -1814,13 +1757,6 @@ static void aes_enc_forward_256(uint32_t m, const uint8_t* x, const bf256_t* bf_
                                 const faest_paramset_t* params) {
   const unsigned int R = params->cipher_param.numRounds;
 
-  bf256_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf256_zero();
-  } else {
-    bf_delta = bf256_load(delta);
-  }
-
   if (m == 1) {
     // Step: 2
     for (uint32_t i = 0; i < 16; i++) {
@@ -1878,9 +1814,10 @@ static void aes_enc_forward_256(uint32_t m, const uint8_t* x, const bf256_t* bf_
     return;
   }
 
-  bf256_t bf_minus_mtag = bf256_from_bit(1 ^ Mtag);
-  bf256_t bf_minus_mkey = bf256_from_bit(1 ^ Mkey);
-  bf256_t bf_mkey       = bf256_from_bit(Mkey);
+  const bf256_t bf_delta      = delta ? bf256_load(delta) : bf256_zero();
+  const bf256_t bf_minus_mtag = bf256_from_bit(1 ^ Mtag);
+  const bf256_t bf_minus_mkey = bf256_from_bit(1 ^ Mkey);
+  const bf256_t bf_mkey       = bf256_from_bit(Mkey);
 
   // Step: 2..4
   for (uint32_t i = 0; i < 16; i++) {
@@ -1983,13 +1920,7 @@ static void aes_enc_backward_256(uint32_t m, const uint8_t* x, const bf256_t* bf
   }
 
   // Step: 1
-  bf256_t bf_delta;
-  if (delta == NULL) {
-    bf_delta = bf256_zero();
-  } else {
-    bf_delta = bf256_load(delta);
-  }
-
+  const bf256_t bf_delta = delta ? bf256_load(delta) : bf256_zero();
   const bf256_t factor =
       bf256_mul(bf256_from_bit(1 ^ Mtag),
                 bf256_add(bf256_mul(bf256_from_bit(Mkey), bf_delta), bf256_from_bit(1 ^ Mkey)));
@@ -2314,10 +2245,9 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
       bf128_t bf_z_hat[4];
 
       for (uint32_t r = 0; r <= 3; r++) {
-
         // Step: 12..13
-        bf_z_hat[r] = bf128_byte_combine(z[(i + 8 * r) / 8]);
-        bf_x_hat[r] = bf128_byte_combine(x[(i + 8 * r) / 8]);
+        bf_z_hat[r] = bf128_byte_combine_bits(z[(i + 8 * r) / 8]);
+        bf_x_hat[r] = bf128_byte_combine_bits(x[(i + 8 * r) / 8]);
       }
 
       bf128_t bf_one   = bf128_one();
@@ -2507,13 +2437,13 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
 
     bf128_t* bf_x = malloc(sizeof(bf128_t) * 128 * (R + 1));
     for (uint32_t i = 0; i < (128 * (R + 1)); i++) {
-      bf_x[i] = bf128_mul(bf128_from_bf8(bf8_load(x[i])), bf128_load(delta));
+      bf_x[i] = bf128_mul(bf128_from_bit(ptr_get_bit(x, i)), bf128_load(delta));
     }
 
     bf128_t* bf_q_out = malloc(sizeof(bf128_t) * lambda);
     for (uint32_t i = 0; i < lambda; i++) {
       bf_q_out[i] =
-          bf128_add(bf128_mul(bf128_from_bf8(bf8_load(out[i])), bf128_load(delta)), bf_q[i]);
+          bf128_add(bf128_mul(bf128_from_bf8(ptr_get_bit(x, i)), bf128_load(delta)), bf_q[i]);
     }
 
     bf128_t* bf_qs      = malloc(sizeof(bf128_t) * Senc);
@@ -2639,13 +2569,25 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
                const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
-    aes_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    if (params->faest_param.Lke) {
+      aes_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    } else {
+      // TODO: EM variant
+    }
     break;
   case 192:
-    aes_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    if (params->faest_param.Lke) {
+      aes_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    } else {
+      // TOD: EM variant
+    }
     break;
   default:
-    aes_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    if (params->faest_param.Lke) {
+      aes_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+    } else {
+      // TODO: EM variant
+    }
   }
 }
 
@@ -2654,11 +2596,26 @@ uint8_t* aes_verify(uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8
                     const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
-    return aes_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    if (params->faest_param.Lke) {
+      return aes_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    } else {
+      // TODO: EM variant
+      return NULL;
+    }
   case 192:
-    return aes_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    if (params->faest_param.Lke) {
+      return aes_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    } else {
+      // TODO: EM variant
+      return NULL;
+    }
   default:
-    return aes_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    if (params->faest_param.Lke) {
+      return aes_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+    } else {
+      // TODO: EM variant
+      return NULL;
+    }
   }
 }
 
