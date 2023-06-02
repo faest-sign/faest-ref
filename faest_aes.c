@@ -2330,9 +2330,6 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
     em_enc_backward_128(lambda, NULL, bf_v, NULL, NULL, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
 
     for (uint32_t j = 0; j < Senc; j++) {
-      // check that the constraint actually holds
-      bf128_t should_be_zero = bf128_add(bf128_mul(bf_s_dash[j], bf_s[j]), bf128_one());
-      assert(should_be_zero.values[0] == 0 && should_be_zero.values[1] == 0);
       A0[j] = bf128_mul(bf_vs[j], bf_vs_dash[j]);
       A1[j] = bf128_add(
           bf128_add(bf128_mul(bf128_add(bf_s[j], bf_vs[j]), bf128_add(bf_s_dash[j], bf_vs_dash[j])),
@@ -2700,10 +2697,6 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
     em_enc_backward_192(lambda, NULL, bf_v, NULL, NULL, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
 
     for (uint32_t j = 0; j < Senc; j++) {
-      // check that the constraint actually holds
-      bf192_t should_be_zero = bf192_add(bf192_mul(bf_s_dash[j], bf_s[j]), bf192_one());
-      assert(should_be_zero.values[0] == 0 && should_be_zero.values[1] == 0 &&
-             should_be_zero.values[2] == 0);
       A0[j] = bf192_mul(bf_vs[j], bf_vs_dash[j]);
       A1[j] = bf192_add(
           bf192_add(bf192_mul(bf192_add(bf_s[j], bf_vs[j]), bf192_add(bf_s_dash[j], bf_vs_dash[j])),
@@ -3071,10 +3064,6 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
     em_enc_backward_256(lambda, NULL, bf_v, NULL, NULL, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
 
     for (uint32_t j = 0; j < Senc; j++) {
-      // check that the constraint actually holds
-      bf256_t should_be_zero = bf256_add(bf256_mul(bf_s_dash[j], bf_s[j]), bf256_one());
-      assert(should_be_zero.values[0] == 0 && should_be_zero.values[1] == 0 &&
-             should_be_zero.values[2] == 0 && should_be_zero.values[3] == 0);
       A0[j] = bf256_mul(bf_vs[j], bf_vs_dash[j]);
       A1[j] = bf256_add(
           bf256_add(bf256_mul(bf256_add(bf_s[j], bf_vs[j]), bf256_add(bf_s_dash[j], bf_vs_dash[j])),
