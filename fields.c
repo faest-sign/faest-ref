@@ -80,16 +80,12 @@ bf8_t bf8_from_bit(uint8_t bit) {
 bf64_t bf64_load(const uint8_t* src) {
   bf64_t ret;
   memcpy(&ret, src, sizeof(ret));
-#if defined(FAEST_IS_BIG_ENDIAN)
   ret = le64toh(ret);
-#endif
   return ret;
 }
 
 void bf64_store(uint8_t* dst, bf64_t src) {
-#if defined(FAEST_IS_BIG_ENDIAN)
   src = htole64(src);
-#endif
   memcpy(dst, &src, sizeof(src));
 }
 
