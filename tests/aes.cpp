@@ -37,7 +37,7 @@ namespace aes_ctr_128_tv {
       0x0c, 0xb2, 0x5d, 0x9a, 0x9f};
 } // namespace aes_ctr_128_tv
 
-namespace aes_em_128_tv {
+namespace rijndael_em_128_tv {
   constexpr std::array<uint8_t, 16> key = aes_ctr_128_tv::key;
   constexpr std::array<uint8_t, 16> in  = aes_ctr_128_tv::in;
   constexpr std::array<uint8_t, 16> out = {0xb8, 0xcf, 0x49, 0x82, 0x1b, 0x05, 0xe3, 0xfd,
@@ -55,7 +55,7 @@ namespace aes_em_128_tv {
       0xae, 0xc2, 0x67, 0x31, 0xa2, 0xbd, 0x5c, 0x4a, 0x5b, 0xb4, 0xfb, 0x2d, 0xf1, 0x52, 0x0d,
       0xce, 0xde, 0x23, 0xb5, 0xd1, 0xf5, 0xb6, 0x81, 0x64, 0xd9, 0xbc, 0x9b, 0xc1, 0xea, 0x46,
       0x51, 0x91, 0x7c, 0x18, 0x81, 0xf7, 0x60, 0x6a, 0x9f, 0x77};
-} // namespace aes_em_128_tv
+} // namespace rijndael_em_128_tv
 
 namespace aes_ctr_192_tv {
   constexpr std::array<uint8_t, 24> key = {0x7f, 0x64, 0xa4, 0x6b, 0xbd, 0x02, 0x67, 0x2c,
@@ -100,7 +100,7 @@ namespace aes_ctr_192_tv {
       0x2f, 0x13, 0xeb};
 } // namespace aes_ctr_192_tv
 
-namespace aes_em_192_tv {
+namespace rijndael_em_192_tv {
   constexpr std::array<uint8_t, 24> key = {
     0x24, 0x18, 0x87, 0x72, 0xc5, 0x1f, 0xbe, 0x52, 0xc0, 0xcd, 0x0b, 0xed, 0xbe, 0x6a, 0x4c, 0x04,
     0xb3, 0x75, 0x89, 0x7d, 0x36, 0x9b, 0x7e, 0x62
@@ -135,7 +135,7 @@ namespace aes_em_192_tv {
     0xcb, 0x96, 0xc1, 0x6c, 0x4d, 0x24, 0x25, 0xb5, 0xd8, 0xab, 0x19, 0x69, 0x21, 0x84, 0x79, 0x6b
   };
 
-} // namespace aes_em_192_tv
+} // namespace rijndael_em_192_tv
 
 namespace aes_ctr_256_tv {
   constexpr std::array<uint8_t, 32> key = {0xa9, 0x86, 0x63, 0xac, 0x8a, 0x05, 0x78, 0xbe,
@@ -187,7 +187,7 @@ namespace aes_ctr_256_tv {
       0xfb, 0x31, 0x97, 0xa9, 0xf1};
 } // namespace aes_ctr_256_tv
 
-namespace aes_em_256_tv {
+namespace rijndael_em_256_tv {
   constexpr std::array<uint8_t, 32> key = {
     0xc0, 0xcd, 0x0b, 0xed, 0xbe, 0x6a, 0x4c, 0x04, 0xb3, 0x75, 0x89, 0x7d, 0x36, 0x9b, 0x7e, 0x62,
     0xaa, 0x6a, 0x6f, 0x17, 0x13, 0xd2, 0x7a, 0x71, 0xfe, 0x98, 0x9e, 0x93, 0xdc, 0x79, 0xd2, 0x7d
@@ -232,7 +232,7 @@ namespace aes_em_256_tv {
     0x98, 0xf9, 0x23, 0x6c, 0x5d, 0xfc, 0x86, 0x1c, 0x41, 0xdd, 0xc4, 0x62, 0x4b, 0x6c, 0x20, 0xa3
   };
 
-} // namespace aes_em_256_tv
+} // namespace rijndael_em_256_tv
 
 BOOST_AUTO_TEST_SUITE(aes)
 
@@ -477,15 +477,15 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes128) {
   BOOST_TEST(extended_witness == aes_ctr_128_tv::expected_extended_witness);
 }
 
-BOOST_AUTO_TEST_CASE(test_extend_witness_aes_em128) {
+BOOST_AUTO_TEST_CASE(test_extend_witness_rijndael_em128) {
   std::array<uint8_t, 160> extended_witness = {};
   faest_paramset_t params = faest_get_paramset(FAEST_EM_128S); // Just using the FAEST-128s
   uint8_t* extwit =
-      aes_extend_witness(aes_em_128_tv::key.data(), aes_em_128_tv::in.data(), &params);
+      aes_extend_witness(rijndael_em_128_tv::key.data(), rijndael_em_128_tv::in.data(), &params);
   memcpy(extended_witness.data(), extwit, 160);
   free(extwit);
 
-  BOOST_TEST(extended_witness == aes_em_128_tv::expected_extended_witness);
+  BOOST_TEST(extended_witness == rijndael_em_128_tv::expected_extended_witness);
 }
 
 BOOST_AUTO_TEST_CASE(test_extend_witness_aes192) {
@@ -499,15 +499,15 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes192) {
   BOOST_TEST(extended_witness == aes_ctr_192_tv::expected_extended_witness);
 }
 
-BOOST_AUTO_TEST_CASE(test_extend_witness_aes_em192) {
+BOOST_AUTO_TEST_CASE(test_extend_witness_rijndael_em192) {
   std::array<uint8_t, 288> extended_witness = {};
   faest_paramset_t params = faest_get_paramset(FAEST_EM_192S); // Just using the FAEST-192s
   uint8_t* extwit =
-      aes_extend_witness(aes_em_192_tv::key.data(), aes_em_192_tv::in.data(), &params);
+      aes_extend_witness(rijndael_em_192_tv::key.data(), rijndael_em_192_tv::in.data(), &params);
   memcpy(extended_witness.data(), extwit, 288);
   free(extwit);
 
-  BOOST_TEST(extended_witness == aes_em_192_tv::expected_extended_witness);
+  BOOST_TEST(extended_witness == rijndael_em_192_tv::expected_extended_witness);
 }
 
 BOOST_AUTO_TEST_CASE(test_extend_witness_aes256) {
@@ -521,15 +521,15 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes256) {
   BOOST_TEST(extended_witness == aes_ctr_256_tv::expected_extended_witness);
 }
 
-BOOST_AUTO_TEST_CASE(test_extend_witness_aes_em256) {
+BOOST_AUTO_TEST_CASE(test_extend_witness_rijndael_em256) {
   std::array<uint8_t, 448> extended_witness = {};
   faest_paramset_t params = faest_get_paramset(FAEST_EM_256S); // Just using the FAEST-256s
   uint8_t* extwit =
-      aes_extend_witness(aes_em_256_tv::key.data(), aes_em_256_tv::in.data(), &params);
+      aes_extend_witness(rijndael_em_256_tv::key.data(), rijndael_em_256_tv::in.data(), &params);
   memcpy(extended_witness.data(), extwit, 448);
   free(extwit);
 
-  BOOST_TEST(extended_witness == aes_em_256_tv::expected_extended_witness);
+  BOOST_TEST(extended_witness == rijndael_em_256_tv::expected_extended_witness);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
