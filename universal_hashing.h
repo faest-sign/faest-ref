@@ -6,7 +6,6 @@
 #define FAEST_UNIVERSAL_HASHING_H
 
 #include <stdint.h>
-#include <stddef.h>
 
 #include "macros.h"
 #include "fields.h"

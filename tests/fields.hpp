@@ -1,3 +1,7 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
 #ifndef FAEST_TESTS_FIELDS_HPP
 #define FAEST_TESTS_FIELDS_HPP
 

@@ -1,7 +1,11 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
 #ifndef FAEST_H
 #define FAEST_H
 
-#include <stdlib.h>
+#include <stdint.h>
 
 #include "vole.h"
 #include "universal_hashing.h"

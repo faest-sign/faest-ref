@@ -1,9 +1,11 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
 #ifndef FAEST_FAEST_AES_H
 #define FAEST_FAEST_AES_H
 
-#include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <assert.h>
 
 #include "instances.h"

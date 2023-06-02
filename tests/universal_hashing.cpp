@@ -1,3 +1,7 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
 #include "../universal_hashing.h"
 
 #include "fields.hpp"

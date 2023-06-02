@@ -2,10 +2,6 @@
  *  SPDX-License-Identifier: MIT
  */
 
-// AES CTR mode 128/192/256
-// Reference - https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.197.pdf
-// Tested against Appendix B - Cipher Example
-
 #if defined(HAVE_CONFIG_H)
 #include <config.h>
 #endif
