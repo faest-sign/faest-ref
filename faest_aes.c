@@ -2115,11 +2115,12 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
                                const bf128_t* bf_x, uint8_t FAEST_UNUSED(Mtag),
                                uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta),
                                bf128_t* bf_y, const faest_paramset_t* params) {
-  const unsigned int R = params->faest_param.R;
+  const unsigned int R   = params->faest_param.R;
+  const unsigned int Nst = params->faest_param.Nwd;
 
   if (m == 1) {
     // Step: 2
-    for (uint32_t j = 0; j < 16; j++) {
+    for (uint32_t j = 0; j < 4 * Nst; j++) {
       bf_y[j] = bf128_add(bf128_byte_combine_bits(z[j]), bf128_byte_combine_bits(x[j]));
     }
 
