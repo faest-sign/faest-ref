@@ -402,6 +402,15 @@ if host_machine.system() == 'windows'
   build_dependencies += cc.find_library('bcrypt')
 endif
 
+# catch2 for benchmarks
+libcatch2 = static_library('catch2',
+  files(join_paths(meson.project_source_root(), 'catch2', 'extras', 'catch_amalgamated.cpp')),
+)
+catch2 = declare_dependency(
+  link_with: libcatch2,
+  include_directories: include_directories(join_paths('catch2', 'extras'))
+)
+
 # generate config.h
 config_header = configure_file(
   output: 'config.h',
