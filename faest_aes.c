@@ -2221,25 +2221,24 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
                                 const bf128_t* bf_x, const uint8_t* z_out, const bf128_t* bf_z_out,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* y_out,
                                 const faest_paramset_t* params) {
-  const unsigned int R   = params->faest_param.R;
-  const unsigned int Nst = params->faest_param.Nwd;
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int R      = params->faest_param.R;
+  const unsigned int Nst    = params->faest_param.Nwd;
 
   if (m == 1) {
     for (uint32_t j = 0; j < R; j++) {
       for (uint32_t c = 0; c <= 3; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
-          unsigned int ird = 128 + (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+          unsigned int icol = (c - r) % Nst;
+          if (Nst == 8 && r >= 2) {
+            icol = (icol - 1) % Nst;
+          }
+          unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
           uint8_t z_tilde  = 0;
           if (j < (R - 1)) {
             z_tilde = z[ird / 8];
           } else {
-            // uint8_t z_tilde_out = 0;
-            // for (uint32_t i = 0; i < 8; i++) {
-            // delta is always \bot if called with m == 1
-            // TODO bit splice
-            // z_tilde_out |= set_bit(get_bit(z_out[(ird - 128 * j) / 8], i), i);
-            // }
-            z_tilde = z_out[(ird - 128 * (j + 1)) / 8] ^ x[(128 + ird - 128) / 8];
+            z_tilde = z_out[(ird - 32 * Nst * j - lambda) / 8] ^ x[(32 * Nst + ird - lambda) / 8];
           }
 
           uint8_t y_tilde = 0;
@@ -2270,7 +2269,11 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
     for (uint32_t c = 0; c <= 3; c++) {
       for (uint32_t r = 0; r <= 3; r++) {
         bf128_t bf_z_tilde[8];
-        unsigned int ird = 128 + (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+        unsigned int icol = (c - r) % Nst;
+        if (Nst == 8 && r >= 2) {
+          icol = (icol - 1) % Nst;
+        }
+        unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
 
         if (j < (R - 1)) {
           // TODO: memcpy
@@ -2280,11 +2283,11 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
         } else {
           bf128_t bf_z_tilde_out[8];
           for (uint32_t i = 0; i < 8; ++i) {
-            bf_z_tilde_out[i] = bf_z_out[ird - 128 * (j + 1) + i];
+            bf_z_tilde_out[i] = bf_z_out[ird - 32 * Nst * (j + 1) + i];
             // Step: 12
             bf_z_tilde[i] = bf_z_tilde_out[i];
             if (bf_x) {
-              bf_z_tilde[i] = bf128_add(bf_z_tilde[i], bf_x[ird + i]);
+              bf_z_tilde[i] = bf128_add(bf_z_tilde[i], bf_x[32 * Nst + ird - lambda + i]);
             }
           }
         }
@@ -2586,8 +2589,9 @@ static void em_enc_backward_192(uint32_t m, const uint8_t* z, const bf192_t* bf_
                                 const bf192_t* bf_x, const uint8_t* z_out, const bf192_t* bf_z_out,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf192_t* y_out,
                                 const faest_paramset_t* params) {
-  const unsigned int R   = params->faest_param.R;
-  const unsigned int Nst = params->faest_param.Nwd;
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int R      = params->faest_param.R;
+  const unsigned int Nst    = params->faest_param.Nwd;
 
   if (m == 1) {
     for (uint32_t j = 0; j < R; j++) {
@@ -2597,12 +2601,12 @@ static void em_enc_backward_192(uint32_t m, const uint8_t* z, const bf192_t* bf_
           if (Nst == 8 && r >= 2) {
             icol = (icol - 1) % Nst;
           }
-          unsigned int ird = 32 * Nst * j + 32 * icol + 8 * r;
+          unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
           uint8_t z_tilde  = 0;
           if (j < (R - 1)) {
             z_tilde = z[ird / 8];
           } else {
-            z_tilde = z_out[(ird - 32 * Nst * j) / 8] ^ x[(32 * Nst + ird) / 8];
+            z_tilde = z_out[(ird - 32 * Nst * (j + 1)) / 8] ^ x[ird / 8];
           }
 
           uint8_t y_tilde = 0;
@@ -2636,7 +2640,7 @@ static void em_enc_backward_192(uint32_t m, const uint8_t* z, const bf192_t* bf_
         if (Nst == 8 && r >= 2) {
           icol = (icol - 1) % Nst;
         }
-        unsigned int ird = 32 * Nst * j + 32 * icol + 8 * r;
+        unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
         bf192_t bf_z_tilde[8];
         if (j < (R - 1)) {
           // TODO: memcpy
@@ -2646,11 +2650,11 @@ static void em_enc_backward_192(uint32_t m, const uint8_t* z, const bf192_t* bf_
         } else {
           bf192_t bf_z_tilde_out[8];
           for (uint32_t i = 0; i < 8; ++i) {
-            bf_z_tilde_out[i] = bf_z_out[(ird - 32 * Nst * j) + i];
+            bf_z_tilde_out[i] = bf_z_out[ird - 32 * Nst * (j + 1) + i];
             // Step: 12
             bf_z_tilde[i] = bf_z_tilde_out[i];
             if (bf_x) {
-              bf_z_tilde[i] = bf192_add(bf_z_tilde[i], bf_x[32 * Nst + ird + i]);
+              bf_z_tilde[i] = bf192_add(bf_z_tilde[i], bf_x[ird + i]);
             }
           }
         }
