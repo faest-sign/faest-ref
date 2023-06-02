@@ -2759,7 +2759,7 @@ static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   uint8_t* x = malloc(lambda * (R + 1) / 8);
   {
     aes_round_keys_t round_keys;
-    aes192_init_round_keys(&round_keys, in);
+    rijndael192_init_round_keys(&round_keys, in);
     uint8_t* tmp_x = x;
     for (unsigned int r = 0; r != R + 1; ++r) {
       for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
@@ -2821,7 +2821,7 @@ static uint8_t* em_verify_192(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   uint8_t* x = malloc(lambda * (R + 1) / 8);
   {
     aes_round_keys_t round_keys;
-    aes192_init_round_keys(&round_keys, in);
+    rijndael192_init_round_keys(&round_keys, in);
     uint8_t* tmp_x = x;
     for (unsigned int r = 0; r != R + 1; ++r) {
       for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
@@ -3130,7 +3130,7 @@ static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   uint8_t* x = malloc(lambda * (R + 1) / 8);
   {
     aes_round_keys_t round_keys;
-    aes256_init_round_keys(&round_keys, in);
+    rijndael256_init_round_keys(&round_keys, in);
     uint8_t* tmp_x = x;
     for (unsigned int r = 0; r != R + 1; ++r) {
       for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
@@ -3192,7 +3192,7 @@ static uint8_t* em_verify_256(uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
   uint8_t* x = malloc(lambda * (R + 1) / 8);
   {
     aes_round_keys_t round_keys;
-    aes256_init_round_keys(&round_keys, in);
+    rijndael256_init_round_keys(&round_keys, in);
     uint8_t* tmp_x = x;
     for (unsigned int r = 0; r != R + 1; ++r) {
       for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
