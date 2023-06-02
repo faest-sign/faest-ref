@@ -146,10 +146,9 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8
     ChalDec(signature->chall_3, i, params->faest_param.k0, params->faest_param.t0,
             params->faest_param.k1, params->faest_param.t1, s_);
     // Step 21
-    const unsigned int num_vole_instances =
-        i < tau0 ? (1 << params->faest_param.k0) : (1 << params->faest_param.k1);
-    vector_open(vecCom[i].k, vecCom[i].com, s_, signature->pdec[i], signature->com_j[i],
-                num_vole_instances, lambdaBytes);
+    const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
+    vector_open(vecCom[i].k, vecCom[i].com, s_, signature->pdec[i], signature->com_j[i], depth,
+                lambdaBytes);
     vec_com_clear(&vecCom[i]);
   }
   free(vecCom);

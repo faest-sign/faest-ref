@@ -4269,12 +4269,11 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
   for (uint32_t i = 0; i < params.faest_param.tau; i++) {
     const uint32_t depth =
         (i < params.faest_param.t0) ? params.faest_param.k0 : params.faest_param.k1;
-    const uint32_t numVoleInstances = 1 << depth;
 
     pdec[i]  = new uint8_t[depth * lambdaBytes];
     com_j[i] = new uint8_t[lambdaBytes * 2];
 
-    vector_open(vec_com[i].k, vec_com[i].com, b.data(), pdec[i], com_j[i], numVoleInstances,
+    vector_open(vec_com[i].k, vec_com[i].com, b.data(), pdec[i], com_j[i], depth,
                 lambdaBytes);
     vec_com_clear(&vec_com[i]);
   }

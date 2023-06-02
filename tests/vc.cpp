@@ -64,20 +64,19 @@ BOOST_AUTO_TEST_CASE(test_vector_open_128) {
 
   faest_paramset_t params = faest_get_paramset(FAEST_128S); // Just using the FAEST-128s
   vec_com_t vecCom;
-  uint32_t numVoleInstances = 16;
-  uint32_t lambda           = params.faest_param.lambda;
-  uint32_t lambdaBytes      = lambda / 8;
-  vector_commitment(rootKey, iv.data(), &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
-
-  uint32_t leafIndex       = 7;
   constexpr uint32_t depth = 4;
+  uint32_t lambda          = params.faest_param.lambda;
+  uint32_t lambdaBytes     = lambda / 8;
+  vector_commitment(rootKey, iv.data(), &params, lambda, &vecCom, depth);
+
+  uint32_t leafIndex = 7;
   uint8_t b[depth];
   BitDec(leafIndex, depth, b);
 
   std::vector<uint8_t> pdec, com_j;
   pdec.resize(depth * lambdaBytes);
   com_j.resize(lambdaBytes * 2);
-  vector_open(vecCom.k, vecCom.com, b, pdec.data(), com_j.data(), numVoleInstances, lambdaBytes);
+  vector_open(vecCom.k, vecCom.com, b, pdec.data(), com_j.data(), depth, lambdaBytes);
 
   BOOST_TEST(memcmp(vecCom.com + (leafIndex * lambdaBytes * 2), com_j.data(), lambdaBytes * 2) ==
              0);
@@ -100,20 +99,19 @@ BOOST_AUTO_TEST_CASE(test_vector_open_192) {
 
   faest_paramset_t params = faest_get_paramset(FAEST_192S); // Just using the FAEST-192s
   vec_com_t vecCom;
-  uint32_t numVoleInstances = 16;
-  uint32_t lambda           = params.faest_param.lambda;
-  uint32_t lambdaBytes      = lambda / 8;
-  vector_commitment(rootKey, iv.data(), &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
-
-  uint32_t leafIndex       = 10;
   constexpr uint32_t depth = 4;
+  uint32_t lambda          = params.faest_param.lambda;
+  uint32_t lambdaBytes     = lambda / 8;
+  vector_commitment(rootKey, iv.data(), &params, lambda, &vecCom, depth);
+
+  uint32_t leafIndex = 10;
   uint8_t b[depth];
   BitDec(leafIndex, depth, b);
 
   std::vector<uint8_t> pdec, com_j;
   pdec.resize(depth * lambdaBytes);
   com_j.resize(lambdaBytes * 2);
-  vector_open(vecCom.k, vecCom.com, b, pdec.data(), com_j.data(), numVoleInstances, lambdaBytes);
+  vector_open(vecCom.k, vecCom.com, b, pdec.data(), com_j.data(), depth, lambdaBytes);
 
   BOOST_TEST(memcmp(vecCom.com + (leafIndex * lambdaBytes * 2), com_j.data(), lambdaBytes * 2) ==
              0);
@@ -137,20 +135,19 @@ BOOST_AUTO_TEST_CASE(test_vector_open_256) {
 
   faest_paramset_t params = faest_get_paramset(FAEST_256S); // Just using the FAEST-256s
   vec_com_t vecCom;
-  uint32_t numVoleInstances = 16;
-  uint32_t lambda           = params.faest_param.lambda;
-  uint32_t lambdaBytes      = lambda / 8;
-  vector_commitment(rootKey, iv.data(), &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
-
-  uint32_t leafIndex       = 7;
   constexpr uint32_t depth = 4;
+  uint32_t lambda          = params.faest_param.lambda;
+  uint32_t lambdaBytes     = lambda / 8;
+  vector_commitment(rootKey, iv.data(), &params, lambda, &vecCom, depth);
+
+  uint32_t leafIndex = 7;
   uint8_t b[depth];
   BitDec(leafIndex, depth, b);
 
   std::vector<uint8_t> pdec, com_j;
   pdec.resize(depth * lambdaBytes);
   com_j.resize(lambdaBytes * 2);
-  vector_open(vecCom.k, vecCom.com, b, pdec.data(), com_j.data(), numVoleInstances, lambdaBytes);
+  vector_open(vecCom.k, vecCom.com, b, pdec.data(), com_j.data(), depth, lambdaBytes);
 
   BOOST_TEST(memcmp(vecCom.com + (leafIndex * lambdaBytes * 2), com_j.data(), lambdaBytes * 2) ==
              0);
@@ -173,23 +170,22 @@ BOOST_AUTO_TEST_CASE(test_vector_reconstruct_and_verify) {
 
   faest_paramset_t params = faest_get_paramset(FAEST_128S); // Just using the FAEST-128s
   vec_com_t vecCom;
-  uint32_t numVoleInstances = 16;
-  uint32_t lambda           = params.faest_param.lambda;
-  uint32_t lambdaBytes      = lambda / 8;
-  vector_commitment(rootKey, iv.data(), &params, lambda, lambdaBytes, &vecCom, numVoleInstances);
-
-  uint32_t leafIndex       = 7;
   constexpr uint32_t depth = 4;
+  uint32_t lambda          = params.faest_param.lambda;
+  uint32_t lambdaBytes     = lambda / 8;
+  vector_commitment(rootKey, iv.data(), &params, lambda, &vecCom, depth);
+
+  uint32_t leafIndex = 7;
   uint8_t b[depth];
   BitDec(leafIndex, depth, b);
 
   std::vector<uint8_t> pdec, com_j;
   pdec.resize(depth * lambdaBytes);
   com_j.resize(lambdaBytes * 2);
-  vector_open(vecCom.k, vecCom.com, b, pdec.data(), com_j.data(), numVoleInstances, lambdaBytes);
+  vector_open(vecCom.k, vecCom.com, b, pdec.data(), com_j.data(), depth, lambdaBytes);
 
-  BOOST_TEST(vector_verify(iv.data(), pdec.data(), com_j.data(), b, lambda, lambdaBytes,
-                           numVoleInstances, depth, nullptr, vecCom.h) == 1);
+  BOOST_TEST(vector_verify(iv.data(), pdec.data(), com_j.data(), b, lambda, depth, nullptr,
+                           vecCom.h) == 1);
 
   vec_com_clear(&vecCom);
 }
@@ -583,10 +579,9 @@ BOOST_AUTO_TEST_CASE(tv_faest_128f) {
   vec_com_t vecCom;
   const auto lambda      = params.faest_param.lambda;
   const auto lambdaBytes = lambda / 8;
-  vector_commitment(root_key_128.data(), iv.data(), &params, lambda, lambdaBytes, &vecCom, 16);
+  const auto depth       = ceil_log2(16);
+  vector_commitment(root_key_128.data(), iv.data(), &params, lambda, &vecCom, depth);
   BOOST_TEST(memcmp(vecCom.com, com_128.data(), 16 * lambdaBytes * 2) == 0);
-
-  const auto depth = ceil_log2(16);
 
   for (unsigned int leafIndex = 0; leafIndex != test_vectors; ++leafIndex) {
     std::vector<uint8_t> b;
@@ -596,14 +591,14 @@ BOOST_AUTO_TEST_CASE(tv_faest_128f) {
     std::vector<uint8_t> pdec, com_j;
     pdec.resize(depth * lambdaBytes);
     com_j.resize(lambdaBytes * 2);
-    vector_open(vecCom.k, vecCom.com, b.data(), pdec.data(), com_j.data(), 16, lambdaBytes);
+    vector_open(vecCom.k, vecCom.com, b.data(), pdec.data(), com_j.data(), depth, lambdaBytes);
 
     BOOST_TEST(memcmp(pdec.data(), pdec_j_128.data() + leafIndex * depth * lambdaBytes,
                       depth * lambdaBytes) == 0);
     BOOST_TEST(
         memcmp(com_j.data(), com_j_128.data() + leafIndex * lambdaBytes * 2, lambdaBytes * 2) == 0);
-    BOOST_TEST(vector_verify(iv.data(), pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes,
-                             16, depth, nullptr, vecCom.h) == 1);
+    BOOST_TEST(vector_verify(iv.data(), pdec.data(), com_j.data(), b.data(), lambda, depth, nullptr,
+                             vecCom.h) == 1);
   }
 
   vec_com_clear(&vecCom);
@@ -614,10 +609,9 @@ BOOST_AUTO_TEST_CASE(tv_faest_192f) {
   vec_com_t vecCom;
   const auto lambda      = params.faest_param.lambda;
   const auto lambdaBytes = lambda / 8;
-  vector_commitment(root_key_192.data(), iv.data(), &params, lambda, lambdaBytes, &vecCom, 16);
+  const auto depth       = 4;
+  vector_commitment(root_key_192.data(), iv.data(), &params, lambda, &vecCom, depth);
   BOOST_TEST(memcmp(vecCom.com, com_192.data(), 16 * lambdaBytes * 2) == 0);
-
-  const auto depth = 4;
 
   for (unsigned int leafIndex = 0; leafIndex != test_vectors; ++leafIndex) {
     std::vector<uint8_t> b;
@@ -627,14 +621,14 @@ BOOST_AUTO_TEST_CASE(tv_faest_192f) {
     std::vector<uint8_t> pdec, com_j;
     pdec.resize(depth * lambdaBytes);
     com_j.resize(lambdaBytes * 2);
-    vector_open(vecCom.k, vecCom.com, b.data(), pdec.data(), com_j.data(), 16, lambdaBytes);
+    vector_open(vecCom.k, vecCom.com, b.data(), pdec.data(), com_j.data(), depth, lambdaBytes);
 
     BOOST_TEST(memcmp(pdec.data(), pdec_j_192.data() + leafIndex * depth * lambdaBytes,
                       depth * lambdaBytes) == 0);
     BOOST_TEST(
         memcmp(com_j.data(), com_j_192.data() + leafIndex * lambdaBytes * 2, lambdaBytes * 2) == 0);
-    BOOST_TEST(vector_verify(iv.data(), pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes,
-                             16, depth, nullptr, vecCom.h) == 1);
+    BOOST_TEST(vector_verify(iv.data(), pdec.data(), com_j.data(), b.data(), lambda, depth, nullptr,
+                             vecCom.h) == 1);
   }
 
   vec_com_clear(&vecCom);
@@ -645,10 +639,9 @@ BOOST_AUTO_TEST_CASE(tv_faest_256f) {
   vec_com_t vecCom;
   const auto lambda      = params.faest_param.lambda;
   const auto lambdaBytes = lambda / 8;
-  vector_commitment(root_key_256.data(), iv.data(), &params, lambda, lambdaBytes, &vecCom, 32);
+  const auto depth       = ceil_log2(32);
+  vector_commitment(root_key_256.data(), iv.data(), &params, lambda, &vecCom, depth);
   BOOST_TEST(memcmp(vecCom.com, com_256.data(), 32 * lambdaBytes * 2) == 0);
-
-  const auto depth = ceil_log2(32);
 
   for (unsigned int leafIndex = 0; leafIndex != test_vectors; ++leafIndex) {
     std::vector<uint8_t> b;
@@ -658,14 +651,14 @@ BOOST_AUTO_TEST_CASE(tv_faest_256f) {
     std::vector<uint8_t> pdec, com_j;
     pdec.resize(depth * lambdaBytes);
     com_j.resize(lambdaBytes * 2);
-    vector_open(vecCom.k, vecCom.com, b.data(), pdec.data(), com_j.data(), 32, lambdaBytes);
+    vector_open(vecCom.k, vecCom.com, b.data(), pdec.data(), com_j.data(), depth, lambdaBytes);
 
     BOOST_TEST(memcmp(pdec.data(), pdec_j_256.data() + leafIndex * depth * lambdaBytes,
                       depth * lambdaBytes) == 0);
     BOOST_TEST(
         memcmp(com_j.data(), com_j_256.data() + leafIndex * lambdaBytes * 2, lambdaBytes * 2) == 0);
-    BOOST_TEST(vector_verify(iv.data(), pdec.data(), com_j.data(), b.data(), lambda, lambdaBytes,
-                             32, depth, nullptr, vecCom.h) == 1);
+    BOOST_TEST(vector_verify(iv.data(), pdec.data(), com_j.data(), b.data(), lambda, depth, nullptr,
+                             vecCom.h) == 1);
   }
 
   vec_com_clear(&vecCom);

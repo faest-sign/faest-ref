@@ -136,11 +136,6 @@ static tree_t generateSeeds(const uint8_t* rootSeed, const uint8_t* iv,
   tree.haveNode[0] = 1;
   expandSeeds(&tree, iv, params);
 
-#if 0
-  printTree("tree", tree);
-  printTreeInfo("tree_info", tree);
-#endif
-
   return tree;
 }
 
@@ -148,13 +143,6 @@ static tree_t generateSeeds(const uint8_t* rootSeed, const uint8_t* iv,
 uint64_t getBinaryTreeNodeCount(uint32_t numVoleInstances) {
   uint32_t depth = ceil_log2(numVoleInstances) + 1;
   return ((1 << depth) - 1) - ((1 << (depth - 1)) - numVoleInstances);
-
-  // uint64_t out = 0;
-  // for (uint64_t i = depth; i > 0; i--) {
-  //   out += (1 << i);
-  // }
-  // out += 1;
-  // return out;
 }
 
 /* Calculates the flat array index of the binary tree position */
@@ -188,8 +176,9 @@ uint64_t NumRec(uint32_t depth, const uint8_t* bi) {
 }
 
 void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
-                       uint32_t lambda, uint32_t lambdaBytes, vec_com_t* vecCom,
-                       uint32_t numVoleInstances) {
+                       uint32_t lambda, vec_com_t* vecCom, uint32_t depth) {
+  const unsigned int lambdaBytes      = lambda / 8;
+  const unsigned int numVoleInstances = 1 << depth;
 
   // Generating the tree
   tree_t tree = generateSeeds(rootKey, iv, params, numVoleInstances);
@@ -224,13 +213,10 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
     H1_update(&h1_ctx, vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
   H1_final(&h1_ctx, vecCom->h, lambdaBytes * 2);
-  /* printHex("hashed_leaves", vecCom->com, 1 << 10); */
 }
 
 void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t* cop,
-                 uint8_t* com_j, uint32_t numVoleInstances, uint32_t lambdaBytes) {
-  uint32_t depth = ceil_log2(numVoleInstances);
-
+                 uint8_t* com_j, uint32_t depth, uint32_t lambdaBytes) {
   // Step: 1
   uint64_t leafIndex = NumRec(depth, b);
 
@@ -247,10 +233,12 @@ void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t
 }
 
 void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t* com_j,
-                           const uint8_t* b, uint32_t lambda, uint32_t lambdaBytes,
-                           uint32_t numVoleInstances, uint32_t depth, vec_com_rec_t* vecComRec) {
+                           const uint8_t* b, uint32_t lambda, uint32_t depth,
+                           vec_com_rec_t* vecComRec) {
   // Initializing
-  uint64_t leafIndex = NumRec(depth, b);
+  const unsigned int lambdaBytes      = lambda / 8;
+  const unsigned int numVoleInstances = 1 << depth;
+  const uint64_t leafIndex            = NumRec(depth, b);
 
   // Step: 3..9
   uint32_t a = 0;
@@ -296,8 +284,10 @@ void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t*
 }
 
 int vector_verify(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b,
-                  uint32_t lambda, uint32_t lambdaBytes, uint32_t numVoleInstances, uint32_t depth,
-                  vec_com_rec_t* rec, const uint8_t* vecComH) {
+                  uint32_t lambda, uint32_t depth, vec_com_rec_t* rec, const uint8_t* vecComH) {
+  const unsigned int lambdaBytes      = lambda / 8;
+  const unsigned int numVoleInstances = 1 << depth;
+
   vec_com_rec_t vecComRec;
   vecComRec.h   = malloc(lambdaBytes * 2);
   vecComRec.k   = calloc(getBinaryTreeNodeCount(numVoleInstances), lambdaBytes);
@@ -305,8 +295,7 @@ int vector_verify(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j, 
   vecComRec.s   = malloc(numVoleInstances * lambdaBytes);
 
   // Step: 2
-  vector_reconstruction(iv, pdec, com_j, b, lambda, lambdaBytes, numVoleInstances, depth,
-                        &vecComRec);
+  vector_reconstruction(iv, pdec, com_j, b, lambda, depth, &vecComRec);
 
   // Step: 3
   int ret = memcmp(vecComH, vecComRec.h, lambdaBytes * 2);

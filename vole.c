@@ -70,8 +70,7 @@ void voleCommit(const uint8_t* rootKey, const uint8_t* iv, uint32_t ellhat,
     uint32_t N     = 1 << depth;
 
     // Step 5
-    vector_commitment(expanded_keys + i * lambdaBytes, iv, params, lambda, lambdaBytes, &vecCom[i],
-                      N);
+    vector_commitment(expanded_keys + i * lambdaBytes, iv, params, lambda, &vecCom[i], depth);
     // Step 6
     ConvertToVole(iv, vecCom[i].sd, false, lambda, lambdaBytes, N, depth, ellhatBytes,
                   ui + i * ellhatBytes, tmp_v);
@@ -135,11 +134,9 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, const uint8_t* con
     ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
     // Step 4
     uint32_t idx = NumRec(depth, chalout);
-    assert(idx < N);
 
     // Step 5
-    vector_reconstruction(iv, pdec[i], com_j[i], chalout, lambda, lambdaBytes, N, depth,
-                          &vecComRec);
+    vector_reconstruction(iv, pdec[i], com_j[i], chalout, lambda, depth, &vecComRec);
 
     // Step: 6
     for (uint32_t j = 1; j < N; j++) {
