@@ -136,14 +136,11 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
 
   // Initialzing stuff
   vecCom->h   = malloc(lambdaBytes * 2);
-  vecCom->k   = malloc(tree.numNodes * lambdaBytes);
   vecCom->com = malloc(numVoleInstances * lambdaBytes * 2);
   vecCom->sd  = malloc(numVoleInstances * lambdaBytes);
 
   // Step: 1..3
-  for (uint32_t i = 0; i < tree.numNodes; i++) {
-    memcpy(vecCom->k + (i * lambdaBytes), tree.nodes[i], lambdaBytes);
-  }
+  vecCom->k = tree.nodes[0];
 
   // Step: 4..5
   uint8_t** leaves = getLeaves(&tree);
@@ -155,6 +152,7 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
     H0_final(&h0_ctx, vecCom->sd + (i * lambdaBytes), lambdaBytes,
              vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
+  tree.nodes[0] = NULL;
   freeTree(&tree);
 
   // Step: 6
