@@ -96,7 +96,7 @@ param_128s.set('T0', 7)
 param_128s.set('T1', 4)
 param_128s.set('SIG_SIZE', 5006)
 param_128s.set('PK_SIZE', 32)
-param_128s.set('SK_SIZE', 16)
+param_128s.set('SK_SIZE', 32)
 parameter_sets += param_128s
 
 # parameter set: FAEST-128f
@@ -120,7 +120,7 @@ param_128f.set('T0', 0)
 param_128f.set('T1', 16)
 param_128f.set('SIG_SIZE', 6336)
 param_128f.set('PK_SIZE', 32)
-param_128f.set('SK_SIZE', 16)
+param_128f.set('SK_SIZE', 32)
 parameter_sets += param_128f
 
 # parameter set: FAEST-EM-128s
@@ -144,7 +144,7 @@ param_em_128s.set('T0', 7)
 param_em_128s.set('T1', 4)
 param_em_128s.set('SIG_SIZE', 4566)
 param_em_128s.set('PK_SIZE', 32)
-param_em_128s.set('SK_SIZE', 16)
+param_em_128s.set('SK_SIZE', 32)
 parameter_sets += param_em_128s
 
 # parameter set: FAEST-EM-128f
@@ -168,7 +168,7 @@ param_em_128f.set('T0', 0)
 param_em_128f.set('T1', 16)
 param_em_128f.set('SIG_SIZE', 5696)
 param_em_128f.set('PK_SIZE', 32)
-param_em_128f.set('SK_SIZE', 16)
+param_em_128f.set('SK_SIZE', 32)
 parameter_sets += param_em_128f
 
 # parameter set: FAEST-192s
@@ -192,7 +192,7 @@ param_192s.set('T0', 0)
 param_192s.set('T1', 16)
 param_192s.set('SIG_SIZE', 12744)
 param_192s.set('PK_SIZE', 64)
-param_192s.set('SK_SIZE', 24)
+param_192s.set('SK_SIZE', 56)
 parameter_sets += param_192s
 
 # parameter set: FAEST-192f
@@ -216,7 +216,7 @@ param_192f.set('T0', 0)
 param_192f.set('T1', 24)
 param_192f.set('SIG_SIZE', 16792)
 param_192f.set('PK_SIZE', 64)
-param_192f.set('SK_SIZE', 24)
+param_192f.set('SK_SIZE', 56)
 parameter_sets += param_192f
 
 # parameter set: FAEST-EM-192s
@@ -240,7 +240,7 @@ param_em_192s.set('T0', 0)
 param_em_192s.set('T1', 16)
 param_em_192s.set('SIG_SIZE', 10824)
 param_em_192s.set('PK_SIZE', 48)
-param_em_192s.set('SK_SIZE', 24)
+param_em_192s.set('SK_SIZE', 48)
 parameter_sets += param_em_192s
 
 # parameter set: FAEST-EM-192f
@@ -264,7 +264,7 @@ param_em_192f.set('T0', 0)
 param_em_192f.set('T1', 24)
 param_em_192f.set('SIG_SIZE', 13912)
 param_em_192f.set('PK_SIZE', 48)
-param_em_192f.set('SK_SIZE', 24)
+param_em_192f.set('SK_SIZE', 48)
 parameter_sets += param_em_192f
 
 # parameter set: FAEST-256s
@@ -288,7 +288,7 @@ param_256s.set('T0', 14)
 param_256s.set('T1', 8)
 param_256s.set('SIG_SIZE', 22100)
 param_256s.set('PK_SIZE', 64)
-param_256s.set('SK_SIZE', 32)
+param_256s.set('SK_SIZE', 64)
 parameter_sets += param_256s
 
 # parameter set: FAEST-256f
@@ -312,7 +312,7 @@ param_256f.set('T0', 0)
 param_256f.set('T1', 32)
 param_256f.set('SIG_SIZE', 28400)
 param_256f.set('PK_SIZE', 64)
-param_256f.set('SK_SIZE', 32)
+param_256f.set('SK_SIZE', 64)
 parameter_sets += param_256f
 
 # parameter set: FAEST-EM-256s
@@ -336,7 +336,7 @@ param_em_256s.set('T0', 14)
 param_em_256s.set('T1', 8)
 param_em_256s.set('SIG_SIZE', 20956)
 param_em_256s.set('PK_SIZE', 64)
-param_em_256s.set('SK_SIZE', 32)
+param_em_256s.set('SK_SIZE', 64)
 parameter_sets += param_em_256s
 
 # parameter set: FAEST-EM-256f
@@ -360,7 +360,7 @@ param_em_256f.set('T0', 0)
 param_em_256f.set('T1', 32)
 param_em_256f.set('SIG_SIZE', 26736)
 param_em_256f.set('PK_SIZE', 64)
-param_em_256f.set('SK_SIZE', 32)
+param_em_256f.set('SK_SIZE', 64)
 parameter_sets += param_em_256f
 
 # also make data from all parameter sets available "globally"

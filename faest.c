@@ -13,9 +13,9 @@
 #include "random_oracle.h"
 #include "utils.h"
 
-void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* pk,
-          const uint8_t* rho, size_t rholen, const faest_paramset_t* params,
-          signature_t* signature) {
+void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8_t* owf_input,
+          const uint8_t* owf_output, const uint8_t* rho, size_t rholen,
+          const faest_paramset_t* params, signature_t* signature) {
   const uint32_t l           = params->faest_param.l;
   const uint32_t ell_bytes   = (l + 7) / 8;
   const uint32_t lambda      = params->faest_param.lambda;
@@ -32,7 +32,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   {
     H1_context_t h1_ctx;
     H1_init(&h1_ctx, lambda);
-    H1_update(&h1_ctx, pk, params->faest_param.pkSize);
+    H1_update(&h1_ctx, owf_input, params->faest_param.pkSize / 2);
+    H1_update(&h1_ctx, owf_output, params->faest_param.pkSize / 2);
     H1_update(&h1_ctx, msg, msglen);
     H1_final(&h1_ctx, mu, lambdaBytes * 2);
   }
@@ -42,7 +43,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   {
     H3_context_t h3_ctx;
     H3_init(&h3_ctx, lambda);
-    H3_update(&h3_ctx, sk, params->faest_param.skSize);
+    H3_update(&h3_ctx, owf_key, lambdaBytes);
     H3_update(&h3_ctx, mu, lambdaBytes * 2);
     if (rho && rholen) {
       H3_update(&h3_ctx, rho, rholen);
@@ -95,11 +96,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
     // Step: 8
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
-  // Step: 9
-  const uint8_t* in  = pk;
-  const uint8_t* out = pk + params->faest_param.pkSize / 2;
-  // Step: 10
-  uint8_t* w = aes_extend_witness(sk, in, params);
+  // Step: 9, 10
+  uint8_t* w = aes_extend_witness(owf_key, owf_input, params);
   // Step: 11
   xorUint8Arr(w, u, signature->d, ell_bytes);
 
@@ -120,7 +118,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
 
   // Step: 16
   uint8_t b_tilde[MAX_LAMBDA_BYTES];
-  aes_prove(w, u, V, in, out, chall_2, signature->a_tilde, b_tilde, params);
+  aes_prove(w, u, V, owf_input, owf_output, chall_2, signature->a_tilde, b_tilde, params);
   free(V[0]);
   free(V);
   V = NULL;
@@ -156,8 +154,8 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* p
   vecCom = NULL;
 }
 
-int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_paramset_t* params,
-           const signature_t* signature) {
+int verify(const uint8_t* msg, size_t msglen, const uint8_t* owf_input, const uint8_t* owf_output,
+           const faest_paramset_t* params, const signature_t* signature) {
   const unsigned int l           = params->faest_param.l;
   const unsigned int ell_bytes   = (l + 7) / 8;
   const unsigned int lambda      = params->faest_param.lambda;
@@ -171,16 +169,13 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   const unsigned int k0            = params->faest_param.k0;
   const unsigned int k1            = params->faest_param.k1;
 
-  // Step: 2
-  const uint8_t* in  = pk;
-  const uint8_t* out = pk + params->faest_param.pkSize / 2;
-
   // Step: 3
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
   {
     H1_context_t h1_ctx;
     H1_init(&h1_ctx, lambda);
-    H1_update(&h1_ctx, pk, params->faest_param.pkSize);
+    H1_update(&h1_ctx, owf_input, params->faest_param.pkSize / 2);
+    H1_update(&h1_ctx, owf_output, params->faest_param.pkSize / 2);
     H1_update(&h1_ctx, msg, msglen);
     H1_final(&h1_ctx, mu, lambdaBytes * 2);
   }
@@ -287,8 +282,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_par
   }
 
   // Step 18
-  uint8_t* b_tilde =
-      aes_verify(signature->d, q, chall_2, signature->chall_3, signature->a_tilde, in, out, params);
+  uint8_t* b_tilde = aes_verify(signature->d, q, chall_2, signature->chall_3, signature->a_tilde,
+                                owf_input, owf_output, params);
   free(q[0]);
   free(q);
   q = NULL;

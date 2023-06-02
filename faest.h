@@ -26,12 +26,12 @@ typedef struct signature_t {
 signature_t init_signature(const faest_paramset_t* params);
 void free_signature(signature_t sig, const faest_paramset_t* params);
 
-void sign(const uint8_t* msg, size_t msglen, const uint8_t* sk, const uint8_t* pk,
-          const uint8_t* rho, size_t rholen, const faest_paramset_t* params,
-          signature_t* signature);
+void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8_t* owf_input,
+          const uint8_t* owf_output, const uint8_t* rho, size_t rholen,
+          const faest_paramset_t* params, signature_t* signature);
 
-int verify(const uint8_t* msg, size_t msglen, const uint8_t* pk, const faest_paramset_t* params,
-           const signature_t* signature);
+int verify(const uint8_t* msg, size_t msglen, const uint8_t* owf_input, const uint8_t* owf_output,
+           const faest_paramset_t* params, const signature_t* signature);
 
 int serialize_signature(uint8_t* dest, size_t* len, const signature_t* signature,
                         const faest_paramset_t* params);

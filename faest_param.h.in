@@ -33,6 +33,25 @@ FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, ui
 
 /**
  * Signature function.
+ * Signs a message with the given keypair. Samples rho internally.
+ *
+ * @param[in] sk      The signer's private key.
+ * @param[in] pk      The signer's public key.
+ * @param[in] message The message to be signed.
+ * @param[in] message_len The length of the message, in bytes.
+ * @param[out] signature A buffer to hold the signature. The specific max number of
+ * bytes required for a parameter set is given by @PARAM_L@_signature_size().
+ * @param[in,out] signature_len The length of the provided signature buffer.
+ * On success, this is set to the number of bytes written to the signature buffer.
+ *
+ * @return Returns 0 for success, or a nonzero value indicating an error.
+ *
+ * @see faest_verify(), faest_keygen(), faest_signature_size()
+ */
+FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len);
+
+/**
+ * Signature function (with custom randomness input).
  * Signs a message with the given keypair.
  *
  * @param[in] sk      The signer's private key.
@@ -50,7 +69,8 @@ FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, ui
  *
  * @see faest_verify(), faest_keygen(), faest_signature_size()
  */
-FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* pk, const uint8_t* message, size_t message_len, const uint8_t* rho, size_t rho_len, uint8_t* signature, size_t* signature_len);
+FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign_with_randomness(const uint8_t* sk, const uint8_t* message, size_t message_len, const uint8_t* rho, size_t rho_len, uint8_t* signature, size_t* signature_len);
+
 
 /**
  * Verification function.

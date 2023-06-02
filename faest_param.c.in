@@ -12,28 +12,32 @@
 #include "owf.h"
 #include "instances.h"
 #include "faest.h"
+#include "parameters.h"
 
 #include <stdlib.h>
 #include <string.h>
+
+// memory layout of the public key: OWF input || OWF output
+#define PK_INPUT(pk) (pk)
+#define PK_OUTPUT(pk) (&pk[@PK_SIZE@ / 2])
+
+// memory layout of the secret key: OWF input || OWF key
+#define SK_INPUT(sk) (sk)
+#define SK_KEY(sk) (&sk[@PK_SIZE@ / 2])
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
   if (!pk || !sk) {
     return -1;
   }
 
-  uint8_t randomness[@PK_SIZE@ / 2 + FAEST_@PARAM@_PRIVATE_KEY_SIZE];
-
-  uint8_t* input = pk;
-  uint8_t* output = pk + @PK_SIZE@ / 2;
-
   bool done = false;
   while (!done) {
-    rand_bytes(randomness, @PK_SIZE@ / 2 + FAEST_@PARAM@_PRIVATE_KEY_SIZE);
-    memcpy(input, randomness, @PK_SIZE@ / 2);
-    memcpy(sk, randomness + @PK_SIZE@ / 2, FAEST_@PARAM@_PRIVATE_KEY_SIZE);
-    done = faest_@PARAM_L@_owf(sk, input, output);
+    rand_bytes(sk, @SK_SIZE@);
+    done = faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), PK_OUTPUT(pk));
   }
+  memcpy(PK_INPUT(pk), SK_INPUT(sk), @PK_SIZE@ / 2);
 
+  faest_declassify(SK_INPUT(sk), @PK_SIZE@ / 2);
   faest_declassify(pk, @PK_SIZE@);
   return 0;
 }
@@ -43,27 +47,31 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk,
     return -1;
   }
 
-  const uint8_t* input = pk;
-  const uint8_t* expected_output = pk + @PK_SIZE@ / 2;
-
-  uint8_t output[@PK_SIZE@ / 2] = { 0 };
-  if (!faest_@PARAM_L@_owf(sk, input, output)) {
+  uint8_t pk_check[@PK_SIZE@];
+  if (!faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), PK_OUTPUT(pk_check))) {
     // zero bytes in SubBytes input
     return 1;
   }
+  memcpy(PK_INPUT(pk_check), SK_INPUT(sk), @PK_SIZE@ / 2);
 
-  return faest_timingsafe_bcmp(output, expected_output, sizeof(output)) == 0 ? 0 : 2;
+  return faest_timingsafe_bcmp(pk_check, pk, sizeof(pk_check)) == 0 ? 0 : 2;
 }
 
-int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* pk, const uint8_t* message, size_t message_len, const uint8_t* rho, size_t rho_len, uint8_t* signature, size_t* signature_len) {
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign_with_randomness(const uint8_t* sk, const uint8_t* message, size_t message_len, const uint8_t* rho, size_t rho_len, uint8_t* signature, size_t* signature_len) {
   if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE || (!rho && rho_len)) {
+    return -1;
+  }
+
+  uint8_t owf_output[@PK_SIZE@ / 2];
+  if (!faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), owf_output)) {
+    // invalid key
     return -1;
   }
 
   const faest_paramset_t params = faest_get_paramset(FAEST_@PARAM@);
   signature_t sig = init_signature(&params);
 
-  sign(message, message_len, sk, pk, rho, rho_len, &params, &sig);
+  sign(message, message_len, SK_KEY(sk), SK_INPUT(sk), owf_output, rho, rho_len, &params, &sig);
   serialize_signature(signature, signature_len, &sig, &params);
   free_signature(sig, &params);
   if (*signature_len != FAEST_@PARAM@_SIGNATURE_SIZE) {
@@ -75,6 +83,17 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8
   return 0;
 }
 
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len) {
+  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE) {
+    return -1;
+  }
+
+  uint8_t rho[FAEST_@PARAM@_LAMBDA / 8];
+  rand_bytes(rho, sizeof(rho));
+
+  return faest_@PARAM_L@_sign_with_randomness(sk, message, message_len, rho, sizeof(rho), signature, signature_len);
+}
+
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* pk, const uint8_t* message, size_t message_len, const uint8_t* signature, size_t signature_len) {
   if (!pk || !signature || signature_len != FAEST_@PARAM@_SIGNATURE_SIZE) {
     return -1;
@@ -83,7 +102,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* pk, const uin
   const faest_paramset_t params = faest_get_paramset(FAEST_@PARAM@);
   signature_t sig = deserialize_signature(signature, &params);
 
-  int ret = verify(message, message_len, pk, &params, &sig);
+  int ret = verify(message, message_len, PK_INPUT(pk), PK_OUTPUT(pk), &params, &sig);
   free_signature(sig, &params);
 
   return ret;
