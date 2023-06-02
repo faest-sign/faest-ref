@@ -65,7 +65,7 @@ def generate(
     for test_source in ("api_test.c",):
         shutil.copy(test_sources / test_source, target_tests)
     # copy NIST files
-    for tool_source in ("rng.c", "rng.h", "PQCgenKAT_sign.cpp"):
+    for tool_source in ("rng.c", "rng.h", "PQCgenKAT_sign.c"):
         shutil.copy(tools_sources / tool_source, target_nist_kat)
     for tool_source in ("Makefile",):
         shutil.copy(tools_sources / tool_source, target)
