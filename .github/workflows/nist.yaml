@@ -2,9 +2,10 @@ name: NIST submission package
 
 on:
   push:
-
-env:
-  VERBOSE: 1
+    tags:
+      - "nist-submission-.*"
+  schedule:
+  - cron: "0 0 1 * *"
 
 jobs:
   build:
