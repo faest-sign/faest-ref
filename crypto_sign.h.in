@@ -8,7 +8,7 @@
 #define CRYPTO_SECRETKEYBYTES (@SK_SIZE@ + @PK_SIZE@ / 2)
 #define CRYPTO_PUBLICKEYBYTES @PK_SIZE@
 #define CRYPTO_BYTES @SIG_SIZE@
-#define CRYPTO_ALGNAME "faest@PARAM_L@"
+#define CRYPTO_ALGNAME "faest_@PARAM_L@"
 
 int crypto_sign_keypair(unsigned char* pk, unsigned char* sk);
 int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned char* m,
