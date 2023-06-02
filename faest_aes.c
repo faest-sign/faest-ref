@@ -2251,7 +2251,7 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
           y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
 
           // Step: 18
-          y_out[16 * j + 4 * c + r] = bf128_byte_combine_bits(y_tilde);
+          y_out[4 * Nst * j + 4 * c + r] = bf128_byte_combine_bits(y_tilde);
         }
       }
     }
@@ -2614,7 +2614,7 @@ static void em_enc_backward_192(uint32_t m, const uint8_t* z, const bf192_t* bf_
           y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
 
           // Step: 18
-          y_out[16 * j + 4 * c + r] = bf192_byte_combine_bits(y_tilde);
+          y_out[4 * Nst * j + 4 * c + r] = bf192_byte_combine_bits(y_tilde);
         }
       }
     }
@@ -2662,7 +2662,7 @@ static void em_enc_backward_192(uint32_t m, const uint8_t* z, const bf192_t* bf_
         bf_y_tilde[2] = bf192_add(bf_y_tilde[2], factor);
 
         // Step: 18
-        y_out[16 * j + 4 * c + r] = bf192_byte_combine(bf_y_tilde);
+        y_out[4 * Nst * j + 4 * c + r] = bf192_byte_combine(bf_y_tilde);
       }
     }
   }
@@ -2984,7 +2984,7 @@ static void em_enc_backward_256(uint32_t m, const uint8_t* z, const bf256_t* bf_
           y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
 
           // Step: 18
-          y_out[16 * j + 4 * c + r] = bf256_byte_combine_bits(y_tilde);
+          y_out[4 * Nst * j + 4 * c + r] = bf256_byte_combine_bits(y_tilde);
         }
       }
     }
@@ -3032,7 +3032,7 @@ static void em_enc_backward_256(uint32_t m, const uint8_t* z, const bf256_t* bf_
         bf_y_tilde[2] = bf256_add(bf_y_tilde[2], factor);
 
         // Step: 18
-        y_out[16 * j + 4 * c + r] = bf256_byte_combine(bf_y_tilde);
+        y_out[4 * Nst * j + 4 * c + r] = bf256_byte_combine(bf_y_tilde);
       }
     }
   }
