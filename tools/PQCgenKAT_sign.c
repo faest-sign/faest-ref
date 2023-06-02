@@ -57,12 +57,12 @@ int main() {
   int ret_val;
 
   // Create the REQUEST file
-  sprintf(fn_req, "PQCsignKAT_%d.req", CRYPTO_ALGNAME);
+  sprintf(fn_req, "PQCsignKAT_%s.req", CRYPTO_ALGNAME);
   if ((fp_req = fopen(fn_req, "w")) == NULL) {
     printf("Couldn't open <%s> for write\n", fn_req);
     return KAT_FILE_OPEN_ERROR;
   }
-  sprintf(fn_rsp, "PQCsignKAT_%d.rsp", CRYPTO_ALGNAME);
+  sprintf(fn_rsp, "PQCsignKAT_%s.rsp", CRYPTO_ALGNAME);
   if ((fp_rsp = fopen(fn_rsp, "w")) == NULL) {
     printf("Couldn't open <%s> for write\n", fn_rsp);
     return KAT_FILE_OPEN_ERROR;
