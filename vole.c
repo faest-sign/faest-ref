@@ -96,8 +96,9 @@ void voleCommit(const uint8_t* rootKey, const uint8_t* iv, uint32_t ellhat,
   H1_final(&h1_ctx, hcom, lambdaBytes * 2);
 }
 
-void voleReconstruct(const uint8_t* iv, const uint8_t* chall, uint8_t** pdec, uint8_t** com_j,
-                     uint8_t* hcom, uint8_t** q, uint32_t ellhat, const faest_paramset_t* params) {
+void voleReconstruct(const uint8_t* iv, const uint8_t* chall, const uint8_t* const* pdec,
+                     const uint8_t* const* com_j, uint8_t* hcom, uint8_t** q, uint32_t ellhat,
+                     const faest_paramset_t* params) {
   uint32_t lambda      = params->faest_param.lambda;
   uint32_t lambdaBytes = lambda / 8;
   uint32_t ellhatBytes = (ellhat + 7) / 8;

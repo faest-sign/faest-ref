@@ -12,6 +12,8 @@
 #include "randomness.h"
 #include "random_oracle.h"
 #include "utils.h"
+#include "vole.h"
+#include "universal_hashing.h"
 
 void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8_t* owf_input,
           const uint8_t* owf_output, const uint8_t* rho, size_t rholen,
@@ -155,7 +157,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8
 }
 
 int verify(const uint8_t* msg, size_t msglen, const uint8_t* owf_input, const uint8_t* owf_output,
-           const faest_paramset_t* params, const signature_t* signature) {
+           const faest_paramset_t* params, const deserialized_signature_t* signature) {
   const unsigned int l           = params->faest_param.l;
   const unsigned int ell_bytes   = (l + 7) / 8;
   const unsigned int lambda      = params->faest_param.lambda;
@@ -201,7 +203,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* owf_input, const ui
     for (unsigned int i = 0; i < (tau - 1); ++i) {
       H2_update(&h2_ctx, signature->c[i], ell_hat_bytes);
     }
-    H2_update(&h2_ctx, signature->iv, sizeof(signature->iv));
+    H2_update(&h2_ctx, signature->iv, IV_SIZE);
     H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
   }
 
@@ -317,19 +319,16 @@ signature_t init_signature(const faest_paramset_t* params) {
   const size_t ell_hat_bytes = ell_hat / 8;
   const size_t utilde_bytes  = (params->faest_param.lambda + UNIVERSAL_HASH_B_BITS + 7) / 8;
 
-  sig.c = calloc(params->faest_param.tau - 1, sizeof(uint8_t*));
   for (unsigned int i = 0; i != params->faest_param.tau - 1; ++i) {
     sig.c[i] = malloc(ell_hat_bytes);
   }
   sig.u_tilde = malloc(utilde_bytes);
   sig.d       = malloc(ell_bytes);
   sig.a_tilde = malloc(lambda_bytes);
-  sig.pdec    = calloc(params->faest_param.tau, sizeof(uint8_t*));
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
     unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
     sig.pdec[i]        = malloc(depth * lambda_bytes);
   }
-  sig.com_j = calloc(params->faest_param.tau, sizeof(uint8_t*));
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
     sig.com_j[i] = malloc(lambda_bytes * 2);
   }
@@ -340,27 +339,18 @@ signature_t init_signature(const faest_paramset_t* params) {
 
 void free_signature(signature_t sig, const faest_paramset_t* params) {
   free(sig.chall_3);
-  if (sig.com_j) {
-    for (unsigned int i = params->faest_param.tau; i; --i) {
-      free(sig.com_j[i - 1]);
-    }
-    free(sig.com_j);
+  for (unsigned int i = params->faest_param.tau; i; --i) {
+    free(sig.com_j[i - 1]);
   }
-  if (sig.pdec) {
-    for (unsigned int i = params->faest_param.tau; i; --i) {
-      free(sig.pdec[i - 1]);
-    }
-    free(sig.pdec);
+  for (unsigned int i = params->faest_param.tau; i; --i) {
+    free(sig.pdec[i - 1]);
   }
   free(sig.a_tilde);
   free(sig.d);
   free(sig.u_tilde);
 
-  if (sig.c) {
-    for (unsigned int i = params->faest_param.tau - 1; i; --i) {
-      free(sig.c[i - 1]);
-    }
-    free(sig.c);
+  for (unsigned int i = params->faest_param.tau - 1; i; --i) {
+    free(sig.c[i - 1]);
   }
 }
 
@@ -414,7 +404,7 @@ int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
   return 0;
 }
 
-signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* params) {
+deserialized_signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* params) {
   const unsigned int tau0   = params->faest_param.t0;
   const size_t lambda_bytes = params->faest_param.lambda / 8;
   const size_t ell_bytes    = (params->faest_param.l + 7) / 8;
@@ -423,40 +413,42 @@ signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* pa
   const size_t ell_hat_bytes = (ell_hat + 7) / 8;
   const size_t utilde_bytes  = (params->faest_param.lambda + UNIVERSAL_HASH_B_BITS + 7) / 8;
 
-  signature_t sig = init_signature(params);
+  deserialized_signature_t sig;
 
   // serialize c_i
   for (unsigned int i = 0; i != params->faest_param.tau - 1; ++i, src += ell_hat_bytes) {
-    memcpy(sig.c[i], src, ell_hat_bytes);
+    sig.c[i] = src;
   }
 
   // serialize u tilde
-  memcpy(sig.u_tilde, src, utilde_bytes);
+  sig.u_tilde = src;
   src += utilde_bytes;
 
   // serialize d
-  memcpy(sig.d, src, ell_bytes);
+  sig.d = src;
   src += ell_bytes;
 
   // serialize a tilde
-  memcpy(sig.a_tilde, src, lambda_bytes);
+  sig.a_tilde = src;
   src += lambda_bytes;
 
   // serialize pdec_i, com_i
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
     const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
-    memcpy(sig.pdec[i], src, depth * lambda_bytes);
+
+    sig.pdec[i] = src;
     src += depth * lambda_bytes;
-    memcpy(sig.com_j[i], src, 2 * lambda_bytes);
+
+    sig.com_j[i] = src;
     src += 2 * lambda_bytes;
   }
 
   // serialize chall_3
-  memcpy(sig.chall_3, src, lambda_bytes);
+  sig.chall_3 = src;
   src += lambda_bytes;
 
   // serialize iv
-  memcpy(sig.iv, src, sizeof(sig.iv));
+  sig.iv = src;
 
   return sig;
 }
