@@ -2126,8 +2126,8 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
 
     for (uint32_t j = 1; j < R; j++) {
       for (uint32_t c = 0; c <= 3; c++) {
-        unsigned int i  = 128 * j + 32 * c;
-        unsigned int iy = 16 * j + 4 * c;
+        unsigned int i  = 32 * Nst * j + 32 * c;
+        unsigned int iy = 4 * Nst * j + 4 * c;
 
         bf128_t bf_x_hat[4];
         bf128_t bf_z_hat[4];
@@ -2166,7 +2166,7 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
   }
 
   // Step: 2
-  for (uint32_t j = 0; j < 16; j++) {
+  for (uint32_t j = 0; j < 4 * Nst; j++) {
     bf_y[j] = bf128_byte_combine(bf_z + 8 * j);
     if (bf_x) {
       bf_y[j] = bf128_add(bf_y[j], bf128_byte_combine(bf_x + 8 * j));
@@ -2175,8 +2175,8 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
 
   for (uint32_t j = 1; j < R; j++) {
     for (uint32_t c = 0; c <= 3; c++) {
-      unsigned int i  = 128 * j + 32 * c;
-      unsigned int iy = 16 * j + 4 * c;
+      unsigned int i  = 32 * Nst * j + 32 * c;
+      unsigned int iy = 4 * Nst * j + 4 * c;
 
       bf128_t bf_x_hat[4];
       bf128_t bf_z_hat[4];
