@@ -23,7 +23,7 @@ $(EXECUTABLE_NISTKAT): CFLAGS+=-Wno-sign-compare -Wno-unused-but-set-variable -W
 $(EXECUTABLE_APITEST): $(EXECUTABLE_APITEST).c.o $(LIBFAEST) randomness.c.o
 	$(CC) $(CPPFLAGS) $(LDFLAGS) $^ -lcrypto -o $@
 
-$(EXECUTABLE_NISTKAT): $(addsuffix .o, $(NISTKAT_SOURCES)) $(LIBFAEST) randomness.c.o
+$(EXECUTABLE_NISTKAT): $(addsuffix .o, $(NISTKAT_SOURCES)) $(LIBFAEST) randomness.c
 	$(CC) $(CPPFLAGS) $(LDFLAGS) $^ -lcrypto -o $@
 
 clean:
