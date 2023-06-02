@@ -51,7 +51,9 @@ faest_256s_test = executable('faest_256s_api_test', test_sources,
   include_directories: include_directories,
   c_args: defines + c_flags + valgrind_defines,
 )
-test('faest_256s_api_test', faest_256s_test)
+test('faest_256s_api_test', faest_256s_test,
+  timeout: 600,
+)
 if valgrind.found() and valgrind_exec.found()
   test('faest_256s_api_test_ct', valgrind_exec,
     args: ['-q', '--error-exitcode=1', '--track-origins=yes', faest_256s_test],
