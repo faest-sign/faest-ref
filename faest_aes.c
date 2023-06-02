@@ -478,7 +478,7 @@ static void aes_enc_backward_128(uint32_t m, const uint8_t* x, const bf128_t* bf
       for (uint32_t c = 0; c <= 3; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
           // Step: 5..6
-          unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+          unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
           if (j < (R - 1)) {
             // Step: 7
             xtilde = x[ird / 8];
@@ -524,7 +524,7 @@ static void aes_enc_backward_128(uint32_t m, const uint8_t* x, const bf128_t* bf
       for (uint32_t r = 0; r <= 3; r++) {
         bf128_t bf_x_tilde[8];
         // Step: 5
-        unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+        unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
         // Step: 6
         if (j < (R - 1)) {
           // Step: 7
@@ -1151,7 +1151,7 @@ static void aes_enc_backward_192(uint32_t m, const uint8_t* x, const bf192_t* bf
       for (uint32_t c = 0; c <= 3; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
           // Step: 5..6
-          unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+          unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
           if (j < (R - 1)) {
             // Step: 7
             xtilde = x[ird / 8];
@@ -1197,7 +1197,7 @@ static void aes_enc_backward_192(uint32_t m, const uint8_t* x, const bf192_t* bf
       for (uint32_t r = 0; r <= 3; r++) {
         bf192_t bf_x_tilde[8];
         // Step: 5
-        unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+        unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
         // Step: 6
         if (j < (R - 1)) {
           // Step: 7
@@ -1846,7 +1846,7 @@ static void aes_enc_backward_256(uint32_t m, const uint8_t* x, const bf256_t* bf
       for (uint32_t c = 0; c <= 3; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
           // Step: 5..6
-          unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+          unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
           if (j < (R - 1)) {
             // Step: 7
             xtilde = x[ird / 8];
@@ -1892,7 +1892,7 @@ static void aes_enc_backward_256(uint32_t m, const uint8_t* x, const bf256_t* bf
       for (uint32_t r = 0; r <= 3; r++) {
         bf256_t bf_x_tilde[8];
         // Step: 5
-        unsigned int ird = (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+        unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
         // Step: 6
         if (j < (R - 1)) {
           // Step: 7
@@ -2229,9 +2229,9 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
     for (uint32_t j = 0; j < R; j++) {
       for (uint32_t c = 0; c <= 3; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
-          unsigned int icol = (c - r) % Nst;
+          unsigned int icol = (c - r + Nst) % Nst;
           if (Nst == 8 && r >= 2) {
-            icol = (icol - 1) % Nst;
+            icol = (icol - 1 + Nst) % Nst;
           }
           unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
           uint8_t z_tilde  = 0;
@@ -2269,9 +2269,9 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
     for (uint32_t c = 0; c <= 3; c++) {
       for (uint32_t r = 0; r <= 3; r++) {
         bf128_t bf_z_tilde[8];
-        unsigned int icol = (c - r) % Nst;
+        unsigned int icol = (c - r + Nst) % Nst;
         if (Nst == 8 && r >= 2) {
-          icol = (icol - 1) % Nst;
+          icol = (icol - 1 + Nst) % Nst;
         }
         unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
 
@@ -2597,9 +2597,9 @@ static void em_enc_backward_192(uint32_t m, const uint8_t* z, const bf192_t* bf_
     for (uint32_t j = 0; j < R; j++) {
       for (uint32_t c = 0; c < Nst; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
-          unsigned int icol = (c - r) % Nst;
+          unsigned int icol = (c - r + Nst) % Nst;
           if (Nst == 8 && r >= 2) {
-            icol = (icol - 1) % Nst;
+            icol = (icol - 1 + Nst) % Nst;
           }
           unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
           uint8_t z_tilde  = 0;
@@ -2636,9 +2636,9 @@ static void em_enc_backward_192(uint32_t m, const uint8_t* z, const bf192_t* bf_
   for (uint32_t j = 0; j < R; j++) {
     for (uint32_t c = 0; c < Nst; c++) {
       for (uint32_t r = 0; r <= 3; r++) {
-        unsigned int icol = (c - r) % Nst;
+        unsigned int icol = (c - r + Nst) % Nst;
         if (Nst == 8 && r >= 2) {
-          icol = (icol - 1) % Nst;
+          icol = (icol - 1 + Nst) % Nst;
         }
         unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
         bf192_t bf_z_tilde[8];
@@ -2968,9 +2968,9 @@ static void em_enc_backward_256(uint32_t m, const uint8_t* z, const bf256_t* bf_
     for (uint32_t j = 0; j < R; j++) {
       for (uint32_t c = 0; c < Nst; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
-          unsigned int icol = (c - r) % Nst;
+          unsigned int icol = (c - r + Nst) % Nst;
           if (Nst == 8 && r >= 2) {
-            icol = (icol - 1) % Nst;
+            icol = (icol - 1 + Nst) % Nst;
           }
           unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
           uint8_t z_tilde  = 0;
@@ -3007,9 +3007,9 @@ static void em_enc_backward_256(uint32_t m, const uint8_t* z, const bf256_t* bf_
   for (uint32_t j = 0; j < R; j++) {
     for (uint32_t c = 0; c < Nst; c++) {
       for (uint32_t r = 0; r <= 3; r++) {
-        unsigned int icol = (c - r) % Nst;
+        unsigned int icol = (c - r + Nst) % Nst;
         if (Nst == 8 && r >= 2) {
-          icol = (icol - 1) % Nst;
+          icol = (icol - 1 + Nst) % Nst;
         }
         unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
         bf256_t bf_z_tilde[8];
