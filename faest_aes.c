@@ -2845,18 +2845,19 @@ static void em_enc_forward_256(uint32_t m, const uint8_t* z, const bf256_t* bf_z
                                const bf256_t* bf_x, uint8_t FAEST_UNUSED(Mtag),
                                uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta),
                                bf256_t* bf_y, const faest_paramset_t* params) {
-  const unsigned int R = params->faest_param.R;
+  const unsigned int R   = params->faest_param.R;
+  const unsigned int Nst = params->faest_param.Nwd;
 
   if (m == 1) {
     // Step: 2
-    for (uint32_t j = 0; j < 16; j++) {
+    for (uint32_t j = 0; j < 4 * Nst; j++) {
       bf_y[j] = bf256_add(bf256_byte_combine_bits(z[j]), bf256_byte_combine_bits(x[j]));
     }
 
     for (uint32_t j = 1; j < R; j++) {
-      for (uint32_t c = 0; c <= 3; c++) {
-        unsigned int i  = 128 * j + 32 * c;
-        unsigned int iy = 16 * j + 4 * c;
+      for (uint32_t c = 0; c < Nst; c++) {
+        unsigned int i  = 32 * Nst * j + 32 * c;
+        unsigned int iy = 4 * Nst * j + 4 * c;
 
         bf256_t bf_x_hat[4];
         bf256_t bf_z_hat[4];
@@ -2895,7 +2896,7 @@ static void em_enc_forward_256(uint32_t m, const uint8_t* z, const bf256_t* bf_z
   }
 
   // Step: 2
-  for (uint32_t j = 0; j < 16; j++) {
+  for (uint32_t j = 0; j < 4 * Nst; j++) {
     bf_y[j] = bf256_byte_combine(bf_z + 8 * j);
     if (bf_x) {
       bf_y[j] = bf256_add(bf_y[j], bf256_byte_combine(bf_x + 8 * j));
@@ -2903,9 +2904,9 @@ static void em_enc_forward_256(uint32_t m, const uint8_t* z, const bf256_t* bf_z
   }
 
   for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      unsigned int i  = 128 * j + 32 * c;
-      unsigned int iy = 16 * j + 4 * c;
+    for (uint32_t c = 0; c < Nst; c++) {
+      unsigned int i  = 32 * Nst * j + 32 * c;
+      unsigned int iy = 4 * Nst * j + 4 * c;
 
       bf256_t bf_x_hat[4];
       bf256_t bf_z_hat[4];
@@ -2950,24 +2951,23 @@ static void em_enc_backward_256(uint32_t m, const uint8_t* z, const bf256_t* bf_
                                 const bf256_t* bf_x, const uint8_t* z_out, const bf256_t* bf_z_out,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf256_t* y_out,
                                 const faest_paramset_t* params) {
-  const unsigned int R = params->faest_param.R;
+  const unsigned int R   = params->faest_param.R;
+  const unsigned int Nst = params->faest_param.Nwd;
 
   if (m == 1) {
     for (uint32_t j = 0; j < R; j++) {
-      for (uint32_t c = 0; c <= 3; c++) {
+      for (uint32_t c = 0; c < Nst; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
-          unsigned int ird = 128 + (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
+          unsigned int icol = (c - r) % Nst;
+          if (Nst == 8 && r >= 2) {
+            icol = (icol - 1) % Nst;
+          }
+          unsigned int ird = 32 * Nst * j + 32 * icol + 8 * r;
           uint8_t z_tilde  = 0;
           if (j < (R - 1)) {
             z_tilde = z[ird / 8];
           } else {
-            // uint8_t z_tilde_out = 0;
-            // for (uint32_t i = 0; i < 8; i++) {
-            // delta is always \bot if called with m == 1
-            // TODO bit splice
-            // z_tilde_out |= set_bit(get_bit(z_out[(ird - 128 * j) / 8], i), i);
-            // }
-            z_tilde = z_out[(ird - 128 * (j + 1)) / 8] ^ x[(128 + ird - 128) / 8];
+            z_tilde = z_out[(ird - 32 * Nst * j) / 8] ^ x[(32 * Nst + ird) / 8];
           }
 
           uint8_t y_tilde = 0;
@@ -2995,11 +2995,14 @@ static void em_enc_backward_256(uint32_t m, const uint8_t* z, const bf256_t* bf_
                 bf256_add(bf256_mul(bf256_from_bit(Mkey), bf_delta), bf256_from_bit(1 ^ Mkey)));
 
   for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
+    for (uint32_t c = 0; c < Nst; c++) {
       for (uint32_t r = 0; r <= 3; r++) {
+        unsigned int icol = (c - r) % Nst;
+        if (Nst == 8 && r >= 2) {
+          icol = (icol - 1) % Nst;
+        }
+        unsigned int ird = 32 * Nst * j + 32 * icol + 8 * r;
         bf256_t bf_z_tilde[8];
-        unsigned int ird = 128 + (128 * j) + (32 * ((c - r) % 4)) + (8 * r);
-
         if (j < (R - 1)) {
           // TODO: memcpy
           for (uint32_t i = 0; i < 8; i++) {
@@ -3008,11 +3011,11 @@ static void em_enc_backward_256(uint32_t m, const uint8_t* z, const bf256_t* bf_
         } else {
           bf256_t bf_z_tilde_out[8];
           for (uint32_t i = 0; i < 8; ++i) {
-            bf_z_tilde_out[i] = bf_z_out[ird - 128 * (j + 1) + i];
+            bf_z_tilde_out[i] = bf_z_out[(ird - 32 * Nst * j) + i];
             // Step: 12
             bf_z_tilde[i] = bf_z_tilde_out[i];
             if (bf_x) {
-              bf_z_tilde[i] = bf256_add(bf_z_tilde[i], bf_x[ird + i]);
+              bf_z_tilde[i] = bf256_add(bf_z_tilde[i], bf_x[32 * Nst + ird + i]);
             }
           }
         }
@@ -3039,6 +3042,7 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int Senc   = params->faest_param.Senc;
   const unsigned int R      = params->faest_param.R;
+  const unsigned int Nst    = params->faest_param.Nwd;
 
   if (Mkey == 0) {
     // Step 6
@@ -3070,8 +3074,8 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
   } else {
     // Step: 18, 19
     const bf256_t bf_delta = bf256_load(delta);
-    bf256_t* bf_x          = malloc(sizeof(bf256_t) * 128 * (R + 1));
-    for (uint32_t i = 0; i < 128 * (R + 1); i++) {
+    bf256_t* bf_x          = malloc(sizeof(bf256_t) * 32 * Nst * (R + 1));
+    for (uint32_t i = 0; i < 32 * Nst * (R + 1); i++) {
       bf_x[i] = bf256_mul(bf256_from_bit(ptr_get_bit(x, i)), bf_delta);
     }
 
