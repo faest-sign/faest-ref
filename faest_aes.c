@@ -2220,7 +2220,8 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
                                 const bf128_t* bf_x, const uint8_t* z_out, const bf128_t* bf_z_out,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* y_out,
                                 const faest_paramset_t* params) {
-  const unsigned int R = params->faest_param.R;
+  const unsigned int R   = params->faest_param.R;
+  const unsigned int Nst = params->faest_param.Nwd;
 
   if (m == 1) {
     for (uint32_t j = 0; j < R; j++) {
