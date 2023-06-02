@@ -119,7 +119,7 @@ void voleReconstruct(const uint8_t* iv, const uint8_t* chall, const uint8_t* con
 
   vec_com_rec_t vecComRec;
   vecComRec.h   = malloc(lambdaBytes * 2);
-  vecComRec.k   = calloc(getBinaryTreeNodeCount(1 << MAX(k0, k1)), lambdaBytes);
+  vecComRec.k   = calloc(getBinaryTreeNodeCount(MAX(k0, k1)), lambdaBytes);
   vecComRec.com = malloc((1 << MAX(k0, k1)) * lambdaBytes * 2);
   vecComRec.s   = malloc((1 << MAX(k0, k1)) * lambdaBytes);
 
