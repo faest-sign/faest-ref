@@ -2125,7 +2125,7 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
     }
 
     for (uint32_t j = 1; j < R; j++) {
-      for (uint32_t c = 0; c <= 3; c++) {
+      for (uint32_t c = 0; c < Nst; c++) {
         unsigned int i  = 32 * Nst * j + 32 * c;
         unsigned int iy = 4 * Nst * j + 4 * c;
 
@@ -2174,7 +2174,7 @@ static void em_enc_forward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_z
   }
 
   for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
+    for (uint32_t c = 0; c < Nst; c++) {
       unsigned int i  = 32 * Nst * j + 32 * c;
       unsigned int iy = 4 * Nst * j + 4 * c;
 
@@ -2227,7 +2227,7 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
 
   if (m == 1) {
     for (uint32_t j = 0; j < R; j++) {
-      for (uint32_t c = 0; c <= 3; c++) {
+      for (uint32_t c = 0; c < Nst; c++) {
         for (uint32_t r = 0; r <= 3; r++) {
           unsigned int icol = (c - r + Nst) % Nst;
           if (Nst == 8 && r >= 2) {
@@ -2266,7 +2266,7 @@ static void em_enc_backward_128(uint32_t m, const uint8_t* z, const bf128_t* bf_
                 bf128_add(bf128_mul(bf128_from_bit(Mkey), bf_delta), bf128_from_bit(1 ^ Mkey)));
 
   for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
+    for (uint32_t c = 0; c < Nst; c++) {
       for (uint32_t r = 0; r <= 3; r++) {
         bf128_t bf_z_tilde[8];
         unsigned int icol = (c - r + Nst) % Nst;
