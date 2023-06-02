@@ -2693,7 +2693,7 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
 
     for (uint32_t j = 0; j < Senc; j++) {
       // check that the constraint actually holds
-      bf192_t should_be_zero = bf192_add(bf192_mul(*bf_s_dash, *bf_s), bf192_one());
+      bf192_t should_be_zero = bf192_add(bf192_mul(bf_s_dash[j], bf_s[j]), bf192_one());
       assert(should_be_zero.values[0] == 0 && should_be_zero.values[1] == 0 &&
              should_be_zero.values[2] == 0);
       A0[j] = bf192_mul(bf_vs[j], bf_vs_dash[j]);
@@ -3063,7 +3063,7 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
 
     for (uint32_t j = 0; j < Senc; j++) {
       // check that the constraint actually holds
-      bf256_t should_be_zero = bf256_add(bf256_mul(*bf_s_dash, *bf_s), bf256_one());
+      bf256_t should_be_zero = bf256_add(bf256_mul(bf_s_dash[j], bf_s[j]), bf256_one());
       assert(should_be_zero.values[0] == 0 && should_be_zero.values[1] == 0 &&
              should_be_zero.values[2] == 0 && should_be_zero.values[3] == 0);
       A0[j] = bf256_mul(bf_vs[j], bf_vs_dash[j]);
