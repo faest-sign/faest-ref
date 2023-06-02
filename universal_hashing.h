@@ -10,9 +10,6 @@
 #include "macros.h"
 #include "fields.h"
 
-#define UNIVERSAL_HASH_B_BITS 16
-#define UNIVERSAL_HASH_B (UNIVERSAL_HASH_B_BITS / 8)
-
 FAEST_BEGIN_C_DECL
 
 void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell);

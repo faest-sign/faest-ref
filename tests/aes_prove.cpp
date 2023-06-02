@@ -23,7 +23,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     const unsigned int lambda      = params.faest_param.lambda;
     const unsigned int lambdaBytes = lambda / 8;
     const unsigned int ell_hat =
-        params.faest_param.l + params.faest_param.lambda * 2 + params.faest_param.b;
+        params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const size_t block_size = is_em ? lambdaBytes : 16;
 

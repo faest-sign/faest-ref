@@ -2,8 +2,8 @@
  *  SPDX-License-Identifier: MIT
  */
 
-#include "../universal_hashing.h"
-
+#include "universal_hashing.h"
+#include "instances.h"
 #include "fields.hpp"
 #include "randomness.h"
 
