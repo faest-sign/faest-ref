@@ -14,6 +14,7 @@
 #include "faest.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
   if (!pk || !sk) {
