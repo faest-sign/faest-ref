@@ -18,7 +18,7 @@ jobs:
     - name: Install Linux dependencies
       run: |
         sudo apt-get -q update
-        sudo apt-get -q -y install meson ninja-build
+        sudo apt-get -q -y install meson ninja-build libssl-dev
     - name: Build
       run: |
         mkdir build
