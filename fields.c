@@ -253,6 +253,17 @@ bf128_t bf128_mul(bf128_t lhs, bf128_t rhs) {
   return result;
 }
 
+ATTR_CONST
+static bf128_t bf128_bit_to_mask_1(uint8_t bit) {
+  bf128_t ret;
+  ret.values[0] = ret.values[1] = -(bit & 1);
+  return ret;
+}
+
+bf128_t bf128_mul_bit(bf128_t lhs, uint8_t rhs) {
+  return bf128_and(bf128_bit_to_mask_1(rhs), lhs);
+}
+
 bf128_t bf128_inv(bf128_t in) {
   bf128_t t1 = in;
   bf128_t t2 = in;
@@ -400,6 +411,17 @@ bf192_t bf192_mul(bf192_t lhs, bf192_t rhs) {
     lhs.values[0] ^= (mask & bf192_modulus);
   }
   return result;
+}
+
+ATTR_CONST
+static bf192_t bf192_bit_to_mask_1(uint8_t bit) {
+  bf192_t ret;
+  ret.values[0] = ret.values[1] = ret.values[2] = -(bit & 1);
+  return ret;
+}
+
+bf192_t bf192_mul_bit(bf192_t lhs, uint8_t rhs) {
+  return bf192_and(bf192_bit_to_mask_1(rhs), lhs);
 }
 
 bf192_t bf192_inv(bf192_t in) {
@@ -553,6 +575,17 @@ bf256_t bf256_mul(bf256_t lhs, bf256_t rhs) {
     lhs.values[0] ^= (mask & bf256_modulus);
   }
   return result;
+}
+
+ATTR_CONST
+static bf256_t bf256_bit_to_mask_1(uint8_t bit) {
+  bf256_t ret;
+  ret.values[0] = ret.values[1] = ret.values[2] = ret.values[3] = -(bit & 1);
+  return ret;
+}
+
+bf256_t bf256_mul_bit(bf256_t lhs, uint8_t rhs) {
+  return bf256_and(bf256_bit_to_mask_1(rhs), lhs);
 }
 
 bf256_t bf256_inv(bf256_t in) {
