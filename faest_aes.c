@@ -348,13 +348,9 @@ static void aes_enc_forward_128(uint32_t m, const uint8_t* x, const bf128_t* bf_
 
   if (m == 1) {
     // Step: 2
-    for (uint32_t i = 0; i < 16; i++) {
-      uint8_t xin = 0;
-      // Step: 3
-      for (uint32_t j = 0; j < 8; j++) {
-        // Step: 4
-        xin |= set_bit(get_bit(in[i], j) & (1 ^ Mtag) & (1 ^ Mkey), j);
-      }
+    for (unsigned int i = 0; i < 16; i++) {
+      // Step: 3, 4 (bit spliced)
+      const uint8_t xin = in[i] & -((1 ^ Mtag) & (1 ^ Mkey));
       // Step: 5
       bf_y[i] = bf128_add(bf128_byte_combine_bits(xin), bf128_byte_combine_bits(xk[i]));
     }
@@ -1012,13 +1008,8 @@ static void aes_enc_forward_192(uint32_t m, const uint8_t* x, const bf192_t* bf_
   if (m == 1) {
     // Step: 2
     for (uint32_t i = 0; i < 16; i++) {
-      uint8_t xin = 0;
-      // Step: 3
-      for (uint32_t j = 0; j < 8; j++) {
-        // Step: 4
-        // TODO: check bit order
-        xin |= set_bit(get_bit(in[i], j) & (1 ^ Mtag) & (1 ^ Mkey), j);
-      }
+      // Step: 3,4 (bit spliced)
+      const uint8_t xin = in[i] & -((1 ^ Mtag) & (1 ^ Mkey));
       // Step: 5
       bf_y[i] = bf192_add(bf192_byte_combine_bits(xin), bf192_byte_combine_bits(xk[i]));
     }
@@ -1697,13 +1688,8 @@ static void aes_enc_forward_256(uint32_t m, const uint8_t* x, const bf256_t* bf_
   if (m == 1) {
     // Step: 2
     for (uint32_t i = 0; i < 16; i++) {
-      uint8_t xin = 0;
-      // Step: 3
-      for (uint32_t j = 0; j < 8; j++) {
-        // Step: 4
-        // TODO: check bit order
-        xin |= set_bit(get_bit(in[i], j) & (1 ^ Mtag) & (1 ^ Mkey), j);
-      }
+      // Step: 3,4 (bit spliced)
+      const uint8_t xin = in[i] & -((1 ^ Mtag) & (1 ^ Mkey));
       // Step: 5
       bf_y[i] = bf256_add(bf256_byte_combine_bits(xin), bf256_byte_combine_bits(xk[i]));
     }
