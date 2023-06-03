@@ -69,12 +69,11 @@ static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int e
   return new_v;
 }
 
-// lambda == 128 implementation
+// m == 1 implementations
 
-static void aes_key_schedule_forward_128(uint32_t m, const uint8_t* x, const bf128_t* v,
-                                         uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
-                                         uint8_t* out, bf128_t* bf_out,
-                                         const faest_paramset_t* params) {
+static void aes_key_schedule_forward_1(const uint8_t* x, uint8_t Mtag, uint8_t Mkey,
+                                       const uint8_t* delta, uint8_t* out,
+                                       const faest_paramset_t* params) {
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
     return;
@@ -85,28 +84,94 @@ static void aes_key_schedule_forward_128(uint32_t m, const uint8_t* x, const bf1
   const unsigned int Nwd         = params->faest_param.Nwd;
   const unsigned int lambdaBytes = lambda / 8;
 
-  if (m == 1) {
-    const unsigned int out_len = (R + 1) * 128 / 8;
-    // Step 3
-    memcpy(out, x, lambdaBytes);
-    memset(out + lambdaBytes, 0, out_len - lambdaBytes);
+  const unsigned int out_len = (R + 1) * 128 / 8;
+  // Step 3
+  memcpy(out, x, lambdaBytes);
+  memset(out + lambdaBytes, 0, out_len - lambdaBytes);
 
-    // Step: 4
-    uint32_t i_wd = lambda;
-    // Step: 5..10
-    for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
-      if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
-        memcpy(out + 32 * j / 8, x + i_wd / 8, 4);
-        i_wd += 32;
+  // Step: 4
+  uint32_t i_wd = lambda;
+  // Step: 5..10
+  for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
+    if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
+      memcpy(out + 32 * j / 8, x + i_wd / 8, 4);
+      i_wd += 32;
+    } else {
+      for (uint32_t i = 0; i < 32; i += 8) {
+        // bit spliced
+        out[(32 * j + i) / 8] |= out[(32 * (j - Nwd) + i) / 8] ^ out[(32 * (j - 1) + i) / 8];
+      }
+    }
+  }
+}
+
+static void aes_key_schedule_backward_1(const uint8_t* x, const uint8_t* xk, uint8_t Mtag,
+                                        uint8_t Mkey, const uint8_t* delta, uint8_t* out,
+                                        const faest_paramset_t* params) {
+  // Step: 1
+  if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
+    return;
+  }
+
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Ske    = params->faest_param.Ske;
+
+  // Step: 2
+  uint32_t iwd   = 0;
+  uint32_t c     = 0;
+  bool rmvRcon   = true;
+  uint32_t ircon = 0;
+
+  for (uint32_t j = 0; j < Ske; j++) {
+    // Step 7 (bit sliced)
+    uint8_t x_tilde = x[j] ^ xk[(iwd + 8 * c) / 8];
+
+    // Step 8
+    if (Mtag == 0 && rmvRcon == true && c == 0) {
+      uint8_t rcon = Rcon[ircon];
+      ircon        = ircon + 1;
+      // Steps 12 and 13, bitsliced; delta is always 0
+      x_tilde ^= rcon;
+    }
+
+    // Step: 15..19 (bit spliced)
+    uint8_t y_tilde = rotr8(x_tilde, 7) ^ rotr8(x_tilde, 5) ^ rotr8(x_tilde, 2);
+    y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
+    y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
+
+    // Step: 19
+    out[j] = y_tilde;
+    // Step: 20
+    c = c + 1;
+
+    if (c == 4) {
+      c = 0;
+      if (lambda == 192) {
+        iwd += 192;
       } else {
-        for (uint32_t i = 0; i < 32; i += 8) {
-          // bit spliced
-          out[(32 * j + i) / 8] |= out[(32 * (j - Nwd) + i) / 8] ^ out[(32 * (j - 1) + i) / 8];
+        iwd += 128;
+        if (lambda == 256) {
+          rmvRcon = !rmvRcon;
         }
       }
     }
+  }
+}
+
+// lambda == 128 implementation
+
+static void aes_key_schedule_forward_128(const bf128_t* v, uint8_t Mtag, uint8_t Mkey,
+                                         const uint8_t* delta, bf128_t* bf_out,
+                                         const faest_paramset_t* params) {
+  // Step: 1
+  if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
     return;
   }
+
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int R           = params->faest_param.R;
+  const unsigned int Nwd         = params->faest_param.Nwd;
+  const unsigned int lambdaBytes = lambda / 8;
 
   for (uint32_t i = 0; i < lambdaBytes; i++) {
     for (uint32_t j = 0; j < 8; j++) {
@@ -130,10 +195,9 @@ static void aes_key_schedule_forward_128(uint32_t m, const uint8_t* x, const bf1
   }
 }
 
-static void aes_key_schedule_backward_128(uint32_t m, const uint8_t* x, const bf128_t* v,
-                                          const uint8_t* xk, const bf128_t* Vk, uint8_t Mtag,
-                                          uint8_t Mkey, const uint8_t* delta, uint8_t* out,
-                                          bf128_t* bf_out, const faest_paramset_t* params) {
+static void aes_key_schedule_backward_128(const bf128_t* v, const bf128_t* Vk, uint8_t Mtag,
+                                          uint8_t Mkey, const uint8_t* delta, bf128_t* bf_out,
+                                          const faest_paramset_t* params) {
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
     return;
@@ -141,50 +205,6 @@ static void aes_key_schedule_backward_128(uint32_t m, const uint8_t* x, const bf
 
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int Ske    = params->faest_param.Ske;
-
-  // Step: 2
-  if (m == 1) {
-    uint32_t iwd   = 0;
-    uint32_t c     = 0;
-    bool rmvRcon   = true;
-    uint32_t ircon = 0;
-
-    for (uint32_t j = 0; j < Ske; j++) {
-      // Step 7 (bit sliced)
-      uint8_t x_tilde = x[j] ^ xk[(iwd + 8 * c) / 8];
-
-      // Step 8
-      if (Mtag == 0 && rmvRcon == true && c == 0) {
-        uint8_t rcon = Rcon[ircon];
-        ircon        = ircon + 1;
-        // Steps 12 and 13, bitsliced; delta is always 0
-        x_tilde ^= rcon;
-      }
-
-      // Step: 15..19 (bit spliced)
-      uint8_t y_tilde = rotr8(x_tilde, 7) ^ rotr8(x_tilde, 5) ^ rotr8(x_tilde, 2);
-      y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-      y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
-
-      // Step: 19
-      out[j] = y_tilde;
-      // Step: 20
-      c = c + 1;
-
-      if (c == 4) {
-        c = 0;
-        if (lambda == 192) {
-          iwd += 192;
-        } else {
-          iwd += 128;
-          if (lambda == 256) {
-            rmvRcon = !rmvRcon;
-          }
-        }
-      }
-    }
-    return;
-  }
 
   const bf128_t bf_delta = delta ? bf128_load(delta) : bf128_zero();
 
@@ -258,20 +278,18 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
 
   if (Mkey == 0) {
     // Step: 2
-    aes_key_schedule_forward_128(1, w, NULL, 0, 0, NULL, k, NULL, params);
+    aes_key_schedule_forward_1(w, 0, 0, NULL, k, params);
 
     // Step: 3
-    aes_key_schedule_forward_128(lambda, NULL, v, 1, 0, NULL, NULL, vk, params);
+    aes_key_schedule_forward_128(v, 1, 0, NULL, vk, params);
 
     // Step: 4
     uint8_t* w_dash = malloc(Ske);
-    aes_key_schedule_backward_128(1, w + lambdaByte, NULL, k, NULL, 0, 0, NULL, w_dash, NULL,
-                                  params);
+    aes_key_schedule_backward_1(w + lambdaByte, k, 0, 0, NULL, w_dash, params);
 
     // Step: 5
     bf128_t* v_w_dash = malloc(Ske * 8 * sizeof(bf128_t));
-    aes_key_schedule_backward_128(lambda, NULL, v + lambda, NULL, vk, 1, 0, NULL, NULL, v_w_dash,
-                                  params);
+    aes_key_schedule_backward_128(v + lambda, vk, 1, 0, NULL, v_w_dash, params);
 
     // Step: 6..8
     uint32_t iwd = 32 * (Nwd - 1);
@@ -308,10 +326,9 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
   }
 
   // Step: 19..20
-  aes_key_schedule_forward_128(lambda, NULL, q, 0, 1, delta, NULL, qk, params);
+  aes_key_schedule_forward_128(q, 0, 1, delta, qk, params);
   bf128_t* q_w_dash = malloc(Ske * 8 * sizeof(bf128_t));
-  aes_key_schedule_backward_128(lambda, NULL, &q[lambda], NULL, qk, 0, 1, delta, NULL, q_w_dash,
-                                params);
+  aes_key_schedule_backward_128(&q[lambda], qk, 0, 1, delta, q_w_dash, params);
 
   const bf128_t bf_delta = bf128_load(delta);
 
@@ -727,9 +744,8 @@ static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* cha
 
 // lambda == 192 implementation
 
-static void aes_key_schedule_forward_192(uint32_t m, const uint8_t* x, const bf192_t* v,
-                                         uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
-                                         uint8_t* out, bf192_t* bf_out,
+static void aes_key_schedule_forward_192(const bf192_t* v, uint8_t Mtag, uint8_t Mkey,
+                                         const uint8_t* delta, bf192_t* bf_out,
                                          const faest_paramset_t* params) {
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
@@ -740,29 +756,6 @@ static void aes_key_schedule_forward_192(uint32_t m, const uint8_t* x, const bf1
   const unsigned int R           = params->faest_param.R;
   const unsigned int Nwd         = params->faest_param.Nwd;
   const unsigned int lambdaBytes = lambda / 8;
-
-  if (m == 1) {
-    const unsigned int out_len = (R + 1) * 128 / 8;
-    // Step 3
-    memcpy(out, x, lambdaBytes);
-    memset(out + lambdaBytes, 0, out_len - lambdaBytes);
-
-    // Step: 4
-    uint32_t i_wd = lambda;
-    // Step: 5..10
-    for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
-      if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
-        memcpy(out + 32 * j / 8, x + i_wd / 8, 4);
-        i_wd += 32;
-      } else {
-        for (uint32_t i = 0; i < 32; i += 8) {
-          // bit spliced
-          out[(32 * j + i) / 8] |= out[(32 * (j - Nwd) + i) / 8] ^ out[(32 * (j - 1) + i) / 8];
-        }
-      }
-    }
-    return;
-  }
 
   for (uint32_t i = 0; i < lambdaBytes; i++) {
     for (uint32_t j = 0; j < 8; j++) {
@@ -786,10 +779,9 @@ static void aes_key_schedule_forward_192(uint32_t m, const uint8_t* x, const bf1
   }
 }
 
-static void aes_key_schedule_backward_192(uint32_t m, const uint8_t* x, const bf192_t* v,
-                                          const uint8_t* xk, const bf192_t* Vk, uint8_t Mtag,
-                                          uint8_t Mkey, const uint8_t* delta, uint8_t* out,
-                                          bf192_t* bf_out, const faest_paramset_t* params) {
+static void aes_key_schedule_backward_192(const bf192_t* v, const bf192_t* Vk, uint8_t Mtag,
+                                          uint8_t Mkey, const uint8_t* delta, bf192_t* bf_out,
+                                          const faest_paramset_t* params) {
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
     return;
@@ -797,50 +789,6 @@ static void aes_key_schedule_backward_192(uint32_t m, const uint8_t* x, const bf
 
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int Ske    = params->faest_param.Ske;
-
-  // Step: 2
-  if (m == 1) {
-    uint32_t iwd   = 0;
-    uint32_t c     = 0;
-    bool rmvRcon   = true;
-    uint32_t ircon = 0;
-
-    for (uint32_t j = 0; j < Ske; j++) {
-      // Step 7 (bit sliced)
-      uint8_t x_tilde = x[j] ^ xk[(iwd + 8 * c) / 8];
-
-      // Step 8
-      if (Mtag == 0 && rmvRcon == true && c == 0) {
-        uint8_t rcon = Rcon[ircon];
-        ircon        = ircon + 1;
-        // Steps 12 and 13, bitsliced; delta is always 0
-        x_tilde ^= rcon;
-      }
-
-      // Step: 15..19 (bit spliced)
-      uint8_t y_tilde = rotr8(x_tilde, 7) ^ rotr8(x_tilde, 5) ^ rotr8(x_tilde, 2);
-      y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-      y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
-
-      // Step: 19
-      out[j] = y_tilde;
-      // Step: 20
-      c = c + 1;
-
-      if (c == 4) {
-        c = 0;
-        if (lambda == 192) {
-          iwd += 192;
-        } else {
-          iwd += 128;
-          if (lambda == 256) {
-            rmvRcon = !rmvRcon;
-          }
-        }
-      }
-    }
-    return;
-  }
 
   const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
   uint32_t iwd           = 0;
@@ -913,20 +861,18 @@ static void aes_key_schedule_constraints_192(const uint8_t* w, const bf192_t* v,
 
   if (Mkey == 0) {
     // Step: 2
-    aes_key_schedule_forward_192(1, w, NULL, 0, 0, NULL, k, NULL, params);
+    aes_key_schedule_forward_1(w, 0, 0, NULL, k, params);
 
     // Step: 3
-    aes_key_schedule_forward_192(lambda, NULL, v, 1, 0, NULL, NULL, vk, params);
+    aes_key_schedule_forward_192(v, 1, 0, NULL, vk, params);
 
     // Step: 4
     uint8_t* w_dash = malloc(Ske);
-    aes_key_schedule_backward_192(1, w + lambdaByte, NULL, k, NULL, 0, 0, NULL, w_dash, NULL,
-                                  params);
+    aes_key_schedule_backward_1(w + lambdaByte, k, 0, 0, NULL, w_dash, params);
 
     // Step: 5
     bf192_t* v_w_dash = malloc(Ske * 8 * sizeof(bf192_t));
-    aes_key_schedule_backward_192(lambda, NULL, v + lambda, NULL, vk, 1, 0, NULL, NULL, v_w_dash,
-                                  params);
+    aes_key_schedule_backward_192(v + lambda, vk, 1, 0, NULL, v_w_dash, params);
 
     // Step: 6..8
     uint32_t iwd = 32 * (Nwd - 1);
@@ -963,10 +909,9 @@ static void aes_key_schedule_constraints_192(const uint8_t* w, const bf192_t* v,
   }
 
   // Step: 19..20
-  aes_key_schedule_forward_192(lambda, NULL, q, 0, 1, delta, NULL, qk, params);
+  aes_key_schedule_forward_192(q, 0, 1, delta, qk, params);
   bf192_t* q_w_dash = malloc(Ske * 8 * sizeof(bf192_t));
-  aes_key_schedule_backward_192(lambda, NULL, &q[lambda], NULL, qk, 0, 1, delta, NULL, q_w_dash,
-                                params);
+  aes_key_schedule_backward_192(&q[lambda], qk, 0, 1, delta, q_w_dash, params);
 
   const bf192_t bf_delta = bf192_load(delta);
 
@@ -1381,9 +1326,8 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
 
 // lambda == 256 implementation
 
-static void aes_key_schedule_forward_256(uint32_t m, const uint8_t* x, const bf256_t* v,
-                                         uint8_t Mtag, uint8_t Mkey, const uint8_t* delta,
-                                         uint8_t* out, bf256_t* bf_out,
+static void aes_key_schedule_forward_256(const bf256_t* v, uint8_t Mtag, uint8_t Mkey,
+                                         const uint8_t* delta, bf256_t* bf_out,
                                          const faest_paramset_t* params) {
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
@@ -1394,29 +1338,6 @@ static void aes_key_schedule_forward_256(uint32_t m, const uint8_t* x, const bf2
   const unsigned int R           = params->faest_param.R;
   const unsigned int Nwd         = params->faest_param.Nwd;
   const unsigned int lambdaBytes = lambda / 8;
-
-  if (m == 1) {
-    const unsigned int out_len = (R + 1) * 128 / 8;
-    // Step 3
-    memcpy(out, x, lambdaBytes);
-    memset(out + lambdaBytes, 0, out_len - lambdaBytes);
-
-    // Step: 4
-    uint32_t i_wd = lambda;
-    // Step: 5..10
-    for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
-      if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
-        memcpy(out + 32 * j / 8, x + i_wd / 8, 4);
-        i_wd += 32;
-      } else {
-        for (uint32_t i = 0; i < 32; i += 8) {
-          // bit spliced
-          out[(32 * j + i) / 8] |= out[(32 * (j - Nwd) + i) / 8] ^ out[(32 * (j - 1) + i) / 8];
-        }
-      }
-    }
-    return;
-  }
 
   // TODO: replace with one memcpy
   for (uint32_t i = 0; i < lambdaBytes; i++) {
@@ -1441,10 +1362,9 @@ static void aes_key_schedule_forward_256(uint32_t m, const uint8_t* x, const bf2
   }
 }
 
-static void aes_key_schedule_backward_256(uint32_t m, const uint8_t* x, const bf256_t* v,
-                                          const uint8_t* xk, const bf256_t* Vk, uint8_t Mtag,
-                                          uint8_t Mkey, const uint8_t* delta, uint8_t* out,
-                                          bf256_t* bf_out, const faest_paramset_t* params) {
+static void aes_key_schedule_backward_256(const bf256_t* v, const bf256_t* Vk, uint8_t Mtag,
+                                          uint8_t Mkey, const uint8_t* delta, bf256_t* bf_out,
+                                          const faest_paramset_t* params) {
   // Step: 1
   if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
     return;
@@ -1452,50 +1372,6 @@ static void aes_key_schedule_backward_256(uint32_t m, const uint8_t* x, const bf
 
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int Ske    = params->faest_param.Ske;
-
-  // Step: 2
-  if (m == 1) {
-    uint32_t iwd   = 0;
-    uint32_t c     = 0;
-    bool rmvRcon   = true;
-    uint32_t ircon = 0;
-
-    for (uint32_t j = 0; j < Ske; j++) {
-      // Step 7 (bit sliced)
-      uint8_t x_tilde = x[j] ^ xk[(iwd + 8 * c) / 8];
-
-      // Step 8
-      if (Mtag == 0 && rmvRcon == true && c == 0) {
-        uint8_t rcon = Rcon[ircon];
-        ircon        = ircon + 1;
-        // Steps 12 and 13, bitsliced; delta is always 0, Mkey is always 0
-        x_tilde ^= rcon;
-      }
-
-      // Step: 15..19 (bit spliced)
-      uint8_t y_tilde = rotr8(x_tilde, 7) ^ rotr8(x_tilde, 5) ^ rotr8(x_tilde, 2);
-      y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-      y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
-
-      // Step: 19
-      out[j] = y_tilde;
-      // Step: 20
-      c = c + 1;
-
-      if (c == 4) {
-        c = 0;
-        if (lambda == 192) {
-          iwd += 192;
-        } else {
-          iwd += 128;
-          if (lambda == 256) {
-            rmvRcon = !rmvRcon;
-          }
-        }
-      }
-    }
-    return;
-  }
 
   uint32_t iwd   = 0;
   uint32_t c     = 0;
@@ -1570,20 +1446,18 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
 
   if (Mkey == 0) {
     // Step: 2
-    aes_key_schedule_forward_256(1, w, NULL, 0, 0, NULL, k, NULL, params);
+    aes_key_schedule_forward_1(w, 0, 0, NULL, k, params);
 
     // Step: 3
-    aes_key_schedule_forward_256(lambda, NULL, v, 1, 0, NULL, NULL, vk, params);
+    aes_key_schedule_forward_256(v, 1, 0, NULL, vk, params);
 
     // Step: 4
     uint8_t* w_dash = malloc(Ske);
-    aes_key_schedule_backward_256(1, w + lambdaByte, NULL, k, NULL, 0, 0, NULL, w_dash, NULL,
-                                  params);
+    aes_key_schedule_backward_1(w + lambdaByte, k, 0, 0, NULL, w_dash, params);
 
     // Step: 5
     bf256_t* v_w_dash = malloc(Ske * 8 * sizeof(bf256_t));
-    aes_key_schedule_backward_256(lambda, NULL, v + lambda, NULL, vk, 1, 0, NULL, NULL, v_w_dash,
-                                  params);
+    aes_key_schedule_backward_256(v + lambda, vk, 1, 0, NULL, v_w_dash, params);
 
     // Step: 6..8
     uint32_t iwd = 32 * (Nwd - 1);
@@ -1630,10 +1504,9 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
   }
 
   // Step: 19..20
-  aes_key_schedule_forward_256(lambda, NULL, q, 0, 1, delta, NULL, qk, params);
+  aes_key_schedule_forward_256(q, 0, 1, delta, qk, params);
   bf256_t* q_w_dash = malloc(Ske * 8 * sizeof(bf256_t));
-  aes_key_schedule_backward_256(lambda, NULL, &q[lambda], NULL, qk, 0, 1, delta, NULL, q_w_dash,
-                                params);
+  aes_key_schedule_backward_256(&q[lambda], qk, 0, 1, delta, q_w_dash, params);
 
   const bf256_t bf_delta = bf256_load(delta);
 
