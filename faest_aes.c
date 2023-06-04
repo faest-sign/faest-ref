@@ -381,31 +381,31 @@ static void aes_enc_forward_128_1(const uint8_t* x, const uint8_t* xk, const uin
         bf_x_hat[r]  = bf128_byte_combine_bits(x[(ix + 8 * r) / 8]);
         bf_xk_hat[r] = bf128_byte_combine_bits(xk[(ik + 8 * r) / 8]);
       }
-      bf128_t bf_one   = bf128_one();
+
       bf128_t bf_two   = bf128_byte_combine_bits(2);
       bf128_t bf_three = bf128_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf128_add(bf_xk_hat[0], bf128_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[1], bf_three));
-      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[2], bf_one));
-      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_x_hat[2]);
+      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_x_hat[3]);
 
       // Step: 15
-      bf_y[iy + 1] = bf128_add(bf_xk_hat[1], bf128_mul(bf_x_hat[0], bf_one));
+      bf_y[iy + 1] = bf128_add(bf_xk_hat[1], bf_x_hat[0]);
       bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf128_mul(bf_x_hat[1], bf_two));
       bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf128_mul(bf_x_hat[2], bf_three));
-      bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf128_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf_x_hat[3]);
 
       // Step: 16
-      bf_y[iy + 2] = bf128_add(bf_xk_hat[2], bf128_mul(bf_x_hat[0], bf_one));
-      bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf128_mul(bf_x_hat[1], bf_one));
+      bf_y[iy + 2] = bf128_add(bf_xk_hat[2], bf_x_hat[0]);
+      bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf_x_hat[1]);
       bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf128_mul(bf_x_hat[2], bf_two));
       bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf128_mul(bf_x_hat[3], bf_three));
 
       // Step: 17
       bf_y[iy + 3] = bf128_add(bf_xk_hat[3], bf128_mul(bf_x_hat[0], bf_three));
-      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf128_mul(bf_x_hat[1], bf_one));
-      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf128_mul(bf_x_hat[2], bf_one));
+      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf_x_hat[1]);
+      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf_x_hat[2]);
       bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf128_mul(bf_x_hat[3], bf_two));
     }
   }
@@ -444,31 +444,31 @@ static void aes_enc_forward_128(const bf128_t* bf_x, const bf128_t* bf_xk, const
         bf_x_hat[r]  = bf128_byte_combine(bf_x + (ix + 8 * r));
         bf_xk_hat[r] = bf128_byte_combine(bf_xk + (ik + 8 * r));
       }
-      bf128_t bf_one   = bf128_one();
+
       bf128_t bf_two   = bf128_byte_combine_bits(2);
       bf128_t bf_three = bf128_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf128_add(bf_xk_hat[0], bf128_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[1], bf_three));
-      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[2], bf_one));
-      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_x_hat[2]);
+      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_x_hat[3]);
 
       // Step: 15
-      bf_y[iy + 1] = bf128_add(bf_xk_hat[1], bf128_mul(bf_x_hat[0], bf_one));
+      bf_y[iy + 1] = bf128_add(bf_xk_hat[1], bf_x_hat[0]);
       bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf128_mul(bf_x_hat[1], bf_two));
       bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf128_mul(bf_x_hat[2], bf_three));
-      bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf128_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf_x_hat[3]);
 
       // Step: 16
-      bf_y[iy + 2] = bf128_add(bf_xk_hat[2], bf128_mul(bf_x_hat[0], bf_one));
-      bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf128_mul(bf_x_hat[1], bf_one));
+      bf_y[iy + 2] = bf128_add(bf_xk_hat[2], bf_x_hat[0]);
+      bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf_x_hat[1]);
       bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf128_mul(bf_x_hat[2], bf_two));
       bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf128_mul(bf_x_hat[3], bf_three));
 
       // Step: 17
       bf_y[iy + 3] = bf128_add(bf_xk_hat[3], bf128_mul(bf_x_hat[0], bf_three));
-      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf128_mul(bf_x_hat[1], bf_one));
-      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf128_mul(bf_x_hat[2], bf_one));
+      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf_x_hat[1]);
+      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf_x_hat[2]);
       bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf128_mul(bf_x_hat[3], bf_two));
     }
   }
@@ -961,31 +961,31 @@ static void aes_enc_forward_192_1(const uint8_t* x, const uint8_t* xk, const uin
         bf_x_hat[r]  = bf192_byte_combine_bits(x[(ix + 8 * r) / 8]);
         bf_xk_hat[r] = bf192_byte_combine_bits(xk[(ik + 8 * r) / 8]);
       }
-      bf192_t bf_one   = bf192_one();
+
       bf192_t bf_two   = bf192_byte_combine_bits(2);
       bf192_t bf_three = bf192_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf192_add(bf_xk_hat[0], bf192_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_x_hat[1], bf_three));
-      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_x_hat[2], bf_one));
-      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_x_hat[2]);
+      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_x_hat[3]);
 
       // Step: 15
-      bf_y[iy + 1] = bf192_add(bf_xk_hat[1], bf192_mul(bf_x_hat[0], bf_one));
+      bf_y[iy + 1] = bf192_add(bf_xk_hat[1], bf_x_hat[0]);
       bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf192_mul(bf_x_hat[1], bf_two));
       bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf192_mul(bf_x_hat[2], bf_three));
-      bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf192_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf_x_hat[3]);
 
       // Step: 16
-      bf_y[iy + 2] = bf192_add(bf_xk_hat[2], bf192_mul(bf_x_hat[0], bf_one));
-      bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_x_hat[1], bf_one));
+      bf_y[iy + 2] = bf192_add(bf_xk_hat[2], bf_x_hat[0]);
+      bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf_x_hat[1]);
       bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_x_hat[2], bf_two));
       bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_x_hat[3], bf_three));
 
       // Step: 17
       bf_y[iy + 3] = bf192_add(bf_xk_hat[3], bf192_mul(bf_x_hat[0], bf_three));
-      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_x_hat[1], bf_one));
-      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_x_hat[2], bf_one));
+      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_x_hat[1]);
+      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_x_hat[2]);
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_x_hat[3], bf_two));
     }
   }
@@ -1024,31 +1024,31 @@ static void aes_enc_forward_192(const bf192_t* bf_x, const bf192_t* bf_xk, const
         bf_x_hat[r]  = bf192_byte_combine(bf_x + (ix + 8 * r));
         bf_xk_hat[r] = bf192_byte_combine(bf_xk + (ik + 8 * r));
       }
-      bf192_t bf_one   = bf192_one();
+
       bf192_t bf_two   = bf192_byte_combine_bits(2);
       bf192_t bf_three = bf192_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf192_add(bf_xk_hat[0], bf192_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_x_hat[1], bf_three));
-      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_x_hat[2], bf_one));
-      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_x_hat[2]);
+      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_x_hat[3]);
 
       // Step: 15
-      bf_y[iy + 1] = bf192_add(bf_xk_hat[1], bf192_mul(bf_x_hat[0], bf_one));
+      bf_y[iy + 1] = bf192_add(bf_xk_hat[1], bf_x_hat[0]);
       bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf192_mul(bf_x_hat[1], bf_two));
       bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf192_mul(bf_x_hat[2], bf_three));
-      bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf192_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf_x_hat[3]);
 
       // Step: 16
-      bf_y[iy + 2] = bf192_add(bf_xk_hat[2], bf192_mul(bf_x_hat[0], bf_one));
-      bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_x_hat[1], bf_one));
+      bf_y[iy + 2] = bf192_add(bf_xk_hat[2], bf_x_hat[0]);
+      bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf_x_hat[1]);
       bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_x_hat[2], bf_two));
       bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_x_hat[3], bf_three));
 
       // Step: 17
       bf_y[iy + 3] = bf192_add(bf_xk_hat[3], bf192_mul(bf_x_hat[0], bf_three));
-      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_x_hat[1], bf_one));
-      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_x_hat[2], bf_one));
+      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_x_hat[1]);
+      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_x_hat[2]);
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_x_hat[3], bf_two));
     }
   }
@@ -1569,31 +1569,31 @@ static void aes_enc_forward_256_1(const uint8_t* x, const uint8_t* xk, const uin
         bf_x_hat[r]  = bf256_byte_combine_bits(x[(ix + 8 * r) / 8]);
         bf_xk_hat[r] = bf256_byte_combine_bits(xk[(ik + 8 * r) / 8]);
       }
-      bf256_t bf_one   = bf256_one();
+
       bf256_t bf_two   = bf256_byte_combine_bits(2);
       bf256_t bf_three = bf256_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf256_add(bf_xk_hat[0], bf256_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_x_hat[1], bf_three));
-      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_x_hat[2], bf_one));
-      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_x_hat[2]);
+      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_x_hat[3]);
 
       // Step: 15
-      bf_y[iy + 1] = bf256_add(bf_xk_hat[1], bf256_mul(bf_x_hat[0], bf_one));
+      bf_y[iy + 1] = bf256_add(bf_xk_hat[1], bf_x_hat[0]);
       bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf256_mul(bf_x_hat[1], bf_two));
       bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf256_mul(bf_x_hat[2], bf_three));
-      bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf256_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf_x_hat[3]);
 
       // Step: 16
-      bf_y[iy + 2] = bf256_add(bf_xk_hat[2], bf256_mul(bf_x_hat[0], bf_one));
-      bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf256_mul(bf_x_hat[1], bf_one));
+      bf_y[iy + 2] = bf256_add(bf_xk_hat[2], bf_x_hat[0]);
+      bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf_x_hat[1]);
       bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf256_mul(bf_x_hat[2], bf_two));
       bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf256_mul(bf_x_hat[3], bf_three));
 
       // Step: 17
       bf_y[iy + 3] = bf256_add(bf_xk_hat[3], bf256_mul(bf_x_hat[0], bf_three));
-      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf256_mul(bf_x_hat[1], bf_one));
-      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf256_mul(bf_x_hat[2], bf_one));
+      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf_x_hat[1]);
+      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf_x_hat[2]);
       bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf256_mul(bf_x_hat[3], bf_two));
     }
   }
@@ -1631,31 +1631,31 @@ static void aes_enc_forward_256(const bf256_t* bf_x, const bf256_t* bf_xk, const
         bf_x_hat[r]  = bf256_byte_combine(bf_x + (ix + 8 * r));
         bf_xk_hat[r] = bf256_byte_combine(bf_xk + (ik + 8 * r));
       }
-      bf256_t bf_one   = bf256_one();
+
       bf256_t bf_two   = bf256_byte_combine_bits(2);
       bf256_t bf_three = bf256_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf256_add(bf_xk_hat[0], bf256_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_x_hat[1], bf_three));
-      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_x_hat[2], bf_one));
-      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_x_hat[2]);
+      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_x_hat[3]);
 
       // Step: 15
-      bf_y[iy + 1] = bf256_add(bf_xk_hat[1], bf256_mul(bf_x_hat[0], bf_one));
+      bf_y[iy + 1] = bf256_add(bf_xk_hat[1], bf_x_hat[0]);
       bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf256_mul(bf_x_hat[1], bf_two));
       bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf256_mul(bf_x_hat[2], bf_three));
-      bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf256_mul(bf_x_hat[3], bf_one));
+      bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf_x_hat[3]);
 
       // Step: 16
-      bf_y[iy + 2] = bf256_add(bf_xk_hat[2], bf256_mul(bf_x_hat[0], bf_one));
-      bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf256_mul(bf_x_hat[1], bf_one));
+      bf_y[iy + 2] = bf256_add(bf_xk_hat[2], bf_x_hat[0]);
+      bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf_x_hat[1]);
       bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf256_mul(bf_x_hat[2], bf_two));
       bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf256_mul(bf_x_hat[3], bf_three));
 
       // Step: 17
       bf_y[iy + 3] = bf256_add(bf_xk_hat[3], bf256_mul(bf_x_hat[0], bf_three));
-      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf256_mul(bf_x_hat[1], bf_one));
-      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf256_mul(bf_x_hat[2], bf_one));
+      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf_x_hat[1]);
+      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf_x_hat[2]);
       bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf256_mul(bf_x_hat[3], bf_two));
     }
   }
@@ -1958,27 +1958,26 @@ static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, uint8_t FAE
         bf_x_hat[r] = bf128_byte_combine_bits(x[(i + 8 * r) / 8]);
       }
 
-      bf128_t bf_one   = bf128_one();
       bf128_t bf_two   = bf128_byte_combine_bits(2);
       bf128_t bf_three = bf128_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf128_add(bf128_mul(bf_z_hat[0], bf_two), bf128_mul(bf_z_hat[1], bf_three));
-      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_z_hat[2], bf_one));
-      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_z_hat[2]);
+      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_z_hat[3]);
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_x_hat[0]);
 
-      bf_y[iy + 1] = bf128_add(bf128_mul(bf_z_hat[0], bf_one), bf128_mul(bf_z_hat[1], bf_two));
+      bf_y[iy + 1] = bf128_add(bf_z_hat[0], bf128_mul(bf_z_hat[1], bf_two));
       bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf128_mul(bf_z_hat[2], bf_three));
-      bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf128_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf_z_hat[3]);
       bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf_x_hat[1]);
 
-      bf_y[iy + 2] = bf128_add(bf128_mul(bf_z_hat[0], bf_one), bf128_mul(bf_z_hat[1], bf_one));
+      bf_y[iy + 2] = bf128_add(bf_z_hat[0], bf_z_hat[1]);
       bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf128_mul(bf_z_hat[2], bf_two));
       bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf128_mul(bf_z_hat[3], bf_three));
       bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf_x_hat[2]);
 
-      bf_y[iy + 3] = bf128_add(bf128_mul(bf_z_hat[0], bf_three), bf128_mul(bf_z_hat[1], bf_one));
-      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf128_mul(bf_z_hat[2], bf_one));
+      bf_y[iy + 3] = bf128_add(bf128_mul(bf_z_hat[0], bf_three), bf_z_hat[1]);
+      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf_z_hat[2]);
       bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf128_mul(bf_z_hat[3], bf_two));
       bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf_x_hat[3]);
     }
@@ -2016,27 +2015,26 @@ static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, uint8_t
         }
       }
 
-      bf128_t bf_one   = bf128_one();
       bf128_t bf_two   = bf128_byte_combine_bits(2);
       bf128_t bf_three = bf128_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf128_add(bf128_mul(bf_z_hat[0], bf_two), bf128_mul(bf_z_hat[1], bf_three));
-      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_z_hat[2], bf_one));
-      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_z_hat[2]);
+      bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_z_hat[3]);
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_x_hat[0]);
 
-      bf_y[iy + 1] = bf128_add(bf128_mul(bf_z_hat[0], bf_one), bf128_mul(bf_z_hat[1], bf_two));
+      bf_y[iy + 1] = bf128_add(bf_z_hat[0], bf128_mul(bf_z_hat[1], bf_two));
       bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf128_mul(bf_z_hat[2], bf_three));
-      bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf128_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf_z_hat[3]);
       bf_y[iy + 1] = bf128_add(bf_y[iy + 1], bf_x_hat[1]);
 
-      bf_y[iy + 2] = bf128_add(bf128_mul(bf_z_hat[0], bf_one), bf128_mul(bf_z_hat[1], bf_one));
+      bf_y[iy + 2] = bf128_add(bf_z_hat[0], bf_z_hat[1]);
       bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf128_mul(bf_z_hat[2], bf_two));
       bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf128_mul(bf_z_hat[3], bf_three));
       bf_y[iy + 2] = bf128_add(bf_y[iy + 2], bf_x_hat[2]);
 
-      bf_y[iy + 3] = bf128_add(bf128_mul(bf_z_hat[0], bf_three), bf128_mul(bf_z_hat[1], bf_one));
-      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf128_mul(bf_z_hat[2], bf_one));
+      bf_y[iy + 3] = bf128_add(bf128_mul(bf_z_hat[0], bf_three), bf_z_hat[1]);
+      bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf_z_hat[2]);
       bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf128_mul(bf_z_hat[3], bf_two));
       bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf_x_hat[3]);
     }
@@ -2327,27 +2325,26 @@ static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, uint8_t FAE
         bf_x_hat[r] = bf192_byte_combine_bits(x[(i + 8 * r) / 8]);
       }
 
-      bf192_t bf_one   = bf192_one();
       bf192_t bf_two   = bf192_byte_combine_bits(2);
       bf192_t bf_three = bf192_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf192_add(bf192_mul(bf_z_hat[0], bf_two), bf192_mul(bf_z_hat[1], bf_three));
-      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_z_hat[2], bf_one));
-      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[2]);
+      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[3]);
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_x_hat[0]);
 
-      bf_y[iy + 1] = bf192_add(bf192_mul(bf_z_hat[0], bf_one), bf192_mul(bf_z_hat[1], bf_two));
+      bf_y[iy + 1] = bf192_add(bf_z_hat[0], bf192_mul(bf_z_hat[1], bf_two));
       bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf192_mul(bf_z_hat[2], bf_three));
-      bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf192_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf_z_hat[3]);
       bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf_x_hat[1]);
 
-      bf_y[iy + 2] = bf192_add(bf192_mul(bf_z_hat[0], bf_one), bf192_mul(bf_z_hat[1], bf_one));
+      bf_y[iy + 2] = bf192_add(bf_z_hat[0], bf_z_hat[1]);
       bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_z_hat[2], bf_two));
       bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_z_hat[3], bf_three));
       bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf_x_hat[2]);
 
-      bf_y[iy + 3] = bf192_add(bf192_mul(bf_z_hat[0], bf_three), bf192_mul(bf_z_hat[1], bf_one));
-      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_z_hat[2], bf_one));
+      bf_y[iy + 3] = bf192_add(bf192_mul(bf_z_hat[0], bf_three), bf_z_hat[1]);
+      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_z_hat[2]);
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_z_hat[3], bf_two));
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_x_hat[3]);
     }
@@ -2385,27 +2382,26 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, uint8_t
         }
       }
 
-      bf192_t bf_one   = bf192_one();
       bf192_t bf_two   = bf192_byte_combine_bits(2);
       bf192_t bf_three = bf192_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf192_add(bf192_mul(bf_z_hat[0], bf_two), bf192_mul(bf_z_hat[1], bf_three));
-      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_z_hat[2], bf_one));
-      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[2]);
+      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[3]);
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_x_hat[0]);
 
-      bf_y[iy + 1] = bf192_add(bf192_mul(bf_z_hat[0], bf_one), bf192_mul(bf_z_hat[1], bf_two));
+      bf_y[iy + 1] = bf192_add(bf_z_hat[0], bf192_mul(bf_z_hat[1], bf_two));
       bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf192_mul(bf_z_hat[2], bf_three));
-      bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf192_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf_z_hat[3]);
       bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf_x_hat[1]);
 
-      bf_y[iy + 2] = bf192_add(bf192_mul(bf_z_hat[0], bf_one), bf192_mul(bf_z_hat[1], bf_one));
+      bf_y[iy + 2] = bf192_add(bf_z_hat[0], bf_z_hat[1]);
       bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_z_hat[2], bf_two));
       bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_z_hat[3], bf_three));
       bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf_x_hat[2]);
 
-      bf_y[iy + 3] = bf192_add(bf192_mul(bf_z_hat[0], bf_three), bf192_mul(bf_z_hat[1], bf_one));
-      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_z_hat[2], bf_one));
+      bf_y[iy + 3] = bf192_add(bf192_mul(bf_z_hat[0], bf_three), bf_z_hat[1]);
+      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_z_hat[2]);
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_z_hat[3], bf_two));
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_x_hat[3]);
     }
@@ -2696,27 +2692,26 @@ static void em_enc_forward_256_1(const uint8_t* z, const uint8_t* x, uint8_t FAE
         bf_x_hat[r] = bf256_byte_combine_bits(x[(i + 8 * r) / 8]);
       }
 
-      bf256_t bf_one   = bf256_one();
       bf256_t bf_two   = bf256_byte_combine_bits(2);
       bf256_t bf_three = bf256_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf256_add(bf256_mul(bf_z_hat[0], bf_two), bf256_mul(bf_z_hat[1], bf_three));
-      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_z_hat[2], bf_one));
-      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_z_hat[2]);
+      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_z_hat[3]);
       bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_x_hat[0]);
 
-      bf_y[iy + 1] = bf256_add(bf256_mul(bf_z_hat[0], bf_one), bf256_mul(bf_z_hat[1], bf_two));
+      bf_y[iy + 1] = bf256_add(bf_z_hat[0], bf256_mul(bf_z_hat[1], bf_two));
       bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf256_mul(bf_z_hat[2], bf_three));
-      bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf256_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf_z_hat[3]);
       bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf_x_hat[1]);
 
-      bf_y[iy + 2] = bf256_add(bf256_mul(bf_z_hat[0], bf_one), bf256_mul(bf_z_hat[1], bf_one));
+      bf_y[iy + 2] = bf256_add(bf_z_hat[0], bf_z_hat[1]);
       bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf256_mul(bf_z_hat[2], bf_two));
       bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf256_mul(bf_z_hat[3], bf_three));
       bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf_x_hat[2]);
 
-      bf_y[iy + 3] = bf256_add(bf256_mul(bf_z_hat[0], bf_three), bf256_mul(bf_z_hat[1], bf_one));
-      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf256_mul(bf_z_hat[2], bf_one));
+      bf_y[iy + 3] = bf256_add(bf256_mul(bf_z_hat[0], bf_three), bf_z_hat[1]);
+      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf_z_hat[2]);
       bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf256_mul(bf_z_hat[3], bf_two));
       bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf_x_hat[3]);
     }
@@ -2754,27 +2749,26 @@ static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, uint8_t
         }
       }
 
-      bf256_t bf_one   = bf256_one();
       bf256_t bf_two   = bf256_byte_combine_bits(2);
       bf256_t bf_three = bf256_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf256_add(bf256_mul(bf_z_hat[0], bf_two), bf256_mul(bf_z_hat[1], bf_three));
-      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_z_hat[2], bf_one));
-      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_z_hat[2]);
+      bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_z_hat[3]);
       bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_x_hat[0]);
 
-      bf_y[iy + 1] = bf256_add(bf256_mul(bf_z_hat[0], bf_one), bf256_mul(bf_z_hat[1], bf_two));
+      bf_y[iy + 1] = bf256_add(bf_z_hat[0], bf256_mul(bf_z_hat[1], bf_two));
       bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf256_mul(bf_z_hat[2], bf_three));
-      bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf256_mul(bf_z_hat[3], bf_one));
+      bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf_z_hat[3]);
       bf_y[iy + 1] = bf256_add(bf_y[iy + 1], bf_x_hat[1]);
 
-      bf_y[iy + 2] = bf256_add(bf256_mul(bf_z_hat[0], bf_one), bf256_mul(bf_z_hat[1], bf_one));
+      bf_y[iy + 2] = bf256_add(bf_z_hat[0], bf_z_hat[1]);
       bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf256_mul(bf_z_hat[2], bf_two));
       bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf256_mul(bf_z_hat[3], bf_three));
       bf_y[iy + 2] = bf256_add(bf_y[iy + 2], bf_x_hat[2]);
 
-      bf_y[iy + 3] = bf256_add(bf256_mul(bf_z_hat[0], bf_three), bf256_mul(bf_z_hat[1], bf_one));
-      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf256_mul(bf_z_hat[2], bf_one));
+      bf_y[iy + 3] = bf256_add(bf256_mul(bf_z_hat[0], bf_three), bf_z_hat[1]);
+      bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf_z_hat[2]);
       bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf256_mul(bf_z_hat[3], bf_two));
       bf_y[iy + 3] = bf256_add(bf_y[iy + 3], bf_x_hat[3]);
     }
