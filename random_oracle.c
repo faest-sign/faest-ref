@@ -28,6 +28,7 @@ void H0_final(H0_context_t* ctx, uint8_t* seed, size_t seed_len, uint8_t* commit
   hash_final(ctx);
   hash_squeeze(ctx, seed, seed_len);
   hash_squeeze(ctx, commitment, commitment_len);
+  hash_clear(ctx);
 }
 
 // H_1
@@ -43,6 +44,7 @@ void H1_final(H1_context_t* ctx, uint8_t* digest, size_t len) {
   hash_update(ctx, &domain_sep_H1, sizeof(domain_sep_H1));
   hash_final(ctx);
   hash_squeeze(ctx, digest, len);
+  hash_clear(ctx);
 }
 
 // H_2
@@ -58,6 +60,7 @@ void H2_final(H2_context_t* ctx, uint8_t* digest, size_t len) {
   hash_update(ctx, &domain_sep_H2, sizeof(domain_sep_H2));
   hash_final(ctx);
   hash_squeeze(ctx, digest, len);
+  hash_clear(ctx);
 }
 
 // H_3
@@ -74,4 +77,5 @@ void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len, uint8_t* iv) {
   hash_final(ctx);
   hash_squeeze(ctx, digest, len);
   hash_squeeze(ctx, iv, 16);
+  hash_clear(ctx);
 }
