@@ -10,11 +10,10 @@
 #include "random_oracle.h"
 #include "compat.h"
 #include "aes.h"
+#include "instances.h"
 
 #include <assert.h>
 #include <string.h>
-
-#define MAX_SEED_SIZE (256 / 8)
 
 typedef struct tree_t {
   uint8_t** nodes;  /* The data for each node */
@@ -72,7 +71,7 @@ static void expandSeeds(tree_t* tree, const uint8_t* iv, const faest_paramset_t*
   size_t lastNonLeaf = getParent(tree->numNodes - 1);
 
   for (size_t i = 0; i <= lastNonLeaf; i++) {
-    uint8_t out[2 * MAX_SEED_SIZE];
+    uint8_t out[2 * MAX_LAMBDA_BYTES];
     prg(tree->nodes[i], iv, out, params->faest_param.lambda, params->faest_param.lambda / 4);
 
     memcpy(tree->nodes[2 * i + 1], out, lambdaBytes);
@@ -217,7 +216,7 @@ void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t*
         continue;
       }
 
-      uint8_t out[2 * MAX_SEED_SIZE];
+      uint8_t out[2 * MAX_LAMBDA_BYTES];
       prg(vecComRec->k + (lambdaBytes * getNodeIndex(i - 1, j)), iv, out, lambda, lambdaBytes * 2);
       memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * j)), out, lambdaBytes);
       memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, (2 * j) + 1)), out + lambdaBytes,
