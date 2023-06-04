@@ -144,7 +144,21 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
 
   // Step: 4..5
   uint8_t** leaves = getLeaves(&tree);
-  for (uint32_t i = 0; i < numVoleInstances; i++) {
+  unsigned int i   = 0;
+  // compute commitments for 4 instances in parallel
+  for (; i < numVoleInstances / 4 * 4; i += 4) {
+    H0_context_x4_t h0_ctx;
+    H0_x4_init(&h0_ctx, lambda);
+    H0_x4_update(&h0_ctx, leaves[i], leaves[i + 1], leaves[i + 2], leaves[i + 3], lambdaBytes);
+    H0_x4_update(&h0_ctx, iv, iv, iv, iv, IV_SIZE);
+    H0_x4_final(&h0_ctx, vecCom->sd + i * lambdaBytes, vecCom->sd + (i + 1) * lambdaBytes,
+                vecCom->sd + (i + 2) * lambdaBytes, vecCom->sd + (i + 3) * lambdaBytes, lambdaBytes,
+                vecCom->com + i * lambdaBytes * 2, vecCom->com + (i + 1) * lambdaBytes * 2,
+                vecCom->com + (i + 2) * lambdaBytes * 2, vecCom->com + (i + 3) * lambdaBytes * 2,
+                (lambdaBytes * 2));
+  }
+  // compute cmmitments for remaining instances
+  for (; i < numVoleInstances; i++) {
     H0_context_t h0_ctx;
     H0_init(&h0_ctx, lambda);
     H0_update(&h0_ctx, leaves[i], lambdaBytes);
@@ -152,14 +166,15 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
     H0_final(&h0_ctx, vecCom->sd + (i * lambdaBytes), lambdaBytes,
              vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
+
   tree.nodes[0] = NULL;
   freeTree(&tree);
 
   // Step: 6
   H1_context_t h1_ctx;
   H1_init(&h1_ctx, lambda);
-  for (uint32_t i = 0; i < numVoleInstances; i++) {
-    H1_update(&h1_ctx, vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
+  for (uint32_t j = 0; j < numVoleInstances; j++) {
+    H1_update(&h1_ctx, vecCom->com + (j * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
   H1_final(&h1_ctx, vecCom->h, lambdaBytes * 2);
 }
@@ -213,17 +228,69 @@ void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t*
   }
 
   // Step: 10..11
-  for (uint32_t j = 0; j < numVoleInstances; j++) {
-    /* Reconstruct the coms and the m from the ks while keeping k_j* secret */
-    if (j != leafIndex) {
-      H0_context_t h0_ctx;
-      H0_init(&h0_ctx, lambda);
-      H0_update(&h0_ctx, vecComRec->k + (getNodeIndex(depth, j) * lambdaBytes), lambdaBytes);
-      H0_update(&h0_ctx, iv, 16);
-      H0_final(&h0_ctx, vecComRec->s + (lambdaBytes * j), lambdaBytes,
-               vecComRec->com + (lambdaBytes * 2 * j), lambdaBytes * 2);
-    }
+  unsigned int j = 0;
+  // reconstruct commitments for 4 instances in parallel
+  for (; j < leafIndex / 4 * 4; j += 4) {
+    H0_context_x4_t h0_ctx;
+    H0_x4_init(&h0_ctx, lambda);
+    H0_x4_update(&h0_ctx, vecComRec->k + (getNodeIndex(depth, j) * lambdaBytes),
+                 vecComRec->k + (getNodeIndex(depth, j + 1) * lambdaBytes),
+                 vecComRec->k + (getNodeIndex(depth, j + 2) * lambdaBytes),
+                 vecComRec->k + (getNodeIndex(depth, j + 3) * lambdaBytes), lambdaBytes);
+    H0_x4_update(&h0_ctx, iv, iv, iv, iv, IV_SIZE);
+    H0_x4_final(&h0_ctx, vecComRec->s + j * lambdaBytes, vecComRec->s + (j + 1) * lambdaBytes,
+                vecComRec->s + (j + 2) * lambdaBytes, vecComRec->s + (j + 3) * lambdaBytes,
+                lambdaBytes, vecComRec->com + j * lambdaBytes * 2,
+                vecComRec->com + (j + 1) * lambdaBytes * 2,
+                vecComRec->com + (j + 2) * lambdaBytes * 2,
+                vecComRec->com + (j + 3) * lambdaBytes * 2, lambdaBytes * 2);
   }
+  // reconstruct commitments up until the leafIndex
+  for (; j < leafIndex; ++j) {
+    H0_context_t h0_ctx;
+    H0_init(&h0_ctx, lambda);
+    H0_update(&h0_ctx, vecComRec->k + getNodeIndex(depth, j) * lambdaBytes, lambdaBytes);
+    H0_update(&h0_ctx, iv, IV_SIZE);
+    H0_final(&h0_ctx, vecComRec->s + j * lambdaBytes, lambdaBytes,
+             vecComRec->com + j * lambdaBytes * 2, lambdaBytes * 2);
+  }
+  // skip leafIndex
+  ++j;
+  // reconstruct until index is divisible by 4 again
+  for (; j < numVoleInstances && j % 4; ++j) {
+    H0_context_t h0_ctx;
+    H0_init(&h0_ctx, lambda);
+    H0_update(&h0_ctx, vecComRec->k + getNodeIndex(depth, j) * lambdaBytes, lambdaBytes);
+    H0_update(&h0_ctx, iv, IV_SIZE);
+    H0_final(&h0_ctx, vecComRec->s + j * lambdaBytes, lambdaBytes,
+             vecComRec->com + j * lambdaBytes * 2, lambdaBytes * 2);
+  }
+  // reconstruct 4 instances in parallel
+  for (; j < numVoleInstances / 4 * 4; j += 4) {
+    H0_context_x4_t h0_ctx;
+    H0_x4_init(&h0_ctx, lambda);
+    H0_x4_update(&h0_ctx, vecComRec->k + (getNodeIndex(depth, j) * lambdaBytes),
+                 vecComRec->k + (getNodeIndex(depth, j + 1) * lambdaBytes),
+                 vecComRec->k + (getNodeIndex(depth, j + 2) * lambdaBytes),
+                 vecComRec->k + (getNodeIndex(depth, j + 3) * lambdaBytes), lambdaBytes);
+    H0_x4_update(&h0_ctx, iv, iv, iv, iv, IV_SIZE);
+    H0_x4_final(&h0_ctx, vecComRec->s + j * lambdaBytes, vecComRec->s + (j + 1) * lambdaBytes,
+                vecComRec->s + (j + 2) * lambdaBytes, vecComRec->s + (j + 3) * lambdaBytes,
+                lambdaBytes, vecComRec->com + j * lambdaBytes * 2,
+                vecComRec->com + (j + 1) * lambdaBytes * 2,
+                vecComRec->com + (j + 2) * lambdaBytes * 2,
+                vecComRec->com + (j + 3) * lambdaBytes * 2, lambdaBytes * 2);
+  }
+  // reconstruct remaining instances
+  for (; j < numVoleInstances; ++j) {
+    H0_context_t h0_ctx;
+    H0_init(&h0_ctx, lambda);
+    H0_update(&h0_ctx, vecComRec->k + getNodeIndex(depth, j) * lambdaBytes, lambdaBytes);
+    H0_update(&h0_ctx, iv, IV_SIZE);
+    H0_final(&h0_ctx, vecComRec->s + j * lambdaBytes, lambdaBytes,
+             vecComRec->com + j * lambdaBytes * 2, lambdaBytes * 2);
+  }
+
   // Step: 12..13
   memcpy(vecComRec->com + (lambdaBytes * 2 * leafIndex), com_j, lambdaBytes * 2);
   H1_context_t h1_ctx;
