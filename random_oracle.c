@@ -31,6 +31,25 @@ void H0_final(H0_context_t* ctx, uint8_t* seed, size_t seed_len, uint8_t* commit
   hash_clear(ctx);
 }
 
+void H0_x4_init(H0_context_x4_t* ctx, unsigned int security_param) {
+  hash_init_x4(ctx, security_param == 128 ? 128 : 256);
+}
+
+void H0_x4_update(H0_context_x4_t* ctx, const uint8_t* src0, const uint8_t* src1,
+                  const uint8_t* src2, const uint8_t* src3, size_t len) {
+  hash_update_x4_4(ctx, src0, src1, src2, src3, len);
+}
+
+void H0_x4_final(H0_context_x4_t* ctx, uint8_t* seed0, uint8_t* seed1, uint8_t* seed2,
+                 uint8_t* seed3, size_t seed_len, uint8_t* commitment0, uint8_t* commitment1,
+                 uint8_t* commitment2, uint8_t* commitment3, size_t commitment_len) {
+  hash_update_x4_1(ctx, &domain_sep_H0, sizeof(domain_sep_H0));
+  hash_final_x4(ctx);
+  hash_squeeze_x4_4(ctx, seed0, seed1, seed2, seed3, seed_len);
+  hash_squeeze_x4_4(ctx, commitment0, commitment1, commitment2, commitment3, commitment_len);
+  hash_clear_x4(ctx);
+}
+
 // H_1
 void H1_init(H1_context_t* ctx, unsigned int security_param) {
   hash_init(ctx, security_param == 128 ? 128 : 256);
