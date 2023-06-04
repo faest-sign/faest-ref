@@ -1636,8 +1636,9 @@ BOOST_AUTO_TEST_CASE(test_bf256_tv) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_zero) {
+BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_invariants) {
   BOOST_TEST(bf128{bf128_byte_combine_bits(0)} == bf128::zero());
+  BOOST_TEST(bf128{bf128_byte_combine_bits(1)} == bf128::one());
 
   std::array<bf128_t, 8> all_zeroes;
   for (auto& x : all_zeroes) {
@@ -1647,11 +1648,10 @@ BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_zero) {
 }
 
 BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_bits) {
-  const auto& inputs = poly128_from_8_poly1_input;
+  const auto& inputs  = poly128_from_8_poly1_input;
   const auto& outputs = poly128_from_8_poly1_output;
 
-  for (size_t index = 0; index < TEST_VEC_LEN; ++index)
-  {
+  for (size_t index = 0; index < TEST_VEC_LEN; ++index) {
     bf128::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
 
@@ -1660,12 +1660,22 @@ BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_bits) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(test_bf192_byte_combine_invariants) {
+  BOOST_TEST(bf192{bf192_byte_combine_bits(0)} == bf192::zero());
+  BOOST_TEST(bf192{bf192_byte_combine_bits(1)} == bf192::one());
+
+  std::array<bf192_t, 8> all_zeroes;
+  for (auto& x : all_zeroes) {
+    x = bf192_zero();
+  }
+  BOOST_TEST(bf192{bf192_byte_combine(all_zeroes.data())} == bf192::zero());
+}
+
 BOOST_AUTO_TEST_CASE(test_bf192_byte_combine_bits) {
-  const auto& inputs = poly192_from_8_poly1_input;
+  const auto& inputs  = poly192_from_8_poly1_input;
   const auto& outputs = poly192_from_8_poly1_output;
 
-  for (size_t index = 0; index < TEST_VEC_LEN; ++index)
-  {
+  for (size_t index = 0; index < TEST_VEC_LEN; ++index) {
     bf192::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
 
@@ -1674,12 +1684,22 @@ BOOST_AUTO_TEST_CASE(test_bf192_byte_combine_bits) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(test_bf256_byte_combine_invariants) {
+  BOOST_TEST(bf256{bf256_byte_combine_bits(0)} == bf256::zero());
+  BOOST_TEST(bf256{bf256_byte_combine_bits(1)} == bf256::one());
+
+  std::array<bf256_t, 8> all_zeroes;
+  for (auto& x : all_zeroes) {
+    x = bf256_zero();
+  }
+  BOOST_TEST(bf256{bf256_byte_combine(all_zeroes.data())} == bf256::zero());
+}
+
 BOOST_AUTO_TEST_CASE(test_bf256_byte_combine_bits) {
-  const auto& inputs = poly256_from_8_poly1_input;
+  const auto& inputs  = poly256_from_8_poly1_input;
   const auto& outputs = poly256_from_8_poly1_output;
 
-  for (size_t index = 0; index < TEST_VEC_LEN; ++index)
-  {
+  for (size_t index = 0; index < TEST_VEC_LEN; ++index) {
     bf256::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
 
@@ -1689,15 +1709,15 @@ BOOST_AUTO_TEST_CASE(test_bf256_byte_combine_bits) {
 }
 
 BOOST_AUTO_TEST_CASE(test_bf128_byte_combine) {
-  const auto& inputs = poly128_from_8_poly128_input;
+  const auto& inputs  = poly128_from_8_poly128_input;
   const auto& outputs = poly128_from_8_poly128_output;
 
   for (size_t index = 0; index < TEST_VEC_LEN; ++index) {
     bf128_t polys[8];
-    for (size_t bit = 0; bit < 8; ++bit)
-    {
+    for (size_t bit = 0; bit < 8; ++bit) {
       bf128::bytes tmp;
-      std::copy(inputs.data() + (index * 8 + bit) * 16, inputs.data() + (index * 8 + bit + 1) * 16, tmp.begin());
+      std::copy(inputs.data() + (index * 8 + bit) * 16, inputs.data() + (index * 8 + bit + 1) * 16,
+                tmp.begin());
       polys[bit] = bf128(tmp).as_internal();
     }
 
@@ -1710,15 +1730,15 @@ BOOST_AUTO_TEST_CASE(test_bf128_byte_combine) {
 }
 
 BOOST_AUTO_TEST_CASE(test_bf192_byte_combine) {
-  const auto& inputs = poly192_from_8_poly192_input;
+  const auto& inputs  = poly192_from_8_poly192_input;
   const auto& outputs = poly192_from_8_poly192_output;
 
   for (size_t index = 0; index < TEST_VEC_LEN; ++index) {
     bf192_t polys[8];
-    for (size_t bit = 0; bit < 8; ++bit)
-    {
+    for (size_t bit = 0; bit < 8; ++bit) {
       bf192::bytes tmp;
-      std::copy(inputs.data() + (index * 8 + bit) * 24, inputs.data() + (index * 8 + bit + 1) * 24, tmp.begin());
+      std::copy(inputs.data() + (index * 8 + bit) * 24, inputs.data() + (index * 8 + bit + 1) * 24,
+                tmp.begin());
       polys[bit] = bf192(tmp).as_internal();
     }
 
@@ -1731,15 +1751,15 @@ BOOST_AUTO_TEST_CASE(test_bf192_byte_combine) {
 }
 
 BOOST_AUTO_TEST_CASE(test_bf256_byte_combine) {
-  const auto& inputs = poly256_from_8_poly256_input;
+  const auto& inputs  = poly256_from_8_poly256_input;
   const auto& outputs = poly256_from_8_poly256_output;
 
   for (size_t index = 0; index < TEST_VEC_LEN; ++index) {
     bf256_t polys[8];
-    for (size_t bit = 0; bit < 8; ++bit)
-    {
+    for (size_t bit = 0; bit < 8; ++bit) {
       bf256::bytes tmp;
-      std::copy(inputs.data() + (index * 8 + bit) * 32, inputs.data() + (index * 8 + bit + 1) * 32, tmp.begin());
+      std::copy(inputs.data() + (index * 8 + bit) * 32, inputs.data() + (index * 8 + bit + 1) * 32,
+                tmp.begin());
       polys[bit] = bf256(tmp).as_internal();
     }
 
