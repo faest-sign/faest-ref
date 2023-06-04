@@ -1,28 +1,15 @@
 boost_test = dependency('boost', required: false, modules: ['unit_test_framework'])
 ntl = cc.find_library('ntl', required: false, has_headers: ['NTL/version.h'])
 
-hash_shake = executable('test_hash_shake', files('hash_shake.c'),
-  dependencies: [libfaest_static_dependency],
-  include_directories: include_directories,
-  c_args: defines + c_flags,
-)
-test('hash_shake', hash_shake)
-
-# faest = executable('faest', files('faest.c'),
-#   dependencies: [libfaest_static_dependency],
-#   include_directories: include_directories,
-#   c_args: defines + c_flags,
-# )
-# test('faest', faest)
-
 if boost_test.found()
   test_sources = files(
     'aes.cpp',
     'aes_prove.cpp',
     'extended_tests.cpp',
+    'hash_shake.cpp',
     'instances.cpp',
-    'universal_hashing.cpp',
     'test_faest_tvs.cpp',
+    'universal_hashing.cpp',
     'vc.cpp',
     'vole.cpp',
     'vole_tvs.cpp',
@@ -52,6 +39,10 @@ if boost_test.found()
   )
   test('AES prove', extended_tests,
     args: ['-t', 'test_aes_prove'],
+    timeout: 600,
+  )
+  test('SHAKE', extended_tests,
+    args: ['-t', 'hash_shake'],
     timeout: 600,
   )
   test('Instances', extended_tests,
