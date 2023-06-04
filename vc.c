@@ -36,7 +36,7 @@ static tree_t createTree(const faest_paramset_t* params, unsigned int depth) {
 
   tree.numNodes  = getBinaryTreeNodeCount(depth);
   tree.numLeaves = 1 << depth;
-  tree.nodes     = malloc(tree.numNodes * sizeof(uint8_t*));
+  tree.nodes     = calloc(tree.numNodes, sizeof(uint8_t*));
 
   uint8_t* slab = calloc(tree.numNodes, lambdaBytes);
   for (size_t i = 0; i < tree.numNodes; i++) {
