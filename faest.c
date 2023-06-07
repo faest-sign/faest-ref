@@ -44,7 +44,7 @@ static void hash_challenge_2(uint8_t* chall_2, const uint8_t* chall_1, const uin
                              const uint8_t* h_v, const uint8_t* d, unsigned int lambda,
                              unsigned int ell) {
   const unsigned int lambda_bytes  = lambda / 8;
-  const unsigned int ell_bytes     = (ell + 7) / 8;
+  const unsigned int ell_bytes     = ell / 8;
   const unsigned int u_tilde_bytes = lambda_bytes + UNIVERSAL_HASH_B;
 
   H2_context_t h2_ctx_1;
@@ -71,15 +71,14 @@ static void hash_challenge_3(uint8_t* chall_3, const uint8_t* chall_2, const uin
 void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8_t* owf_input,
           const uint8_t* owf_output, const uint8_t* rho, size_t rholen,
           const faest_paramset_t* params, signature_t* signature) {
-  const uint32_t l           = params->faest_param.l;
-  const uint32_t ell_bytes   = (l + 7) / 8;
-  const uint32_t lambda      = params->faest_param.lambda;
-  const uint32_t lambdaBytes = lambda / 8;
-  const uint32_t tau         = params->faest_param.tau;
-  const uint32_t tau0        = params->faest_param.t0;
-  const uint32_t ell_hat =
-      params->faest_param.l + params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
+  const uint32_t l             = params->faest_param.l;
+  const uint32_t ell_bytes     = l / 8;
+  const uint32_t lambda        = params->faest_param.lambda;
+  const uint32_t lambdaBytes   = lambda / 8;
+  const uint32_t tau           = params->faest_param.tau;
+  const uint32_t tau0          = params->faest_param.t0;
+  const uint32_t ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  const uint32_t ell_hat_bytes = ell_hat / 8;
 
   // Step: 2
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
@@ -177,15 +176,14 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8
 
 int verify(const uint8_t* msg, size_t msglen, const uint8_t* owf_input, const uint8_t* owf_output,
            const faest_paramset_t* params, const deserialized_signature_t* signature) {
-  const unsigned int l           = params->faest_param.l;
-  const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int lambdaBytes = lambda / 8;
-  const unsigned int tau         = params->faest_param.tau;
-  const unsigned int tau0        = params->faest_param.t0;
-  const unsigned int ell_hat =
-      params->faest_param.l + params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-  const unsigned int utilde_bytes  = (params->faest_param.lambda + UNIVERSAL_HASH_B_BITS + 7) / 8;
+  const unsigned int l             = params->faest_param.l;
+  const unsigned int lambda        = params->faest_param.lambda;
+  const unsigned int lambdaBytes   = lambda / 8;
+  const unsigned int tau           = params->faest_param.tau;
+  const unsigned int tau0          = params->faest_param.t0;
+  const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  const unsigned int ell_hat_bytes = ell_hat / 8;
+  const unsigned int utilde_bytes  = lambdaBytes + UNIVERSAL_HASH_B;
   const unsigned int k0            = params->faest_param.k0;
   const unsigned int k1            = params->faest_param.k1;
 
@@ -298,13 +296,11 @@ signature_t init_signature(const faest_paramset_t* params) {
   signature_t sig;
   memset(&sig, 0, sizeof(sig));
 
-  const unsigned int tau0   = params->faest_param.t0;
-  const size_t lambda_bytes = params->faest_param.lambda / 8;
-  const size_t ell_bytes    = (params->faest_param.l + 7) / 8;
-  const size_t ell_hat =
-      params->faest_param.l + params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  const size_t ell_hat_bytes = ell_hat / 8;
-  const size_t utilde_bytes  = (params->faest_param.lambda + UNIVERSAL_HASH_B_BITS + 7) / 8;
+  const unsigned int tau0    = params->faest_param.t0;
+  const size_t lambda_bytes  = params->faest_param.lambda / 8;
+  const size_t ell_bytes     = params->faest_param.l / 8;
+  const size_t ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
+  const size_t utilde_bytes  = lambda_bytes + UNIVERSAL_HASH_B;
 
   sig.c       = malloc(ell_hat_bytes * (params->faest_param.tau - 1));
   sig.u_tilde = malloc(utilde_bytes);
@@ -338,13 +334,11 @@ void free_signature(signature_t sig, const faest_paramset_t* params) {
 
 int serialize_signature(uint8_t* dst, const signature_t* signature,
                         const faest_paramset_t* params) {
-  const unsigned int tau0   = params->faest_param.t0;
-  const size_t lambda_bytes = params->faest_param.lambda / 8;
-  const size_t ell_bytes    = (params->faest_param.l + 7) / 8;
-  const size_t ell_hat =
-      params->faest_param.l + params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  const size_t ell_hat_bytes = (ell_hat + 7) / 8;
-  const size_t utilde_bytes  = (params->faest_param.lambda + UNIVERSAL_HASH_B_BITS + 7) / 8;
+  const unsigned int tau0    = params->faest_param.t0;
+  const size_t lambda_bytes  = params->faest_param.lambda / 8;
+  const size_t ell_bytes     = params->faest_param.l / 8;
+  const size_t ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
+  const size_t utilde_bytes  = lambda_bytes + UNIVERSAL_HASH_B;
 
   // serialize c_i
   memcpy(dst, signature->c, ell_hat_bytes * (params->faest_param.tau - 1));
@@ -383,13 +377,11 @@ int serialize_signature(uint8_t* dst, const signature_t* signature,
 }
 
 deserialized_signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* params) {
-  const unsigned int tau0   = params->faest_param.t0;
-  const size_t lambda_bytes = params->faest_param.lambda / 8;
-  const size_t ell_bytes    = (params->faest_param.l + 7) / 8;
-  const size_t ell_hat =
-      params->faest_param.l + params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  const size_t ell_hat_bytes = (ell_hat + 7) / 8;
-  const size_t utilde_bytes  = (params->faest_param.lambda + UNIVERSAL_HASH_B_BITS + 7) / 8;
+  const unsigned int tau0    = params->faest_param.t0;
+  const size_t lambda_bytes  = params->faest_param.lambda / 8;
+  const size_t ell_bytes     = params->faest_param.l / 8;
+  const size_t ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
+  const size_t utilde_bytes  = lambda_bytes + UNIVERSAL_HASH_B;
 
   deserialized_signature_t sig;
 
