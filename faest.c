@@ -25,6 +25,22 @@ static void hash_mu(uint8_t* mu, const uint8_t* owf_input, const uint8_t* owf_ou
   H1_final(&h1_ctx, mu, 2 * lambda / 8);
 }
 
+static void hash_challenge_2(uint8_t* chall_2, const uint8_t* chall_1, const uint8_t* u_tilde,
+                             const uint8_t* h_v, const uint8_t* d, unsigned int lambda,
+                             unsigned int ell) {
+  const unsigned int lambda_bytes  = lambda / 8;
+  const unsigned int ell_bytes     = (ell + 7) / 8;
+  const unsigned int u_tilde_bytes = lambda_bytes + UNIVERSAL_HASH_B;
+
+  H2_context_t h2_ctx_1;
+  H2_init(&h2_ctx_1, lambda);
+  H2_update(&h2_ctx_1, chall_1, 5 * lambda_bytes + 8);
+  H2_update(&h2_ctx_1, u_tilde, u_tilde_bytes);
+  H2_update(&h2_ctx_1, h_v, 2 * lambda_bytes);
+  H2_update(&h2_ctx_1, d, ell_bytes);
+  H2_final(&h2_ctx_1, chall_2, 3 * lambda_bytes + 8);
+}
+
 void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8_t* owf_input,
           const uint8_t* owf_output, const uint8_t* rho, size_t rholen,
           const faest_paramset_t* params, signature_t* signature) {
@@ -37,7 +53,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8
   const uint32_t ell_hat =
       params->faest_param.l + params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const uint32_t ell_hat_bytes = (ell_hat + 7) / 8;
-  const size_t utilde_bytes    = (params->faest_param.lambda + UNIVERSAL_HASH_B_BITS + 7) / 8;
 
   // Step: 2
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
@@ -108,15 +123,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8
 
   // Step: 12
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
-  {
-    H2_context_t h2_ctx_1;
-    H2_init(&h2_ctx_1, lambda);
-    H2_update(&h2_ctx_1, chall_1, (5 * lambdaBytes) + 8);
-    H2_update(&h2_ctx_1, signature->u_tilde, utilde_bytes);
-    H2_update(&h2_ctx_1, h_v, 2 * lambdaBytes);
-    H2_update(&h2_ctx_1, signature->d, ell_bytes);
-    H2_final(&h2_ctx_1, chall_2, (3 * lambdaBytes) + 8);
-  }
+  hash_challenge_2(chall_2, chall_1, signature->u_tilde, h_v, signature->d, lambda, l);
 
   // Step: 14..15
   // transpose is computed in aes_prove
@@ -161,7 +168,6 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8
 int verify(const uint8_t* msg, size_t msglen, const uint8_t* owf_input, const uint8_t* owf_output,
            const faest_paramset_t* params, const deserialized_signature_t* signature) {
   const unsigned int l           = params->faest_param.l;
-  const unsigned int ell_bytes   = (l + 7) / 8;
   const unsigned int lambda      = params->faest_param.lambda;
   const unsigned int lambdaBytes = lambda / 8;
   const unsigned int tau         = params->faest_param.tau;
@@ -268,15 +274,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* owf_input, const ui
 
   // Step 17
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
-  {
-    H2_context_t h2_ctx_1;
-    H2_init(&h2_ctx_1, lambda);
-    H2_update(&h2_ctx_1, chall_1, (5 * lambdaBytes) + 8);
-    H2_update(&h2_ctx_1, signature->u_tilde, utilde_bytes);
-    H2_update(&h2_ctx_1, h_v, 2 * lambdaBytes);
-    H2_update(&h2_ctx_1, signature->d, ell_bytes);
-    H2_final(&h2_ctx_1, chall_2, (3 * lambdaBytes) + 8);
-  }
+  hash_challenge_2(chall_2, chall_1, signature->u_tilde, h_v, signature->d, lambda, l);
 
   // Step 18
   uint8_t* b_tilde = aes_verify(signature->d, q, chall_2, signature->chall_3, signature->a_tilde,
