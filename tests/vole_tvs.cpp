@@ -4213,12 +4213,13 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
       params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
 
-  std::vector<uint8_t> hcom, hcomRec, u, b, chal;
+  std::vector<uint8_t> hcom, hcomRec, u, b, chal, c;
   hcom.resize(lambdaBytes * 2);
   hcomRec.resize(lambdaBytes * 2);
   u.resize(ell_hat_bytes);
   b.resize(MAX(params.faest_param.k0, params.faest_param.k1), 0);
   chal.resize(lambdaBytes, 0);
+  c.resize((params.faest_param.tau - 1) * ell_hat_bytes);
 
   // fixed \Delta = 42
   unsigned int bit_index = 0;
@@ -4233,8 +4234,7 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
   std::vector<vec_com_t> vec_com;
   vec_com.resize(params.faest_param.tau);
 
-  std::vector<uint8_t*> c, v, q, pdec, com_j;
-  c.resize(params.faest_param.tau - 1);
+  std::vector<uint8_t*> v, q, pdec, com_j;
   v.resize(lambda);
   q.resize(lambda);
   pdec.resize(params.faest_param.tau);
@@ -4247,11 +4247,6 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
     q[i] = q[0] + i * ell_hat_bytes;
   }
 
-  c[0] = new uint8_t[(params.faest_param.tau - 1) * ell_hat_bytes];
-  for (unsigned int i = 1; i < params.faest_param.tau - 1; ++i) {
-    c[i] = c[0] + i * ell_hat_bytes;
-  }
-
   constexpr std::array<uint8_t, 16> iv{};
   voleCommit(seed_128s.data(), iv.data(), ell_hat, &params, hcom.data(), vec_com.data(), c.data(),
              u.data(), v.data());
@@ -4262,9 +4257,7 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
   BOOST_TEST(std::equal(hcom.begin(), hcom.end(), hcom_128s.begin()));
   BOOST_TEST(std::equal(v_128s.begin(), v_128s.end(), v[0]));
   BOOST_TEST(std::equal(u_128s.begin(), u_128s.end(), u.begin()));
-  BOOST_TEST(std::equal(corrections_128s.begin(), corrections_128s.end(), c[0]));
-
-  delete[] c[0];
+  BOOST_TEST(std::equal(corrections_128s.begin(), corrections_128s.end(), c.begin()));
 
   for (uint32_t i = 0; i < params.faest_param.tau; i++) {
     const uint32_t depth =
@@ -4273,8 +4266,7 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
     pdec[i]  = new uint8_t[depth * lambdaBytes];
     com_j[i] = new uint8_t[lambdaBytes * 2];
 
-    vector_open(vec_com[i].k, vec_com[i].com, b.data(), pdec[i], com_j[i], depth,
-                lambdaBytes);
+    vector_open(vec_com[i].k, vec_com[i].com, b.data(), pdec[i], com_j[i], depth, lambdaBytes);
     vec_com_clear(&vec_com[i]);
   }
 

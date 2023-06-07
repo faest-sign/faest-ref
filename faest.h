@@ -11,7 +11,7 @@
 #include "instances.h"
 
 typedef struct signature_s {
-  uint8_t* c[MAX_TAU - 1];
+  uint8_t* c;
   uint8_t* u_tilde;
   uint8_t* d;
   uint8_t* a_tilde;
@@ -22,7 +22,7 @@ typedef struct signature_s {
 } signature_t;
 
 typedef struct deserialized_signature_s {
-  const uint8_t* c[MAX_TAU - 1];
+  const uint8_t* c;
   const uint8_t* u_tilde;
   const uint8_t* d;
   const uint8_t* a_tilde;

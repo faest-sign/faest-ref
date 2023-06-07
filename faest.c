@@ -25,6 +25,21 @@ static void hash_mu(uint8_t* mu, const uint8_t* owf_input, const uint8_t* owf_ou
   H1_final(&h1_ctx, mu, 2 * lambda / 8);
 }
 
+static void hash_challenge_1(uint8_t* chall_1, const uint8_t* mu, const uint8_t* hcom,
+                             const uint8_t* c, const uint8_t* iv, unsigned int lambda,
+                             unsigned int ell, unsigned int tau) {
+  const unsigned int lambda_bytes  = lambda / 8;
+  const unsigned int ell_hat_bytes = ell / 8 + lambda_bytes * 2 + UNIVERSAL_HASH_B;
+
+  H2_context_t h2_ctx;
+  H2_init(&h2_ctx, lambda);
+  H2_update(&h2_ctx, mu, lambda_bytes * 2);
+  H2_update(&h2_ctx, hcom, lambda_bytes * 2);
+  H2_update(&h2_ctx, c, ell_hat_bytes * (tau - 1));
+  H2_update(&h2_ctx, iv, IV_SIZE);
+  H2_final(&h2_ctx, chall_1, 5 * lambda_bytes + 8);
+}
+
 static void hash_challenge_2(uint8_t* chall_2, const uint8_t* chall_1, const uint8_t* u_tilde,
                              const uint8_t* h_v, const uint8_t* d, unsigned int lambda,
                              unsigned int ell) {
@@ -97,17 +112,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8
 
   // Step: 4
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
-  {
-    H2_context_t h2_ctx;
-    H2_init(&h2_ctx, lambda);
-    H2_update(&h2_ctx, mu, lambdaBytes * 2);
-    H2_update(&h2_ctx, hcom, lambdaBytes * 2);
-    for (unsigned int i = 0; i < (tau - 1); ++i) {
-      H2_update(&h2_ctx, signature->c[i], ell_hat_bytes);
-    }
-    H2_update(&h2_ctx, signature->iv, sizeof(signature->iv));
-    H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
-  }
+  hash_challenge_1(chall_1, mu, hcom, signature->c, signature->iv, lambda, l, tau);
 
   // Step: 6
   vole_hash(signature->u_tilde, chall_1, u, l, lambda);
@@ -201,17 +206,7 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* owf_input, const ui
 
   // Step: 5
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
-  {
-    H2_context_t h2_ctx;
-    H2_init(&h2_ctx, lambda);
-    H2_update(&h2_ctx, mu, lambdaBytes * 2);
-    H2_update(&h2_ctx, hcom, lambdaBytes * 2);
-    for (unsigned int i = 0; i < (tau - 1); ++i) {
-      H2_update(&h2_ctx, signature->c[i], ell_hat_bytes);
-    }
-    H2_update(&h2_ctx, signature->iv, IV_SIZE);
-    H2_final(&h2_ctx, chall_1, (5 * lambdaBytes) + 8);
-  }
+  hash_challenge_1(chall_1, mu, hcom, signature->c, signature->iv, lambda, l, tau);
 
   // Step: 8..14
   uint8_t** q = malloc(lambda * sizeof(uint8_t*));
@@ -248,7 +243,8 @@ int verify(const uint8_t* msg, size_t msglen, const uint8_t* owf_input, const ui
     } else {
       // Step 14
       for (unsigned int d = 0; d < depth; ++d, ++q_idx) {
-        maskedXorUint8Arr(qprime[q_idx], signature->c[i - 1], q[q_idx], delta[d], ell_hat_bytes);
+        maskedXorUint8Arr(qprime[q_idx], signature->c + (i - 1) * ell_hat_bytes, q[q_idx], delta[d],
+                          ell_hat_bytes);
       }
     }
   }
@@ -310,9 +306,7 @@ signature_t init_signature(const faest_paramset_t* params) {
   const size_t ell_hat_bytes = ell_hat / 8;
   const size_t utilde_bytes  = (params->faest_param.lambda + UNIVERSAL_HASH_B_BITS + 7) / 8;
 
-  for (unsigned int i = 0; i != params->faest_param.tau - 1; ++i) {
-    sig.c[i] = malloc(ell_hat_bytes);
-  }
+  sig.c       = malloc(ell_hat_bytes * (params->faest_param.tau - 1));
   sig.u_tilde = malloc(utilde_bytes);
   sig.d       = malloc(ell_bytes);
   sig.a_tilde = malloc(lambda_bytes);
@@ -339,10 +333,7 @@ void free_signature(signature_t sig, const faest_paramset_t* params) {
   free(sig.a_tilde);
   free(sig.d);
   free(sig.u_tilde);
-
-  for (unsigned int i = params->faest_param.tau - 1; i; --i) {
-    free(sig.c[i - 1]);
-  }
+  free(sig.c);
 }
 
 int serialize_signature(uint8_t* dst, const signature_t* signature,
@@ -356,10 +347,8 @@ int serialize_signature(uint8_t* dst, const signature_t* signature,
   const size_t utilde_bytes  = (params->faest_param.lambda + UNIVERSAL_HASH_B_BITS + 7) / 8;
 
   // serialize c_i
-  for (unsigned int i = 0; i < params->faest_param.tau - 1; ++i) {
-    memcpy(dst, signature->c[i], ell_hat_bytes);
-    dst += ell_hat_bytes;
-  }
+  memcpy(dst, signature->c, ell_hat_bytes * (params->faest_param.tau - 1));
+  dst += ell_hat_bytes * (params->faest_param.tau - 1);
 
   // serialize u tilde
   memcpy(dst, signature->u_tilde, utilde_bytes);
@@ -405,9 +394,8 @@ deserialized_signature_t deserialize_signature(const uint8_t* src, const faest_p
   deserialized_signature_t sig;
 
   // serialize c_i
-  for (unsigned int i = 0; i != params->faest_param.tau - 1; ++i, src += ell_hat_bytes) {
-    sig.c[i] = src;
-  }
+  sig.c = src;
+  src += ell_hat_bytes * (params->faest_param.tau - 1);
 
   // serialize u tilde
   sig.u_tilde = src;

@@ -66,19 +66,19 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
         params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
 
-    std::vector<uint8_t> hcom, hcomRec, u, b, chal;
+    std::vector<uint8_t> hcom, hcomRec, u, b, chal, c;
     hcom.resize(lambdaBytes * 2);
     hcomRec.resize(lambdaBytes * 2);
     u.resize(ell_hat_bytes);
     b.resize(MAX(params.faest_param.k0, params.faest_param.k1), 0);
     chal.resize(lambdaBytes);
     rand_bytes(chal.data(), chal.size());
+    c.resize((params.faest_param.tau - 1) * ell_hat_bytes);
 
     std::vector<vec_com_t> vec_com;
     vec_com.resize(params.faest_param.tau);
 
-    std::vector<uint8_t*> c, v, q, pdec, com_j;
-    c.resize(params.faest_param.tau - 1);
+    std::vector<uint8_t*> v, q, pdec, com_j;
     v.resize(lambda);
     q.resize(lambda);
     pdec.resize(params.faest_param.tau);
@@ -89,11 +89,6 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     for (unsigned int i = 1; i < lambda; ++i) {
       v[i] = v[0] + i * ell_hat_bytes;
       q[i] = q[0] + i * ell_hat_bytes;
-    }
-
-    c[0] = new uint8_t[(params.faest_param.tau - 1) * ell_hat_bytes];
-    for (unsigned int i = 1; i < params.faest_param.tau - 1; ++i) {
-      c[i] = c[0] + i * ell_hat_bytes;
     }
 
     voleCommit(rootKey.data(), iv.data(), ell_hat, &params, hcom.data(), vec_com.data(), c.data(),
@@ -127,8 +122,8 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
           if (b[j]) {
             // need to correct the vole correlation
             if (i > 0) {
-              BOOST_TEST((q[(running_idx)][inner] ^ c[i - 1][inner] ^ u[inner]) ==
-                         v[(running_idx)][inner]);
+              BOOST_TEST((q[(running_idx)][inner] ^ c[(i - 1) * ell_hat_bytes + inner] ^
+                          u[inner]) == v[(running_idx)][inner]);
             } else {
               BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
             }
@@ -146,7 +141,6 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
     delete[] q[0];
     delete[] v[0];
-    delete[] c[0];
   }
 }
 

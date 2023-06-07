@@ -42,7 +42,7 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
 }
 
 void voleCommit(const uint8_t* rootKey, const uint8_t* iv, uint32_t ellhat,
-                const faest_paramset_t* params, uint8_t* hcom, vec_com_t* vecCom, uint8_t** c,
+                const faest_paramset_t* params, uint8_t* hcom, vec_com_t* vecCom, uint8_t* c,
                 uint8_t* u, uint8_t** v) {
   uint32_t lambda      = params->faest_param.lambda;
   uint32_t lambdaBytes = lambda / 8;
@@ -83,7 +83,7 @@ void voleCommit(const uint8_t* rootKey, const uint8_t* iv, uint32_t ellhat,
   memcpy(u, ui, ellhatBytes);
   for (uint32_t i = 1; i < tau; i++) {
     // Step 11
-    xorUint8Arr(u, ui + i * ellhatBytes, c[i - 1], ellhatBytes);
+    xorUint8Arr(u, ui + i * ellhatBytes, c + (i - 1) * ellhatBytes, ellhatBytes);
   }
   free(ui);
 
