@@ -42,7 +42,7 @@ void sign(const uint8_t* msg, size_t msglen, const uint8_t* owf_key, const uint8
 int verify(const uint8_t* msg, size_t msglen, const uint8_t* owf_input, const uint8_t* owf_output,
            const faest_paramset_t* params, const deserialized_signature_t* signature);
 
-int serialize_signature(uint8_t* dest, size_t* len, const signature_t* signature,
+int serialize_signature(uint8_t* dest, const signature_t* signature,
                         const faest_paramset_t* params);
 deserialized_signature_t deserialize_signature(const uint8_t* src, const faest_paramset_t* params);
 

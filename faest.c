@@ -345,9 +345,8 @@ void free_signature(signature_t sig, const faest_paramset_t* params) {
   }
 }
 
-int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
+int serialize_signature(uint8_t* dst, const signature_t* signature,
                         const faest_paramset_t* params) {
-  uint8_t* const old_dst    = dst;
   const unsigned int tau0   = params->faest_param.t0;
   const size_t lambda_bytes = params->faest_param.lambda / 8;
   const size_t ell_bytes    = (params->faest_param.l + 7) / 8;
@@ -391,7 +390,6 @@ int serialize_signature(uint8_t* dst, size_t* len, const signature_t* signature,
   memcpy(dst, signature->iv, sizeof(signature->iv));
   dst += sizeof(signature->iv);
 
-  *len = dst - old_dst;
   return 0;
 }
 

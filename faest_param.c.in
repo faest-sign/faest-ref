@@ -77,13 +77,9 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign_with_randomness(const uint8_t*
   signature_t sig = init_signature(&params);
 
   sign(message, message_len, SK_KEY(sk), SK_INPUT(sk), owf_output, rho, rho_len, &params, &sig);
-  serialize_signature(signature, signature_len, &sig, &params);
+  serialize_signature(signature, &sig, &params);
   free_signature(sig, &params);
-  if (*signature_len != FAEST_@PARAM@_SIGNATURE_SIZE) {
-    // something went wrong
-    memset(signature, 0, FAEST_@PARAM@_SIGNATURE_SIZE);
-    return -2;
-  }
+  *signature_len = FAEST_@PARAM@_SIGNATURE_SIZE;
 
   return 0;
 }
