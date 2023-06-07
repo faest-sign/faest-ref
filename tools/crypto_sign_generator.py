@@ -54,7 +54,8 @@ if openssl.found()
     dependencies: [openssl],
     include_directories: include_directories,
     c_args: defines + c_flags + ['-DHAVE_RANDOMBYTES'],
-    cpp_args: defines + cpp_flags + ['-DHAVE_RANDOMBYTES']
+    cpp_args: defines + cpp_flags + ['-DHAVE_RANDOMBYTES'],
+    override_options: ['b_lto=false'],
   )
 endif
 if boost_program_options.found()
@@ -71,6 +72,7 @@ faest_{param_name}_test = executable('faest_{param_name}_api_test', test_sources
   dependencies: [libfaest_{param_name}_dependency, valgrind],
   include_directories: include_directories,
   c_args: defines + c_flags + valgrind_defines,
+  override_options: ['b_lto=false'],
 )
 test('faest_{param_name}_api_test', faest_{param_name}_test,
   timeout: 600,

@@ -32,6 +32,7 @@ if boost_test.found()
     dependencies: [libfaest_static_dependency, boost_test] + test_deps,
     include_directories: include_directories,
     cpp_args: defines + cpp_flags + ['-DBOOST_TEST_DYN_LINK'],
+    override_options: ['b_lto=false']
   )
   test('AES', extended_tests,
     args: ['-t', 'aes'],
