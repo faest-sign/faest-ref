@@ -182,9 +182,9 @@ static void hash_challenge_3(uint8_t* chall_3, const uint8_t* chall_2, const uin
   H2_final(&h2_ctx_2, chall_3, lambda_bytes);
 }
 
-void sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* owf_key,
-          const uint8_t* owf_input, const uint8_t* owf_output, const uint8_t* rho, size_t rholen,
-          const faest_paramset_t* params) {
+void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* owf_key,
+                const uint8_t* owf_input, const uint8_t* owf_output, const uint8_t* rho,
+                size_t rholen, const faest_paramset_t* params) {
   const uint32_t l             = params->faest_param.l;
   const uint32_t ell_bytes     = l / 8;
   const uint32_t lambda        = params->faest_param.lambda;
@@ -290,8 +290,8 @@ void sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* owf_ke
   vecCom = NULL;
 }
 
-int verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,
-           const uint8_t* owf_output, const faest_paramset_t* params) {
+int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,
+                 const uint8_t* owf_output, const faest_paramset_t* params) {
   const unsigned int l             = params->faest_param.l;
   const unsigned int lambda        = params->faest_param.lambda;
   const unsigned int lambdaBytes   = lambda / 8;
