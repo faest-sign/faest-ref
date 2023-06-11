@@ -74,9 +74,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign_with_randomness(const uint8_t*
   faest_declassify(owf_output, sizeof(owf_output));
 
   const faest_paramset_t params = faest_get_paramset(FAEST_@PARAM@);
-  signature_t sig = init_signature(signature, &params);
-
-  sign(message, message_len, SK_KEY(sk), SK_INPUT(sk), owf_output, rho, rho_len, &params, &sig);
+  sign(signature, message, message_len, SK_KEY(sk), SK_INPUT(sk), owf_output, rho, rho_len, &params);
   *signature_len = FAEST_@PARAM@_SIGNATURE_SIZE;
 
   return 0;
@@ -99,9 +97,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* pk, const uin
   }
 
   const faest_paramset_t params = faest_get_paramset(FAEST_@PARAM@);
-  deserialized_signature_t sig = deserialize_signature(signature, &params);
-
-  return verify(message, message_len, PK_INPUT(pk), PK_OUTPUT(pk), &params, &sig);
+  return verify(message, message_len, signature, PK_INPUT(pk), PK_OUTPUT(pk), &params);
 }
 
 void FAEST_CALLING_CONVENTION faest_@PARAM_L@_clear_private_key(uint8_t* key) {
