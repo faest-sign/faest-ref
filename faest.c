@@ -223,7 +223,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   for (unsigned int i = 1; i < lambda; ++i) {
     V[i] = V[0] + i * ell_hat_bytes;
   }
-  voleCommit(rootkey, signature.iv, ell_hat, params, hcom, vecCom, signature.c, u, V);
+  vole_commit(rootkey, signature.iv, ell_hat, params, hcom, vecCom, signature.c, u, V);
 
   // Step: 4
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
@@ -317,8 +317,8 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     qprime[i] = qprime[0] + i * ell_hat_bytes;
   }
   uint8_t hcom[MAX_LAMBDA_BYTES * 2];
-  voleReconstruct(signature.iv, signature.chall_3, signature.pdec, signature.com_j, hcom, qprime,
-                  ell_hat, params);
+  vole_reconstruct(signature.iv, signature.chall_3, signature.pdec, signature.com_j, hcom, qprime,
+                   ell_hat, params);
 
   // Step: 5
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];

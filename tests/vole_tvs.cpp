@@ -4248,8 +4248,8 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
   }
 
   constexpr std::array<uint8_t, 16> iv{};
-  voleCommit(seed_128s.data(), iv.data(), ell_hat, &params, hcom.data(), vec_com.data(), c.data(),
-             u.data(), v.data());
+  vole_commit(seed_128s.data(), iv.data(), ell_hat, &params, hcom.data(), vec_com.data(), c.data(),
+              u.data(), v.data());
   BOOST_TEST(hcom.size() == hcom_128s.size());
   BOOST_TEST(lambda * ell_hat_bytes == v_128s.size());
   BOOST_TEST(u.size() == u_128s.size());
@@ -4270,8 +4270,8 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
     vec_com_clear(&vec_com[i]);
   }
 
-  voleReconstruct(iv.data(), chal.data(), pdec.data(), com_j.data(), hcomRec.data(), q.data(),
-                  ell_hat, &params);
+  vole_reconstruct(iv.data(), chal.data(), pdec.data(), com_j.data(), hcomRec.data(), q.data(),
+                   ell_hat, &params);
   BOOST_TEST(hcom == hcomRec);
   BOOST_TEST(q_128s.size() == lambda * ell_hat_bytes);
 

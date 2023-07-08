@@ -38,9 +38,9 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
   return 1;
 }
 
-void voleCommit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                const faest_paramset_t* params, uint8_t* hcom, vec_com_t* vecCom, uint8_t* c,
-                uint8_t* u, uint8_t** v) {
+void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
+                 const faest_paramset_t* params, uint8_t* hcom, vec_com_t* vecCom, uint8_t* c,
+                 uint8_t* u, uint8_t** v) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
@@ -87,9 +87,9 @@ void voleCommit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   H1_final(&h1_ctx, hcom, lambda_bytes * 2);
 }
 
-void voleReconstruct(const uint8_t* iv, const uint8_t* chall, const uint8_t* const* pdec,
-                     const uint8_t* const* com_j, uint8_t* hcom, uint8_t** q, unsigned int ellhat,
-                     const faest_paramset_t* params) {
+void vole_reconstruct(const uint8_t* iv, const uint8_t* chall, const uint8_t* const* pdec,
+                      const uint8_t* const* com_j, uint8_t* hcom, uint8_t** q, unsigned int ellhat,
+                      const faest_paramset_t* params) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;

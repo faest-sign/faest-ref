@@ -91,8 +91,8 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       q[i] = q[0] + i * ell_hat_bytes;
     }
 
-    voleCommit(rootKey.data(), iv.data(), ell_hat, &params, hcom.data(), vec_com.data(), c.data(),
-               u.data(), v.data());
+    vole_commit(rootKey.data(), iv.data(), ell_hat, &params, hcom.data(), vec_com.data(), c.data(),
+                u.data(), v.data());
 
     unsigned int running_idx = 0;
     for (uint32_t i = 0; i < params.faest_param.tau; i++) {
@@ -108,8 +108,8 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       vec_com_clear(&vec_com[i]);
     }
 
-    voleReconstruct(iv.data(), chal.data(), pdec.data(), com_j.data(), hcomRec.data(), q.data(),
-                    ell_hat, &params);
+    vole_reconstruct(iv.data(), chal.data(), pdec.data(), com_j.data(), hcomRec.data(), q.data(),
+                     ell_hat, &params);
     BOOST_TEST(hcom == hcomRec);
     for (unsigned int i = 0; i < params.faest_param.tau; ++i) {
       const uint32_t depth =
