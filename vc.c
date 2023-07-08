@@ -25,7 +25,7 @@ static uint8_t** getLeaves(tree_t* tree) {
   return &tree->nodes[tree->numNodes - tree->numLeaves];
 }
 
-static int isLeftChild(size_t node) {
+static ATTR_CONST int isLeftChild(size_t node) {
   assert(node != 0);
   return (node % 2 == 1);
 }
@@ -54,7 +54,7 @@ static void freeTree(tree_t* tree) {
   }
 }
 
-static size_t getParent(size_t node) {
+static ATTR_CONST size_t getParent(size_t node) {
   assert(node != 0);
 
   if (isLeftChild(node)) {
@@ -298,6 +298,7 @@ void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t*
   H1_final(&h1_ctx, vecComRec->h, lambdaBytes * 2);
 }
 
+#if defined(FAEST_STATIC)
 int vector_verify(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b,
                   uint32_t lambda, uint32_t depth, vec_com_rec_t* rec, const uint8_t* vecComH) {
   const unsigned int lambdaBytes      = lambda / 8;
@@ -327,6 +328,7 @@ int vector_verify(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j, 
     return 0;
   }
 }
+#endif
 
 void vec_com_clear(vec_com_t* com) {
   free(com->sd);

@@ -22,8 +22,8 @@ typedef struct vec_com_rec_t {
   uint8_t* s;
 } vec_com_rec_t;
 
-uint64_t getBinaryTreeNodeCount(unsigned int depth);
-uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex);
+ATTR_CONST uint64_t getBinaryTreeNodeCount(unsigned int depth);
+ATTR_CONST uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex);
 
 int BitDec(uint32_t leafIndex, uint32_t depth, uint8_t* out);
 uint64_t NumRec(uint32_t depth, const uint8_t* bi);
@@ -37,7 +37,7 @@ void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t
 void vector_reconstruction(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j,
                            const uint8_t* b, uint32_t lambda, uint32_t depth,
                            vec_com_rec_t* vecComRec);
-
+// only for tests
 int vector_verify(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b,
                   uint32_t lambda, uint32_t depth, vec_com_rec_t* rec, const uint8_t* vecComH);
 
