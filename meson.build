@@ -519,7 +519,7 @@ libfaest_static = static_library('faest',
   faest_sources,
   dependencies: build_dependencies + [valgrind],
   include_directories: include_directories,
-  c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT='] + valgrind_defines,
+  c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT=', '-DFAEST_TESTS'] + valgrind_defines,
   install: true
 )
 libfaest_static_dependency = declare_dependency(

@@ -13,6 +13,47 @@
 
 #include <stdbool.h>
 
+#if !defined(FAEST_TESTS)
+static
+#endif
+    void
+    ConvertToVole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int lambda,
+                  unsigned int depth, unsigned int outLenBytes, uint8_t* u, uint8_t* v) {
+  const unsigned int num_instances = 1 << depth;
+  const unsigned int lambda_bytes  = lambda / 8;
+
+  // (depth + 1) x num_instances array of outLenBytes; but we only need to rows at a time
+  uint8_t* r = calloc(2 * num_instances, outLenBytes);
+
+#define R(row, column) (r + (((row) % 2) * num_instances + (column)) * outLenBytes)
+#define V(idx) (v + (idx)*outLenBytes)
+
+  // Step: 2
+  if (!sd0_bot) {
+    prg(sd, iv, R(0, 0), lambda, outLenBytes);
+  }
+
+  // Step: 3..4
+  for (unsigned int i = 1; i < num_instances; i++) {
+    prg(sd + (lambda_bytes * i), iv, R(0, i), lambda, outLenBytes);
+  }
+
+  // Step: 5..9
+  memset(v, 0, depth * outLenBytes);
+  for (unsigned int j = 0; j < depth; j++) {
+    unsigned int depthloop = num_instances >> (j + 1);
+    for (unsigned int i = 0; i < depthloop; i++) {
+      xorUint8Arr(V(j), R(j, 2 * i + 1), V(j), outLenBytes);
+      xorUint8Arr(R(j, 2 * i), R(j, 2 * i + 1), R(j + 1, i), outLenBytes);
+    }
+  }
+  // Step: 10
+  if (!sd0_bot && u != NULL) {
+    memcpy(u, R(depth, 0), outLenBytes);
+  }
+  free(r);
+}
+
 int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t0, unsigned int k1,
             unsigned int t1, uint8_t* chalout) {
   if (i >= t0 + t1) {
@@ -145,41 +186,4 @@ void vole_reconstruct(const uint8_t* iv, const uint8_t* chall, const uint8_t* co
 
   // Step: 9
   H1_final(&h1_ctx, hcom, lambda_bytes * 2);
-}
-
-void ConvertToVole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int lambda,
-                   unsigned int depth, unsigned int outLenBytes, uint8_t* u, uint8_t* v) {
-  const unsigned int num_instances = 1 << depth;
-  const unsigned int lambda_bytes  = lambda / 8;
-
-  // (depth + 1) x num_instances array of outLenBytes; but we only need to rows at a time
-  uint8_t* r = calloc(2 * num_instances, outLenBytes);
-
-#define R(row, column) (r + (((row) % 2) * num_instances + (column)) * outLenBytes)
-#define V(idx) (v + (idx)*outLenBytes)
-
-  // Step: 2
-  if (!sd0_bot) {
-    prg(sd, iv, R(0, 0), lambda, outLenBytes);
-  }
-
-  // Step: 3..4
-  for (unsigned int i = 1; i < num_instances; i++) {
-    prg(sd + (lambda_bytes * i), iv, R(0, i), lambda, outLenBytes);
-  }
-
-  // Step: 5..9
-  memset(v, 0, depth * outLenBytes);
-  for (unsigned int j = 0; j < depth; j++) {
-    unsigned int depthloop = num_instances >> (j + 1);
-    for (unsigned int i = 0; i < depthloop; i++) {
-      xorUint8Arr(V(j), R(j, 2 * i + 1), V(j), outLenBytes);
-      xorUint8Arr(R(j, 2 * i), R(j, 2 * i + 1), R(j + 1, i), outLenBytes);
-    }
-  }
-  // Step: 10
-  if (!sd0_bot && u != NULL) {
-    memcpy(u, R(depth, 0), outLenBytes);
-  }
-  free(r);
 }

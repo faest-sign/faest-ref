@@ -298,7 +298,7 @@ void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t*
   H1_final(&h1_ctx, vecComRec->h, lambdaBytes * 2);
 }
 
-#if defined(FAEST_STATIC)
+#if defined(FAEST_TESTS)
 int vector_verify(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b,
                   uint32_t lambda, uint32_t depth, vec_com_rec_t* rec, const uint8_t* vecComH) {
   const unsigned int lambdaBytes      = lambda / 8;
