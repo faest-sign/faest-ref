@@ -69,7 +69,7 @@ void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   bf128_store(h, h2);
   bf128_store(tmp, h3);
   memcpy(h + sizeof(bf128_t), tmp, UNIVERSAL_HASH_B);
-  xorUint8Arr(h, x1, h, sizeof(bf128_t) + UNIVERSAL_HASH_B);
+  xor_u8_array(h, x1, h, sizeof(bf128_t) + UNIVERSAL_HASH_B);
 }
 
 void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
@@ -104,7 +104,7 @@ void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   bf192_store(h, h2);
   bf192_store(tmp, h3);
   memcpy(h + sizeof(bf192_t), tmp, UNIVERSAL_HASH_B);
-  xorUint8Arr(h, x1, h, sizeof(bf192_t) + UNIVERSAL_HASH_B);
+  xor_u8_array(h, x1, h, sizeof(bf192_t) + UNIVERSAL_HASH_B);
 }
 
 void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
@@ -139,7 +139,7 @@ void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   bf256_store(h, h2);
   bf256_store(tmp, h3);
   memcpy(h + sizeof(bf256_t), tmp, UNIVERSAL_HASH_B);
-  xorUint8Arr(h, x1, h, sizeof(bf256_t) + UNIVERSAL_HASH_B);
+  xor_u8_array(h, x1, h, sizeof(bf256_t) + UNIVERSAL_HASH_B);
 }
 
 void vole_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, uint32_t lambda) {

@@ -690,7 +690,7 @@ static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* cha
     ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
     for (uint32_t j = 0; j < depth; j++, ++col) {
       if (fancy_d[j] == 1) {
-        xorUint8Arr(d, Q[col], Q[col], (l + 7) / 8);
+        xor_u8_array(d, Q[col], Q[col], (l + 7) / 8);
       }
     }
   }
@@ -1277,7 +1277,7 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
     ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
     for (uint32_t j = 0; j < depth; j++, ++col) {
       if (fancy_d[j] == 1) {
-        xorUint8Arr(d, Q[col], Q[col], (l + 7) / 8);
+        xor_u8_array(d, Q[col], Q[col], (l + 7) / 8);
       }
     }
   }
@@ -1883,7 +1883,7 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
     ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
     for (uint32_t j = 0; j < depth; j++, ++col) {
       if (fancy_d[j] == 1) {
-        xorUint8Arr(d, Q[col], Q[col], (l + 7) / 8);
+        xor_u8_array(d, Q[col], Q[col], (l + 7) / 8);
       }
     }
   }
@@ -2141,7 +2141,7 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
   if (Mkey == 0) {
     // Step 6
     uint8_t* w_out = malloc(lambda / 8);
-    xorUint8Arr(out, w, w_out, lambda / 8);
+    xor_u8_array(out, w, w_out, lambda / 8);
 
     bf128_t* bf_s       = malloc(sizeof(bf128_t) * Senc);
     bf128_t* bf_vs      = malloc(sizeof(bf128_t) * Senc);
@@ -2259,7 +2259,7 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
     ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
     for (uint32_t j = 0; j < depth; j++, ++col) {
       if (fancy_d[j] == 1) {
-        xorUint8Arr(d, Q[col], Q[col], (Lenc + 7) / 8);
+        xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
       }
     }
   }
@@ -2509,7 +2509,7 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
   if (Mkey == 0) {
     // Step 6
     uint8_t* w_out = malloc(lambda / 8);
-    xorUint8Arr(out, w, w_out, lambda / 8);
+    xor_u8_array(out, w, w_out, lambda / 8);
 
     bf192_t* bf_s       = malloc(sizeof(bf192_t) * Senc);
     bf192_t* bf_vs      = malloc(sizeof(bf192_t) * Senc);
@@ -2626,7 +2626,7 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
     ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
     for (uint32_t j = 0; j < depth; j++, ++col) {
       if (fancy_d[j] == 1) {
-        xorUint8Arr(d, Q[col], Q[col], (Lenc + 7) / 8);
+        xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
       }
     }
   }
@@ -2876,7 +2876,7 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
   if (Mkey == 0) {
     // Step 6
     uint8_t* w_out = malloc(lambda / 8);
-    xorUint8Arr(out, w, w_out, lambda / 8);
+    xor_u8_array(out, w, w_out, lambda / 8);
 
     bf256_t* bf_s       = malloc(sizeof(bf256_t) * Senc);
     bf256_t* bf_vs      = malloc(sizeof(bf256_t) * Senc);
@@ -2993,7 +2993,7 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
     ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
     for (uint32_t j = 0; j < depth; j++, ++col) {
       if (fancy_d[j] == 1) {
-        xorUint8Arr(d, Q[col], Q[col], (Lenc + 7) / 8);
+        xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
       }
     }
   }

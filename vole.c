@@ -43,8 +43,8 @@ static
   for (unsigned int j = 0; j < depth; j++) {
     unsigned int depthloop = num_instances >> (j + 1);
     for (unsigned int i = 0; i < depthloop; i++) {
-      xorUint8Arr(V(j), R(j, 2 * i + 1), V(j), outLenBytes);
-      xorUint8Arr(R(j, 2 * i), R(j, 2 * i + 1), R(j + 1, i), outLenBytes);
+      xor_u8_array(V(j), R(j, 2 * i + 1), V(j), outLenBytes);
+      xor_u8_array(R(j, 2 * i), R(j, 2 * i + 1), R(j + 1, i), outLenBytes);
     }
   }
   // Step: 10
@@ -120,7 +120,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   memcpy(u, ui, ellhat_bytes);
   for (unsigned int i = 1; i < tau; i++) {
     // Step 11
-    xorUint8Arr(u, ui + i * ellhat_bytes, c + (i - 1) * ellhat_bytes, ellhat_bytes);
+    xor_u8_array(u, ui + i * ellhat_bytes, c + (i - 1) * ellhat_bytes, ellhat_bytes);
   }
   free(ui);
 

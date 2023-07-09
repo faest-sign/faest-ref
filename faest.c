@@ -251,7 +251,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   // Step: 9, 10
   uint8_t* w = aes_extend_witness(owf_key, owf_input, params);
   // Step: 11
-  xorUint8Arr(w, u, signature.d, ell_bytes);
+  xor_u8_array(w, u, signature.d, ell_bytes);
 
   // Step: 12
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
@@ -348,8 +348,8 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
             params->faest_param.k1, params->faest_param.t1, delta);
     // Step 16
     for (unsigned int j = 0; j != depth; ++j, ++Dtilde_idx) {
-      maskedXorUint8Arr(Dtilde[Dtilde_idx], signature.u_tilde, Dtilde[Dtilde_idx], delta[j],
-                        utilde_bytes);
+      masked_xor_u8_array(Dtilde[Dtilde_idx], signature.u_tilde, Dtilde[Dtilde_idx], delta[j],
+                          utilde_bytes);
     }
 
     if (i == 0) {
@@ -359,8 +359,8 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     } else {
       // Step 14
       for (unsigned int d = 0; d < depth; ++d, ++q_idx) {
-        maskedXorUint8Arr(qprime[q_idx], signature.c + (i - 1) * ell_hat_bytes, q[q_idx], delta[d],
-                          ell_hat_bytes);
+        masked_xor_u8_array(qprime[q_idx], signature.c + (i - 1) * ell_hat_bytes, q[q_idx],
+                            delta[d], ell_hat_bytes);
       }
     }
   }
@@ -379,7 +379,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
       // Step 15
       vole_hash(Q_tilde, chall_1, q[i], l, lambda);
       // Step 16
-      xorUint8Arr(Q_tilde, Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
+      xor_u8_array(Q_tilde, Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     // Step: 16
