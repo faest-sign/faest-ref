@@ -33,11 +33,11 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-        - { os: ubuntu-22.04, compiler: gcc, cxxcompiler: g++ } # = gcc-11
-        - { os: ubuntu-22.04, compiler: clang, cxxcompiler: clang++ } # = clang-14
-        - { os: ubuntu-22.04, compiler: gcc-12, cxxcompiler: g++-12 }
-        - { os: ubuntu-22.04, compiler: clang-13, cxxcompiler: clang++-13 }
-        - { os: macos-latest, compiler: clang, cxxcompiler: clang++ }
+        - { os: ubuntu-22.04, compiler: gcc, cxxcompiler: g++, ld: bfd } # = gcc-11
+        - { os: ubuntu-22.04, compiler: clang, cxxcompiler: clang++, ld: lld } # = clang-14
+        - { os: ubuntu-22.04, compiler: gcc-12, cxxcompiler: g++-12, ld: bfd }
+        - { os: ubuntu-22.04, compiler: clang-13, cxxcompiler: clang++-13, ld: lld-13 }
+        - { os: macos-latest, compiler: clang, cxxcompiler: clang++, ld: ld64 }
 
     steps:
     - uses: actions/checkout@v3
@@ -48,6 +48,7 @@ jobs:
         sudo apt-get -q update
         sudo apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build libntl-dev libboost-test-dev libssl-dev
         sudo apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
+        sudo apt-get -q -y install ${{ matrix.cfg.ld }} || true
       if: ${{ runner.os == 'Linux' }}
     - uses: actions/setup-python@v4
       with:
@@ -66,9 +67,11 @@ jobs:
       env:
         CC: ${{ matrix.cfg.compiler }}
         CXX: ${{ matrix.cfg.cxxcompiler }}
+        CC_LD: ${{ matrix.cfg.ld }}
+        CXX_LD: ${{ matrix.cfg.ld }}
 
   build-flags-windows:
-    name: Test on Windows with MSVC (${{ matrix.flags }})
+    name: Test on Windows with MSVC
     needs: [build-base]
     runs-on: windows-latest
 
