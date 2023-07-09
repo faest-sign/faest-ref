@@ -13,13 +13,9 @@
 
 FAEST_BEGIN_C_DECL
 
-void printHex(const char* s, const uint8_t* data, size_t len);
-
 void xorUint8Arr(const uint8_t* a, const uint8_t* b, uint8_t* out, size_t len);
 void maskedXorUint8Arr(const uint8_t* a, const uint8_t* b, uint8_t* out, uint8_t mask_bit,
                        size_t len);
-
-int printUint8Arr(char* name, uint8_t* arr, uint32_t unitSize, uint32_t len);
 
 ATTR_CONST static inline uint8_t get_bit(uint8_t in, uint8_t index) {
   return (in >> index) & 0x01;
