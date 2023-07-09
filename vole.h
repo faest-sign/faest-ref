@@ -1,3 +1,7 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
 #ifndef FAEST_VOLE_H
 #define FAEST_VOLE_H
 
