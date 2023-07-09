@@ -67,11 +67,11 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    - name: Install meson and ninja
-      run:
+    - name: Set up Homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+    - name: Install dependencies
+      run: |
+        brew upgrade python@3 || true
         brew install ninja meson openssl@3
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
