@@ -37,8 +37,6 @@ jobs:
         - { os: ubuntu-22.04, compiler: clang, cxxcompiler: clang++, ld: lld } # = clang-14
         - { os: ubuntu-22.04, compiler: gcc-12, cxxcompiler: g++-12, ld: bfd }
         - { os: ubuntu-22.04, compiler: clang-13, cxxcompiler: clang++-13, ld: lld-13 }
-        - { os: macos-latest, compiler: clang, cxxcompiler: clang++, ld: ld64 }
-
     steps:
     - uses: actions/checkout@v3
       with:
@@ -49,15 +47,6 @@ jobs:
         sudo apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build libntl-dev libboost-test-dev libssl-dev
         sudo apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
         sudo apt-get -q -y install ${{ matrix.cfg.ld }} || true
-      if: ${{ runner.os == 'Linux' }}
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-      if: ${{ runner.os != 'Linux' }}
-    - name: Install meson and ninja
-      run:
-        brew install ninja meson openssl@3
-      if: ${{ runner.os != 'Linux' }}
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
       with:
@@ -70,11 +59,31 @@ jobs:
         CC_LD: ${{ matrix.cfg.ld }}
         CXX_LD: ${{ matrix.cfg.ld }}
 
+  build-flags-macos:
+    name: Test on macOS
+    needs: [build-base]
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install meson and ninja
+      run:
+        brew install ninja meson openssl@3
+    - name: Build and test
+      uses: BSFishy/meson-build@v1.0.3
+      with:
+        action: test
+        options: --verbose
+        meson-version: 0.56
+
   build-flags-windows:
     name: Test on Windows with MSVC
     needs: [build-base]
     runs-on: windows-latest
-
     steps:
     - uses: actions/checkout@v3
       with:
