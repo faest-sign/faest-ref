@@ -72,7 +72,7 @@ jobs:
     - name: Install dependencies
       run: |
         brew upgrade python@3 || true
-        brew install ninja meson openssl@3
+        brew install ninja meson openssl@3 boost
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
       with:
