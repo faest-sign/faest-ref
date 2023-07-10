@@ -523,7 +523,8 @@ libfaest_static = static_library('faest',
 )
 libfaest_static_dependency = declare_dependency(
   link_with: libfaest_static,
-  include_directories: include_directories
+  include_directories: include_directories,
+  compile_args: ['-DFAEST_EXPORT=']
 )
 
 # shared library
