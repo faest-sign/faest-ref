@@ -34,7 +34,7 @@ jobs:
     - name: Install Linux dependencies
       run: |
         apt-get -q update
-        apt-get -q -y install build-essential python3 python3-pip ninja-build pkgconf libssl-dev
+        apt-get -q -y install build-essential python3 python3-pip ninja-build pkgconf libntl-dev libboost-test-dev libssl-dev
         pip3 install meson
     - uses: actions/checkout@v1
       with:
