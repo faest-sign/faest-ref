@@ -126,3 +126,57 @@ jobs:
         setup-options: --vsenv
         options: --verbose
         meson-version: 0.56
+
+  build-scan-build:
+    name: Test on Ubuntu with scan-build
+    needs: [build-base, build-base-i386]
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: Install Linux dependencies
+      run: |
+        sudo apt-get -q update
+        sudo apt-get -q -y install  meson ninja-build pkgconf libntl-dev libboost-test-dev libssl-dev clang-tools
+    - name: Configure, build and test
+      run: |
+        mkdir -p build
+        scan-build meson setup build
+        scan-build --exclude "sha3/" --status-bugs ninja -C build
+
+  build-archs:
+    runs-on: ubuntu-22.04
+    needs: [build-scan-build]
+    name: Test with ${{ matrix.cfg.compiler }} on ${{ matrix.cfg.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - { arch: aarch64, compiler: gcc, cxxcompiler: g++ }
+        - { arch: ppc64le, compiler: gcc, cxxcompiler: g++ }
+        - { arch: s390x, compiler: gcc, cxxcompiler: g++ }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: uraimo/run-on-arch-action@master
+        name: Build and test
+        id: build
+        with:
+          arch: ${{ matrix.cfg.arch }}
+          distro: ubuntu22.04
+          githubToken: ${{ github.token }}
+          install: |
+            apt-get -q update
+            apt-get -q -y dist-upgrade
+            apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build pkgconf libntl-dev libboost-test-dev libssl-dev
+            apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
+          run: |
+            mkdir build
+            meson setup build
+            ninja -C build
+            ninja -C build test
+          env: |
+            CC: ${{ matrix.cfg.compiler }}
+            CXX: ${{ matrix.cfg.cxxcompiler }}
