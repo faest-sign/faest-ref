@@ -9,16 +9,6 @@ option('SHA3',
   value: 'auto',
   description: 'Select SHA3 implementation'
 )
-option('EM-192',
-  type: 'feature',
-  value: 'disabled',
-  description: 'Enable EM-192 variants (not implemented)'
-)
-option('EM-256',
-  type: 'feature',
-  value: 'disabled',
-  description: 'Enable EM-256 variants (not implemented)'
-)
 option('valgrind',
   type: 'feature',
   value: 'disabled',
