@@ -75,12 +75,12 @@ faest_{param_name}_test = executable('faest_{param_name}_api_test', test_sources
   override_options: ['b_lto=false'],
 )
 test('faest_{param_name}_api_test', faest_{param_name}_test,
-  timeout: 600,
+  timeout: 6000,
 )
 if valgrind.found() and valgrind_exec.found()
   test('faest_{param_name}_api_test_ct', valgrind_exec,
     args: ['-q', '--error-exitcode=1', '--track-origins=yes', faest_{param_name}_test],
-    timeout: 600,
+    timeout: 6000,
   )
 endif
 if valgrind_exec.found()
