@@ -25,9 +25,29 @@ jobs:
         action: test
         options: --verbose
 
+  build-base-i386:
+    name: Test on Ubuntu with gcc (32 bit)
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: Install Linux dependencies
+      run: |
+        sudo apt-get -q update
+        sudo apt-get -q -y install meson ninja-build gcc-i686-linux-gnu g++-i686-linux-gnu
+    - name: Build and test
+      uses: BSFishy/meson-build@v1.0.3
+      with:
+        action: test
+        options: --verbose
+      env:
+        CC: i686-linux-gnu-gcc
+        CXX: i686-linux-gnu-g++
+
   build-flags:
     name: Test on ${{ matrix.cfg.os }} with ${{ matrix.cfg.compiler }}
-    needs: [build-base]
+    needs: [build-base, build-base-i386]
     runs-on: ${{ matrix.cfg.os }}
     strategy:
       fail-fast: false
@@ -61,7 +81,7 @@ jobs:
 
   build-flags-macos:
     name: Test on macOS
-    needs: [build-base]
+    needs: [build-base, build-base-i386]
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
@@ -82,7 +102,7 @@ jobs:
 
   build-flags-windows:
     name: Test on Windows with MSVC
-    needs: [build-base]
+    needs: [build-base, build-base-i386]
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
