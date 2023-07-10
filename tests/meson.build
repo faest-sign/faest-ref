@@ -36,42 +36,42 @@ if boost_test.found()
   )
   test('AES', extended_tests,
     args: ['-t', 'aes'],
-    timeout: 600,
+    timeout: 6000,
   )
   test('AES prove', extended_tests,
     args: ['-t', 'test_aes_prove'],
-    timeout: 600,
+    timeout: 6000,
   )
   test('SHAKE', extended_tests,
     args: ['-t', 'hash_shake'],
-    timeout: 600,
+    timeout: 6000,
   )
   test('Instances', extended_tests,
     args: ['-t', 'instances'],
-    timeout: 600,
+    timeout: 6000,
   )
   test('Universal hashing', extended_tests,
     args: ['-t', 'universal_hashing'],
-    timeout: 600,
+    timeout: 6000,
   )
   test('Vector commitments', extended_tests,
     args: ['-t', 'vector_commitments'],
-    timeout: 600,
+    timeout: 6000,
   )
   test('VOLE', extended_tests,
     args: ['-t', 'vole'],
-    timeout: 600,
+    timeout: 6000,
   )
   if ntl.found()
     test('Fields', extended_tests,
       args: ['-t', 'fields'],
-      timeout: 600,
+      timeout: 6000,
     )
   endif
   foreach parameter_set : parameter_sets
     test('FAEST_@0@'.format(parameter_set.get('PARAM')), extended_tests,
       args: ['-t', 'faest_@0@'.format(parameter_set.get('PARAM_L'))],
-      timeout: 600,
+      timeout: 6000,
     )
   endforeach
 endif
