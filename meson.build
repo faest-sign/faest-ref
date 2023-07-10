@@ -373,7 +373,7 @@ foreach parameter_set : parameter_sets
 endforeach
 
 # dependencies
-openssl = dependency('openssl', required: false)
+openssl = dependency('openssl', required: get_option('openssl'))
 boost_program_options = dependency('boost', required: false, modules: ['program_options'])
 valgrind = dependency('valgrind', required: get_option('valgrind'))
 if valgrind.found()

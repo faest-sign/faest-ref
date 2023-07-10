@@ -1,3 +1,8 @@
+option('openssl',
+  type: 'feature',
+  value: 'auto',
+  description: 'Use OpenSSL for AES-CTR implementation'
+)
 option('SHA3',
   type: 'combo',
   choices: ['auto', 'opt64', 'plain32', 'avx2', 'armv8a-neon', 's390-cpacf'],
