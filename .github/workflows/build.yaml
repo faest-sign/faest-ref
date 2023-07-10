@@ -41,6 +41,7 @@ jobs:
       with:
         action: test
         options: --verbose
+        setup-options: -Dopenssl=disabled
       env:
         CC: i686-linux-gnu-gcc
         CXX: i686-linux-gnu-g++
