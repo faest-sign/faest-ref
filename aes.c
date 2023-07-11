@@ -421,8 +421,15 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   uint8_t* w           = malloc((l + 7) / 8);
   uint8_t* const w_out = w;
 
-  unsigned int block_words;
+  unsigned int block_words = 4;
+  unsigned int beta        = 1;
   switch (params->faest_paramid) {
+  case FAEST_192F:
+  case FAEST_192S:
+  case FAEST_256F:
+  case FAEST_256S:
+    beta = 2;
+    break;
   case FAEST_EM_192F:
   case FAEST_EM_192S:
     block_words = 6;
@@ -432,7 +439,7 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
     block_words = 8;
     break;
   default:
-    block_words = 4;
+    break;
   }
 
   if (!L_ke) {
@@ -484,7 +491,7 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   }
 
   // Step 10
-  for (unsigned b = 0; b < params->faest_param.beta; ++b, in += sizeof(aes_word_t) * block_words) {
+  for (unsigned b = 0; b < beta; ++b, in += sizeof(aes_word_t) * block_words) {
     // Step 12
     aes_block_t state;
     load_state(state, in, block_words);
