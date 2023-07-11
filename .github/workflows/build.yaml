@@ -153,8 +153,10 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
+        - { arch: armv7, compiler: gcc, cxxcompiler: g++ }
         - { arch: aarch64, compiler: gcc, cxxcompiler: g++ }
         - { arch: ppc64le, compiler: gcc, cxxcompiler: g++ }
+        - { arch: riscv64, compiler: gcc, cxxcompiler: g++ }
         - { arch: s390x, compiler: gcc, cxxcompiler: g++ }
     steps:
       - uses: actions/checkout@v3
@@ -169,7 +171,6 @@ jobs:
           githubToken: ${{ github.token }}
           install: |
             apt-get -q update
-            apt-get -q -y dist-upgrade
             apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build pkgconf libntl-dev libboost-test-dev libssl-dev
             apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
           run: |
