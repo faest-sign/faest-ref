@@ -43,7 +43,6 @@ typedef struct faest_param_t {
   uint32_t Ske;
   uint32_t R;
   uint32_t Senc;
-  uint32_t beta;
   uint32_t l;
   uint32_t Lke;
   uint32_t Lenc;
