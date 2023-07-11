@@ -47,7 +47,6 @@ typedef struct faest_param_t {
   uint32_t l;
   uint32_t Lke;
   uint32_t Lenc;
-  uint32_t c;
   uint32_t tau;
   uint32_t k0;
   uint32_t k1;
@@ -55,7 +54,6 @@ typedef struct faest_param_t {
   uint32_t t1;
   uint32_t sigSize;
   uint32_t pkSize;
-  uint32_t skSize;
 } faest_param_t;
 
 typedef struct faest_paramset_t {
