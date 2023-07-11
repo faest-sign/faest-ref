@@ -23,12 +23,12 @@ typedef struct tree_t {
 
 #define NODE(tree, node, lambda_bytes) (&(tree).nodes[(node) * (lambda_bytes)])
 
-static ATTR_CONST int isLeftChild(size_t node) {
+static ATTR_CONST int is_left_child(size_t node) {
   assert(node != 0);
   return (node % 2 == 1);
 }
 
-static tree_t createTree(const faest_paramset_t* params, unsigned int depth) {
+static tree_t create_tree(const faest_paramset_t* params, unsigned int depth) {
   tree_t tree;
   uint32_t lambdaBytes = params->faest_param.lambda / 8;
 
@@ -39,28 +39,28 @@ static tree_t createTree(const faest_paramset_t* params, unsigned int depth) {
   return tree;
 }
 
-static void freeTree(tree_t* tree) {
+static void free_tree(tree_t* tree) {
   if (tree != NULL) {
     free(tree->nodes);
     tree->nodes = NULL;
   }
 }
 
-static ATTR_CONST size_t getParent(size_t node) {
+static ATTR_CONST size_t get_parent(size_t node) {
   assert(node != 0);
 
-  if (isLeftChild(node)) {
+  if (is_left_child(node)) {
     return (node - 1) / 2;
   }
   return (node - 2) / 2;
 }
 
-static void expandSeeds(tree_t* tree, const uint8_t* iv, const faest_paramset_t* params) {
+static void expand_seeds(tree_t* tree, const uint8_t* iv, const faest_paramset_t* params) {
   const unsigned int lambda_bytes = params->faest_param.lambda / 8;
 
   /* Walk the tree, expanding seeds where possible. Compute children of
    * non-leaf nodes. */
-  size_t lastNonLeaf = getParent(tree->numNodes - 1);
+  size_t lastNonLeaf = get_parent(tree->numNodes - 1);
   // for scan build
   assert(2 * lastNonLeaf + 2 < tree->numNodes);
 
@@ -73,13 +73,13 @@ static void expandSeeds(tree_t* tree, const uint8_t* iv, const faest_paramset_t*
   }
 }
 
-static tree_t generateSeeds(const uint8_t* rootSeed, const uint8_t* iv,
-                            const faest_paramset_t* params, unsigned int depth) {
+static tree_t generate_seeds(const uint8_t* rootSeed, const uint8_t* iv,
+                             const faest_paramset_t* params, unsigned int depth) {
   uint32_t lambdaBytes = params->faest_param.lambda / 8;
-  tree_t tree          = createTree(params, depth);
+  tree_t tree          = create_tree(params, depth);
 
   memcpy(NODE(tree, 0, lambdaBytes), rootSeed, lambdaBytes);
-  expandSeeds(&tree, iv, params);
+  expand_seeds(&tree, iv, params);
 
   return tree;
 }
@@ -125,7 +125,7 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
   const unsigned int numVoleInstances = 1 << depth;
 
   // Generating the tree
-  tree_t tree = generateSeeds(rootKey, iv, params, depth);
+  tree_t tree = generate_seeds(rootKey, iv, params, depth);
 
   // Initialzing stuff
   vecCom->h   = malloc(lambdaBytes * 2);
@@ -164,7 +164,7 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
   }
 
   tree.nodes = NULL;
-  freeTree(&tree);
+  free_tree(&tree);
 
   // Step: 6
   H1_context_t h1_ctx;
