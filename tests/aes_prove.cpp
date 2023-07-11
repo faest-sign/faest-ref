@@ -24,55 +24,54 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     const unsigned int ell_hat =
         params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-    const size_t block_size          = is_em ? lambdaBytes : 16;
 
     // extended witness
-    std::vector<uint8_t> w((params.faest_param.l + 7) / 8, 0);
-    std::vector<uint8_t> in(params.faest_param.beta * block_size, 0);
-    std::vector<uint8_t> out(params.faest_param.beta * block_size, 0);
+    std::vector<uint8_t> w;
+    std::vector<uint8_t> in;
+    std::vector<uint8_t> out;
 
     if (lambda == 128 && !is_em) {
-      BOOST_TEST(in.size() == aes_ctr_128_tv::in.size());
-      BOOST_TEST(out.size() == aes_ctr_128_tv::out.size());
-      BOOST_TEST(w.size() == aes_ctr_128_tv::expected_extended_witness.size());
-      memcpy(in.data(), aes_ctr_128_tv::in.data(), in.size());
-      memcpy(out.data(), aes_ctr_128_tv::out.data(), out.size());
-      memcpy(w.data(), aes_ctr_128_tv::expected_extended_witness.data(), w.size());
+      std::copy(aes_ctr_128_tv::in.begin(), aes_ctr_128_tv::in.end(),
+                std::back_insert_iterator(in));
+      std::copy(aes_ctr_128_tv::out.begin(), aes_ctr_128_tv::out.end(),
+                std::back_insert_iterator(out));
+      std::copy(aes_ctr_128_tv::expected_extended_witness.begin(),
+                aes_ctr_128_tv::expected_extended_witness.end(), std::back_insert_iterator(w));
     } else if (lambda == 128 && is_em) {
-      BOOST_TEST(in.size() == rijndael_em_128_tv::in.size());
-      BOOST_TEST(out.size() == rijndael_em_128_tv::out.size());
-      BOOST_TEST(w.size() == rijndael_em_128_tv::expected_extended_witness.size());
-      memcpy(in.data(), rijndael_em_128_tv::in.data(), in.size());
-      memcpy(out.data(), rijndael_em_128_tv::out.data(), out.size());
-      memcpy(w.data(), rijndael_em_128_tv::expected_extended_witness.data(), w.size());
+      std::copy(rijndael_em_128_tv::in.begin(), rijndael_em_128_tv::in.end(),
+                std::back_insert_iterator(in));
+      std::copy(rijndael_em_128_tv::out.begin(), rijndael_em_128_tv::out.end(),
+                std::back_insert_iterator(out));
+      std::copy(rijndael_em_128_tv::expected_extended_witness.begin(),
+                rijndael_em_128_tv::expected_extended_witness.end(), std::back_insert_iterator(w));
     } else if (lambda == 192 && !is_em) {
-      BOOST_TEST(in.size() == aes_ctr_192_tv::in.size());
-      BOOST_TEST(out.size() == aes_ctr_192_tv::out.size());
-      BOOST_TEST(w.size() == aes_ctr_192_tv::expected_extended_witness.size());
-      memcpy(in.data(), aes_ctr_192_tv::in.data(), in.size());
-      memcpy(out.data(), aes_ctr_192_tv::out.data(), out.size());
-      memcpy(w.data(), aes_ctr_192_tv::expected_extended_witness.data(), w.size());
+      std::copy(aes_ctr_192_tv::in.begin(), aes_ctr_192_tv::in.end(),
+                std::back_insert_iterator(in));
+      std::copy(aes_ctr_192_tv::out.begin(), aes_ctr_192_tv::out.end(),
+                std::back_insert_iterator(out));
+      std::copy(aes_ctr_192_tv::expected_extended_witness.begin(),
+                aes_ctr_192_tv::expected_extended_witness.end(), std::back_insert_iterator(w));
     } else if (lambda == 192 && is_em) {
-      BOOST_TEST(in.size() == rijndael_em_192_tv::in.size());
-      BOOST_TEST(out.size() == rijndael_em_192_tv::out.size());
-      BOOST_TEST(w.size() == rijndael_em_192_tv::expected_extended_witness.size());
-      memcpy(in.data(), rijndael_em_192_tv::in.data(), in.size());
-      memcpy(out.data(), rijndael_em_192_tv::out.data(), out.size());
-      memcpy(w.data(), rijndael_em_192_tv::expected_extended_witness.data(), w.size());
+      std::copy(rijndael_em_192_tv::in.begin(), rijndael_em_192_tv::in.end(),
+                std::back_insert_iterator(in));
+      std::copy(rijndael_em_192_tv::out.begin(), rijndael_em_192_tv::out.end(),
+                std::back_insert_iterator(out));
+      std::copy(rijndael_em_192_tv::expected_extended_witness.begin(),
+                rijndael_em_192_tv::expected_extended_witness.end(), std::back_insert_iterator(w));
     } else if (lambda == 256 && !is_em) {
-      BOOST_TEST(in.size() == aes_ctr_256_tv::in.size());
-      BOOST_TEST(out.size() == aes_ctr_256_tv::out.size());
-      BOOST_TEST(w.size() == aes_ctr_256_tv::expected_extended_witness.size());
-      memcpy(in.data(), aes_ctr_256_tv::in.data(), in.size());
-      memcpy(out.data(), aes_ctr_256_tv::out.data(), out.size());
-      memcpy(w.data(), aes_ctr_256_tv::expected_extended_witness.data(), w.size());
+      std::copy(aes_ctr_256_tv::in.begin(), aes_ctr_256_tv::in.end(),
+                std::back_insert_iterator(in));
+      std::copy(aes_ctr_256_tv::out.begin(), aes_ctr_256_tv::out.end(),
+                std::back_insert_iterator(out));
+      std::copy(aes_ctr_256_tv::expected_extended_witness.begin(),
+                aes_ctr_256_tv::expected_extended_witness.end(), std::back_insert_iterator(w));
     } else if (lambda == 256 && is_em) {
-      BOOST_TEST(in.size() == rijndael_em_256_tv::in.size());
-      BOOST_TEST(out.size() == rijndael_em_256_tv::out.size());
-      BOOST_TEST(w.size() == rijndael_em_256_tv::expected_extended_witness.size());
-      memcpy(in.data(), rijndael_em_256_tv::in.data(), in.size());
-      memcpy(out.data(), rijndael_em_256_tv::out.data(), out.size());
-      memcpy(w.data(), rijndael_em_256_tv::expected_extended_witness.data(), w.size());
+      std::copy(rijndael_em_256_tv::in.begin(), rijndael_em_256_tv::in.end(),
+                std::back_insert_iterator(in));
+      std::copy(rijndael_em_256_tv::out.begin(), rijndael_em_256_tv::out.end(),
+                std::back_insert_iterator(out));
+      std::copy(rijndael_em_256_tv::expected_extended_witness.begin(),
+                rijndael_em_256_tv::expected_extended_witness.end(), std::back_insert_iterator(w));
     }
 
     // prepare vole correlation
