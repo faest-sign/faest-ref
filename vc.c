@@ -65,11 +65,9 @@ static void expand_seeds(tree_t* tree, const uint8_t* iv, const faest_paramset_t
   assert(2 * lastNonLeaf + 2 < tree->numNodes);
 
   for (size_t i = 0; i <= lastNonLeaf; i++) {
-    uint8_t out[2 * MAX_LAMBDA_BYTES];
-    prg(NODE(*tree, i, lambda_bytes), iv, out, params->faest_param.lambda, lambda_bytes * 2);
-
-    memcpy(NODE(*tree, 2 * i + 1, lambda_bytes), out, lambda_bytes);
-    memcpy(NODE(*tree, 2 * i + 2, lambda_bytes), out + lambda_bytes, lambda_bytes);
+    // the nodes are located other in memory consecutively
+    prg(NODE(*tree, i, lambda_bytes), iv, NODE(*tree, 2 * i + 1, lambda_bytes),
+        params->faest_param.lambda, lambda_bytes * 2);
   }
 }
 
