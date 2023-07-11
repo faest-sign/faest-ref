@@ -420,6 +420,8 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
             params->faest_param.k1, params->faest_param.t1, delta);
     // Step 16
     for (unsigned int j = 0; j != depth; ++j, ++Dtilde_idx) {
+      // for scan-build
+      assert(Dtilde_idx < lambda);
       masked_xor_u8_array(Dtilde[Dtilde_idx], dsignature_u_tilde(sig, params), Dtilde[Dtilde_idx],
                           delta[j], utilde_bytes);
     }
