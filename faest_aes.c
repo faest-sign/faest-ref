@@ -605,10 +605,8 @@ static void aes_enc_constraints_128(const uint8_t* in, const uint8_t* out, const
 static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                           const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                           uint8_t* b_tilde, const faest_paramset_t* params) {
-  const unsigned int beta = params->faest_param.beta;
   const unsigned int l    = params->faest_param.l;
   const unsigned int Lke  = params->faest_param.Lke;
-  const unsigned int Lenc = params->faest_param.Lenc;
   const unsigned int R    = params->faest_param.R;
   const unsigned int Ske  = params->faest_param.Ske;
   const unsigned int Senc = params->faest_param.Senc;
@@ -621,7 +619,7 @@ static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   // Step: 6
 
   // Step: 7
-  const unsigned int length_a = Ske + (beta * Senc) + 1;
+  const unsigned int length_a = Ske + Senc + 1;
   bf128_t* A0                 = malloc(sizeof(bf128_t) * length_a);
   bf128_t* A1                 = malloc(sizeof(bf128_t) * length_a);
   uint8_t* k                  = malloc((R + 1) * 128 / 8);
@@ -637,13 +635,7 @@ static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   // Step: 10,11
   aes_enc_constraints_128(in, out, w + Lke / 8, bf_v + Lke, k, vk, 0, NULL, NULL, NULL, A0 + Ske,
                           A1 + Ske, NULL, params);
-  // Step: 12
-  if (beta == 2) {
-    // Step: 13
-    // Step: 14, 15
-    aes_enc_constraints_128(in + 16, out + 16, w + (Lke + Lenc) / 8, bf_v + Lke + Lenc, k, vk, 0,
-                            NULL, NULL, NULL, A0 + (Ske + Senc), A1 + (Ske + Senc), NULL, params);
-  }
+  // Step: 12 (beta == 1)
   free(qk);
   free(vk);
   free(k);
@@ -669,10 +661,8 @@ static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   const unsigned int k0          = params->faest_param.k0;
   const unsigned int t1          = params->faest_param.t1;
   const unsigned int k1          = params->faest_param.k1;
-  const unsigned int beta        = params->faest_param.beta;
   const unsigned int l           = params->faest_param.l;
   const unsigned int Lke         = params->faest_param.Lke;
-  const unsigned int Lenc        = params->faest_param.Lenc;
   const unsigned int R           = params->faest_param.R;
   const unsigned int Ske         = params->faest_param.Ske;
   const unsigned int Senc        = params->faest_param.Senc;
@@ -699,7 +689,7 @@ static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, l);
 
   // Step: 13
-  const unsigned int length_b = Ske + (beta * Senc) + 1;
+  const unsigned int length_b = Ske + Senc + 1;
   uint8_t* k                  = malloc((R + 1) * 128);
   bf128_t* vk                 = malloc(sizeof(bf128_t) * ((R + 1) * 128));
   bf128_t* qk                 = malloc(sizeof(bf128_t) * ((R + 1) * 128));
@@ -713,13 +703,7 @@ static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   bf128_t* B_1 = B_0 + Ske;
   aes_enc_constraints_128(in, out, NULL, NULL, NULL, NULL, 1, bf_q + Lke, qk, delta, NULL, NULL,
                           B_1, params);
-
-  if (beta == 2) {
-    // Step: 18
-    bf128_t* B_2 = B_0 + (Ske + Senc);
-    aes_enc_constraints_128(in + 16, out + 16, NULL, NULL, NULL, NULL, 1, bf_q + (Lke + Lenc), qk,
-                            delta, NULL, NULL, B_2, params);
-  }
+  // Step: 18 (beta == 1)
   free(qk);
   free(vk);
   free(k);
@@ -1192,7 +1176,6 @@ static void aes_enc_constraints_192(const uint8_t* in, const uint8_t* out, const
 static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                           const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                           uint8_t* b_tilde, const faest_paramset_t* params) {
-  const unsigned int beta = params->faest_param.beta;
   const unsigned int l    = params->faest_param.l;
   const unsigned int Lke  = params->faest_param.Lke;
   const unsigned int Lenc = params->faest_param.Lenc;
@@ -1208,7 +1191,7 @@ static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   // Step: 6
 
   // Step: 7
-  const unsigned int length_a = Ske + (beta * Senc) + 1;
+  const unsigned int length_a = Ske + 2 * Senc + 1;
   bf192_t* A0                 = malloc(sizeof(bf192_t) * length_a);
   bf192_t* A1                 = malloc(sizeof(bf192_t) * length_a);
   uint8_t* k                  = malloc((R + 1) * 128 / 8);
@@ -1224,13 +1207,9 @@ static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   // Step: 10,11
   aes_enc_constraints_192(in, out, w + Lke / 8, bf_v + Lke, k, vk, 0, NULL, NULL, NULL, A0 + Ske,
                           A1 + Ske, NULL, params);
-  // Step: 12
-  if (beta == 2) {
-    // Step: 13
-    // Step: 14, 15
-    aes_enc_constraints_192(in + 16, out + 16, w + (Lke + Lenc) / 8, bf_v + Lke + Lenc, k, vk, 0,
-                            NULL, NULL, NULL, A0 + (Ske + Senc), A1 + (Ske + Senc), NULL, params);
-  }
+  // Step: 12-15
+  aes_enc_constraints_192(in + 16, out + 16, w + (Lke + Lenc) / 8, bf_v + Lke + Lenc, k, vk, 0,
+                          NULL, NULL, NULL, A0 + (Ske + Senc), A1 + (Ske + Senc), NULL, params);
   free(qk);
   free(vk);
   free(k);
@@ -1256,7 +1235,6 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   const unsigned int k0          = params->faest_param.k0;
   const unsigned int t1          = params->faest_param.t1;
   const unsigned int k1          = params->faest_param.k1;
-  const unsigned int beta        = params->faest_param.beta;
   const unsigned int l           = params->faest_param.l;
   const unsigned int Lke         = params->faest_param.Lke;
   const unsigned int Lenc        = params->faest_param.Lenc;
@@ -1286,7 +1264,7 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   bf192_t* bf_q = column_to_row_major_and_shrink_V_192(Q, l);
 
   // Step: 13
-  const unsigned int length_b = Ske + (beta * Senc) + 1;
+  const unsigned int length_b = Ske + 2 * Senc + 1;
   uint8_t* k                  = malloc((R + 1) * 128);
   bf192_t* vk                 = malloc(sizeof(bf192_t) * ((R + 1) * 128));
   bf192_t* qk                 = malloc(sizeof(bf192_t) * ((R + 1) * 128));
@@ -1301,12 +1279,10 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   aes_enc_constraints_192(in, out, NULL, NULL, NULL, NULL, 1, bf_q + Lke, qk, delta, NULL, NULL,
                           B_1, params);
 
-  if (beta == 2) {
-    // Step: 18
-    bf192_t* B_2 = B_0 + (Ske + Senc);
-    aes_enc_constraints_192(in + 16, out + 16, NULL, NULL, NULL, NULL, 1, bf_q + (Lke + Lenc), qk,
-                            delta, NULL, NULL, B_2, params);
-  }
+  // Step: 18
+  bf192_t* B_2 = B_0 + (Ske + Senc);
+  aes_enc_constraints_192(in + 16, out + 16, NULL, NULL, NULL, NULL, 1, bf_q + (Lke + Lenc), qk,
+                          delta, NULL, NULL, B_2, params);
   free(qk);
   free(vk);
   free(k);
@@ -1798,7 +1774,6 @@ static void aes_enc_constraints_256(const uint8_t* in, const uint8_t* out, const
 static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                           const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                           uint8_t* b_tilde, const faest_paramset_t* params) {
-  const unsigned int beta = params->faest_param.beta;
   const unsigned int l    = params->faest_param.l;
   const unsigned int Lke  = params->faest_param.Lke;
   const unsigned int Lenc = params->faest_param.Lenc;
@@ -1814,7 +1789,7 @@ static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   // Step: 6
 
   // Step: 7
-  const unsigned int length_a = Ske + (beta * Senc) + 1;
+  const unsigned int length_a = Ske + 2 * Senc + 1;
   bf256_t* A0                 = malloc(sizeof(bf256_t) * length_a);
   bf256_t* A1                 = malloc(sizeof(bf256_t) * length_a);
   uint8_t* k                  = malloc((R + 1) * 128 / 8);
@@ -1830,13 +1805,9 @@ static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   // Step: 10,11
   aes_enc_constraints_256(in, out, w + Lke / 8, bf_v + Lke, k, vk, 0, NULL, NULL, NULL, A0 + Ske,
                           A1 + Ske, NULL, params);
-  // Step: 12
-  if (beta == 2) {
-    // Step: 13
-    // Step: 14, 15
-    aes_enc_constraints_256(in + 16, out + 16, w + (Lke + Lenc) / 8, bf_v + Lke + Lenc, k, vk, 0,
-                            NULL, NULL, NULL, A0 + (Ske + Senc), A1 + (Ske + Senc), NULL, params);
-  }
+  // Step: 12-15
+  aes_enc_constraints_256(in + 16, out + 16, w + (Lke + Lenc) / 8, bf_v + Lke + Lenc, k, vk, 0,
+                          NULL, NULL, NULL, A0 + (Ske + Senc), A1 + (Ske + Senc), NULL, params);
   free(qk);
   free(vk);
   free(k);
@@ -1862,7 +1833,6 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   const unsigned int k0          = params->faest_param.k0;
   const unsigned int t1          = params->faest_param.t1;
   const unsigned int k1          = params->faest_param.k1;
-  const unsigned int beta        = params->faest_param.beta;
   const unsigned int l           = params->faest_param.l;
   const unsigned int Lke         = params->faest_param.Lke;
   const unsigned int Lenc        = params->faest_param.Lenc;
@@ -1892,7 +1862,7 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   bf256_t* bf_q = column_to_row_major_and_shrink_V_256(Q, l);
 
   // Step: 13
-  const unsigned int length_b = Ske + (beta * Senc) + 1;
+  const unsigned int length_b = Ske + 2 * Senc + 1;
   uint8_t* k                  = malloc((R + 1) * 128);
   bf256_t* vk                 = malloc(sizeof(bf256_t) * ((R + 1) * 128));
   bf256_t* qk                 = malloc(sizeof(bf256_t) * ((R + 1) * 128));
@@ -1907,12 +1877,10 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   aes_enc_constraints_256(in, out, NULL, NULL, NULL, NULL, 1, bf_q + Lke, qk, delta, NULL, NULL,
                           B_1, params);
 
-  if (beta == 2) {
-    // Step: 18
-    bf256_t* B_2 = B_0 + (Ske + Senc);
-    aes_enc_constraints_256(in + 16, out + 16, NULL, NULL, NULL, NULL, 1, bf_q + (Lke + Lenc), qk,
-                            delta, NULL, NULL, B_2, params);
-  }
+  // Step: 18
+  bf256_t* B_2 = B_0 + (Ske + Senc);
+  aes_enc_constraints_256(in + 16, out + 16, NULL, NULL, NULL, NULL, 1, bf_q + (Lke + Lenc), qk,
+                          delta, NULL, NULL, B_2, params);
   free(qk);
   free(vk);
   free(k);
