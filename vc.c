@@ -16,14 +16,12 @@
 #include <string.h>
 
 typedef struct tree_t {
-  uint8_t** nodes;  /* The data for each node */
+  uint8_t* nodes;   /* The data for each node */
   size_t numNodes;  /* The total number of nodes in the tree */
   size_t numLeaves; /* The total number of leaves in the tree */
 } tree_t;
 
-static uint8_t** getLeaves(tree_t* tree) {
-  return &tree->nodes[tree->numNodes - tree->numLeaves];
-}
+#define NODE(tree, node, lambda_bytes) (&(tree).nodes[(node) * (lambda_bytes)])
 
 static ATTR_CONST int isLeftChild(size_t node) {
   assert(node != 0);
@@ -36,21 +34,15 @@ static tree_t createTree(const faest_paramset_t* params, unsigned int depth) {
 
   tree.numNodes  = getBinaryTreeNodeCount(depth);
   tree.numLeaves = 1 << depth;
-  tree.nodes     = calloc(tree.numNodes, sizeof(uint8_t*));
-
-  uint8_t* slab = calloc(tree.numNodes, lambdaBytes);
-  for (size_t i = 0; i < tree.numNodes; i++) {
-    tree.nodes[i] = slab;
-    slab += lambdaBytes;
-  }
+  tree.nodes     = calloc(tree.numNodes, lambdaBytes);
 
   return tree;
 }
 
 static void freeTree(tree_t* tree) {
   if (tree != NULL) {
-    free(tree->nodes[0]);
     free(tree->nodes);
+    tree->nodes = NULL;
   }
 }
 
@@ -64,18 +56,20 @@ static ATTR_CONST size_t getParent(size_t node) {
 }
 
 static void expandSeeds(tree_t* tree, const uint8_t* iv, const faest_paramset_t* params) {
-  unsigned int lambdaBytes = params->faest_param.lambda / 8;
+  const unsigned int lambda_bytes = params->faest_param.lambda / 8;
 
   /* Walk the tree, expanding seeds where possible. Compute children of
    * non-leaf nodes. */
   size_t lastNonLeaf = getParent(tree->numNodes - 1);
+  // for scan build
+  assert(2 * lastNonLeaf + 2 < tree->numNodes);
 
   for (size_t i = 0; i <= lastNonLeaf; i++) {
     uint8_t out[2 * MAX_LAMBDA_BYTES];
-    prg(tree->nodes[i], iv, out, params->faest_param.lambda, params->faest_param.lambda / 4);
+    prg(NODE(*tree, i, lambda_bytes), iv, out, params->faest_param.lambda, lambda_bytes * 2);
 
-    memcpy(tree->nodes[2 * i + 1], out, lambdaBytes);
-    memcpy(tree->nodes[2 * i + 2], out + lambdaBytes, lambdaBytes);
+    memcpy(NODE(*tree, 2 * i + 1, lambda_bytes), out, lambda_bytes);
+    memcpy(NODE(*tree, 2 * i + 2, lambda_bytes), out + lambda_bytes, lambda_bytes);
   }
 }
 
@@ -84,7 +78,7 @@ static tree_t generateSeeds(const uint8_t* rootSeed, const uint8_t* iv,
   uint32_t lambdaBytes = params->faest_param.lambda / 8;
   tree_t tree          = createTree(params, depth);
 
-  memcpy(tree.nodes[0], rootSeed, lambdaBytes);
+  memcpy(NODE(tree, 0, lambdaBytes), rootSeed, lambdaBytes);
   expandSeeds(&tree, iv, params);
 
   return tree;
@@ -139,16 +133,19 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
   vecCom->sd  = malloc(numVoleInstances * lambdaBytes);
 
   // Step: 1..3
-  vecCom->k = tree.nodes[0];
+  vecCom->k = NODE(tree, 0, lambdaBytes);
 
   // Step: 4..5
-  uint8_t** leaves = getLeaves(&tree);
-  unsigned int i   = 0;
+  const unsigned int base_index = tree.numNodes - tree.numLeaves;
+  unsigned int i                = 0;
   // compute commitments for 4 instances in parallel
   for (; i < numVoleInstances / 4 * 4; i += 4) {
     H0_context_x4_t h0_ctx;
     H0_x4_init(&h0_ctx, lambda);
-    H0_x4_update(&h0_ctx, leaves[i], leaves[i + 1], leaves[i + 2], leaves[i + 3], lambdaBytes);
+    H0_x4_update(&h0_ctx, NODE(tree, base_index + i, lambdaBytes),
+                 NODE(tree, base_index + i + 1, lambdaBytes),
+                 NODE(tree, base_index + i + 2, lambdaBytes),
+                 NODE(tree, base_index + i + 3, lambdaBytes), lambdaBytes);
     H0_x4_update(&h0_ctx, iv, iv, iv, iv, IV_SIZE);
     H0_x4_final(&h0_ctx, vecCom->sd + i * lambdaBytes, vecCom->sd + (i + 1) * lambdaBytes,
                 vecCom->sd + (i + 2) * lambdaBytes, vecCom->sd + (i + 3) * lambdaBytes, lambdaBytes,
@@ -156,17 +153,17 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
                 vecCom->com + (i + 2) * lambdaBytes * 2, vecCom->com + (i + 3) * lambdaBytes * 2,
                 (lambdaBytes * 2));
   }
-  // compute cmmitments for remaining instances
+  // compute commitments for remaining instances
   for (; i < numVoleInstances; i++) {
     H0_context_t h0_ctx;
     H0_init(&h0_ctx, lambda);
-    H0_update(&h0_ctx, leaves[i], lambdaBytes);
+    H0_update(&h0_ctx, NODE(tree, base_index + i, lambdaBytes), lambdaBytes);
     H0_update(&h0_ctx, iv, 16);
     H0_final(&h0_ctx, vecCom->sd + (i * lambdaBytes), lambdaBytes,
              vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
 
-  tree.nodes[0] = NULL;
+  tree.nodes = NULL;
   freeTree(&tree);
 
   // Step: 6
