@@ -7,10 +7,7 @@
 #endif
 
 #include "fields.h"
-#include "endian_compat.h"
 #include "randomness.h"
-
-#include <string.h>
 
 // GF(2^8) with X^8 + X^4 + X^3 + X^1 + 1
 #define bf8_modulus (UINT8_C((1 << 4) | (1 << 3) | (1 << 1) | 1))
@@ -29,30 +26,10 @@
 
 // GF(2^8) implementation
 
-bf8_t bf8_load(const uint8_t* src) {
-  return *src;
-}
-
-void bf8_store(uint8_t* dst, bf8_t src) {
-  *dst = src;
-}
-
 bf8_t bf8_rand() {
   bf8_t ret;
   rand_bytes(&ret, sizeof(ret));
   return ret;
-}
-
-bf8_t bf8_zero() {
-  return 0;
-}
-
-bf8_t bf8_one() {
-  return 1;
-}
-
-bf8_t bf8_add(bf8_t lhs, bf8_t rhs) {
-  return lhs ^ rhs;
 }
 
 bf8_t bf8_mul(bf8_t lhs, bf8_t rhs) {
@@ -75,40 +52,12 @@ bf8_t bf8_inv(bf8_t in) {
   return bf8_mul(t1, t1);
 }
 
-bf8_t bf8_from_bit(uint8_t bit) {
-  return bit & 1;
-}
-
 // GF(2^64) implementation
-
-bf64_t bf64_load(const uint8_t* src) {
-  bf64_t ret;
-  memcpy(&ret, src, sizeof(ret));
-  ret = le64toh(ret);
-  return ret;
-}
-
-void bf64_store(uint8_t* dst, bf64_t src) {
-  src = htole64(src);
-  memcpy(dst, &src, sizeof(src));
-}
 
 bf64_t bf64_rand() {
   bf64_t ret;
   rand_bytes((uint8_t*)&ret, sizeof(ret));
   return ret;
-}
-
-bf64_t bf64_zero() {
-  return 0;
-}
-
-bf64_t bf64_one() {
-  return 1;
-}
-
-bf64_t bf64_add(bf64_t lhs, bf64_t rhs) {
-  return lhs ^ rhs;
 }
 
 bf64_t bf64_mul(bf64_t lhs, bf64_t rhs) {
@@ -129,10 +78,6 @@ bf64_t bf64_inv(bf64_t in) {
     t1 = bf64_mul(t1, t2);
   }
   return bf64_mul(t1, t1);
-}
-
-bf64_t bf64_from_bit(uint8_t bit) {
-  return bit & 1;
 }
 
 // GF(2^128) implementation
@@ -170,61 +115,14 @@ bf128_t bf128_byte_combine_bits(uint8_t x) {
   return bf_out;
 }
 
-bf128_t bf128_load(const uint8_t* src) {
-  bf128_t ret;
-  for (unsigned int i = 0; i != ARRAY_SIZE(ret.values); ++i, src += sizeof(uint64_t)) {
-    memcpy(&ret.values[i], src, sizeof(ret.values[i]));
-    ret.values[i] = le64toh(ret.values[i]);
-  }
-  return ret;
-}
-
-bf128_t bf128_from_bf64(bf64_t src) {
-  bf128_t ret;
-  ret.values[0] = src;
-  ret.values[1] = 0;
-  return ret;
-}
-
-bf128_t bf128_from_bf8(bf8_t src) {
-  bf128_t ret;
-  ret.values[0] = src;
-  ret.values[1] = 0;
-  return ret;
-}
-
-void bf128_store(uint8_t* dst, bf128_t src) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(src.values); ++i, dst += sizeof(uint64_t)) {
-    uint64_t tmp = htole64(src.values[i]);
-    memcpy(dst, &tmp, sizeof(tmp));
-  }
-}
-
 bf128_t bf128_rand() {
   bf128_t ret;
   rand_bytes((uint8_t*)&ret, sizeof(ret));
   return ret;
 }
 
-bf128_t bf128_zero() {
-  bf128_t r = {0};
-  return r;
-}
-
-bf128_t bf128_one() {
-  bf128_t r = {{1, 0}};
-  return r;
-}
-
-bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
-    lhs.values[i] ^= rhs.values[i];
-  }
-  return lhs;
-}
-
 ATTR_CONST
-static bf128_t bf128_and(bf128_t lhs, bf128_t rhs) {
+static inline bf128_t bf128_and(bf128_t lhs, bf128_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] &= rhs.values[i];
   }
@@ -232,14 +130,14 @@ static bf128_t bf128_and(bf128_t lhs, bf128_t rhs) {
 }
 
 ATTR_CONST
-static bf128_t bf128_shift_left_1(bf128_t value) {
+static inline bf128_t bf128_shift_left_1(bf128_t value) {
   value.values[1] = (value.values[1] << 1) | (value.values[0] >> 63);
   value.values[0] = value.values[0] << 1;
   return value;
 }
 
 ATTR_CONST
-static uint64_t bf128_bit_to_uint64_mask(bf128_t value, unsigned int bit) {
+static inline uint64_t bf128_bit_to_uint64_mask(bf128_t value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
@@ -247,7 +145,7 @@ static uint64_t bf128_bit_to_uint64_mask(bf128_t value, unsigned int bit) {
 }
 
 ATTR_CONST
-static bf128_t bf128_bit_to_mask(bf128_t value, unsigned int bit) {
+static inline bf128_t bf128_bit_to_mask(bf128_t value, unsigned int bit) {
   bf128_t ret;
   ret.values[0] = ret.values[1] = bf128_bit_to_uint64_mask(value, bit);
   return ret;
@@ -266,7 +164,7 @@ bf128_t bf128_mul(bf128_t lhs, bf128_t rhs) {
 }
 
 ATTR_CONST
-static bf128_t bf128_bit_to_mask_1(uint8_t bit) {
+static inline bf128_t bf128_bit_to_mask_1(uint8_t bit) {
   bf128_t ret;
   ret.values[0] = ret.values[1] = -(bit & 1);
   return ret;
@@ -284,10 +182,6 @@ bf128_t bf128_inv(bf128_t in) {
     t1 = bf128_mul(t1, t2);
   }
   return bf128_mul(t1, t1);
-}
-
-bf128_t bf128_from_bit(uint8_t bit) {
-  return bf128_from_bf8(bit & 1);
 }
 
 bf128_t bf128_sum_poly(const bf128_t* xs) {
@@ -341,63 +235,14 @@ bf192_t bf192_byte_combine_bits(uint8_t x) {
   return bf_out;
 }
 
-bf192_t bf192_load(const uint8_t* src) {
-  bf192_t ret;
-  for (unsigned int i = 0; i != ARRAY_SIZE(ret.values); ++i, src += sizeof(uint64_t)) {
-    memcpy(&ret.values[i], src, sizeof(ret.values[i]));
-    ret.values[i] = le64toh(ret.values[i]);
-  }
-  return ret;
-}
-
-bf192_t bf192_from_bf64(bf64_t src) {
-  bf192_t ret;
-  ret.values[0] = src;
-  ret.values[1] = 0;
-  ret.values[2] = 0;
-  return ret;
-}
-
-bf192_t bf192_from_bf8(bf8_t src) {
-  bf192_t ret;
-  ret.values[0] = src;
-  ret.values[1] = 0;
-  ret.values[2] = 0;
-  return ret;
-}
-
-void bf192_store(uint8_t* dst, bf192_t src) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(src.values); ++i, dst += sizeof(uint64_t)) {
-    uint64_t tmp = htole64(src.values[i]);
-    memcpy(dst, &tmp, sizeof(tmp));
-  }
-}
-
 bf192_t bf192_rand() {
   bf192_t ret;
   rand_bytes((uint8_t*)&ret, sizeof(ret));
   return ret;
 }
 
-bf192_t bf192_zero() {
-  bf192_t r = {0};
-  return r;
-}
-
-bf192_t bf192_one() {
-  bf192_t r = {{1, 0, 0}};
-  return r;
-}
-
-bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
-    lhs.values[i] ^= rhs.values[i];
-  }
-  return lhs;
-}
-
 ATTR_CONST
-static bf192_t bf192_and(bf192_t lhs, bf192_t rhs) {
+static inline bf192_t bf192_and(bf192_t lhs, bf192_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] &= rhs.values[i];
   }
@@ -405,7 +250,7 @@ static bf192_t bf192_and(bf192_t lhs, bf192_t rhs) {
 }
 
 ATTR_CONST
-static bf192_t bf192_shift_left_1(bf192_t value) {
+static inline bf192_t bf192_shift_left_1(bf192_t value) {
   value.values[2] = (value.values[2] << 1) | (value.values[1] >> 63);
   value.values[1] = (value.values[1] << 1) | (value.values[0] >> 63);
   value.values[0] = value.values[0] << 1;
@@ -413,7 +258,7 @@ static bf192_t bf192_shift_left_1(bf192_t value) {
 }
 
 ATTR_CONST
-static uint64_t bf192_bit_to_uint64_mask(bf192_t value, unsigned int bit) {
+static inline uint64_t bf192_bit_to_uint64_mask(bf192_t value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
@@ -421,7 +266,7 @@ static uint64_t bf192_bit_to_uint64_mask(bf192_t value, unsigned int bit) {
 }
 
 ATTR_CONST
-static bf192_t bf192_bit_to_mask(bf192_t value, unsigned int bit) {
+static inline bf192_t bf192_bit_to_mask(bf192_t value, unsigned int bit) {
   bf192_t ret;
   ret.values[0] = ret.values[1] = ret.values[2] = bf192_bit_to_uint64_mask(value, bit);
   return ret;
@@ -458,10 +303,6 @@ bf192_t bf192_inv(bf192_t in) {
     t1 = bf192_mul(t1, t2);
   }
   return bf192_mul(t1, t1);
-}
-
-bf192_t bf192_from_bit(uint8_t bit) {
-  return bf192_from_bf8(bit & 1);
 }
 
 bf192_t bf192_sum_poly(const bf192_t* xs) {
@@ -522,65 +363,14 @@ bf256_t bf256_byte_combine_bits(uint8_t x) {
   return bf_out;
 }
 
-bf256_t bf256_load(const uint8_t* src) {
-  bf256_t ret;
-  for (unsigned int i = 0; i != ARRAY_SIZE(ret.values); ++i, src += sizeof(uint64_t)) {
-    memcpy(&ret.values[i], src, sizeof(ret.values[i]));
-    ret.values[i] = le64toh(ret.values[i]);
-  }
-  return ret;
-}
-
-bf256_t bf256_from_bf64(bf64_t src) {
-  bf256_t ret;
-  ret.values[0] = src;
-  ret.values[1] = 0;
-  ret.values[2] = 0;
-  ret.values[3] = 0;
-  return ret;
-}
-
-bf256_t bf256_from_bf8(bf8_t src) {
-  bf256_t ret;
-  ret.values[0] = src;
-  ret.values[1] = 0;
-  ret.values[2] = 0;
-  ret.values[3] = 0;
-  return ret;
-}
-
-void bf256_store(uint8_t* dst, bf256_t src) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(src.values); ++i, dst += sizeof(uint64_t)) {
-    uint64_t tmp = htole64(src.values[i]);
-    memcpy(dst, &tmp, sizeof(tmp));
-  }
-}
-
-bf256_t bf256_zero() {
-  bf256_t r = {0};
-  return r;
-}
-
-bf256_t bf256_one() {
-  bf256_t r = {{1, 0, 0, 0}};
-  return r;
-}
-
 bf256_t bf256_rand() {
   bf256_t ret;
   rand_bytes((uint8_t*)&ret, sizeof(ret));
   return ret;
 }
 
-bf256_t bf256_add(bf256_t lhs, bf256_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
-    lhs.values[i] ^= rhs.values[i];
-  }
-  return lhs;
-}
-
 ATTR_CONST
-static bf256_t bf256_and(bf256_t lhs, bf256_t rhs) {
+static inline bf256_t bf256_and(bf256_t lhs, bf256_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] &= rhs.values[i];
   }
@@ -588,7 +378,7 @@ static bf256_t bf256_and(bf256_t lhs, bf256_t rhs) {
 }
 
 ATTR_CONST
-static bf256_t bf256_shift_left_1(bf256_t value) {
+static inline bf256_t bf256_shift_left_1(bf256_t value) {
   value.values[3] = (value.values[3] << 1) | (value.values[2] >> 63);
   value.values[2] = (value.values[2] << 1) | (value.values[1] >> 63);
   value.values[1] = (value.values[1] << 1) | (value.values[0] >> 63);
@@ -597,7 +387,7 @@ static bf256_t bf256_shift_left_1(bf256_t value) {
 }
 
 ATTR_CONST
-static uint64_t bf256_bit_to_uint64_mask(bf256_t value, unsigned int bit) {
+static inline uint64_t bf256_bit_to_uint64_mask(bf256_t value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
@@ -605,7 +395,7 @@ static uint64_t bf256_bit_to_uint64_mask(bf256_t value, unsigned int bit) {
 }
 
 ATTR_CONST
-static bf256_t bf256_bit_to_mask(bf256_t value, unsigned int bit) {
+static inline bf256_t bf256_bit_to_mask(bf256_t value, unsigned int bit) {
   bf256_t ret;
   ret.values[0] = ret.values[1] = ret.values[2] = ret.values[3] =
       bf256_bit_to_uint64_mask(value, bit);
@@ -625,7 +415,7 @@ bf256_t bf256_mul(bf256_t lhs, bf256_t rhs) {
 }
 
 ATTR_CONST
-static bf256_t bf256_bit_to_mask_1(uint8_t bit) {
+static inline bf256_t bf256_bit_to_mask_1(uint8_t bit) {
   bf256_t ret;
   ret.values[0] = ret.values[1] = ret.values[2] = ret.values[3] = -(bit & 1);
   return ret;
@@ -643,10 +433,6 @@ bf256_t bf256_inv(bf256_t in) {
     t1 = bf256_mul(t1, t2);
   }
   return bf256_mul(t1, t1);
-}
-
-bf256_t bf256_from_bit(uint8_t bit) {
-  return bf256_from_bf8(bit & 1);
 }
 
 bf256_t bf256_sum_poly(const bf256_t* xs) {
