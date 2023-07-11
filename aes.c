@@ -325,32 +325,56 @@ void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, unsigned int seclv
   switch (seclvl) {
   case 256:
     aes256_init_round_keys(&round_key, key);
-    for (size_t i = 0; i < (outlen + 15) / 16; i++) {
+    for (; outlen >= 16; outlen -= 16, out += 16) {
       aes_block_t state;
       load_state(state, internal_iv, 4);
       aes_encrypt(&round_key, state, 4, 14);
-      store_state(out + i * 16, state, 4);
+      store_state(out, state, 4);
       aes_increment_iv(internal_iv);
+    }
+    if (outlen) {
+      aes_block_t state;
+      load_state(state, internal_iv, 4);
+      aes_encrypt(&round_key, state, 4, 14);
+      uint8_t tmp[16];
+      store_state(tmp, state, 4);
+      memcpy(out, tmp, outlen);
     }
     return;
   case 192:
     aes192_init_round_keys(&round_key, key);
-    for (size_t i = 0; i < (outlen + 15) / 16; i++) {
+    for (; outlen >= 16; outlen -= 16, out += 16) {
       aes_block_t state;
       load_state(state, internal_iv, 4);
       aes_encrypt(&round_key, state, 4, 12);
-      store_state(out + i * 16, state, 4);
+      store_state(out, state, 4);
       aes_increment_iv(internal_iv);
+    }
+    if (outlen) {
+      aes_block_t state;
+      load_state(state, internal_iv, 4);
+      aes_encrypt(&round_key, state, 4, 12);
+      uint8_t tmp[16];
+      store_state(tmp, state, 4);
+      memcpy(out, tmp, outlen);
     }
     return;
   default:
     aes128_init_round_keys(&round_key, key);
-    for (size_t i = 0; i < (outlen + 15) / 16; i++) {
+    for (; outlen >= 16; outlen -= 16, out += 16) {
       aes_block_t state;
       load_state(state, internal_iv, 4);
       aes_encrypt(&round_key, state, 4, 10);
-      store_state(out + i * 16, state, 4);
+      store_state(out, state, 4);
       aes_increment_iv(internal_iv);
+    }
+    if (outlen) {
+      aes_block_t state;
+      load_state(state, internal_iv, 4);
+      aes_encrypt(&round_key, state, 4, 10);
+      uint8_t tmp[16];
+      store_state(tmp, state, 4);
+      memcpy(out, tmp, outlen);
     }
     return;
   }
