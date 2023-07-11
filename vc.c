@@ -99,22 +99,20 @@ uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex) {
 
 /* Gets the bit string of a node according to its position in the binary tree */
 /* idx -> 2 -> {0,1},, Little Endian */
-int BitDec(uint32_t leafIndex, uint32_t depth, uint8_t* out) {
-  uint32_t i = leafIndex;
-  if (leafIndex >= (uint32_t)(1 << depth)) {
+int BitDec(unsigned int leafIndex, unsigned int depth, uint8_t* out) {
+  if (leafIndex >= (1u << depth)) {
     return -1;
   }
-  for (uint32_t j = 0; j < depth; j++) {
-    out[j] = i % 2;
-    i      = (i - out[j]) / 2;
+  for (unsigned int j = 0; j < depth; j++, leafIndex /= 2) {
+    out[j] = leafIndex % 2;
   }
   return 1;
 }
 
-uint64_t NumRec(uint32_t depth, const uint8_t* bi) {
-  uint64_t out = 0;
-  for (uint32_t i = 0; i < depth; i++) {
-    out = out + ((uint64_t)bi[i] << i);
+unsigned int NumRec(unsigned int depth, const uint8_t* bi) {
+  unsigned int out = 0;
+  for (unsigned int i = 0; i < depth; i++) {
+    out += ((unsigned int)bi[i]) << i;
   }
   return out;
 }

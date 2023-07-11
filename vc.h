@@ -25,8 +25,8 @@ typedef struct vec_com_rec_t {
 ATTR_CONST uint64_t getBinaryTreeNodeCount(unsigned int depth);
 ATTR_CONST uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex);
 
-int BitDec(uint32_t leafIndex, uint32_t depth, uint8_t* out);
-uint64_t NumRec(uint32_t depth, const uint8_t* bi);
+int BitDec(unsigned int leafIndex, unsigned int depth, uint8_t* out);
+unsigned int NumRec(unsigned int depth, const uint8_t* bi);
 
 void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
                        uint32_t lambda, vec_com_t* vecCom, uint32_t depth);
