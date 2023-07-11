@@ -63,7 +63,7 @@ typedef struct faest_paramset_t {
   faest_paramid_t faest_paramid;
 } faest_paramset_t;
 
-const char* faest_get_param_name(faest_paramid_t paramid);
+const char* ATTR_CONST faest_get_param_name(faest_paramid_t paramid);
 faest_paramset_t faest_get_paramset(faest_paramid_t paramid);
 
 FAEST_END_C_DECL

@@ -135,25 +135,33 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
 #define FAEST_INVALID_PARAMS                                                                       \
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
-static const faest_paramset_t faestInstances[PARAMETER_SET_MAX_INDEX] = {
-    {FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID},
-    {FAEST_128S_PARAMS, FAEST_128S},
-    {FAEST_128F_PARAMS, FAEST_128F},
-    {FAEST_192S_PARAMS, FAEST_192S},
-    {FAEST_192F_PARAMS, FAEST_192F},
-    {FAEST_256S_PARAMS, FAEST_256S},
-    {FAEST_256F_PARAMS, FAEST_256F},
-    {FAEST_EM_128S_PARAMS, FAEST_EM_128S},
-    {FAEST_EM_128F_PARAMS, FAEST_EM_128F},
-    {FAEST_EM_192S_PARAMS, FAEST_EM_192S},
-    {FAEST_EM_192F_PARAMS, FAEST_EM_192F},
-    {FAEST_EM_256S_PARAMS, FAEST_EM_256S},
-    {FAEST_EM_256F_PARAMS, FAEST_EM_256F},
-};
-
 faest_paramset_t faest_get_paramset(faest_paramid_t paramid) {
-  if (paramid == PARAMETER_SET_INVALID || paramid >= PARAMETER_SET_MAX_INDEX) {
-    return faestInstances[0];
+  switch (paramid) {
+  case FAEST_128S:
+    return (faest_paramset_t){FAEST_128S_PARAMS, FAEST_128S};
+  case FAEST_128F:
+    return (faest_paramset_t){FAEST_128F_PARAMS, FAEST_128F};
+  case FAEST_EM_128S:
+    return (faest_paramset_t){FAEST_EM_128S_PARAMS, FAEST_EM_128S};
+  case FAEST_EM_128F:
+    return (faest_paramset_t){FAEST_EM_128F_PARAMS, FAEST_EM_128F};
+  case FAEST_192S:
+    return (faest_paramset_t){FAEST_192S_PARAMS, FAEST_192S};
+  case FAEST_192F:
+    return (faest_paramset_t){FAEST_192F_PARAMS, FAEST_192F};
+  case FAEST_EM_192S:
+    return (faest_paramset_t){FAEST_EM_192S_PARAMS, FAEST_EM_192S};
+  case FAEST_EM_192F:
+    return (faest_paramset_t){FAEST_EM_192F_PARAMS, FAEST_EM_192F};
+  case FAEST_256S:
+    return (faest_paramset_t){FAEST_256S_PARAMS, FAEST_256S};
+  case FAEST_256F:
+    return (faest_paramset_t){FAEST_256F_PARAMS, FAEST_256F};
+  case FAEST_EM_256S:
+    return (faest_paramset_t){FAEST_EM_256S_PARAMS, FAEST_EM_256S};
+  case FAEST_EM_256F:
+    return (faest_paramset_t){FAEST_EM_256F_PARAMS, FAEST_EM_256F};
+  default:
+    return (faest_paramset_t){FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID};
   }
-  return faestInstances[paramid];
 }
