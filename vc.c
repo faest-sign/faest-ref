@@ -39,13 +39,6 @@ static tree_t create_tree(const faest_paramset_t* params, unsigned int depth) {
   return tree;
 }
 
-static void free_tree(tree_t* tree) {
-  if (tree != NULL) {
-    free(tree->nodes);
-    tree->nodes = NULL;
-  }
-}
-
 static ATTR_CONST size_t get_parent(size_t node) {
   assert(node != 0);
 
@@ -160,7 +153,6 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
   }
 
   tree.nodes = NULL;
-  free_tree(&tree);
 
   // Step: 6
   H1_context_t h1_ctx;
