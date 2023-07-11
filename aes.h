@@ -47,13 +47,6 @@ int rijndael192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaint
 int rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                               uint8_t* ciphertext);
 
-void aes128_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const uint8_t* plaintext,
-                        uint8_t* ciphertext);
-void aes192_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const uint8_t* plaintext,
-                        uint8_t* ciphertext);
-void aes256_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const uint8_t* plaintext,
-                        uint8_t* ciphertext);
-
 void aes_increment_iv(uint8_t* iv);
 
 uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_paramset_t* params);

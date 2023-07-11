@@ -294,39 +294,6 @@ int rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaint
   return ret;
 }
 
-void aes128_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const uint8_t* plaintext,
-                        uint8_t* ciphertext) {
-  aes_block_t state;
-  load_state(state, iv, AES_BLOCK_WORDS);
-  aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_128);
-
-  for (unsigned int i = 0; i < 16; ++i) {
-    ciphertext[i] = plaintext[i] ^ state[i / 4][i % 4];
-  }
-}
-
-void aes192_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const uint8_t* plaintext,
-                        uint8_t* ciphertext) {
-  aes_block_t state;
-  load_state(state, iv, AES_BLOCK_WORDS);
-  aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_192);
-
-  for (unsigned int i = 0; i < 16; ++i) {
-    ciphertext[i] = plaintext[i] ^ state[i / 4][i % 4];
-  }
-}
-
-void aes256_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const uint8_t* plaintext,
-                        uint8_t* ciphertext) {
-  aes_block_t state;
-  load_state(state, iv, AES_BLOCK_WORDS);
-  aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_256);
-
-  for (unsigned int i = 0; i < 16; ++i) {
-    ciphertext[i] = plaintext[i] ^ state[i / 4][i % 4];
-  }
-}
-
 void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, unsigned int seclvl, size_t outlen) {
 #if !defined(HAVE_OPENSSL)
   uint8_t internal_iv[16];
