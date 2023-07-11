@@ -147,7 +147,7 @@ jobs:
 
   build-archs:
     runs-on: ubuntu-22.04
-    needs: [build-scan-build]
+    needs: [build-base, build-base-i386]
     name: Test with ${{ matrix.cfg.compiler }} on ${{ matrix.cfg.arch }}
     strategy:
       fail-fast: false
