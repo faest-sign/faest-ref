@@ -315,8 +315,7 @@ void aes256_ctr_encrypt(const aes_round_keys_t* key, const uint8_t* iv, const ui
   }
 }
 
-void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, uint16_t seclvl,
-         size_t outSizeBytes) {
+void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, unsigned int seclvl, size_t outlen) {
 #if !defined(HAVE_OPENSSL)
   uint8_t internal_iv[16];
   memcpy(internal_iv, iv, sizeof(internal_iv));
@@ -326,7 +325,7 @@ void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, uint16_t seclvl,
   switch (seclvl) {
   case 256:
     aes256_init_round_keys(&round_key, key);
-    for (size_t i = 0; i < (outSizeBytes + 15) / 16; i++) {
+    for (size_t i = 0; i < (outlen + 15) / 16; i++) {
       aes_block_t state;
       load_state(state, internal_iv, 4);
       aes_encrypt(&round_key, state, 4, 14);
@@ -336,7 +335,7 @@ void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, uint16_t seclvl,
     return;
   case 192:
     aes192_init_round_keys(&round_key, key);
-    for (size_t i = 0; i < (outSizeBytes + 15) / 16; i++) {
+    for (size_t i = 0; i < (outlen + 15) / 16; i++) {
       aes_block_t state;
       load_state(state, internal_iv, 4);
       aes_encrypt(&round_key, state, 4, 12);
@@ -346,7 +345,7 @@ void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, uint16_t seclvl,
     return;
   default:
     aes128_init_round_keys(&round_key, key);
-    for (size_t i = 0; i < (outSizeBytes + 15) / 16; i++) {
+    for (size_t i = 0; i < (outlen + 15) / 16; i++) {
       aes_block_t state;
       load_state(state, internal_iv, 4);
       aes_encrypt(&round_key, state, 4, 10);
@@ -377,11 +376,11 @@ void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, uint16_t seclvl,
   static const uint8_t plaintext[16] = {0};
 
   int len = 0;
-  for (size_t idx = 0; idx < outSizeBytes / 16; idx += 1, out += 16) {
+  for (size_t idx = 0; idx < outlen / 16; idx += 1, out += 16) {
     EVP_EncryptUpdate(ctx, out, &len, plaintext, sizeof(plaintext));
   }
-  if (outSizeBytes % 16) {
-    EVP_EncryptUpdate(ctx, out, &len, plaintext, outSizeBytes % 16);
+  if (outlen % 16) {
+    EVP_EncryptUpdate(ctx, out, &len, plaintext, outlen % 16);
   }
   EVP_EncryptFinal_ex(ctx, out, &len);
   EVP_CIPHER_CTX_free(ctx);
