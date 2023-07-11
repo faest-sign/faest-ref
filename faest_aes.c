@@ -2268,6 +2268,8 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   // copy expanded key in to an array
   uint8_t* x = malloc(lambda * (R + 1) / 8);
+  // for scan-build
+  assert(lambda * (R + 1) / 8 == sizeof(aes_word_t) * params->faest_param.Nwd * (R + 1));
   {
     aes_round_keys_t round_keys;
     aes128_init_round_keys(&round_keys, in);
