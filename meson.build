@@ -438,7 +438,6 @@ faest_sources = files(
   'instances.c',
   'owf.c',
   'random_oracle.c',
-  'randomness.c',
   'universal_hashing.c',
   'vc.c',
   'vole.c'
@@ -514,12 +513,23 @@ foreach parameter_set : parameter_sets
 endforeach
 
 # static faest library
-libfaest_static = static_library('faest',
+libfaest_no_random_static = static_library('faest_no_random',
   faest_sources,
   dependencies: build_dependencies + [valgrind],
   include_directories: include_directories,
   c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT=', '-DFAEST_TESTS'] + valgrind_defines,
-  install: true
+)
+libfaest_no_random_static_dependency = declare_dependency(
+  link_with: libfaest_no_random_static,
+  include_directories: include_directories,
+  compile_args: ['-DFAEST_EXPORT=']
+)
+
+libfaest_static = static_library('faest',
+  files('randomness.c'),
+  dependencies: build_dependencies + [libfaest_no_random_static_dependency, valgrind],
+  include_directories: include_directories,
+  c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT=', '-DFAEST_TESTS'] + valgrind_defines,
 )
 libfaest_static_dependency = declare_dependency(
   link_with: libfaest_static,
@@ -535,7 +545,7 @@ elif cc.has_function_attribute('visibility:default')
   visibility_define += '-DFAEST_EXPORT=__attribute__((visibility("default")))'
 endif
 libfaest = shared_library('faest',
-  faest_sources,
+  faest_sources + files('randomness.c'),
   dependencies: build_dependencies,
   include_directories: include_directories,
   c_args: defines + c_flags + visibility_define,

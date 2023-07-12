@@ -49,9 +49,13 @@ libfaest_{param_name}_dependency = declare_dependency(
   include_directories: include_directories
 )
 if openssl.found()
-  tv_sources = files(join_paths(meson.project_source_root(), 'tools', 'rng.c'), join_paths(meson.project_source_root(), 'tools', 'PQCgenKAT_sign.cpp'))
-  test_vector_generator = executable('faest_{param_name}_test_vectors', [sources] + faest_sources + tv_sources,
-    dependencies: [openssl],
+  tv_sources = files(
+    join_paths(meson.project_source_root(), 'randomness.c'),
+    join_paths(meson.project_source_root(), 'tools', 'rng.c'),
+    join_paths(meson.project_source_root(), 'tools', 'PQCgenKAT_sign.cpp')
+  )
+  test_vector_generator = executable('faest_{param_name}_test_vectors', [sources] + tv_sources,
+    dependencies: [libfaest_no_random_static_dependency, openssl],
     include_directories: include_directories,
     c_args: defines + c_flags + ['-DHAVE_RANDOMBYTES'],
     cpp_args: defines + cpp_flags + ['-DHAVE_RANDOMBYTES'],
