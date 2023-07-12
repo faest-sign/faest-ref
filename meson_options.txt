@@ -14,3 +14,8 @@ option('valgrind',
   value: 'disabled',
   description: 'Use valgrind for timing checks'
 )
+option('benchmarks',
+  type: 'feature',
+  value: 'auto',
+  description: 'Build benchmark executables'
+)

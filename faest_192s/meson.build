@@ -76,12 +76,14 @@ if valgrind_exec.found()
     build_by_default: false,
   )
 endif
-bench_sources = files(
-  join_paths(meson.project_source_root(), 'tools', 'bench_c2.cpp'),
-)
-bench_catch = executable('faest_192s_bench_c2', bench_sources,
-  dependencies: [libfaest_192s_dependency, boost_program_options, catch2],
-  include_directories: include_directories,
-  c_args: defines + c_flags,
-  cpp_args: defines + cpp_flags
-)
+if get_option('benchmarks').enabled()
+  bench_sources = files(
+    join_paths(meson.project_source_root(), 'tools', 'bench_c2.cpp'),
+  )
+  bench_catch = executable('faest_192s_bench_c2', bench_sources,
+    dependencies: [libfaest_192s_dependency, boost_program_options, catch2],
+    include_directories: include_directories,
+    c_args: defines + c_flags,
+    cpp_args: defines + cpp_flags
+  )
+endif

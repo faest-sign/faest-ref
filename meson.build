@@ -374,7 +374,7 @@ endforeach
 
 # dependencies
 openssl = dependency('openssl', required: get_option('openssl'))
-boost_program_options = dependency('boost', required: false, modules: ['program_options'])
+boost_program_options = dependency('boost', required: get_option('benchmarks'), modules: ['program_options'])
 valgrind = dependency('valgrind', required: get_option('valgrind'))
 if valgrind.found()
   valgrind_exec = find_program('valgrind', required: true)
@@ -403,13 +403,15 @@ if host_machine.system() == 'windows'
 endif
 
 # catch2 for benchmarks
-libcatch2 = static_library('catch2',
-  files(join_paths(meson.project_source_root(), 'catch2', 'extras', 'catch_amalgamated.cpp')),
-)
-catch2 = declare_dependency(
-  link_with: libcatch2,
-  include_directories: include_directories(join_paths('catch2', 'extras'))
-)
+if get_option('benchmarks').enabled()
+  libcatch2 = static_library('catch2',
+    files(join_paths(meson.project_source_root(), 'catch2', 'extras', 'catch_amalgamated.cpp')),
+  )
+  catch2 = declare_dependency(
+    link_with: libcatch2,
+    include_directories: include_directories(join_paths('catch2', 'extras'))
+  )
+endif
 
 # generate config.h
 config_header = configure_file(
