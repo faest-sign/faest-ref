@@ -24,6 +24,7 @@ jobs:
       with:
         action: test
         options: --verbose
+        setup-options: -Dbenchmarks=disabled
 
   build-base-i386:
     name: Test on Ubuntu with gcc (32 bit)
@@ -42,7 +43,7 @@ jobs:
     - name: Build and test
       run: |
         mkdir build
-        meson setup build
+        meson setup build -Dbenchmarks=disabled
         ninja -C build
         ninja -C build test
 
@@ -73,7 +74,7 @@ jobs:
       with:
         action: test
         options: --verbose
-        meson-version: 0.56
+        setup-options: -Dbenchmarks=disabled
       env:
         CC: ${{ matrix.cfg.compiler }}
         CXX: ${{ matrix.cfg.cxxcompiler }}
@@ -99,7 +100,7 @@ jobs:
       with:
         action: test
         options: --verbose
-        meson-version: 0.56
+        setup-options: -Dbenchmarks=disabled
 
   build-flags-windows:
     name: Test on Windows with MSVC
@@ -123,9 +124,8 @@ jobs:
       uses: BSFishy/meson-build@v1.0.3
       with:
         action: test
-        setup-options: --vsenv
+        setup-options: --vsenv -Dbenchmarks=disabled
         options: --verbose
-        meson-version: 0.56
 
   build-scan-build:
     name: Test on Ubuntu with scan-build
@@ -142,7 +142,7 @@ jobs:
     - name: Configure, build and test
       run: |
         mkdir -p build
-        scan-build meson setup build
+        scan-build meson setup build -Dbenchmarks=disabled
         scan-build --exclude "sha3/" --status-bugs ninja -C build
 
   build-archs:
@@ -175,7 +175,7 @@ jobs:
             apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
           run: |
             mkdir build
-            meson setup build
+            meson setup build -Dbenchmarks=disabled
             ninja -C build
             ninja -C build test
           env: |
