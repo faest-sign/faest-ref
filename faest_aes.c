@@ -676,10 +676,10 @@ static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   // Step: 4..10
   for (uint32_t i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
-    uint8_t fancy_d[MAX_DEPTH];
-    ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
+    uint8_t decoded_challenge[MAX_DEPTH];
+    ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
     for (uint32_t j = 0; j < depth; j++, ++col) {
-      if (fancy_d[j] == 1) {
+      if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (l + 7) / 8);
       }
     }
@@ -1251,10 +1251,10 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   // Step: 4..10
   for (uint32_t i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
-    uint8_t fancy_d[MAX_DEPTH];
-    ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
+    uint8_t decoded_challenge[MAX_DEPTH];
+    ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
     for (uint32_t j = 0; j < depth; j++, ++col) {
-      if (fancy_d[j] == 1) {
+      if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (l + 7) / 8);
       }
     }
@@ -1849,10 +1849,10 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   // Step: 4..10
   for (uint32_t i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
-    uint8_t fancy_d[MAX_DEPTH];
-    ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
+    uint8_t decoded_challenge[MAX_DEPTH];
+    ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
     for (uint32_t j = 0; j < depth; j++, ++col) {
-      if (fancy_d[j] == 1) {
+      if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (l + 7) / 8);
       }
     }
@@ -2223,10 +2223,10 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   for (uint32_t i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
-    uint8_t fancy_d[MAX_DEPTH];
-    ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
+    uint8_t decoded_challenge[MAX_DEPTH];
+    ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
     for (uint32_t j = 0; j < depth; j++, ++col) {
-      if (fancy_d[j] == 1) {
+      if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
       }
     }
@@ -2592,10 +2592,10 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   for (uint32_t i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
-    uint8_t fancy_d[MAX_DEPTH];
-    ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
+    uint8_t decoded_challenge[MAX_DEPTH];
+    ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
     for (uint32_t j = 0; j < depth; j++, ++col) {
-      if (fancy_d[j] == 1) {
+      if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
       }
     }
@@ -2959,10 +2959,10 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   for (uint32_t i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
-    uint8_t fancy_d[MAX_DEPTH];
-    ChalDec(chall_3, i, k0, t0, k1, t1, fancy_d);
+    uint8_t decoded_challenge[MAX_DEPTH];
+    ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
     for (uint32_t j = 0; j < depth; j++, ++col) {
-      if (fancy_d[j] == 1) {
+      if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
       }
     }
