@@ -28,6 +28,10 @@ if cc.get_id() != 'msvc'
   ]
   flags += '-Wshadow'
   defines += '-D_GNU_SOURCE'
+
+  if get_option('march-native').enabled()
+    flags += '-march=native'
+  endif
 else
   warnings = []
   # function inlining

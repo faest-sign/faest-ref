@@ -19,3 +19,8 @@ option('benchmarks',
   value: 'auto',
   description: 'Build benchmark executables'
 )
+option('march-native',
+  type: 'feature',
+  value: 'disabled',
+  description: 'Build with -march=native'
+)
