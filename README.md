@@ -16,6 +16,11 @@ apt install meson ninja-build # for build dependencies
 apt install libboost-test-dev libntl-dev # for test dependencies
 ```
 
+`meson` is also available via PyPI:
+```sh
+pip install meson
+```
+
 ## Building
 
 ```sh
