@@ -1038,16 +1038,9 @@ static void aes_enc_backward_192_1(const uint8_t* x, const uint8_t* xk, uint8_t 
           // Step: 7
           xtilde = x[ird / 8];
         } else {
-          // Step: 9
-          uint8_t xout = 0;
-          for (unsigned int i = 0; i < 8; i++) {
-            // Step: 10..11
-            // delta is always \bot if called with m == 1
-            // TODO bit splice
-            xout |=
-                set_bit(get_bit(out[(ird - 128 * (R - 1)) / 8], i) & (1 ^ Mtag) & (1 ^ Mkey), i);
-          }
-          xtilde = xout ^ xk[(128 + ird) / 8];
+          // Step: 9..11 (bit spliced)
+          uint8_t xout = out[(ird - 128 * (R - 1)) / 8] & -((1 ^ Mtag) & (1 ^ Mkey));
+          xtilde       = xout ^ xk[(128 + ird) / 8];
         }
 
         // Step: 12..17 (bit spliced)
@@ -1627,16 +1620,9 @@ static void aes_enc_backward_256_1(const uint8_t* x, const uint8_t* xk, uint8_t 
           // Step: 7
           xtilde = x[ird / 8];
         } else {
-          // Step: 9
-          uint8_t xout = 0;
-          for (unsigned int i = 0; i < 8; i++) {
-            // Step: 10..11
-            // delta is always \bot if called with m == 1
-            // TODO bit splice
-            xout |=
-                set_bit(get_bit(out[(ird - 128 * (R - 1)) / 8], i) & (1 ^ Mtag) & (1 ^ Mkey), i);
-          }
-          xtilde = xout ^ xk[(128 + ird) / 8];
+          // Step: 9..11 (bit spliced)
+          uint8_t xout = out[(ird - 128 * (R - 1)) / 8] & -((1 ^ Mtag) & (1 ^ Mkey));
+          xtilde       = xout ^ xk[(128 + ird) / 8];
         }
 
         // Step: 12..17 (bit spliced)
