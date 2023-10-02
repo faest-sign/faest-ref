@@ -2026,16 +2026,11 @@ static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const 
         unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
 
         if (j < (R - 1)) {
-          // TODO: memcpy
-          for (uint32_t i = 0; i < 8; i++) {
-            bf_z_tilde[i] = bf_z[ird + i];
-          }
+          memcpy(bf_z_tilde, bf_z + ird, sizeof(bf_z_tilde));
         } else {
-          bf128_t bf_z_tilde_out[8];
           for (uint32_t i = 0; i < 8; ++i) {
-            bf_z_tilde_out[i] = bf_z_out[ird - 32 * Nst * (j + 1) + i];
             // Step: 12
-            bf_z_tilde[i] = bf_z_tilde_out[i];
+            bf_z_tilde[i] = bf_z_out[ird - 32 * Nst * (j + 1) + i];
             if (bf_x) {
               bf_z_tilde[i] = bf128_add(bf_z_tilde[i], bf_x[ird + i]);
             }
@@ -2392,16 +2387,11 @@ static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const 
         unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
         bf192_t bf_z_tilde[8];
         if (j < (R - 1)) {
-          // TODO: memcpy
-          for (uint32_t i = 0; i < 8; i++) {
-            bf_z_tilde[i] = bf_z[ird + i];
-          }
+          memcpy(bf_z_tilde, bf_z + ird, sizeof(bf_z_tilde));
         } else {
-          bf192_t bf_z_tilde_out[8];
           for (uint32_t i = 0; i < 8; ++i) {
-            bf_z_tilde_out[i] = bf_z_out[ird - 32 * Nst * (j + 1) + i];
             // Step: 12
-            bf_z_tilde[i] = bf_z_tilde_out[i];
+            bf_z_tilde[i] = bf_z_out[ird - 32 * Nst * (j + 1) + i];
             if (bf_x) {
               bf_z_tilde[i] = bf192_add(bf_z_tilde[i], bf_x[ird + i]);
             }
@@ -2757,16 +2747,11 @@ static void em_enc_backward_256(const bf256_t* bf_z, const bf256_t* bf_x, const 
         unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
         bf256_t bf_z_tilde[8];
         if (j < (R - 1)) {
-          // TODO: memcpy
-          for (uint32_t i = 0; i < 8; i++) {
-            bf_z_tilde[i] = bf_z[ird + i];
-          }
+          memcpy(bf_z_tilde, bf_z + ird, sizeof(bf_z_tilde));
         } else {
-          bf256_t bf_z_tilde_out[8];
           for (uint32_t i = 0; i < 8; ++i) {
-            bf_z_tilde_out[i] = bf_z_out[(ird - 32 * Nst * (j + 1)) + i];
             // Step: 12
-            bf_z_tilde[i] = bf_z_tilde_out[i];
+            bf_z_tilde[i] = bf_z_out[(ird - 32 * Nst * (j + 1)) + i];
             if (bf_x) {
               bf_z_tilde[i] = bf256_add(bf_z_tilde[i], bf_x[ird + i]);
             }
