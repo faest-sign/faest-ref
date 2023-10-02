@@ -1,5 +1,5 @@
 project('faest-ref', ['c', 'cpp'],
-  version: '0.0.0',
+  version: '1.0.1',
   meson_version: '>=0.57',
   default_options: [
     'c_std=c11',
@@ -556,7 +556,7 @@ libfaest = shared_library('faest',
   include_directories: include_directories,
   c_args: defines + c_flags + visibility_define,
   install: true,
-  version: '0.0.0',
+  version: '0.0.1',
   gnu_symbol_visibility: 'hidden'
 )
 libfaest_dependency = declare_dependency(
