@@ -348,8 +348,8 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
 }
 
 static void aes_enc_forward_128_1(const uint8_t* x, const uint8_t* xk, const uint8_t* in,
-                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* FAEST_UNUSED(delta),
-                                  bf128_t* bf_y, const faest_paramset_t* params) {
+                                  uint8_t Mtag, uint8_t Mkey, bf128_t* bf_y,
+                                  const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   // Step: 2
@@ -466,8 +466,8 @@ static void aes_enc_forward_128(const bf128_t* bf_x, const bf128_t* bf_xk, const
 }
 
 static void aes_enc_backward_128_1(const uint8_t* x, const uint8_t* xk, uint8_t Mtag, uint8_t Mkey,
-                                   const uint8_t* FAEST_UNUSED(delta), const uint8_t* out,
-                                   bf128_t* y_out, const faest_paramset_t* params) {
+                                   const uint8_t* out, bf128_t* y_out,
+                                   const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   uint8_t xtilde;
@@ -557,9 +557,9 @@ static void aes_enc_constraints_128(const uint8_t* in, const uint8_t* out, const
     bf128_t* vs      = malloc(sizeof(bf128_t) * Senc);
     bf128_t* s_dash  = malloc(sizeof(bf128_t) * Senc);
     bf128_t* vs_dash = malloc(sizeof(bf128_t) * Senc);
-    aes_enc_forward_128_1(w, k, in, 0, 0, NULL, s, params);
+    aes_enc_forward_128_1(w, k, in, 0, 0, s, params);
     aes_enc_forward_128(v, vk, in, 1, 0, NULL, vs, params);
-    aes_enc_backward_128_1(w, k, 0, 0, NULL, out, s_dash, params);
+    aes_enc_backward_128_1(w, k, 0, 0, out, s_dash, params);
     aes_enc_backward_128(v, vk, 1, 0, NULL, out, vs_dash, params);
 
     for (uint32_t j = 0; j < Senc; j++) {
@@ -899,8 +899,8 @@ static void aes_key_schedule_constraints_192(const uint8_t* w, const bf192_t* v,
 }
 
 static void aes_enc_forward_192_1(const uint8_t* x, const uint8_t* xk, const uint8_t* in,
-                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* FAEST_UNUSED(delta),
-                                  bf192_t* bf_y, const faest_paramset_t* params) {
+                                  uint8_t Mtag, uint8_t Mkey, bf192_t* bf_y,
+                                  const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   // Step: 2
@@ -1017,8 +1017,8 @@ static void aes_enc_forward_192(const bf192_t* bf_x, const bf192_t* bf_xk, const
 }
 
 static void aes_enc_backward_192_1(const uint8_t* x, const uint8_t* xk, uint8_t Mtag, uint8_t Mkey,
-                                   const uint8_t* FAEST_UNUSED(delta), const uint8_t* out,
-                                   bf192_t* y_out, const faest_paramset_t* params) {
+                                   const uint8_t* out, bf192_t* y_out,
+                                   const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   uint8_t xtilde;
@@ -1115,9 +1115,9 @@ static void aes_enc_constraints_192(const uint8_t* in, const uint8_t* out, const
     bf192_t* vs      = malloc(sizeof(bf192_t) * Senc);
     bf192_t* s_dash  = malloc(sizeof(bf192_t) * Senc);
     bf192_t* vs_dash = malloc(sizeof(bf192_t) * Senc);
-    aes_enc_forward_192_1(w, k, in, 0, 0, NULL, s, params);
+    aes_enc_forward_192_1(w, k, in, 0, 0, s, params);
     aes_enc_forward_192(v, vk, in, 1, 0, NULL, vs, params);
-    aes_enc_backward_192_1(w, k, 0, 0, NULL, out, s_dash, params);
+    aes_enc_backward_192_1(w, k, 0, 0, out, s_dash, params);
     aes_enc_backward_192(v, vk, 1, 0, NULL, out, vs_dash, params);
 
     for (uint32_t j = 0; j < Senc; j++) {
@@ -1485,8 +1485,8 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
 }
 
 static void aes_enc_forward_256_1(const uint8_t* x, const uint8_t* xk, const uint8_t* in,
-                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* FAEST_UNUSED(delta),
-                                  bf256_t* bf_y, const faest_paramset_t* params) {
+                                  uint8_t Mtag, uint8_t Mkey, bf256_t* bf_y,
+                                  const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   // Step: 2
@@ -1602,8 +1602,8 @@ static void aes_enc_forward_256(const bf256_t* bf_x, const bf256_t* bf_xk, const
 }
 
 static void aes_enc_backward_256_1(const uint8_t* x, const uint8_t* xk, uint8_t Mtag, uint8_t Mkey,
-                                   const uint8_t* FAEST_UNUSED(delta), const uint8_t* out,
-                                   bf256_t* y_out, const faest_paramset_t* params) {
+                                   const uint8_t* out, bf256_t* y_out,
+                                   const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   uint8_t xtilde;
@@ -1699,9 +1699,9 @@ static void aes_enc_constraints_256(const uint8_t* in, const uint8_t* out, const
     bf256_t* vs      = malloc(sizeof(bf256_t) * Senc);
     bf256_t* s_dash  = malloc(sizeof(bf256_t) * Senc);
     bf256_t* vs_dash = malloc(sizeof(bf256_t) * Senc);
-    aes_enc_forward_256_1(w, k, in, 0, 0, NULL, s, params);
+    aes_enc_forward_256_1(w, k, in, 0, 0, s, params);
     aes_enc_forward_256(v, vk, in, 1, 0, NULL, vs, params);
-    aes_enc_backward_256_1(w, k, 0, 0, NULL, out, s_dash, params);
+    aes_enc_backward_256_1(w, k, 0, 0, out, s_dash, params);
     aes_enc_backward_256(v, vk, 1, 0, NULL, out, vs_dash, params);
 
     for (uint32_t j = 0; j < Senc; j++) {
@@ -1863,9 +1863,8 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
 
 // EM-128
 
-static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, uint8_t FAEST_UNUSED(Mtag),
-                                 uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta),
-                                 bf128_t* bf_y, const faest_paramset_t* params) {
+static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, bf128_t* bf_y,
+                                 const faest_paramset_t* params) {
   const unsigned int R   = params->faest_param.R;
   const unsigned int Nst = params->faest_param.Nwd;
 
@@ -1913,9 +1912,8 @@ static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, uint8_t FAE
   }
 }
 
-static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, uint8_t FAEST_UNUSED(Mtag),
-                               uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta),
-                               bf128_t* bf_y, const faest_paramset_t* params) {
+static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, bf128_t* bf_y,
+                               const faest_paramset_t* params) {
   const unsigned int R   = params->faest_param.R;
   const unsigned int Nst = params->faest_param.Nwd;
 
@@ -1971,8 +1969,8 @@ static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, uint8_t
 }
 
 static void em_enc_backward_128_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* FAEST_UNUSED(delta),
-                                  bf128_t* y_out, const faest_paramset_t* params) {
+                                  uint8_t Mtag, uint8_t Mkey, bf128_t* y_out,
+                                  const faest_paramset_t* params) {
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int R      = params->faest_param.R;
   const unsigned int Nst    = params->faest_param.Nwd;
@@ -2076,9 +2074,9 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
     bf128_t* bf_vs      = malloc(sizeof(bf128_t) * Senc);
     bf128_t* bf_s_dash  = malloc(sizeof(bf128_t) * Senc);
     bf128_t* bf_vs_dash = malloc(sizeof(bf128_t) * Senc);
-    em_enc_forward_128_1(w, x, 0, 0, NULL, bf_s, params);
-    em_enc_forward_128(bf_v, NULL, 1, 0, NULL, bf_vs, params);
-    em_enc_backward_128_1(w, x, w_out, 0, 0, NULL, bf_s_dash, params);
+    em_enc_forward_128_1(w, x, bf_s, params);
+    em_enc_forward_128(bf_v, NULL, bf_vs, params);
+    em_enc_backward_128_1(w, x, w_out, 0, 0, bf_s_dash, params);
     em_enc_backward_128(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
 
     for (uint32_t j = 0; j < Senc; j++) {
@@ -2110,7 +2108,7 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
 
     bf128_t* bf_qs      = malloc(sizeof(bf128_t) * Senc);
     bf128_t* bf_qs_dash = malloc(sizeof(bf128_t) * Senc);
-    em_enc_forward_128(bf_q, bf_x, 0, 1, delta, bf_qs, params);
+    em_enc_forward_128(bf_q, bf_x, bf_qs, params);
     em_enc_backward_128(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash, params);
     free(bf_q_out);
 
@@ -2232,9 +2230,8 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
 // EM-192
 
-static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, uint8_t FAEST_UNUSED(Mtag),
-                                 uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta),
-                                 bf192_t* bf_y, const faest_paramset_t* params) {
+static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, bf192_t* bf_y,
+                                 const faest_paramset_t* params) {
   const unsigned int R   = params->faest_param.R;
   const unsigned int Nst = params->faest_param.Nwd;
 
@@ -2282,9 +2279,8 @@ static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, uint8_t FAE
   }
 }
 
-static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, uint8_t FAEST_UNUSED(Mtag),
-                               uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta),
-                               bf192_t* bf_y, const faest_paramset_t* params) {
+static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t* bf_y,
+                               const faest_paramset_t* params) {
   const unsigned int R   = params->faest_param.R;
   const unsigned int Nst = params->faest_param.Nwd;
 
@@ -2340,8 +2336,7 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, uint8_t
 }
 
 static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  const bf192_t* FAEST_UNUSED(bf_z_out), uint8_t Mtag, uint8_t Mkey,
-                                  const uint8_t* FAEST_UNUSED(delta), bf192_t* y_out,
+                                  uint8_t Mtag, uint8_t Mkey, bf192_t* y_out,
                                   const faest_paramset_t* params) {
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int R      = params->faest_param.R;
@@ -2446,9 +2441,9 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
     bf192_t* bf_vs      = malloc(sizeof(bf192_t) * Senc);
     bf192_t* bf_s_dash  = malloc(sizeof(bf192_t) * Senc);
     bf192_t* bf_vs_dash = malloc(sizeof(bf192_t) * Senc);
-    em_enc_forward_192_1(w, x, 0, 0, NULL, bf_s, params);
-    em_enc_forward_192(bf_v, NULL, 1, 0, NULL, bf_vs, params);
-    em_enc_backward_192_1(w, x, w_out, NULL, 0, 0, NULL, bf_s_dash, params);
+    em_enc_forward_192_1(w, x, bf_s, params);
+    em_enc_forward_192(bf_v, NULL, bf_vs, params);
+    em_enc_backward_192_1(w, x, w_out, 0, 0, bf_s_dash, params);
     em_enc_backward_192(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
 
     for (uint32_t j = 0; j < Senc; j++) {
@@ -2479,7 +2474,7 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
 
     bf192_t* bf_qs      = malloc(sizeof(bf192_t) * Senc);
     bf192_t* bf_qs_dash = malloc(sizeof(bf192_t) * Senc);
-    em_enc_forward_192(bf_q, bf_x, 0, 1, delta, bf_qs, params);
+    em_enc_forward_192(bf_q, bf_x, bf_qs, params);
     em_enc_backward_192(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash, params);
     free(bf_q_out);
 
@@ -2599,9 +2594,8 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
 // EM-256
 
-static void em_enc_forward_256_1(const uint8_t* z, const uint8_t* x, uint8_t FAEST_UNUSED(Mtag),
-                                 uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta),
-                                 bf256_t* bf_y, const faest_paramset_t* params) {
+static void em_enc_forward_256_1(const uint8_t* z, const uint8_t* x, bf256_t* bf_y,
+                                 const faest_paramset_t* params) {
   const unsigned int R   = params->faest_param.R;
   const unsigned int Nst = params->faest_param.Nwd;
 
@@ -2649,9 +2643,8 @@ static void em_enc_forward_256_1(const uint8_t* z, const uint8_t* x, uint8_t FAE
   }
 }
 
-static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, uint8_t FAEST_UNUSED(Mtag),
-                               uint8_t FAEST_UNUSED(Mkey), const uint8_t* FAEST_UNUSED(delta),
-                               bf256_t* bf_y, const faest_paramset_t* params) {
+static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, bf256_t* bf_y,
+                               const faest_paramset_t* params) {
   const unsigned int R   = params->faest_param.R;
   const unsigned int Nst = params->faest_param.Nwd;
 
@@ -2707,8 +2700,8 @@ static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, uint8_t
 }
 
 static void em_enc_backward_256_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* FAEST_UNUSED(delta),
-                                  bf256_t* y_out, const faest_paramset_t* params) {
+                                  uint8_t Mtag, uint8_t Mkey, bf256_t* y_out,
+                                  const faest_paramset_t* params) {
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int R      = params->faest_param.R;
   const unsigned int Nst    = params->faest_param.Nwd;
@@ -2813,9 +2806,9 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
     bf256_t* bf_vs      = malloc(sizeof(bf256_t) * Senc);
     bf256_t* bf_s_dash  = malloc(sizeof(bf256_t) * Senc);
     bf256_t* bf_vs_dash = malloc(sizeof(bf256_t) * Senc);
-    em_enc_forward_256_1(w, x, 0, 0, NULL, bf_s, params);
-    em_enc_forward_256(bf_v, NULL, 1, 0, NULL, bf_vs, params);
-    em_enc_backward_256_1(w, x, w_out, 0, 0, NULL, bf_s_dash, params);
+    em_enc_forward_256_1(w, x, bf_s, params);
+    em_enc_forward_256(bf_v, NULL, bf_vs, params);
+    em_enc_backward_256_1(w, x, w_out, 0, 0, bf_s_dash, params);
     em_enc_backward_256(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
 
     for (uint32_t j = 0; j < Senc; j++) {
@@ -2846,7 +2839,7 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
 
     bf256_t* bf_qs      = malloc(sizeof(bf256_t) * Senc);
     bf256_t* bf_qs_dash = malloc(sizeof(bf256_t) * Senc);
-    em_enc_forward_256(bf_q, bf_x, 0, 1, delta, bf_qs, params);
+    em_enc_forward_256(bf_q, bf_x, bf_qs, params);
     em_enc_backward_256(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash, params);
     free(bf_q_out);
 
