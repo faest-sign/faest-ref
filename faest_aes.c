@@ -90,14 +90,14 @@ static void aes_key_schedule_forward_1(const uint8_t* x, uint8_t Mtag, uint8_t M
   memset(out + lambdaBytes, 0, out_len - lambdaBytes);
 
   // Step: 4
-  uint32_t i_wd = lambda;
+  unsigned int i_wd = lambda;
   // Step: 5..10
-  for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
+  for (unsigned int j = Nwd; j < 4 * (R + 1); j++) {
     if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
       memcpy(out + 32 * j / 8, x + i_wd / 8, 4);
       i_wd += 32;
     } else {
-      for (uint32_t i = 0; i < 32; i += 8) {
+      for (unsigned int i = 0; i < 32; i += 8) {
         // bit spliced
         out[(32 * j + i) / 8] |= out[(32 * (j - Nwd) + i) / 8] ^ out[(32 * (j - 1) + i) / 8];
       }
@@ -117,12 +117,12 @@ static void aes_key_schedule_backward_1(const uint8_t* x, const uint8_t* xk, uin
   const unsigned int Ske    = params->faest_param.Ske;
 
   // Step: 2
-  uint32_t iwd   = 0;
-  uint32_t c     = 0;
-  bool rmvRcon   = true;
-  uint32_t ircon = 0;
+  unsigned int iwd   = 0;
+  unsigned int c     = 0;
+  bool rmvRcon       = true;
+  unsigned int ircon = 0;
 
-  for (uint32_t j = 0; j < Ske; j++) {
+  for (unsigned int j = 0; j < Ske; j++) {
     // Step 7 (bit sliced)
     uint8_t x_tilde = x[j] ^ xk[(iwd + 8 * c) / 8];
 
@@ -175,15 +175,15 @@ static void aes_key_schedule_forward_128(const bf128_t* v, uint8_t Mtag, uint8_t
   memcpy(bf_out, v, lambda * sizeof(bf128_t));
 
   // Step: 4
-  uint32_t i_wd = lambda;
+  unsigned int i_wd = lambda;
   // Step: 5..10
-  for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
+  for (unsigned int j = Nwd; j < 4 * (R + 1); j++) {
     if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
       // copy all at once
       memcpy(bf_out + j * 32, v + i_wd, sizeof(bf128_t) * 32);
       i_wd += 32;
     } else {
-      for (uint32_t i = 0; i < 32; i++) {
+      for (unsigned int i = 0; i < 32; i++) {
         bf_out[(32 * j) + i] = bf128_add(bf_out[32 * (j - Nwd) + i], bf_out[32 * (j - 1) + i]);
       }
     }
@@ -203,20 +203,20 @@ static void aes_key_schedule_backward_128(const bf128_t* v, const bf128_t* Vk, u
 
   const bf128_t bf_delta = delta ? bf128_load(delta) : bf128_zero();
 
-  uint32_t iwd   = 0;
-  uint32_t c     = 0;
-  bool rmvRcon   = true;
-  uint32_t ircon = 0;
+  unsigned int iwd   = 0;
+  unsigned int c     = 0;
+  bool rmvRcon       = true;
+  unsigned int ircon = 0;
 
   bf128_t bf_minus_mkey       = bf128_from_bit(1 ^ Mkey);
   uint8_t minus_mtag          = 1 ^ Mtag;
   bf128_t bf_mkey_times_delta = bf128_mul_bit(bf_delta, Mkey);
   bf_mkey_times_delta         = bf128_add(bf_mkey_times_delta, bf_minus_mkey);
 
-  for (uint32_t j = 0; j < Ske; j++) {
+  for (unsigned int j = 0; j < Ske; j++) {
     // Step 7
     bf128_t bf_x_tilde[8];
-    for (uint32_t i = 0; i < 8; i++) {
+    for (unsigned int i = 0; i < 8; i++) {
       bf_x_tilde[i] = bf128_add(v[8 * j + i], Vk[iwd + 8 * c + i]);
     }
 
@@ -226,7 +226,7 @@ static void aes_key_schedule_backward_128(const bf128_t* v, const bf128_t* Vk, u
       ircon     = ircon + 1;
 
       bf128_t bf_r[8];
-      for (uint32_t i = 0; i < 8; i++) {
+      for (unsigned int i = 0; i < 8; i++) {
         // Step 12
         bf_r[i] = bf128_mul_bit(bf_mkey_times_delta, get_bit(r, i));
         // Step 13
@@ -234,7 +234,7 @@ static void aes_key_schedule_backward_128(const bf128_t* v, const bf128_t* Vk, u
       }
     }
 
-    for (uint32_t i = 0; i < 8; ++i) {
+    for (unsigned int i = 0; i < 8; ++i) {
       bf_out[i + 8 * j] = bf128_add(bf128_add(bf_x_tilde[(i + 7) % 8], bf_x_tilde[(i + 5) % 8]),
                                     bf_x_tilde[(i + 2) % 8]);
     }
@@ -283,13 +283,13 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
     aes_key_schedule_backward_128(v + lambda, vk, 1, 0, NULL, v_w_dash, params);
 
     // Step: 6..8
-    uint32_t iwd = 32 * (Nwd - 1);
-    for (uint32_t j = 0; j < Ske / 4; j++) {
+    unsigned int iwd = 32 * (Nwd - 1);
+    for (unsigned int j = 0; j < Ske / 4; j++) {
       bf128_t bf_k_hat[4];
       bf128_t bf_v_k_hat[4];
       bf128_t bf_w_dash_hat[4];
       bf128_t bf_v_w_dash_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 10..11
         bf_k_hat[(r + 3) % 4]   = bf128_byte_combine_bits(k[(iwd + 8 * r) / 8]);
         bf_v_k_hat[(r + 3) % 4] = bf128_byte_combine(vk + (iwd + 8 * r));
@@ -297,7 +297,7 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
         bf_v_w_dash_hat[r]      = bf128_byte_combine(v_w_dash + (32 * j + 8 * r));
       }
       // Step: 13..17
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         A0[4 * j + r] = bf128_mul(bf_v_k_hat[r], bf_v_w_dash_hat[r]);
         A1[4 * j + r] =
             bf128_add(bf128_add(bf128_mul(bf128_add(bf_k_hat[r], bf_v_k_hat[r]),
@@ -324,17 +324,17 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
   const bf128_t bf_delta = bf128_load(delta);
 
   // Step 23..24
-  uint32_t iwd = 32 * (Nwd - 1);
-  for (uint32_t j = 0; j < Ske / 4; j++) {
+  unsigned int iwd = 32 * (Nwd - 1);
+  for (unsigned int j = 0; j < Ske / 4; j++) {
     bf128_t bf_q_hat_k[4];
     bf128_t bf_q_hat_w_dash[4];
-    for (uint32_t r = 0; r <= 3; r++) {
+    for (unsigned int r = 0; r <= 3; r++) {
       // Step: 25..26
       bf_q_hat_k[(r + 3) % 4] = bf128_byte_combine(qk + ((iwd + 8 * r)));
       bf_q_hat_w_dash[r]      = bf128_byte_combine(q_w_dash + ((32 * j + 8 * r)));
     }
     // Step: 27
-    for (uint32_t r = 0; r <= 3; r++) {
+    for (unsigned int r = 0; r <= 3; r++) {
       bf128_t bf_tmp = bf128_mul(bf_q_hat_k[r], bf_q_hat_w_dash[r]);
       B[4 * j + r]   = bf128_add(bf_tmp, bf128_mul(bf_delta, bf_delta));
     }
@@ -359,22 +359,24 @@ static void aes_enc_forward_128_1(const uint8_t* x, const uint8_t* xk, const uin
     // Step: 5
     bf_y[i] = bf128_add(bf128_byte_combine_bits(xin), bf128_byte_combine_bits(xk[i]));
   }
-  uint32_t ix, ik, iy;
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      ix = 128 * (j - 1) + 32 * c;
-      ik = 128 * j + 32 * c;
-      iy = 16 * j + 4 * c;
+
+  const bf128_t bf_two   = bf128_byte_combine_bits(2);
+  const bf128_t bf_three = bf128_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      const unsigned int ix = 128 * (j - 1) + 32 * c;
+      const unsigned int ik = 128 * j + 32 * c;
+      const unsigned int iy = 16 * j + 4 * c;
+
       bf128_t bf_x_hat[4];
       bf128_t bf_xk_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_x_hat[r]  = bf128_byte_combine_bits(x[(ix + 8 * r) / 8]);
         bf_xk_hat[r] = bf128_byte_combine_bits(xk[(ik + 8 * r) / 8]);
       }
 
-      bf128_t bf_two   = bf128_byte_combine_bits(2);
-      bf128_t bf_three = bf128_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf128_add(bf_xk_hat[0], bf128_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[1], bf_three));
@@ -413,31 +415,33 @@ static void aes_enc_forward_128(const bf128_t* bf_x, const bf128_t* bf_xk, const
   const bf128_t bf_mkey       = bf128_from_bit(Mkey);
 
   // Step: 2..4
-  for (uint32_t i = 0; i < 16; i++) {
+  for (unsigned int i = 0; i < 16; i++) {
     bf128_t bf_xin[8];
-    for (uint32_t j = 0; j < 8; j++) {
+    for (unsigned int j = 0; j < 8; j++) {
       bf_xin[j] = bf128_mul(bf128_mul_bit(bf_minus_mtag, get_bit(in[i], j)),
                             bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey));
     }
     // Step: 5
     bf_y[i] = bf128_add(bf128_byte_combine(bf_xin), bf128_byte_combine(bf_xk + (8 * i)));
   }
-  uint32_t ix, ik, iy;
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      ix = 128 * (j - 1) + 32 * c;
-      ik = 128 * j + 32 * c;
-      iy = 16 * j + 4 * c;
+
+  const bf128_t bf_two   = bf128_byte_combine_bits(2);
+  const bf128_t bf_three = bf128_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      const unsigned int ix = 128 * (j - 1) + 32 * c;
+      const unsigned int ik = 128 * j + 32 * c;
+      const unsigned int iy = 16 * j + 4 * c;
+
       bf128_t bf_x_hat[4];
       bf128_t bf_xk_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_x_hat[r]  = bf128_byte_combine(bf_x + (ix + 8 * r));
         bf_xk_hat[r] = bf128_byte_combine(bf_xk + (ik + 8 * r));
       }
 
-      bf128_t bf_two   = bf128_byte_combine_bits(2);
-      bf128_t bf_three = bf128_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf128_add(bf_xk_hat[0], bf128_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf128_mul(bf_x_hat[1], bf_three));
@@ -472,9 +476,9 @@ static void aes_enc_backward_128_1(const uint8_t* x, const uint8_t* xk, uint8_t 
 
   uint8_t xtilde;
   // Step:2..4
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 5..6
         unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
         if (j < (R - 1)) {
@@ -510,9 +514,9 @@ static void aes_enc_backward_128(const bf128_t* bf_x, const bf128_t* bf_xk, uint
       bf128_mul_bit(bf128_add(bf128_mul_bit(bf_delta, Mkey), bf128_from_bit(1 ^ Mkey)), 1 ^ Mtag);
 
   // Step: 2..4
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         bf128_t bf_x_tilde[8];
         // Step: 5
         unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
@@ -522,7 +526,7 @@ static void aes_enc_backward_128(const bf128_t* bf_x, const bf128_t* bf_xk, uint
           memcpy(bf_x_tilde, bf_x + ird, sizeof(bf_x_tilde));
         } else {
           // Step: 10
-          for (uint32_t i = 0; i < 8; ++i) {
+          for (unsigned int i = 0; i < 8; ++i) {
             // Step: 11
             bf128_t bf_xout = bf128_mul_bit(factor, get_bit(out[(ird - 128 * (R - 1)) / 8], i));
             // Step: 12
@@ -531,7 +535,7 @@ static void aes_enc_backward_128(const bf128_t* bf_x, const bf128_t* bf_xk, uint
         }
         // Step: 13..17
         bf128_t bf_y_tilde[8];
-        for (uint32_t i = 0; i < 8; ++i) {
+        for (unsigned int i = 0; i < 8; ++i) {
           bf_y_tilde[i] = bf128_add(bf128_add(bf_x_tilde[(i + 7) % 8], bf_x_tilde[(i + 5) % 8]),
                                     bf_x_tilde[(i + 2) % 8]);
         }
@@ -562,7 +566,7 @@ static void aes_enc_constraints_128(const uint8_t* in, const uint8_t* out, const
     aes_enc_backward_128_1(w, k, 0, 0, out, s_dash, params);
     aes_enc_backward_128(v, vk, 1, 0, NULL, out, vs_dash, params);
 
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       A0[j] = bf128_mul(vs[j], vs_dash[j]);
       A1[j] = bf128_add(
           bf128_add(bf128_mul(bf128_add(s[j], vs[j]), bf128_add(s_dash[j], vs_dash[j])), A0[j]),
@@ -582,7 +586,7 @@ static void aes_enc_constraints_128(const uint8_t* in, const uint8_t* out, const
 
     // Step: 13..14
     bf128_t minus_part = bf128_mul(bf128_load(delta), bf128_load(delta));
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       B[j] = bf128_add(bf128_mul(qs[j], qs_dash[j]), minus_part);
     }
     free(qs);
@@ -662,11 +666,11 @@ static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   // do nothing
 
   // Step: 4..10
-  for (uint32_t i = 0, col = 0; i < tau; i++) {
+  for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
     ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
-    for (uint32_t j = 0; j < depth; j++, ++col) {
+    for (unsigned int j = 0; j < depth; j++, ++col) {
       if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (l + 7) / 8);
       }
@@ -728,14 +732,14 @@ static void aes_key_schedule_forward_192(const bf192_t* v, uint8_t Mtag, uint8_t
   memcpy(bf_out, v, lambda * sizeof(bf192_t));
 
   // Step: 4
-  uint32_t i_wd = lambda;
+  unsigned int i_wd = lambda;
   // Step: 5..10
-  for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
+  for (unsigned int j = Nwd; j < 4 * (R + 1); j++) {
     if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
       memcpy(bf_out + j * 32, v + i_wd, sizeof(bf192_t) * 32);
       i_wd += 32;
     } else {
-      for (uint32_t i = 0; i < 32; i++) {
+      for (unsigned int i = 0; i < 32; i++) {
         bf_out[(32 * j) + i] = bf192_add(bf_out[32 * (j - Nwd) + i], bf_out[32 * (j - 1) + i]);
       }
     }
@@ -754,20 +758,20 @@ static void aes_key_schedule_backward_192(const bf192_t* v, const bf192_t* Vk, u
   const unsigned int Ske    = params->faest_param.Ske;
 
   const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
-  uint32_t iwd           = 0;
-  uint32_t c             = 0;
+  unsigned int iwd       = 0;
+  unsigned int c         = 0;
   bool rmvRcon           = true;
-  uint32_t ircon         = 0;
+  unsigned int ircon     = 0;
 
   bf192_t bf_minus_mkey       = bf192_from_bit(1 ^ Mkey);
   uint8_t minus_mtag          = 1 ^ Mtag;
   bf192_t bf_mkey_times_delta = bf192_mul_bit(bf_delta, Mkey);
   bf_mkey_times_delta         = bf192_add(bf_mkey_times_delta, bf_minus_mkey);
 
-  for (uint32_t j = 0; j < Ske; j++) {
+  for (unsigned int j = 0; j < Ske; j++) {
     // Step 7
     bf192_t bf_x_tilde[8];
-    for (uint32_t i = 0; i < 8; i++) {
+    for (unsigned int i = 0; i < 8; i++) {
       bf_x_tilde[i] = bf192_add(v[8 * j + i], Vk[iwd + 8 * c + i]);
     }
 
@@ -777,7 +781,7 @@ static void aes_key_schedule_backward_192(const bf192_t* v, const bf192_t* Vk, u
       ircon     = ircon + 1;
 
       bf192_t bf_r[8];
-      for (uint32_t i = 0; i < 8; i++) {
+      for (unsigned int i = 0; i < 8; i++) {
         // Step 12
         bf_r[i] = bf192_mul_bit(bf_mkey_times_delta, get_bit(r, i));
         // Step 13
@@ -785,7 +789,7 @@ static void aes_key_schedule_backward_192(const bf192_t* v, const bf192_t* Vk, u
       }
     }
 
-    for (uint32_t i = 0; i < 8; ++i) {
+    for (unsigned int i = 0; i < 8; ++i) {
       bf_out[i + 8 * j] = bf192_add(bf192_add(bf_x_tilde[(i + 7) % 8], bf_x_tilde[(i + 5) % 8]),
                                     bf_x_tilde[(i + 2) % 8]);
     }
@@ -834,13 +838,13 @@ static void aes_key_schedule_constraints_192(const uint8_t* w, const bf192_t* v,
     aes_key_schedule_backward_192(v + lambda, vk, 1, 0, NULL, v_w_dash, params);
 
     // Step: 6..8
-    uint32_t iwd = 32 * (Nwd - 1);
-    for (uint32_t j = 0; j < Ske / 4; j++) {
+    unsigned int iwd = 32 * (Nwd - 1);
+    for (unsigned int j = 0; j < Ske / 4; j++) {
       bf192_t bf_k_hat[4];
       bf192_t bf_v_k_hat[4];
       bf192_t bf_w_dash_hat[4];
       bf192_t bf_v_w_dash_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 10..11
         bf_k_hat[(r + 3) % 4]   = bf192_byte_combine_bits(k[(iwd + 8 * r) / 8]);
         bf_v_k_hat[(r + 3) % 4] = bf192_byte_combine(vk + (iwd + 8 * r));
@@ -848,7 +852,7 @@ static void aes_key_schedule_constraints_192(const uint8_t* w, const bf192_t* v,
         bf_v_w_dash_hat[r]      = bf192_byte_combine(v_w_dash + (32 * j + 8 * r));
       }
       // Step: 13..17
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         A0[4 * j + r] = bf192_mul(bf_v_k_hat[r], bf_v_w_dash_hat[r]);
         A1[4 * j + r] =
             bf192_add(bf192_add(bf192_mul(bf192_add(bf_k_hat[r], bf_v_k_hat[r]),
@@ -875,17 +879,17 @@ static void aes_key_schedule_constraints_192(const uint8_t* w, const bf192_t* v,
   const bf192_t bf_delta = bf192_load(delta);
 
   // Step 23..24
-  uint32_t iwd = 32 * (Nwd - 1);
-  for (uint32_t j = 0; j < Ske / 4; j++) {
+  unsigned int iwd = 32 * (Nwd - 1);
+  for (unsigned int j = 0; j < Ske / 4; j++) {
     bf192_t bf_q_hat_k[4];
     bf192_t bf_q_hat_w_dash[4];
-    for (uint32_t r = 0; r <= 3; r++) {
+    for (unsigned int r = 0; r <= 3; r++) {
       // Step: 25..26
       bf_q_hat_k[(r + 3) % 4] = bf192_byte_combine(qk + ((iwd + 8 * r)));
       bf_q_hat_w_dash[r]      = bf192_byte_combine(q_w_dash + ((32 * j + 8 * r)));
     }
     // Step: 27
-    for (uint32_t r = 0; r <= 3; r++) {
+    for (unsigned int r = 0; r <= 3; r++) {
       bf192_t bf_tmp = bf192_mul(bf_q_hat_k[r], bf_q_hat_w_dash[r]);
       B[4 * j + r]   = bf192_add(bf_tmp, bf192_mul(bf_delta, bf_delta));
     }
@@ -904,28 +908,30 @@ static void aes_enc_forward_192_1(const uint8_t* x, const uint8_t* xk, const uin
   const unsigned int R = params->faest_param.R;
 
   // Step: 2
-  for (uint32_t i = 0; i < 16; i++) {
+  for (unsigned int i = 0; i < 16; i++) {
     // Step: 3,4 (bit spliced)
     const uint8_t xin = in[i] & -((1 ^ Mtag) & (1 ^ Mkey));
     // Step: 5
     bf_y[i] = bf192_add(bf192_byte_combine_bits(xin), bf192_byte_combine_bits(xk[i]));
   }
-  uint32_t ix, ik, iy;
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      ix = 128 * (j - 1) + 32 * c;
-      ik = 128 * j + 32 * c;
-      iy = 16 * j + 4 * c;
+
+  const bf192_t bf_two   = bf192_byte_combine_bits(2);
+  const bf192_t bf_three = bf192_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      const unsigned int ix = 128 * (j - 1) + 32 * c;
+      const unsigned int ik = 128 * j + 32 * c;
+      const unsigned int iy = 16 * j + 4 * c;
+
       bf192_t bf_x_hat[4];
       bf192_t bf_xk_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_x_hat[r]  = bf192_byte_combine_bits(x[(ix + 8 * r) / 8]);
         bf_xk_hat[r] = bf192_byte_combine_bits(xk[(ik + 8 * r) / 8]);
       }
 
-      bf192_t bf_two   = bf192_byte_combine_bits(2);
-      bf192_t bf_three = bf192_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf192_add(bf_xk_hat[0], bf192_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_x_hat[1], bf_three));
@@ -964,31 +970,33 @@ static void aes_enc_forward_192(const bf192_t* bf_x, const bf192_t* bf_xk, const
   const bf192_t bf_minus_mkey = bf192_from_bit(1 ^ Mkey);
 
   // Step: 2..4
-  for (uint32_t i = 0; i < 16; i++) {
+  for (unsigned int i = 0; i < 16; i++) {
     bf192_t bf_xin[8];
-    for (uint32_t j = 0; j < 8; j++) {
+    for (unsigned int j = 0; j < 8; j++) {
       bf_xin[j] = bf192_mul(bf192_mul_bit(bf_minus_mtag, get_bit(in[i], j)),
                             bf192_add(bf192_mul_bit(bf_delta, Mkey), bf_minus_mkey));
     }
     // Step: 5
     bf_y[i] = bf192_add(bf192_byte_combine(bf_xin), bf192_byte_combine(bf_xk + (8 * i)));
   }
-  uint32_t ix, ik, iy;
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      ix = 128 * (j - 1) + 32 * c;
-      ik = 128 * j + 32 * c;
-      iy = 16 * j + 4 * c;
+
+  const bf192_t bf_two   = bf192_byte_combine_bits(2);
+  const bf192_t bf_three = bf192_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      const unsigned int ix = 128 * (j - 1) + 32 * c;
+      const unsigned int ik = 128 * j + 32 * c;
+      const unsigned int iy = 16 * j + 4 * c;
+
       bf192_t bf_x_hat[4];
       bf192_t bf_xk_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_x_hat[r]  = bf192_byte_combine(bf_x + (ix + 8 * r));
         bf_xk_hat[r] = bf192_byte_combine(bf_xk + (ik + 8 * r));
       }
 
-      bf192_t bf_two   = bf192_byte_combine_bits(2);
-      bf192_t bf_three = bf192_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf192_add(bf_xk_hat[0], bf192_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf192_mul(bf_x_hat[1], bf_three));
@@ -1023,9 +1031,9 @@ static void aes_enc_backward_192_1(const uint8_t* x, const uint8_t* xk, uint8_t 
 
   uint8_t xtilde;
   // Step:2..4
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 5..6
         unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
         if (j < (R - 1)) {
@@ -1034,7 +1042,7 @@ static void aes_enc_backward_192_1(const uint8_t* x, const uint8_t* xk, uint8_t 
         } else {
           // Step: 9
           uint8_t xout = 0;
-          for (uint32_t i = 0; i < 8; i++) {
+          for (unsigned int i = 0; i < 8; i++) {
             // Step: 10..11
             // delta is always \bot if called with m == 1
             // TODO bit splice
@@ -1068,9 +1076,9 @@ static void aes_enc_backward_192(const bf192_t* bf_x, const bf192_t* bf_xk, uint
       bf192_mul_bit(bf192_add(bf192_mul_bit(bf_delta, Mkey), bf192_from_bit(1 ^ Mkey)), 1 ^ Mtag);
 
   // Step: 2..4
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         bf192_t bf_x_tilde[8];
         // Step: 5
         unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
@@ -1080,7 +1088,7 @@ static void aes_enc_backward_192(const bf192_t* bf_x, const bf192_t* bf_xk, uint
           memcpy(bf_x_tilde, bf_x + ird, sizeof(bf_x_tilde));
         } else {
           // Step: 10
-          for (uint32_t i = 0; i < 8; ++i) {
+          for (unsigned int i = 0; i < 8; ++i) {
             // Step: 11
             bf192_t bf_xout = bf192_mul_bit(factor, get_bit(out[(ird - 128 * (R - 1)) / 8], i));
             // Step: 12
@@ -1089,7 +1097,7 @@ static void aes_enc_backward_192(const bf192_t* bf_x, const bf192_t* bf_xk, uint
         }
         // Step: 13..17
         bf192_t bf_y_tilde[8];
-        for (uint32_t i = 0; i < 8; ++i) {
+        for (unsigned int i = 0; i < 8; ++i) {
           bf_y_tilde[i] = bf192_add(bf192_add(bf_x_tilde[(i + 7) % 8], bf_x_tilde[(i + 5) % 8]),
                                     bf_x_tilde[(i + 2) % 8]);
         }
@@ -1120,7 +1128,7 @@ static void aes_enc_constraints_192(const uint8_t* in, const uint8_t* out, const
     aes_enc_backward_192_1(w, k, 0, 0, out, s_dash, params);
     aes_enc_backward_192(v, vk, 1, 0, NULL, out, vs_dash, params);
 
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       A0[j] = bf192_mul(vs[j], vs_dash[j]);
       A1[j] = bf192_add(
           bf192_add(bf192_mul(bf192_add(s[j], vs[j]), bf192_add(s_dash[j], vs_dash[j])), A0[j]),
@@ -1140,7 +1148,7 @@ static void aes_enc_constraints_192(const uint8_t* in, const uint8_t* out, const
 
     // Step: 13..14
     bf192_t minus_part = bf192_mul(bf192_load(delta), bf192_load(delta));
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       B[j] = bf192_add(bf192_mul(qs[j], qs_dash[j]), minus_part);
     }
     free(qs);
@@ -1224,11 +1232,11 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   // do nothing
 
   // Step: 4..10
-  for (uint32_t i = 0, col = 0; i < tau; i++) {
+  for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
     ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
-    for (uint32_t j = 0; j < depth; j++, ++col) {
+    for (unsigned int j = 0; j < depth; j++, ++col) {
       if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (l + 7) / 8);
       }
@@ -1294,14 +1302,14 @@ static void aes_key_schedule_forward_256(const bf256_t* v, uint8_t Mtag, uint8_t
   memcpy(bf_out, v, sizeof(bf256_t) * lambda);
 
   // Step: 4
-  uint32_t i_wd = lambda;
+  unsigned int i_wd = lambda;
   // Step: 5..10
-  for (uint32_t j = Nwd; j < 4 * (R + 1); j++) {
+  for (unsigned int j = Nwd; j < 4 * (R + 1); j++) {
     if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
       memcpy(bf_out + j * 32, v + i_wd, sizeof(bf256_t) * 32);
       i_wd += 32;
     } else {
-      for (uint32_t i = 0; i < 32; i++) {
+      for (unsigned int i = 0; i < 32; i++) {
         bf_out[(32 * j) + i] = bf256_add(bf_out[32 * (j - Nwd) + i], bf_out[32 * (j - 1) + i]);
       }
     }
@@ -1319,10 +1327,10 @@ static void aes_key_schedule_backward_256(const bf256_t* v, const bf256_t* Vk, u
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int Ske    = params->faest_param.Ske;
 
-  uint32_t iwd   = 0;
-  uint32_t c     = 0;
-  bool rmvRcon   = true;
-  uint32_t ircon = 0;
+  unsigned int iwd   = 0;
+  unsigned int c     = 0;
+  bool rmvRcon       = true;
+  unsigned int ircon = 0;
 
   const bf256_t bf_delta      = delta ? bf256_load(delta) : bf256_zero();
   const bf256_t bf_minus_mkey = bf256_from_bit(1 ^ Mkey);
@@ -1330,10 +1338,10 @@ static void aes_key_schedule_backward_256(const bf256_t* v, const bf256_t* Vk, u
   bf256_t bf_mkey_times_delta = bf256_mul_bit(bf_delta, Mkey);
   bf_mkey_times_delta         = bf256_add(bf_mkey_times_delta, bf_minus_mkey);
 
-  for (uint32_t j = 0; j < Ske; j++) {
+  for (unsigned int j = 0; j < Ske; j++) {
     // Step 7
     bf256_t bf_x_tilde[8];
-    for (uint32_t i = 0; i < 8; i++) {
+    for (unsigned int i = 0; i < 8; i++) {
       bf_x_tilde[i] = bf256_add(v[8 * j + i], Vk[iwd + 8 * c + i]);
     }
 
@@ -1343,7 +1351,7 @@ static void aes_key_schedule_backward_256(const bf256_t* v, const bf256_t* Vk, u
       ircon     = ircon + 1;
 
       bf256_t bf_r[8];
-      for (uint32_t i = 0; i < 8; i++) {
+      for (unsigned int i = 0; i < 8; i++) {
         // Step 12
         bf_r[i] = bf256_mul_bit(bf_mkey_times_delta, get_bit(r, i));
         // Step 13
@@ -1351,7 +1359,7 @@ static void aes_key_schedule_backward_256(const bf256_t* v, const bf256_t* Vk, u
       }
     }
 
-    for (uint32_t i = 0; i < 8; ++i) {
+    for (unsigned int i = 0; i < 8; ++i) {
       bf_out[i + 8 * j] = bf256_add(bf256_add(bf_x_tilde[(i + 7) % 8], bf_x_tilde[(i + 5) % 8]),
                                     bf_x_tilde[(i + 2) % 8]);
     }
@@ -1402,13 +1410,13 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
     aes_key_schedule_backward_256(v + lambda, vk, 1, 0, NULL, v_w_dash, params);
 
     // Step: 6..8
-    uint32_t iwd = 32 * (Nwd - 1);
-    for (uint32_t j = 0; j < Ske / 4; j++) {
+    unsigned int iwd = 32 * (Nwd - 1);
+    for (unsigned int j = 0; j < Ske / 4; j++) {
       bf256_t bf_k_hat[4];
       bf256_t bf_v_k_hat[4];
       bf256_t bf_w_dash_hat[4];
       bf256_t bf_v_w_dash_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 10..11
         if (rotate_word) {
           bf_k_hat[(r + 3) % 4]   = bf256_byte_combine_bits(k[(iwd + 8 * r) / 8]);
@@ -1423,7 +1431,7 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
         }
       }
       // Step: 13..17
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         A0[4 * j + r] = bf256_mul(bf_v_k_hat[r], bf_v_w_dash_hat[r]);
         A1[4 * j + r] =
             bf256_add(bf256_add(bf256_mul(bf256_add(bf_k_hat[r], bf_v_k_hat[r]),
@@ -1453,11 +1461,11 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
   const bf256_t bf_delta = bf256_load(delta);
 
   // Step 23..24
-  uint32_t iwd = 32 * (Nwd - 1);
-  for (uint32_t j = 0; j < Ske / 4; j++) {
+  unsigned int iwd = 32 * (Nwd - 1);
+  for (unsigned int j = 0; j < Ske / 4; j++) {
     bf256_t bf_q_hat_k[4];
     bf256_t bf_q_hat_w_dash[4];
-    for (uint32_t r = 0; r <= 3; r++) {
+    for (unsigned int r = 0; r <= 3; r++) {
       // Step: 25..26
       if (rotate_word) {
         bf_q_hat_k[(r + 3) % 4] = bf256_byte_combine(qk + ((iwd + 8 * r)));
@@ -1468,7 +1476,7 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
       }
     }
     // Step: 27
-    for (uint32_t r = 0; r <= 3; r++) {
+    for (unsigned int r = 0; r <= 3; r++) {
       bf256_t bf_tmp = bf256_mul(bf_q_hat_k[r], bf_q_hat_w_dash[r]);
       B[4 * j + r]   = bf256_add(bf_tmp, bf256_mul(bf_delta, bf_delta));
     }
@@ -1490,28 +1498,30 @@ static void aes_enc_forward_256_1(const uint8_t* x, const uint8_t* xk, const uin
   const unsigned int R = params->faest_param.R;
 
   // Step: 2
-  for (uint32_t i = 0; i < 16; i++) {
+  for (unsigned int i = 0; i < 16; i++) {
     // Step: 3,4 (bit spliced)
     const uint8_t xin = in[i] & -((1 ^ Mtag) & (1 ^ Mkey));
     // Step: 5
     bf_y[i] = bf256_add(bf256_byte_combine_bits(xin), bf256_byte_combine_bits(xk[i]));
   }
-  uint32_t ix, ik, iy;
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      ix = 128 * (j - 1) + 32 * c;
-      ik = 128 * j + 32 * c;
-      iy = 16 * j + 4 * c;
+
+  const bf256_t bf_two   = bf256_byte_combine_bits(2);
+  const bf256_t bf_three = bf256_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      const unsigned int ix = 128 * (j - 1) + 32 * c;
+      const unsigned int ik = 128 * j + 32 * c;
+      const unsigned int iy = 16 * j + 4 * c;
+
       bf256_t bf_x_hat[4];
       bf256_t bf_xk_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_x_hat[r]  = bf256_byte_combine_bits(x[(ix + 8 * r) / 8]);
         bf_xk_hat[r] = bf256_byte_combine_bits(xk[(ik + 8 * r) / 8]);
       }
 
-      bf256_t bf_two   = bf256_byte_combine_bits(2);
-      bf256_t bf_three = bf256_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf256_add(bf_xk_hat[0], bf256_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_x_hat[1], bf_three));
@@ -1549,31 +1559,33 @@ static void aes_enc_forward_256(const bf256_t* bf_x, const bf256_t* bf_xk, const
   const bf256_t bf_minus_mkey = bf256_from_bit(1 ^ Mkey);
 
   // Step: 2..4
-  for (uint32_t i = 0; i < 16; i++) {
+  for (unsigned int i = 0; i < 16; i++) {
     bf256_t bf_xin[8];
-    for (uint32_t j = 0; j < 8; j++) {
+    for (unsigned int j = 0; j < 8; j++) {
       bf_xin[j] = bf256_mul(bf256_mul_bit(bf_minus_mtag, get_bit(in[i], j)),
                             bf256_add(bf256_mul_bit(bf_delta, Mkey), bf_minus_mkey));
     }
     // Step: 5
     bf_y[i] = bf256_add(bf256_byte_combine(bf_xin), bf256_byte_combine(bf_xk + (8 * i)));
   }
-  uint32_t ix, ik, iy;
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      ix = 128 * (j - 1) + 32 * c;
-      ik = 128 * j + 32 * c;
-      iy = 16 * j + 4 * c;
+
+  const bf256_t bf_two   = bf256_byte_combine_bits(2);
+  const bf256_t bf_three = bf256_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      const unsigned int ix = 128 * (j - 1) + 32 * c;
+      const unsigned int ik = 128 * j + 32 * c;
+      const unsigned int iy = 16 * j + 4 * c;
+
       bf256_t bf_x_hat[4];
       bf256_t bf_xk_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_x_hat[r]  = bf256_byte_combine(bf_x + (ix + 8 * r));
         bf_xk_hat[r] = bf256_byte_combine(bf_xk + (ik + 8 * r));
       }
 
-      bf256_t bf_two   = bf256_byte_combine_bits(2);
-      bf256_t bf_three = bf256_byte_combine_bits(3);
       // Step : 14
       bf_y[iy + 0] = bf256_add(bf_xk_hat[0], bf256_mul(bf_x_hat[0], bf_two));
       bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf256_mul(bf_x_hat[1], bf_three));
@@ -1608,9 +1620,9 @@ static void aes_enc_backward_256_1(const uint8_t* x, const uint8_t* xk, uint8_t 
 
   uint8_t xtilde;
   // Step:2..4
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 5..6
         unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
         if (j < (R - 1)) {
@@ -1619,7 +1631,7 @@ static void aes_enc_backward_256_1(const uint8_t* x, const uint8_t* xk, uint8_t 
         } else {
           // Step: 9
           uint8_t xout = 0;
-          for (uint32_t i = 0; i < 8; i++) {
+          for (unsigned int i = 0; i < 8; i++) {
             // Step: 10..11
             // delta is always \bot if called with m == 1
             // TODO bit splice
@@ -1652,9 +1664,9 @@ static void aes_enc_backward_256(const bf256_t* bf_x, const bf256_t* bf_xk, uint
       bf256_mul_bit(bf256_add(bf256_mul_bit(bf_delta, Mkey), bf256_from_bit(1 ^ Mkey)), 1 ^ Mtag);
 
   // Step: 2..4
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c <= 3; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c <= 3; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         bf256_t bf_x_tilde[8];
         // Step: 5
         unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
@@ -1664,7 +1676,7 @@ static void aes_enc_backward_256(const bf256_t* bf_x, const bf256_t* bf_xk, uint
           memcpy(bf_x_tilde, bf_x + ird, sizeof(bf_x_tilde));
         } else {
           // Step: 10
-          for (uint32_t i = 0; i < 8; ++i) {
+          for (unsigned int i = 0; i < 8; ++i) {
             // Step: 11
             bf256_t bf_xout = bf256_mul_bit(factor, get_bit(out[(ird - 128 * (R - 1)) / 8], i));
             // Step: 12
@@ -1673,7 +1685,7 @@ static void aes_enc_backward_256(const bf256_t* bf_x, const bf256_t* bf_xk, uint
         }
         // Step: 13..17
         bf256_t bf_y_tilde[8];
-        for (uint32_t i = 0; i < 8; ++i) {
+        for (unsigned int i = 0; i < 8; ++i) {
           bf_y_tilde[i] = bf256_add(bf256_add(bf_x_tilde[(i + 7) % 8], bf_x_tilde[(i + 5) % 8]),
                                     bf_x_tilde[(i + 2) % 8]);
         }
@@ -1704,7 +1716,7 @@ static void aes_enc_constraints_256(const uint8_t* in, const uint8_t* out, const
     aes_enc_backward_256_1(w, k, 0, 0, out, s_dash, params);
     aes_enc_backward_256(v, vk, 1, 0, NULL, out, vs_dash, params);
 
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       A0[j] = bf256_mul(vs[j], vs_dash[j]);
       A1[j] = bf256_add(
           bf256_add(bf256_mul(bf256_add(s[j], vs[j]), bf256_add(s_dash[j], vs_dash[j])), A0[j]),
@@ -1724,7 +1736,7 @@ static void aes_enc_constraints_256(const uint8_t* in, const uint8_t* out, const
 
     // Step: 13..14
     bf256_t minus_part = bf256_mul(bf256_load(delta), bf256_load(delta));
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       B[j] = bf256_add(bf256_mul(qs[j], qs_dash[j]), minus_part);
     }
     free(qs);
@@ -1808,11 +1820,11 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   // do nothing
 
   // Step: 4..10
-  for (uint32_t i = 0, col = 0; i < tau; i++) {
+  for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
     ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
-    for (uint32_t j = 0; j < depth; j++, ++col) {
+    for (unsigned int j = 0; j < depth; j++, ++col) {
       if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (l + 7) / 8);
       }
@@ -1869,25 +1881,25 @@ static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, bf128_t* bf
   const unsigned int Nst = params->faest_param.Nwd;
 
   // Step: 2
-  for (uint32_t j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * Nst; j++) {
     bf_y[j] = bf128_add(bf128_byte_combine_bits(z[j]), bf128_byte_combine_bits(x[j]));
   }
 
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      unsigned int i  = 32 * Nst * j + 32 * c;
-      unsigned int iy = 4 * Nst * j + 4 * c;
+  const bf128_t bf_two   = bf128_byte_combine_bits(2);
+  const bf128_t bf_three = bf128_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      const unsigned int i  = 32 * Nst * j + 32 * c;
+      const unsigned int iy = 4 * Nst * j + 4 * c;
 
       bf128_t bf_x_hat[4];
       bf128_t bf_z_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_z_hat[r] = bf128_byte_combine_bits(z[(i + 8 * r) / 8]);
         bf_x_hat[r] = bf128_byte_combine_bits(x[(i + 8 * r) / 8]);
       }
-
-      bf128_t bf_two   = bf128_byte_combine_bits(2);
-      bf128_t bf_three = bf128_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf128_add(bf128_mul(bf_z_hat[0], bf_two), bf128_mul(bf_z_hat[1], bf_three));
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_z_hat[2]);
@@ -1918,21 +1930,24 @@ static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, bf128_t
   const unsigned int Nst = params->faest_param.Nwd;
 
   // Step: 2
-  for (uint32_t j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * Nst; j++) {
     bf_y[j] = bf128_byte_combine(bf_z + 8 * j);
     if (bf_x) {
       bf_y[j] = bf128_add(bf_y[j], bf128_byte_combine(bf_x + 8 * j));
     }
   }
 
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      unsigned int i  = 32 * Nst * j + 32 * c;
-      unsigned int iy = 4 * Nst * j + 4 * c;
+  const bf128_t bf_two   = bf128_byte_combine_bits(2);
+  const bf128_t bf_three = bf128_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      const unsigned int i  = 32 * Nst * j + 32 * c;
+      const unsigned int iy = 4 * Nst * j + 4 * c;
 
       bf128_t bf_x_hat[4];
       bf128_t bf_z_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_z_hat[r] = bf128_byte_combine(bf_z + (i + 8 * r));
         if (bf_x) {
@@ -1941,9 +1956,6 @@ static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, bf128_t
           bf_x_hat[r] = bf128_zero();
         }
       }
-
-      bf128_t bf_two   = bf128_byte_combine_bits(2);
-      bf128_t bf_three = bf128_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf128_add(bf128_mul(bf_z_hat[0], bf_two), bf128_mul(bf_z_hat[1], bf_three));
       bf_y[iy + 0] = bf128_add(bf_y[iy + 0], bf_z_hat[2]);
@@ -1975,9 +1987,9 @@ static void em_enc_backward_128_1(const uint8_t* z, const uint8_t* x, const uint
   const unsigned int R      = params->faest_param.R;
   const unsigned int Nst    = params->faest_param.Nwd;
 
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         unsigned int icol = (c - r + Nst) % Nst;
         if (Nst == 8 && r >= 2) {
           icol = (icol - 1 + Nst) % Nst;
@@ -2015,9 +2027,9 @@ static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const 
   const bf128_t factor =
       bf128_mul_bit(bf128_add(bf128_mul_bit(bf_delta, Mkey), bf128_from_bit(1 ^ Mkey)), 1 ^ Mtag);
 
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         bf128_t bf_z_tilde[8];
         unsigned int icol = (c - r + Nst) % Nst;
         if (Nst == 8 && r >= 2) {
@@ -2028,7 +2040,7 @@ static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const 
         if (j < (R - 1)) {
           memcpy(bf_z_tilde, bf_z + ird, sizeof(bf_z_tilde));
         } else {
-          for (uint32_t i = 0; i < 8; ++i) {
+          for (unsigned int i = 0; i < 8; ++i) {
             // Step: 12
             bf_z_tilde[i] = bf_z_out[ird - 32 * Nst * (j + 1) + i];
             if (bf_x) {
@@ -2038,7 +2050,7 @@ static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const 
         }
 
         bf128_t bf_y_tilde[8];
-        for (uint32_t i = 0; i < 8; ++i) {
+        for (unsigned int i = 0; i < 8; ++i) {
           bf_y_tilde[i] = bf128_add(bf128_add(bf_z_tilde[(i + 7) % 8], bf_z_tilde[(i + 5) % 8]),
                                     bf_z_tilde[(i + 2) % 8]);
         }
@@ -2074,7 +2086,7 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
     em_enc_backward_128_1(w, x, w_out, 0, 0, bf_s_dash, params);
     em_enc_backward_128(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
 
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       A0[j] = bf128_mul(bf_vs[j], bf_vs_dash[j]);
       A1[j] = bf128_add(
           bf128_add(bf128_mul(bf128_add(bf_s[j], bf_vs[j]), bf128_add(bf_s_dash[j], bf_vs_dash[j])),
@@ -2091,13 +2103,13 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
     // TODO: compute these on demand in em_enc_backward_128
     const bf128_t bf_delta = bf128_load(delta);
     bf128_t* bf_x          = malloc(sizeof(bf128_t) * 128 * (R + 1));
-    for (uint32_t i = 0; i < 128 * (R + 1); i++) {
+    for (unsigned int i = 0; i < 128 * (R + 1); i++) {
       bf_x[i] = bf128_mul_bit(bf_delta, ptr_get_bit(x, i));
     }
 
     // Step 21
     bf128_t* bf_q_out = malloc(sizeof(bf128_t) * lambda);
-    for (uint32_t i = 0; i < lambda; i++) {
+    for (unsigned int i = 0; i < lambda; i++) {
       bf_q_out[i] = bf128_add(bf128_mul_bit(bf_delta, ptr_get_bit(out, i)), bf_q[i]);
     }
 
@@ -2109,7 +2121,7 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
 
     // Step: 13..14
     bf128_t minus_part = bf128_mul(bf_delta, bf_delta);
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       B[j] = bf128_add(bf128_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
     }
     free(bf_qs);
@@ -2175,11 +2187,11 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   const uint8_t* delta = chall_3;
 
-  for (uint32_t i = 0, col = 0; i < tau; i++) {
+  for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
     ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
-    for (uint32_t j = 0; j < depth; j++, ++col) {
+    for (unsigned int j = 0; j < depth; j++, ++col) {
       if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
       }
@@ -2231,25 +2243,25 @@ static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, bf192_t* bf
   const unsigned int Nst = params->faest_param.Nwd;
 
   // Step: 2
-  for (uint32_t j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * Nst; j++) {
     bf_y[j] = bf192_add(bf192_byte_combine_bits(z[j]), bf192_byte_combine_bits(x[j]));
   }
 
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      unsigned int i  = 32 * Nst * j + 32 * c;
-      unsigned int iy = 4 * Nst * j + 4 * c;
+  const bf192_t bf_two   = bf192_byte_combine_bits(2);
+  const bf192_t bf_three = bf192_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      const unsigned int i  = 32 * Nst * j + 32 * c;
+      const unsigned int iy = 4 * Nst * j + 4 * c;
 
       bf192_t bf_x_hat[4];
       bf192_t bf_z_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_z_hat[r] = bf192_byte_combine_bits(z[(i + 8 * r) / 8]);
         bf_x_hat[r] = bf192_byte_combine_bits(x[(i + 8 * r) / 8]);
       }
-
-      bf192_t bf_two   = bf192_byte_combine_bits(2);
-      bf192_t bf_three = bf192_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf192_add(bf192_mul(bf_z_hat[0], bf_two), bf192_mul(bf_z_hat[1], bf_three));
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[2]);
@@ -2280,21 +2292,24 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t
   const unsigned int Nst = params->faest_param.Nwd;
 
   // Step: 2
-  for (uint32_t j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * Nst; j++) {
     bf_y[j] = bf192_byte_combine(bf_z + 8 * j);
     if (bf_x) {
       bf_y[j] = bf192_add(bf_y[j], bf192_byte_combine(bf_x + 8 * j));
     }
   }
 
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      unsigned int i  = 32 * Nst * j + 32 * c;
-      unsigned int iy = 4 * Nst * j + 4 * c;
+  const bf192_t bf_two   = bf192_byte_combine_bits(2);
+  const bf192_t bf_three = bf192_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      const unsigned int i  = 32 * Nst * j + 32 * c;
+      const unsigned int iy = 4 * Nst * j + 4 * c;
 
       bf192_t bf_x_hat[4];
       bf192_t bf_z_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_z_hat[r] = bf192_byte_combine(bf_z + (i + 8 * r));
         if (bf_x) {
@@ -2303,9 +2318,6 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t
           bf_x_hat[r] = bf192_zero();
         }
       }
-
-      bf192_t bf_two   = bf192_byte_combine_bits(2);
-      bf192_t bf_three = bf192_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf192_add(bf192_mul(bf_z_hat[0], bf_two), bf192_mul(bf_z_hat[1], bf_three));
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[2]);
@@ -2337,9 +2349,9 @@ static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint
   const unsigned int R      = params->faest_param.R;
   const unsigned int Nst    = params->faest_param.Nwd;
 
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         unsigned int icol = (c - r + Nst) % Nst;
         if (Nst == 8 && r >= 2) {
           icol = (icol - 1 + Nst) % Nst;
@@ -2377,9 +2389,9 @@ static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const 
   const bf192_t factor =
       bf192_mul_bit(bf192_add(bf192_mul_bit(bf_delta, Mkey), bf192_from_bit(1 ^ Mkey)), 1 ^ Mtag);
 
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         unsigned int icol = (c - r + Nst) % Nst;
         if (Nst == 8 && r >= 2) {
           icol = (icol - 1 + Nst) % Nst;
@@ -2389,7 +2401,7 @@ static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const 
         if (j < (R - 1)) {
           memcpy(bf_z_tilde, bf_z + ird, sizeof(bf_z_tilde));
         } else {
-          for (uint32_t i = 0; i < 8; ++i) {
+          for (unsigned int i = 0; i < 8; ++i) {
             // Step: 12
             bf_z_tilde[i] = bf_z_out[ird - 32 * Nst * (j + 1) + i];
             if (bf_x) {
@@ -2399,7 +2411,7 @@ static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const 
         }
 
         bf192_t bf_y_tilde[8];
-        for (uint32_t i = 0; i < 8; ++i) {
+        for (unsigned int i = 0; i < 8; ++i) {
           bf_y_tilde[i] = bf192_add(bf192_add(bf_z_tilde[(i + 7) % 8], bf_z_tilde[(i + 5) % 8]),
                                     bf_z_tilde[(i + 2) % 8]);
         }
@@ -2436,7 +2448,7 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
     em_enc_backward_192_1(w, x, w_out, 0, 0, bf_s_dash, params);
     em_enc_backward_192(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
 
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       A0[j] = bf192_mul(bf_vs[j], bf_vs_dash[j]);
       A1[j] = bf192_add(
           bf192_add(bf192_mul(bf192_add(bf_s[j], bf_vs[j]), bf192_add(bf_s_dash[j], bf_vs_dash[j])),
@@ -2452,13 +2464,13 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
     // Step: 18, 19
     const bf192_t bf_delta = bf192_load(delta);
     bf192_t* bf_x          = malloc(sizeof(bf192_t) * 32 * Nst * (R + 1));
-    for (uint32_t i = 0; i < 32 * Nst * (R + 1); i++) {
+    for (unsigned int i = 0; i < 32 * Nst * (R + 1); i++) {
       bf_x[i] = bf192_mul_bit(bf_delta, ptr_get_bit(x, i));
     }
 
     // Step 21
     bf192_t* bf_q_out = malloc(sizeof(bf192_t) * lambda);
-    for (uint32_t i = 0; i < lambda; i++) {
+    for (unsigned int i = 0; i < lambda; i++) {
       bf_q_out[i] = bf192_add(bf192_mul_bit(bf_delta, ptr_get_bit(out, i)), bf_q[i]);
     }
 
@@ -2470,7 +2482,7 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
 
     // Step: 13..14
     bf192_t minus_part = bf192_mul(bf_delta, bf_delta);
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       B[j] = bf192_add(bf192_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
     }
     free(bf_qs);
@@ -2536,11 +2548,11 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   const uint8_t* delta = chall_3;
 
-  for (uint32_t i = 0, col = 0; i < tau; i++) {
+  for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
     ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
-    for (uint32_t j = 0; j < depth; j++, ++col) {
+    for (unsigned int j = 0; j < depth; j++, ++col) {
       if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
       }
@@ -2590,25 +2602,25 @@ static void em_enc_forward_256_1(const uint8_t* z, const uint8_t* x, bf256_t* bf
   const unsigned int Nst = params->faest_param.Nwd;
 
   // Step: 2
-  for (uint32_t j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * Nst; j++) {
     bf_y[j] = bf256_add(bf256_byte_combine_bits(z[j]), bf256_byte_combine_bits(x[j]));
   }
 
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      unsigned int i  = 32 * Nst * j + 32 * c;
-      unsigned int iy = 4 * Nst * j + 4 * c;
+  const bf256_t bf_two   = bf256_byte_combine_bits(2);
+  const bf256_t bf_three = bf256_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      const unsigned int i  = 32 * Nst * j + 32 * c;
+      const unsigned int iy = 4 * Nst * j + 4 * c;
 
       bf256_t bf_x_hat[4];
       bf256_t bf_z_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_z_hat[r] = bf256_byte_combine_bits(z[(i + 8 * r) / 8]);
         bf_x_hat[r] = bf256_byte_combine_bits(x[(i + 8 * r) / 8]);
       }
-
-      bf256_t bf_two   = bf256_byte_combine_bits(2);
-      bf256_t bf_three = bf256_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf256_add(bf256_mul(bf_z_hat[0], bf_two), bf256_mul(bf_z_hat[1], bf_three));
       bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_z_hat[2]);
@@ -2639,21 +2651,24 @@ static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, bf256_t
   const unsigned int Nst = params->faest_param.Nwd;
 
   // Step: 2
-  for (uint32_t j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * Nst; j++) {
     bf_y[j] = bf256_byte_combine(bf_z + 8 * j);
     if (bf_x) {
       bf_y[j] = bf256_add(bf_y[j], bf256_byte_combine(bf_x + 8 * j));
     }
   }
 
-  for (uint32_t j = 1; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      unsigned int i  = 32 * Nst * j + 32 * c;
-      unsigned int iy = 4 * Nst * j + 4 * c;
+  const bf256_t bf_two   = bf256_byte_combine_bits(2);
+  const bf256_t bf_three = bf256_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      const unsigned int i  = 32 * Nst * j + 32 * c;
+      const unsigned int iy = 4 * Nst * j + 4 * c;
 
       bf256_t bf_x_hat[4];
       bf256_t bf_z_hat[4];
-      for (uint32_t r = 0; r <= 3; r++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
         bf_z_hat[r] = bf256_byte_combine(bf_z + (i + 8 * r));
         if (bf_x) {
@@ -2662,9 +2677,6 @@ static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, bf256_t
           bf_x_hat[r] = bf256_zero();
         }
       }
-
-      bf256_t bf_two   = bf256_byte_combine_bits(2);
-      bf256_t bf_three = bf256_byte_combine_bits(3);
 
       bf_y[iy + 0] = bf256_add(bf256_mul(bf_z_hat[0], bf_two), bf256_mul(bf_z_hat[1], bf_three));
       bf_y[iy + 0] = bf256_add(bf_y[iy + 0], bf_z_hat[2]);
@@ -2696,9 +2708,9 @@ static void em_enc_backward_256_1(const uint8_t* z, const uint8_t* x, const uint
   const unsigned int R      = params->faest_param.R;
   const unsigned int Nst    = params->faest_param.Nwd;
 
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         unsigned int icol = (c - r + Nst) % Nst;
         if (Nst == 8 && r >= 2) {
           icol = (icol - 1 + Nst) % Nst;
@@ -2737,9 +2749,9 @@ static void em_enc_backward_256(const bf256_t* bf_z, const bf256_t* bf_x, const 
   const bf256_t factor =
       bf256_mul_bit(bf256_add(bf256_mul_bit(bf_delta, Mkey), bf256_from_bit(1 ^ Mkey)), 1 ^ Mtag);
 
-  for (uint32_t j = 0; j < R; j++) {
-    for (uint32_t c = 0; c < Nst; c++) {
-      for (uint32_t r = 0; r <= 3; r++) {
+  for (unsigned int j = 0; j < R; j++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
         unsigned int icol = (c - r + Nst) % Nst;
         if (Nst == 8 && r >= 2) {
           icol = (icol - 1 + Nst) % Nst;
@@ -2749,7 +2761,7 @@ static void em_enc_backward_256(const bf256_t* bf_z, const bf256_t* bf_x, const 
         if (j < (R - 1)) {
           memcpy(bf_z_tilde, bf_z + ird, sizeof(bf_z_tilde));
         } else {
-          for (uint32_t i = 0; i < 8; ++i) {
+          for (unsigned int i = 0; i < 8; ++i) {
             // Step: 12
             bf_z_tilde[i] = bf_z_out[(ird - 32 * Nst * (j + 1)) + i];
             if (bf_x) {
@@ -2759,7 +2771,7 @@ static void em_enc_backward_256(const bf256_t* bf_z, const bf256_t* bf_x, const 
         }
 
         bf256_t bf_y_tilde[8];
-        for (uint32_t i = 0; i < 8; ++i) {
+        for (unsigned int i = 0; i < 8; ++i) {
           bf_y_tilde[i] = bf256_add(bf256_add(bf_z_tilde[(i + 7) % 8], bf_z_tilde[(i + 5) % 8]),
                                     bf_z_tilde[(i + 2) % 8]);
         }
@@ -2796,7 +2808,7 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
     em_enc_backward_256_1(w, x, w_out, 0, 0, bf_s_dash, params);
     em_enc_backward_256(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
 
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       A0[j] = bf256_mul(bf_vs[j], bf_vs_dash[j]);
       A1[j] = bf256_add(
           bf256_add(bf256_mul(bf256_add(bf_s[j], bf_vs[j]), bf256_add(bf_s_dash[j], bf_vs_dash[j])),
@@ -2812,13 +2824,13 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
     // Step: 18, 19
     const bf256_t bf_delta = bf256_load(delta);
     bf256_t* bf_x          = malloc(sizeof(bf256_t) * 32 * Nst * (R + 1));
-    for (uint32_t i = 0; i < 32 * Nst * (R + 1); i++) {
+    for (unsigned int i = 0; i < 32 * Nst * (R + 1); i++) {
       bf_x[i] = bf256_mul_bit(bf_delta, ptr_get_bit(x, i));
     }
 
     // Step 21
     bf256_t* bf_q_out = malloc(sizeof(bf256_t) * lambda);
-    for (uint32_t i = 0; i < lambda; i++) {
+    for (unsigned int i = 0; i < lambda; i++) {
       bf_q_out[i] = bf256_add(bf256_mul_bit(bf_delta, ptr_get_bit(out, i)), bf_q[i]);
     }
 
@@ -2830,7 +2842,7 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
 
     // Step: 13..14
     bf256_t minus_part = bf256_mul(bf_delta, bf_delta);
-    for (uint32_t j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < Senc; j++) {
       B[j] = bf256_add(bf256_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
     }
     free(bf_qs);
@@ -2896,11 +2908,11 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   const uint8_t* delta = chall_3;
 
-  for (uint32_t i = 0, col = 0; i < tau; i++) {
+  for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
     ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
-    for (uint32_t j = 0; j < depth; j++, ++col) {
+    for (unsigned int j = 0; j < depth; j++, ++col) {
       if (decoded_challenge[j] == 1) {
         xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
       }
