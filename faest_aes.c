@@ -136,11 +136,9 @@ static void aes_key_schedule_backward_1(const uint8_t* x, const uint8_t* xk, uin
 
     // Step: 15..19 (bit spliced)
     uint8_t y_tilde = rotr8(x_tilde, 7) ^ rotr8(x_tilde, 5) ^ rotr8(x_tilde, 2);
-    y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-    y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
+    y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 0);
+    out[j] = y_tilde ^ set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
 
-    // Step: 19
-    out[j] = y_tilde;
     // Step: 20
     c = c + 1;
 
@@ -492,8 +490,8 @@ static void aes_enc_backward_128_1(const uint8_t* x, const uint8_t* xk, uint8_t 
 
         // Step: 12..17 (bit spliced)
         uint8_t ytilde = rotr8(xtilde, 7) ^ rotr8(xtilde, 5) ^ rotr8(xtilde, 2);
-        ytilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-        ytilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
+        ytilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 0);
+        ytilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
 
         // Step: 18
         y_out[16 * j + 4 * c + r] = bf128_byte_combine_bits(ytilde);
@@ -1054,8 +1052,8 @@ static void aes_enc_backward_192_1(const uint8_t* x, const uint8_t* xk, uint8_t 
 
         // Step: 12..17 (bit spliced)
         uint8_t ytilde = rotr8(xtilde, 7) ^ rotr8(xtilde, 5) ^ rotr8(xtilde, 2);
-        ytilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-        ytilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
+        ytilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 0);
+        ytilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
 
         // Step: 18
         y_out[16 * j + 4 * c + r] = bf192_byte_combine_bits(ytilde);
@@ -1643,8 +1641,8 @@ static void aes_enc_backward_256_1(const uint8_t* x, const uint8_t* xk, uint8_t 
 
         // Step: 12..17 (bit spliced)
         uint8_t ytilde = rotr8(xtilde, 7) ^ rotr8(xtilde, 5) ^ rotr8(xtilde, 2);
-        ytilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-        ytilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
+        ytilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 0);
+        ytilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
 
         // Step: 18
         y_out[16 * j + 4 * c + r] = bf256_byte_combine_bits(ytilde);
@@ -2005,8 +2003,8 @@ static void em_enc_backward_128_1(const uint8_t* z, const uint8_t* x, const uint
         // (bit spliced)
         uint8_t y_tilde = rotr8(z_tilde, 7) ^ rotr8(z_tilde, 5) ^ rotr8(z_tilde, 2);
         // delta is always bot
-        y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-        y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
+        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 0);
+        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
 
         // Step: 18
         y_out[4 * Nst * j + 4 * c + r] = bf128_byte_combine_bits(y_tilde);
@@ -2367,8 +2365,8 @@ static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint
         // (bit spliced)
         uint8_t y_tilde = rotr8(z_tilde, 7) ^ rotr8(z_tilde, 5) ^ rotr8(z_tilde, 2);
         // delta is always bot
-        y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-        y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
+        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 0);
+        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
 
         // Step: 18
         y_out[4 * Nst * j + 4 * c + r] = bf192_byte_combine_bits(y_tilde);
@@ -2726,8 +2724,8 @@ static void em_enc_backward_256_1(const uint8_t* z, const uint8_t* x, const uint
         // (bit spliced)
         uint8_t y_tilde = rotr8(z_tilde, 7) ^ rotr8(z_tilde, 5) ^ rotr8(z_tilde, 2);
         // delta is always bot
-        y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 0);
-        y_tilde ^= set_bit(((1 ^ Mtag) & (1 ^ Mkey)), 2);
+        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 0);
+        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
 
         // Step: 18
         y_out[4 * Nst * j + 4 * c + r] = bf256_byte_combine_bits(y_tilde);
