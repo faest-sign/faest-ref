@@ -348,8 +348,8 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
 }
 
 static void aes_enc_forward_128_1(const uint8_t* x, const uint8_t* xk, const uint8_t* in,
-                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* bf_y,
-                                  const faest_paramset_t* params) {
+                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* FAEST_UNUSED(delta),
+                                  bf128_t* bf_y, const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   // Step: 2
@@ -466,8 +466,8 @@ static void aes_enc_forward_128(const bf128_t* bf_x, const bf128_t* bf_xk, const
 }
 
 static void aes_enc_backward_128_1(const uint8_t* x, const uint8_t* xk, uint8_t Mtag, uint8_t Mkey,
-                                   const uint8_t* delta, const uint8_t* out, bf128_t* y_out,
-                                   const faest_paramset_t* params) {
+                                   const uint8_t* FAEST_UNUSED(delta), const uint8_t* out,
+                                   bf128_t* y_out, const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   uint8_t xtilde;
@@ -899,8 +899,8 @@ static void aes_key_schedule_constraints_192(const uint8_t* w, const bf192_t* v,
 }
 
 static void aes_enc_forward_192_1(const uint8_t* x, const uint8_t* xk, const uint8_t* in,
-                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf192_t* bf_y,
-                                  const faest_paramset_t* params) {
+                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* FAEST_UNUSED(delta),
+                                  bf192_t* bf_y, const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   // Step: 2
@@ -1017,8 +1017,8 @@ static void aes_enc_forward_192(const bf192_t* bf_x, const bf192_t* bf_xk, const
 }
 
 static void aes_enc_backward_192_1(const uint8_t* x, const uint8_t* xk, uint8_t Mtag, uint8_t Mkey,
-                                   const uint8_t* delta, const uint8_t* out, bf192_t* y_out,
-                                   const faest_paramset_t* params) {
+                                   const uint8_t* FAEST_UNUSED(delta), const uint8_t* out,
+                                   bf192_t* y_out, const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   uint8_t xtilde;
@@ -1485,8 +1485,8 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
 }
 
 static void aes_enc_forward_256_1(const uint8_t* x, const uint8_t* xk, const uint8_t* in,
-                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf256_t* bf_y,
-                                  const faest_paramset_t* params) {
+                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* FAEST_UNUSED(delta),
+                                  bf256_t* bf_y, const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   // Step: 2
@@ -1602,8 +1602,8 @@ static void aes_enc_forward_256(const bf256_t* bf_x, const bf256_t* bf_xk, const
 }
 
 static void aes_enc_backward_256_1(const uint8_t* x, const uint8_t* xk, uint8_t Mtag, uint8_t Mkey,
-                                   const uint8_t* delta, const uint8_t* out, bf256_t* y_out,
-                                   const faest_paramset_t* params) {
+                                   const uint8_t* FAEST_UNUSED(delta), const uint8_t* out,
+                                   bf256_t* y_out, const faest_paramset_t* params) {
   const unsigned int R = params->faest_param.R;
 
   uint8_t xtilde;
@@ -1971,8 +1971,8 @@ static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, uint8_t
 }
 
 static void em_enc_backward_128_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* y_out,
-                                  const faest_paramset_t* params) {
+                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* FAEST_UNUSED(delta),
+                                  bf128_t* y_out, const faest_paramset_t* params) {
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int R      = params->faest_param.R;
   const unsigned int Nst    = params->faest_param.Nwd;
@@ -2340,8 +2340,8 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, uint8_t
 }
 
 static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  const bf192_t* bf_z_out, uint8_t Mtag, uint8_t Mkey,
-                                  const uint8_t* delta, bf192_t* y_out,
+                                  const bf192_t* FAEST_UNUSED(bf_z_out), uint8_t Mtag, uint8_t Mkey,
+                                  const uint8_t* FAEST_UNUSED(delta), bf192_t* y_out,
                                   const faest_paramset_t* params) {
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int R      = params->faest_param.R;
@@ -2707,8 +2707,8 @@ static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, uint8_t
 }
 
 static void em_enc_backward_256_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf256_t* y_out,
-                                  const faest_paramset_t* params) {
+                                  uint8_t Mtag, uint8_t Mkey, const uint8_t* FAEST_UNUSED(delta),
+                                  bf256_t* y_out, const faest_paramset_t* params) {
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int R      = params->faest_param.R;
   const unsigned int Nst    = params->faest_param.Nwd;
