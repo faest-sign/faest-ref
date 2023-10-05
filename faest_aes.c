@@ -615,9 +615,7 @@ static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   uint8_t* k                  = malloc((R + 1) * 128 / 8);
   bf128_t* vk                 = malloc(sizeof(bf128_t) * ((R + 1) * 128));
   bf128_t* qk                 = malloc(sizeof(bf128_t) * ((R + 1) * 128));
-  if (Lke > 0) {
-    aes_key_schedule_constraints_128(w, bf_v, 0, NULL, NULL, A0, A1, k, vk, NULL, qk, params);
-  }
+  aes_key_schedule_constraints_128(w, bf_v, 0, NULL, NULL, A0, A1, k, vk, NULL, qk, params);
 
   // Step: Skipping 8 in implementation
   // Step: 9
@@ -684,10 +682,7 @@ static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   bf128_t* vk                 = malloc(sizeof(bf128_t) * ((R + 1) * 128));
   bf128_t* qk                 = malloc(sizeof(bf128_t) * ((R + 1) * 128));
   bf128_t* B_0                = malloc(sizeof(bf128_t) * length_b);
-  if (Lke > 0) {
-    aes_key_schedule_constraints_128(NULL, NULL, 1, bf_q, delta, NULL, NULL, k, vk, B_0, qk,
-                                     params);
-  }
+  aes_key_schedule_constraints_128(NULL, NULL, 1, bf_q, delta, NULL, NULL, k, vk, B_0, qk, params);
 
   // Step: 14
   bf128_t* B_1 = B_0 + Ske;
@@ -1171,9 +1166,7 @@ static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   uint8_t* k                  = malloc((R + 1) * 128 / 8);
   bf192_t* vk                 = malloc(sizeof(bf192_t) * ((R + 1) * 128));
   bf192_t* qk                 = malloc(sizeof(bf192_t) * ((R + 1) * 128));
-  if (Lke > 0) {
-    aes_key_schedule_constraints_192(w, bf_v, 0, NULL, NULL, A0, A1, k, vk, NULL, qk, params);
-  }
+  aes_key_schedule_constraints_192(w, bf_v, 0, NULL, NULL, A0, A1, k, vk, NULL, qk, params);
 
   // Step: Skipping 8 in implementation
   // Step: 9
@@ -1243,10 +1236,7 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   bf192_t* vk                 = malloc(sizeof(bf192_t) * ((R + 1) * 128));
   bf192_t* qk                 = malloc(sizeof(bf192_t) * ((R + 1) * 128));
   bf192_t* B_0                = malloc(sizeof(bf192_t) * length_b);
-  if (Lke > 0) {
-    aes_key_schedule_constraints_192(NULL, NULL, 1, bf_q, delta, NULL, NULL, k, vk, B_0, qk,
-                                     params);
-  }
+  aes_key_schedule_constraints_192(NULL, NULL, 1, bf_q, delta, NULL, NULL, k, vk, B_0, qk, params);
 
   // Step: 14
   bf192_t* B_1 = B_0 + Ske;
@@ -1752,9 +1742,7 @@ static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   uint8_t* k                  = malloc((R + 1) * 128 / 8);
   bf256_t* vk                 = malloc(sizeof(bf256_t) * ((R + 1) * 128));
   bf256_t* qk                 = malloc(sizeof(bf256_t) * ((R + 1) * 128));
-  if (Lke > 0) {
-    aes_key_schedule_constraints_256(w, bf_v, 0, NULL, NULL, A0, A1, k, vk, NULL, qk, params);
-  }
+  aes_key_schedule_constraints_256(w, bf_v, 0, NULL, NULL, A0, A1, k, vk, NULL, qk, params);
 
   // Step: Skipping 8 in implementation
   // Step: 9
@@ -1824,10 +1812,7 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   bf256_t* vk                 = malloc(sizeof(bf256_t) * ((R + 1) * 128));
   bf256_t* qk                 = malloc(sizeof(bf256_t) * ((R + 1) * 128));
   bf256_t* B_0                = malloc(sizeof(bf256_t) * length_b);
-  if (Lke > 0) {
-    aes_key_schedule_constraints_256(NULL, NULL, 1, bf_q, delta, NULL, NULL, k, vk, B_0, qk,
-                                     params);
-  }
+  aes_key_schedule_constraints_256(NULL, NULL, 1, bf_q, delta, NULL, NULL, k, vk, B_0, qk, params);
 
   // Step: 14
   bf256_t* B_1 = B_0 + Ske;
