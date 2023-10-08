@@ -75,9 +75,7 @@ static void aes_key_schedule_forward_1(const uint8_t* x, uint8_t Mtag, uint8_t M
                                        const uint8_t* delta, uint8_t* out,
                                        const faest_paramset_t* params) {
   // Step: 1
-  if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
-    return;
-  }
+  assert(!((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)));
 
   const unsigned int lambda      = params->faest_param.lambda;
   const unsigned int R           = params->faest_param.R;
@@ -109,9 +107,7 @@ static void aes_key_schedule_backward_1(const uint8_t* x, const uint8_t* xk, uin
                                         uint8_t Mkey, const uint8_t* delta, uint8_t* out,
                                         const faest_paramset_t* params) {
   // Step: 1
-  if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
-    return;
-  }
+  assert(!((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)));
 
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int Ske    = params->faest_param.Ske;
@@ -162,9 +158,7 @@ static void aes_key_schedule_forward_128(const bf128_t* v, uint8_t Mtag, uint8_t
                                          const uint8_t* delta, bf128_t* bf_out,
                                          const faest_paramset_t* params) {
   // Step: 1
-  if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
-    return;
-  }
+  assert(!((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)));
 
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int R      = params->faest_param.R;
@@ -192,9 +186,7 @@ static void aes_key_schedule_backward_128(const bf128_t* v, const bf128_t* Vk, u
                                           uint8_t Mkey, const uint8_t* delta, bf128_t* bf_out,
                                           const faest_paramset_t* params) {
   // Step: 1
-  if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
-    return;
-  }
+  assert(!((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)));
 
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int Ske    = params->faest_param.Ske;
@@ -714,9 +706,7 @@ static void aes_key_schedule_forward_192(const bf192_t* v, uint8_t Mtag, uint8_t
                                          const uint8_t* delta, bf192_t* bf_out,
                                          const faest_paramset_t* params) {
   // Step: 1
-  if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
-    return;
-  }
+  assert(!((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)));
 
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int R      = params->faest_param.R;
@@ -743,9 +733,7 @@ static void aes_key_schedule_backward_192(const bf192_t* v, const bf192_t* Vk, u
                                           uint8_t Mkey, const uint8_t* delta, bf192_t* bf_out,
                                           const faest_paramset_t* params) {
   // Step: 1
-  if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
-    return;
-  }
+  assert(!((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)));
 
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int Ske    = params->faest_param.Ske;
@@ -1272,9 +1260,7 @@ static void aes_key_schedule_forward_256(const bf256_t* v, uint8_t Mtag, uint8_t
                                          const uint8_t* delta, bf256_t* bf_out,
                                          const faest_paramset_t* params) {
   // Step: 1
-  if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
-    return;
-  }
+  assert(!((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)));
 
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int R      = params->faest_param.R;
@@ -1301,9 +1287,7 @@ static void aes_key_schedule_backward_256(const bf256_t* v, const bf256_t* Vk, u
                                           uint8_t Mkey, const uint8_t* delta, bf256_t* bf_out,
                                           const faest_paramset_t* params) {
   // Step: 1
-  if ((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)) {
-    return;
-  }
+  assert(!((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)));
 
   const unsigned int lambda = params->faest_param.lambda;
   const unsigned int Ske    = params->faest_param.Ske;
@@ -2004,7 +1988,7 @@ static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const 
         if (Nst == 8 && r >= 2) {
           icol = (icol - 1 + Nst) % Nst;
         }
-        unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
+        const unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
 
         if (j < (R - 1)) {
           memcpy(bf_z_tilde, bf_z + ird, sizeof(bf_z_tilde));
