@@ -189,7 +189,6 @@ static void aes_key_schedule_backward_128(const bf128_t* v, const bf128_t* Vk, u
 
   unsigned int iwd   = 0;
   unsigned int c     = 0;
-  bool rmvRcon       = true;
   unsigned int ircon = 0;
 
   bf128_t bf_minus_mkey       = bf128_from_bit(1 ^ Mkey);
@@ -204,7 +203,7 @@ static void aes_key_schedule_backward_128(const bf128_t* v, const bf128_t* Vk, u
       bf_x_tilde[i] = bf128_add(v[8 * j + i], Vk[iwd + 8 * c + i]);
     }
 
-    if (Mtag == 0 && rmvRcon == true && c == 0) {
+    if (Mtag == 0 && c == 0) {
       // Step 9
       uint8_t r = Rcon[ircon];
       ircon     = ircon + 1;
@@ -230,14 +229,7 @@ static void aes_key_schedule_backward_128(const bf128_t* v, const bf128_t* Vk, u
 
     if (c == 4) {
       c = 0;
-      if (FAEST_128F_LAMBDA == 192) {
-        iwd += 192;
-      } else {
-        iwd += 128;
-        if (FAEST_128F_LAMBDA == 256) {
-          rmvRcon = !rmvRcon;
-        }
-      }
+      iwd += 128;
     }
   }
 }
@@ -712,7 +704,6 @@ static void aes_key_schedule_backward_192(const bf192_t* v, const bf192_t* Vk, u
   const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
   unsigned int iwd       = 0;
   unsigned int c         = 0;
-  bool rmvRcon           = true;
   unsigned int ircon     = 0;
 
   bf192_t bf_minus_mkey       = bf192_from_bit(1 ^ Mkey);
@@ -727,7 +718,7 @@ static void aes_key_schedule_backward_192(const bf192_t* v, const bf192_t* Vk, u
       bf_x_tilde[i] = bf192_add(v[8 * j + i], Vk[iwd + 8 * c + i]);
     }
 
-    if (Mtag == 0 && rmvRcon == true && c == 0) {
+    if (Mtag == 0 && c == 0) {
       // Step 9
       uint8_t r = Rcon[ircon];
       ircon     = ircon + 1;
@@ -753,14 +744,7 @@ static void aes_key_schedule_backward_192(const bf192_t* v, const bf192_t* Vk, u
 
     if (c == 4) {
       c = 0;
-      if (FAEST_192F_LAMBDA == 192) {
-        iwd += 192;
-      } else {
-        iwd += 128;
-        if (FAEST_192F_LAMBDA == 256) {
-          rmvRcon = !rmvRcon;
-        }
-      }
+      iwd += 192;
     }
   }
 }
@@ -1286,14 +1270,8 @@ static void aes_key_schedule_backward_256(const bf256_t* v, const bf256_t* Vk, u
 
     if (c == 4) {
       c = 0;
-      if (FAEST_256F_LAMBDA == 192) {
-        iwd += 192;
-      } else {
-        iwd += 128;
-        if (FAEST_256F_LAMBDA == 256) {
-          rmvRcon = !rmvRcon;
-        }
-      }
+      iwd += 128;
+      rmvRcon = !rmvRcon;
     }
   }
 }
