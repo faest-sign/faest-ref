@@ -62,7 +62,7 @@ if openssl.found()
     override_options: ['b_lto=false'],
   )
 endif
-if boost_program_options.found()
+if boost_program_options.found() and get_option('benchmarks').enabled()
   bench_sources = files(join_paths(meson.project_source_root(), 'tools', 'bench.cpp'))
   bench = executable('faest_{param_name}_bench', bench_sources,
     dependencies: [libfaest_{param_name}_dependency, boost_program_options],
@@ -97,7 +97,7 @@ if valgrind_exec.found()
     build_by_default: false,
   )
 endif
-if get_option('benchmarks').enabled()
+if get_option('catch2').enabled() and get_option('benchmarks').enabled()
   bench_sources = files(
     join_paths(meson.project_source_root(), 'tools', 'bench_c2.cpp'),
   )
