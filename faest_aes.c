@@ -320,13 +320,16 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
 }
 
 static void aes_enc_forward_128_1(const uint8_t* x, const uint8_t* xk, const uint8_t* in,
-                                  uint8_t Mtag, uint8_t Mkey, bf128_t* bf_y) {
+                                  bf128_t* bf_y) {
   static_assert(FAEST_128F_R == FAEST_128S_R);
+
+  // called only with Mtag == Mkey == 0
 
   // Step: 2
   for (unsigned int i = 0; i < 16; i++) {
     // Step: 3, 4 (bit spliced)
-    const uint8_t xin = in[i] & -((1 ^ Mtag) & (1 ^ Mkey));
+    // -((1 ^ Mtag) & (1 ^ Mkey)) == 0xFF
+    const uint8_t xin = in[i];
     // Step: 5
     bf_y[i] = bf128_add(bf128_byte_combine_bits(xin), bf128_byte_combine_bits(xk[i]));
   }
@@ -439,9 +442,11 @@ static void aes_enc_forward_128(const bf128_t* bf_x, const bf128_t* bf_xk, const
   }
 }
 
-static void aes_enc_backward_128_1(const uint8_t* x, const uint8_t* xk, uint8_t Mtag, uint8_t Mkey,
-                                   const uint8_t* out, bf128_t* y_out) {
+static void aes_enc_backward_128_1(const uint8_t* x, const uint8_t* xk, const uint8_t* out,
+                                   bf128_t* y_out) {
   static_assert(FAEST_128F_R == FAEST_128S_R);
+
+  // called only with Mtag == Mkey == 0
 
   uint8_t xtilde;
   // Step:2..4
@@ -455,21 +460,20 @@ static void aes_enc_backward_128_1(const uint8_t* x, const uint8_t* xk, uint8_t 
           xtilde = x[ird / 8];
         } else {
           // Step: 9..11 (bit spliced)
-          uint8_t xout = out[(ird - 128 * (FAEST_128F_R - 1)) / 8] & -((1 ^ Mtag) & (1 ^ Mkey));
-          xtilde       = xout ^ xk[(128 + ird) / 8];
+          // -((1 ^ Mtag) & (1 ^ Mkey)) == 0xff
+          const uint8_t xout = out[(ird - 128 * (FAEST_128F_R - 1)) / 8];
+          xtilde             = xout ^ xk[(128 + ird) / 8];
         }
 
         // Step: 12..17 (bit spliced)
-        uint8_t ytilde = rotr8(xtilde, 7) ^ rotr8(xtilde, 5) ^ rotr8(xtilde, 2);
-        ytilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 0);
-        ytilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
+        // set_bit((1 ^ Mtag) & (1 ^ Mkey), 0) ^ set_bit((1 ^ Mtag) & (1 ^ Mkey), 2) == 0x5
+        const uint8_t ytilde = rotr8(xtilde, 7) ^ rotr8(xtilde, 5) ^ rotr8(xtilde, 2) ^ 0x5;
 
         // Step: 18
         y_out[16 * j + 4 * c + r] = bf128_byte_combine_bits(ytilde);
       }
     }
   }
-  return;
 }
 
 static void aes_enc_backward_128(const bf128_t* bf_x, const bf128_t* bf_xk, uint8_t Mtag,
@@ -530,9 +534,9 @@ static void aes_enc_constraints_128(const uint8_t* in, const uint8_t* out, const
     bf128_t vs[FAEST_128F_Senc];
     bf128_t s_dash[FAEST_128F_Senc];
     bf128_t vs_dash[FAEST_128F_Senc];
-    aes_enc_forward_128_1(w, k, in, 0, 0, s);
+    aes_enc_forward_128_1(w, k, in, s);
     aes_enc_forward_128(v, vk, in, 1, 0, NULL, vs);
-    aes_enc_backward_128_1(w, k, 0, 0, out, s_dash);
+    aes_enc_backward_128_1(w, k, out, s_dash);
     aes_enc_backward_128(v, vk, 1, 0, NULL, out, vs_dash);
 
     for (unsigned int j = 0; j < FAEST_128F_Senc; j++) {
@@ -1743,23 +1747,22 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
 
 // EM-128
 
-static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, bf128_t* bf_y,
-                                 const faest_paramset_t* params) {
-  const unsigned int R   = params->faest_param.R;
-  const unsigned int Nst = params->faest_param.Nwd;
+static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, bf128_t* bf_y) {
+  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
+  static_assert(FAEST_EM_128F_Nwd == FAEST_EM_128S_Nwd);
 
   // Step: 2
-  for (unsigned int j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * FAEST_EM_128F_Nwd; j++) {
     bf_y[j] = bf128_add(bf128_byte_combine_bits(z[j]), bf128_byte_combine_bits(x[j]));
   }
 
   const bf128_t bf_two   = bf128_byte_combine_bits(2);
   const bf128_t bf_three = bf128_byte_combine_bits(3);
 
-  for (unsigned int j = 1; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
-      const unsigned int i  = 32 * Nst * j + 32 * c;
-      const unsigned int iy = 4 * Nst * j + 4 * c;
+  for (unsigned int j = 1; j < FAEST_EM_128F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_128F_Nwd; c++) {
+      const unsigned int i  = 32 * FAEST_EM_128F_Nwd * j + 32 * c;
+      const unsigned int iy = 4 * FAEST_EM_128F_Nwd * j + 4 * c;
 
       bf128_t bf_x_hat[4];
       bf128_t bf_z_hat[4];
@@ -1792,13 +1795,12 @@ static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, bf128_t* bf
   }
 }
 
-static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, bf128_t* bf_y,
-                               const faest_paramset_t* params) {
-  const unsigned int R   = params->faest_param.R;
-  const unsigned int Nst = params->faest_param.Nwd;
+static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, bf128_t* bf_y) {
+  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
+  static_assert(FAEST_EM_128F_Nwd == FAEST_EM_128S_Nwd);
 
   // Step: 2
-  for (unsigned int j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * FAEST_EM_128F_Nwd; j++) {
     bf_y[j] = bf128_byte_combine(bf_z + 8 * j);
     if (bf_x) {
       bf_y[j] = bf128_add(bf_y[j], bf128_byte_combine(bf_x + 8 * j));
@@ -1808,10 +1810,10 @@ static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, bf128_t
   const bf128_t bf_two   = bf128_byte_combine_bits(2);
   const bf128_t bf_three = bf128_byte_combine_bits(3);
 
-  for (unsigned int j = 1; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
-      const unsigned int i  = 32 * Nst * j + 32 * c;
-      const unsigned int iy = 4 * Nst * j + 4 * c;
+  for (unsigned int j = 1; j < FAEST_EM_128F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_128F_Nwd; c++) {
+      const unsigned int i  = 32 * FAEST_EM_128F_Nwd * j + 32 * c;
+      const unsigned int iy = 4 * FAEST_EM_128F_Nwd * j + 4 * c;
 
       bf128_t bf_x_hat[4];
       bf128_t bf_z_hat[4];
@@ -1849,25 +1851,24 @@ static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, bf128_t
 }
 
 static void em_enc_backward_128_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  uint8_t Mtag, uint8_t Mkey, bf128_t* y_out,
-                                  const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int R      = params->faest_param.R;
-  const unsigned int Nst    = params->faest_param.Nwd;
+                                  uint8_t Mtag, uint8_t Mkey, bf128_t* y_out) {
+  static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA);
+  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
+  static_assert(FAEST_EM_128F_Nwd == FAEST_EM_128S_Nwd);
 
-  for (unsigned int j = 0; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
+  for (unsigned int j = 0; j < FAEST_EM_128F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_128F_Nwd; c++) {
       for (unsigned int r = 0; r <= 3; r++) {
-        unsigned int icol = (c - r + Nst) % Nst;
-        if (Nst == 8 && r >= 2) {
-          icol = (icol - 1 + Nst) % Nst;
+        unsigned int icol = (c - r + FAEST_EM_128F_Nwd) % FAEST_EM_128F_Nwd;
+        if (FAEST_EM_128F_Nwd == 8 && r >= 2) {
+          icol = (icol - 1 + FAEST_EM_128F_Nwd) % FAEST_EM_128F_Nwd;
         }
-        unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
+        unsigned int ird = FAEST_EM_128F_LAMBDA + 32 * FAEST_EM_128F_Nwd * j + 32 * icol + 8 * r;
         uint8_t z_tilde  = 0;
-        if (j < (R - 1)) {
+        if (j < (FAEST_EM_128F_R - 1)) {
           z_tilde = z[ird / 8];
         } else {
-          z_tilde = z_out[(ird - 32 * Nst * (j + 1)) / 8] ^ x[ird / 8];
+          z_tilde = z_out[(ird - 32 * FAEST_EM_128F_Nwd * (j + 1)) / 8] ^ x[ird / 8];
         }
 
         // (bit spliced)
@@ -1877,40 +1878,40 @@ static void em_enc_backward_128_1(const uint8_t* z, const uint8_t* x, const uint
         y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
 
         // Step: 18
-        y_out[4 * Nst * j + 4 * c + r] = bf128_byte_combine_bits(y_tilde);
+        y_out[4 * FAEST_EM_128F_Nwd * j + 4 * c + r] = bf128_byte_combine_bits(y_tilde);
       }
     }
   }
 }
 
 static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const bf128_t* bf_z_out,
-                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* y_out,
-                                const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int R      = params->faest_param.R;
-  const unsigned int Nst    = params->faest_param.Nwd;
+                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* y_out) {
+  static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA);
+  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
+  static_assert(FAEST_EM_128F_Nwd == FAEST_EM_128S_Nwd);
 
   // Step: 1
   const bf128_t bf_delta = delta ? bf128_load(delta) : bf128_zero();
   const bf128_t factor =
       bf128_mul_bit(bf128_add(bf128_mul_bit(bf_delta, Mkey), bf128_from_bit(1 ^ Mkey)), 1 ^ Mtag);
 
-  for (unsigned int j = 0; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
+  for (unsigned int j = 0; j < FAEST_EM_128F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_128F_Nwd; c++) {
       for (unsigned int r = 0; r <= 3; r++) {
         bf128_t bf_z_tilde[8];
-        unsigned int icol = (c - r + Nst) % Nst;
-        if (Nst == 8 && r >= 2) {
-          icol = (icol - 1 + Nst) % Nst;
+        unsigned int icol = (c - r + FAEST_EM_128F_Nwd) % FAEST_EM_128F_Nwd;
+        if (FAEST_EM_128F_Nwd == 8 && r >= 2) {
+          icol = (icol - 1 + FAEST_EM_128F_Nwd) % FAEST_EM_128F_Nwd;
         }
-        const unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
+        const unsigned int ird =
+            FAEST_EM_128F_LAMBDA + 32 * FAEST_EM_128F_Nwd * j + 32 * icol + 8 * r;
 
-        if (j < (R - 1)) {
+        if (j < (FAEST_EM_128F_R - 1)) {
           memcpy(bf_z_tilde, bf_z + ird, sizeof(bf_z_tilde));
         } else {
           for (unsigned int i = 0; i < 8; ++i) {
             // Step: 12
-            bf_z_tilde[i] = bf_z_out[ird - 32 * Nst * (j + 1) + i];
+            bf_z_tilde[i] = bf_z_out[ird - 32 * FAEST_EM_128F_Nwd * (j + 1) + i];
             if (bf_x) {
               bf_z_tilde[i] = bf128_add(bf_z_tilde[i], bf_x[ird + i]);
             }
@@ -1926,7 +1927,7 @@ static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const 
         bf_y_tilde[2] = bf128_add(bf_y_tilde[2], factor);
 
         // Step: 18
-        y_out[16 * j + 4 * c + r] = bf128_byte_combine(bf_y_tilde);
+        y_out[4 * FAEST_EM_128F_Nwd * j + 4 * c + r] = bf128_byte_combine(bf_y_tilde);
       }
     }
   }
@@ -1934,106 +1935,97 @@ static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const 
 
 static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const uint8_t* w,
                                    const bf128_t* bf_v, uint8_t Mkey, const bf128_t* bf_q,
-                                   const uint8_t* delta, bf128_t* A0, bf128_t* A1, bf128_t* B,
-                                   const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int Senc   = params->faest_param.Senc;
-  const unsigned int R      = params->faest_param.R;
+                                   const uint8_t* delta, bf128_t* A0, bf128_t* A1, bf128_t* B) {
+  static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA);
+  static_assert(FAEST_EM_128F_Senc == FAEST_EM_128S_Senc);
+  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
 
   if (Mkey == 0) {
     // Step 6
-    uint8_t* w_out = malloc(lambda / 8);
-    xor_u8_array(out, w, w_out, lambda / 8);
+    uint8_t w_out[FAEST_EM_128F_LAMBDA / 8];
+    xor_u8_array(out, w, w_out, sizeof(w_out));
 
-    bf128_t* bf_s       = malloc(sizeof(bf128_t) * Senc);
-    bf128_t* bf_vs      = malloc(sizeof(bf128_t) * Senc);
-    bf128_t* bf_s_dash  = malloc(sizeof(bf128_t) * Senc);
-    bf128_t* bf_vs_dash = malloc(sizeof(bf128_t) * Senc);
-    em_enc_forward_128_1(w, x, bf_s, params);
-    em_enc_forward_128(bf_v, NULL, bf_vs, params);
-    em_enc_backward_128_1(w, x, w_out, 0, 0, bf_s_dash, params);
-    em_enc_backward_128(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
+    bf128_t bf_s[FAEST_EM_128F_Senc];
+    bf128_t bf_vs[FAEST_EM_128F_Senc];
+    bf128_t bf_s_dash[FAEST_EM_128F_Senc];
+    bf128_t bf_vs_dash[FAEST_EM_128F_Senc];
+    em_enc_forward_128_1(w, x, bf_s);
+    em_enc_forward_128(bf_v, NULL, bf_vs);
+    em_enc_backward_128_1(w, x, w_out, 0, 0, bf_s_dash);
+    em_enc_backward_128(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash);
 
-    for (unsigned int j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < FAEST_EM_128F_Senc; j++) {
       A0[j] = bf128_mul(bf_vs[j], bf_vs_dash[j]);
       A1[j] = bf128_add(
           bf128_add(bf128_mul(bf128_add(bf_s[j], bf_vs[j]), bf128_add(bf_s_dash[j], bf_vs_dash[j])),
                     A0[j]),
           bf128_one());
     }
-    free(bf_vs_dash);
-    free(bf_s_dash);
-    free(bf_vs);
-    free(bf_s);
-    free(w_out);
   } else {
     // Step: 18, 19
     // TODO: compute these on demand in em_enc_backward_128
     const bf128_t bf_delta = bf128_load(delta);
-    bf128_t* bf_x          = malloc(sizeof(bf128_t) * 128 * (R + 1));
-    for (unsigned int i = 0; i < 128 * (R + 1); i++) {
+    bf128_t* bf_x          = malloc(sizeof(bf128_t) * 128 * (FAEST_EM_128F_R + 1));
+    for (unsigned int i = 0; i < 128 * (FAEST_EM_128F_R + 1); i++) {
       bf_x[i] = bf128_mul_bit(bf_delta, ptr_get_bit(x, i));
     }
 
     // Step 21
-    bf128_t* bf_q_out = malloc(sizeof(bf128_t) * lambda);
-    for (unsigned int i = 0; i < lambda; i++) {
+    bf128_t* bf_q_out = malloc(sizeof(bf128_t) * FAEST_EM_128F_LAMBDA);
+    for (unsigned int i = 0; i < FAEST_EM_128F_LAMBDA; i++) {
       bf_q_out[i] = bf128_add(bf128_mul_bit(bf_delta, ptr_get_bit(out, i)), bf_q[i]);
     }
 
-    bf128_t* bf_qs      = malloc(sizeof(bf128_t) * Senc);
-    bf128_t* bf_qs_dash = malloc(sizeof(bf128_t) * Senc);
-    em_enc_forward_128(bf_q, bf_x, bf_qs, params);
-    em_enc_backward_128(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash, params);
+    bf128_t bf_qs[FAEST_EM_128F_Senc];
+    bf128_t bf_qs_dash[FAEST_EM_128F_Senc];
+    em_enc_forward_128(bf_q, bf_x, bf_qs);
+    em_enc_backward_128(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash);
     free(bf_q_out);
 
     // Step: 13..14
     bf128_t minus_part = bf128_mul(bf_delta, bf_delta);
-    for (unsigned int j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < FAEST_EM_128F_Senc; j++) {
       B[j] = bf128_add(bf128_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
     }
-    free(bf_qs);
-    free(bf_qs_dash);
     free(bf_x);
   }
 }
 
 static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
-                         uint8_t* b_tilde, const faest_paramset_t* params) {
-  const unsigned int Lenc   = params->faest_param.Lenc;
-  const unsigned int R      = params->faest_param.R;
-  const unsigned int Senc   = params->faest_param.Senc;
-  const unsigned int lambda = params->faest_param.lambda;
+                         uint8_t* b_tilde) {
+  static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA);
+  static_assert(FAEST_EM_128F_Senc == FAEST_EM_128S_Senc);
+  static_assert(FAEST_EM_128F_Lenc == FAEST_EM_128S_Lenc);
+  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
 
   // copy expanded key in to an array
-  uint8_t* x = malloc(lambda * (R + 1) / 8);
+  uint8_t* x = malloc(FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8);
   {
     aes_round_keys_t round_keys;
     aes128_init_round_keys(&round_keys, in);
     uint8_t* tmp_x = x;
-    for (unsigned int r = 0; r != R + 1; ++r) {
-      for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
+    for (unsigned int r = 0; r != FAEST_EM_128F_R + 1; ++r) {
+      for (unsigned int i = 0; i != FAEST_EM_128F_Nwd; ++i) {
         memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
         tmp_x += sizeof(aes_word_t);
       }
     }
   }
 
-  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, Lenc);
+  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, FAEST_EM_128F_Lenc);
 
-  const unsigned int length_a = Senc + 1;
-  bf128_t* A0                 = malloc(sizeof(bf128_t) * length_a);
-  bf128_t* A1                 = malloc(sizeof(bf128_t) * length_a);
-  em_enc_constraints_128(out, x, w, bf_v, 0, NULL, NULL, A0, A1, NULL, params);
+  bf128_t* A0 = malloc(sizeof(bf128_t) * (FAEST_EM_128F_Senc + 1));
+  bf128_t* A1 = malloc(sizeof(bf128_t) * (FAEST_EM_128F_Senc + 1));
+  em_enc_constraints_128(out, x, w, bf_v, 0, NULL, NULL, A0, A1, NULL);
   free(x);
 
-  A1[length_a - 1] = bf128_load(u + Lenc / 8);
-  A0[length_a - 1] = bf128_sum_poly(bf_v + Lenc);
+  A1[FAEST_EM_128F_Senc] = bf128_load(u + FAEST_EM_128F_Lenc / 8);
+  A0[FAEST_EM_128F_Senc] = bf128_sum_poly(bf_v + FAEST_EM_128F_Lenc);
   free(bf_v);
 
-  zk_hash_128(a_tilde, chall, A1, length_a - 1);
-  zk_hash_128(b_tilde, chall, A0, length_a - 1);
+  zk_hash_128(a_tilde, chall, A1, FAEST_EM_128F_Senc);
+  zk_hash_128(b_tilde, chall, A0, FAEST_EM_128F_Senc);
 
   free(A0);
   free(A1);
@@ -2042,16 +2034,16 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
 static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                               const uint8_t* out, const faest_paramset_t* params) {
-  const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int tau         = params->faest_param.tau;
-  const unsigned int t0          = params->faest_param.t0;
-  const unsigned int k0          = params->faest_param.k0;
-  const unsigned int t1          = params->faest_param.t1;
-  const unsigned int k1          = params->faest_param.k1;
-  const unsigned int Lenc        = params->faest_param.Lenc;
-  const unsigned int R           = params->faest_param.R;
-  const unsigned int Senc        = params->faest_param.Senc;
-  const unsigned int lambdaBytes = lambda / 8;
+  static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA);
+  static_assert(FAEST_EM_128F_Senc == FAEST_EM_128S_Senc);
+  static_assert(FAEST_EM_128F_Lenc == FAEST_EM_128S_Lenc);
+  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
+
+  const unsigned int tau = params->faest_param.tau;
+  const unsigned int t0  = params->faest_param.t0;
+  const unsigned int k0  = params->faest_param.k0;
+  const unsigned int t1  = params->faest_param.t1;
+  const unsigned int k1  = params->faest_param.k1;
 
   const uint8_t* delta = chall_3;
 
@@ -2061,40 +2053,40 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
     ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
     for (unsigned int j = 0; j < depth; j++, ++col) {
       if (decoded_challenge[j] == 1) {
-        xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
+        xor_u8_array(d, Q[col], Q[col], (FAEST_EM_128F_Lenc + 7) / 8);
       }
     }
   }
 
-  bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, Lenc);
+  bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, FAEST_EM_128F_Lenc);
 
   // copy expanded key in to an array
-  uint8_t* x = malloc(lambda * (R + 1) / 8);
+  uint8_t* x = malloc(FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8);
   // for scan-build
-  assert(lambda * (R + 1) / 8 == sizeof(aes_word_t) * params->faest_param.Nwd * (R + 1));
+  static_assert(FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8 ==
+                sizeof(aes_word_t) * FAEST_EM_128F_Nwd * (FAEST_EM_128F_R + 1));
   {
     aes_round_keys_t round_keys;
     aes128_init_round_keys(&round_keys, in);
     uint8_t* tmp_x = x;
-    for (unsigned int r = 0; r != R + 1; ++r) {
-      for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
+    for (unsigned int r = 0; r != FAEST_EM_128F_R + 1; ++r) {
+      for (unsigned int i = 0; i != FAEST_EM_128F_Nwd; ++i) {
         memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
         tmp_x += sizeof(aes_word_t);
       }
     }
   }
 
-  const unsigned int length_b = Senc + 1;
-  bf128_t* B                  = malloc(sizeof(bf128_t) * length_b);
+  bf128_t* B = malloc(sizeof(bf128_t) * (FAEST_EM_128F_Senc + 1));
 
-  em_enc_constraints_128(out, x, NULL, NULL, 1, bf_q, delta, NULL, NULL, B, params);
+  em_enc_constraints_128(out, x, NULL, NULL, 1, bf_q, delta, NULL, NULL, B);
   free(x);
 
-  B[length_b - 1] = bf128_sum_poly(bf_q + Lenc);
+  B[FAEST_EM_128F_Senc] = bf128_sum_poly(bf_q + FAEST_EM_128F_Lenc);
   free(bf_q);
 
-  uint8_t* q_tilde = malloc(lambdaBytes);
-  zk_hash_128(q_tilde, chall_2, B, length_b - 1);
+  uint8_t* q_tilde = malloc(FAEST_EM_128F_LAMBDA / 8);
+  zk_hash_128(q_tilde, chall_2, B, FAEST_EM_128F_Senc);
   free(B);
 
   bf128_t bf_qtilde = bf128_load(q_tilde);
@@ -2105,23 +2097,22 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
 // EM-192
 
-static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, bf192_t* bf_y,
-                                 const faest_paramset_t* params) {
-  const unsigned int R   = params->faest_param.R;
-  const unsigned int Nst = params->faest_param.Nwd;
+static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, bf192_t* bf_y) {
+  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
+  static_assert(FAEST_EM_192F_Nwd == FAEST_EM_192S_Nwd);
 
   // Step: 2
-  for (unsigned int j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * FAEST_EM_192F_Nwd; j++) {
     bf_y[j] = bf192_add(bf192_byte_combine_bits(z[j]), bf192_byte_combine_bits(x[j]));
   }
 
   const bf192_t bf_two   = bf192_byte_combine_bits(2);
   const bf192_t bf_three = bf192_byte_combine_bits(3);
 
-  for (unsigned int j = 1; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
-      const unsigned int i  = 32 * Nst * j + 32 * c;
-      const unsigned int iy = 4 * Nst * j + 4 * c;
+  for (unsigned int j = 1; j < FAEST_EM_192F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
+      const unsigned int i  = 32 * FAEST_EM_192F_Nwd * j + 32 * c;
+      const unsigned int iy = 4 * FAEST_EM_192F_Nwd * j + 4 * c;
 
       bf192_t bf_x_hat[4];
       bf192_t bf_z_hat[4];
@@ -2154,13 +2145,12 @@ static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, bf192_t* bf
   }
 }
 
-static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t* bf_y,
-                               const faest_paramset_t* params) {
-  const unsigned int R   = params->faest_param.R;
-  const unsigned int Nst = params->faest_param.Nwd;
+static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t* bf_y) {
+  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
+  static_assert(FAEST_EM_192F_Nwd == FAEST_EM_192S_Nwd);
 
   // Step: 2
-  for (unsigned int j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * FAEST_EM_192F_Nwd; j++) {
     bf_y[j] = bf192_byte_combine(bf_z + 8 * j);
     if (bf_x) {
       bf_y[j] = bf192_add(bf_y[j], bf192_byte_combine(bf_x + 8 * j));
@@ -2170,10 +2160,10 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t
   const bf192_t bf_two   = bf192_byte_combine_bits(2);
   const bf192_t bf_three = bf192_byte_combine_bits(3);
 
-  for (unsigned int j = 1; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
-      const unsigned int i  = 32 * Nst * j + 32 * c;
-      const unsigned int iy = 4 * Nst * j + 4 * c;
+  for (unsigned int j = 1; j < FAEST_EM_192F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
+      const unsigned int i  = 32 * FAEST_EM_192F_Nwd * j + 32 * c;
+      const unsigned int iy = 4 * FAEST_EM_192F_Nwd * j + 4 * c;
 
       bf192_t bf_x_hat[4];
       bf192_t bf_z_hat[4];
@@ -2211,25 +2201,24 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t
 }
 
 static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  uint8_t Mtag, uint8_t Mkey, bf192_t* y_out,
-                                  const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int R      = params->faest_param.R;
-  const unsigned int Nst    = params->faest_param.Nwd;
+                                  uint8_t Mtag, uint8_t Mkey, bf192_t* y_out) {
+  static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA);
+  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
+  static_assert(FAEST_EM_192F_Nwd == FAEST_EM_192S_Nwd);
 
-  for (unsigned int j = 0; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
+  for (unsigned int j = 0; j < FAEST_EM_192F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
       for (unsigned int r = 0; r <= 3; r++) {
-        unsigned int icol = (c - r + Nst) % Nst;
-        if (Nst == 8 && r >= 2) {
-          icol = (icol - 1 + Nst) % Nst;
+        unsigned int icol = (c - r + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
+        if (FAEST_EM_192F_Nwd == 8 && r >= 2) {
+          icol = (icol - 1 + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
         }
-        unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
+        unsigned int ird = FAEST_EM_192F_LAMBDA + 32 * FAEST_EM_192F_Nwd * j + 32 * icol + 8 * r;
         uint8_t z_tilde  = 0;
-        if (j < (R - 1)) {
+        if (j < (FAEST_EM_192F_R - 1)) {
           z_tilde = z[ird / 8];
         } else {
-          z_tilde = z_out[(ird - 32 * Nst * (j + 1)) / 8] ^ x[ird / 8];
+          z_tilde = z_out[(ird - 32 * FAEST_EM_192F_Nwd * (j + 1)) / 8] ^ x[ird / 8];
         }
 
         // (bit spliced)
@@ -2239,39 +2228,40 @@ static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint
         y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
 
         // Step: 18
-        y_out[4 * Nst * j + 4 * c + r] = bf192_byte_combine_bits(y_tilde);
+        y_out[4 * FAEST_EM_192F_Nwd * j + 4 * c + r] = bf192_byte_combine_bits(y_tilde);
       }
     }
   }
 }
 
 static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const bf192_t* bf_z_out,
-                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf192_t* y_out,
-                                const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int R      = params->faest_param.R;
-  const unsigned int Nst    = params->faest_param.Nwd;
+                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf192_t* y_out) {
+  static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA);
+  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
+  static_assert(FAEST_EM_192F_Nwd == FAEST_EM_192S_Nwd);
 
   // Step: 1
   const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
   const bf192_t factor =
       bf192_mul_bit(bf192_add(bf192_mul_bit(bf_delta, Mkey), bf192_from_bit(1 ^ Mkey)), 1 ^ Mtag);
 
-  for (unsigned int j = 0; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
+  for (unsigned int j = 0; j < FAEST_EM_192F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
       for (unsigned int r = 0; r <= 3; r++) {
-        unsigned int icol = (c - r + Nst) % Nst;
-        if (Nst == 8 && r >= 2) {
-          icol = (icol - 1 + Nst) % Nst;
-        }
-        unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
         bf192_t bf_z_tilde[8];
-        if (j < (R - 1)) {
+        unsigned int icol = (c - r + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
+        if (FAEST_EM_192F_Nwd == 8 && r >= 2) {
+          icol = (icol - 1 + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
+        }
+        const unsigned int ird =
+            FAEST_EM_192F_LAMBDA + 32 * FAEST_EM_192F_Nwd * j + 32 * icol + 8 * r;
+
+        if (j < (FAEST_EM_192F_R - 1)) {
           memcpy(bf_z_tilde, bf_z + ird, sizeof(bf_z_tilde));
         } else {
           for (unsigned int i = 0; i < 8; ++i) {
             // Step: 12
-            bf_z_tilde[i] = bf_z_out[ird - 32 * Nst * (j + 1) + i];
+            bf_z_tilde[i] = bf_z_out[ird - 32 * FAEST_EM_192F_Nwd * (j + 1) + i];
             if (bf_x) {
               bf_z_tilde[i] = bf192_add(bf_z_tilde[i], bf_x[ird + i]);
             }
@@ -2287,7 +2277,7 @@ static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const 
         bf_y_tilde[2] = bf192_add(bf_y_tilde[2], factor);
 
         // Step: 18
-        y_out[4 * Nst * j + 4 * c + r] = bf192_byte_combine(bf_y_tilde);
+        y_out[4 * FAEST_EM_192F_Nwd * j + 4 * c + r] = bf192_byte_combine(bf_y_tilde);
       }
     }
   }
@@ -2295,106 +2285,97 @@ static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const 
 
 static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const uint8_t* w,
                                    const bf192_t* bf_v, uint8_t Mkey, const bf192_t* bf_q,
-                                   const uint8_t* delta, bf192_t* A0, bf192_t* A1, bf192_t* B,
-                                   const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int Senc   = params->faest_param.Senc;
-  const unsigned int R      = params->faest_param.R;
-  const unsigned int Nst    = params->faest_param.Nwd;
+                                   const uint8_t* delta, bf192_t* A0, bf192_t* A1, bf192_t* B) {
+  static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA);
+  static_assert(FAEST_EM_192F_Senc == FAEST_EM_192S_Senc);
+  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
 
   if (Mkey == 0) {
     // Step 6
-    uint8_t* w_out = malloc(lambda / 8);
-    xor_u8_array(out, w, w_out, lambda / 8);
+    uint8_t w_out[FAEST_EM_192F_LAMBDA / 8];
+    xor_u8_array(out, w, w_out, sizeof(w_out));
 
-    bf192_t* bf_s       = malloc(sizeof(bf192_t) * Senc);
-    bf192_t* bf_vs      = malloc(sizeof(bf192_t) * Senc);
-    bf192_t* bf_s_dash  = malloc(sizeof(bf192_t) * Senc);
-    bf192_t* bf_vs_dash = malloc(sizeof(bf192_t) * Senc);
-    em_enc_forward_192_1(w, x, bf_s, params);
-    em_enc_forward_192(bf_v, NULL, bf_vs, params);
-    em_enc_backward_192_1(w, x, w_out, 0, 0, bf_s_dash, params);
-    em_enc_backward_192(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
+    bf192_t bf_s[FAEST_EM_192F_Senc];
+    bf192_t bf_vs[FAEST_EM_192F_Senc];
+    bf192_t bf_s_dash[FAEST_EM_192F_Senc];
+    bf192_t bf_vs_dash[FAEST_EM_192F_Senc];
+    em_enc_forward_192_1(w, x, bf_s);
+    em_enc_forward_192(bf_v, NULL, bf_vs);
+    em_enc_backward_192_1(w, x, w_out, 0, 0, bf_s_dash);
+    em_enc_backward_192(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash);
 
-    for (unsigned int j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < FAEST_EM_192F_Senc; j++) {
       A0[j] = bf192_mul(bf_vs[j], bf_vs_dash[j]);
       A1[j] = bf192_add(
           bf192_add(bf192_mul(bf192_add(bf_s[j], bf_vs[j]), bf192_add(bf_s_dash[j], bf_vs_dash[j])),
                     A0[j]),
           bf192_one());
     }
-    free(bf_vs_dash);
-    free(bf_s_dash);
-    free(bf_vs);
-    free(bf_s);
-    free(w_out);
   } else {
     // Step: 18, 19
+    // TODO: compute these on demand in em_enc_backward_192
     const bf192_t bf_delta = bf192_load(delta);
-    bf192_t* bf_x          = malloc(sizeof(bf192_t) * 32 * Nst * (R + 1));
-    for (unsigned int i = 0; i < 32 * Nst * (R + 1); i++) {
+    bf192_t* bf_x          = malloc(sizeof(bf192_t) * 192 * (FAEST_EM_192F_R + 1));
+    for (unsigned int i = 0; i < 192 * (FAEST_EM_192F_R + 1); i++) {
       bf_x[i] = bf192_mul_bit(bf_delta, ptr_get_bit(x, i));
     }
 
     // Step 21
-    bf192_t* bf_q_out = malloc(sizeof(bf192_t) * lambda);
-    for (unsigned int i = 0; i < lambda; i++) {
+    bf192_t* bf_q_out = malloc(sizeof(bf192_t) * FAEST_EM_192F_LAMBDA);
+    for (unsigned int i = 0; i < FAEST_EM_192F_LAMBDA; i++) {
       bf_q_out[i] = bf192_add(bf192_mul_bit(bf_delta, ptr_get_bit(out, i)), bf_q[i]);
     }
 
-    bf192_t* bf_qs      = malloc(sizeof(bf192_t) * Senc);
-    bf192_t* bf_qs_dash = malloc(sizeof(bf192_t) * Senc);
-    em_enc_forward_192(bf_q, bf_x, bf_qs, params);
-    em_enc_backward_192(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash, params);
+    bf192_t bf_qs[FAEST_EM_192F_Senc];
+    bf192_t bf_qs_dash[FAEST_EM_192F_Senc];
+    em_enc_forward_192(bf_q, bf_x, bf_qs);
+    em_enc_backward_192(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash);
     free(bf_q_out);
 
     // Step: 13..14
     bf192_t minus_part = bf192_mul(bf_delta, bf_delta);
-    for (unsigned int j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < FAEST_EM_192F_Senc; j++) {
       B[j] = bf192_add(bf192_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
     }
-    free(bf_qs);
-    free(bf_qs_dash);
     free(bf_x);
   }
 }
 
 static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
-                         uint8_t* b_tilde, const faest_paramset_t* params) {
-  const unsigned int Lenc   = params->faest_param.Lenc;
-  const unsigned int R      = params->faest_param.R;
-  const unsigned int Senc   = params->faest_param.Senc;
-  const unsigned int lambda = params->faest_param.lambda;
+                         uint8_t* b_tilde) {
+  static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA);
+  static_assert(FAEST_EM_192F_Senc == FAEST_EM_192S_Senc);
+  static_assert(FAEST_EM_192F_Lenc == FAEST_EM_192S_Lenc);
+  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
 
   // copy expanded key in to an array
-  uint8_t* x = malloc(lambda * (R + 1) / 8);
+  uint8_t* x = malloc(FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8);
   {
     aes_round_keys_t round_keys;
     rijndael192_init_round_keys(&round_keys, in);
     uint8_t* tmp_x = x;
-    for (unsigned int r = 0; r != R + 1; ++r) {
-      for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
+    for (unsigned int r = 0; r != FAEST_EM_192F_R + 1; ++r) {
+      for (unsigned int i = 0; i != FAEST_EM_192F_Nwd; ++i) {
         memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
         tmp_x += sizeof(aes_word_t);
       }
     }
   }
 
-  bf192_t* bf_v = column_to_row_major_and_shrink_V_192(V, Lenc);
+  bf192_t* bf_v = column_to_row_major_and_shrink_V_192(V, FAEST_EM_192F_Lenc);
 
-  const unsigned int length_a = Senc + 1;
-  bf192_t* A0                 = malloc(sizeof(bf192_t) * length_a);
-  bf192_t* A1                 = malloc(sizeof(bf192_t) * length_a);
-  em_enc_constraints_192(out, x, w, bf_v, 0, NULL, NULL, A0, A1, NULL, params);
+  bf192_t* A0 = malloc(sizeof(bf192_t) * (FAEST_EM_192F_Senc + 1));
+  bf192_t* A1 = malloc(sizeof(bf192_t) * (FAEST_EM_192F_Senc + 1));
+  em_enc_constraints_192(out, x, w, bf_v, 0, NULL, NULL, A0, A1, NULL);
   free(x);
 
-  A1[length_a - 1] = bf192_load(u + Lenc / 8);
-  A0[length_a - 1] = bf192_sum_poly(bf_v + Lenc);
+  A1[FAEST_EM_192F_Senc] = bf192_load(u + FAEST_EM_192F_Lenc / 8);
+  A0[FAEST_EM_192F_Senc] = bf192_sum_poly(bf_v + FAEST_EM_192F_Lenc);
   free(bf_v);
 
-  zk_hash_192(a_tilde, chall, A1, length_a - 1);
-  zk_hash_192(b_tilde, chall, A0, length_a - 1);
+  zk_hash_192(a_tilde, chall, A1, FAEST_EM_192F_Senc);
+  zk_hash_192(b_tilde, chall, A0, FAEST_EM_192F_Senc);
 
   free(A0);
   free(A1);
@@ -2403,16 +2384,16 @@ static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
 static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                               const uint8_t* out, const faest_paramset_t* params) {
-  const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int tau         = params->faest_param.tau;
-  const unsigned int t0          = params->faest_param.t0;
-  const unsigned int k0          = params->faest_param.k0;
-  const unsigned int t1          = params->faest_param.t1;
-  const unsigned int k1          = params->faest_param.k1;
-  const unsigned int Lenc        = params->faest_param.Lenc;
-  const unsigned int R           = params->faest_param.R;
-  const unsigned int Senc        = params->faest_param.Senc;
-  const unsigned int lambdaBytes = lambda / 8;
+  static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA);
+  static_assert(FAEST_EM_192F_Senc == FAEST_EM_192S_Senc);
+  static_assert(FAEST_EM_192F_Lenc == FAEST_EM_192S_Lenc);
+  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
+
+  const unsigned int tau = params->faest_param.tau;
+  const unsigned int t0  = params->faest_param.t0;
+  const unsigned int k0  = params->faest_param.k0;
+  const unsigned int t1  = params->faest_param.t1;
+  const unsigned int k1  = params->faest_param.k1;
 
   const uint8_t* delta = chall_3;
 
@@ -2422,38 +2403,40 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
     ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
     for (unsigned int j = 0; j < depth; j++, ++col) {
       if (decoded_challenge[j] == 1) {
-        xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
+        xor_u8_array(d, Q[col], Q[col], (FAEST_EM_192F_Lenc + 7) / 8);
       }
     }
   }
 
-  bf192_t* bf_q = column_to_row_major_and_shrink_V_192(Q, Lenc);
+  bf192_t* bf_q = column_to_row_major_and_shrink_V_192(Q, FAEST_EM_192F_Lenc);
 
   // copy expanded key in to an array
-  uint8_t* x = malloc(lambda * (R + 1) / 8);
+  uint8_t* x = malloc(FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8);
+  // for scan-build
+  static_assert(FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8 ==
+                sizeof(aes_word_t) * FAEST_EM_192F_Nwd * (FAEST_EM_192F_R + 1));
   {
     aes_round_keys_t round_keys;
     rijndael192_init_round_keys(&round_keys, in);
     uint8_t* tmp_x = x;
-    for (unsigned int r = 0; r != R + 1; ++r) {
-      for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
+    for (unsigned int r = 0; r != FAEST_EM_192F_R + 1; ++r) {
+      for (unsigned int i = 0; i != FAEST_EM_192F_Nwd; ++i) {
         memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
         tmp_x += sizeof(aes_word_t);
       }
     }
   }
 
-  const unsigned int length_b = Senc + 1;
-  bf192_t* B                  = malloc(sizeof(bf192_t) * length_b);
+  bf192_t* B = malloc(sizeof(bf192_t) * (FAEST_EM_192F_Senc + 1));
 
-  em_enc_constraints_192(out, x, NULL, NULL, 1, bf_q, delta, NULL, NULL, B, params);
+  em_enc_constraints_192(out, x, NULL, NULL, 1, bf_q, delta, NULL, NULL, B);
   free(x);
 
-  B[length_b - 1] = bf192_sum_poly(bf_q + Lenc);
+  B[FAEST_EM_192F_Senc] = bf192_sum_poly(bf_q + FAEST_EM_192F_Lenc);
   free(bf_q);
 
-  uint8_t* q_tilde = malloc(lambdaBytes);
-  zk_hash_192(q_tilde, chall_2, B, length_b - 1);
+  uint8_t* q_tilde = malloc(FAEST_EM_192F_LAMBDA / 8);
+  zk_hash_192(q_tilde, chall_2, B, FAEST_EM_192F_Senc);
   free(B);
 
   bf192_t bf_qtilde = bf192_load(q_tilde);
@@ -2464,23 +2447,22 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
 // EM-256
 
-static void em_enc_forward_256_1(const uint8_t* z, const uint8_t* x, bf256_t* bf_y,
-                                 const faest_paramset_t* params) {
-  const unsigned int R   = params->faest_param.R;
-  const unsigned int Nst = params->faest_param.Nwd;
+static void em_enc_forward_256_1(const uint8_t* z, const uint8_t* x, bf256_t* bf_y) {
+  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
+  static_assert(FAEST_EM_256F_Nwd == FAEST_EM_256S_Nwd);
 
   // Step: 2
-  for (unsigned int j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * FAEST_EM_256F_Nwd; j++) {
     bf_y[j] = bf256_add(bf256_byte_combine_bits(z[j]), bf256_byte_combine_bits(x[j]));
   }
 
   const bf256_t bf_two   = bf256_byte_combine_bits(2);
   const bf256_t bf_three = bf256_byte_combine_bits(3);
 
-  for (unsigned int j = 1; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
-      const unsigned int i  = 32 * Nst * j + 32 * c;
-      const unsigned int iy = 4 * Nst * j + 4 * c;
+  for (unsigned int j = 1; j < FAEST_EM_256F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_256F_Nwd; c++) {
+      const unsigned int i  = 32 * FAEST_EM_256F_Nwd * j + 32 * c;
+      const unsigned int iy = 4 * FAEST_EM_256F_Nwd * j + 4 * c;
 
       bf256_t bf_x_hat[4];
       bf256_t bf_z_hat[4];
@@ -2513,13 +2495,12 @@ static void em_enc_forward_256_1(const uint8_t* z, const uint8_t* x, bf256_t* bf
   }
 }
 
-static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, bf256_t* bf_y,
-                               const faest_paramset_t* params) {
-  const unsigned int R   = params->faest_param.R;
-  const unsigned int Nst = params->faest_param.Nwd;
+static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, bf256_t* bf_y) {
+  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
+  static_assert(FAEST_EM_256F_Nwd == FAEST_EM_256S_Nwd);
 
   // Step: 2
-  for (unsigned int j = 0; j < 4 * Nst; j++) {
+  for (unsigned int j = 0; j < 4 * FAEST_EM_256F_Nwd; j++) {
     bf_y[j] = bf256_byte_combine(bf_z + 8 * j);
     if (bf_x) {
       bf_y[j] = bf256_add(bf_y[j], bf256_byte_combine(bf_x + 8 * j));
@@ -2529,10 +2510,10 @@ static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, bf256_t
   const bf256_t bf_two   = bf256_byte_combine_bits(2);
   const bf256_t bf_three = bf256_byte_combine_bits(3);
 
-  for (unsigned int j = 1; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
-      const unsigned int i  = 32 * Nst * j + 32 * c;
-      const unsigned int iy = 4 * Nst * j + 4 * c;
+  for (unsigned int j = 1; j < FAEST_EM_256F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_256F_Nwd; c++) {
+      const unsigned int i  = 32 * FAEST_EM_256F_Nwd * j + 32 * c;
+      const unsigned int iy = 4 * FAEST_EM_256F_Nwd * j + 4 * c;
 
       bf256_t bf_x_hat[4];
       bf256_t bf_z_hat[4];
@@ -2570,25 +2551,24 @@ static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, bf256_t
 }
 
 static void em_enc_backward_256_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  uint8_t Mtag, uint8_t Mkey, bf256_t* y_out,
-                                  const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int R      = params->faest_param.R;
-  const unsigned int Nst    = params->faest_param.Nwd;
+                                  uint8_t Mtag, uint8_t Mkey, bf256_t* y_out) {
+  static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA);
+  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
+  static_assert(FAEST_EM_256F_Nwd == FAEST_EM_256S_Nwd);
 
-  for (unsigned int j = 0; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
+  for (unsigned int j = 0; j < FAEST_EM_256F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_256F_Nwd; c++) {
       for (unsigned int r = 0; r <= 3; r++) {
-        unsigned int icol = (c - r + Nst) % Nst;
-        if (Nst == 8 && r >= 2) {
-          icol = (icol - 1 + Nst) % Nst;
+        unsigned int icol = (c - r + FAEST_EM_256F_Nwd) % FAEST_EM_256F_Nwd;
+        if (FAEST_EM_256F_Nwd == 8 && r >= 2) {
+          icol = (icol - 1 + FAEST_EM_256F_Nwd) % FAEST_EM_256F_Nwd;
         }
-        unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
+        unsigned int ird = FAEST_EM_256F_LAMBDA + 32 * FAEST_EM_256F_Nwd * j + 32 * icol + 8 * r;
         uint8_t z_tilde  = 0;
-        if (j < (R - 1)) {
+        if (j < (FAEST_EM_256F_R - 1)) {
           z_tilde = z[ird / 8];
         } else {
-          z_tilde = z_out[(ird - 32 * Nst * (j + 1)) / 8] ^ x[ird / 8];
+          z_tilde = z_out[(ird - 32 * FAEST_EM_256F_Nwd * (j + 1)) / 8] ^ x[ird / 8];
         }
 
         // (bit spliced)
@@ -2598,40 +2578,40 @@ static void em_enc_backward_256_1(const uint8_t* z, const uint8_t* x, const uint
         y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
 
         // Step: 18
-        y_out[4 * Nst * j + 4 * c + r] = bf256_byte_combine_bits(y_tilde);
+        y_out[4 * FAEST_EM_256F_Nwd * j + 4 * c + r] = bf256_byte_combine_bits(y_tilde);
       }
     }
   }
-  return;
 }
 
 static void em_enc_backward_256(const bf256_t* bf_z, const bf256_t* bf_x, const bf256_t* bf_z_out,
-                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf256_t* y_out,
-                                const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int R      = params->faest_param.R;
-  const unsigned int Nst    = params->faest_param.Nwd;
+                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf256_t* y_out) {
+  static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA);
+  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
+  static_assert(FAEST_EM_256F_Nwd == FAEST_EM_256S_Nwd);
 
   // Step: 1
   const bf256_t bf_delta = delta ? bf256_load(delta) : bf256_zero();
   const bf256_t factor =
       bf256_mul_bit(bf256_add(bf256_mul_bit(bf_delta, Mkey), bf256_from_bit(1 ^ Mkey)), 1 ^ Mtag);
 
-  for (unsigned int j = 0; j < R; j++) {
-    for (unsigned int c = 0; c < Nst; c++) {
+  for (unsigned int j = 0; j < FAEST_EM_256F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_256F_Nwd; c++) {
       for (unsigned int r = 0; r <= 3; r++) {
-        unsigned int icol = (c - r + Nst) % Nst;
-        if (Nst == 8 && r >= 2) {
-          icol = (icol - 1 + Nst) % Nst;
-        }
-        unsigned int ird = lambda + 32 * Nst * j + 32 * icol + 8 * r;
         bf256_t bf_z_tilde[8];
-        if (j < (R - 1)) {
+        unsigned int icol = (c - r + FAEST_EM_256F_Nwd) % FAEST_EM_256F_Nwd;
+        if (FAEST_EM_256F_Nwd == 8 && r >= 2) {
+          icol = (icol - 1 + FAEST_EM_256F_Nwd) % FAEST_EM_256F_Nwd;
+        }
+        const unsigned int ird =
+            FAEST_EM_256F_LAMBDA + 32 * FAEST_EM_256F_Nwd * j + 32 * icol + 8 * r;
+
+        if (j < (FAEST_EM_256F_R - 1)) {
           memcpy(bf_z_tilde, bf_z + ird, sizeof(bf_z_tilde));
         } else {
           for (unsigned int i = 0; i < 8; ++i) {
             // Step: 12
-            bf_z_tilde[i] = bf_z_out[(ird - 32 * Nst * (j + 1)) + i];
+            bf_z_tilde[i] = bf_z_out[ird - 32 * FAEST_EM_256F_Nwd * (j + 1) + i];
             if (bf_x) {
               bf_z_tilde[i] = bf256_add(bf_z_tilde[i], bf_x[ird + i]);
             }
@@ -2647,7 +2627,7 @@ static void em_enc_backward_256(const bf256_t* bf_z, const bf256_t* bf_x, const 
         bf_y_tilde[2] = bf256_add(bf_y_tilde[2], factor);
 
         // Step: 18
-        y_out[4 * Nst * j + 4 * c + r] = bf256_byte_combine(bf_y_tilde);
+        y_out[4 * FAEST_EM_256F_Nwd * j + 4 * c + r] = bf256_byte_combine(bf_y_tilde);
       }
     }
   }
@@ -2655,106 +2635,97 @@ static void em_enc_backward_256(const bf256_t* bf_z, const bf256_t* bf_x, const 
 
 static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const uint8_t* w,
                                    const bf256_t* bf_v, uint8_t Mkey, const bf256_t* bf_q,
-                                   const uint8_t* delta, bf256_t* A0, bf256_t* A1, bf256_t* B,
-                                   const faest_paramset_t* params) {
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int Senc   = params->faest_param.Senc;
-  const unsigned int R      = params->faest_param.R;
-  const unsigned int Nst    = params->faest_param.Nwd;
+                                   const uint8_t* delta, bf256_t* A0, bf256_t* A1, bf256_t* B) {
+  static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA);
+  static_assert(FAEST_EM_256F_Senc == FAEST_EM_256S_Senc);
+  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
 
   if (Mkey == 0) {
     // Step 6
-    uint8_t* w_out = malloc(lambda / 8);
-    xor_u8_array(out, w, w_out, lambda / 8);
+    uint8_t w_out[FAEST_EM_256F_LAMBDA / 8];
+    xor_u8_array(out, w, w_out, sizeof(w_out));
 
-    bf256_t* bf_s       = malloc(sizeof(bf256_t) * Senc);
-    bf256_t* bf_vs      = malloc(sizeof(bf256_t) * Senc);
-    bf256_t* bf_s_dash  = malloc(sizeof(bf256_t) * Senc);
-    bf256_t* bf_vs_dash = malloc(sizeof(bf256_t) * Senc);
-    em_enc_forward_256_1(w, x, bf_s, params);
-    em_enc_forward_256(bf_v, NULL, bf_vs, params);
-    em_enc_backward_256_1(w, x, w_out, 0, 0, bf_s_dash, params);
-    em_enc_backward_256(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash, params);
+    bf256_t bf_s[FAEST_EM_256F_Senc];
+    bf256_t bf_vs[FAEST_EM_256F_Senc];
+    bf256_t bf_s_dash[FAEST_EM_256F_Senc];
+    bf256_t bf_vs_dash[FAEST_EM_256F_Senc];
+    em_enc_forward_256_1(w, x, bf_s);
+    em_enc_forward_256(bf_v, NULL, bf_vs);
+    em_enc_backward_256_1(w, x, w_out, 0, 0, bf_s_dash);
+    em_enc_backward_256(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash);
 
-    for (unsigned int j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < FAEST_EM_256F_Senc; j++) {
       A0[j] = bf256_mul(bf_vs[j], bf_vs_dash[j]);
       A1[j] = bf256_add(
           bf256_add(bf256_mul(bf256_add(bf_s[j], bf_vs[j]), bf256_add(bf_s_dash[j], bf_vs_dash[j])),
                     A0[j]),
           bf256_one());
     }
-    free(bf_vs_dash);
-    free(bf_s_dash);
-    free(bf_vs);
-    free(bf_s);
-    free(w_out);
   } else {
     // Step: 18, 19
+    // TODO: compute these on demand in em_enc_backward_256
     const bf256_t bf_delta = bf256_load(delta);
-    bf256_t* bf_x          = malloc(sizeof(bf256_t) * 32 * Nst * (R + 1));
-    for (unsigned int i = 0; i < 32 * Nst * (R + 1); i++) {
+    bf256_t* bf_x          = malloc(sizeof(bf256_t) * 256 * (FAEST_EM_256F_R + 1));
+    for (unsigned int i = 0; i < 256 * (FAEST_EM_256F_R + 1); i++) {
       bf_x[i] = bf256_mul_bit(bf_delta, ptr_get_bit(x, i));
     }
 
     // Step 21
-    bf256_t* bf_q_out = malloc(sizeof(bf256_t) * lambda);
-    for (unsigned int i = 0; i < lambda; i++) {
+    bf256_t* bf_q_out = malloc(sizeof(bf256_t) * FAEST_EM_256F_LAMBDA);
+    for (unsigned int i = 0; i < FAEST_EM_256F_LAMBDA; i++) {
       bf_q_out[i] = bf256_add(bf256_mul_bit(bf_delta, ptr_get_bit(out, i)), bf_q[i]);
     }
 
-    bf256_t* bf_qs      = malloc(sizeof(bf256_t) * Senc);
-    bf256_t* bf_qs_dash = malloc(sizeof(bf256_t) * Senc);
-    em_enc_forward_256(bf_q, bf_x, bf_qs, params);
-    em_enc_backward_256(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash, params);
+    bf256_t bf_qs[FAEST_EM_256F_Senc];
+    bf256_t bf_qs_dash[FAEST_EM_256F_Senc];
+    em_enc_forward_256(bf_q, bf_x, bf_qs);
+    em_enc_backward_256(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash);
     free(bf_q_out);
 
     // Step: 13..14
     bf256_t minus_part = bf256_mul(bf_delta, bf_delta);
-    for (unsigned int j = 0; j < Senc; j++) {
+    for (unsigned int j = 0; j < FAEST_EM_256F_Senc; j++) {
       B[j] = bf256_add(bf256_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
     }
-    free(bf_qs);
-    free(bf_qs_dash);
     free(bf_x);
   }
 }
 
 static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
-                         uint8_t* b_tilde, const faest_paramset_t* params) {
-  const unsigned int Lenc   = params->faest_param.Lenc;
-  const unsigned int R      = params->faest_param.R;
-  const unsigned int Senc   = params->faest_param.Senc;
-  const unsigned int lambda = params->faest_param.lambda;
+                         uint8_t* b_tilde) {
+  static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA);
+  static_assert(FAEST_EM_256F_Senc == FAEST_EM_256S_Senc);
+  static_assert(FAEST_EM_256F_Lenc == FAEST_EM_256S_Lenc);
+  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
 
   // copy expanded key in to an array
-  uint8_t* x = malloc(lambda * (R + 1) / 8);
+  uint8_t* x = malloc(FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8);
   {
     aes_round_keys_t round_keys;
     rijndael256_init_round_keys(&round_keys, in);
     uint8_t* tmp_x = x;
-    for (unsigned int r = 0; r != R + 1; ++r) {
-      for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
+    for (unsigned int r = 0; r != FAEST_EM_256F_R + 1; ++r) {
+      for (unsigned int i = 0; i != FAEST_EM_256F_Nwd; ++i) {
         memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
         tmp_x += sizeof(aes_word_t);
       }
     }
   }
 
-  bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, Lenc);
+  bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, FAEST_EM_256F_Lenc);
 
-  const unsigned int length_a = Senc + 1;
-  bf256_t* A0                 = malloc(sizeof(bf256_t) * length_a);
-  bf256_t* A1                 = malloc(sizeof(bf256_t) * length_a);
-  em_enc_constraints_256(out, x, w, bf_v, 0, NULL, NULL, A0, A1, NULL, params);
+  bf256_t* A0 = malloc(sizeof(bf256_t) * (FAEST_EM_256F_Senc + 1));
+  bf256_t* A1 = malloc(sizeof(bf256_t) * (FAEST_EM_256F_Senc + 1));
+  em_enc_constraints_256(out, x, w, bf_v, 0, NULL, NULL, A0, A1, NULL);
   free(x);
 
-  A1[length_a - 1] = bf256_load(u + Lenc / 8);
-  A0[length_a - 1] = bf256_sum_poly(bf_v + Lenc);
+  A1[FAEST_EM_256F_Senc] = bf256_load(u + FAEST_EM_256F_Lenc / 8);
+  A0[FAEST_EM_256F_Senc] = bf256_sum_poly(bf_v + FAEST_EM_256F_Lenc);
   free(bf_v);
 
-  zk_hash_256(a_tilde, chall, A1, length_a - 1);
-  zk_hash_256(b_tilde, chall, A0, length_a - 1);
+  zk_hash_256(a_tilde, chall, A1, FAEST_EM_256F_Senc);
+  zk_hash_256(b_tilde, chall, A0, FAEST_EM_256F_Senc);
 
   free(A0);
   free(A1);
@@ -2763,16 +2734,16 @@ static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
 static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                               const uint8_t* out, const faest_paramset_t* params) {
-  const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int tau         = params->faest_param.tau;
-  const unsigned int t0          = params->faest_param.t0;
-  const unsigned int k0          = params->faest_param.k0;
-  const unsigned int t1          = params->faest_param.t1;
-  const unsigned int k1          = params->faest_param.k1;
-  const unsigned int Lenc        = params->faest_param.Lenc;
-  const unsigned int R           = params->faest_param.R;
-  const unsigned int Senc        = params->faest_param.Senc;
-  const unsigned int lambdaBytes = lambda / 8;
+  static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA);
+  static_assert(FAEST_EM_256F_Senc == FAEST_EM_256S_Senc);
+  static_assert(FAEST_EM_256F_Lenc == FAEST_EM_256S_Lenc);
+  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
+
+  const unsigned int tau = params->faest_param.tau;
+  const unsigned int t0  = params->faest_param.t0;
+  const unsigned int k0  = params->faest_param.k0;
+  const unsigned int t1  = params->faest_param.t1;
+  const unsigned int k1  = params->faest_param.k1;
 
   const uint8_t* delta = chall_3;
 
@@ -2782,38 +2753,40 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
     ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
     for (unsigned int j = 0; j < depth; j++, ++col) {
       if (decoded_challenge[j] == 1) {
-        xor_u8_array(d, Q[col], Q[col], (Lenc + 7) / 8);
+        xor_u8_array(d, Q[col], Q[col], (FAEST_EM_256F_Lenc + 7) / 8);
       }
     }
   }
 
-  bf256_t* bf_q = column_to_row_major_and_shrink_V_256(Q, Lenc);
+  bf256_t* bf_q = column_to_row_major_and_shrink_V_256(Q, FAEST_EM_256F_Lenc);
 
   // copy expanded key in to an array
-  uint8_t* x = malloc(lambda * (R + 1) / 8);
+  uint8_t* x = malloc(FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8);
+  // for scan-build
+  static_assert(FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8 ==
+                sizeof(aes_word_t) * FAEST_EM_256F_Nwd * (FAEST_EM_256F_R + 1));
   {
     aes_round_keys_t round_keys;
     rijndael256_init_round_keys(&round_keys, in);
     uint8_t* tmp_x = x;
-    for (unsigned int r = 0; r != R + 1; ++r) {
-      for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
+    for (unsigned int r = 0; r != FAEST_EM_256F_R + 1; ++r) {
+      for (unsigned int i = 0; i != FAEST_EM_256F_Nwd; ++i) {
         memcpy(tmp_x, round_keys.round_keys[r][i], sizeof(aes_word_t));
         tmp_x += sizeof(aes_word_t);
       }
     }
   }
 
-  const unsigned int length_b = Senc + 1;
-  bf256_t* B                  = malloc(sizeof(bf256_t) * length_b);
+  bf256_t* B = malloc(sizeof(bf256_t) * (FAEST_EM_256F_Senc + 1));
 
-  em_enc_constraints_256(out, x, NULL, NULL, 1, bf_q, delta, NULL, NULL, B, params);
+  em_enc_constraints_256(out, x, NULL, NULL, 1, bf_q, delta, NULL, NULL, B);
   free(x);
 
-  B[length_b - 1] = bf256_sum_poly(bf_q + Lenc);
+  B[FAEST_EM_256F_Senc] = bf256_sum_poly(bf_q + FAEST_EM_256F_Lenc);
   free(bf_q);
 
-  uint8_t* q_tilde = malloc(lambdaBytes);
-  zk_hash_256(q_tilde, chall_2, B, length_b - 1);
+  uint8_t* q_tilde = malloc(FAEST_EM_256F_LAMBDA / 8);
+  zk_hash_256(q_tilde, chall_2, B, FAEST_EM_256F_Senc);
   free(B);
 
   bf256_t bf_qtilde = bf256_load(q_tilde);
@@ -2832,21 +2805,21 @@ void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* i
     if (params->faest_param.Lke) {
       aes_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde, params);
     } else {
-      em_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+      em_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde);
     }
     break;
   case 192:
     if (params->faest_param.Lke) {
       aes_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde, params);
     } else {
-      em_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+      em_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde);
     }
     break;
   default:
     if (params->faest_param.Lke) {
       aes_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde, params);
     } else {
-      em_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+      em_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde);
     }
   }
 }
