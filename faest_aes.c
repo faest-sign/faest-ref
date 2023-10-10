@@ -1859,12 +1859,10 @@ static void em_enc_backward_128_1(const uint8_t* z, const uint8_t* x, const uint
   for (unsigned int j = 0; j < FAEST_EM_128F_R; j++) {
     for (unsigned int c = 0; c < FAEST_EM_128F_Nwd; c++) {
       for (unsigned int r = 0; r <= 3; r++) {
-        unsigned int icol = (c - r + FAEST_EM_128F_Nwd) % FAEST_EM_128F_Nwd;
-        if (FAEST_EM_128F_Nwd == 8 && r >= 2) {
-          icol = (icol - 1 + FAEST_EM_128F_Nwd) % FAEST_EM_128F_Nwd;
-        }
-        unsigned int ird = FAEST_EM_128F_LAMBDA + 32 * FAEST_EM_128F_Nwd * j + 32 * icol + 8 * r;
-        uint8_t z_tilde  = 0;
+        const unsigned int icol = (c - r + FAEST_EM_128F_Nwd) % FAEST_EM_128F_Nwd;
+        const unsigned int ird =
+            FAEST_EM_128F_LAMBDA + 32 * FAEST_EM_128F_Nwd * j + 32 * icol + 8 * r;
+        uint8_t z_tilde = 0;
         if (j < (FAEST_EM_128F_R - 1)) {
           z_tilde = z[ird / 8];
         } else {
@@ -1899,10 +1897,7 @@ static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const 
     for (unsigned int c = 0; c < FAEST_EM_128F_Nwd; c++) {
       for (unsigned int r = 0; r <= 3; r++) {
         bf128_t bf_z_tilde[8];
-        unsigned int icol = (c - r + FAEST_EM_128F_Nwd) % FAEST_EM_128F_Nwd;
-        if (FAEST_EM_128F_Nwd == 8 && r >= 2) {
-          icol = (icol - 1 + FAEST_EM_128F_Nwd) % FAEST_EM_128F_Nwd;
-        }
+        const unsigned int icol = (c - r + FAEST_EM_128F_Nwd) % FAEST_EM_128F_Nwd;
         const unsigned int ird =
             FAEST_EM_128F_LAMBDA + 32 * FAEST_EM_128F_Nwd * j + 32 * icol + 8 * r;
 
@@ -2209,12 +2204,10 @@ static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint
   for (unsigned int j = 0; j < FAEST_EM_192F_R; j++) {
     for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
       for (unsigned int r = 0; r <= 3; r++) {
-        unsigned int icol = (c - r + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
-        if (FAEST_EM_192F_Nwd == 8 && r >= 2) {
-          icol = (icol - 1 + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
-        }
-        unsigned int ird = FAEST_EM_192F_LAMBDA + 32 * FAEST_EM_192F_Nwd * j + 32 * icol + 8 * r;
-        uint8_t z_tilde  = 0;
+        const unsigned int icol = (c - r + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
+        const unsigned int ird =
+            FAEST_EM_192F_LAMBDA + 32 * FAEST_EM_192F_Nwd * j + 32 * icol + 8 * r;
+        uint8_t z_tilde = 0;
         if (j < (FAEST_EM_192F_R - 1)) {
           z_tilde = z[ird / 8];
         } else {
@@ -2249,10 +2242,7 @@ static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const 
     for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
       for (unsigned int r = 0; r <= 3; r++) {
         bf192_t bf_z_tilde[8];
-        unsigned int icol = (c - r + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
-        if (FAEST_EM_192F_Nwd == 8 && r >= 2) {
-          icol = (icol - 1 + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
-        }
+        const unsigned int icol = (c - r + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
         const unsigned int ird =
             FAEST_EM_192F_LAMBDA + 32 * FAEST_EM_192F_Nwd * j + 32 * icol + 8 * r;
 
