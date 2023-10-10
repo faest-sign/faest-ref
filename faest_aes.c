@@ -17,6 +17,60 @@
 #include <string.h>
 #include <stdlib.h>
 
+static_assert(FAEST_128F_L == FAEST_128S_L, "Invalid parameters");
+static_assert(FAEST_128F_LAMBDA == FAEST_128S_LAMBDA, "Invalid parameters");
+static_assert(FAEST_128F_Lke == FAEST_128S_Lke, "Invalid parameters");
+static_assert(FAEST_128F_Nwd == FAEST_128S_Nwd, "Invalid parameters");
+static_assert(FAEST_128F_R == FAEST_128S_R, "Invalid parameters");
+static_assert(FAEST_128F_Senc == FAEST_128S_Senc, "Invalid parameters");
+static_assert(FAEST_128F_Ske == FAEST_128S_Ske, "Invalid parameters");
+
+static_assert(FAEST_192F_L == FAEST_192S_L, "Invalid parameters");
+static_assert(FAEST_192F_LAMBDA == FAEST_192S_LAMBDA, "Invalid parameters");
+static_assert(FAEST_192F_Lke == FAEST_192S_Lke, "Invalid parameters");
+static_assert(FAEST_192F_Nwd == FAEST_192S_Nwd, "Invalid parameters");
+static_assert(FAEST_192F_R == FAEST_192S_R, "Invalid parameters");
+static_assert(FAEST_192F_Senc == FAEST_192S_Senc, "Invalid parameters");
+static_assert(FAEST_192F_Ske == FAEST_192S_Ske, "Invalid parameters");
+
+static_assert(FAEST_256F_L == FAEST_256S_L, "Invalid parameters");
+static_assert(FAEST_256F_LAMBDA == FAEST_256S_LAMBDA, "Invalid parameters");
+static_assert(FAEST_256F_Lke == FAEST_256S_Lke, "Invalid parameters");
+static_assert(FAEST_256F_Nwd == FAEST_256S_Nwd, "Invalid parameters");
+static_assert(FAEST_256F_R == FAEST_256S_R, "Invalid parameters");
+static_assert(FAEST_256F_Senc == FAEST_256S_Senc, "Invalid parameters");
+static_assert(FAEST_256F_Ske == FAEST_256S_Ske, "Invalid parameters");
+
+static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA, "Invalid parameters");
+static_assert(FAEST_EM_128F_Lenc == FAEST_EM_128S_Lenc, "Invalid parameters");
+static_assert(FAEST_EM_128F_Nwd == FAEST_EM_128S_Nwd, "Invalid parameters");
+static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R, "Invalid parameters");
+static_assert(FAEST_EM_128F_Senc == FAEST_EM_128S_Senc, "Invalid parameters");
+// for scan-build
+static_assert(FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8 ==
+                  sizeof(aes_word_t) * FAEST_EM_128F_Nwd * (FAEST_EM_128F_R + 1),
+              "Invalid parameters");
+
+static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA, "Invalid parameters");
+static_assert(FAEST_EM_192F_Lenc == FAEST_EM_192S_Lenc, "Invalid parameters");
+static_assert(FAEST_EM_192F_Nwd == FAEST_EM_192S_Nwd, "Invalid parameters");
+static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R, "Invalid parameters");
+static_assert(FAEST_EM_192F_Senc == FAEST_EM_192S_Senc, "Invalid parameters");
+// for scan-build
+static_assert(FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8 ==
+                  sizeof(aes_word_t) * FAEST_EM_192F_Nwd * (FAEST_EM_192F_R + 1),
+              "Invalid parameters");
+
+static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA, "Invalid parameters");
+static_assert(FAEST_EM_256F_Lenc == FAEST_EM_256S_Lenc, "Invalid parameters");
+static_assert(FAEST_EM_256F_Nwd == FAEST_EM_256S_Nwd, "Invalid parameters");
+static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R, "Invalid parameters");
+static_assert(FAEST_EM_256F_Senc == FAEST_EM_256S_Senc, "Invalid parameters");
+// for scan-build
+static_assert(FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8 ==
+                  sizeof(aes_word_t) * FAEST_EM_256F_Nwd * (FAEST_EM_256F_R + 1),
+              "Invalid parameters");
+
 static const bf8_t Rcon[30] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
     0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
@@ -152,10 +206,6 @@ static void aes_key_schedule_backward_1(const uint8_t* x, const uint8_t* xk, uin
 // lambda == 128 implementation
 
 static void aes_key_schedule_forward_128(const bf128_t* v, bf128_t* bf_out) {
-  static_assert(FAEST_128F_LAMBDA == FAEST_128S_LAMBDA);
-  static_assert(FAEST_128F_R == FAEST_128S_R);
-  static_assert(FAEST_128F_Nwd == FAEST_128S_Nwd);
-
   // Step: 1 sanity check (skipped)
 
   memcpy(bf_out, v, FAEST_128F_LAMBDA * sizeof(bf128_t));
@@ -181,9 +231,6 @@ static void aes_key_schedule_backward_128(const bf128_t* v, const bf128_t* Vk, u
                                           uint8_t Mkey, const uint8_t* delta, bf128_t* bf_out) {
   // Step: 1
   assert(!((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)));
-
-  static_assert(FAEST_128F_LAMBDA == FAEST_128S_LAMBDA);
-  static_assert(FAEST_128F_Ske == FAEST_128S_Ske);
 
   const bf128_t bf_delta = delta ? bf128_load(delta) : bf128_zero();
 
@@ -238,10 +285,6 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
                                              const bf128_t* q, const uint8_t* delta, bf128_t* A0,
                                              bf128_t* A1, uint8_t* k, bf128_t* vk, bf128_t* B,
                                              bf128_t* qk, const faest_paramset_t* params) {
-  static_assert(FAEST_128F_LAMBDA == FAEST_128S_LAMBDA);
-  static_assert(FAEST_128F_Ske == FAEST_128S_Ske);
-  static_assert(FAEST_128F_Nwd == FAEST_128S_Nwd);
-
   if (Mkey == 0) {
     // Step: 2
     aes_key_schedule_forward_1(w, k, params);
@@ -321,8 +364,6 @@ static void aes_key_schedule_constraints_128(const uint8_t* w, const bf128_t* v,
 
 static void aes_enc_forward_128_1(const uint8_t* x, const uint8_t* xk, const uint8_t* in,
                                   bf128_t* bf_y) {
-  static_assert(FAEST_128F_R == FAEST_128S_R);
-
   // called only with Mtag == Mkey == 0
 
   // Step: 2
@@ -380,8 +421,6 @@ static void aes_enc_forward_128_1(const uint8_t* x, const uint8_t* xk, const uin
 
 static void aes_enc_forward_128(const bf128_t* bf_x, const bf128_t* bf_xk, const uint8_t* in,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* bf_y) {
-  static_assert(FAEST_128F_R == FAEST_128S_R);
-
   const bf128_t bf_delta      = delta ? bf128_load(delta) : bf128_zero();
   const bf128_t bf_minus_mtag = bf128_from_bit(1 ^ Mtag);
   const bf128_t bf_minus_mkey = bf128_from_bit(1 ^ Mkey);
@@ -444,8 +483,6 @@ static void aes_enc_forward_128(const bf128_t* bf_x, const bf128_t* bf_xk, const
 
 static void aes_enc_backward_128_1(const uint8_t* x, const uint8_t* xk, const uint8_t* out,
                                    bf128_t* y_out) {
-  static_assert(FAEST_128F_R == FAEST_128S_R);
-
   // called only with Mtag == Mkey == 0
 
   uint8_t xtilde;
@@ -479,8 +516,6 @@ static void aes_enc_backward_128_1(const uint8_t* x, const uint8_t* xk, const ui
 static void aes_enc_backward_128(const bf128_t* bf_x, const bf128_t* bf_xk, uint8_t Mtag,
                                  uint8_t Mkey, const uint8_t* delta, const uint8_t* out,
                                  bf128_t* y_out) {
-  static_assert(FAEST_128F_R == FAEST_128S_R);
-
   // Step: 1
   const bf128_t bf_delta = delta ? bf128_load(delta) : bf128_zero();
   const bf128_t factor =
@@ -527,8 +562,6 @@ static void aes_enc_constraints_128(const uint8_t* in, const uint8_t* out, const
                                     const bf128_t* v, const uint8_t* k, const bf128_t* vk,
                                     uint8_t Mkey, const bf128_t* q, const bf128_t* qk,
                                     const uint8_t* delta, bf128_t* A0, bf128_t* A1, bf128_t* B) {
-  static_assert(FAEST_128F_Senc == FAEST_128S_Senc);
-
   if (Mkey == 0) {
     bf128_t s[FAEST_128F_Senc];
     bf128_t vs[FAEST_128F_Senc];
@@ -563,12 +596,6 @@ static void aes_enc_constraints_128(const uint8_t* in, const uint8_t* out, const
 static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                           const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                           uint8_t* b_tilde, const faest_paramset_t* params) {
-  static_assert(FAEST_128F_L == FAEST_128S_L);
-  static_assert(FAEST_128F_Lke == FAEST_128S_Lke);
-  static_assert(FAEST_128F_R == FAEST_128S_R);
-  static_assert(FAEST_128F_Ske == FAEST_128S_Ske);
-  static_assert(FAEST_128F_Senc == FAEST_128S_Senc);
-
   // Step: 1..2
   bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, FAEST_128F_L);
 
@@ -610,12 +637,6 @@ static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const
 static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                                const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                                const uint8_t* out, const faest_paramset_t* params) {
-  static_assert(FAEST_128F_L == FAEST_128S_L);
-  static_assert(FAEST_128F_Lke == FAEST_128S_Lke);
-  static_assert(FAEST_128F_R == FAEST_128S_R);
-  static_assert(FAEST_128F_Ske == FAEST_128S_Ske);
-  static_assert(FAEST_128F_Senc == FAEST_128S_Senc);
-
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
@@ -673,10 +694,6 @@ static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* cha
 // lambda == 192 implementation
 
 static void aes_key_schedule_forward_192(const bf192_t* v, bf192_t* bf_out) {
-  static_assert(FAEST_192F_LAMBDA == FAEST_192S_LAMBDA);
-  static_assert(FAEST_192F_Nwd == FAEST_192S_Nwd);
-  static_assert(FAEST_192F_R == FAEST_192S_R);
-
   // Step: 1 sanity check (skipped)
 
   memcpy(bf_out, v, FAEST_192F_LAMBDA * sizeof(bf192_t));
@@ -701,9 +718,6 @@ static void aes_key_schedule_backward_192(const bf192_t* v, const bf192_t* Vk, u
                                           uint8_t Mkey, const uint8_t* delta, bf192_t* bf_out) {
   // Step: 1
   assert(!((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)));
-
-  static_assert(FAEST_192F_LAMBDA == FAEST_192S_LAMBDA);
-  static_assert(FAEST_192F_Ske == FAEST_192S_Ske);
 
   const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
   unsigned int iwd       = 0;
@@ -757,10 +771,6 @@ static void aes_key_schedule_constraints_192(const uint8_t* w, const bf192_t* v,
                                              const bf192_t* q, const uint8_t* delta, bf192_t* A0,
                                              bf192_t* A1, uint8_t* k, bf192_t* vk, bf192_t* B,
                                              bf192_t* qk, const faest_paramset_t* params) {
-  static_assert(FAEST_192F_LAMBDA == FAEST_192S_LAMBDA);
-  static_assert(FAEST_192F_Nwd == FAEST_192S_Nwd);
-  static_assert(FAEST_192F_Ske == FAEST_192S_Ske);
-
   if (Mkey == 0) {
     // Step: 2
     aes_key_schedule_forward_1(w, k, params);
@@ -840,8 +850,6 @@ static void aes_key_schedule_constraints_192(const uint8_t* w, const bf192_t* v,
 
 static void aes_enc_forward_192_1(const uint8_t* x, const uint8_t* xk, const uint8_t* in,
                                   uint8_t Mtag, uint8_t Mkey, bf192_t* bf_y) {
-  static_assert(FAEST_192F_R == FAEST_192S_R);
-
   // Step: 2
   for (unsigned int i = 0; i < 16; i++) {
     // Step: 3,4 (bit spliced)
@@ -897,8 +905,6 @@ static void aes_enc_forward_192_1(const uint8_t* x, const uint8_t* xk, const uin
 
 static void aes_enc_forward_192(const bf192_t* bf_x, const bf192_t* bf_xk, const uint8_t* in,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf192_t* bf_y) {
-  static_assert(FAEST_192F_R == FAEST_192S_R);
-
   const bf192_t bf_delta      = delta ? bf192_load(delta) : bf192_zero();
   const bf192_t bf_minus_mtag = bf192_from_bit(1 ^ Mtag);
   const bf192_t bf_minus_mkey = bf192_from_bit(1 ^ Mkey);
@@ -960,8 +966,6 @@ static void aes_enc_forward_192(const bf192_t* bf_x, const bf192_t* bf_xk, const
 
 static void aes_enc_backward_192_1(const uint8_t* x, const uint8_t* xk, uint8_t Mtag, uint8_t Mkey,
                                    const uint8_t* out, bf192_t* y_out) {
-  static_assert(FAEST_192F_R == FAEST_192S_R);
-
   uint8_t xtilde;
   // Step:2..4
   for (unsigned int j = 0; j < FAEST_192F_R; j++) {
@@ -994,8 +998,6 @@ static void aes_enc_backward_192_1(const uint8_t* x, const uint8_t* xk, uint8_t 
 static void aes_enc_backward_192(const bf192_t* bf_x, const bf192_t* bf_xk, uint8_t Mtag,
                                  uint8_t Mkey, const uint8_t* delta, const uint8_t* out,
                                  bf192_t* y_out) {
-  static_assert(FAEST_192F_R == FAEST_192S_R);
-
   // Step: 1
   const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
   const bf192_t factor =
@@ -1042,8 +1044,6 @@ static void aes_enc_constraints_192(const uint8_t* in, const uint8_t* out, const
                                     const bf192_t* v, const uint8_t* k, const bf192_t* vk,
                                     uint8_t Mkey, const bf192_t* q, const bf192_t* qk,
                                     const uint8_t* delta, bf192_t* A0, bf192_t* A1, bf192_t* B) {
-  static_assert(FAEST_192F_Senc == FAEST_192S_Senc);
-
   if (Mkey == 0) {
     bf192_t s[FAEST_192F_Senc];
     bf192_t vs[FAEST_192F_Senc];
@@ -1078,12 +1078,6 @@ static void aes_enc_constraints_192(const uint8_t* in, const uint8_t* out, const
 static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                           const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                           uint8_t* b_tilde, const faest_paramset_t* params) {
-  static_assert(FAEST_192F_L == FAEST_192S_L);
-  static_assert(FAEST_192F_Lke == FAEST_192S_Lke);
-  static_assert(FAEST_192F_R == FAEST_192S_R);
-  static_assert(FAEST_192F_Ske == FAEST_192S_Ske);
-  static_assert(FAEST_192F_Senc == FAEST_192S_Senc);
-
   // Step: 1..2
   bf192_t* bf_v = column_to_row_major_and_shrink_V_192(V, FAEST_192F_L);
 
@@ -1129,12 +1123,6 @@ static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const
 static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                                const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                                const uint8_t* out, const faest_paramset_t* params) {
-  static_assert(FAEST_192F_L == FAEST_192S_L);
-  static_assert(FAEST_192F_Lke == FAEST_192S_Lke);
-  static_assert(FAEST_192F_R == FAEST_192S_R);
-  static_assert(FAEST_192F_Ske == FAEST_192S_Ske);
-  static_assert(FAEST_192F_Senc == FAEST_192S_Senc);
-
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
@@ -1199,9 +1187,6 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
 // lambda == 256 implementation
 
 static void aes_key_schedule_forward_256(const bf256_t* v, bf256_t* bf_out) {
-  static_assert(FAEST_256F_LAMBDA == FAEST_256S_LAMBDA);
-  static_assert(FAEST_256F_Ske == FAEST_256S_Ske);
-
   // Step: 1 sanity check (skipped)
 
   memcpy(bf_out, v, sizeof(bf256_t) * FAEST_256F_LAMBDA);
@@ -1224,9 +1209,6 @@ static void aes_key_schedule_forward_256(const bf256_t* v, bf256_t* bf_out) {
 
 static void aes_key_schedule_backward_256(const bf256_t* v, const bf256_t* Vk, uint8_t Mtag,
                                           uint8_t Mkey, const uint8_t* delta, bf256_t* bf_out) {
-  static_assert(FAEST_256F_LAMBDA == FAEST_256S_LAMBDA);
-  static_assert(FAEST_256F_Ske == FAEST_256S_Ske);
-
   // Step: 1
   assert(!((Mtag == 1 && Mkey == 1) || (Mkey == 1 && delta == NULL)));
 
@@ -1284,10 +1266,6 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
                                              const bf256_t* q, const uint8_t* delta, bf256_t* A0,
                                              bf256_t* A1, uint8_t* k, bf256_t* vk, bf256_t* B,
                                              bf256_t* qk, const faest_paramset_t* params) {
-  static_assert(FAEST_256F_LAMBDA == FAEST_256S_LAMBDA);
-  static_assert(FAEST_256F_Nwd == FAEST_256S_Nwd);
-  static_assert(FAEST_256F_Ske == FAEST_256S_Ske);
-
   bool rotate_word = true;
 
   if (Mkey == 0) {
@@ -1388,8 +1366,6 @@ static void aes_key_schedule_constraints_256(const uint8_t* w, const bf256_t* v,
 
 static void aes_enc_forward_256_1(const uint8_t* x, const uint8_t* xk, const uint8_t* in,
                                   uint8_t Mtag, uint8_t Mkey, bf256_t* bf_y) {
-  static_assert(FAEST_256F_R == FAEST_256S_R);
-
   // Step: 2
   for (unsigned int i = 0; i < 16; i++) {
     // Step: 3,4 (bit spliced)
@@ -1444,8 +1420,6 @@ static void aes_enc_forward_256_1(const uint8_t* x, const uint8_t* xk, const uin
 
 static void aes_enc_forward_256(const bf256_t* bf_x, const bf256_t* bf_xk, const uint8_t* in,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf256_t* bf_y) {
-  static_assert(FAEST_256F_R == FAEST_256S_R);
-
   const bf256_t bf_delta      = delta ? bf256_load(delta) : bf256_zero();
   const bf256_t bf_minus_mtag = bf256_from_bit(1 ^ Mtag);
   const bf256_t bf_minus_mkey = bf256_from_bit(1 ^ Mkey);
@@ -1507,8 +1481,6 @@ static void aes_enc_forward_256(const bf256_t* bf_x, const bf256_t* bf_xk, const
 
 static void aes_enc_backward_256_1(const uint8_t* x, const uint8_t* xk, uint8_t Mtag, uint8_t Mkey,
                                    const uint8_t* out, bf256_t* y_out) {
-  static_assert(FAEST_256F_R == FAEST_256S_R);
-
   uint8_t xtilde;
   // Step:2..4
   for (unsigned int j = 0; j < FAEST_256F_R; j++) {
@@ -1540,8 +1512,6 @@ static void aes_enc_backward_256_1(const uint8_t* x, const uint8_t* xk, uint8_t 
 static void aes_enc_backward_256(const bf256_t* bf_x, const bf256_t* bf_xk, uint8_t Mtag,
                                  uint8_t Mkey, const uint8_t* delta, const uint8_t* out,
                                  bf256_t* y_out) {
-  static_assert(FAEST_256F_R == FAEST_256S_R);
-
   // Step: 1
   const bf256_t bf_delta = delta ? bf256_load(delta) : bf256_zero();
   const bf256_t factor =
@@ -1588,8 +1558,6 @@ static void aes_enc_constraints_256(const uint8_t* in, const uint8_t* out, const
                                     const bf256_t* v, const uint8_t* k, const bf256_t* vk,
                                     uint8_t Mkey, const bf256_t* q, const bf256_t* qk,
                                     const uint8_t* delta, bf256_t* A0, bf256_t* A1, bf256_t* B) {
-  static_assert(FAEST_256F_Senc == FAEST_256S_Senc);
-
   if (Mkey == 0) {
     bf256_t s[FAEST_256F_Senc];
     bf256_t vs[FAEST_256F_Senc];
@@ -1624,13 +1592,6 @@ static void aes_enc_constraints_256(const uint8_t* in, const uint8_t* out, const
 static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                           const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                           uint8_t* b_tilde, const faest_paramset_t* params) {
-  static_assert(FAEST_256F_L == FAEST_256S_L);
-  static_assert(FAEST_256F_Lke == FAEST_256S_Lke);
-  static_assert(FAEST_256F_Lenc == FAEST_256S_Lenc);
-  static_assert(FAEST_256F_R == FAEST_256S_R);
-  static_assert(FAEST_256F_Ske == FAEST_256S_Ske);
-  static_assert(FAEST_256F_Senc == FAEST_256S_Senc);
-
   // Step: 1..2
   bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, FAEST_256F_L);
 
@@ -1676,14 +1637,6 @@ static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const
 static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                                const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                                const uint8_t* out, const faest_paramset_t* params) {
-  static_assert(FAEST_256F_LAMBDA == FAEST_256S_LAMBDA);
-  static_assert(FAEST_256F_L == FAEST_256S_L);
-  static_assert(FAEST_256F_Lke == FAEST_256S_Lke);
-  static_assert(FAEST_256F_Lenc == FAEST_256S_Lenc);
-  static_assert(FAEST_256F_R == FAEST_256S_R);
-  static_assert(FAEST_256F_Ske == FAEST_256S_Ske);
-  static_assert(FAEST_256F_Senc == FAEST_256S_Senc);
-
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
@@ -1747,11 +1700,7 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
 
 // EM-128
 
-static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, bf128_t* bf_y) {
-  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
-  static_assert(FAEST_EM_128F_Nwd == FAEST_EM_128S_Nwd);
-
-  // Step: 2
+static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, bf128_t* bf_y) { // Step: 2
   for (unsigned int j = 0; j < 4 * FAEST_EM_128F_Nwd; j++) {
     bf_y[j] = bf128_add(bf128_byte_combine_bits(z[j]), bf128_byte_combine_bits(x[j]));
   }
@@ -1796,9 +1745,6 @@ static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, bf128_t* bf
 }
 
 static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, bf128_t* bf_y) {
-  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
-  static_assert(FAEST_EM_128F_Nwd == FAEST_EM_128S_Nwd);
-
   // Step: 2
   for (unsigned int j = 0; j < 4 * FAEST_EM_128F_Nwd; j++) {
     bf_y[j] = bf128_byte_combine(bf_z + 8 * j);
@@ -1852,10 +1798,6 @@ static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, bf128_t
 
 static void em_enc_backward_128_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
                                   bf128_t* y_out) {
-  static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA);
-  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
-  static_assert(FAEST_EM_128F_Nwd == FAEST_EM_128S_Nwd);
-
   // only called with Mtag == Mkey == 0
 
   for (unsigned int j = 0; j < FAEST_EM_128F_R; j++) {
@@ -1885,10 +1827,6 @@ static void em_enc_backward_128_1(const uint8_t* z, const uint8_t* x, const uint
 
 static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const bf128_t* bf_z_out,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* y_out) {
-  static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA);
-  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
-  static_assert(FAEST_EM_128F_Nwd == FAEST_EM_128S_Nwd);
-
   // Step: 1
   const bf128_t bf_delta = delta ? bf128_load(delta) : bf128_zero();
   const bf128_t factor =
@@ -1932,10 +1870,6 @@ static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const 
 static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const uint8_t* w,
                                    const bf128_t* bf_v, uint8_t Mkey, const bf128_t* bf_q,
                                    const uint8_t* delta, bf128_t* A0, bf128_t* A1, bf128_t* B) {
-  static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA);
-  static_assert(FAEST_EM_128F_Senc == FAEST_EM_128S_Senc);
-  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
-
   if (Mkey == 0) {
     // Step 6
     uint8_t w_out[FAEST_EM_128F_LAMBDA / 8];
@@ -1990,11 +1924,6 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
 static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                          uint8_t* b_tilde) {
-  static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA);
-  static_assert(FAEST_EM_128F_Senc == FAEST_EM_128S_Senc);
-  static_assert(FAEST_EM_128F_Lenc == FAEST_EM_128S_Lenc);
-  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
-
   // copy expanded key in to an array
   uint8_t* x = malloc(FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8);
   {
@@ -2030,11 +1959,6 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
 static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                               const uint8_t* out, const faest_paramset_t* params) {
-  static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA);
-  static_assert(FAEST_EM_128F_Senc == FAEST_EM_128S_Senc);
-  static_assert(FAEST_EM_128F_Lenc == FAEST_EM_128S_Lenc);
-  static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
-
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
@@ -2058,9 +1982,6 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   // copy expanded key in to an array
   uint8_t* x = malloc(FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8);
-  // for scan-build
-  static_assert(FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8 ==
-                sizeof(aes_word_t) * FAEST_EM_128F_Nwd * (FAEST_EM_128F_R + 1));
   {
     aes_round_keys_t round_keys;
     aes128_init_round_keys(&round_keys, in);
@@ -2094,9 +2015,6 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 // EM-192
 
 static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, bf192_t* bf_y) {
-  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
-  static_assert(FAEST_EM_192F_Nwd == FAEST_EM_192S_Nwd);
-
   // Step: 2
   for (unsigned int j = 0; j < 4 * FAEST_EM_192F_Nwd; j++) {
     bf_y[j] = bf192_add(bf192_byte_combine_bits(z[j]), bf192_byte_combine_bits(x[j]));
@@ -2142,9 +2060,6 @@ static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, bf192_t* bf
 }
 
 static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t* bf_y) {
-  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
-  static_assert(FAEST_EM_192F_Nwd == FAEST_EM_192S_Nwd);
-
   // Step: 2
   for (unsigned int j = 0; j < 4 * FAEST_EM_192F_Nwd; j++) {
     bf_y[j] = bf192_byte_combine(bf_z + 8 * j);
@@ -2198,10 +2113,6 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t
 
 static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
                                   bf192_t* y_out) {
-  static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA);
-  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
-  static_assert(FAEST_EM_192F_Nwd == FAEST_EM_192S_Nwd);
-
   // only called with Mtag == Mkey == 0
 
   for (unsigned int j = 0; j < FAEST_EM_192F_R; j++) {
@@ -2230,10 +2141,6 @@ static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint
 
 static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const bf192_t* bf_z_out,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf192_t* y_out) {
-  static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA);
-  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
-  static_assert(FAEST_EM_192F_Nwd == FAEST_EM_192S_Nwd);
-
   // Step: 1
   const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
   const bf192_t factor =
@@ -2277,10 +2184,6 @@ static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const 
 static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const uint8_t* w,
                                    const bf192_t* bf_v, uint8_t Mkey, const bf192_t* bf_q,
                                    const uint8_t* delta, bf192_t* A0, bf192_t* A1, bf192_t* B) {
-  static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA);
-  static_assert(FAEST_EM_192F_Senc == FAEST_EM_192S_Senc);
-  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
-
   if (Mkey == 0) {
     // Step 6
     uint8_t w_out[FAEST_EM_192F_LAMBDA / 8];
@@ -2335,11 +2238,6 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
 static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                          uint8_t* b_tilde) {
-  static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA);
-  static_assert(FAEST_EM_192F_Senc == FAEST_EM_192S_Senc);
-  static_assert(FAEST_EM_192F_Lenc == FAEST_EM_192S_Lenc);
-  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
-
   // copy expanded key in to an array
   uint8_t* x = malloc(FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8);
   {
@@ -2375,11 +2273,6 @@ static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
 static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                               const uint8_t* out, const faest_paramset_t* params) {
-  static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA);
-  static_assert(FAEST_EM_192F_Senc == FAEST_EM_192S_Senc);
-  static_assert(FAEST_EM_192F_Lenc == FAEST_EM_192S_Lenc);
-  static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
-
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
@@ -2403,9 +2296,6 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   // copy expanded key in to an array
   uint8_t* x = malloc(FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8);
-  // for scan-build
-  static_assert(FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8 ==
-                sizeof(aes_word_t) * FAEST_EM_192F_Nwd * (FAEST_EM_192F_R + 1));
   {
     aes_round_keys_t round_keys;
     rijndael192_init_round_keys(&round_keys, in);
@@ -2439,9 +2329,6 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 // EM-256
 
 static void em_enc_forward_256_1(const uint8_t* z, const uint8_t* x, bf256_t* bf_y) {
-  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
-  static_assert(FAEST_EM_256F_Nwd == FAEST_EM_256S_Nwd);
-
   // Step: 2
   for (unsigned int j = 0; j < 4 * FAEST_EM_256F_Nwd; j++) {
     bf_y[j] = bf256_add(bf256_byte_combine_bits(z[j]), bf256_byte_combine_bits(x[j]));
@@ -2487,9 +2374,6 @@ static void em_enc_forward_256_1(const uint8_t* z, const uint8_t* x, bf256_t* bf
 }
 
 static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, bf256_t* bf_y) {
-  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
-  static_assert(FAEST_EM_256F_Nwd == FAEST_EM_256S_Nwd);
-
   // Step: 2
   for (unsigned int j = 0; j < 4 * FAEST_EM_256F_Nwd; j++) {
     bf_y[j] = bf256_byte_combine(bf_z + 8 * j);
@@ -2543,10 +2427,6 @@ static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, bf256_t
 
 static void em_enc_backward_256_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
                                   bf256_t* y_out) {
-  static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA);
-  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
-  static_assert(FAEST_EM_256F_Nwd == FAEST_EM_256S_Nwd);
-
   // only called with Mtag == Mkey == 0
 
   for (unsigned int j = 0; j < FAEST_EM_256F_R; j++) {
@@ -2578,10 +2458,6 @@ static void em_enc_backward_256_1(const uint8_t* z, const uint8_t* x, const uint
 
 static void em_enc_backward_256(const bf256_t* bf_z, const bf256_t* bf_x, const bf256_t* bf_z_out,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf256_t* y_out) {
-  static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA);
-  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
-  static_assert(FAEST_EM_256F_Nwd == FAEST_EM_256S_Nwd);
-
   // Step: 1
   const bf256_t bf_delta = delta ? bf256_load(delta) : bf256_zero();
   const bf256_t factor =
@@ -2628,10 +2504,6 @@ static void em_enc_backward_256(const bf256_t* bf_z, const bf256_t* bf_x, const 
 static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const uint8_t* w,
                                    const bf256_t* bf_v, uint8_t Mkey, const bf256_t* bf_q,
                                    const uint8_t* delta, bf256_t* A0, bf256_t* A1, bf256_t* B) {
-  static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA);
-  static_assert(FAEST_EM_256F_Senc == FAEST_EM_256S_Senc);
-  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
-
   if (Mkey == 0) {
     // Step 6
     uint8_t w_out[FAEST_EM_256F_LAMBDA / 8];
@@ -2686,11 +2558,6 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
 static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                          uint8_t* b_tilde) {
-  static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA);
-  static_assert(FAEST_EM_256F_Senc == FAEST_EM_256S_Senc);
-  static_assert(FAEST_EM_256F_Lenc == FAEST_EM_256S_Lenc);
-  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
-
   // copy expanded key in to an array
   uint8_t* x = malloc(FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8);
   {
@@ -2726,11 +2593,6 @@ static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
 static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                               const uint8_t* out, const faest_paramset_t* params) {
-  static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA);
-  static_assert(FAEST_EM_256F_Senc == FAEST_EM_256S_Senc);
-  static_assert(FAEST_EM_256F_Lenc == FAEST_EM_256S_Lenc);
-  static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
-
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
@@ -2754,9 +2616,6 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   // copy expanded key in to an array
   uint8_t* x = malloc(FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8);
-  // for scan-build
-  static_assert(FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8 ==
-                sizeof(aes_word_t) * FAEST_EM_256F_Nwd * (FAEST_EM_256F_R + 1));
   {
     aes_round_keys_t round_keys;
     rijndael256_init_round_keys(&round_keys, in);
