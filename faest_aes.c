@@ -1851,10 +1851,12 @@ static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x, bf128_t
 }
 
 static void em_enc_backward_128_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  uint8_t Mtag, uint8_t Mkey, bf128_t* y_out) {
+                                  bf128_t* y_out) {
   static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA);
   static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R);
   static_assert(FAEST_EM_128F_Nwd == FAEST_EM_128S_Nwd);
+
+  // only called with Mtag == Mkey == 0
 
   for (unsigned int j = 0; j < FAEST_EM_128F_R; j++) {
     for (unsigned int c = 0; c < FAEST_EM_128F_Nwd; c++) {
@@ -1870,10 +1872,9 @@ static void em_enc_backward_128_1(const uint8_t* z, const uint8_t* x, const uint
         }
 
         // (bit spliced)
-        uint8_t y_tilde = rotr8(z_tilde, 7) ^ rotr8(z_tilde, 5) ^ rotr8(z_tilde, 2);
         // delta is always bot
-        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 0);
-        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
+        // set_bit((1 ^ Mtag) & (1 ^ Mkey), 0) ^ set_bit((1 ^ Mtag) & (1 ^ Mkey), 2) == 0x5
+        const uint8_t y_tilde = rotr8(z_tilde, 7) ^ rotr8(z_tilde, 5) ^ rotr8(z_tilde, 2) ^ 0x5;
 
         // Step: 18
         y_out[4 * FAEST_EM_128F_Nwd * j + 4 * c + r] = bf128_byte_combine_bits(y_tilde);
@@ -1946,7 +1947,7 @@ static void em_enc_constraints_128(const uint8_t* out, const uint8_t* x, const u
     bf128_t bf_vs_dash[FAEST_EM_128F_Senc];
     em_enc_forward_128_1(w, x, bf_s);
     em_enc_forward_128(bf_v, NULL, bf_vs);
-    em_enc_backward_128_1(w, x, w_out, 0, 0, bf_s_dash);
+    em_enc_backward_128_1(w, x, w_out, bf_s_dash);
     em_enc_backward_128(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash);
 
     for (unsigned int j = 0; j < FAEST_EM_128F_Senc; j++) {
@@ -2196,10 +2197,12 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t
 }
 
 static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  uint8_t Mtag, uint8_t Mkey, bf192_t* y_out) {
+                                  bf192_t* y_out) {
   static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA);
   static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R);
   static_assert(FAEST_EM_192F_Nwd == FAEST_EM_192S_Nwd);
+
+  // only called with Mtag == Mkey == 0
 
   for (unsigned int j = 0; j < FAEST_EM_192F_R; j++) {
     for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
@@ -2214,11 +2217,9 @@ static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint
           z_tilde = z_out[(ird - 32 * FAEST_EM_192F_Nwd * (j + 1)) / 8] ^ x[ird / 8];
         }
 
-        // (bit spliced)
-        uint8_t y_tilde = rotr8(z_tilde, 7) ^ rotr8(z_tilde, 5) ^ rotr8(z_tilde, 2);
         // delta is always bot
-        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 0);
-        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
+        // set_bit((1 ^ Mtag) & (1 ^ Mkey), 0) ^ set_bit((1 ^ Mtag) & (1 ^ Mkey), 2) == 0x5
+        const uint8_t y_tilde = rotr8(z_tilde, 7) ^ rotr8(z_tilde, 5) ^ rotr8(z_tilde, 2) ^ 0x5;
 
         // Step: 18
         y_out[4 * FAEST_EM_192F_Nwd * j + 4 * c + r] = bf192_byte_combine_bits(y_tilde);
@@ -2291,7 +2292,7 @@ static void em_enc_constraints_192(const uint8_t* out, const uint8_t* x, const u
     bf192_t bf_vs_dash[FAEST_EM_192F_Senc];
     em_enc_forward_192_1(w, x, bf_s);
     em_enc_forward_192(bf_v, NULL, bf_vs);
-    em_enc_backward_192_1(w, x, w_out, 0, 0, bf_s_dash);
+    em_enc_backward_192_1(w, x, w_out, bf_s_dash);
     em_enc_backward_192(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash);
 
     for (unsigned int j = 0; j < FAEST_EM_192F_Senc; j++) {
@@ -2541,10 +2542,12 @@ static void em_enc_forward_256(const bf256_t* bf_z, const bf256_t* bf_x, bf256_t
 }
 
 static void em_enc_backward_256_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  uint8_t Mtag, uint8_t Mkey, bf256_t* y_out) {
+                                  bf256_t* y_out) {
   static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA);
   static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R);
   static_assert(FAEST_EM_256F_Nwd == FAEST_EM_256S_Nwd);
+
+  // only called with Mtag == Mkey == 0
 
   for (unsigned int j = 0; j < FAEST_EM_256F_R; j++) {
     for (unsigned int c = 0; c < FAEST_EM_256F_Nwd; c++) {
@@ -2562,10 +2565,9 @@ static void em_enc_backward_256_1(const uint8_t* z, const uint8_t* x, const uint
         }
 
         // (bit spliced)
-        uint8_t y_tilde = rotr8(z_tilde, 7) ^ rotr8(z_tilde, 5) ^ rotr8(z_tilde, 2);
         // delta is always bot
-        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 0);
-        y_tilde ^= set_bit((1 ^ Mtag) & (1 ^ Mkey), 2);
+        // set_bit((1 ^ Mtag) & (1 ^ Mkey), 0) ^ set_bit((1 ^ Mtag) & (1 ^ Mkey), 2) == 0x5
+        const uint8_t y_tilde = rotr8(z_tilde, 7) ^ rotr8(z_tilde, 5) ^ rotr8(z_tilde, 2) ^ 0x5;
 
         // Step: 18
         y_out[4 * FAEST_EM_256F_Nwd * j + 4 * c + r] = bf256_byte_combine_bits(y_tilde);
@@ -2641,7 +2643,7 @@ static void em_enc_constraints_256(const uint8_t* out, const uint8_t* x, const u
     bf256_t bf_vs_dash[FAEST_EM_256F_Senc];
     em_enc_forward_256_1(w, x, bf_s);
     em_enc_forward_256(bf_v, NULL, bf_vs);
-    em_enc_backward_256_1(w, x, w_out, 0, 0, bf_s_dash);
+    em_enc_backward_256_1(w, x, w_out, bf_s_dash);
     em_enc_backward_256(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash);
 
     for (unsigned int j = 0; j < FAEST_EM_256F_Senc; j++) {
