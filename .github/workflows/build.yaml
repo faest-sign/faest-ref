@@ -28,9 +28,10 @@ jobs:
 
   build-base-i386:
     name: Test on Ubuntu with gcc (32 bit)
+    needs: [build-base]
     runs-on: ubuntu-22.04
     container:
-      image: i386/ubuntu:latest
+      image: i386/debian:stable
     steps:
     - uses: actions/checkout@v1
       with:
@@ -38,8 +39,7 @@ jobs:
     - name: Install Linux dependencies
       run: |
         apt-get -q update
-        apt-get -q -y install build-essential python3 python3-pip ninja-build pkgconf libntl-dev libboost-test-dev libssl-dev
-        pip3 install meson
+        apt-get -q -y install build-essential meson ninja-build pkgconf libntl-dev libboost-test-dev libssl-dev
     - name: Build and test
       run: |
         mkdir build
@@ -49,7 +49,7 @@ jobs:
 
   build-flags:
     name: Test on ${{ matrix.cfg.os }} with ${{ matrix.cfg.compiler }}
-    needs: [build-base, build-base-i386]
+    needs: [build-base]
     runs-on: ${{ matrix.cfg.os }}
     strategy:
       fail-fast: false
@@ -83,7 +83,7 @@ jobs:
 
   build-flags-macos:
     name: Test on macOS
-    needs: [build-base, build-base-i386]
+    needs: [build-base]
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
@@ -104,7 +104,7 @@ jobs:
 
   build-flags-windows:
     name: Test on Windows with MSVC
-    needs: [build-base, build-base-i386]
+    needs: [build-base]
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
@@ -129,7 +129,7 @@ jobs:
 
   build-scan-build:
     name: Test on Ubuntu with scan-build
-    needs: [build-base, build-base-i386]
+    needs: [build-base]
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
@@ -147,7 +147,7 @@ jobs:
 
   build-archs:
     runs-on: ubuntu-22.04
-    needs: [build-base, build-base-i386]
+    needs: [build-base]
     name: Test with ${{ matrix.cfg.compiler }} on ${{ matrix.cfg.arch }}
     strategy:
       fail-fast: false
