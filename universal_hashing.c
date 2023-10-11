@@ -164,13 +164,13 @@ void zk_hash_128(uint8_t* h, const uint8_t* sd, const bf128_t* x, unsigned int e
   const bf128_t* x1 = x + ell;
 
   bf128_t b_s       = bf128_load(s);
-  bf128_t b_t       = bf128_from_bf64(bf64_load(t));
+  bf64_t b_t        = bf64_load(t);
   bf128_t running_s = bf128_one();
   bf128_t running_t = bf128_one();
   bf128_t h0        = bf128_zero();
   bf128_t h1        = bf128_zero();
   for (unsigned int i = 0; i != ell;
-       ++i, running_s = bf128_mul(running_s, b_s), running_t = bf128_mul(running_t, b_t)) {
+       ++i, running_s = bf128_mul(running_s, b_s), running_t = bf128_mul_64(running_t, b_t)) {
     h0 = bf128_add(h0, bf128_mul(running_s, x[ell - 1 - i]));
     h1 = bf128_add(h1, bf128_mul(running_t, x[ell - 1 - i]));
   }
@@ -187,13 +187,13 @@ void zk_hash_192(uint8_t* h, const uint8_t* sd, const bf192_t* x, unsigned int e
   const bf192_t* x1 = x + ell;
 
   bf192_t b_s       = bf192_load(s);
-  bf192_t b_t       = bf192_from_bf64(bf64_load(t));
+  bf64_t b_t        = bf64_load(t);
   bf192_t running_s = bf192_one();
   bf192_t running_t = bf192_one();
   bf192_t h0        = bf192_zero();
   bf192_t h1        = bf192_zero();
   for (unsigned int i = 0; i != ell;
-       ++i, running_s = bf192_mul(running_s, b_s), running_t = bf192_mul(running_t, b_t)) {
+       ++i, running_s = bf192_mul(running_s, b_s), running_t = bf192_mul_64(running_t, b_t)) {
     h0 = bf192_add(h0, bf192_mul(running_s, x[ell - 1 - i]));
     h1 = bf192_add(h1, bf192_mul(running_t, x[ell - 1 - i]));
   }
@@ -210,13 +210,13 @@ void zk_hash_256(uint8_t* h, const uint8_t* sd, const bf256_t* x, unsigned int e
   const bf256_t* x1 = x + ell;
 
   bf256_t b_s       = bf256_load(s);
-  bf256_t b_t       = bf256_from_bf64(bf64_load(t));
+  bf64_t b_t        = bf64_load(t);
   bf256_t running_s = bf256_one();
   bf256_t running_t = bf256_one();
   bf256_t h0        = bf256_zero();
   bf256_t h1        = bf256_zero();
   for (unsigned int i = 0; i != ell;
-       ++i, running_s = bf256_mul(running_s, b_s), running_t = bf256_mul(running_t, b_t)) {
+       ++i, running_s = bf256_mul(running_s, b_s), running_t = bf256_mul_64(running_t, b_t)) {
     h0 = bf256_add(h0, bf256_mul(running_s, x[ell - 1 - i]));
     h1 = bf256_add(h1, bf256_mul(running_t, x[ell - 1 - i]));
   }
