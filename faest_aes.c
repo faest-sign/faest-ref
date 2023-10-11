@@ -284,6 +284,9 @@ static void aes_key_schedule_backward_128(const bf128_t* v, const bf128_t* Vk, u
 static void aes_key_schedule_constraints_Mkey_0_128(const uint8_t* w, const bf128_t* v, bf128_t* A0,
                                                     bf128_t* A1, uint8_t* k, bf128_t* vk,
                                                     const faest_paramset_t* params) {
+  // for scan-build
+  assert(FAEST_128F_Ske == params->faest_param.Ske);
+
   // Step: 2
   aes_key_schedule_forward_1(w, k, params);
 
@@ -758,6 +761,9 @@ static void aes_key_schedule_backward_192(const bf192_t* v, const bf192_t* Vk, u
 static void aes_key_schedule_constraints_Mkey_0_192(const uint8_t* w, const bf192_t* v, bf192_t* A0,
                                                     bf192_t* A1, uint8_t* k, bf192_t* vk,
                                                     const faest_paramset_t* params) {
+  // for scan-build
+  assert(FAEST_192F_Ske == params->faest_param.Ske);
+
   // Step: 2
   aes_key_schedule_forward_1(w, k, params);
 
@@ -1237,6 +1243,9 @@ static void aes_key_schedule_backward_256(const bf256_t* v, const bf256_t* Vk, u
 static void aes_key_schedule_constraints_Mkey_0_256(const uint8_t* w, const bf256_t* v, bf256_t* A0,
                                                     bf256_t* A1, uint8_t* k, bf256_t* vk,
                                                     const faest_paramset_t* params) {
+  // for scan-build
+  assert(FAEST_256F_Ske == params->faest_param.Ske);
+
   // Step: 2
   aes_key_schedule_forward_1(w, k, params);
 
