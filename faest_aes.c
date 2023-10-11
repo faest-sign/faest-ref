@@ -1877,7 +1877,7 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                          uint8_t* b_tilde) {
   // copy expanded key in to an array
-  uint8_t* x = malloc(FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8);
+  uint8_t x[FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1)];
   {
     aes_round_keys_t round_keys;
     aes128_init_round_keys(&round_keys, in);
@@ -1895,7 +1895,6 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   bf128_t* A0 = malloc(sizeof(bf128_t) * (FAEST_EM_128F_Senc + 1));
   bf128_t* A1 = malloc(sizeof(bf128_t) * (FAEST_EM_128F_Senc + 1));
   em_enc_constraints_Mkey_0_128(out, x, w, bf_v, A0, A1);
-  free(x);
 
   A1[FAEST_EM_128F_Senc] = bf128_load(u + FAEST_EM_128F_Lenc / 8);
   A0[FAEST_EM_128F_Senc] = bf128_sum_poly(bf_v + FAEST_EM_128F_Lenc);
@@ -1933,7 +1932,7 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, FAEST_EM_128F_Lenc);
 
   // copy expanded key in to an array
-  uint8_t* x = malloc(FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8);
+  uint8_t x[FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8];
   {
     aes_round_keys_t round_keys;
     aes128_init_round_keys(&round_keys, in);
@@ -1949,7 +1948,6 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   bf128_t* B = malloc(sizeof(bf128_t) * (FAEST_EM_128F_Senc + 1));
 
   em_enc_constraints_Mkey_1_128(out, x, bf_q, delta, B);
-  free(x);
 
   B[FAEST_EM_128F_Senc] = bf128_sum_poly(bf_q + FAEST_EM_128F_Lenc);
   free(bf_q);
@@ -2191,7 +2189,7 @@ static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                          uint8_t* b_tilde) {
   // copy expanded key in to an array
-  uint8_t* x = malloc(FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8);
+  uint8_t x[FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8];
   {
     aes_round_keys_t round_keys;
     rijndael192_init_round_keys(&round_keys, in);
@@ -2209,7 +2207,6 @@ static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   bf192_t* A0 = malloc(sizeof(bf192_t) * (FAEST_EM_192F_Senc + 1));
   bf192_t* A1 = malloc(sizeof(bf192_t) * (FAEST_EM_192F_Senc + 1));
   em_enc_constraints_Mkey_0_192(out, x, w, bf_v, A0, A1);
-  free(x);
 
   A1[FAEST_EM_192F_Senc] = bf192_load(u + FAEST_EM_192F_Lenc / 8);
   A0[FAEST_EM_192F_Senc] = bf192_sum_poly(bf_v + FAEST_EM_192F_Lenc);
@@ -2247,7 +2244,7 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   bf192_t* bf_q = column_to_row_major_and_shrink_V_192(Q, FAEST_EM_192F_Lenc);
 
   // copy expanded key in to an array
-  uint8_t* x = malloc(FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8);
+  uint8_t x[FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8];
   {
     aes_round_keys_t round_keys;
     rijndael192_init_round_keys(&round_keys, in);
@@ -2263,7 +2260,6 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   bf192_t* B = malloc(sizeof(bf192_t) * (FAEST_EM_192F_Senc + 1));
 
   em_enc_constraints_Mkey_1_192(out, x, bf_q, delta, B);
-  free(x);
 
   B[FAEST_EM_192F_Senc] = bf192_sum_poly(bf_q + FAEST_EM_192F_Lenc);
   free(bf_q);
@@ -2511,7 +2507,7 @@ static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                          uint8_t* b_tilde) {
   // copy expanded key in to an array
-  uint8_t* x = malloc(FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8);
+  uint8_t x[FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8];
   {
     aes_round_keys_t round_keys;
     rijndael256_init_round_keys(&round_keys, in);
@@ -2529,7 +2525,6 @@ static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   bf256_t* A0 = malloc(sizeof(bf256_t) * (FAEST_EM_256F_Senc + 1));
   bf256_t* A1 = malloc(sizeof(bf256_t) * (FAEST_EM_256F_Senc + 1));
   em_enc_constraints_Mkey_0_256(out, x, w, bf_v, A0, A1);
-  free(x);
 
   A1[FAEST_EM_256F_Senc] = bf256_load(u + FAEST_EM_256F_Lenc / 8);
   A0[FAEST_EM_256F_Senc] = bf256_sum_poly(bf_v + FAEST_EM_256F_Lenc);
@@ -2567,7 +2562,7 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   bf256_t* bf_q = column_to_row_major_and_shrink_V_256(Q, FAEST_EM_256F_Lenc);
 
   // copy expanded key in to an array
-  uint8_t* x = malloc(FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8);
+  uint8_t x[FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8];
   {
     aes_round_keys_t round_keys;
     rijndael256_init_round_keys(&round_keys, in);
@@ -2583,7 +2578,6 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   bf256_t* B = malloc(sizeof(bf256_t) * (FAEST_EM_256F_Senc + 1));
 
   em_enc_constraints_Mkey_1_256(out, x, bf_q, delta, B);
-  free(x);
 
   B[FAEST_EM_256F_Senc] = bf256_sum_poly(bf_q + FAEST_EM_256F_Lenc);
   free(bf_q);
