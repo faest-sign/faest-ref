@@ -156,7 +156,7 @@ bf128_t bf128_mul(bf128_t lhs, bf128_t rhs) {
   for (unsigned int idx = 0; idx != 128; ++idx) {
     result = bf128_add(result, bf128_and(bf128_bit_to_mask(rhs, idx), lhs));
 
-    const uint64_t mask = bf128_bit_to_uint64_mask(lhs, 127);
+    const uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
     lhs                 = bf128_shift_left_1(lhs);
     lhs.values[0] ^= (mask & bf128_modulus);
   }
@@ -180,7 +180,7 @@ bf128_t bf128_mul_64(bf128_t lhs, bf64_t rhs) {
   for (unsigned int idx = 0; idx != 64; ++idx) {
     result = bf128_add(result, bf128_and(bf128_bit_to_mask_64(rhs, idx), lhs));
 
-    const uint64_t mask = bf128_bit_to_uint64_mask(lhs, 127);
+    const uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
     lhs                 = bf128_shift_left_1(lhs);
     lhs.values[0] ^= (mask & bf128_modulus);
   }
@@ -294,7 +294,7 @@ bf192_t bf192_mul(bf192_t lhs, bf192_t rhs) {
   for (unsigned int idx = 0; idx != 192; ++idx) {
     result = bf192_add(result, bf192_and(bf192_bit_to_mask(rhs, idx), lhs));
 
-    const uint64_t mask = bf192_bit_to_uint64_mask(lhs, 191);
+    const uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
     lhs                 = bf192_shift_left_1(lhs);
     lhs.values[0] ^= (mask & bf192_modulus);
   }
@@ -318,7 +318,7 @@ bf192_t bf192_mul_64(bf192_t lhs, bf64_t rhs) {
   for (unsigned int idx = 0; idx != 64; ++idx) {
     result = bf192_add(result, bf192_and(bf192_bit_to_mask_64(rhs, idx), lhs));
 
-    const uint64_t mask = bf192_bit_to_uint64_mask(lhs, 191);
+    const uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
     lhs                 = bf192_shift_left_1(lhs);
     lhs.values[0] ^= (mask & bf192_modulus);
   }
@@ -441,7 +441,7 @@ bf256_t bf256_mul(bf256_t lhs, bf256_t rhs) {
   for (unsigned int idx = 0; idx != 256; ++idx) {
     result = bf256_add(result, bf256_and(bf256_bit_to_mask(rhs, idx), lhs));
 
-    const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 255);
+    const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
     lhs                 = bf256_shift_left_1(lhs);
     lhs.values[0] ^= (mask & bf256_modulus);
   }
@@ -465,7 +465,7 @@ bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs) {
   for (unsigned int idx = 0; idx != 64; ++idx) {
     result = bf256_add(result, bf256_and(bf256_bit_to_mask_64(rhs, idx), lhs));
 
-    const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 255);
+    const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
     lhs                 = bf256_shift_left_1(lhs);
     lhs.values[0] ^= (mask & bf256_modulus);
   }
