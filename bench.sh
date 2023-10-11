@@ -21,7 +21,6 @@ ALL="FAEST_128S FAEST_128F FAEST_192S FAEST_192F FAEST_256S FAEST_256F FAEST_EM_
 BUILD_DIR="build_release"
 
 clean () {
-    make clean
     (cd ${BUILD_DIR} && ninja clean)
 }
 
@@ -147,5 +146,10 @@ bench_spec_variants () {
         run_bench "${faest_variant}" "${setting_id}"
     done
 }
+
+mkdir -p "${BUILD_DIR}"
+pushd "${BUILD_DIR}"
+meson setup .. --buildtype release -Dbenchmarks=enabled -Dcatch2=enabled -Dmarch-native=enabled
+popd
 
 bench_spec_variants
