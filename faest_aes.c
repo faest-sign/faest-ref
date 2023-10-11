@@ -321,11 +321,7 @@ static void aes_key_schedule_constraints_Mkey_0_128(const uint8_t* w, const bf12
                               bf128_from_bf8(bf8_one())),
                     A0[4 * j + r]);
     }
-    if (FAEST_128F_LAMBDA == 192) {
-      iwd = iwd + 192;
-    } else {
-      iwd = iwd + 128;
-    }
+    iwd = iwd + 128;
   }
 }
 
@@ -353,11 +349,7 @@ static void aes_key_schedule_constraints_Mkey_1_128(const bf128_t* q, const uint
       bf128_t bf_tmp = bf128_mul(bf_q_hat_k[r], bf_q_hat_w_dash[r]);
       B[4 * j + r]   = bf128_add(bf_tmp, bf128_mul(bf_delta, bf_delta));
     }
-    if (FAEST_128F_LAMBDA == 192) {
-      iwd = iwd + 192;
-    } else {
-      iwd = iwd + 128;
-    }
+    iwd = iwd + 128;
   }
 }
 
@@ -803,11 +795,7 @@ static void aes_key_schedule_constraints_Mkey_0_192(const uint8_t* w, const bf19
                               bf192_from_bf8(bf8_one())),
                     A0[4 * j + r]);
     }
-    if (FAEST_192F_LAMBDA == 192) {
-      iwd = iwd + 192;
-    } else {
-      iwd = iwd + 128;
-    }
+    iwd = iwd + 192;
   }
 }
 
@@ -835,11 +823,7 @@ static void aes_key_schedule_constraints_Mkey_1_192(const bf192_t* q, const uint
       bf192_t bf_tmp = bf192_mul(bf_q_hat_k[r], bf_q_hat_w_dash[r]);
       B[4 * j + r]   = bf192_add(bf_tmp, bf192_mul(bf_delta, bf_delta));
     }
-    if (FAEST_192F_LAMBDA == 192) {
-      iwd = iwd + 192;
-    } else {
-      iwd = iwd + 128;
-    }
+    iwd = iwd + 192;
   }
 }
 
@@ -1333,14 +1317,8 @@ static void aes_key_schedule_constraints_Mkey_1_256(const bf256_t* q, const uint
       bf256_t bf_tmp = bf256_mul(bf_q_hat_k[r], bf_q_hat_w_dash[r]);
       B[4 * j + r]   = bf256_add(bf_tmp, bf256_mul(bf_delta, bf_delta));
     }
-    if (FAEST_256F_LAMBDA == 192) {
-      iwd = iwd + 192;
-    } else {
-      iwd = iwd + 128;
-      if (FAEST_256F_LAMBDA == 256) {
-        rotate_word = !rotate_word;
-      }
-    }
+    iwd         = iwd + 128;
+    rotate_word = !rotate_word;
   }
   free(q_w_dash);
 }
