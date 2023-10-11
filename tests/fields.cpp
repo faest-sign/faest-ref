@@ -246,6 +246,9 @@ BOOST_AUTO_TEST_CASE(test_bf128_test_vectors_with64) {
 
   const auto o = (l * r).as_uint8();
   BOOST_TEST(o == expected);
+
+  const auto o2 = (l * bf64{rhs}).as_uint8();
+  BOOST_TEST(o2 == expected);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf192_test_vectors) {
@@ -281,6 +284,9 @@ BOOST_AUTO_TEST_CASE(test_bf192_test_vectors_with64) {
 
   const auto o = (l * r).as_uint8();
   BOOST_TEST(o == expected);
+
+  const auto o2 = (l * bf64{rhs}).as_uint8();
+  BOOST_TEST(o2 == expected);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf256_test_vectors) {
@@ -317,6 +323,9 @@ BOOST_AUTO_TEST_CASE(test_bf256_test_vectors_with64) {
 
   const auto o = (l * r).as_uint8();
   BOOST_TEST(o == expected);
+
+  const auto o2 = (l * bf64{rhs}).as_uint8();
+  BOOST_TEST(o2 == expected);
 }
 
 namespace {

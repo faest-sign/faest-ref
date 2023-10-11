@@ -170,6 +170,23 @@ static inline bf128_t bf128_bit_to_mask_1(uint8_t bit) {
   return ret;
 }
 
+ATTR_CONST
+static inline bf128_t bf128_bit_to_mask_64(bf64_t value, unsigned int bit) {
+  return bf128_bit_to_mask_1(value >> bit);
+}
+
+bf128_t bf128_mul_64(bf128_t lhs, bf64_t rhs) {
+  bf128_t result = {0};
+  for (unsigned int idx = 0; idx != 64; ++idx) {
+    result = bf128_add(result, bf128_and(bf128_bit_to_mask_64(rhs, idx), lhs));
+
+    const uint64_t mask = bf128_bit_to_uint64_mask(lhs, 127);
+    lhs                 = bf128_shift_left_1(lhs);
+    lhs.values[0] ^= (mask & bf128_modulus);
+  }
+  return result;
+}
+
 bf128_t bf128_mul_bit(bf128_t lhs, uint8_t rhs) {
   return bf128_and(bf128_bit_to_mask_1(rhs), lhs);
 }
@@ -289,6 +306,23 @@ static bf192_t bf192_bit_to_mask_1(uint8_t bit) {
   bf192_t ret;
   ret.values[0] = ret.values[1] = ret.values[2] = -(bit & 1);
   return ret;
+}
+
+ATTR_CONST
+static inline bf192_t bf192_bit_to_mask_64(bf64_t value, unsigned int bit) {
+  return bf192_bit_to_mask_1(value >> bit);
+}
+
+bf192_t bf192_mul_64(bf192_t lhs, bf64_t rhs) {
+  bf192_t result = {0};
+  for (unsigned int idx = 0; idx != 64; ++idx) {
+    result = bf192_add(result, bf192_and(bf192_bit_to_mask_64(rhs, idx), lhs));
+
+    const uint64_t mask = bf192_bit_to_uint64_mask(lhs, 191);
+    lhs                 = bf192_shift_left_1(lhs);
+    lhs.values[0] ^= (mask & bf192_modulus);
+  }
+  return result;
 }
 
 bf192_t bf192_mul_bit(bf192_t lhs, uint8_t rhs) {
@@ -419,6 +453,23 @@ static inline bf256_t bf256_bit_to_mask_1(uint8_t bit) {
   bf256_t ret;
   ret.values[0] = ret.values[1] = ret.values[2] = ret.values[3] = -(bit & 1);
   return ret;
+}
+
+ATTR_CONST
+static inline bf256_t bf256_bit_to_mask_64(bf64_t value, unsigned int bit) {
+  return bf256_bit_to_mask_1(value >> bit);
+}
+
+bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs) {
+  bf256_t result = {0};
+  for (unsigned int idx = 0; idx != 64; ++idx) {
+    result = bf256_add(result, bf256_and(bf256_bit_to_mask_64(rhs, idx), lhs));
+
+    const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 255);
+    lhs                 = bf256_shift_left_1(lhs);
+    lhs.values[0] ^= (mask & bf256_modulus);
+  }
+  return result;
 }
 
 bf256_t bf256_mul_bit(bf256_t lhs, uint8_t rhs) {

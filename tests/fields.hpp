@@ -247,6 +247,10 @@ namespace {
       return {bf128_mul(value, other.value)};
     }
 
+    bf128 operator*(bf64 other) const {
+      return {bf128_mul_64(value, other.as_internal())};
+    }
+
     bf128 operator/(bf128 other) const {
       return {bf128_mul(value, bf128_inv(other.value))};
     }
@@ -347,6 +351,10 @@ namespace {
 
     bf192 operator*(bf192 other) const {
       return {bf192_mul(value, other.value)};
+    }
+
+    bf192 operator*(bf64 other) const {
+      return {bf192_mul_64(value, other.as_internal())};
     }
 
     bf192 operator/(bf192 other) const {
@@ -453,6 +461,10 @@ namespace {
 
     bf256 operator*(bf256 other) const {
       return {bf256_mul(value, other.value)};
+    }
+
+    bf256 operator*(bf64 other) const {
+      return {bf256_mul_64(value, other.as_internal())};
     }
 
     bf256 operator/(bf256 other) const {
