@@ -407,7 +407,7 @@ if host_machine.system() == 'windows'
 endif
 
 # catch2 for benchmarks
-if get_option('benchmarks').enabled()
+if get_option('benchmarks').enabled() and get_option('catch2').enabled()
   libcatch2 = static_library('catch2',
     files(join_paths(meson.project_source_root(), 'catch2', 'extras', 'catch_amalgamated.cpp')),
   )
