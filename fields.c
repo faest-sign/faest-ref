@@ -187,11 +187,18 @@ bf128_t bf128_inv(bf128_t in) {
   return bf128_mul(t1, t1);
 }
 
+ATTR_CONST static inline bf128_t bf128_dbl(bf128_t lhs) {
+  uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
+  lhs           = bf128_shift_left_1(lhs);
+  lhs.values[0] ^= (mask & bf128_modulus);
+
+  return bf128_and_64(lhs, U64C(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff));
+}
+
 bf128_t bf128_sum_poly(const bf128_t* xs) {
-  bf128_t ret   = bf128_zero();
-  bf128_t alpha = bf128_from_bf64(1);
-  for (size_t i = 0; i < 128; ++i, alpha = bf128_shift_left_1(alpha)) {
-    ret = bf128_add(ret, bf128_mul(alpha, xs[i]));
+  bf128_t ret = xs[128 - 1];
+  for (size_t i = 1; i < 128; ++i) {
+    ret = bf128_add(bf128_dbl(ret), xs[128 - 1 - i]);
   }
   return ret;
 }
@@ -306,11 +313,18 @@ bf192_t bf192_inv(bf192_t in) {
   return bf192_mul(t1, t1);
 }
 
+ATTR_CONST static inline bf192_t bf192_dbl(bf192_t lhs) {
+  uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
+  lhs           = bf192_shift_left_1(lhs);
+  lhs.values[0] ^= (mask & bf192_modulus);
+
+  return bf192_and_64(lhs, U64C(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff));
+}
+
 bf192_t bf192_sum_poly(const bf192_t* xs) {
-  bf192_t ret   = bf192_zero();
-  bf192_t alpha = bf192_from_bf64(1);
-  for (size_t i = 0; i < 192; ++i, alpha = bf192_shift_left_1(alpha)) {
-    ret = bf192_add(ret, bf192_mul(alpha, xs[i]));
+  bf192_t ret = xs[192 - 1];
+  for (size_t i = 1; i < 192; ++i) {
+    ret = bf192_add(bf192_dbl(ret), xs[192 - 1 - i]);
   }
   return ret;
 }
@@ -433,11 +447,18 @@ bf256_t bf256_inv(bf256_t in) {
   return bf256_mul(t1, t1);
 }
 
+ATTR_CONST static inline bf256_t bf256_dbl(bf256_t lhs) {
+  uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
+  lhs           = bf256_shift_left_1(lhs);
+  lhs.values[0] ^= (mask & bf256_modulus);
+
+  return bf256_and_64(lhs, U64C(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff));
+}
+
 bf256_t bf256_sum_poly(const bf256_t* xs) {
-  bf256_t ret   = bf256_zero();
-  bf256_t alpha = bf256_from_bf64(1);
-  for (size_t i = 0; i < 256; ++i, alpha = bf256_shift_left_1(alpha)) {
-    ret = bf256_add(ret, bf256_mul(alpha, xs[i]));
+  bf256_t ret = xs[256 - 1];
+  for (size_t i = 1; i < 256; ++i) {
+    ret = bf256_add(bf256_dbl(ret), xs[256 - 1 - i]);
   }
   return ret;
 }
