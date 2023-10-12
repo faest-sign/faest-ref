@@ -21,15 +21,15 @@ ALL="FAEST_128S FAEST_128F FAEST_192S FAEST_192F FAEST_256S FAEST_256F FAEST_EM_
 BUILD_DIR="build_release"
 
 clean () {
-    (cd ${BUILD_DIR} && ninja clean)
+    ninja -C "${BUILD_DIR}" clean >&2
 }
 
 run_make () {
     name="$1"
     setting_id="$2"
     echo "# Building: ${name} (${setting_id})" >&2
-    (cd ${BUILD_DIR} && ninja "${setting_id}/${setting_id}_api_test") >&2
-    (cd ${BUILD_DIR} && ninja "${setting_id}/${setting_id}_bench_c2") >&2
+    ninja -C "${BUILD_DIR}" "${setting_id}/${setting_id}_api_test" >&2
+    ninja -C "${BUILD_DIR}" "${setting_id}/${setting_id}_bench_c2" >&2
 }
 
 run_test () {
@@ -149,7 +149,7 @@ bench_spec_variants () {
 
 mkdir -p "${BUILD_DIR}"
 pushd "${BUILD_DIR}"
-meson setup .. --buildtype release -Dbenchmarks=enabled -Dcatch2=enabled -Dmarch-native=enabled
+meson setup .. --buildtype release -Dbenchmarks=enabled -Dcatch2=enabled -Dmarch-native=enabled >&2
 popd
 
 bench_spec_variants
