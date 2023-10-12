@@ -415,17 +415,14 @@ static void aes_enc_forward_128_1(const uint8_t* x, const uint8_t* xk, const uin
 
 static void aes_enc_forward_128(const bf128_t* bf_x, const bf128_t* bf_xk, const uint8_t* in,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* bf_y) {
-  const bf128_t bf_delta      = delta ? bf128_load(delta) : bf128_zero();
-  const bf128_t bf_minus_mtag = bf128_from_bit(1 ^ Mtag);
-  const bf128_t bf_minus_mkey = bf128_from_bit(1 ^ Mkey);
-  const bf128_t bf_mkey       = bf128_from_bit(Mkey);
+  const bf128_t bf_delta  = delta ? bf128_load(delta) : bf128_zero();
+  const bf128_t bf_factor = bf128_add(bf128_mul_bit(bf_delta, Mkey), bf128_from_bit(1 ^ Mkey));
 
   // Step: 2..4
   for (unsigned int i = 0; i < 16; i++) {
     bf128_t bf_xin[8];
     for (unsigned int j = 0; j < 8; j++) {
-      bf_xin[j] = bf128_mul(bf128_mul_bit(bf_minus_mtag, get_bit(in[i], j)),
-                            bf128_add(bf128_mul(bf_mkey, bf_delta), bf_minus_mkey));
+      bf_xin[j] = bf128_mul_bit(bf_factor, (1 ^ Mtag) & get_bit(in[i], j));
     }
     // Step: 5
     bf_y[i] = bf128_add(bf128_byte_combine(bf_xin), bf128_byte_combine(bf_xk + (8 * i)));
@@ -890,16 +887,14 @@ static void aes_enc_forward_192_1(const uint8_t* x, const uint8_t* xk, const uin
 
 static void aes_enc_forward_192(const bf192_t* bf_x, const bf192_t* bf_xk, const uint8_t* in,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf192_t* bf_y) {
-  const bf192_t bf_delta      = delta ? bf192_load(delta) : bf192_zero();
-  const bf192_t bf_minus_mtag = bf192_from_bit(1 ^ Mtag);
-  const bf192_t bf_minus_mkey = bf192_from_bit(1 ^ Mkey);
+  const bf192_t bf_delta  = delta ? bf192_load(delta) : bf192_zero();
+  const bf192_t bf_factor = bf192_add(bf192_mul_bit(bf_delta, Mkey), bf192_from_bit(1 ^ Mkey));
 
   // Step: 2..4
   for (unsigned int i = 0; i < 16; i++) {
     bf192_t bf_xin[8];
     for (unsigned int j = 0; j < 8; j++) {
-      bf_xin[j] = bf192_mul(bf192_mul_bit(bf_minus_mtag, get_bit(in[i], j)),
-                            bf192_add(bf192_mul_bit(bf_delta, Mkey), bf_minus_mkey));
+      bf_xin[j] = bf192_mul_bit(bf_factor, (1 ^ Mtag) & get_bit(in[i], j));
     }
     // Step: 5
     bf_y[i] = bf192_add(bf192_byte_combine(bf_xin), bf192_byte_combine(bf_xk + (8 * i)));
@@ -1388,16 +1383,14 @@ static void aes_enc_forward_256_1(const uint8_t* x, const uint8_t* xk, const uin
 
 static void aes_enc_forward_256(const bf256_t* bf_x, const bf256_t* bf_xk, const uint8_t* in,
                                 uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf256_t* bf_y) {
-  const bf256_t bf_delta      = delta ? bf256_load(delta) : bf256_zero();
-  const bf256_t bf_minus_mtag = bf256_from_bit(1 ^ Mtag);
-  const bf256_t bf_minus_mkey = bf256_from_bit(1 ^ Mkey);
+  const bf256_t bf_delta  = delta ? bf256_load(delta) : bf256_zero();
+  const bf256_t bf_factor = bf256_add(bf256_mul_bit(bf_delta, Mkey), bf256_from_bit(1 ^ Mkey));
 
   // Step: 2..4
   for (unsigned int i = 0; i < 16; i++) {
     bf256_t bf_xin[8];
     for (unsigned int j = 0; j < 8; j++) {
-      bf_xin[j] = bf256_mul(bf256_mul_bit(bf_minus_mtag, get_bit(in[i], j)),
-                            bf256_add(bf256_mul_bit(bf_delta, Mkey), bf_minus_mkey));
+      bf_xin[j] = bf256_mul_bit(bf_factor, (1 ^ Mtag) & get_bit(in[i], j));
     }
     // Step: 5
     bf_y[i] = bf256_add(bf256_byte_combine(bf_xin), bf256_byte_combine(bf_xk + (8 * i)));
