@@ -52,6 +52,8 @@ else
   warnings += '4127'
   # unary minus of unsigned types
   warnings += '4146'
+  # 'inline' used more than once
+  warnings += '4141'
 
   foreach w : warnings
     flags += '/wd' + w
