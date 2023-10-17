@@ -43,7 +43,6 @@ libfaest_{param_name} = static_library('faest_{param_name}',
   include_directories: include_directories,
   c_args: defines + c_flags
 )
-install_headers(headers, subdir: 'faest_{param_name}')
 libfaest_{param_name}_dependency = declare_dependency(
   link_with: libfaest_{param_name},
   include_directories: include_directories
