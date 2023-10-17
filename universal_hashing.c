@@ -231,6 +231,7 @@ void zk_hash_256_finalize(uint8_t* h, zk_hash_256_ctx* ctx, bf256_t x1) {
                            x1));
 }
 
+#if defined(FAEST_TESTS)
 void zk_hash_128(uint8_t* h, const uint8_t* sd, const bf128_t* x, unsigned int ell) {
   zk_hash_128_ctx ctx;
   zk_hash_128_init(&ctx, sd);
@@ -257,3 +258,4 @@ void zk_hash_256(uint8_t* h, const uint8_t* sd, const bf256_t* x, unsigned int e
   }
   zk_hash_256_finalize(h, &ctx, x[ell]);
 }
+#endif
