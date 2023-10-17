@@ -15,9 +15,11 @@ if boost_test.found()
     'vole_tvs.cpp',
   )
   test_deps = []
+  test_defines = ['-DBOOST_TEST_DYN_LINK', '-DFAEST_TESTS']
   if ntl.found()
     test_sources += files('fields.cpp')
     test_deps += ntl
+    test_defines += ['-DHAVE_NTL']
   endif
 
   foreach parameter_set : parameter_sets
@@ -31,7 +33,7 @@ if boost_test.found()
   extended_tests = executable('test_extended_tests', test_sources,
     dependencies: [libfaest_static_dependency, boost_test] + test_deps,
     include_directories: include_directories,
-    cpp_args: defines + cpp_flags + ['-DBOOST_TEST_DYN_LINK', '-DFAEST_TESTS'],
+    cpp_args: defines + cpp_flags + test_defines,
     override_options: ['b_lto=false']
   )
   test('AES', extended_tests,

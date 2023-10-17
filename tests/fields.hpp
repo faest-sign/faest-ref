@@ -7,19 +7,23 @@
 
 #include "../fields.h"
 
-#include <NTL/GF2X.h>
 #include <boost/format.hpp>
 #include <algorithm>
 #include <iterator>
 #include <array>
 
+#if defined(HAVE_NTL)
+#include <NTL/GF2X.h>
 using namespace NTL;
+#endif
 
 namespace {
+#if defined(HAVE_NTL)
   static inline GF2X DivMod(const GF2X& lhs, const GF2X& rhs, const GF2XModulus& modulus) {
     const auto denom = InvMod(rhs, modulus);
     return MulMod(lhs, denom, modulus);
   }
+#endif
 
   class bf8 {
     bf8_t value;
@@ -65,6 +69,7 @@ namespace {
       return value == other.value;
     }
 
+#if defined(HAVE_NTL)
     GF2X as_ntl() const {
       GF2X ret;
       auto v = value;
@@ -73,6 +78,7 @@ namespace {
       }
       return ret;
     }
+#endif
 
     bf8_t as_internal() const {
       return value;
@@ -84,6 +90,7 @@ namespace {
       return ret;
     }
 
+#if defined(HAVE_NTL)
     static GF2X ntl_residue() {
       GF2X residue;
       SetCoeff(residue, 8);
@@ -93,6 +100,7 @@ namespace {
       SetCoeff(residue, 0);
       return residue;
     }
+#endif
 
     static bf8 random() {
       return bf8_rand();
@@ -159,6 +167,7 @@ namespace {
       return value == other.value;
     }
 
+#if defined(HAVE_NTL)
     GF2X as_ntl() const {
       GF2X ret;
       auto v = value;
@@ -167,6 +176,7 @@ namespace {
       }
       return ret;
     }
+#endif
 
     bf64_t as_internal() const {
       return value;
@@ -178,6 +188,7 @@ namespace {
       return ret;
     }
 
+#if defined(HAVE_NTL)
     static GF2X ntl_residue() {
       GF2X residue;
       SetCoeff(residue, 64);
@@ -187,6 +198,7 @@ namespace {
       SetCoeff(residue, 0);
       return residue;
     }
+#endif
 
     static bf64 random() {
       return bf64_rand();
@@ -260,6 +272,7 @@ namespace {
                         std::begin(other.value.values), std::end(other.value.values));
     }
 
+#if defined(HAVE_NTL)
     GF2X as_ntl() const {
       GF2X ret;
       auto v = value.values[0];
@@ -272,6 +285,7 @@ namespace {
       }
       return ret;
     }
+#endif
 
     bf128_t as_internal() const {
       return value;
@@ -283,6 +297,7 @@ namespace {
       return ret;
     }
 
+#if defined(HAVE_NTL)
     static GF2X ntl_residue() {
       GF2X residue;
       SetCoeff(residue, 128);
@@ -292,6 +307,7 @@ namespace {
       SetCoeff(residue, 0);
       return residue;
     }
+#endif
 
     static bf128 random() {
       return bf128_rand();
@@ -366,6 +382,7 @@ namespace {
                         std::begin(other.value.values), std::end(other.value.values));
     }
 
+#if defined(HAVE_NTL)
     GF2X as_ntl() const {
       GF2X ret;
       auto v = value.values[0];
@@ -382,6 +399,7 @@ namespace {
       }
       return ret;
     }
+#endif
 
     bf192_t as_internal() const {
       return value;
@@ -393,6 +411,7 @@ namespace {
       return ret;
     }
 
+#if defined(HAVE_NTL)
     static GF2X ntl_residue() {
       GF2X residue;
       SetCoeff(residue, 192);
@@ -402,6 +421,7 @@ namespace {
       SetCoeff(residue, 0);
       return residue;
     }
+#endif
 
     static bf192 random() {
       return bf192_rand();
@@ -476,6 +496,7 @@ namespace {
                         std::begin(other.value.values), std::end(other.value.values));
     }
 
+#if defined(HAVE_NTL)
     GF2X as_ntl() const {
       GF2X ret;
       auto v = value.values[0];
@@ -496,6 +517,7 @@ namespace {
       }
       return ret;
     }
+#endif
 
     bf256_t as_internal() const {
       return value;
@@ -507,6 +529,7 @@ namespace {
       return ret;
     }
 
+#if defined(HAVE_NTL)
     static GF2X ntl_residue() {
       GF2X residue;
       SetCoeff(residue, 256);
@@ -516,6 +539,7 @@ namespace {
       SetCoeff(residue, 0);
       return residue;
     }
+#endif
 
     static bf256 random() {
       return bf256_rand();
