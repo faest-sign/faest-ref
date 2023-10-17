@@ -38,21 +38,21 @@ typedef enum faest_paramid_t {
 } faest_paramid_t;
 
 typedef struct faest_param_t {
-  uint32_t lambda;
-  uint32_t Nwd;
-  uint32_t Ske;
-  uint32_t R;
-  uint32_t Senc;
-  uint32_t l;
-  uint32_t Lke;
-  uint32_t Lenc;
-  uint32_t tau;
-  uint32_t k0;
-  uint32_t k1;
-  uint32_t t0;
-  uint32_t t1;
-  uint32_t sigSize;
-  uint32_t pkSize;
+  uint16_t lambda;
+  uint16_t Nwd;
+  uint16_t Ske;
+  uint16_t R;
+  uint16_t Senc;
+  uint16_t l;
+  uint16_t Lke;
+  uint16_t Lenc;
+  uint16_t tau;
+  uint16_t k0;
+  uint16_t k1;
+  uint16_t t0;
+  uint16_t t1;
+  uint16_t sigSize;
+  uint16_t pkSize;
 } faest_param_t;
 
 typedef struct faest_paramset_t {
