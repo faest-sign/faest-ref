@@ -2447,7 +2447,8 @@ static void em_enc_backward_256(const bf256_t* bf_z, const bf256_t* bf_x, const 
 }
 
 static void em_enc_constraints_Mkey_0_256(const uint8_t* out, const uint8_t* x, const uint8_t* w,
-                                          const bf256_t* bf_v, bf256_t* A0, bf256_t* A1) {
+                                          const bf256_t* bf_v, zk_hash_256_ctx* a0_ctx,
+                                          zk_hash_256_ctx* a1_ctx) {
   // Step 6
   uint8_t w_out[FAEST_EM_256F_LAMBDA / 8];
   xor_u8_array(out, w, w_out, sizeof(w_out));
@@ -2462,16 +2463,18 @@ static void em_enc_constraints_Mkey_0_256(const uint8_t* out, const uint8_t* x, 
   em_enc_backward_256(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash);
 
   for (unsigned int j = 0; j < FAEST_EM_256F_Senc; j++) {
-    A0[j] = bf256_mul(bf_vs[j], bf_vs_dash[j]);
-    A1[j] = bf256_add(
-        bf256_add(bf256_mul(bf256_add(bf_s[j], bf_vs[j]), bf256_add(bf_s_dash[j], bf_vs_dash[j])),
-                  A0[j]),
-        bf256_one());
+    const bf256_t tmp = bf256_mul(bf_vs[j], bf_vs_dash[j]);
+    zk_hash_256_update(a0_ctx, tmp);
+    zk_hash_256_update(a1_ctx,
+                       bf256_add(bf256_add(bf256_mul(bf256_add(bf_s[j], bf_vs[j]),
+                                                     bf256_add(bf_s_dash[j], bf_vs_dash[j])),
+                                           tmp),
+                                 bf256_one()));
   }
 }
 
 static void em_enc_constraints_Mkey_1_256(const uint8_t* out, const uint8_t* x, const bf256_t* bf_q,
-                                          const uint8_t* delta, bf256_t* B) {
+                                          const uint8_t* delta, zk_hash_256_ctx* b0_ctx) {
   // Step: 18, 19
   // TODO: compute these on demand in em_enc_backward_256
   const bf256_t bf_delta = bf256_load(delta);
@@ -2491,13 +2494,13 @@ static void em_enc_constraints_Mkey_1_256(const uint8_t* out, const uint8_t* x, 
   em_enc_forward_256(bf_q, bf_x, bf_qs);
   em_enc_backward_256(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash);
   free(bf_q_out);
+  free(bf_x);
 
   // Step: 13..14
   bf256_t minus_part = bf256_mul(bf_delta, bf_delta);
   for (unsigned int j = 0; j < FAEST_EM_256F_Senc; j++) {
-    B[j] = bf256_add(bf256_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
+    zk_hash_256_update(b0_ctx, bf256_add(bf256_mul(bf_qs[j], bf_qs_dash[j]), minus_part));
   }
-  free(bf_x);
 }
 
 static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
@@ -2518,20 +2521,17 @@ static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   }
 
   bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, FAEST_EM_256F_Lenc);
+  zk_hash_256_ctx a0_ctx;
+  zk_hash_256_ctx a1_ctx;
 
-  bf256_t* A0 = malloc(sizeof(bf256_t) * (FAEST_EM_256F_Senc + 1));
-  bf256_t* A1 = malloc(sizeof(bf256_t) * (FAEST_EM_256F_Senc + 1));
-  em_enc_constraints_Mkey_0_256(out, x, w, bf_v, A0, A1);
+  zk_hash_256_init(&a0_ctx, chall);
+  zk_hash_256_init(&a1_ctx, chall);
+  em_enc_constraints_Mkey_0_256(out, x, w, bf_v, &a0_ctx, &a1_ctx);
 
-  A1[FAEST_EM_256F_Senc] = bf256_load(u + FAEST_EM_256F_Lenc / 8);
-  A0[FAEST_EM_256F_Senc] = bf256_sum_poly(bf_v + FAEST_EM_256F_Lenc);
+  zk_hash_256_finalize(a_tilde, &a1_ctx, bf256_load(u + FAEST_EM_256F_Lenc / 8));
+  zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly(bf_v + FAEST_EM_256F_Lenc));
+
   free(bf_v);
-
-  zk_hash_256(a_tilde, chall, A1, FAEST_EM_256F_Senc);
-  zk_hash_256(b_tilde, chall, A0, FAEST_EM_256F_Senc);
-
-  free(A0);
-  free(A1);
 }
 
 static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
@@ -2572,16 +2572,13 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
     }
   }
 
-  bf256_t* B = malloc(sizeof(bf256_t) * (FAEST_EM_256F_Senc + 1));
-
-  em_enc_constraints_Mkey_1_256(out, x, bf_q, delta, B);
-
-  B[FAEST_EM_256F_Senc] = bf256_sum_poly(bf_q + FAEST_EM_256F_Lenc);
-  free(bf_q);
+  zk_hash_256_ctx b0_ctx;
+  zk_hash_256_init(&b0_ctx, chall_2);
+  em_enc_constraints_Mkey_1_256(out, x, bf_q, delta, &b0_ctx);
 
   uint8_t* q_tilde = malloc(FAEST_EM_256F_LAMBDA / 8);
-  zk_hash_256(q_tilde, chall_2, B, FAEST_EM_256F_Senc);
-  free(B);
+  zk_hash_256_finalize(q_tilde, &b0_ctx, bf256_sum_poly(bf_q + FAEST_EM_256F_Lenc));
+  free(bf_q);
 
   bf256_t bf_qtilde = bf256_load(q_tilde);
   bf256_store(q_tilde, bf256_add(bf_qtilde, bf256_mul(bf256_load(a_tilde), bf256_load(delta))));
