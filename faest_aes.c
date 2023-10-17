@@ -324,7 +324,7 @@ static void aes_key_schedule_constraints_Mkey_0_128(const uint8_t* w, const bf12
       zk_hash_128_update(
           a1_ctx, bf128_add(bf128_add(bf128_mul(bf128_add(bf_k_hat[r], bf_v_k_hat[r]),
                                                 bf128_add(bf_w_dash_hat[r], bf_v_w_dash_hat[r])),
-                                      bf128_from_bf8(bf8_one())),
+                                      bf128_one()),
                             tmp));
     }
     iwd = iwd + 128;
@@ -802,7 +802,7 @@ static void aes_key_schedule_constraints_Mkey_0_192(const uint8_t* w, const bf19
       zk_hash_192_update(
           a1_ctx, bf192_add(bf192_add(bf192_mul(bf192_add(bf_k_hat[r], bf_v_k_hat[r]),
                                                 bf192_add(bf_w_dash_hat[r], bf_v_w_dash_hat[r])),
-                                      bf192_from_bf8(bf8_one())),
+                                      bf192_one()),
                             tmp));
     }
     iwd = iwd + 192;
@@ -1290,7 +1290,7 @@ static void aes_key_schedule_constraints_Mkey_0_256(const uint8_t* w, const bf25
       zk_hash_256_update(
           a1_ctx, bf256_add(bf256_add(bf256_mul(bf256_add(bf_k_hat[r], bf_v_k_hat[r]),
                                                 bf256_add(bf_w_dash_hat[r], bf_v_w_dash_hat[r])),
-                                      bf256_from_bf8(bf8_one())),
+                                      bf256_one()),
                             tmp));
     }
     iwd         = iwd + 128;
