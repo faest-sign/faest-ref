@@ -380,11 +380,7 @@ endforeach
 openssl = dependency('openssl', required: get_option('openssl'))
 boost_program_options = dependency('boost', required: get_option('benchmarks'), modules: ['program_options'])
 valgrind = dependency('valgrind', required: get_option('valgrind'))
-if valgrind.found()
-  valgrind_exec = find_program('valgrind', required: true)
-else
-  valgrind_exec = find_program('valgrind', required: false)
-endif
+valgrind_exec = find_program('valgrind', required: valgrind.found())
 
 build_dependencies = []
 if openssl.found()
