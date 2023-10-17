@@ -6,6 +6,7 @@ if boost_test.found()
     'aes.cpp',
     'aes_prove.cpp',
     'extended_tests.cpp',
+    'fields.cpp',
     'hash_shake.cpp',
     'instances.cpp',
     'test_faest_tvs.cpp',
@@ -17,7 +18,6 @@ if boost_test.found()
   test_deps = []
   test_defines = ['-DBOOST_TEST_DYN_LINK', '-DFAEST_TESTS']
   if ntl.found()
-    test_sources += files('fields.cpp')
     test_deps += ntl
     test_defines += ['-DHAVE_NTL']
   endif

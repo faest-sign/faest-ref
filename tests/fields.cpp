@@ -15,46 +15,58 @@ namespace {
   void check_add(B lhs, B rhs, B expected) {
     const auto result = lhs + rhs;
     BOOST_TEST(result == expected);
+#if defined(HAVE_NTL)
     const auto ntl_result = lhs.as_ntl() + rhs.as_ntl();
     BOOST_TEST(ntl_result == result.as_ntl());
+#endif
   }
 
+#if defined(HAVE_NTL)
   template <class B>
   void check_add(B lhs, B rhs) {
     const auto result     = lhs + rhs;
     const auto ntl_result = lhs.as_ntl() + rhs.as_ntl();
     BOOST_TEST(ntl_result == result.as_ntl());
   }
+#endif
 
   template <class B>
   void check_mul(B lhs, B rhs, B expected) {
     const auto result = lhs * rhs;
     BOOST_TEST(result == expected);
+#if defined(HAVE_NTL)
     const auto ntl_result = MulMod(lhs.as_ntl(), rhs.as_ntl(), B::ntl_residue());
     BOOST_TEST(ntl_result == result.as_ntl());
+#endif
   }
 
+#if defined(HAVE_NTL)
   template <class B>
   void check_mul(B lhs, B rhs) {
     const auto result     = lhs * rhs;
     const auto ntl_result = MulMod(lhs.as_ntl(), rhs.as_ntl(), B::ntl_residue());
     BOOST_TEST(ntl_result == result.as_ntl());
   }
+#endif
 
   template <class B>
   void check_div(B lhs, B rhs, B expected) {
     const auto result = lhs / rhs;
     BOOST_TEST(result == expected);
+#if defined(HAVE_NTL)
     const auto ntl_result = DivMod(lhs.as_ntl(), rhs.as_ntl(), B::ntl_residue());
     BOOST_TEST(ntl_result == result.as_ntl());
+#endif
   }
 
+#if defined(HAVE_NTL)
   template <class B>
   void check_div(B lhs, B rhs) {
     const auto result     = lhs / rhs;
     const auto ntl_result = DivMod(lhs.as_ntl(), rhs.as_ntl(), B::ntl_residue());
     BOOST_TEST(ntl_result == result.as_ntl());
   }
+#endif
 
   template <class B>
   void add_invariants() {
@@ -63,6 +75,7 @@ namespace {
     check_add<B>(0xFF, 0xFF, B::zero());
   }
 
+#if defined(HAVE_NTL)
   template <class B>
   void add_random() {
     for (unsigned int i = 50; i; --i) {
@@ -71,6 +84,7 @@ namespace {
       check_add(lhs, rhs);
     }
   }
+#endif
 
   template <class B>
   void mul_invariants() {
@@ -81,6 +95,7 @@ namespace {
     check_div<B>(0xFF, B::one(), 0xFF);
   }
 
+#if defined(HAVE_NTL)
   template <class B>
   void mul_random() {
     for (unsigned int i = 50; i; --i) {
@@ -89,7 +104,9 @@ namespace {
       check_mul(lhs, rhs);
     }
   }
+#endif
 
+#if defined(HAVE_NTL)
   template <class B>
   void div_random() {
     for (unsigned int i = 50; i; --i) {
@@ -101,6 +118,7 @@ namespace {
       check_div(lhs, rhs);
     }
   }
+#endif
 } // namespace
 
 BOOST_AUTO_TEST_SUITE(fields)
@@ -109,14 +127,17 @@ BOOST_AUTO_TEST_CASE(test_bf8_add_invariants) {
   add_invariants<bf8>();
 }
 
+#if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf8_add_random) {
   add_random<bf8>();
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_bf8_mul_invariants) {
   mul_invariants<bf8>();
 }
 
+#if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf8_mul_random) {
   mul_random<bf8>();
 }
@@ -124,19 +145,23 @@ BOOST_AUTO_TEST_CASE(test_bf8_mul_random) {
 BOOST_AUTO_TEST_CASE(test_bf8_div_random) {
   div_random<bf8>();
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_bf64_add_invariants) {
   add_invariants<bf64>();
 }
 
+#if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf64_add_random) {
   add_random<bf64>();
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_bf64_mul_invariants) {
   mul_invariants<bf64>();
 }
 
+#if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf64_mul_random) {
   mul_random<bf64>();
 }
@@ -144,19 +169,23 @@ BOOST_AUTO_TEST_CASE(test_bf64_mul_random) {
 BOOST_AUTO_TEST_CASE(test_bf64_div_random) {
   div_random<bf64>();
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_bf128_add_invariants) {
   add_invariants<bf128>();
 }
 
+#if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf128_add_random) {
   add_random<bf128>();
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_bf128_mul_invariants) {
   mul_invariants<bf128>();
 }
 
+#if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf128_mul_random) {
   mul_random<bf128>();
 }
@@ -164,19 +193,23 @@ BOOST_AUTO_TEST_CASE(test_bf128_mul_random) {
 BOOST_AUTO_TEST_CASE(test_bf128_div_random) {
   div_random<bf128>();
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_bf192_add_invariants) {
   add_invariants<bf192>();
 }
 
+#if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf192_add_random) {
   add_random<bf192>();
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_bf192_mul_invariants) {
   mul_invariants<bf192>();
 }
 
+#if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf192_mul_random) {
   mul_random<bf192>();
 }
@@ -184,19 +217,23 @@ BOOST_AUTO_TEST_CASE(test_bf192_mul_random) {
 BOOST_AUTO_TEST_CASE(test_bf192_div_random) {
   div_random<bf192>();
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_bf256_add_invariants) {
   add_invariants<bf256>();
 }
 
+#if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf256_add_random) {
   add_random<bf256>();
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_bf256_mul_invariants) {
   mul_invariants<bf256>();
 }
 
+#if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf256_mul_random) {
   mul_random<bf256>();
 }
@@ -204,6 +241,7 @@ BOOST_AUTO_TEST_CASE(test_bf256_mul_random) {
 BOOST_AUTO_TEST_CASE(test_bf256_div_random) {
   div_random<bf256>();
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(test_bf64_test_vectors) {
   constexpr bf64::bytes lhs{0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
