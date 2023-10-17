@@ -2132,7 +2132,8 @@ static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const 
 }
 
 static void em_enc_constraints_Mkey_0_192(const uint8_t* out, const uint8_t* x, const uint8_t* w,
-                                          const bf192_t* bf_v, bf192_t* A0, bf192_t* A1) {
+                                          const bf192_t* bf_v, zk_hash_192_ctx* a0_ctx,
+                                          zk_hash_192_ctx* a1_ctx) {
   // Step 6
   uint8_t w_out[FAEST_EM_192F_LAMBDA / 8];
   xor_u8_array(out, w, w_out, sizeof(w_out));
@@ -2147,16 +2148,18 @@ static void em_enc_constraints_Mkey_0_192(const uint8_t* out, const uint8_t* x, 
   em_enc_backward_192(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash);
 
   for (unsigned int j = 0; j < FAEST_EM_192F_Senc; j++) {
-    A0[j] = bf192_mul(bf_vs[j], bf_vs_dash[j]);
-    A1[j] = bf192_add(
-        bf192_add(bf192_mul(bf192_add(bf_s[j], bf_vs[j]), bf192_add(bf_s_dash[j], bf_vs_dash[j])),
-                  A0[j]),
-        bf192_one());
+    const bf192_t tmp = bf192_mul(bf_vs[j], bf_vs_dash[j]);
+    zk_hash_192_update(a0_ctx, tmp);
+    zk_hash_192_update(a1_ctx,
+                       bf192_add(bf192_add(bf192_mul(bf192_add(bf_s[j], bf_vs[j]),
+                                                     bf192_add(bf_s_dash[j], bf_vs_dash[j])),
+                                           tmp),
+                                 bf192_one()));
   }
 }
 
 static void em_enc_constraints_Mkey_1_192(const uint8_t* out, const uint8_t* x, const bf192_t* bf_q,
-                                          const uint8_t* delta, bf192_t* B) {
+                                          const uint8_t* delta, zk_hash_192_ctx* b0_ctx) {
   // Step: 18, 19
   // TODO: compute these on demand in em_enc_backward_192
   const bf192_t bf_delta = bf192_load(delta);
@@ -2176,13 +2179,13 @@ static void em_enc_constraints_Mkey_1_192(const uint8_t* out, const uint8_t* x, 
   em_enc_forward_192(bf_q, bf_x, bf_qs);
   em_enc_backward_192(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash);
   free(bf_q_out);
+  free(bf_x);
 
   // Step: 13..14
   bf192_t minus_part = bf192_mul(bf_delta, bf_delta);
   for (unsigned int j = 0; j < FAEST_EM_192F_Senc; j++) {
-    B[j] = bf192_add(bf192_mul(bf_qs[j], bf_qs_dash[j]), minus_part);
+    zk_hash_192_update(b0_ctx, bf192_add(bf192_mul(bf_qs[j], bf_qs_dash[j]), minus_part));
   }
-  free(bf_x);
 }
 
 static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
@@ -2203,20 +2206,17 @@ static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   }
 
   bf192_t* bf_v = column_to_row_major_and_shrink_V_192(V, FAEST_EM_192F_Lenc);
+  zk_hash_192_ctx a0_ctx;
+  zk_hash_192_ctx a1_ctx;
 
-  bf192_t* A0 = malloc(sizeof(bf192_t) * (FAEST_EM_192F_Senc + 1));
-  bf192_t* A1 = malloc(sizeof(bf192_t) * (FAEST_EM_192F_Senc + 1));
-  em_enc_constraints_Mkey_0_192(out, x, w, bf_v, A0, A1);
+  zk_hash_192_init(&a0_ctx, chall);
+  zk_hash_192_init(&a1_ctx, chall);
+  em_enc_constraints_Mkey_0_192(out, x, w, bf_v, &a0_ctx, &a1_ctx);
 
-  A1[FAEST_EM_192F_Senc] = bf192_load(u + FAEST_EM_192F_Lenc / 8);
-  A0[FAEST_EM_192F_Senc] = bf192_sum_poly(bf_v + FAEST_EM_192F_Lenc);
+  zk_hash_192_finalize(a_tilde, &a1_ctx, bf192_load(u + FAEST_EM_192F_Lenc / 8));
+  zk_hash_192_finalize(b_tilde, &a0_ctx, bf192_sum_poly(bf_v + FAEST_EM_192F_Lenc));
+
   free(bf_v);
-
-  zk_hash_192(a_tilde, chall, A1, FAEST_EM_192F_Senc);
-  zk_hash_192(b_tilde, chall, A0, FAEST_EM_192F_Senc);
-
-  free(A0);
-  free(A1);
 }
 
 static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
@@ -2257,16 +2257,13 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
     }
   }
 
-  bf192_t* B = malloc(sizeof(bf192_t) * (FAEST_EM_192F_Senc + 1));
-
-  em_enc_constraints_Mkey_1_192(out, x, bf_q, delta, B);
-
-  B[FAEST_EM_192F_Senc] = bf192_sum_poly(bf_q + FAEST_EM_192F_Lenc);
-  free(bf_q);
+  zk_hash_192_ctx b0_ctx;
+  zk_hash_192_init(&b0_ctx, chall_2);
+  em_enc_constraints_Mkey_1_192(out, x, bf_q, delta, &b0_ctx);
 
   uint8_t* q_tilde = malloc(FAEST_EM_192F_LAMBDA / 8);
-  zk_hash_192(q_tilde, chall_2, B, FAEST_EM_192F_Senc);
-  free(B);
+  zk_hash_192_finalize(q_tilde, &b0_ctx, bf192_sum_poly(bf_q + FAEST_EM_192F_Lenc));
+  free(bf_q);
 
   bf192_t bf_qtilde = bf192_load(q_tilde);
   bf192_store(q_tilde, bf192_add(bf_qtilde, bf192_mul(bf192_load(a_tilde), bf192_load(delta))));
