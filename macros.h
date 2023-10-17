@@ -164,7 +164,7 @@
 #define ATTR_PURE
 #endif
 
-/* constr attribute
+/* const attribute
   Functions can be marked as pure if their only effect is their return value. The return value
   itself may only be computed from the arguments.
  */
