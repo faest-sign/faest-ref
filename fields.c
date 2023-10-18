@@ -121,9 +121,9 @@ bf128_t bf128_byte_combine_bits(uint8_t x) {
 }
 
 bf128_t bf128_rand() {
-  bf128_t ret;
-  rand_bytes((uint8_t*)&ret, sizeof(ret));
-  return ret;
+  uint8_t buf[BF128_NUM_BYTES];
+  rand_bytes(buf, sizeof(buf));
+  return bf128_load(buf);
 }
 
 ATTR_CONST
@@ -246,9 +246,9 @@ bf192_t bf192_byte_combine_bits(uint8_t x) {
 }
 
 bf192_t bf192_rand() {
-  bf192_t ret;
-  rand_bytes((uint8_t*)&ret, sizeof(ret));
-  return ret;
+  uint8_t buf[BF192_NUM_BYTES];
+  rand_bytes(buf, sizeof(buf));
+  return bf192_load(buf);
 }
 
 ATTR_CONST
@@ -379,9 +379,9 @@ bf256_t bf256_byte_combine_bits(uint8_t x) {
 }
 
 bf256_t bf256_rand() {
-  bf256_t ret;
-  rand_bytes((uint8_t*)&ret, sizeof(ret));
-  return ret;
+  uint8_t buf[BF256_NUM_BYTES];
+  rand_bytes(buf, sizeof(buf));
+  return bf256_load(buf);
 }
 
 ATTR_CONST
