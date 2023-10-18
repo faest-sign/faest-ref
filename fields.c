@@ -26,7 +26,7 @@
 
 // GF(2^8) implementation
 
-bf8_t bf8_rand() {
+bf8_t bf8_rand(void) {
   bf8_t ret;
   rand_bytes(&ret, sizeof(ret));
   return ret;
@@ -54,7 +54,7 @@ bf8_t bf8_inv(bf8_t in) {
 
 // GF(2^64) implementation
 
-bf64_t bf64_rand() {
+bf64_t bf64_rand(void) {
   bf64_t ret;
   rand_bytes((uint8_t*)&ret, sizeof(ret));
   return ret;
@@ -120,7 +120,7 @@ bf128_t bf128_byte_combine_bits(uint8_t x) {
   return bf_out;
 }
 
-bf128_t bf128_rand() {
+bf128_t bf128_rand(void) {
   uint8_t buf[BF128_NUM_BYTES];
   rand_bytes(buf, sizeof(buf));
   return bf128_load(buf);
@@ -245,7 +245,7 @@ bf192_t bf192_byte_combine_bits(uint8_t x) {
   return bf_out;
 }
 
-bf192_t bf192_rand() {
+bf192_t bf192_rand(void) {
   uint8_t buf[BF192_NUM_BYTES];
   rand_bytes(buf, sizeof(buf));
   return bf192_load(buf);
@@ -378,7 +378,7 @@ bf256_t bf256_byte_combine_bits(uint8_t x) {
   return bf_out;
 }
 
-bf256_t bf256_rand() {
+bf256_t bf256_rand(void) {
   uint8_t buf[BF256_NUM_BYTES];
   rand_bytes(buf, sizeof(buf));
   return bf256_load(buf);

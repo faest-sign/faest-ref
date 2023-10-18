@@ -56,15 +56,15 @@ ATTR_ALWAYS_INLINE static inline void bf8_store(uint8_t* dst, bf8_t src) {
   *dst = src;
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf8_t bf8_zero() {
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf8_t bf8_zero(void) {
   return 0;
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf8_t bf8_one() {
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf8_t bf8_one(void) {
   return 1;
 }
 
-bf8_t bf8_rand();
+bf8_t bf8_rand(void);
 
 ATTR_CONST ATTR_ALWAYS_INLINE inline bf8_t bf8_add(bf8_t lhs, bf8_t rhs) {
   return lhs ^ rhs;
@@ -95,15 +95,15 @@ ATTR_ALWAYS_INLINE inline void bf64_store(uint8_t* dst, bf64_t src) {
   memcpy(dst, &src, sizeof(src));
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_zero() {
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_zero(void) {
   return 0;
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_one() {
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_one(void) {
   return 1;
 }
 
-bf64_t bf64_rand();
+bf64_t bf64_rand(void);
 
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_add(bf64_t lhs, bf64_t rhs) {
   return lhs ^ rhs;
@@ -158,19 +158,19 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_from_bit(uint8_t bit) 
   return bf128_from_bf8(bit & 1);
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_zero() {
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_zero(void) {
   const bf128_t ret = BF128C(0, 0);
   return ret;
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_one() {
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_one(void) {
   const bf128_t ret = BF128C(1, 0);
   return ret;
 }
 
 ATTR_PURE bf128_t bf128_byte_combine(const bf128_t* x);
 ATTR_PURE bf128_t bf128_byte_combine_bits(uint8_t x);
-bf128_t bf128_rand();
+bf128_t bf128_rand(void);
 
 ATTR_CONST ATTR_ALWAYS_INLINE inline bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
   lhs.values[0] ^= rhs.values[0];
@@ -226,19 +226,19 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_from_bit(uint8_t bit) 
   return bf192_from_bf8(bit & 1);
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_zero() {
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_zero(void) {
   const bf192_t ret = BF192C(0, 0, 0);
   return ret;
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_one() {
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_one(void) {
   const bf192_t ret = BF192C(1, 0, 0);
   return ret;
 }
 
 ATTR_PURE bf192_t bf192_byte_combine(const bf192_t* x);
 ATTR_PURE bf192_t bf192_byte_combine_bits(uint8_t x);
-bf192_t bf192_rand();
+bf192_t bf192_rand(void);
 
 ATTR_CONST static inline bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
@@ -295,19 +295,19 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_from_bit(uint8_t bit) 
   return bf256_from_bf8(bit & 1);
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_zero() {
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_zero(void) {
   const bf256_t ret = BF256C(0, 0, 0, 0);
   return ret;
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_one() {
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_one(void) {
   const bf256_t ret = BF256C(1, 0, 0, 0);
   return ret;
 }
 
 ATTR_PURE bf256_t bf256_byte_combine(const bf256_t* x);
 ATTR_PURE bf256_t bf256_byte_combine_bits(uint8_t x);
-bf256_t bf256_rand();
+bf256_t bf256_rand(void);
 
 ATTR_CONST static inline bf256_t bf256_add(bf256_t lhs, bf256_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
