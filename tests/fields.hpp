@@ -222,7 +222,7 @@ namespace {
     bf128_t value;
 
   public:
-    typedef std::array<uint8_t, 16> bytes;
+    typedef std::array<uint8_t, BF128_NUM_BYTES> bytes;
 
     bf128() : value{0} {}
     bf128(uint64_t v) : value{bf128_from_bf64(v)} {}
@@ -268,18 +268,18 @@ namespace {
     }
 
     bool operator==(bf128 other) const {
-      return std::equal(std::begin(value.values), std::end(value.values),
-                        std::begin(other.value.values), std::end(other.value.values));
+      return BF_VALUE(value, 0) == BF_VALUE(other.value, 0) &&
+             BF_VALUE(value, 1) == BF_VALUE(other.value, 1);
     }
 
 #if defined(HAVE_NTL)
     GF2X as_ntl() const {
       GF2X ret;
-      auto v = value.values[0];
+      auto v = BF_VALUE(value, 0);
       for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
         SetCoeff(ret, i, v & 1);
       }
-      v = value.values[1];
+      v = BF_VALUE(value, 1);
       for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
         SetCoeff(ret, i + 64, v & 1);
       }
@@ -324,7 +324,7 @@ namespace {
 
   static inline std::ostream& operator<<(std::ostream& stream, bf128 v) {
     auto value = v.as_internal();
-    stream << boost::format("%08x %08x") % value.values[1] % value.values[0];
+    stream << boost::format("%08x %08x") % BF_VALUE(value, 1) % BF_VALUE(value, 0);
     return stream;
   }
 
@@ -332,7 +332,7 @@ namespace {
     bf192_t value;
 
   public:
-    typedef std::array<uint8_t, 24> bytes;
+    typedef std::array<uint8_t, BF192_NUM_BYTES> bytes;
 
     bf192() : value{0} {}
     bf192(uint64_t v) : value{bf192_from_bf64(v)} {}
@@ -378,22 +378,23 @@ namespace {
     }
 
     bool operator==(bf192 other) const {
-      return std::equal(std::begin(value.values), std::end(value.values),
-                        std::begin(other.value.values), std::end(other.value.values));
+      return BF_VALUE(value, 0) == BF_VALUE(other.value, 0) &&
+             BF_VALUE(value, 1) == BF_VALUE(other.value, 1) &&
+             BF_VALUE(value, 2) == BF_VALUE(other.value, 2);
     }
 
 #if defined(HAVE_NTL)
     GF2X as_ntl() const {
       GF2X ret;
-      auto v = value.values[0];
+      auto v = BF_VALUE(value, 0);
       for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
         SetCoeff(ret, i, v & 1);
       }
-      v = value.values[1];
+      v = BF_VALUE(value, 1);
       for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
         SetCoeff(ret, i + 64, v & 1);
       }
-      v = value.values[2];
+      v = BF_VALUE(value, 2);
       for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
         SetCoeff(ret, i + 128, v & 1);
       }
@@ -438,7 +439,8 @@ namespace {
 
   static inline std::ostream& operator<<(std::ostream& stream, bf192 v) {
     auto value = v.as_internal();
-    stream << boost::format("%08x %08x %08x") % value.values[2] % value.values[1] % value.values[0];
+    stream << boost::format("%08x %08x %08x") % BF_VALUE(value, 2) % BF_VALUE(value, 1) %
+                  BF_VALUE(value, 0);
     return stream;
   }
 
@@ -446,7 +448,7 @@ namespace {
     bf256_t value;
 
   public:
-    typedef std::array<uint8_t, 32> bytes;
+    typedef std::array<uint8_t, BF256_NUM_BYTES> bytes;
 
     bf256() : value{0} {}
     bf256(uint64_t v) : value{bf256_from_bf64(v)} {}
@@ -492,26 +494,28 @@ namespace {
     }
 
     bool operator==(bf256 other) const {
-      return std::equal(std::begin(value.values), std::end(value.values),
-                        std::begin(other.value.values), std::end(other.value.values));
+      return BF_VALUE(value, 0) == BF_VALUE(other.value, 0) &&
+             BF_VALUE(value, 1) == BF_VALUE(other.value, 1) &&
+             BF_VALUE(value, 2) == BF_VALUE(other.value, 2) &&
+             BF_VALUE(value, 3) == BF_VALUE(other.value, 3);
     }
 
 #if defined(HAVE_NTL)
     GF2X as_ntl() const {
       GF2X ret;
-      auto v = value.values[0];
+      auto v = BF_VALUE(value, 0);
       for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
         SetCoeff(ret, i, v & 1);
       }
-      v = value.values[1];
+      v = BF_VALUE(value, 1);
       for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
         SetCoeff(ret, i + 64, v & 1);
       }
-      v = value.values[2];
+      v = BF_VALUE(value, 2);
       for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
         SetCoeff(ret, i + 128, v & 1);
       }
-      v = value.values[3];
+      v = BF_VALUE(value, 3);
       for (unsigned int i = 0; i != sizeof(v) * 8 && v; ++i, v >>= 1) {
         SetCoeff(ret, i + 192, v & 1);
       }
@@ -556,8 +560,8 @@ namespace {
 
   static inline std::ostream& operator<<(std::ostream& stream, bf256 v) {
     auto value = v.as_internal();
-    stream << boost::format("%08x %08x %08x %08x") % value.values[3] % value.values[2] %
-                  value.values[1] % value.values[0];
+    stream << boost::format("%08x %08x %08x %08x") % BF_VALUE(value, 3) % BF_VALUE(value, 2) %
+                  BF_VALUE(value, 1) % BF_VALUE(value, 0);
     return stream;
   }
 } // namespace
