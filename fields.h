@@ -42,6 +42,11 @@ typedef struct {
   {                                                                                                \
     { x0, x1, x2, x3 }                                                                             \
   }
+
+#define BF128_ALIGN 16
+#define BF192_ALIGN 16
+#define BF256_ALIGN 32
+
 #define BF128_NUM_BYTES (128 / 8)
 #define BF192_NUM_BYTES (192 / 8)
 #define BF256_NUM_BYTES (256 / 8)
