@@ -1302,7 +1302,7 @@ static void aes_key_schedule_constraints_Mkey_1_256(const bf256_t* q, const uint
                                                     zk_hash_256_ctx* b0_ctx, bf256_t* qk) {
   // Step: 19..20
   aes_key_schedule_forward_256(q, qk);
-  bf256_t* q_w_dash = malloc(FAEST_256F_Ske * 8 * sizeof(bf256_t));
+  bf256_t q_w_dash[FAEST_256F_Ske * 8];
   aes_key_schedule_backward_256(&q[FAEST_256F_LAMBDA], qk, 0, 1, delta, q_w_dash);
 
   const bf256_t bf_delta         = bf256_load(delta);
@@ -1332,7 +1332,6 @@ static void aes_key_schedule_constraints_Mkey_1_256(const bf256_t* q, const uint
     iwd         = iwd + 128;
     rotate_word = !rotate_word;
   }
-  free(q_w_dash);
 }
 
 static void aes_enc_forward_256_1(const uint8_t* x, const uint8_t* xk, const uint8_t* in,
