@@ -80,10 +80,7 @@ bf64_t bf64_inv(bf64_t in) {
   return bf64_mul(t1, t1);
 }
 
-ATTR_CONST
-static inline bf64_t bf64_bit_to_mask(bf64_t value, unsigned int bit) {
-  return -((value >> bit) & 1);
-}
+#define bf64_bit_to_mask(value, bit) -((((uint64_t)(value)) >> (bit)) & 1)
 
 // GF(2^128) implementation
 
@@ -192,7 +189,7 @@ ATTR_CONST static inline bf128_t bf128_dbl(bf128_t lhs) {
   lhs           = bf128_shift_left_1(lhs);
   BF_VALUE(lhs, 0) ^= (mask & bf128_modulus);
 
-  return bf128_and_64(lhs, U64C(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff));
+  return lhs;
 }
 
 bf128_t bf128_sum_poly(const bf128_t* xs) {
@@ -318,7 +315,7 @@ ATTR_CONST static inline bf192_t bf192_dbl(bf192_t lhs) {
   lhs           = bf192_shift_left_1(lhs);
   BF_VALUE(lhs, 0) ^= (mask & bf192_modulus);
 
-  return bf192_and_64(lhs, U64C(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff));
+  return lhs;
 }
 
 bf192_t bf192_sum_poly(const bf192_t* xs) {
@@ -452,7 +449,7 @@ ATTR_CONST static inline bf256_t bf256_dbl(bf256_t lhs) {
   lhs           = bf256_shift_left_1(lhs);
   BF_VALUE(lhs, 0) ^= (mask & bf256_modulus);
 
-  return bf256_and_64(lhs, U64C(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff));
+  return lhs;
 }
 
 bf256_t bf256_sum_poly(const bf256_t* xs) {

@@ -177,9 +177,10 @@ ATTR_PURE bf128_t bf128_byte_combine(const bf128_t* x);
 ATTR_PURE bf128_t bf128_byte_combine_bits(uint8_t x);
 bf128_t bf128_rand(void);
 
-ATTR_CONST ATTR_ALWAYS_INLINE inline bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
-  lhs.values[0] ^= rhs.values[0];
-  lhs.values[1] ^= rhs.values[1];
+ATTR_CONST static inline bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+    lhs.values[i] ^= rhs.values[i];
+  }
   return lhs;
 }
 
@@ -192,7 +193,7 @@ ATTR_PURE bf128_t bf128_sum_poly(const bf128_t* xs);
 // GF(2^192) implemenation
 
 ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load(const uint8_t* src) {
-  bf192_t ret;
+  bf192_t ret = bf192_zero();
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF192_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
     memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
