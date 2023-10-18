@@ -323,7 +323,7 @@ namespace {
   };
 
   static inline std::ostream& operator<<(std::ostream& stream, bf128 v) {
-    auto value = v.as_internal();
+    const auto value = v.as_internal();
     stream << boost::format("%08x %08x") % BF_VALUE(value, 1) % BF_VALUE(value, 0);
     return stream;
   }
@@ -438,7 +438,7 @@ namespace {
   };
 
   static inline std::ostream& operator<<(std::ostream& stream, bf192 v) {
-    auto value = v.as_internal();
+    const auto value = v.as_internal();
     stream << boost::format("%08x %08x %08x") % BF_VALUE(value, 2) % BF_VALUE(value, 1) %
                   BF_VALUE(value, 0);
     return stream;
@@ -559,7 +559,7 @@ namespace {
   };
 
   static inline std::ostream& operator<<(std::ostream& stream, bf256 v) {
-    auto value = v.as_internal();
+    const auto value = v.as_internal();
     stream << boost::format("%08x %08x %08x %08x") % BF_VALUE(value, 3) % BF_VALUE(value, 2) %
                   BF_VALUE(value, 1) % BF_VALUE(value, 0);
     return stream;
