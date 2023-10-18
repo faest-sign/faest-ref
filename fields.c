@@ -146,7 +146,7 @@ static inline uint64_t bf128_bit_to_uint64_mask(bf128_t value, unsigned int bit)
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
-  return -((value.values[byte_idx] >> bit_idx) & 1);
+  return -((BF_VALUE(value, byte_idx) >> bit_idx) & 1);
 }
 
 bf128_t bf128_mul(bf128_t lhs, bf128_t rhs) {
@@ -156,7 +156,7 @@ bf128_t bf128_mul(bf128_t lhs, bf128_t rhs) {
 
     const uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
     lhs                 = bf128_shift_left_1(lhs);
-    lhs.values[0] ^= (mask & bf128_modulus);
+    BF_VALUE(lhs, 0) ^= (mask & bf128_modulus);
   }
   return result;
 }
@@ -168,7 +168,7 @@ bf128_t bf128_mul_64(bf128_t lhs, bf64_t rhs) {
 
     const uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
     lhs                 = bf128_shift_left_1(lhs);
-    lhs.values[0] ^= (mask & bf128_modulus);
+    BF_VALUE(lhs, 0) ^= (mask & bf128_modulus);
   }
   return result;
 }
@@ -190,7 +190,7 @@ bf128_t bf128_inv(bf128_t in) {
 ATTR_CONST static inline bf128_t bf128_dbl(bf128_t lhs) {
   uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
   lhs           = bf128_shift_left_1(lhs);
-  lhs.values[0] ^= (mask & bf128_modulus);
+  BF_VALUE(lhs, 0) ^= (mask & bf128_modulus);
 
   return bf128_and_64(lhs, U64C(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff));
 }
@@ -272,7 +272,7 @@ static inline uint64_t bf192_bit_to_uint64_mask(bf192_t value, unsigned int bit)
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
-  return -((value.values[byte_idx] >> bit_idx) & 1);
+  return -((BF_VALUE(value, byte_idx) >> bit_idx) & 1);
 }
 
 bf192_t bf192_mul(bf192_t lhs, bf192_t rhs) {
@@ -282,7 +282,7 @@ bf192_t bf192_mul(bf192_t lhs, bf192_t rhs) {
 
     const uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
     lhs                 = bf192_shift_left_1(lhs);
-    lhs.values[0] ^= (mask & bf192_modulus);
+    BF_VALUE(lhs, 0) ^= (mask & bf192_modulus);
   }
   return result;
 }
@@ -294,7 +294,7 @@ bf192_t bf192_mul_64(bf192_t lhs, bf64_t rhs) {
 
     const uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
     lhs                 = bf192_shift_left_1(lhs);
-    lhs.values[0] ^= (mask & bf192_modulus);
+    BF_VALUE(lhs, 0) ^= (mask & bf192_modulus);
   }
   return result;
 }
@@ -316,7 +316,7 @@ bf192_t bf192_inv(bf192_t in) {
 ATTR_CONST static inline bf192_t bf192_dbl(bf192_t lhs) {
   uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
   lhs           = bf192_shift_left_1(lhs);
-  lhs.values[0] ^= (mask & bf192_modulus);
+  BF_VALUE(lhs, 0) ^= (mask & bf192_modulus);
 
   return bf192_and_64(lhs, U64C(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff));
 }
@@ -406,7 +406,7 @@ static inline uint64_t bf256_bit_to_uint64_mask(bf256_t value, unsigned int bit)
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
-  return -((value.values[byte_idx] >> bit_idx) & 1);
+  return -((BF_VALUE(value, byte_idx) >> bit_idx) & 1);
 }
 
 bf256_t bf256_mul(bf256_t lhs, bf256_t rhs) {
@@ -416,7 +416,7 @@ bf256_t bf256_mul(bf256_t lhs, bf256_t rhs) {
 
     const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
     lhs                 = bf256_shift_left_1(lhs);
-    lhs.values[0] ^= (mask & bf256_modulus);
+    BF_VALUE(lhs, 0) ^= (mask & bf256_modulus);
   }
   return result;
 }
@@ -428,7 +428,7 @@ bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs) {
 
     const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
     lhs                 = bf256_shift_left_1(lhs);
-    lhs.values[0] ^= (mask & bf256_modulus);
+    BF_VALUE(lhs, 0) ^= (mask & bf256_modulus);
   }
   return result;
 }
@@ -450,7 +450,7 @@ bf256_t bf256_inv(bf256_t in) {
 ATTR_CONST static inline bf256_t bf256_dbl(bf256_t lhs) {
   uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
   lhs           = bf256_shift_left_1(lhs);
-  lhs.values[0] ^= (mask & bf256_modulus);
+  BF_VALUE(lhs, 0) ^= (mask & bf256_modulus);
 
   return bf256_and_64(lhs, U64C(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff));
 }
