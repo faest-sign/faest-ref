@@ -165,7 +165,7 @@
 #endif
 
 /* const attribute
-  Functions can be marked as pure if their only effect is their return value. The return value
+  Functions can be marked as const if their only effect is their return value. The return value
   itself may only be computed from the arguments.
  */
 #if defined(__GNUC__) || __has_attribute(const)
