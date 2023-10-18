@@ -30,6 +30,18 @@ typedef struct {
   uint64_t values[4];
 } bf256_t;
 
+#define BF128C(x0, x1)                                                                             \
+  {                                                                                                \
+    { x0, x1 }                                                                                     \
+  }
+#define BF192C(x0, x1, x2)                                                                         \
+  {                                                                                                \
+    { x0, x1, x2 }                                                                                 \
+  }
+#define BF256C(x0, x1, x2, x3)                                                                     \
+  {                                                                                                \
+    { x0, x1, x2, x3 }                                                                             \
+  }
 #define BF128_NUM_BYTES (128 / 8)
 #define BF192_NUM_BYTES (192 / 8)
 #define BF256_NUM_BYTES (256 / 8)
