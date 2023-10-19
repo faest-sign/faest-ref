@@ -157,7 +157,7 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
   // Step: 6
   H1_context_t h1_ctx;
   H1_init(&h1_ctx, lambda);
-  for (uint32_t j = 0; j < numVoleInstances; j++) {
+  for (unsigned int j = 0; j < numVoleInstances; j++) {
     H1_update(&h1_ctx, vecCom->com + (j * (lambdaBytes * 2)), (lambdaBytes * 2));
   }
   H1_final(&h1_ctx, vecCom->h, lambdaBytes * 2);
