@@ -265,7 +265,7 @@ ATTR_PURE ATTR_ALWAYS_INLINE static inline bf256_t bf256_load(const uint8_t* src
   bf256_t ret;
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF256_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
-    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t);
+    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
     BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
   }
 #else
