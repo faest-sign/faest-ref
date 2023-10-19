@@ -193,7 +193,7 @@ ATTR_PURE bf128_t bf128_sum_poly(const bf128_t* xs);
 // GF(2^192) implemenation
 
 ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load(const uint8_t* src) {
-  bf192_t ret = bf192_zero();
+  bf192_t ret;
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF192_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
     memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
