@@ -2,10 +2,15 @@
  *  SPDX-License-Identifier: MIT
  */
 
+#if defined(HAVE_CONFIG_H)
+#include <config.h>
+#endif
+
 extern "C" {
 #include "api.h"
 }
 
+#include <algorithm>
 #include <array>
 #include <boost/program_options.hpp>
 #include <chrono>
@@ -13,11 +18,36 @@ extern "C" {
 #include <random>
 #include <vector>
 
+#if defined(HAVE_PTHREAD_SETAFFINITY_NP)
+#include <pthread.h>
+#endif
+
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::microseconds;
 
 namespace {
+#if defined(HAVE_PTHREAD_SETAFFINITY_NP)
+  void set_thread_affinity(const std::vector<unsigned int>& cpus) {
+    if (cpus.empty()) {
+      return;
+    }
+
+    auto max_cpu = *std::max_element(cpus.begin(), cpus.end());
+
+    cpu_set_t* cpuset        = CPU_ALLOC(max_cpu);
+    const size_t cpuset_size = CPU_ALLOC_SIZE(max_cpu);
+
+    CPU_ZERO_S(cpuset_size, cpuset);
+    for (auto cpu : cpus) {
+      CPU_SET_S(cpu, cpuset_size, cpuset);
+    }
+
+    pthread_setaffinity_np(pthread_self(), cpuset_size, cpuset);
+    CPU_FREE(cpuset);
+  }
+#endif
+
   struct timing_and_size_t {
     microseconds keygen, sign, verify;
   };
@@ -29,6 +59,9 @@ namespace {
     options.add_options()("help", "produce help message");
     options.add_options()("iter,i", value<unsigned int>()->default_value(100),
                           "set number of iterations");
+#if defined(HAVE_PTHREAD_SETAFFINITY_NP)
+    options.add_options()("cpu,c", value<std::vector<unsigned int>>()->multitoken(), "bind to CPU");
+#endif
 
     variables_map vm;
     try {
@@ -39,6 +72,10 @@ namespace {
         std::cout << options << std::endl;
         return 0;
       }
+
+#if defined(HAVE_PTHREAD_SETAFFINITY_NP)
+      set_thread_affinity(vm["cpu"].as<std::vector<unsigned int>>());
+#endif
 
       return vm["iter"].as<unsigned int>();
     } catch (const boost::exception& e) {

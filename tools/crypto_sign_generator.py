@@ -64,7 +64,7 @@ endif
 if boost_program_options.found() and get_option('benchmarks').enabled()
   bench_sources = files(join_paths(meson.project_source_root(), 'tools', 'bench.cpp'))
   bench = executable('faest_{param_name}_bench', bench_sources,
-    dependencies: [libfaest_{param_name}_dependency, boost_program_options],
+    dependencies: [libfaest_{param_name}_dependency, boost_program_options, threads],
     include_directories: include_directories,
     c_args: defines + c_flags,
     cpp_args: defines + cpp_flags

@@ -76,6 +76,7 @@ conf_data.set('HAVE_ARC4RANDOM_BUF', cc.has_header_symbol('stdlib.h', 'arc4rando
 conf_data.set('HAVE_EXPLICIT_BZERO', cc.has_header_symbol('string.h', 'explicit_bzero', args: defines))
 conf_data.set('HAVE_CONSTTIME_MEMEQUAL', cc.has_header_symbol('string.h', 'consttime_memequal', args: defines))
 conf_data.set('HAVE_TIMINGSAFE_BCMP', cc.has_header_symbol('string.h', 'timingsafe_bcmp', args: defines))
+conf_data.set('HAVE_PTHREAD_SETAFFINITY_NP', cc.has_header_symbol('pthread.h', 'pthread_setaffinity_np', args: defines))
 
 # parameter sets
 # After changing the parameter sets, be sure to run crypto_sign_generator.py to create the corresponding meson files.
@@ -381,6 +382,7 @@ endforeach
 # dependencies
 openssl = dependency('openssl', required: get_option('openssl'))
 boost_program_options = dependency('boost', required: get_option('benchmarks'), modules: ['program_options'])
+threads = dependency('threads')
 valgrind = dependency('valgrind', required: get_option('valgrind'))
 valgrind_exec = find_program('valgrind', required: valgrind.found())
 
