@@ -22,7 +22,6 @@ libfaest_128f = static_library('faest_128f',
   include_directories: include_directories,
   c_args: defines + c_flags
 )
-install_headers(headers, subdir: 'faest_128f')
 libfaest_128f_dependency = declare_dependency(
   link_with: libfaest_128f,
   include_directories: include_directories

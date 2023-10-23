@@ -22,7 +22,6 @@ libfaest_em_192s = static_library('faest_em_192s',
   include_directories: include_directories,
   c_args: defines + c_flags
 )
-install_headers(headers, subdir: 'faest_em_192s')
 libfaest_em_192s_dependency = declare_dependency(
   link_with: libfaest_em_192s,
   include_directories: include_directories
