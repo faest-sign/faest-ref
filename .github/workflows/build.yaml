@@ -18,7 +18,6 @@ jobs:
     - name: Install Linux dependencies
       run: |
         sudo apt-get -q update
-        sudo apt-get -q -y upgrade
         sudo apt-get -q -y install meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
@@ -39,7 +38,6 @@ jobs:
       run: |
         sudo dpkg --add-architecture i386
         sudo apt-get -q update
-        sudo apt-get -q -y upgrade
         sudo apt-get -q -y install meson ninja-build pkg-config libboost-test-dev:i386 libssl-dev:i386 gcc-i686-linux-gnu g++-i686-linux-gnu
     - name: Build and test
       run: |
@@ -68,10 +66,9 @@ jobs:
     - name: Install Linux dependencies
       run: |
         sudo apt-get -q update
-        sudo apt-get -q -y upgrade
         sudo apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev
-        sudo apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
-        sudo apt-get -q -y install ${{ matrix.cfg.ld }} || true
+        if [[ ! "${{matrix.cfg.cxxcompiler}}" =~ clang ]]; then sudo apt-get -q -y install ${{ matrix.cfg.cxxcompiler }}; fi
+        if [[ "${{matrix.cfg.ld}}" != "bfd" ]]; then sudo apt-get -q -y install ${{ matrix.cfg.ld }}; fi
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
       with:
@@ -174,7 +171,6 @@ jobs:
           githubToken: ${{ github.token }}
           install: |
             apt-get -q update
-            apt-get -q -y upgrade
             apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev
             apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
           run: |
