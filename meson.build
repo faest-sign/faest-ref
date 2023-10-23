@@ -26,7 +26,7 @@ if cc.get_id() != 'msvc'
     '-Werror=vla',
     '-Werror=incompatible-pointer-types',
   ]
-  flags += '-Wshadow'
+  flags += ['-Werror=shadow', '-Wno-psabi']
   defines += '-D_GNU_SOURCE'
 
   if get_option('march-native').enabled()
