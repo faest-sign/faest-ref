@@ -19,7 +19,7 @@ jobs:
       run: |
         sudo apt-get -q update
         sudo apt-get -q -y upgrade
-        sudo apt-get -q -y install meson ninja-build pkgconf libntl-dev libboost-test-dev libssl-dev
+        sudo apt-get -q -y install meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
       with:
@@ -40,7 +40,7 @@ jobs:
         sudo dpkg --add-architecture i386
         sudo apt-get -q update
         sudo apt-get -q -y upgrade
-        sudo apt-get -q -y install meson ninja-build pkgconf libboost-test-dev:i386 libssl-dev:i386 gcc-i686-linux-gnu g++-i686-linux-gnu
+        sudo apt-get -q -y install meson ninja-build pkg-config libboost-test-dev:i386 libssl-dev:i386 gcc-i686-linux-gnu g++-i686-linux-gnu
     - name: Build and test
       run: |
         mkdir build
@@ -69,7 +69,7 @@ jobs:
       run: |
         sudo apt-get -q update
         sudo apt-get -q -y upgrade
-        sudo apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build pkgconf libntl-dev libboost-test-dev libssl-dev
+        sudo apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev
         sudo apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
         sudo apt-get -q -y install ${{ matrix.cfg.ld }} || true
     - name: Build and test
@@ -141,7 +141,7 @@ jobs:
     - name: Install Linux dependencies
       run: |
         sudo apt-get -q update
-        sudo apt-get -q -y install meson ninja-build pkgconf libntl-dev libboost-test-dev libssl-dev clang-tools
+        sudo apt-get -q -y install meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev clang-tools
     - name: Configure, build and test
       run: |
         mkdir -p build
@@ -175,7 +175,7 @@ jobs:
           install: |
             apt-get -q update
             apt-get -q -y upgrade
-            apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build pkgconf libntl-dev libboost-test-dev libssl-dev
+            apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev
             apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
           run: |
             mkdir build
