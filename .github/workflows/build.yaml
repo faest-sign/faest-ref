@@ -74,7 +74,7 @@ jobs:
       with:
         action: test
         options: --verbose
-        setup-options: -Dbenchmarks=disabled
+        setup-options: -Dbenchmarks=disabled -Db_lto=false
       env:
         CC: ${{ matrix.cfg.compiler }}
         CXX: ${{ matrix.cfg.cxxcompiler }}
@@ -142,7 +142,7 @@ jobs:
     - name: Configure, build and test
       run: |
         mkdir -p build
-        scan-build meson setup build -Dbenchmarks=disabled
+        scan-build meson setup build -Dbenchmarks=disabled -Db_lto=false
         scan-build --exclude "sha3/" --status-bugs ninja -C build
 
   build-archs:
@@ -172,7 +172,7 @@ jobs:
           install: |
             apt-get -q update
             apt-get -q -y install ${{ matrix.cfg.compiler }} meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev
-            apt-get -q -y install ${{ matrix.cfg.cxxcompiler }} || true
+            apt-get -q -y install ${{ matrix.cfg.cxxcompiler }}
           run: |
             mkdir build
             meson setup build -Dbenchmarks=disabled
