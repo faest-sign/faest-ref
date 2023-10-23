@@ -60,6 +60,7 @@ jobs:
         - { os: ubuntu-22.04, compiler: clang, cxxcompiler: clang++, ld: lld } # = clang-14
         - { os: ubuntu-22.04, compiler: gcc-12, cxxcompiler: g++-12, ld: bfd }
         - { os: ubuntu-22.04, compiler: clang-13, cxxcompiler: clang++-13, ld: lld-13 }
+        - { os: ubuntu-22.04, compiler: clang-15, cxxcompiler: clang++-15, ld: lld-15 }
     steps:
     - uses: actions/checkout@v4
       with:
