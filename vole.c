@@ -12,6 +12,7 @@
 #include "random_oracle.h"
 
 #include <stdbool.h>
+#include <string.h>
 
 #if !defined(FAEST_TESTS)
 static

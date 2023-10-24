@@ -15,6 +15,8 @@
 #include "vole.h"
 #include "universal_hashing.h"
 
+#include <string.h>
+
 // helpers to compute position in signature (sign)
 
 ATTR_PURE static inline uint8_t* signature_c(uint8_t* base_ptr, unsigned int index,
