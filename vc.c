@@ -33,7 +33,7 @@ static tree_t create_tree(const faest_paramset_t* params, unsigned int depth) {
   uint32_t lambdaBytes = params->faest_param.lambda / 8;
 
   tree.numNodes  = getBinaryTreeNodeCount(depth);
-  tree.numLeaves = 1 << depth;
+  tree.numLeaves = ((size_t)1) << depth;
   tree.nodes     = calloc(tree.numNodes, lambdaBytes);
 
   return tree;
@@ -125,8 +125,8 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
   vecCom->k = NODE(tree, 0, lambdaBytes);
 
   // Step: 4..5
-  const unsigned int base_index = tree.numNodes - tree.numLeaves;
-  unsigned int i                = 0;
+  const size_t base_index = tree.numNodes - tree.numLeaves;
+  unsigned int i          = 0;
   // compute commitments for 4 instances in parallel
   for (; i < numVoleInstances / 4 * 4; i += 4) {
     H0_context_x4_t h0_ctx;
