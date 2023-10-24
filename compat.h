@@ -198,6 +198,21 @@ ATTR_CONST ATTR_ARTIFICIAL static inline uint32_t ceil_log2(uint32_t x) {
   return 32 - clz(x - 1);
 }
 
+/* helper functions for byte parity: 0 if even number of bits are set, 1 if odd number of bts are
+ * set */
+#if __has_builtin(__builtin_parity)
+#define parity8 __builtin_parity
+#elif __has_builtin(__builtin_popcount)
+#define parity8(x) (__builtin_popcount(x) & 0x1)
+#else
+ATTR_CONST ATTR_ARTIFICIAL static inline uint8_t parity8(uint8_t n) {
+  n ^= n >> 4;
+  n ^= n >> 2;
+  n ^= n >> 1;
+  return !((~n) & 1);
+}
+#endif
+
 #if !defined(__cplusplus)
 #include <assert.h>
 
