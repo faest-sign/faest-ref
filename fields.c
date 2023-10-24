@@ -110,11 +110,21 @@ bf128_t bf128_byte_combine(const bf128_t* x) {
 }
 
 bf128_t bf128_byte_combine_bits(uint8_t x) {
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  return bf128_from_bit(x & 1) ^ bf128_mul_bit(bf128_alpha[1 - 1], (x >> 1) & 1) ^
+         bf128_mul_bit(bf128_alpha[2 - 1], (x >> 2) & 1) ^
+         bf128_mul_bit(bf128_alpha[3 - 1], (x >> 3) & 1) ^
+         bf128_mul_bit(bf128_alpha[4 - 1], (x >> 4) & 1) ^
+         bf128_mul_bit(bf128_alpha[5 - 1], (x >> 5) & 1) ^
+         bf128_mul_bit(bf128_alpha[6 - 1], (x >> 6) & 1) ^
+         bf128_mul_bit(bf128_alpha[7 - 1], (x >> 7) & 1);
+#else
   bf128_t bf_out = bf128_from_bit(x & 1);
   for (unsigned int i = 1; i < 8; ++i) {
     bf_out = bf128_add(bf_out, bf128_mul_bit(bf128_alpha[i - 1], (x >> i) & 1));
   }
   return bf_out;
+#endif
 }
 
 bf128_t bf128_rand(void) {
@@ -123,6 +133,9 @@ bf128_t bf128_rand(void) {
   return bf128_load(buf);
 }
 
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf128_and_64(lhs, rhs) ((lhs) & (rhs))
+#else
 ATTR_CONST
 static inline bf128_t bf128_and_64(bf128_t lhs, bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
@@ -130,13 +143,29 @@ static inline bf128_t bf128_and_64(bf128_t lhs, bf64_t rhs) {
   }
   return lhs;
 }
+#endif
 
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#if __has_builtin(__builtin_shufflevector)
+#define bf128_shift_right_64(v1) __builtin_shufflevector((v1), bf128_zero(), 2, 0)
+#else
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_shift_right_64(bf128_t v1) {
+  bf128_t ret;
+  BF_VALUE(ret, 0) = 0;
+  BF_VALUE(ret, 1) = BF_VALUE(v1, 0);
+  return ret;
+}
+#endif
+
+#define bf128_shift_left_1(value) ((value << 1) | bf128_shift_right_64(value >> 63))
+#else
 ATTR_CONST
 static inline bf128_t bf128_shift_left_1(bf128_t value) {
   value.values[1] = (value.values[1] << 1) | (value.values[0] >> 63);
   value.values[0] = value.values[0] << 1;
   return value;
 }
+#endif
 
 ATTR_CONST
 static inline uint64_t bf128_bit_to_uint64_mask(bf128_t value, unsigned int bit) {
@@ -170,9 +199,11 @@ bf128_t bf128_mul_64(bf128_t lhs, bf64_t rhs) {
   return result;
 }
 
+#if !defined(HAVE_ATTR_VECTOR_SIZE)
 bf128_t bf128_mul_bit(bf128_t lhs, uint8_t rhs) {
   return bf128_and_64(lhs, -((uint64_t)rhs & 1));
 }
+#endif
 
 bf128_t bf128_inv(bf128_t in) {
   bf128_t t1 = in;
@@ -235,11 +266,21 @@ bf192_t bf192_byte_combine(const bf192_t* x) {
 }
 
 bf192_t bf192_byte_combine_bits(uint8_t x) {
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  return bf192_from_bit(x & 1) ^ bf192_mul_bit(bf192_alpha[1 - 1], (x >> 1) & 1) ^
+         bf192_mul_bit(bf192_alpha[2 - 1], (x >> 2) & 1) ^
+         bf192_mul_bit(bf192_alpha[3 - 1], (x >> 3) & 1) ^
+         bf192_mul_bit(bf192_alpha[4 - 1], (x >> 4) & 1) ^
+         bf192_mul_bit(bf192_alpha[5 - 1], (x >> 5) & 1) ^
+         bf192_mul_bit(bf192_alpha[6 - 1], (x >> 6) & 1) ^
+         bf192_mul_bit(bf192_alpha[7 - 1], (x >> 7) & 1);
+#else
   bf192_t bf_out = bf192_from_bit(x & 1);
   for (unsigned int i = 1; i < 8; ++i) {
     bf_out = bf192_add(bf_out, bf192_mul_bit(bf192_alpha[i - 1], (x >> i) & 1));
   }
   return bf_out;
+#endif
 }
 
 bf192_t bf192_rand(void) {
@@ -248,6 +289,9 @@ bf192_t bf192_rand(void) {
   return bf192_load(buf);
 }
 
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf192_and_64(lhs, rhs) ((lhs) & (rhs))
+#else
 ATTR_CONST
 static inline bf192_t bf192_and_64(bf192_t lhs, bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
@@ -255,12 +299,33 @@ static inline bf192_t bf192_and_64(bf192_t lhs, bf64_t rhs) {
   }
   return lhs;
 }
+#endif
+
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#if __has_builtin(__builtin_shufflevector)
+#define bf192_shift_right_64(v1) __builtin_shufflevector((v1), bf192_zero(), 4, 0, 1, 5)
+#else
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_shift_right_64(bf192_t v1) {
+  bf192_t ret;
+  BF_VALUE(ret, 0) = 0;
+  BF_VALUE(ret, 1) = BF_VALUE(v1, 0);
+  BF_VALUE(ret, 2) = BF_VALUE(v1, 1);
+  BF_VALUE(ret, 3) = 0;
+  return ret;
+}
+#endif
+#endif
 
 ATTR_CONST
 static inline bf192_t bf192_shift_left_1(bf192_t value) {
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  const bf192_t mask = BF192C(0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff);
+  return ((value << 1) | bf192_shift_right_64(value >> 63)) & mask;
+#else
   value.values[2] = (value.values[2] << 1) | (value.values[1] >> 63);
   value.values[1] = (value.values[1] << 1) | (value.values[0] >> 63);
   value.values[0] = value.values[0] << 1;
+#endif
   return value;
 }
 
@@ -296,9 +361,11 @@ bf192_t bf192_mul_64(bf192_t lhs, bf64_t rhs) {
   return result;
 }
 
+#if !defined(HAVE_ATTR_VECTOR_SIZE)
 bf192_t bf192_mul_bit(bf192_t lhs, uint8_t rhs) {
   return bf192_and_64(lhs, -((uint64_t)rhs & 1));
 }
+#endif
 
 bf192_t bf192_inv(bf192_t in) {
   bf192_t t1 = in;
@@ -368,11 +435,21 @@ bf256_t bf256_byte_combine(const bf256_t* x) {
 }
 
 bf256_t bf256_byte_combine_bits(uint8_t x) {
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  return bf256_from_bit(x & 1) ^ bf256_mul_bit(bf256_alpha[1 - 1], (x >> 1) & 1) ^
+         bf256_mul_bit(bf256_alpha[2 - 1], (x >> 2) & 1) ^
+         bf256_mul_bit(bf256_alpha[3 - 1], (x >> 3) & 1) ^
+         bf256_mul_bit(bf256_alpha[4 - 1], (x >> 4) & 1) ^
+         bf256_mul_bit(bf256_alpha[5 - 1], (x >> 5) & 1) ^
+         bf256_mul_bit(bf256_alpha[6 - 1], (x >> 6) & 1) ^
+         bf256_mul_bit(bf256_alpha[7 - 1], (x >> 7) & 1);
+#else
   bf256_t bf_out = bf256_from_bit(x & 1);
   for (unsigned int i = 1; i < 8; ++i) {
     bf_out = bf256_add(bf_out, bf256_mul_bit(bf256_alpha[i - 1], (x >> i) & 1));
   }
   return bf_out;
+#endif
 }
 
 bf256_t bf256_rand(void) {
@@ -381,6 +458,9 @@ bf256_t bf256_rand(void) {
   return bf256_load(buf);
 }
 
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf256_and_64(lhs, rhs) ((lhs) & (rhs))
+#else
 ATTR_CONST
 static inline bf256_t bf256_and_64(bf256_t lhs, bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
@@ -388,7 +468,24 @@ static inline bf256_t bf256_and_64(bf256_t lhs, bf64_t rhs) {
   }
   return lhs;
 }
+#endif
 
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#if __has_builtin(__builtin_shufflevector)
+#define bf256_shift_right_64(v1) __builtin_shufflevector((v1), bf256_zero(), 4, 0, 1, 2)
+#else
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_shift_right_64(bf256_t v1) {
+  bf256_t ret;
+  BF_VALUE(ret, 0) = 0;
+  BF_VALUE(ret, 1) = BF_VALUE(v1, 0);
+  BF_VALUE(ret, 2) = BF_VALUE(v1, 1);
+  BF_VALUE(ret, 3) = BF_VALUE(v1, 2);
+  return ret;
+}
+#endif
+
+#define bf256_shift_left_1(value) ((value << 1) | bf256_shift_right_64(value >> 63))
+#else
 ATTR_CONST
 static inline bf256_t bf256_shift_left_1(bf256_t value) {
   value.values[3] = (value.values[3] << 1) | (value.values[2] >> 63);
@@ -397,9 +494,10 @@ static inline bf256_t bf256_shift_left_1(bf256_t value) {
   value.values[0] = value.values[0] << 1;
   return value;
 }
+#endif
 
-ATTR_CONST
-static inline uint64_t bf256_bit_to_uint64_mask(bf256_t value, unsigned int bit) {
+ATTR_CONST ATTR_ALWAYS_INLINE static inline uint64_t bf256_bit_to_uint64_mask(bf256_t value,
+                                                                              unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
@@ -407,32 +505,48 @@ static inline uint64_t bf256_bit_to_uint64_mask(bf256_t value, unsigned int bit)
 }
 
 bf256_t bf256_mul(bf256_t lhs, bf256_t rhs) {
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  const bf256_t mod = BF256C(bf256_modulus, 0, 0, 0);
+#endif
   bf256_t result = {0};
   for (unsigned int idx = 0; idx != 256; ++idx) {
     result = bf256_add(result, bf256_and_64(lhs, bf256_bit_to_uint64_mask(rhs, idx)));
 
     const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
     lhs                 = bf256_shift_left_1(lhs);
-    BF_VALUE(lhs, 0) ^= (mask & bf256_modulus);
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+    lhs ^= bf256_and_64(mod, mask);
+#else
+    BF_VALUE(lhs, 0) ^= mask & bf256_modulus;
+#endif
   }
   return result;
 }
 
 bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs) {
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  const bf256_t mod = BF256C(bf256_modulus, 0, 0, 0);
+#endif
   bf256_t result = {0};
   for (unsigned int idx = 0; idx != 64; ++idx) {
     result = bf256_add(result, bf256_and_64(lhs, bf64_bit_to_mask(rhs, idx)));
 
     const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
     lhs                 = bf256_shift_left_1(lhs);
-    BF_VALUE(lhs, 0) ^= (mask & bf256_modulus);
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+    lhs ^= bf256_and_64(mod, mask);
+#else
+    BF_VALUE(lhs, 0) ^= mask & bf256_modulus;
+#endif
   }
   return result;
 }
 
+#if !defined(HAVE_ATTR_VECTOR_SIZE)
 bf256_t bf256_mul_bit(bf256_t lhs, uint8_t rhs) {
   return bf256_and_64(lhs, -((uint64_t)rhs & 1));
 }
+#endif
 
 bf256_t bf256_inv(bf256_t in) {
   bf256_t t1 = in;
@@ -447,9 +561,13 @@ bf256_t bf256_inv(bf256_t in) {
 ATTR_CONST static inline bf256_t bf256_dbl(bf256_t lhs) {
   uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
   lhs           = bf256_shift_left_1(lhs);
-  BF_VALUE(lhs, 0) ^= (mask & bf256_modulus);
-
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  const bf256_t mod = BF256C(bf256_modulus, 0, 0, 0);
+  return lhs ^ bf256_and_64(mod, mask);
+#else
+  BF_VALUE(lhs, 0) ^= mask & bf256_modulus;
   return lhs;
+#endif
 }
 
 bf256_t bf256_sum_poly(const bf256_t* xs) {

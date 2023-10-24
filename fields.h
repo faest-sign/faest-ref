@@ -16,6 +16,24 @@ FAEST_BEGIN_C_DECL
 typedef uint8_t bf8_t;
 typedef uint64_t bf64_t;
 
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define BF_VALUE(v, i) ((v)[i])
+
+typedef uint64_t bf128_t ATTR_VECTOR_SIZE(16);
+typedef uint64_t bf192_t ATTR_VECTOR_SIZE(32);
+typedef uint64_t bf256_t ATTR_VECTOR_SIZE(32);
+
+#define BF128_ALIGN 16
+#define BF192_ALIGN 32
+#define BF256_ALIGN 32
+
+#define BF128C(x0, x1)                                                                             \
+  { x0, x1 }
+#define BF192C(x0, x1, x2)                                                                         \
+  { x0, x1, x2, UINT64_C(0) }
+#define BF256C(x0, x1, x2, x3)                                                                     \
+  { x0, x1, x2, x3 }
+#else
 #define BF_VALUE(v, i) ((v).values[i])
 
 typedef struct {
@@ -46,6 +64,7 @@ typedef struct {
 #define BF128_ALIGN 16
 #define BF192_ALIGN 16
 #define BF256_ALIGN 32
+#endif
 
 #define BF128_NUM_BYTES (128 / 8)
 #define BF192_NUM_BYTES (192 / 8)
@@ -177,16 +196,24 @@ ATTR_PURE bf128_t bf128_byte_combine(const bf128_t* x);
 ATTR_PURE bf128_t bf128_byte_combine_bits(uint8_t x);
 bf128_t bf128_rand(void);
 
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf128_add(lhs, rhs) ((lhs) ^ (rhs))
+#else
 ATTR_CONST static inline bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] ^= rhs.values[i];
   }
   return lhs;
 }
+#endif
 
 ATTR_CONST bf128_t bf128_mul(bf128_t lhs, bf128_t rhs);
 ATTR_CONST bf128_t bf128_mul_64(bf128_t lhs, bf64_t rhs);
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf128_mul_bit(lhs, rhs) ((lhs) & -((uint64_t)(rhs)&1))
+#else
 ATTR_CONST bf128_t bf128_mul_bit(bf128_t lhs, uint8_t rhs);
+#endif
 ATTR_CONST bf128_t bf128_inv(bf128_t lhs);
 ATTR_PURE bf128_t bf128_sum_poly(const bf128_t* xs);
 
@@ -201,6 +228,9 @@ ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load(const uint8_t* src
   }
 #else
   memcpy(&ret, src, BF192_NUM_BYTES);
+#endif
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  BF_VALUE(ret, 3) = 0;
 #endif
   return ret;
 }
@@ -246,16 +276,24 @@ ATTR_PURE bf192_t bf192_byte_combine(const bf192_t* x);
 ATTR_PURE bf192_t bf192_byte_combine_bits(uint8_t x);
 bf192_t bf192_rand(void);
 
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf192_add(lhs, rhs) ((lhs) ^ (rhs))
+#else
 ATTR_CONST static inline bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] ^= rhs.values[i];
   }
   return lhs;
 }
+#endif
 
 ATTR_CONST bf192_t bf192_mul(bf192_t lhs, bf192_t rhs);
 ATTR_CONST bf192_t bf192_mul_64(bf192_t lhs, bf64_t rhs);
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf192_mul_bit(lhs, rhs) ((lhs) & -((uint64_t)(rhs)&1))
+#else
 ATTR_CONST bf192_t bf192_mul_bit(bf192_t lhs, uint8_t rhs);
+#endif
 ATTR_CONST bf192_t bf192_inv(bf192_t lhs);
 ATTR_PURE bf192_t bf192_sum_poly(const bf192_t* xs);
 
@@ -315,16 +353,24 @@ ATTR_PURE bf256_t bf256_byte_combine(const bf256_t* x);
 ATTR_PURE bf256_t bf256_byte_combine_bits(uint8_t x);
 bf256_t bf256_rand(void);
 
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf256_add(lhs, rhs) ((lhs) ^ (rhs))
+#else
 ATTR_CONST static inline bf256_t bf256_add(bf256_t lhs, bf256_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
     lhs.values[i] ^= rhs.values[i];
   }
   return lhs;
 }
+#endif
 
 ATTR_CONST bf256_t bf256_mul(bf256_t lhs, bf256_t rhs);
 ATTR_CONST bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs);
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf256_mul_bit(lhs, rhs) ((lhs) & -((uint64_t)(rhs)&1))
+#else
 ATTR_CONST bf256_t bf256_mul_bit(bf256_t lhs, uint8_t rhs);
+#endif
 ATTR_CONST bf256_t bf256_inv(bf256_t lhs);
 ATTR_PURE bf256_t bf256_sum_poly(const bf256_t* xs);
 
