@@ -27,11 +27,11 @@ static inline void masked_xor_u8_array(const uint8_t* a, const uint8_t* b, uint8
   }
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE inline uint8_t get_bit(uint8_t in, uint8_t index) {
+ATTR_CONST ATTR_ALWAYS_INLINE inline uint8_t get_bit(uint8_t in, unsigned int index) {
   return (in >> index) & 0x01;
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE inline uint8_t set_bit(uint8_t in, uint8_t index) {
+ATTR_CONST ATTR_ALWAYS_INLINE inline uint8_t set_bit(uint8_t in, unsigned int index) {
   return (in << index);
 }
 
