@@ -111,7 +111,7 @@ jobs:
       with:
         submodules: recursive
     - name: Set up Windows SDK
-      uses: fbactions/setup-winsdk@v1
+      uses: fbactions/setup-winsdk@v2
       with:
         winsdk-build-version: 19041
     - uses: actions/setup-python@v4
