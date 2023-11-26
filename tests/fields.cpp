@@ -92,6 +92,10 @@ namespace {
     check_mul<B>(B::zero(), 0xFF, B::zero());
     check_mul<B>(0xFF, B::one(), 0xFF);
     check_mul<B>(B::one(), 0xFF, 0xFF);
+  }
+
+  template <class B>
+  void div_invariants() {
     check_div<B>(0xFF, B::one(), 0xFF);
   }
 
@@ -135,6 +139,7 @@ BOOST_AUTO_TEST_CASE(test_bf8_add_random) {
 
 BOOST_AUTO_TEST_CASE(test_bf8_mul_invariants) {
   mul_invariants<bf8>();
+  div_invariants<bf8>();
 }
 
 #if defined(HAVE_NTL)
@@ -165,10 +170,6 @@ BOOST_AUTO_TEST_CASE(test_bf64_mul_invariants) {
 BOOST_AUTO_TEST_CASE(test_bf64_mul_random) {
   mul_random<bf64>();
 }
-
-BOOST_AUTO_TEST_CASE(test_bf64_div_random) {
-  div_random<bf64>();
-}
 #endif
 
 BOOST_AUTO_TEST_CASE(test_bf128_add_invariants) {
@@ -188,10 +189,6 @@ BOOST_AUTO_TEST_CASE(test_bf128_mul_invariants) {
 #if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf128_mul_random) {
   mul_random<bf128>();
-}
-
-BOOST_AUTO_TEST_CASE(test_bf128_div_random) {
-  div_random<bf128>();
 }
 #endif
 
@@ -213,10 +210,6 @@ BOOST_AUTO_TEST_CASE(test_bf192_mul_invariants) {
 BOOST_AUTO_TEST_CASE(test_bf192_mul_random) {
   mul_random<bf192>();
 }
-
-BOOST_AUTO_TEST_CASE(test_bf192_div_random) {
-  div_random<bf192>();
-}
 #endif
 
 BOOST_AUTO_TEST_CASE(test_bf256_add_invariants) {
@@ -236,10 +229,6 @@ BOOST_AUTO_TEST_CASE(test_bf256_mul_invariants) {
 #if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf256_mul_random) {
   mul_random<bf256>();
-}
-
-BOOST_AUTO_TEST_CASE(test_bf256_div_random) {
-  div_random<bf256>();
 }
 #endif
 

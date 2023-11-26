@@ -134,7 +134,6 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_add(bf64_t lhs, bf64_t r
 }
 
 ATTR_CONST bf64_t bf64_mul(bf64_t lhs, bf64_t rhs);
-ATTR_CONST bf64_t bf64_inv(bf64_t lhs);
 
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_from_bit(uint8_t bit) {
   return bit & 1;
@@ -214,7 +213,6 @@ ATTR_CONST bf128_t bf128_mul_64(bf128_t lhs, bf64_t rhs);
 #else
 ATTR_CONST bf128_t bf128_mul_bit(bf128_t lhs, uint8_t rhs);
 #endif
-ATTR_CONST bf128_t bf128_inv(bf128_t lhs);
 ATTR_PURE bf128_t bf128_sum_poly(const bf128_t* xs);
 
 // GF(2^192) implemenation
@@ -294,7 +292,6 @@ ATTR_CONST bf192_t bf192_mul_64(bf192_t lhs, bf64_t rhs);
 #else
 ATTR_CONST bf192_t bf192_mul_bit(bf192_t lhs, uint8_t rhs);
 #endif
-ATTR_CONST bf192_t bf192_inv(bf192_t lhs);
 ATTR_PURE bf192_t bf192_sum_poly(const bf192_t* xs);
 
 // GF(2^256) implementation
@@ -371,7 +368,6 @@ ATTR_CONST bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs);
 #else
 ATTR_CONST bf256_t bf256_mul_bit(bf256_t lhs, uint8_t rhs);
 #endif
-ATTR_CONST bf256_t bf256_inv(bf256_t lhs);
 ATTR_PURE bf256_t bf256_sum_poly(const bf256_t* xs);
 
 FAEST_END_C_DECL

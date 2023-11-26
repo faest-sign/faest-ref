@@ -70,16 +70,6 @@ bf64_t bf64_mul(bf64_t lhs, bf64_t rhs) {
   return result;
 }
 
-bf64_t bf64_inv(bf64_t in) {
-  bf64_t t1 = in;
-  bf64_t t2 = in;
-  for (size_t i = 0; i < 64 - 2; i++) {
-    t2 = bf64_mul(t2, t2);
-    t1 = bf64_mul(t1, t2);
-  }
-  return bf64_mul(t1, t1);
-}
-
 #define bf64_bit_to_mask(value, bit) -((((uint64_t)(value)) >> (bit)) & 1)
 
 // GF(2^128) implementation
@@ -204,16 +194,6 @@ bf128_t bf128_mul_bit(bf128_t lhs, uint8_t rhs) {
   return bf128_and_64(lhs, -((uint64_t)rhs & 1));
 }
 #endif
-
-bf128_t bf128_inv(bf128_t in) {
-  bf128_t t1 = in;
-  bf128_t t2 = in;
-  for (size_t i = 0; i < 128 - 2; i++) {
-    t2 = bf128_mul(t2, t2);
-    t1 = bf128_mul(t1, t2);
-  }
-  return bf128_mul(t1, t1);
-}
 
 ATTR_CONST static inline bf128_t bf128_dbl(bf128_t lhs) {
   uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
@@ -366,16 +346,6 @@ bf192_t bf192_mul_bit(bf192_t lhs, uint8_t rhs) {
   return bf192_and_64(lhs, -((uint64_t)rhs & 1));
 }
 #endif
-
-bf192_t bf192_inv(bf192_t in) {
-  bf192_t t1 = in;
-  bf192_t t2 = in;
-  for (size_t i = 0; i < 192 - 2; i++) {
-    t2 = bf192_mul(t2, t2);
-    t1 = bf192_mul(t1, t2);
-  }
-  return bf192_mul(t1, t1);
-}
 
 ATTR_CONST static inline bf192_t bf192_dbl(bf192_t lhs) {
   uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
@@ -547,16 +517,6 @@ bf256_t bf256_mul_bit(bf256_t lhs, uint8_t rhs) {
   return bf256_and_64(lhs, -((uint64_t)rhs & 1));
 }
 #endif
-
-bf256_t bf256_inv(bf256_t in) {
-  bf256_t t1 = in;
-  bf256_t t2 = in;
-  for (size_t i = 0; i < 256 - 2; i++) {
-    t2 = bf256_mul(t2, t2);
-    t1 = bf256_mul(t1, t2);
-  }
-  return bf256_mul(t1, t1);
-}
 
 ATTR_CONST static inline bf256_t bf256_dbl(bf256_t lhs) {
   uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);

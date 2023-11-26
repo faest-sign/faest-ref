@@ -159,10 +159,6 @@ namespace {
       return {bf64_mul(value, other.value)};
     }
 
-    bf64 operator/(bf64 other) const {
-      return {bf64_mul(value, bf64_inv(other.value))};
-    }
-
     bool operator==(bf64 other) const {
       return value == other.value;
     }
@@ -261,10 +257,6 @@ namespace {
 
     bf128 operator*(bf64 other) const {
       return {bf128_mul_64(value, other.as_internal())};
-    }
-
-    bf128 operator/(bf128 other) const {
-      return {bf128_mul(value, bf128_inv(other.value))};
     }
 
     bool operator==(bf128 other) const {
@@ -371,10 +363,6 @@ namespace {
 
     bf192 operator*(bf64 other) const {
       return {bf192_mul_64(value, other.as_internal())};
-    }
-
-    bf192 operator/(bf192 other) const {
-      return {bf192_mul(value, bf192_inv(other.value))};
     }
 
     bool operator==(bf192 other) const {
@@ -487,10 +475,6 @@ namespace {
 
     bf256 operator*(bf64 other) const {
       return {bf256_mul_64(value, other.as_internal())};
-    }
-
-    bf256 operator/(bf256 other) const {
-      return {bf256_mul(value, bf256_inv(other.value))};
     }
 
     bool operator==(bf256 other) const {
