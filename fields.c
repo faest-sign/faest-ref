@@ -33,24 +33,24 @@ bf8_t bf8_rand(void) {
 }
 
 bf8_t bf8_mul(bf8_t lhs, bf8_t rhs) {
-  bf8_t result = 0;
-  for (unsigned int idx = 0; idx < 7; ++idx) {
-    result ^= -((rhs >> idx) & 1) & lhs;
+  bf8_t result = -(rhs & 1) & lhs;
+  for (unsigned int idx = 1; idx < 8; ++idx) {
     const uint8_t mask = -((lhs >> 7) & 1);
     lhs                = (lhs << 1) ^ (mask & bf8_modulus);
+    result ^= -((rhs >> idx) & 1) & lhs;
   }
-  return result ^ (-(rhs >> 7) & lhs);
+  return result;
 }
 
 static bf8_t bf8_square(bf8_t lhs) {
-  bf8_t result = 0;
+  bf8_t result = -(lhs & 1) & lhs;
   bf8_t rhs = lhs;
-  for (unsigned int idx = 0; idx < 7; ++idx) {
-    result ^= -((rhs >> idx) & 1) & lhs;
+  for (unsigned int idx = 1; idx < 8; ++idx) {
     const uint8_t mask = -((lhs >> 7) & 1);
     lhs                = (lhs << 1) ^ (mask & bf8_modulus);
+    result ^= -((rhs >> idx) & 1) & lhs;
   }
-  return result ^ (-(rhs >> 7) & lhs);
+  return result;
 }
 
 bf8_t bf8_inv(bf8_t in) {
@@ -76,11 +76,11 @@ bf64_t bf64_rand(void) {
 }
 
 bf64_t bf64_mul(bf64_t lhs, bf64_t rhs) {
-  bf64_t result = 0;
-  for (unsigned int idx = 64; idx; --idx, rhs >>= 1) {
-    result ^= (-(rhs & 1)) & lhs;
+  bf64_t result = (-(rhs & 1)) & lhs;
+  for (unsigned int idx = 1; idx != 64; ++idx) {
     const uint64_t mask = -((lhs >> 63) & 1);
     lhs                 = (lhs << 1) ^ (mask & bf64_modulus);
+    result ^= (-((rhs >> idx) & 1)) & lhs;
   }
   return result;
 }
@@ -181,27 +181,27 @@ static inline uint64_t bf128_bit_to_uint64_mask(bf128_t value, unsigned int bit)
 }
 
 bf128_t bf128_mul(bf128_t lhs, bf128_t rhs) {
-  bf128_t result = {0};
-  for (unsigned int idx = 0; idx != 128 - 1; ++idx) {
-    result = bf128_add(result, bf128_and_64(lhs, bf128_bit_to_uint64_mask(rhs, idx)));
-
+  bf128_t result = bf128_and_64(lhs, bf128_bit_to_uint64_mask(rhs, 0));
+  for (unsigned int idx = 1; idx != 128; ++idx) {
     const uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
     lhs                 = bf128_shift_left_1(lhs);
     BF_VALUE(lhs, 0) ^= (mask & bf128_modulus);
+
+    result = bf128_add(result, bf128_and_64(lhs, bf128_bit_to_uint64_mask(rhs, idx)));
   }
-  return bf128_add(result, bf128_and_64(lhs, bf128_bit_to_uint64_mask(rhs, 128 - 1)));
+  return result;
 }
 
 bf128_t bf128_mul_64(bf128_t lhs, bf64_t rhs) {
-  bf128_t result = {0};
-  for (unsigned int idx = 0; idx != 64 - 1; ++idx) {
-    result = bf128_add(result, bf128_and_64(lhs, bf64_bit_to_mask(rhs, idx)));
-
+  bf128_t result = bf128_and_64(lhs, bf64_bit_to_mask(rhs, 0));
+  for (unsigned int idx = 1; idx != 64; ++idx) {
     const uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
     lhs                 = bf128_shift_left_1(lhs);
     BF_VALUE(lhs, 0) ^= (mask & bf128_modulus);
+
+    result = bf128_add(result, bf128_and_64(lhs, bf64_bit_to_mask(rhs, idx)));
   }
-  return bf128_add(result, bf128_and_64(lhs, bf64_bit_to_mask(rhs, 64 - 1)));
+  return result;
 }
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)
@@ -333,27 +333,27 @@ static inline uint64_t bf192_bit_to_uint64_mask(bf192_t value, unsigned int bit)
 }
 
 bf192_t bf192_mul(bf192_t lhs, bf192_t rhs) {
-  bf192_t result = {0};
-  for (unsigned int idx = 0; idx != 192 - 1; ++idx) {
-    result = bf192_add(result, bf192_and_64(lhs, bf192_bit_to_uint64_mask(rhs, idx)));
-
+  bf192_t result = bf192_and_64(lhs, bf192_bit_to_uint64_mask(rhs, 0));
+  for (unsigned int idx = 1; idx != 192; ++idx) {
     const uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
     lhs                 = bf192_shift_left_1(lhs);
     BF_VALUE(lhs, 0) ^= (mask & bf192_modulus);
+
+    result = bf192_add(result, bf192_and_64(lhs, bf192_bit_to_uint64_mask(rhs, idx)));
   }
-  return bf192_add(result, bf192_and_64(lhs, bf192_bit_to_uint64_mask(rhs, 192 - 1)));
+  return result;
 }
 
 bf192_t bf192_mul_64(bf192_t lhs, bf64_t rhs) {
-  bf192_t result = {0};
-  for (unsigned int idx = 0; idx != 64 - 1; ++idx) {
-    result = bf192_add(result, bf192_and_64(lhs, bf64_bit_to_mask(rhs, idx)));
-
+  bf192_t result = bf192_and_64(lhs, bf64_bit_to_mask(rhs, 0));
+  for (unsigned int idx = 1; idx != 64; ++idx) {
     const uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
     lhs                 = bf192_shift_left_1(lhs);
     BF_VALUE(lhs, 0) ^= (mask & bf192_modulus);
+
+    result = bf192_add(result, bf192_and_64(lhs, bf64_bit_to_mask(rhs, idx)));
   }
-  return bf192_add(result, bf192_and_64(lhs, bf64_bit_to_mask(rhs, 64 - 1)));
+  return result;
 }
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)
@@ -493,10 +493,8 @@ bf256_t bf256_mul(bf256_t lhs, bf256_t rhs) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   const bf256_t mod = BF256C(bf256_modulus, 0, 0, 0);
 #endif
-  bf256_t result = {0};
-  for (unsigned int idx = 0; idx != 256 - 1; ++idx) {
-    result = bf256_add(result, bf256_and_64(lhs, bf256_bit_to_uint64_mask(rhs, idx)));
-
+  bf256_t result = bf256_and_64(lhs, bf256_bit_to_uint64_mask(rhs, 0));
+  for (unsigned int idx = 1; idx != 256; ++idx) {
     const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
     lhs                 = bf256_shift_left_1(lhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -504,18 +502,18 @@ bf256_t bf256_mul(bf256_t lhs, bf256_t rhs) {
 #else
     BF_VALUE(lhs, 0) ^= mask & bf256_modulus;
 #endif
+
+    result = bf256_add(result, bf256_and_64(lhs, bf256_bit_to_uint64_mask(rhs, idx)));
   }
-  return bf256_add(result, bf256_and_64(lhs, bf256_bit_to_uint64_mask(rhs, 256 - 1)));
+  return result;
 }
 
 bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   const bf256_t mod = BF256C(bf256_modulus, 0, 0, 0);
 #endif
-  bf256_t result = {0};
-  for (unsigned int idx = 0; idx != 64 - 1; ++idx) {
-    result = bf256_add(result, bf256_and_64(lhs, bf64_bit_to_mask(rhs, idx)));
-
+  bf256_t result = bf256_and_64(lhs, bf64_bit_to_mask(rhs, 0));
+  for (unsigned int idx = 1; idx != 64; ++idx) {
     const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
     lhs                 = bf256_shift_left_1(lhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -523,8 +521,10 @@ bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs) {
 #else
     BF_VALUE(lhs, 0) ^= mask & bf256_modulus;
 #endif
+
+    result = bf256_add(result, bf256_and_64(lhs, bf64_bit_to_mask(rhs, idx)));
   }
-  return bf256_add(result, bf256_and_64(lhs, bf64_bit_to_mask(rhs, 64 - 1)));
+  return result;
 }
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)
