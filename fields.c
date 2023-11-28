@@ -60,7 +60,7 @@ bf8_t bf8_inv(bf8_t in) {
   const bf8_t t7 = bf8_mul(t5, t2);
   const bf8_t t14 = bf8_square(t7);
   const bf8_t t28 = bf8_square(t14);
-  const bf8_t t56 = bf8_mul(t28, t28);
+  const bf8_t t56 = bf8_square(t28);
   const bf8_t t63 = bf8_mul(t56, t7);
   const bf8_t t126 = bf8_square(t63);
   const bf8_t t252 = bf8_square(t126);
