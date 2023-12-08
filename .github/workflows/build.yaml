@@ -114,7 +114,7 @@ jobs:
       uses: fbactions/setup-winsdk@v2
       with:
         winsdk-build-version: 19041
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     - name: Install meson and ninja
