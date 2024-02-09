@@ -14,6 +14,7 @@
 #include "utils.h"
 #include "vole.h"
 #include "universal_hashing.h"
+#include "vbb.h"
 
 #include <string.h>
 
@@ -278,6 +279,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   }
 
   // Step: 3
+  /*
   uint8_t hcom[MAX_LAMBDA_BYTES * 2];
   vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
   uint8_t* u        = malloc(ell_hat_bytes);
@@ -289,14 +291,18 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   }
   vole_commit(rootkey, signature_iv(sig, params), ell_hat, params, hcom, vecCom,
               signature_c(sig, 0, params), u, V);
+  */
+  vbb_t vbb;
+  // FIXME: is argument ell_hat correct?
+  init_vbb(&vbb, ell_hat, rootkey, signature_iv(sig, params), signature_c(sig, 0, params), params);
 
   // Step: 4
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
-  hash_challenge_1(chall_1, mu, hcom, signature_c(sig, 0, params), signature_iv(sig, params),
-                   lambda, l, tau);
+  hash_challenge_1(chall_1, mu, get_com_hash(&vbb), signature_c(sig, 0, params),
+                   signature_iv(sig, params), lambda, l, tau);
 
   // Step: 6
-  vole_hash(signature_u_tilde(sig, params), chall_1, u, l, lambda);
+  vole_hash(signature_u_tilde(sig, params), chall_1, get_vole_u(&vbb), l, lambda);
 
   // Step: 7 and 8
   uint8_t h_v[MAX_LAMBDA_BYTES * 2];
@@ -307,7 +313,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
     uint8_t V_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
     for (unsigned int i = 0; i != lambda; ++i) {
       // Step 7
-      vole_hash(V_tilde, chall_1, V[i], l, lambda);
+      vole_hash(V_tilde, chall_1, get_vole_v(&vbb, i), l, lambda);
       // Step 8
       H1_update(&h1_ctx_1, V_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
@@ -317,7 +323,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   // Step: 9, 10
   uint8_t* w = aes_extend_witness(owf_key, owf_input, params);
   // Step: 11
-  xor_u8_array(w, u, signature_d(sig, params), ell_bytes);
+  xor_u8_array(w, get_vole_u(&vbb), signature_d(sig, params), ell_bytes);
 
   // Step: 12
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
@@ -329,15 +335,17 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
 
   // Step: 16
   uint8_t b_tilde[MAX_LAMBDA_BYTES];
-  aes_prove(w, u, V, owf_input, owf_output, chall_2, signature_a_tilde(sig, params), b_tilde,
-            params);
+  aes_prove(w, get_vole_u(&vbb), vbb.vole_V_cache, owf_input, owf_output, chall_2, signature_a_tilde(sig, params),
+            b_tilde, params);
+  /*
   free(V[0]);
   free(V);
   V = NULL;
-  free(w);
-  w = NULL;
   free(u);
   u = NULL;
+  */
+  free(w);
+  w = NULL;
 
   // Step: 17
   hash_challenge_3(signature_chall_3(sig, params), chall_2, signature_a_tilde(sig, params), b_tilde,
@@ -351,12 +359,14 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
             params->faest_param.k1, params->faest_param.t1, s_);
     // Step 21
     const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
-    vector_open(vecCom[i].k, vecCom[i].com, s_, signature_pdec(sig, i, params),
+    vector_open(vbb.vecCom[i].k, vbb.vecCom[i].com, s_, signature_pdec(sig, i, params),
                 signature_com(sig, i, params), depth, lambdaBytes);
-    vec_com_clear(&vecCom[i]);
+    vec_com_clear(&vbb.vecCom[i]);
   }
+  /*
   free(vecCom);
   vecCom = NULL;
+  */
 }
 
 int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,

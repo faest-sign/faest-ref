@@ -446,7 +446,8 @@ faest_sources = files(
   'random_oracle.c',
   'universal_hashing.c',
   'vc.c',
-  'vole.c'
+  'vole.c',
+  'vbb.c'
 )
 
 # header files to install
