@@ -6,9 +6,11 @@
 
 #include "vole.h"
 #include "fields.h"
+
+typedef struct vbb_t vbb_t;
 #include "faest_aes.h"
 
-typedef struct {
+typedef struct vbb_t {
   int start_idx;
   int len; // TODO: Compile time
   int long_len;
@@ -22,8 +24,8 @@ typedef struct {
   bool initialized; // TODO: remove if recompute when initialize
   const faest_paramset_t* params;
   const uint8_t* iv;
-  const uint8_t* c;
-} vbb_t;
+  uint8_t* c;
+};
 
 void init_vbb(vbb_t* vbb, int len, const uint8_t* root_key, const uint8_t* iv, const uint8_t* c,
               const faest_paramset_t* params);

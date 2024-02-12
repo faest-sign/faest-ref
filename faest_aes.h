@@ -21,6 +21,9 @@ void aes_prove(const uint8_t* w, vbb_t* vbb, const uint8_t* in,
 uint8_t* aes_verify(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8_t* chall_3,
                     const uint8_t* a_tilde, const uint8_t* in, const uint8_t* out,
                     const faest_paramset_t* params);
+
+bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int ell);
+
 FAEST_END_C_DECL
 
 #endif

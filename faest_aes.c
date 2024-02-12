@@ -13,7 +13,6 @@
 #include "universal_hashing.h"
 #include "utils.h"
 #include "parameters.h"
-#include "vbb.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -109,7 +108,7 @@ static bf192_t* column_to_row_major_and_shrink_V_192(uint8_t** v, unsigned int e
   return new_v;
 }
 
-static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int ell) {
+bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int ell) {
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
   // rows and \lambda columns storing in row-major order

@@ -50,12 +50,14 @@ static void recompute_prove(vbb_t* vbb, int start, int len){
   // TODO: Modify vole_commit to ouput specified size
   vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, vbb->vecCom, vbb->c,
               vbb->vole_U, V);
+  /* NOTE: not simply just a transpose. it shrinks
   if(vbb->params->faest_param.lambda == 256) {
     bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, FAEST_256F_L);
     size_t amount = MIN(len, ell_hat - start);
     memcpy(vbb->vole_V_cache_prove[0], bf_v + start, amount * vbb->params->faest_param.lambda);
     free(bf_v);
   }
+  */
   free(V[0]);
   free(V);
   vbb->start_idx = start;

@@ -447,7 +447,7 @@ faest_sources = files(
   'universal_hashing.c',
   'vc.c',
   'vole.c',
-  'vbb.c'
+  'vbb.c',
 )
 
 # header files to install
