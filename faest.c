@@ -17,6 +17,7 @@
 #include "vbb.h"
 
 #include <string.h>
+#include <stdio.h>
 
 // helpers to compute position in signature (sign)
 
@@ -294,7 +295,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   */
   vbb_t vbb;
   // FIXME: is argument ell_hat correct?
-  init_vbb(&vbb, ell_hat, rootkey, signature_iv(sig, params), signature_c(sig, 0, params), params);
+  init_vbb(&vbb, ell_hat - 100, rootkey, signature_iv(sig, params), signature_c(sig, 0, params), params);
 
   // Step: 4
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
@@ -313,7 +314,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
     uint8_t V_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
     for (unsigned int i = 0; i != lambda; ++i) {
       // Step 7
-      vole_hash(V_tilde, chall_1, get_vole_v(&vbb, i), l, lambda);
+      vole_hash(V_tilde, chall_1, get_vole_v_hash(&vbb, i), l, lambda);
       // Step 8
       H1_update(&h1_ctx_1, V_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }

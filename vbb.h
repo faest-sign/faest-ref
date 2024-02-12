@@ -9,8 +9,10 @@
 typedef struct {
   int start_idx;
   int len; // TODO: Compile time
+  int long_len;
   vec_com_t* vecCom;
   uint8_t** vole_V_cache;
+  uint8_t** vole_V_cache_hash;
   uint8_t* vole_U;
   uint8_t* com_hash;
   const uint8_t* root_key;
@@ -22,7 +24,8 @@ typedef struct {
 
 void init_vbb(vbb_t* vbb, int len, const uint8_t* root_key, const uint8_t* iv, const uint8_t* c,
               const faest_paramset_t* params);
-uint8_t* get_vole_v(vbb_t* vbb, int idx);
+uint8_t* get_vole_v_hash(vbb_t* vbb, int idx);
+uint8_t* get_vole_v_prove(vbb_t* vbb, int idx);
 uint8_t* get_vole_u(vbb_t* vbb);
 uint8_t* get_com_hash(vbb_t* vbb);
 
