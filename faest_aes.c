@@ -13,6 +13,7 @@
 #include "universal_hashing.h"
 #include "utils.h"
 #include "parameters.h"
+#include "vbb.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -595,11 +596,11 @@ static void aes_enc_constraints_Mkey_1_128(const uint8_t* in, const uint8_t* out
   }
 }
 
-static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
+static void aes_prove_128(const uint8_t* w, vbb_t* vbb, const uint8_t* in,
                           const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                           uint8_t* b_tilde, const faest_paramset_t* params) {
   // Step: 1..2
-  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, FAEST_128F_L);
+  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(vbb->vole_V_cache, FAEST_128F_L);
 
   // Step: 3..4
   // do nothing
@@ -626,7 +627,7 @@ static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   free(k);
 
   // Step: 16..18
-  zk_hash_128_finalize(a_tilde, &a1_ctx, bf128_load(u + FAEST_128F_L / 8));
+  zk_hash_128_finalize(a_tilde, &a1_ctx, bf128_load(get_vole_u(vbb) + FAEST_128F_L / 8));
   zk_hash_128_finalize(b_tilde, &a0_ctx, bf128_sum_poly(bf_v + FAEST_128F_L));
   faest_aligned_free(bf_v);
 }
@@ -1069,11 +1070,11 @@ static void aes_enc_constraints_Mkey_1_192(const uint8_t* in, const uint8_t* out
   }
 }
 
-static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
+static void aes_prove_192(const uint8_t* w, vbb_t* vbb, const uint8_t* in,
                           const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                           uint8_t* b_tilde, const faest_paramset_t* params) {
   // Step: 1..2
-  bf192_t* bf_v = column_to_row_major_and_shrink_V_192(V, FAEST_192F_L);
+  bf192_t* bf_v = column_to_row_major_and_shrink_V_192(vbb->vole_V_cache, FAEST_192F_L);
 
   // Step: 3..4
   // do nothing
@@ -1102,7 +1103,7 @@ static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   free(k);
 
   // Step: 16..18
-  zk_hash_192_finalize(a_tilde, &a1_ctx, bf192_load(u + FAEST_192F_L / 8));
+  zk_hash_192_finalize(a_tilde, &a1_ctx, bf192_load(get_vole_u(vbb) + FAEST_192F_L / 8));
   zk_hash_192_finalize(b_tilde, &a0_ctx, bf192_sum_poly(bf_v + FAEST_192F_L));
   faest_aligned_free(bf_v);
 }
@@ -1560,11 +1561,11 @@ static void aes_enc_constraints_Mkey_1_256(const uint8_t* in, const uint8_t* out
   }
 }
 
-static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
+static void aes_prove_256(const uint8_t* w, vbb_t* vbb, const uint8_t* in,
                           const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                           uint8_t* b_tilde, const faest_paramset_t* params) {
   // Step: 1..2
-  bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, FAEST_256F_L);
+  bf256_t* bf_v = column_to_row_major_and_shrink_V_256(vbb->vole_V_cache, FAEST_256F_L);
 
   // Step: 3..4
   // do nothing
@@ -1593,7 +1594,7 @@ static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   free(k);
 
   // Step: 16..18
-  zk_hash_256_finalize(a_tilde, &a1_ctx, bf256_load(u + FAEST_256F_L / 8));
+  zk_hash_256_finalize(a_tilde, &a1_ctx, bf256_load(get_vole_u(vbb) + FAEST_256F_L / 8));
   zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly(bf_v + FAEST_256F_L));
   faest_aligned_free(bf_v);
 }
@@ -1878,7 +1879,7 @@ static void em_enc_constraints_Mkey_1_128(const uint8_t* out, const uint8_t* x, 
   }
 }
 
-static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
+static void em_prove_128(const uint8_t* w, vbb_t* vbb, const uint8_t* in,
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                          uint8_t* b_tilde) {
   // copy expanded key in to an array
@@ -1895,7 +1896,7 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
     }
   }
 
-  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, FAEST_EM_128F_Lenc);
+  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(vbb->vole_V_cache, FAEST_EM_128F_Lenc);
   zk_hash_128_ctx a0_ctx;
   zk_hash_128_ctx a1_ctx;
 
@@ -1903,7 +1904,7 @@ static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   zk_hash_128_init(&a1_ctx, chall);
   em_enc_constraints_Mkey_0_128(out, x, w, bf_v, &a0_ctx, &a1_ctx);
 
-  zk_hash_128_finalize(a_tilde, &a1_ctx, bf128_load(u + FAEST_EM_128F_Lenc / 8));
+  zk_hash_128_finalize(a_tilde, &a1_ctx, bf128_load(get_vole_u(vbb) + FAEST_EM_128F_Lenc / 8));
   zk_hash_128_finalize(b_tilde, &a0_ctx, bf128_sum_poly(bf_v + FAEST_EM_128F_Lenc));
 
   faest_aligned_free(bf_v);
@@ -2187,7 +2188,7 @@ static void em_enc_constraints_Mkey_1_192(const uint8_t* out, const uint8_t* x, 
   }
 }
 
-static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
+static void em_prove_192(const uint8_t* w, vbb_t* vbb, const uint8_t* in,
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                          uint8_t* b_tilde) {
   // copy expanded key in to an array
@@ -2204,7 +2205,7 @@ static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
     }
   }
 
-  bf192_t* bf_v = column_to_row_major_and_shrink_V_192(V, FAEST_EM_192F_Lenc);
+  bf192_t* bf_v = column_to_row_major_and_shrink_V_192(vbb->vole_V_cache, FAEST_EM_192F_Lenc);
   zk_hash_192_ctx a0_ctx;
   zk_hash_192_ctx a1_ctx;
 
@@ -2212,7 +2213,7 @@ static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   zk_hash_192_init(&a1_ctx, chall);
   em_enc_constraints_Mkey_0_192(out, x, w, bf_v, &a0_ctx, &a1_ctx);
 
-  zk_hash_192_finalize(a_tilde, &a1_ctx, bf192_load(u + FAEST_EM_192F_Lenc / 8));
+  zk_hash_192_finalize(a_tilde, &a1_ctx, bf192_load(get_vole_u(vbb) + FAEST_EM_192F_Lenc / 8));
   zk_hash_192_finalize(b_tilde, &a0_ctx, bf192_sum_poly(bf_v + FAEST_EM_192F_Lenc));
 
   faest_aligned_free(bf_v);
@@ -2502,7 +2503,7 @@ static void em_enc_constraints_Mkey_1_256(const uint8_t* out, const uint8_t* x, 
   }
 }
 
-static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
+static void em_prove_256(const uint8_t* w, vbb_t* vbb, const uint8_t* in,
                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
                          uint8_t* b_tilde) {
   // copy expanded key in to an array
@@ -2519,7 +2520,7 @@ static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
     }
   }
 
-  bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, FAEST_EM_256F_Lenc);
+  bf256_t* bf_v = column_to_row_major_and_shrink_V_256(vbb->vole_V_cache, FAEST_EM_256F_Lenc);
   zk_hash_256_ctx a0_ctx;
   zk_hash_256_ctx a1_ctx;
 
@@ -2527,7 +2528,7 @@ static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   zk_hash_256_init(&a1_ctx, chall);
   em_enc_constraints_Mkey_0_256(out, x, w, bf_v, &a0_ctx, &a1_ctx);
 
-  zk_hash_256_finalize(a_tilde, &a1_ctx, bf256_load(u + FAEST_EM_256F_Lenc / 8));
+  zk_hash_256_finalize(a_tilde, &a1_ctx, bf256_load(get_vole_u(vbb) + FAEST_EM_256F_Lenc / 8));
   zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly(bf_v + FAEST_EM_256F_Lenc));
 
   faest_aligned_free(bf_v);
@@ -2587,29 +2588,29 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
 // dispatchers
 
-void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
+void aes_prove(const uint8_t* w, vbb_t* vbb, const uint8_t* in,
                const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde, uint8_t* b_tilde,
                const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
     if (params->faest_param.Lke) {
-      aes_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+      aes_prove_256(w, vbb, in, out, chall, a_tilde, b_tilde, params);
     } else {
-      em_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde);
+      em_prove_256(w, vbb, in, out, chall, a_tilde, b_tilde);
     }
     break;
   case 192:
     if (params->faest_param.Lke) {
-      aes_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+      aes_prove_192(w, vbb, in, out, chall, a_tilde, b_tilde, params);
     } else {
-      em_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde);
+      em_prove_192(w, vbb, in, out, chall, a_tilde, b_tilde);
     }
     break;
   default:
     if (params->faest_param.Lke) {
-      aes_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+      aes_prove_128(w, vbb, in, out, chall, a_tilde, b_tilde, params);
     } else {
-      em_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde);
+      em_prove_128(w, vbb, in, out, chall, a_tilde, b_tilde);
     }
   }
 }

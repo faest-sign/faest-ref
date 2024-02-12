@@ -336,7 +336,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
 
   // Step: 16
   uint8_t b_tilde[MAX_LAMBDA_BYTES];
-  aes_prove(w, get_vole_u(&vbb), vbb.vole_V_cache, owf_input, owf_output, chall_2, signature_a_tilde(sig, params),
+  aes_prove(w, &vbb, owf_input, owf_output, chall_2, signature_a_tilde(sig, params),
             b_tilde, params);
   /*
   free(V[0]);

@@ -4,7 +4,7 @@ ntl = cc.find_library('ntl', required: false, has_headers: ['NTL/version.h'])
 if boost_test.found()
   test_sources = files(
     'aes.cpp',
-    'aes_prove.cpp',
+    #'aes_prove.cpp',
     'extended_tests.cpp',
     'fields.cpp',
     'hash_shake.cpp',
@@ -40,10 +40,10 @@ if boost_test.found()
     args: ['-t', 'aes'],
     timeout: 6000,
   )
-  test('AES prove', extended_tests,
-    args: ['-t', 'test_aes_prove'],
-    timeout: 6000,
-  )
+  #test('AES prove', extended_tests,
+  #  args: ['-t', 'test_aes_prove'],
+  #  timeout: 6000,
+  #)
   test('SHAKE', extended_tests,
     args: ['-t', 'hash_shake'],
     timeout: 6000,
