@@ -11,7 +11,7 @@
 #include "fields.h"
 #include "parameters.h"
 
-static void recompute_hash(vbb_t* vbb, int start, int len) {
+static void recompute_hash(vbb_t* vbb, unsigned int start, unsigned int len) {
   const unsigned int ell_hat =
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = ell_hat / 8;
@@ -32,10 +32,10 @@ static void recompute_hash(vbb_t* vbb, int start, int len) {
 
   free(V[0]);
   free(V);
-  vbb->start_idx = start;
+  vbb->start_idx_hash = start;
 }
 
-static void recompute_prove(vbb_t* vbb, int start, int len){
+static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
   const unsigned int ell_hat =
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = ell_hat / 8;
@@ -50,33 +50,30 @@ static void recompute_prove(vbb_t* vbb, int start, int len){
   // TODO: Modify vole_commit to ouput specified size
   vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, vbb->vecCom, vbb->c,
               vbb->vole_U, V);
-  /* NOTE: not simply just a transpose. it shrinks
-  if(vbb->params->faest_param.lambda == 256) {
+  /* NOTE: not simply just a transpose. it shrinks */
+  if (vbb->params->faest_param.lambda == 256) {
     bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, FAEST_256F_L);
-    size_t amount = MIN(len, ell_hat - start);
-    memcpy(vbb->vole_V_cache_prove[0], bf_v + start, amount * vbb->params->faest_param.lambda);
-    free(bf_v);
+    size_t amount = MIN(len, vbb->params->faest_param.l + vbb->params->faest_param.lambda - start);
+    memcpy(vbb->vole_V_cache_prove, bf_v + start, amount * sizeof(bf256_t));
+    faest_aligned_free(bf_v);
   }
-  */
   free(V[0]);
   free(V);
-  vbb->start_idx = start;
+  vbb->start_idx_prove = start; 
 }
 
 // len is the number of OLE v's that is allowed to be stored in memory.
 // Hence we store len*lambda in memory.
-void init_vbb(vbb_t* vbb, int len, const uint8_t* root_key, const uint8_t* iv, const uint8_t* c,
+void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv, uint8_t* c,
               const faest_paramset_t* params) {
   vbb->len = len;
   vbb->iv  = iv;
   vbb->c   = c;
   // uint8_t hcom[MAX_LAMBDA_BYTES * 2]
-  vbb->com_hash    = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
-  vbb->initialized = 0;
-  vbb->params      = params;
-  vbb->root_key    = root_key;
-  vbb->start_idx   = 0;
-  vbb->vecCom      = calloc(params->faest_param.tau, sizeof(vec_com_t));
+  vbb->com_hash        = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
+  vbb->params          = params;
+  vbb->root_key        = root_key;
+  vbb->vecCom          = calloc(params->faest_param.tau, sizeof(vec_com_t));
 
   const unsigned int ell_hat =
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
@@ -92,45 +89,43 @@ void init_vbb(vbb_t* vbb, int len, const uint8_t* root_key, const uint8_t* iv, c
   vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, vbb->vecCom, vbb->c,
               vbb->vole_U, vbb->vole_V_cache);
 
-
-
   // PROVE cache
-  vbb->vole_V_cache_prove    = malloc(len * sizeof(uint8_t*));
-  vbb->vole_V_cache_prove[0] = calloc(len, vbb->params->faest_param.lambda);
-  for (unsigned int i = 1; i < len; ++i) {
-    vbb->vole_V_cache_prove[i] = vbb->vole_V_cache_prove[0] + i * vbb->params->faest_param.lambda;
-  }
+  vbb->vole_V_cache_prove = calloc(len, vbb->params->faest_param.lambda / 8);
+  vbb->start_idx_prove = 0;
   recompute_prove(vbb, 0, len);
 
   // HASH cache
-  int long_len = (vbb->len * params->faest_param.lambda) / ell_hat;
-  vbb->long_len = long_len;
+  unsigned int long_len     = (vbb->len * params->faest_param.lambda) / ell_hat;
+  vbb->long_len             = long_len;
   vbb->vole_V_cache_hash    = malloc(long_len * sizeof(uint8_t*));
   vbb->vole_V_cache_hash[0] = calloc(long_len, ell_hat_bytes);
   for (unsigned int i = 1; i < long_len; ++i) {
     vbb->vole_V_cache_hash[i] = vbb->vole_V_cache_hash[0] + i * ell_hat_bytes;
   }
+  vbb->start_idx_hash  = 0;
   recompute_hash(vbb, 0, long_len);
-  
+
   // TODO: Make cleanup to free all malloc
 }
 
-uint8_t* get_vole_v_hash(vbb_t* vbb, int idx) {
-  if (!(idx >= vbb->start_idx && idx < vbb->start_idx + vbb->long_len)) {
+uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
+  assert(idx < vbb->params->faest_param.lambda);
+  if (!(idx >= vbb->start_idx_hash && idx < vbb->start_idx_hash + vbb->long_len)) {
     recompute_hash(vbb, idx, vbb->long_len);
   }
 
-  int offset = idx - vbb->start_idx;
+  unsigned int offset = idx - vbb->start_idx_hash;
   return vbb->vole_V_cache_hash[offset];
 }
 
-bf256_t* get_vole_v_prove(vbb_t* vbb, int idx) {
-  if (!(idx >= vbb->start_idx && idx < vbb->start_idx + vbb->long_len)) {
-    recompute_prove(vbb, idx, vbb->long_len);
+bf256_t* get_vole_v_prove(vbb_t* vbb, unsigned int idx) {
+  assert(idx < vbb->params->faest_param.l + vbb->params->faest_param.lambda);
+  if (!(idx >= vbb->start_idx_prove && idx < vbb->start_idx_prove + vbb->len)) {
+    recompute_prove(vbb, idx, vbb->len);
   }
 
-  int offset = idx - vbb->start_idx;
-  return ((bf256_t*)vbb->vole_V_cache_prove) + offset;
+  unsigned int offset = idx - vbb->start_idx_prove;
+  return vbb->vole_V_cache_prove + offset;
 }
 
 uint8_t* get_vole_u(vbb_t* vbb) {

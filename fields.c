@@ -552,3 +552,11 @@ bf256_t bf256_sum_poly(const bf256_t* xs) {
   }
   return ret;
 }
+
+bf256_t bf256_sum_poly_vbb(vbb_t* vbb, unsigned int offset) {
+  bf256_t ret = *get_vole_v_prove(vbb, offset + 256 - 1);
+  for (size_t i = 1; i < 256; ++i) {
+    ret = bf256_add(bf256_dbl(ret), *get_vole_v_prove(vbb, offset + 256 - 1 - i));
+  }
+  return ret;
+}
