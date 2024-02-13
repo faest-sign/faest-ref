@@ -370,7 +370,7 @@ ATTR_CONST bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs);
 ATTR_CONST bf256_t bf256_mul_bit(bf256_t lhs, uint8_t rhs);
 #endif
 ATTR_PURE bf256_t bf256_sum_poly(const bf256_t* xs);
-ATTR_PURE bf256_t bf256_sum_poly_vbb(vbb_t* vbb, unsigned int offset);
+bf256_t bf256_sum_poly_vbb(vbb_t* vbb, unsigned int offset);
 
 FAEST_END_C_DECL
 

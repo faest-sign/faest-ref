@@ -1759,8 +1759,7 @@ static void aes_prove_256(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const
                           const faest_paramset_t* params) {
   // Step: 1..2
   // bf256_t* bf_v = vbb->vole_V_cache_prove; //
-  // column_to_row_major_and_shrink_V_256(vbb->vole_V_cache,
-  // FAEST_256F_L);
+  // column_to_row_major_and_shrink_V_256(vbb->vole_V_cache, FAEST_256F_L);
 
   // Step: 3..4
   // do nothing

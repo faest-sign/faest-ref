@@ -59,7 +59,7 @@ static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
   }
   free(V[0]);
   free(V);
-  vbb->start_idx_prove = start; 
+  vbb->start_idx_prove = start;
 }
 
 // len is the number of OLE v's that is allowed to be stored in memory.
