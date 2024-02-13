@@ -1559,7 +1559,7 @@ static void aes_enc_forward_256_vbb(vbb_t* vbb, unsigned int offset, const bf256
       bf256_t bf_xk_hat[4];
       for (unsigned int r = 0; r <= 3; r++) {
         // Step: 12..13
-        bf_x_hat[r]  = bf256_byte_combine(get_vole_v_prove(vbb, offset + ix + 8 * r));
+        bf_x_hat[r]  = bf256_byte_combine_vbb(vbb, offset + ix + 8 * r);
         bf_xk_hat[r] = bf256_byte_combine(bf_xk + (ik + 8 * r));
       }
 
