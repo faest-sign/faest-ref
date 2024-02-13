@@ -27,8 +27,14 @@ static void recompute_hash(vbb_t* vbb, unsigned int start, unsigned int len) {
   vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, vbb->vecCom, vbb->c,
               vbb->vole_U, V);
 
-  size_t amount = MIN(len, vbb->params->faest_param.lambda - start);
-  memcpy(vbb->vole_V_cache_hash[0], V[start], amount * ell_hat_bytes);
+  if(len >= vbb->params->faest_param.lambda){
+    start = 0;
+  }
+  else if(start + len > vbb->params->faest_param.lambda){
+    start = vbb->params->faest_param.lambda - len;
+  }
+  //size_t amount = MIN(len, vbb->params->faest_param.lambda - start);
+  memcpy(vbb->vole_V_cache_hash[0], V[start], len * ell_hat_bytes);
 
   free(V[0]);
   free(V);
@@ -53,8 +59,14 @@ static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
   /* NOTE: not simply just a transpose. it shrinks */
   if (vbb->params->faest_param.lambda == 256) {
     bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, FAEST_256F_L);
-    size_t amount = MIN(len, vbb->params->faest_param.l + vbb->params->faest_param.lambda - start);
-    memcpy(vbb->vole_V_cache_prove, bf_v + start, amount * sizeof(bf256_t));
+    if(len >= vbb->params->faest_param.l + vbb->params->faest_param.lambda){
+      start = 0;
+    }
+    else if(start + len > vbb->params->faest_param.l + vbb->params->faest_param.lambda){
+      start = vbb->params->faest_param.l + vbb->params->faest_param.lambda - len;
+    }
+    //size_t amount = MIN(len, vbb->params->faest_param.l + vbb->params->faest_param.lambda - start);
+    memcpy(vbb->vole_V_cache_prove, bf_v + start, len * sizeof(bf256_t));
     faest_aligned_free(bf_v);
   }
   free(V[0]);
