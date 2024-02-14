@@ -280,19 +280,6 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   }
 
   // Step: 3
-  /*
-  uint8_t hcom[MAX_LAMBDA_BYTES * 2];
-  vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
-  uint8_t* u        = malloc(ell_hat_bytes);
-  // v has \hat \ell rows, \lambda columns, storing in column-major order
-  uint8_t** V = malloc(lambda * sizeof(uint8_t*));
-  V[0]        = calloc(lambda, ell_hat_bytes);
-  for (unsigned int i = 1; i < lambda; ++i) {
-    V[i] = V[0] + i * ell_hat_bytes;
-  }
-  vole_commit(rootkey, signature_iv(sig, params), ell_hat, params, hcom, vecCom,
-              signature_c(sig, 0, params), u, V);
-  */
   vbb_t vbb;
   // TODO: is argument ell_hat correct?
   init_vbb(&vbb, 3099, rootkey, signature_iv(sig, params), signature_c(sig, 0, params), params);
@@ -338,13 +325,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   uint8_t b_tilde[MAX_LAMBDA_BYTES];
   aes_prove(w, &vbb, owf_input, owf_output, chall_2, signature_a_tilde(sig, params),
             b_tilde, params);
-  /*
-  free(V[0]);
-  free(V);
-  V = NULL;
-  free(u);
-  u = NULL;
-  */
+
   free(w);
   w = NULL;
 
@@ -364,10 +345,6 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
                 signature_com(sig, i, params), depth, lambdaBytes);
     vec_com_clear(&vbb.vecCom[i]);
   }
-  /*
-  free(vecCom);
-  vecCom = NULL;
-  */
 }
 
 int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,

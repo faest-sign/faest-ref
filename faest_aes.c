@@ -1191,7 +1191,6 @@ static void aes_key_schedule_forward_256_vbb(vbb_t* vbb, bf256_t* bf_out) {
   for (unsigned int i = 0; i < FAEST_256F_LAMBDA; i++) {
     memcpy(bf_out + i, get_vole_v_prove(vbb, i), sizeof(bf256_t));
   }
-  // memcpy(bf_out, v, sizeof(bf256_t) * FAEST_256F_LAMBDA);
 
   // Step: 4
   unsigned int i_wd = FAEST_256F_LAMBDA;
@@ -1201,7 +1200,6 @@ static void aes_key_schedule_forward_256_vbb(vbb_t* vbb, bf256_t* bf_out) {
       for (unsigned int i = 0; i < 32; i++) {
         memcpy(bf_out + j * 32 + i, get_vole_v_prove(vbb, i_wd + i), sizeof(bf256_t));
       }
-      // memcpy(bf_out + j * 32, v + i_wd, sizeof(bf256_t) * 32);
       i_wd += 32;
     } else {
       for (unsigned int i = 0; i < 32; i++) {
@@ -1686,7 +1684,6 @@ static void aes_enc_backward_256_vbb(vbb_t* vbb, unsigned int offset, const bf25
           for (unsigned int i = 0; i < 8; i++) {
             memcpy(bf_x_tilde + i, get_vole_v_prove(vbb, ird + i + offset), sizeof(bf256_t));
           }
-          // memcpy(bf_x_tilde, bf_x + ird, sizeof(bf_x_tilde));
         } else {
           // Step: 10
           for (unsigned int i = 0; i < 8; ++i) {
@@ -1758,8 +1755,7 @@ static void aes_prove_256(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const
                           const uint8_t* chall, uint8_t* a_tilde, uint8_t* b_tilde,
                           const faest_paramset_t* params) {
   // Step: 1..2
-  // bf256_t* bf_v = vbb->vole_V_cache_prove; //
-  // column_to_row_major_and_shrink_V_256(vbb->vole_V_cache, FAEST_256F_L);
+  // compute on the fly
 
   // Step: 3..4
   // do nothing
@@ -1790,8 +1786,6 @@ static void aes_prove_256(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const
   // Step: 16..18
   zk_hash_256_finalize(a_tilde, &a1_ctx, bf256_load(get_vole_u(vbb) + FAEST_256F_L / 8));
   zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly_vbb(vbb, FAEST_256F_L));
-  // zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly(bf_v + FAEST_256F_L));
-  // faest_aligned_free(bf_v);
 }
 
 static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
