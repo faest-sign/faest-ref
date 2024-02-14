@@ -37,58 +37,56 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
 }
 */
 
-void StreamConstructVole(const uint8_t* iv, stream_vec_com_t* sVecCom, unsigned int lambda, unsigned int outLenBytes, uint8_t* u, uint8_t* v, uint8_t* h) {
-  unsigned int depth = sVecCom->depth;
+static void StreamConstructVole(const uint8_t* iv, stream_vec_com_t* sVecCom, unsigned int lambda,
+                                unsigned int outLenBytes, uint8_t* u, uint8_t* v, uint8_t* h) {
+  unsigned int depth               = sVecCom->depth;
   const unsigned int num_instances = 1 << depth;
   const unsigned int lambda_bytes  = lambda / 8;
 
-  uint8_t* stack = calloc(depth+1, outLenBytes);
-  memset(v, 0, depth * outLenBytes);
-  unsigned int stack_index = 1;
-#define V(idx) (v + (idx)*outLenBytes)
-#define STACK_PEAK(depth) (stack + (stack_index - 1 - depth) * outLenBytes)
+#define V(idx) (v + (idx) * outLenBytes)
 
-
-  uint8_t* sd = alloca(lambda_bytes);
+  uint8_t* sd  = alloca(lambda_bytes);
   uint8_t* com = alloca(lambda_bytes * 2);
+  H1_context_t* h1_ctx;
+  if (h != NULL) {
+    h1_ctx = alloca(sizeof(H1_context_t));
+    H1_init(h1_ctx, lambda);
+  }
 
-  H1_context_t h1_ctx;
-  H1_init(&h1_ctx, lambda);
+  uint8_t* r = alloca(outLenBytes);
 
-  get_sd_com(sVecCom, iv, lambda, 0, sd, com);
-  H1_update(&h1_ctx, com, lambda_bytes * 2);
-  prg(sd, iv, stack, lambda, outLenBytes);
+  // Clear initial memory
+  if (u != NULL) {
+    memset(u, 0, outLenBytes);
+  }
+  memset(v, 0, depth * outLenBytes);
 
-  unsigned int j;
-  // Step: 3..4
-  for (unsigned int i = 1; i < num_instances; i++) {
+  for (unsigned int i = 0; i < num_instances; i++) {
     get_sd_com(sVecCom, iv, lambda, i, sd, com);
-    H1_update(&h1_ctx, com, lambda_bytes * 2);
+    if (h != NULL) {
+      H1_update(h1_ctx, com, lambda_bytes * 2);
+    }
 
-    prg(sd, iv, STACK_PEAK(-1), lambda, outLenBytes);
-    stack_index++;
-
-    j = 0;
-    for (unsigned int x = i + 1; !(x & 1); x >>= 1) {
-      xor_u8_array(V(j), STACK_PEAK(0), V(j), outLenBytes);
-      ++j;
-      xor_u8_array(STACK_PEAK(0), STACK_PEAK(1), STACK_PEAK(1), outLenBytes);
-      stack_index--;
+    prg(sd, iv, r, lambda, outLenBytes);
+    if (u != NULL) {
+      xor_u8_array(u, r, u, outLenBytes);
+    }
+    for (unsigned int j = 0; j < depth; j++) {
+      // Apply r if the j'th bit is set
+      if ((i >> j) & 1) {
+        xor_u8_array(V(j), r, V(j), outLenBytes);
+      }
     }
   }
-  
-  // Step: 10
-  if (u != NULL) {
-    memcpy(u, stack, outLenBytes);
-  }
-  free(stack);
 
-  H1_final(&h1_ctx, h, lambda_bytes * 2);
+  if (h != NULL) {
+    H1_final(h1_ctx, h, lambda_bytes * 2);
+  }
 }
 
 void stream_vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                        const faest_paramset_t* params, uint8_t* hcom, stream_vec_com_t* sVecCom, uint8_t* c,
-                        uint8_t* u, uint8_t** v) {
+                        const faest_paramset_t* params, uint8_t* hcom, stream_vec_com_t* sVecCom,
+                        uint8_t* c, uint8_t* u, uint8_t** v) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
@@ -96,7 +94,7 @@ void stream_vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int 
   unsigned int tau0         = params->faest_param.t0;
   unsigned int k0           = params->faest_param.k0;
   unsigned int k1           = params->faest_param.k1;
-  unsigned int max_depth = MAX(k0, k1);
+  unsigned int max_depth    = MAX(k0, k1);
 
   uint8_t* ui = alloca(tau * ellhat_bytes);
 
@@ -107,7 +105,7 @@ void stream_vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int 
   // for Step 12
   H1_context_t h1_ctx;
   H1_init(&h1_ctx, lambda);
-  uint8_t* h = alloca(lambda_bytes * 2);
+  uint8_t* h    = alloca(lambda_bytes * 2);
   uint8_t* path = alloca(lambda_bytes * max_depth);
 
   unsigned int v_idx = 0;
