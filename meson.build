@@ -448,6 +448,8 @@ faest_sources = files(
   'vc.c',
   'vole.c',
   'vbb.c',
+  'vole_stream.c',
+  'vc_stream.c',
 )
 
 # header files to install

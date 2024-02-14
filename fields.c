@@ -419,7 +419,7 @@ bf256_t bf256_byte_combine(const bf256_t* x) {
   return bf_out;
 }
 
-bf256_t bf256_byte_combine_vbb(const vbb_t* vbb, unsigned int offset) {
+bf256_t bf256_byte_combine_vbb(vbb_t* vbb, unsigned int offset) {
   bf256_t bf_out = *get_vole_v_prove(vbb, offset);
   for (unsigned int i = 1; i < 8; ++i) {
     bf_out = bf256_add(bf_out, bf256_mul(*get_vole_v_prove(vbb, offset + i), bf256_alpha[i - 1]));

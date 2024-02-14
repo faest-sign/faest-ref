@@ -4,7 +4,8 @@
 #include "macros.h"
 #include "vbb.h"
 #include "vole.h"
-#include "vc.h"
+#include "vole_stream.h"
+#include "vc_stream.h"
 #include "instances.h"
 #include "faest.h"
 #include "faest_aes.h"
@@ -24,16 +25,21 @@ static void recompute_hash(vbb_t* vbb, unsigned int start, unsigned int len) {
   }
 
   // TODO: Modify vole_commit to ouput specified size
+  /*
   vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, vbb->vecCom, vbb->c,
               vbb->vole_U, V);
+  */
+  stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
+  stream_vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, sVecCom, vbb->c,
+                     vbb->vole_U, V);
+  free(sVecCom);
 
-  if(len >= vbb->params->faest_param.lambda){
+  if (len >= vbb->params->faest_param.lambda) {
     start = 0;
-  }
-  else if(start + len > vbb->params->faest_param.lambda){
+  } else if (start + len > vbb->params->faest_param.lambda) {
     start = vbb->params->faest_param.lambda - len;
   }
-  //size_t amount = MIN(len, vbb->params->faest_param.lambda - start);
+  // size_t amount = MIN(len, vbb->params->faest_param.lambda - start);
   memcpy(vbb->vole_V_cache_hash[0], V[start], len * ell_hat_bytes);
 
   free(V[0]);
@@ -54,18 +60,25 @@ static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
   }
 
   // TODO: Modify vole_commit to ouput specified size
+  /*
   vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, vbb->vecCom, vbb->c,
               vbb->vole_U, V);
+  */
+  stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
+  stream_vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, sVecCom, vbb->c,
+                     vbb->vole_U, V);
+  free(sVecCom);
+
   /* NOTE: not simply just a transpose. it shrinks */
   if (vbb->params->faest_param.lambda == 256) {
     bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, FAEST_256F_L);
-    if(len >= vbb->params->faest_param.l + vbb->params->faest_param.lambda){
+    if (len >= vbb->params->faest_param.l + vbb->params->faest_param.lambda) {
       start = 0;
-    }
-    else if(start + len > vbb->params->faest_param.l + vbb->params->faest_param.lambda){
+    } else if (start + len > vbb->params->faest_param.l + vbb->params->faest_param.lambda) {
       start = vbb->params->faest_param.l + vbb->params->faest_param.lambda - len;
     }
-    //size_t amount = MIN(len, vbb->params->faest_param.l + vbb->params->faest_param.lambda - start);
+    // size_t amount = MIN(len, vbb->params->faest_param.l + vbb->params->faest_param.lambda -
+    // start);
     memcpy(vbb->vole_V_cache_prove, bf_v + start, len * sizeof(bf256_t));
     faest_aligned_free(bf_v);
   }
@@ -82,10 +95,10 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
   vbb->iv  = iv;
   vbb->c   = c;
   // uint8_t hcom[MAX_LAMBDA_BYTES * 2]
-  vbb->com_hash        = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
-  vbb->params          = params;
-  vbb->root_key        = root_key;
-  vbb->vecCom          = calloc(params->faest_param.tau, sizeof(vec_com_t));
+  vbb->com_hash = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
+  vbb->params   = params;
+  vbb->root_key = root_key;
+  vbb->vecCom   = calloc(params->faest_param.tau, sizeof(vec_com_t));
 
   const unsigned int ell_hat =
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
@@ -103,7 +116,7 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
 
   // PROVE cache
   vbb->vole_V_cache_prove = calloc(len, vbb->params->faest_param.lambda / 8);
-  vbb->start_idx_prove = 0;
+  vbb->start_idx_prove    = 0;
   recompute_prove(vbb, 0, len);
 
   // HASH cache
@@ -114,7 +127,7 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
   for (unsigned int i = 1; i < long_len; ++i) {
     vbb->vole_V_cache_hash[i] = vbb->vole_V_cache_hash[0] + i * ell_hat_bytes;
   }
-  vbb->start_idx_hash  = 0;
+  vbb->start_idx_hash = 0;
   recompute_hash(vbb, 0, long_len);
 
   // TODO: Make cleanup to free all malloc
