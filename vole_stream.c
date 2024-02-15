@@ -20,15 +20,15 @@ static void StreamConstructVole(const uint8_t* iv, stream_vec_com_t* sVecCom, un
 
 #define V(idx) (v + ((idx)-begin) * outLenBytes)
 
-  uint8_t* sd  = alloca(lambda_bytes);
-  uint8_t* com = alloca(lambda_bytes * 2);
+  uint8_t* sd  = malloc(lambda_bytes);
+  uint8_t* com = malloc(lambda_bytes * 2);
   H1_context_t* h1_ctx;
   if (h != NULL) {
-    h1_ctx = alloca(sizeof(H1_context_t));
+    h1_ctx = malloc(sizeof(H1_context_t));
     H1_init(h1_ctx, lambda);
   }
 
-  uint8_t* r = alloca(outLenBytes);
+  uint8_t* r = malloc(outLenBytes);
 
   // Clear initial memory
   if (u != NULL) {
@@ -57,6 +57,13 @@ static void StreamConstructVole(const uint8_t* iv, stream_vec_com_t* sVecCom, un
   if (h != NULL) {
     H1_final(h1_ctx, h, lambda_bytes * 2);
   }
+
+  if (h != NULL){
+    free(h1_ctx);
+  }
+  free(sd);
+  free(com);
+  free(r);
 }
 
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
@@ -71,9 +78,9 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
   unsigned int k1           = params->faest_param.k1;
   unsigned int max_depth    = MAX(k0, k1);
 
-  uint8_t* expanded_keys = alloca(tau * lambda_bytes);
+  uint8_t* expanded_keys = malloc(tau * lambda_bytes);
   prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
-  uint8_t* path = alloca(lambda_bytes * max_depth);
+  uint8_t* path = malloc(lambda_bytes * max_depth);
 
   unsigned int end        = start + len;
   unsigned int tree_start = 0;
@@ -109,6 +116,8 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       break;
     }
   }
+  free(expanded_keys);
+  free(path);
 }
 
 void stream_vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
@@ -123,17 +132,17 @@ void stream_vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int 
   unsigned int k1           = params->faest_param.k1;
   unsigned int max_depth    = MAX(k0, k1);
 
-  uint8_t* ui = alloca(tau * ellhat_bytes);
+  uint8_t* ui = malloc(tau * ellhat_bytes);
 
   // Step 1
-  uint8_t* expanded_keys = alloca(tau * lambda_bytes);
+  uint8_t* expanded_keys = malloc(tau * lambda_bytes);
   prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
 
   // for Step 12
   H1_context_t h1_ctx;
   H1_init(&h1_ctx, lambda);
-  uint8_t* h    = alloca(lambda_bytes * 2);
-  uint8_t* path = alloca(lambda_bytes * max_depth);
+  uint8_t* h    = malloc(lambda_bytes * 2);
+  uint8_t* path = malloc(lambda_bytes * max_depth);
 
   unsigned int v_idx = 0;
   for (unsigned int i = 0; i < tau; i++) {
@@ -160,4 +169,8 @@ void stream_vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int 
 
   // Step 12: Generating final commitment from all the com commitments
   H1_final(&h1_ctx, hcom, lambda_bytes * 2);
+  free(ui);
+  free(expanded_keys);
+  free(h);
+  free(path);
 }

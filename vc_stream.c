@@ -24,7 +24,7 @@ static void H0(const uint8_t* node, uint32_t lambda, const uint8_t* iv, uint8_t*
 void get_sd_com(stream_vec_com_t* sVecCom, const uint8_t* iv, uint32_t lambda, unsigned int index, uint8_t* sd, uint8_t* com) {
   const unsigned int lambdaBytes = lambda / 8;
 
-  uint8_t* children = alloca(lambdaBytes * 2);
+  uint8_t* children = malloc(lambdaBytes * 2);
   uint8_t* l_child = children;
   uint8_t* r_child = l_child + lambdaBytes;
 
@@ -79,6 +79,7 @@ void get_sd_com(stream_vec_com_t* sVecCom, const uint8_t* iv, uint32_t lambda, u
   sVecCom->index = index;
 
   H0(node, lambda, iv, sd, com);
+  free(children);
 }
 
 void stream_vector_commitment(const uint8_t* rootKey, uint32_t lambda, stream_vec_com_t* sVecCom, uint32_t depth) {
