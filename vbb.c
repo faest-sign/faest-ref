@@ -17,14 +17,10 @@ static void recompute_hash(vbb_t* vbb, unsigned int start, unsigned int len) {
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = ell_hat / 8;
 
-  if (len >= vbb->params->faest_param.lambda) {
-    start = 0;
-  } else if (start + len > vbb->params->faest_param.lambda) {
-    start = vbb->params->faest_param.lambda - len;
-  }
-
+  unsigned int amount       = MIN(len, vbb->params->faest_param.lambda - start);
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
-  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ell_hat, vbb->params, sVecCom, vbb->vole_V_cache_hash, start, len);
+  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ell_hat, vbb->params, sVecCom,
+                          vbb->vole_V_cache_hash, start, amount);
   free(sVecCom);
 
   vbb->start_idx_hash = start;
@@ -95,12 +91,17 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
   }
   vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, vbb->vecCom, vbb->c,
               vbb->vole_U, vbb->vole_V_cache);
-
   // PROVE cache
   vbb->vole_V_cache_prove = calloc(len, vbb->params->faest_param.lambda / 8);
   vbb->start_idx_prove    = 0;
   recompute_prove(vbb, 0, len);
 
+  // Setup u hcom c.
+  stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
+  vole_commit_u_hcom_c(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, sVecCom, vbb->c,
+                       vbb->vole_U);
+  free(sVecCom);
+  
   // HASH cache
   unsigned int long_len     = (vbb->len * params->faest_param.lambda) / ell_hat;
   vbb->long_len             = long_len;
