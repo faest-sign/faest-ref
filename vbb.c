@@ -17,33 +17,16 @@ static void recompute_hash(vbb_t* vbb, unsigned int start, unsigned int len) {
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = ell_hat / 8;
 
-  // TODO: FAKE IT
-  uint8_t** V = malloc(vbb->params->faest_param.lambda * sizeof(uint8_t*));
-  V[0]        = calloc(vbb->params->faest_param.lambda, ell_hat_bytes);
-  for (unsigned int i = 1; i < vbb->params->faest_param.lambda; ++i) {
-    V[i] = V[0] + i * ell_hat_bytes;
-  }
-
-  // TODO: Modify vole_commit to ouput specified size
-  /*
-  vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, vbb->vecCom, vbb->c,
-              vbb->vole_U, V);
-  */
-  stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
-  stream_vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, sVecCom, vbb->c,
-                     vbb->vole_U, V);
-  free(sVecCom);
-
   if (len >= vbb->params->faest_param.lambda) {
     start = 0;
   } else if (start + len > vbb->params->faest_param.lambda) {
     start = vbb->params->faest_param.lambda - len;
   }
-  // size_t amount = MIN(len, vbb->params->faest_param.lambda - start);
-  memcpy(vbb->vole_V_cache_hash[0], V[start], len * ell_hat_bytes);
 
-  free(V[0]);
-  free(V);
+  stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
+  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ell_hat, vbb->params, sVecCom, vbb->vole_V_cache_hash, start, len);
+  free(sVecCom);
+
   vbb->start_idx_hash = start;
 }
 
@@ -77,8 +60,7 @@ static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
     } else if (start + len > vbb->params->faest_param.l + vbb->params->faest_param.lambda) {
       start = vbb->params->faest_param.l + vbb->params->faest_param.lambda - len;
     }
-    // size_t amount = MIN(len, vbb->params->faest_param.l + vbb->params->faest_param.lambda -
-    // start);
+
     memcpy(vbb->vole_V_cache_prove, bf_v + start, len * sizeof(bf256_t));
     faest_aligned_free(bf_v);
   }

@@ -11,16 +11,6 @@
 #include <assert.h>
 #include <string.h>
 
-/*
-unsigned int NumRec(unsigned int depth, const uint8_t* bi) {
-  unsigned int out = 0;
-  for (unsigned int i = 0; i < depth; i++) {
-    out += ((unsigned int)bi[i]) << i;
-  }
-  return out;
-}
-*/
-
 static void H0(const uint8_t* node, uint32_t lambda, const uint8_t* iv, uint8_t* sd, uint8_t* com) {
   const unsigned int lambda_bytes = lambda / 8;
   H0_context_t h0_ctx;

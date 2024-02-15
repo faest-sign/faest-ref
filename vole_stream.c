@@ -10,40 +10,15 @@
 #include <stdbool.h>
 #include <string.h>
 
-/*
-int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t0, unsigned int k1,
-            unsigned int t1, uint8_t* chalout) {
-  if (i >= t0 + t1) {
-    return 0;
-  }
-
-  unsigned int lo;
-  unsigned int hi;
-  if (i < t0) {
-    lo = i * k0;
-    hi = ((i + 1) * k0);
-  } else {
-    unsigned int t = i - t0;
-    lo             = (t0 * k0) + (t * k1);
-    hi             = (t0 * k0) + ((t + 1) * k1);
-  }
-
-  assert(hi - lo == k0 || hi - lo == k1);
-  for (unsigned int j = lo; j < hi; ++j) {
-    // set_bit(chalout, i - lo, get_bit(chal, i));
-    chalout[j - lo] = ptr_get_bit(chal, j);
-  }
-  return 1;
-}
-*/
-
 static void StreamConstructVole(const uint8_t* iv, stream_vec_com_t* sVecCom, unsigned int lambda,
-                                unsigned int outLenBytes, uint8_t* u, uint8_t* v, uint8_t* h) {
+                                unsigned int outLenBytes, uint8_t* u, uint8_t* v, uint8_t* h,
+                                unsigned int begin, unsigned int end) {
   unsigned int depth               = sVecCom->depth;
   const unsigned int num_instances = 1 << depth;
   const unsigned int lambda_bytes  = lambda / 8;
+  unsigned int len                 = end - begin;
 
-#define V(idx) (v + (idx) * outLenBytes)
+#define V(idx) (v + ((idx)-begin) * outLenBytes)
 
   uint8_t* sd  = alloca(lambda_bytes);
   uint8_t* com = alloca(lambda_bytes * 2);
@@ -59,7 +34,7 @@ static void StreamConstructVole(const uint8_t* iv, stream_vec_com_t* sVecCom, un
   if (u != NULL) {
     memset(u, 0, outLenBytes);
   }
-  memset(v, 0, depth * outLenBytes);
+  memset(v, 0, len * outLenBytes);
 
   for (unsigned int i = 0; i < num_instances; i++) {
     get_sd_com(sVecCom, iv, lambda, i, sd, com);
@@ -71,16 +46,68 @@ static void StreamConstructVole(const uint8_t* iv, stream_vec_com_t* sVecCom, un
     if (u != NULL) {
       xor_u8_array(u, r, u, outLenBytes);
     }
-    for (unsigned int j = 0; j < depth; j++) {
+    for (unsigned int j = begin; j < end; j++) {
       // Apply r if the j'th bit is set
       if ((i >> j) & 1) {
-        xor_u8_array(V(j), r, V(j), outLenBytes);
+        xor_u8_array(V(j), r, V(j), outLenBytes); // FIXME - arhgh!
       }
     }
   }
 
   if (h != NULL) {
     H1_final(h1_ctx, h, lambda_bytes * 2);
+  }
+}
+
+void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
+                             const faest_paramset_t* params, stream_vec_com_t* sVecCom, uint8_t** v,
+                             unsigned int start, unsigned int len) {
+  unsigned int lambda       = params->faest_param.lambda;
+  unsigned int lambda_bytes = lambda / 8;
+  unsigned int ellhat_bytes = (ellhat + 7) / 8;
+  unsigned int tau          = params->faest_param.tau;
+  unsigned int tau0         = params->faest_param.t0;
+  unsigned int k0           = params->faest_param.k0;
+  unsigned int k1           = params->faest_param.k1;
+  unsigned int max_depth    = MAX(k0, k1);
+
+  uint8_t* expanded_keys = alloca(tau * lambda_bytes);
+  prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
+  uint8_t* path = alloca(lambda_bytes * max_depth);
+
+  unsigned int end        = start + len;
+  unsigned int tree_start = 0;
+  for (unsigned int i = 0; i < tau; i++) {
+    unsigned int depth = i < tau0 ? k0 : k1;
+
+    if (tree_start + depth > start) {
+      stream_vector_commitment(expanded_keys + i * lambda_bytes, lambda, &sVecCom[i], depth);
+
+      unsigned int lbegin = 0;
+      if (start > tree_start) {
+        assert(start >= tree_start);
+        lbegin = start - tree_start;
+      }
+
+      assert(end > tree_start);
+      unsigned int lend  = MIN(depth, end - tree_start);
+      unsigned int v_idx = 0;
+      if (tree_start > start) {
+        v_idx = tree_start - start;
+      }
+
+      assert(lend <= depth);
+
+      sVecCom[i].path = path;
+      StreamConstructVole(iv, &sVecCom[i], lambda, ellhat_bytes, NULL, v[v_idx], NULL, lbegin,
+                          lend);
+      sVecCom[i].path = NULL;
+    }
+
+    tree_start += depth;
+    if (tree_start >= end) {
+      break;
+    }
   }
 }
 
@@ -116,7 +143,8 @@ void stream_vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int 
     stream_vector_commitment(expanded_keys + i * lambda_bytes, lambda, &sVecCom[i], depth);
     // Step 6
     sVecCom[i].path = path;
-    StreamConstructVole(iv, &sVecCom[i], lambda, ellhat_bytes, ui + i * ellhat_bytes, v[v_idx], h);
+    StreamConstructVole(iv, &sVecCom[i], lambda, ellhat_bytes, ui + i * ellhat_bytes, v[v_idx], h,
+                        0, depth);
     sVecCom[i].path = NULL;
     // Step 7 (and parts of 8)
     v_idx += depth;
