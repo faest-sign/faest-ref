@@ -207,7 +207,8 @@ void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
                              stream_vec_com_t* sVecCom, uint8_t* v) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
-  unsigned int ell_hat      = params->faest_param.l + params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  unsigned int ell_hat =
+      params->faest_param.l + params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   unsigned int ellhat_bytes = (ell_hat + 7) / 8;
   unsigned int tau          = params->faest_param.tau;
   unsigned int tau0         = params->faest_param.t0;
