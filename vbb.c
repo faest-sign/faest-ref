@@ -29,6 +29,7 @@ static void recompute_hash(vbb_t* vbb, unsigned int start, unsigned int len) {
 static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
   const unsigned int ell_hat =
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  /*
   const unsigned int ell_hat_bytes = ell_hat / 8;
 
   // TODO: FAKE IT
@@ -37,18 +38,21 @@ static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
   for (unsigned int i = 1; i < vbb->params->faest_param.lambda; ++i) {
     V[i] = V[0] + i * ell_hat_bytes;
   }
+  */
 
   // TODO: Modify vole_commit to ouput specified size
   /*
   vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, vbb->vecCom, vbb->c,
               vbb->vole_U, V);
   */
+
+  /*
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
   stream_vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, sVecCom, vbb->c,
                      vbb->vole_U, V);
   free(sVecCom);
 
-  /* NOTE: not simply just a transpose. it shrinks */
+  // NOTE: not simply just a transpose. it shrinks
   if (vbb->params->faest_param.lambda == 256) {
     bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, FAEST_256F_L);
     if (len >= vbb->params->faest_param.l + vbb->params->faest_param.lambda) {
@@ -62,6 +66,13 @@ static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
   }
   free(V[0]);
   free(V);
+  */
+  memset(vbb->vole_V_cache_prove, 0, ((size_t)len) * (size_t)vbb->params->faest_param.lambda / 8);
+
+  stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
+  partial_vole_commit_rmo(vbb->root_key, vbb->iv, ell_hat, vbb->params, sVecCom, (uint8_t*)vbb->vole_V_cache_prove);
+  free(sVecCom);
+
   vbb->start_idx_prove = start;
 }
 
@@ -101,9 +112,9 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
   vole_commit_u_hcom_c(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, sVecCom, vbb->c,
                        vbb->vole_U);
   free(sVecCom);
-  
+
   // HASH cache
-  unsigned int long_len     = (vbb->len * params->faest_param.lambda) / ell_hat;
+  unsigned int long_len     = ((uint32_t)vbb->len * (uint32_t)params->faest_param.lambda) / ell_hat;
   vbb->long_len             = long_len;
   vbb->vole_V_cache_hash    = malloc(long_len * sizeof(uint8_t*));
   vbb->vole_V_cache_hash[0] = calloc(long_len, ell_hat_bytes);
