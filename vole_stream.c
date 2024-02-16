@@ -96,78 +96,12 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int ellhat, stream_vec_
           continue;
         }
 
+        char bit = (r[row_idx/8] >> (row_idx%8)) & 1;
         unsigned int bit_idx = (offset + col_idx) % 8;
         unsigned int byte_idx = (offset + col_idx) / 8;
-        
-        //uint8_t b_mask = 0x80 >> bit_idx;
-        uint8_t b_mask = 1 << bit_idx;
-        uint8_t b = r[byte_idx] & b_mask;
-        uint8_t rev_b = 0;
-        for (unsigned int j = 0; j < sizeof(rev_b) * 8; j++) {
-          rev_b <<= 1;
-          rev_b |= (b >> j) & 1;
-        }
-
-        v[row_idx * lambda_bytes + byte_idx] ^= rev_b;
-
+        v[row_idx * lambda_bytes + byte_idx] ^= (bit << bit_idx);
       }
     }
-
-
-    /*
-    // NOTE - outLenBytes is round up, up to 7 last rows could be garbage.. who cares? with begin and end cut off.
-    for (unsigned int byte_idx = 0; byte_idx < outLenBytes; byte_idx++) {
-      for (unsigned int bit_idx = 0; bit_idx < 8; bit_idx++) {
-        unsigned int index = byte_idx * 8 + bit_idx;
-        if (index >= ellhat) {
-          continue;
-        }
-        //uint8_t bitmask = 1 << bit_idx; // FIXME - flip?
-        uint8_t bitmask = 0x80 >> bit_idx;
-        uint8_t bit     = r[byte_idx] & bitmask;
-        if (bit == 0) {
-          continue;
-        }
-        */
-        /*
-        for (unsigned int j = 0; j < depth; j++) {
-          uint8_t val = (((i >> j) & 1) << 7) >> ((offset + j) % 8);
-          xor_u8_array(a(((offset + j) % 8),index), &val, a(((offset + j) % 8),index), 1);
-        }
-        */
-        /*
-        uint32_t rev_i = 0;
-        for (unsigned int j = 0; j < sizeof(rev_i) * 8; j++) {
-          rev_i <<= 1;
-          rev_i |= (i >> j) & 1;
-        }
-        
-        // FIXME - could we get endian problems? (not with the buf)
-        unsigned int shift = (offset % 8);
-        aligned_i          = rev_i >> shift;
-        //xor_u8_array(V_RMO(index), (uint8_t*)&aligned_i, V_RMO(index), MIN(3, (lambda - offset + 7) / 8));
-        
-        buf[0] = (aligned_i >> 24) & 0xFF;
-        buf[1] = (aligned_i >> 16) & 0xFF;
-        buf[2] = (aligned_i >> 8) & 0xFF;
-        xor_u8_array(V_RMO(index), buf, V_RMO(index), MIN(3, (lambda - offset + 7) / 8));
-        */
-        /*
-        // FIXME - could we get endian problems?
-        unsigned int shift = (sizeof(aligned_i) * 8) - depth - (offset % 8);
-        aligned_i          = ((uint32_t)i) << shift;
-        xor_u8_array(V_RMO(index), (uint8_t*)&aligned_i, V_RMO(index), sizeof(aligned_i));
-        */
-    //  }
-    //}
-    /*
-    for (unsigned int j = begin; j < end; j++) {
-      // Apply r if the j'th bit is set
-      if ((i >> j) & 1) {
-        xor_u8_array(V_RMO(j), r, V_RMO(j), outLenBytes);
-      }
-    }
-    */
   }
   free(sd);
   free(com);

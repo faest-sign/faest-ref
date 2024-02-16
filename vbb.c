@@ -70,7 +70,7 @@ static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
   memset(vbb->vole_V_cache_prove, 0, ((size_t)len) * (size_t)vbb->params->faest_param.lambda / 8);
 
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
-  partial_vole_commit_rmo(vbb->root_key, vbb->iv, ell_hat, vbb->params, sVecCom, (uint8_t*)vbb->vole_V_cache_prove);
+  partial_vole_commit_rmo(vbb->root_key, vbb->iv, len, vbb->params, sVecCom, (uint8_t*)vbb->vole_V_cache_prove);
   free(sVecCom);
 
   vbb->start_idx_prove = start;
