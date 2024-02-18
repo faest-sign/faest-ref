@@ -78,29 +78,29 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
   const unsigned int num_instances = 1 << depth;
   const unsigned int lambda_bytes  = lambda / 8;
 
-  // #define V_RMO(idx) (v + (offset / 8) + ((uint32_t)idx) * (uint32_t)lambda_bytes)
-
   uint8_t* sd  = malloc(lambda_bytes);
   uint8_t* com = malloc(lambda_bytes * 2);
   uint8_t* r   = malloc(outLenBytes);
-  // uint32_t aligned_i;
-  // uint8_t buf[3];
+  unsigned int bit_offset = (offset % 8);
+  unsigned int byte_offset = (offset / 8);
 
   for (unsigned int i = 0; i < num_instances; i++) {
     get_sd_com(sVecCom, iv, lambda, i, sd, com);
     prg(sd, iv, r, lambda, outLenBytes);
 
     for (unsigned int row_idx = 0; row_idx < len; row_idx++) {
-      for (unsigned int col_idx = 0; col_idx < depth; col_idx++) {
-        bool do_work = (i >> col_idx) & 1;
-        if (do_work == 0) {
-          continue;
-        }
-
-        char bit              = (r[(row_idx + start) / 8] >> ((row_idx + start) % 8)) & 1;
-        unsigned int bit_idx  = (offset + col_idx) % 8;
-        unsigned int byte_idx = (offset + col_idx) / 8;
-        v[row_idx * lambda_bytes + byte_idx] ^= (bit << bit_idx);
+      unsigned int byte_idx = (row_idx + start) / 8;
+      unsigned int bit_idx = (row_idx + start) % 8;
+      bool bit = (r[byte_idx] >> (bit_idx)) & 1;
+      if (bit == 0) {
+        continue;
+      }
+      unsigned int base_idx = row_idx * lambda_bytes + byte_offset;
+      unsigned int amount = (bit_offset + depth + 7) / 8;
+      // Avoid carry by breaking into two steps
+      v[base_idx] ^= i << bit_offset;
+      for (unsigned int j = 1; j < amount; j++) {
+        v[base_idx + j] ^= i >> (j * 8 - bit_offset);
       }
     }
   }
