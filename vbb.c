@@ -15,7 +15,6 @@
 static void recompute_hash(vbb_t* vbb, unsigned int start, unsigned int len) {
   const unsigned int ell_hat =
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  const unsigned int ell_hat_bytes = ell_hat / 8;
 
   unsigned int amount       = MIN(len, vbb->params->faest_param.lambda - start);
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
@@ -36,7 +35,7 @@ static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
 
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
   partial_vole_commit_rmo(vbb->root_key, vbb->iv, start, len, vbb->params, sVecCom,
-                          (uint8_t*)vbb->vole_V_cache_prove);
+                          vbb->vole_V_cache_prove);
   free(sVecCom);
 
   vbb->start_idx_prove = start;
@@ -103,14 +102,24 @@ uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
   return vbb->vole_V_cache_hash[offset];
 }
 
-bf256_t* get_vole_v_prove(vbb_t* vbb, unsigned int idx) {
+bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx) {
   assert(idx < vbb->params->faest_param.l + vbb->params->faest_param.lambda);
   if (!(idx >= vbb->start_idx_prove && idx < vbb->start_idx_prove + vbb->len)) {
     recompute_prove(vbb, idx, vbb->len);
   }
 
   unsigned int offset = idx - vbb->start_idx_prove;
-  return vbb->vole_V_cache_prove + offset;
+  return ((bf256_t*)(vbb->vole_V_cache_prove)) + offset;
+}
+
+bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx) {
+  assert(idx < vbb->params->faest_param.l + vbb->params->faest_param.lambda);
+  if (!(idx >= vbb->start_idx_prove && idx < vbb->start_idx_prove + vbb->len)) {
+    recompute_prove(vbb, idx, vbb->len);
+  }
+
+  unsigned int offset = idx - vbb->start_idx_prove;
+  return ((bf192_t*)(vbb->vole_V_cache_prove)) + offset;
 }
 
 uint8_t* get_vole_u(vbb_t* vbb) {

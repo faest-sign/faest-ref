@@ -91,7 +91,7 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
     for (unsigned int row_idx = 0; row_idx < len; row_idx++) {
       unsigned int byte_idx = (row_idx + start) / 8;
       unsigned int bit_idx = (row_idx + start) % 8;
-      bool bit = (r[byte_idx] >> (bit_idx)) & 1;
+      uint8_t bit = (r[byte_idx] >> (bit_idx)) & 1;
       if (bit == 0) {
         continue;
       }
