@@ -6,6 +6,7 @@
 #include "vole.h"
 #include "vole_stream.h"
 #include "vc_stream.h"
+#include "vc.h"
 #include "instances.h"
 #include "faest.h"
 #include "faest_aes.h"
@@ -128,4 +129,19 @@ uint8_t* get_vole_u(vbb_t* vbb) {
 
 uint8_t* get_com_hash(vbb_t* vbb) {
   return vbb->com_hash;
+}
+
+// TODO - refactor this stuff
+void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8_t* sig_pdec, uint8_t* sig_com, unsigned int depth) {
+  unsigned int lambda       = vbb->params->faest_param.lambda;
+  unsigned int lambda_bytes = lambda / 8;
+  unsigned int tau          = vbb->params->faest_param.tau;
+  uint8_t* expanded_keys = malloc(tau * lambda_bytes);
+  prg(vbb->root_key, vbb->iv, expanded_keys, lambda, lambda_bytes * tau);
+
+  stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
+  stream_vector_commitment(expanded_keys + lambda_bytes * idx, lambda, &sVecCom[idx], depth);
+  stream_vector_open(&sVecCom[idx], s_, sig_pdec, sig_com, depth, vbb->iv, lambda);
+  free(sVecCom);
+  free(expanded_keys);
 }

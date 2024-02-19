@@ -7,6 +7,7 @@
 #include "compat.h"
 #include "aes.h"
 #include "instances.h"
+#include "vc.h"
 
 #include <assert.h>
 #include <string.h>
@@ -87,4 +88,36 @@ void stream_vector_commitment(const uint8_t* rootKey, uint32_t lambda, stream_ve
   memcpy(sVecCom->rootKey, rootKey, lambdaBytes);
   sVecCom->depth = depth;
   sVecCom->index = depth; // Signals no path yet
+}
+
+void stream_vector_open(stream_vec_com_t* sVecCom, const uint8_t* b, uint8_t* cop,
+                 uint8_t* com_j, uint32_t depth,  const uint8_t* iv, uint32_t lambda) {
+  // Step: 1
+  const unsigned int lambdaBytes = lambda / 8;
+  uint8_t* children = alloca(lambdaBytes * 2);
+  uint8_t* l_child = children;
+  uint8_t* r_child = l_child + lambdaBytes;
+  uint8_t* node = sVecCom->rootKey;
+
+  // Step: 3..6
+  uint8_t save_left;
+  for (uint32_t i = 0; i < depth; i++) {
+    // b = 0 => Right
+    // b = 1 => Left
+    prg(node, iv, children, lambda, lambdaBytes * 2);
+    save_left = b[depth - 1 - i];
+    if (save_left) {
+      memcpy(cop + (lambdaBytes * i), l_child, lambdaBytes);
+      node = r_child;
+    }
+    else {
+      memcpy(cop + (lambdaBytes * i), r_child, lambdaBytes);
+      node = l_child;
+    }
+  }
+
+  // Step: 7
+  uint64_t leafIndex = NumRec(depth, b);
+  uint8_t* sd = alloca(lambdaBytes); // Byproduct
+  get_sd_com(sVecCom, iv, lambda, leafIndex, sd, com_j);
 }

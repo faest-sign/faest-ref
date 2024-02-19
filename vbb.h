@@ -34,5 +34,6 @@ bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx);
 bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx);
 uint8_t* get_vole_u(vbb_t* vbb);
 uint8_t* get_com_hash(vbb_t* vbb);
+void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8_t* sig_pdec, uint8_t* sig_com, unsigned int depth);
 
 #endif
