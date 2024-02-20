@@ -260,7 +260,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   const unsigned int tau           = params->faest_param.tau;
   const unsigned int tau0          = params->faest_param.t0;
   const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  const unsigned int ell_hat_bytes = ell_hat / 8;
+  //const unsigned int ell_hat_bytes = ell_hat / 8;
 
   // Step: 2
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
@@ -345,6 +345,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
     vector_open_ondemand(&vbb, i, s_, signature_pdec(sig, i, params), signature_com(sig, i, params),
                          depth);
   }
+  clean_vbb(&vbb);
 }
 
 int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,

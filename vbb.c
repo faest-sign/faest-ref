@@ -69,11 +69,14 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
   free(sVecCom);
   // HASH cache
   unsigned int column_count = (size_t)vbb->row_count * (size_t)lambda_bytes / (size_t)ellhat_bytes;
-  printf("%lu\t%u\n", column_count, lambda);
   assert(column_count >= 1);
   vbb->column_count = column_count;
+}
 
-  // TODO: Make cleanup to free all malloc
+void clean_vbb(vbb_t* vbb) {
+  free(vbb->com_hash);
+  free(vbb->vole_U);
+  free(vbb->vole_V_cache);
 }
 
 void prepare_hash(vbb_t* vbb) {
