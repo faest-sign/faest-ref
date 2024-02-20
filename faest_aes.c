@@ -2721,6 +2721,58 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t
   }
 }
 
+static void em_enc_forward_192_vbb(vbb_t* vbb, const bf192_t* bf_x, bf192_t* bf_y) {
+  // Step: 2
+  for (unsigned int j = 0; j < 4 * FAEST_EM_192F_Nwd; j++) {
+    bf_y[j] = bf192_byte_combine_vbb(vbb, 8 * j);
+    if (bf_x) {
+      bf_y[j] = bf192_add(bf_y[j], bf192_byte_combine(bf_x + 8 * j));
+    }
+  }
+
+  const bf192_t bf_two   = bf192_byte_combine_bits(2);
+  const bf192_t bf_three = bf192_byte_combine_bits(3);
+
+  for (unsigned int j = 1; j < FAEST_EM_192F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
+      const unsigned int i  = 32 * FAEST_EM_192F_Nwd * j + 32 * c;
+      const unsigned int iy = 4 * FAEST_EM_192F_Nwd * j + 4 * c;
+
+      bf192_t bf_x_hat[4];
+      bf192_t bf_z_hat[4];
+      for (unsigned int r = 0; r <= 3; r++) {
+        // Step: 12..13
+        bf_z_hat[r] = bf192_byte_combine_vbb(vbb, i + 8 * r);
+        if (bf_x) {
+          bf_x_hat[r] = bf192_byte_combine(bf_x + (i + 8 * r));
+        } else {
+          bf_x_hat[r] = bf192_zero();
+        }
+      }
+
+      bf_y[iy + 0] = bf192_add(bf192_mul(bf_z_hat[0], bf_two), bf192_mul(bf_z_hat[1], bf_three));
+      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[2]);
+      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[3]);
+      bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_x_hat[0]);
+
+      bf_y[iy + 1] = bf192_add(bf_z_hat[0], bf192_mul(bf_z_hat[1], bf_two));
+      bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf192_mul(bf_z_hat[2], bf_three));
+      bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf_z_hat[3]);
+      bf_y[iy + 1] = bf192_add(bf_y[iy + 1], bf_x_hat[1]);
+
+      bf_y[iy + 2] = bf192_add(bf_z_hat[0], bf_z_hat[1]);
+      bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_z_hat[2], bf_two));
+      bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf192_mul(bf_z_hat[3], bf_three));
+      bf_y[iy + 2] = bf192_add(bf_y[iy + 2], bf_x_hat[2]);
+
+      bf_y[iy + 3] = bf192_add(bf192_mul(bf_z_hat[0], bf_three), bf_z_hat[1]);
+      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_z_hat[2]);
+      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_z_hat[3], bf_two));
+      bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_x_hat[3]);
+    }
+  }
+}
+
 static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
                                   bf192_t* y_out) {
   // only called with Mtag == Mkey == 0
@@ -2791,8 +2843,52 @@ static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const 
   }
 }
 
+static void em_enc_backward_192_vbb(vbb_t* vbb, const bf192_t* bf_x, vbb_t* vbb_out,
+                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf192_t* y_out) {
+  // Step: 1
+  const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
+  const bf192_t factor =
+      bf192_mul_bit(bf192_add(bf192_mul_bit(bf_delta, Mkey), bf192_from_bit(1 ^ Mkey)), 1 ^ Mtag);
+
+  for (unsigned int j = 0; j < FAEST_EM_192F_R; j++) {
+    for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
+      for (unsigned int r = 0; r <= 3; r++) {
+        bf192_t bf_z_tilde[8];
+        const unsigned int icol = (c - r + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
+        const unsigned int ird =
+            FAEST_EM_192F_LAMBDA + 32 * FAEST_EM_192F_Nwd * j + 32 * icol + 8 * r;
+
+        if (j < (FAEST_EM_192F_R - 1)) {
+          for (unsigned int i = 0; i < 8; i++) {
+            memcpy(bf_z_tilde + i, get_vole_v_prove_192(vbb, ird + i), sizeof(bf192_t));
+          }
+        } else {
+          for (unsigned int i = 0; i < 8; ++i) {
+            // Step: 12
+            bf_z_tilde[i] = *get_vole_v_prove_192(vbb_out, ird - 32 * FAEST_EM_192F_Nwd * (j + 1) + i);
+            if (bf_x) {
+              bf_z_tilde[i] = bf192_add(bf_z_tilde[i], bf_x[ird + i]);
+            }
+          }
+        }
+
+        bf192_t bf_y_tilde[8];
+        for (unsigned int i = 0; i < 8; ++i) {
+          bf_y_tilde[i] = bf192_add(bf192_add(bf_z_tilde[(i + 7) % 8], bf_z_tilde[(i + 5) % 8]),
+                                    bf_z_tilde[(i + 2) % 8]);
+        }
+        bf_y_tilde[0] = bf192_add(bf_y_tilde[0], factor);
+        bf_y_tilde[2] = bf192_add(bf_y_tilde[2], factor);
+
+        // Step: 18
+        y_out[4 * FAEST_EM_192F_Nwd * j + 4 * c + r] = bf192_byte_combine(bf_y_tilde);
+      }
+    }
+  }
+}
+
 static void em_enc_constraints_Mkey_0_192(const uint8_t* out, const uint8_t* x, const uint8_t* w,
-                                          const bf192_t* bf_v, zk_hash_192_ctx* a0_ctx,
+                                          vbb_t* vbb, zk_hash_192_ctx* a0_ctx,
                                           zk_hash_192_ctx* a1_ctx) {
   // Step 6
   uint8_t w_out[FAEST_EM_192F_LAMBDA / 8];
@@ -2803,9 +2899,9 @@ static void em_enc_constraints_Mkey_0_192(const uint8_t* out, const uint8_t* x, 
   bf192_t bf_s_dash[FAEST_EM_192F_Senc];
   bf192_t bf_vs_dash[FAEST_EM_192F_Senc];
   em_enc_forward_192_1(w, x, bf_s);
-  em_enc_forward_192(bf_v, NULL, bf_vs);
+  em_enc_forward_192_vbb(vbb, NULL, bf_vs);
   em_enc_backward_192_1(w, x, w_out, bf_s_dash);
-  em_enc_backward_192(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash);
+  em_enc_backward_192_vbb(vbb, NULL, vbb, 1, 0, NULL, bf_vs_dash);
 
   for (unsigned int j = 0; j < FAEST_EM_192F_Senc; j++) {
     const bf192_t tmp = bf192_mul(bf_vs[j], bf_vs_dash[j]);
@@ -2864,18 +2960,15 @@ static void em_prove_192(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const 
     }
   }
 
-  bf192_t* bf_v = column_to_row_major_and_shrink_V_192(vbb->vole_V_cache, FAEST_EM_192F_Lenc);
   zk_hash_192_ctx a0_ctx;
   zk_hash_192_ctx a1_ctx;
 
   zk_hash_192_init(&a0_ctx, chall);
   zk_hash_192_init(&a1_ctx, chall);
-  em_enc_constraints_Mkey_0_192(out, x, w, bf_v, &a0_ctx, &a1_ctx);
+  em_enc_constraints_Mkey_0_192(out, x, w, vbb, &a0_ctx, &a1_ctx);
 
   zk_hash_192_finalize(a_tilde, &a1_ctx, bf192_load(get_vole_u(vbb) + FAEST_EM_192F_Lenc / 8));
-  zk_hash_192_finalize(b_tilde, &a0_ctx, bf192_sum_poly(bf_v + FAEST_EM_192F_Lenc));
-
-  faest_aligned_free(bf_v);
+  zk_hash_192_finalize(b_tilde, &a0_ctx, bf192_sum_poly_vbb(vbb, FAEST_EM_192F_Lenc));
 }
 
 static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
