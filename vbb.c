@@ -120,7 +120,7 @@ bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx) {
   }
 
   unsigned int offset = idx - vbb->start_idx_prove;
-  return ((bf192_t*)(vbb->vole_V_cache_prove)) + offset;
+  return (bf192_t*)(vbb->vole_V_cache_prove + offset*vbb->params->faest_param.lambda/8);
 }
 
 uint8_t* get_vole_u(vbb_t* vbb) {
