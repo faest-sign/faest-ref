@@ -15,8 +15,6 @@ struct vbb_t {
   unsigned int start_idx_prove;
   unsigned int len; // TODO: Compile time
   unsigned int long_len;
-  vec_com_t* vecCom;
-  uint8_t** vole_V_cache;
   uint8_t** vole_V_cache_hash;
   uint8_t* vole_V_cache_prove;
   uint8_t* vole_U;
@@ -35,6 +33,7 @@ bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx);
 bf128_t* get_vole_v_prove_128(vbb_t* vbb, unsigned int idx);
 uint8_t* get_vole_u(vbb_t* vbb);
 uint8_t* get_com_hash(vbb_t* vbb);
-void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8_t* sig_pdec, uint8_t* sig_com, unsigned int depth);
+void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8_t* sig_pdec,
+                          uint8_t* sig_com, unsigned int depth);
 
 #endif

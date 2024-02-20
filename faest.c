@@ -323,8 +323,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
 
   // Step: 16
   uint8_t b_tilde[MAX_LAMBDA_BYTES];
-  aes_prove(w, &vbb, owf_input, owf_output, chall_2, signature_a_tilde(sig, params),
-            b_tilde, params);
+  aes_prove(w, &vbb, owf_input, owf_output, chall_2, signature_a_tilde(sig, params), b_tilde,
+            params);
 
   free(w);
   w = NULL;
@@ -341,10 +341,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
             params->faest_param.k1, params->faest_param.t1, s_);
     // Step 21
     const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
-    vector_open_ondemand(&vbb, i, s_, signature_pdec(sig, i, params), signature_com(sig, i, params), depth);
-    //vector_open(vbb.vecCom[i].k, vbb.vecCom[i].com, s_, signature_pdec(sig, i, params),
-    //            signature_com(sig, i, params), depth, lambdaBytes);
-    vec_com_clear(&vbb.vecCom[i]);
+    vector_open_ondemand(&vbb, i, s_, signature_pdec(sig, i, params), signature_com(sig, i, params),
+                         depth);
   }
 }
 

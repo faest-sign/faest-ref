@@ -53,21 +53,12 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
   vbb->com_hash = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
   vbb->params   = params;
   vbb->root_key = root_key;
-  vbb->vecCom   = calloc(params->faest_param.tau, sizeof(vec_com_t));
 
   const unsigned int ell_hat =
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = ell_hat / 8;
   vbb->vole_U                      = malloc(ell_hat_bytes);
 
-  // FIXME: FAKE IT - make all variant work pre change
-  vbb->vole_V_cache    = malloc(params->faest_param.lambda * sizeof(uint8_t*));
-  vbb->vole_V_cache[0] = calloc(params->faest_param.lambda, ell_hat_bytes);
-  for (unsigned int i = 1; i < params->faest_param.lambda; ++i) {
-    vbb->vole_V_cache[i] = vbb->vole_V_cache[0] + i * ell_hat_bytes;
-  }
-  vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, vbb->vecCom, vbb->c,
-              vbb->vole_U, vbb->vole_V_cache);
   // PROVE cache
   // FIXME - would MAX(len, vbb->params->faest_param.Lenc) be correct for all variants?
   vbb->vole_V_cache_prove = calloc(len, vbb->params->faest_param.lambda / 8);
@@ -94,7 +85,7 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
   // TODO: Make cleanup to free all malloc
 }
 
-uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
+inline uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
   assert(idx < vbb->params->faest_param.lambda);
   if (!(idx >= vbb->start_idx_hash && idx < vbb->start_idx_hash + vbb->long_len)) {
     recompute_hash(vbb, idx, vbb->long_len);
@@ -113,23 +104,23 @@ static inline uint8_t* get_vole_v_prove(vbb_t* vbb, unsigned int idx) {
   return vbb->vole_V_cache_prove + offset;
 }
 
-bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx) {
+inline bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx) {
   return (bf256_t*)get_vole_v_prove(vbb, idx);
 }
 
-bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx) {
+inline bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx) {
   return (bf192_t*)get_vole_v_prove(vbb, idx);
 }
 
-bf128_t* get_vole_v_prove_128(vbb_t* vbb, unsigned int idx) {
+inline bf128_t* get_vole_v_prove_128(vbb_t* vbb, unsigned int idx) {
   return (bf128_t*)get_vole_v_prove(vbb, idx);
 }
 
-uint8_t* get_vole_u(vbb_t* vbb) {
+inline uint8_t* get_vole_u(vbb_t* vbb) {
   return vbb->vole_U;
 }
 
-uint8_t* get_com_hash(vbb_t* vbb) {
+inline uint8_t* get_com_hash(vbb_t* vbb) {
   return vbb->com_hash;
 }
 
