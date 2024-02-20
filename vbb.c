@@ -69,6 +69,7 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
   vole_commit(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, vbb->vecCom, vbb->c,
               vbb->vole_U, vbb->vole_V_cache);
   // PROVE cache
+  // FIXME - would MAX(len, vbb->params->faest_param.Lenc) be correct for all variants?
   vbb->vole_V_cache_prove = calloc(len, vbb->params->faest_param.lambda / 8);
   vbb->start_idx_prove    = 0;
   recompute_prove(vbb, 0, len);

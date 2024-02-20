@@ -282,7 +282,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   // Step: 3
   vbb_t vbb;
   // TODO: is argument ell_hat correct?
-  init_vbb(&vbb, 3000, rootkey, signature_iv(sig, params), signature_c(sig, 0, params), params);
+  init_vbb(&vbb, ell_hat, rootkey, signature_iv(sig, params), signature_c(sig, 0, params), params);
 
   // Step: 4
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
