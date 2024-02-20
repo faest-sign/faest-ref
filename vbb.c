@@ -14,16 +14,16 @@
 #include "parameters.h"
 
 static void recompute_hash(vbb_t* vbb, unsigned int start, unsigned int len) {
-  const unsigned int ell_hat =
+  const unsigned int ellhat =
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
 
   unsigned int amount       = MIN(len, vbb->params->faest_param.lambda - start);
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
-  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ell_hat, vbb->params, sVecCom,
-                          vbb->vole_V_cache_hash, start, amount);
+  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, vbb->params, sVecCom, vbb->vole_V_cache,
+                          start, amount);
   free(sVecCom);
 
-  vbb->start_idx_hash = start;
+  vbb->cache_idx = start;
 }
 
 static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
@@ -32,76 +32,85 @@ static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
   } else if (start + len > vbb->params->faest_param.l + vbb->params->faest_param.lambda) {
     start = vbb->params->faest_param.l + vbb->params->faest_param.lambda - len;
   }
-  memset(vbb->vole_V_cache_prove, 0, ((size_t)len) * (size_t)vbb->params->faest_param.lambda / 8);
 
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
   partial_vole_commit_rmo(vbb->root_key, vbb->iv, start, len, vbb->params, sVecCom,
-                          vbb->vole_V_cache_prove);
+                          vbb->vole_V_cache);
   free(sVecCom);
 
-  vbb->start_idx_prove = start;
+  vbb->cache_idx = start;
 }
 
 // len is the number of OLE v's that is allowed to be stored in memory.
-// Hence we store len*lambda in memory.
+// Hence we store (at most) len*lambda in memory.
 void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv, uint8_t* c,
               const faest_paramset_t* params) {
-  vbb->len = len;
-  vbb->iv  = iv;
-  vbb->c   = c;
-  // uint8_t hcom[MAX_LAMBDA_BYTES * 2]
+  vbb->iv       = iv;
   vbb->com_hash = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
   vbb->params   = params;
   vbb->root_key = root_key;
 
-  const unsigned int ell_hat =
-      vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  const unsigned int ell_hat_bytes = ell_hat / 8;
-  vbb->vole_U                      = malloc(ell_hat_bytes);
+  unsigned int lambda       = vbb->params->faest_param.lambda;
+  unsigned int lambda_bytes = lambda / 8;
+  const unsigned int ellhat = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  unsigned int ellhat_bytes = (ellhat + 7) / 8;
+  vbb->vole_U               = malloc(ellhat_bytes);
 
   // PROVE cache
   // FIXME - would MAX(len, vbb->params->faest_param.Lenc) be correct for all variants?
-  vbb->vole_V_cache_prove = calloc(len, vbb->params->faest_param.lambda / 8);
-  vbb->start_idx_prove    = 0;
-  recompute_prove(vbb, 0, len);
+  unsigned int row_count = len;
+  vbb->row_count         = row_count;
+  vbb->vole_V_cache      = calloc(row_count, lambda_bytes);
 
   // Setup u hcom c.
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
-  vole_commit_u_hcom_c(vbb->root_key, vbb->iv, ell_hat, vbb->params, vbb->com_hash, sVecCom, vbb->c,
+  vole_commit_u_hcom_c(vbb->root_key, vbb->iv, ellhat, vbb->params, vbb->com_hash, sVecCom, c,
                        vbb->vole_U);
   free(sVecCom);
-
   // HASH cache
-  unsigned int long_len     = ((uint32_t)vbb->len * (uint32_t)params->faest_param.lambda) / ell_hat;
-  vbb->long_len             = long_len;
-  vbb->vole_V_cache_hash    = malloc(long_len * sizeof(uint8_t*));
-  vbb->vole_V_cache_hash[0] = calloc(long_len, ell_hat_bytes);
-  for (unsigned int i = 1; i < long_len; ++i) {
-    vbb->vole_V_cache_hash[i] = vbb->vole_V_cache_hash[0] + i * ell_hat_bytes;
-  }
-  vbb->start_idx_hash = 0;
-  recompute_hash(vbb, 0, long_len);
+  unsigned int column_count = (size_t)vbb->row_count * (size_t)lambda_bytes / (size_t)ellhat_bytes;
+  printf("%lu\t%u\n", column_count, lambda);
+  assert(column_count >= 1);
+  vbb->column_count = column_count;
 
   // TODO: Make cleanup to free all malloc
 }
 
+void prepare_hash(vbb_t* vbb) {
+  vbb->cache_idx = 0;
+  recompute_hash(vbb, 0, vbb->column_count);
+}
+
+void prepare_prove(vbb_t* vbb) {
+  unsigned int len = vbb->row_count;
+
+  vbb->cache_idx = 0;
+  recompute_prove(vbb, 0, len);
+}
+
 inline uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
+  const unsigned int ellhat =
+      vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  unsigned int ellhat_bytes = (ellhat + 7) / 8;
+
   assert(idx < vbb->params->faest_param.lambda);
-  if (!(idx >= vbb->start_idx_hash && idx < vbb->start_idx_hash + vbb->long_len)) {
-    recompute_hash(vbb, idx, vbb->long_len);
+  if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
+    recompute_hash(vbb, idx, vbb->column_count);
   }
 
-  unsigned int offset = idx - vbb->start_idx_hash;
-  return vbb->vole_V_cache_hash[offset];
+  // FIXME - should it be ell + lambda instead? (also change offset in partial_vole_commit_cmo
+  // then!)
+  unsigned int offset = idx - vbb->cache_idx;
+  return vbb->vole_V_cache + offset * ellhat_bytes;
 }
 
 static inline uint8_t* get_vole_v_prove(vbb_t* vbb, unsigned int idx) {
-  if (!(idx >= vbb->start_idx_prove && idx < vbb->start_idx_prove + vbb->len)) {
-    recompute_prove(vbb, idx, vbb->len);
+  if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->row_count)) {
+    recompute_prove(vbb, idx, vbb->row_count);
   }
 
-  unsigned int offset = (idx - vbb->start_idx_prove) * (vbb->params->faest_param.lambda / 8);
-  return vbb->vole_V_cache_prove + offset;
+  unsigned int offset = (idx - vbb->cache_idx) * (vbb->params->faest_param.lambda / 8);
+  return vbb->vole_V_cache + offset;
 }
 
 inline bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx) {

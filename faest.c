@@ -293,6 +293,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   vole_hash(signature_u_tilde(sig, params), chall_1, get_vole_u(&vbb), l, lambda);
 
   // Step: 7 and 8
+  prepare_hash(&vbb);
   uint8_t h_v[MAX_LAMBDA_BYTES * 2];
   {
     H1_context_t h1_ctx_1;
@@ -319,9 +320,9 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
                    lambda, l);
 
   // Step: 14..15
-  // transpose is computed in aes_prove
 
   // Step: 16
+  prepare_prove(&vbb);
   uint8_t b_tilde[MAX_LAMBDA_BYTES];
   aes_prove(w, &vbb, owf_input, owf_output, chall_2, signature_a_tilde(sig, params), b_tilde,
             params);

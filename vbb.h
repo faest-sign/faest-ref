@@ -11,22 +11,21 @@ typedef struct vbb_t vbb_t;
 #include "faest_aes.h"
 
 struct vbb_t {
-  unsigned int start_idx_hash;
-  unsigned int start_idx_prove;
-  unsigned int len; // TODO: Compile time
-  unsigned int long_len;
-  uint8_t** vole_V_cache_hash;
-  uint8_t* vole_V_cache_prove;
+  unsigned int row_count;
+  unsigned int column_count;
+  unsigned int cache_idx;
+  uint8_t* vole_V_cache;
   uint8_t* vole_U;
   uint8_t* com_hash;
   const uint8_t* root_key;
   const faest_paramset_t* params;
   const uint8_t* iv;
-  uint8_t* c;
 };
 
 void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv, uint8_t* c,
               const faest_paramset_t* params);
+void prepare_hash(vbb_t* vbb);
+void prepare_prove(vbb_t* vbb);
 uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx);
 bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx);
 bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx);

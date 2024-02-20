@@ -78,10 +78,10 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
   const unsigned int num_instances = 1 << depth;
   const unsigned int lambda_bytes  = lambda / 8;
 
-  uint8_t* sd  = malloc(lambda_bytes);
-  uint8_t* com = malloc(lambda_bytes * 2);
-  uint8_t* r   = malloc(outLenBytes);
-  unsigned int bit_offset = (offset % 8);
+  uint8_t* sd              = malloc(lambda_bytes);
+  uint8_t* com             = malloc(lambda_bytes * 2);
+  uint8_t* r               = malloc(outLenBytes);
+  unsigned int bit_offset  = (offset % 8);
   unsigned int byte_offset = (offset / 8);
 
   for (unsigned int i = 0; i < num_instances; i++) {
@@ -90,13 +90,13 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
 
     for (unsigned int row_idx = 0; row_idx < len; row_idx++) {
       unsigned int byte_idx = (row_idx + start) / 8;
-      unsigned int bit_idx = (row_idx + start) % 8;
-      uint8_t bit = (r[byte_idx] >> (bit_idx)) & 1;
+      unsigned int bit_idx  = (row_idx + start) % 8;
+      uint8_t bit           = (r[byte_idx] >> (bit_idx)) & 1;
       if (bit == 0) {
         continue;
       }
       unsigned int base_idx = row_idx * lambda_bytes + byte_offset;
-      unsigned int amount = (bit_offset + depth + 7) / 8;
+      unsigned int amount   = (bit_offset + depth + 7) / 8;
       // Avoid carry by breaking into two steps
       v[base_idx] ^= i << bit_offset;
       for (unsigned int j = 1; j < amount; j++) {
@@ -110,7 +110,7 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
 }
 
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                             const faest_paramset_t* params, stream_vec_com_t* sVecCom, uint8_t** v,
+                             const faest_paramset_t* params, stream_vec_com_t* sVecCom, uint8_t* v,
                              unsigned int start, unsigned int len) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
@@ -145,7 +145,8 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       }
 
       sVecCom[i].path = path;
-      ConstructVoleCMO(iv, &sVecCom[i], lambda, ellhat_bytes, NULL, v[v_idx], NULL, lbegin, lend);
+      ConstructVoleCMO(iv, &sVecCom[i], lambda, ellhat_bytes, NULL, v + ellhat_bytes * v_idx, NULL,
+                       lbegin, lend);
       sVecCom[i].path = NULL;
     }
 
@@ -221,7 +222,7 @@ void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 
   uint8_t* path = malloc(lambda_bytes * max_depth);
 
-  // TODO - memset here: memset(v, 0, );
+  memset(v, 0, ((size_t)len) * (size_t)lambda_bytes);
 
   unsigned int col_idx = 0;
   for (unsigned int i = 0; i < tau; i++) {
@@ -236,60 +237,5 @@ void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
   }
 
   free(expanded_keys);
-  free(path);
-}
-
-void stream_vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                        const faest_paramset_t* params, uint8_t* hcom, stream_vec_com_t* sVecCom,
-                        uint8_t* c, uint8_t* u, uint8_t** v) {
-  unsigned int lambda       = params->faest_param.lambda;
-  unsigned int lambda_bytes = lambda / 8;
-  unsigned int ellhat_bytes = (ellhat + 7) / 8;
-  unsigned int tau          = params->faest_param.tau;
-  unsigned int tau0         = params->faest_param.t0;
-  unsigned int k0           = params->faest_param.k0;
-  unsigned int k1           = params->faest_param.k1;
-  unsigned int max_depth    = MAX(k0, k1);
-
-  uint8_t* ui = malloc(tau * ellhat_bytes);
-
-  // Step 1
-  uint8_t* expanded_keys = malloc(tau * lambda_bytes);
-  prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
-
-  // for Step 12
-  H1_context_t h1_ctx;
-  H1_init(&h1_ctx, lambda);
-  uint8_t* h    = malloc(lambda_bytes * 2);
-  uint8_t* path = malloc(lambda_bytes * max_depth);
-
-  unsigned int v_idx = 0;
-  for (unsigned int i = 0; i < tau; i++) {
-    // Step 4
-    unsigned int depth = i < tau0 ? k0 : k1;
-    // Step 5
-    stream_vector_commitment(expanded_keys + i * lambda_bytes, lambda, &sVecCom[i], depth);
-    // Step 6
-    sVecCom[i].path = path;
-    ConstructVoleCMO(iv, &sVecCom[i], lambda, ellhat_bytes, ui + i * ellhat_bytes, v[v_idx], h, 0,
-                     depth);
-    sVecCom[i].path = NULL;
-    // Step 7 (and parts of 8)
-    v_idx += depth;
-    // Step 12 (part)
-    H1_update(&h1_ctx, h, lambda_bytes * 2);
-  }
-  // Step 9
-  memcpy(u, ui, ellhat_bytes);
-  for (unsigned int i = 1; i < tau; i++) {
-    // Step 11
-    xor_u8_array(u, ui + i * ellhat_bytes, c + (i - 1) * ellhat_bytes, ellhat_bytes);
-  }
-
-  // Step 12: Generating final commitment from all the com commitments
-  H1_final(&h1_ctx, hcom, lambda_bytes * 2);
-  free(ui);
-  free(expanded_keys);
-  free(h);
   free(path);
 }
