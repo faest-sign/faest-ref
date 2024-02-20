@@ -120,6 +120,10 @@ bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx) {
   return (bf192_t*)get_vole_v_prove(vbb, idx);
 }
 
+bf128_t* get_vole_v_prove_128(vbb_t* vbb, unsigned int idx) {
+  return (bf128_t*)get_vole_v_prove(vbb, idx);
+}
+
 uint8_t* get_vole_u(vbb_t* vbb) {
   return vbb->vole_U;
 }

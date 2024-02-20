@@ -32,6 +32,7 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
 uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx);
 bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx);
 bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx);
+bf128_t* get_vole_v_prove_128(vbb_t* vbb, unsigned int idx);
 uint8_t* get_vole_u(vbb_t* vbb);
 uint8_t* get_com_hash(vbb_t* vbb);
 void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8_t* sig_pdec, uint8_t* sig_com, unsigned int depth);

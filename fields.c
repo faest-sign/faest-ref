@@ -114,6 +114,14 @@ bf128_t bf128_byte_combine(const bf128_t* x) {
   return bf_out;
 }
 
+bf128_t bf128_byte_combine_vbb(vbb_t* vbb, unsigned int offset) {
+  bf128_t bf_out = *get_vole_v_prove_128(vbb, offset);
+  for (unsigned int i = 1; i < 8; ++i) {
+    bf_out = bf128_add(bf_out, bf128_mul(*get_vole_v_prove_128(vbb, offset + i), bf128_alpha[i - 1]));
+  }
+  return bf_out;
+}
+
 bf128_t bf128_byte_combine_bits(uint8_t x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   return bf128_from_bit(x & 1) ^ bf128_mul_bit(bf128_alpha[1 - 1], (x >> 1) & 1) ^
@@ -222,6 +230,14 @@ bf128_t bf128_sum_poly(const bf128_t* xs) {
   bf128_t ret = xs[128 - 1];
   for (size_t i = 1; i < 128; ++i) {
     ret = bf128_add(bf128_dbl(ret), xs[128 - 1 - i]);
+  }
+  return ret;
+}
+
+bf128_t bf128_sum_poly_vbb(vbb_t* vbb, unsigned int offset) {
+  bf128_t ret = *get_vole_v_prove_128(vbb, offset + 128 - 1);
+  for (size_t i = 1; i < 128; ++i) {
+    ret = bf128_add(bf128_dbl(ret), *get_vole_v_prove_128(vbb, offset + 128 - 1 - i));
   }
   return ret;
 }
