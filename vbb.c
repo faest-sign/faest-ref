@@ -103,24 +103,21 @@ uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
   return vbb->vole_V_cache_hash[offset];
 }
 
-bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx) {
-  assert(idx < vbb->params->faest_param.l + vbb->params->faest_param.lambda);
+static inline uint8_t* get_vole_v_prove(vbb_t* vbb, unsigned int idx) {
   if (!(idx >= vbb->start_idx_prove && idx < vbb->start_idx_prove + vbb->len)) {
     recompute_prove(vbb, idx, vbb->len);
   }
 
-  unsigned int offset = idx - vbb->start_idx_prove;
-  return ((bf256_t*)(vbb->vole_V_cache_prove)) + offset;
+  unsigned int offset = (idx - vbb->start_idx_prove) * (vbb->params->faest_param.lambda / 8);
+  return vbb->vole_V_cache_prove + offset;
+}
+
+bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx) {
+  return (bf256_t*)get_vole_v_prove(vbb, idx);
 }
 
 bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx) {
-  assert(idx < vbb->params->faest_param.l + vbb->params->faest_param.lambda);
-  if (!(idx >= vbb->start_idx_prove && idx < vbb->start_idx_prove + vbb->len)) {
-    recompute_prove(vbb, idx, vbb->len);
-  }
-
-  unsigned int offset = idx - vbb->start_idx_prove;
-  return (bf192_t*)(vbb->vole_V_cache_prove + offset*vbb->params->faest_param.lambda/8);
+  return (bf192_t*)get_vole_v_prove(vbb, idx);
 }
 
 uint8_t* get_vole_u(vbb_t* vbb) {
@@ -132,11 +129,12 @@ uint8_t* get_com_hash(vbb_t* vbb) {
 }
 
 // TODO - refactor this stuff
-void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8_t* sig_pdec, uint8_t* sig_com, unsigned int depth) {
+void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8_t* sig_pdec,
+                          uint8_t* sig_com, unsigned int depth) {
   unsigned int lambda       = vbb->params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int tau          = vbb->params->faest_param.tau;
-  uint8_t* expanded_keys = malloc(tau * lambda_bytes);
+  uint8_t* expanded_keys    = malloc(tau * lambda_bytes);
   prg(vbb->root_key, vbb->iv, expanded_keys, lambda, lambda_bytes * tau);
 
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
