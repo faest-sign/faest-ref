@@ -44,6 +44,7 @@ static void ConstructVoleCMO(const uint8_t* iv, stream_vec_com_t* sVecCom, unsig
       H1_update(h1_ctx, com, lambda_bytes * 2);
     }
 
+    // Seed expansion
     prg(sd, iv, r, lambda, outLenBytes);
     if (u != NULL) {
       xor_u8_array(u, r, u, outLenBytes);
