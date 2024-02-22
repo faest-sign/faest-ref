@@ -12,6 +12,7 @@
 #include "faest_aes.h"
 #include "fields.h"
 #include "parameters.h"
+#include "utils.h"
 
 static void recompute_hash(vbb_t* vbb, unsigned int start, unsigned int len) {
   const unsigned int ellhat =
@@ -54,6 +55,7 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
   unsigned int lambda_bytes = lambda / 8;
   const unsigned int ellhat = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
+  vbb->full_size            = len >= ellhat;
   vbb->vole_U               = malloc(ellhat_bytes);
 
   // PROVE cache
@@ -65,12 +67,13 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
 
   // Setup u hcom c.
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
-  if(len >= ellhat){
+  if (vbb->full_size) {
+    vbb->v_buf = malloc(lambda_bytes);
     partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, vbb->params, sVecCom, vbb->vole_V_cache,
-                          0, ellhat, vbb->vole_U, vbb->com_hash, c);
-  }else{
+                            0, ellhat, vbb->vole_U, vbb->com_hash, c);
+  } else {
     vole_commit_u_hcom_c(vbb->root_key, vbb->iv, ellhat, vbb->params, vbb->com_hash, sVecCom, c,
-                          vbb->vole_U);
+                         vbb->vole_U);
   }
   free(sVecCom);
   // HASH cache
@@ -83,22 +86,25 @@ void clean_vbb(vbb_t* vbb) {
   free(vbb->com_hash);
   free(vbb->vole_U);
   free(vbb->vole_V_cache);
+  if (vbb->full_size) {
+    free(vbb->v_buf);
+  }
 }
 
 void prepare_hash(vbb_t* vbb) {
-  unsigned int lambda       = vbb->params->faest_param.lambda;
-  const unsigned int ellhat = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   vbb->cache_idx = 0;
-  if(vbb->row_count >= ellhat){
+  if (vbb->full_size) {
     return;
   }
   recompute_hash(vbb, 0, vbb->column_count);
 }
 
 void prepare_prove(vbb_t* vbb) {
-  unsigned int len = vbb->row_count;
-
   vbb->cache_idx = 0;
+  if (vbb->full_size) {
+    return;
+  }
+  unsigned int len = vbb->row_count;
   recompute_prove(vbb, 0, len);
 }
 
@@ -119,31 +125,44 @@ inline uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
 }
 
 static inline uint8_t* get_vole_v_prove(vbb_t* vbb, unsigned int idx) {
+  unsigned int lambda       = vbb->params->faest_param.lambda;
+  unsigned int lambda_bytes = lambda / 8;
+  unsigned int ellhat       = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  unsigned int ellhat_bytes = (ellhat + 7) / 8;
+
+  if (vbb->full_size) {
+    memset(vbb->v_buf, 0, lambda_bytes);
+    // Transpose on the fly into v_buf
+    for (unsigned int column = 0; column != lambda; ++column) {
+      ptr_set_bit(vbb->v_buf, ptr_get_bit(vbb->vole_V_cache + column * ellhat_bytes, idx), column);
+    }
+    return vbb->v_buf;
+  }
+
   if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->row_count)) {
     recompute_prove(vbb, idx, vbb->row_count);
   }
-
   unsigned int offset = (idx - vbb->cache_idx) * (vbb->params->faest_param.lambda / 8);
   return vbb->vole_V_cache + offset;
 }
 
-inline bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx) {
+bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx) {
   return (bf256_t*)get_vole_v_prove(vbb, idx);
 }
 
-inline bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx) {
+bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx) {
   return (bf192_t*)get_vole_v_prove(vbb, idx);
 }
 
-inline bf128_t* get_vole_v_prove_128(vbb_t* vbb, unsigned int idx) {
+bf128_t* get_vole_v_prove_128(vbb_t* vbb, unsigned int idx) {
   return (bf128_t*)get_vole_v_prove(vbb, idx);
 }
 
-inline uint8_t* get_vole_u(vbb_t* vbb) {
+uint8_t* get_vole_u(vbb_t* vbb) {
   return vbb->vole_U;
 }
 
-inline uint8_t* get_com_hash(vbb_t* vbb) {
+uint8_t* get_com_hash(vbb_t* vbb) {
   return vbb->com_hash;
 }
 

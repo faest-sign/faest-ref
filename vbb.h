@@ -20,6 +20,9 @@ struct vbb_t {
   const uint8_t* root_key;
   const faest_paramset_t* params;
   const uint8_t* iv;
+  // Optimized parameters
+  bool full_size;
+  uint8_t* v_buf;
 };
 
 void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv, uint8_t* c,
