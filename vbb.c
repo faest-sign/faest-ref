@@ -20,7 +20,7 @@ static void recompute_hash(vbb_t* vbb, unsigned int start, unsigned int len) {
   unsigned int amount       = MIN(len, vbb->params->faest_param.lambda - start);
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
   partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, vbb->params, sVecCom, vbb->vole_V_cache,
-                          start, amount);
+                          start, amount, NULL, NULL, NULL);
   free(sVecCom);
 
   vbb->cache_idx = start;
@@ -58,14 +58,20 @@ void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8
 
   // PROVE cache
   // FIXME - would MAX(len, vbb->params->faest_param.Lenc) be correct for all variants?
+  // FIXME - do not allocate too much memory...
   unsigned int row_count = len;
   vbb->row_count         = row_count;
   vbb->vole_V_cache      = calloc(row_count, lambda_bytes);
 
   // Setup u hcom c.
   stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
-  vole_commit_u_hcom_c(vbb->root_key, vbb->iv, ellhat, vbb->params, vbb->com_hash, sVecCom, c,
-                       vbb->vole_U);
+  if(len >= ellhat){
+    partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, vbb->params, sVecCom, vbb->vole_V_cache,
+                          0, ellhat, vbb->vole_U, vbb->com_hash, c);
+  }else{
+    vole_commit_u_hcom_c(vbb->root_key, vbb->iv, ellhat, vbb->params, vbb->com_hash, sVecCom, c,
+                          vbb->vole_U);
+  }
   free(sVecCom);
   // HASH cache
   unsigned int column_count = (size_t)vbb->row_count * (size_t)lambda_bytes / (size_t)ellhat_bytes;
@@ -80,7 +86,12 @@ void clean_vbb(vbb_t* vbb) {
 }
 
 void prepare_hash(vbb_t* vbb) {
+  unsigned int lambda       = vbb->params->faest_param.lambda;
+  const unsigned int ellhat = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   vbb->cache_idx = 0;
+  if(vbb->row_count >= ellhat){
+    return;
+  }
   recompute_hash(vbb, 0, vbb->column_count);
 }
 

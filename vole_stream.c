@@ -112,7 +112,8 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
 
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                              const faest_paramset_t* params, stream_vec_com_t* sVecCom, uint8_t* v,
-                             unsigned int start, unsigned int len) {
+                             unsigned int start, unsigned int len, uint8_t* u, uint8_t* hcom,
+                             uint8_t* c) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
@@ -125,6 +126,13 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
   uint8_t* expanded_keys = malloc(tau * lambda_bytes);
   prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
   uint8_t* path = malloc(lambda_bytes * max_depth);
+
+  H1_context_t h1_ctx;
+  uint8_t* h = NULL;
+  if (hcom != NULL) {
+    H1_init(&h1_ctx, lambda);
+    h = malloc(lambda_bytes * 2);
+  }
 
   unsigned int end        = start + len;
   unsigned int tree_start = 0;
@@ -145,10 +153,26 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
         v_idx = tree_start - start;
       }
 
+      // This is for optimization when len = ell_hat
+      uint8_t* u_ptr = NULL;
+      if (u != NULL && i == 0) {
+        u_ptr = u;
+      } else if (c != NULL && i != 0) {
+        u_ptr = c + (i - 1) * ellhat_bytes;
+      }
+
       sVecCom[i].path = path;
-      ConstructVoleCMO(iv, &sVecCom[i], lambda, ellhat_bytes, NULL, v + ellhat_bytes * v_idx, NULL,
+      ConstructVoleCMO(iv, &sVecCom[i], lambda, ellhat_bytes, u_ptr, v + ellhat_bytes * v_idx, h,
                        lbegin, lend);
       sVecCom[i].path = NULL;
+
+      if (c != NULL && u != NULL && i >= 1) {
+        xor_u8_array(u, u_ptr, u_ptr, ellhat_bytes);
+      }
+
+      if (hcom != NULL) {
+        H1_update(&h1_ctx, h, lambda_bytes * 2);
+      }
     }
 
     tree_start += depth;
@@ -156,6 +180,11 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       break;
     }
   }
+  if (hcom != NULL) {
+    H1_final(&h1_ctx, hcom, lambda_bytes * 2);
+    free(h);
+  }
+
   free(expanded_keys);
   free(path);
 }
@@ -172,8 +201,6 @@ void vole_commit_u_hcom_c(const uint8_t* rootKey, const uint8_t* iv, unsigned in
   unsigned int k1           = params->faest_param.k1;
   unsigned int max_depth    = MAX(k0, k1);
 
-  uint8_t* ui = malloc(tau * ellhat_bytes);
-
   uint8_t* expanded_keys = malloc(tau * lambda_bytes);
   prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
 
@@ -185,20 +212,26 @@ void vole_commit_u_hcom_c(const uint8_t* rootKey, const uint8_t* iv, unsigned in
   for (unsigned int i = 0; i < tau; i++) {
     unsigned int depth = i < tau0 ? k0 : k1;
     stream_vector_commitment(expanded_keys + i * lambda_bytes, lambda, &sVecCom[i], depth);
+
+    uint8_t* u_ptr = NULL;
+    if (i == 0) {
+      u_ptr = u;
+    } else {
+      u_ptr = c + (i - 1) * ellhat_bytes;
+    }
+
     sVecCom[i].path = path;
-    ConstructVoleCMO(iv, &sVecCom[i], lambda, ellhat_bytes, ui + i * ellhat_bytes, NULL, h, 0,
+    ConstructVoleCMO(iv, &sVecCom[i], lambda, ellhat_bytes, u_ptr, NULL, h, 0,
                      depth);
     sVecCom[i].path = NULL;
+    
+    if(i != 0){
+      xor_u8_array(u, u_ptr, u_ptr, ellhat_bytes);
+    }
     H1_update(&h1_ctx, h, lambda_bytes * 2);
   }
 
-  memcpy(u, ui, ellhat_bytes);
-  for (unsigned int i = 1; i < tau; i++) {
-    xor_u8_array(u, ui + i * ellhat_bytes, c + (i - 1) * ellhat_bytes, ellhat_bytes);
-  }
-
   H1_final(&h1_ctx, hcom, lambda_bytes * 2);
-  free(ui);
   free(expanded_keys);
   free(h);
   free(path);
