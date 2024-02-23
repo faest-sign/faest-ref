@@ -15,6 +15,7 @@
 #include "vole.h"
 #include "universal_hashing.h"
 #include "vbb.h"
+#include "qbb.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -253,14 +254,14 @@ static void hash_challenge_3(uint8_t* chall_3, const uint8_t* chall_2, const uin
 void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* owf_key,
                 const uint8_t* owf_input, const uint8_t* owf_output, const uint8_t* rho,
                 size_t rholen, const faest_paramset_t* params) {
-  const unsigned int l             = params->faest_param.l;
-  const unsigned int ell_bytes     = l / 8;
-  const unsigned int lambda        = params->faest_param.lambda;
-  const unsigned int lambdaBytes   = lambda / 8;
-  const unsigned int tau           = params->faest_param.tau;
-  const unsigned int tau0          = params->faest_param.t0;
-  const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  //const unsigned int ell_hat_bytes = ell_hat / 8;
+  const unsigned int l           = params->faest_param.l;
+  const unsigned int ell_bytes   = l / 8;
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int lambdaBytes = lambda / 8;
+  const unsigned int tau         = params->faest_param.tau;
+  const unsigned int tau0        = params->faest_param.t0;
+  const unsigned int ell_hat     = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  // const unsigned int ell_hat_bytes = ell_hat / 8;
 
   // Step: 2
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
@@ -361,8 +362,13 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   const unsigned int k0            = params->faest_param.k0;
   const unsigned int k1            = params->faest_param.k1;
 
-  // Step: 3
-  uint8_t mu[MAX_LAMBDA_BYTES * 2];
+  qbb_t qbb;
+  init_qbb(&qbb, ell_hat, dsignature_iv(sig, params), dsignature_c(sig, 0, params),
+           dsignature_pdec(sig, 0, params), dsignature_com(sig, 0, params),
+           dsignature_chall_3(sig, params), dsignature_u_tilde(sig, params), params);
+
+      // Step: 3
+      uint8_t mu[MAX_LAMBDA_BYTES * 2];
   hash_mu(mu, owf_input, owf_output, params->faest_param.pkSize / 2, msg, msglen, lambda);
 
   // Step: 5

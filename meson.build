@@ -448,6 +448,7 @@ faest_sources = files(
   'vc.c',
   'vole.c',
   'vbb.c',
+  'qbb.c',
   'vole_stream.c',
   'vc_stream.c',
 )
