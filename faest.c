@@ -451,7 +451,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     uint8_t Q_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
     for (unsigned int i = 0; i != lambda; ++i) {
       // Step 15
-      vole_hash(Q_tilde, chall_1, q[i], l, lambda);
+      vole_hash(Q_tilde, chall_1, get_vole_q_hash(&qbb, i), l, lambda);
       // Step 16
       xor_u8_array(Q_tilde, Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
@@ -469,6 +469,9 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
                    dsignature_d(sig, params), lambda, l);
 
   // Step 18
+  if(params->faest_param.lambda == 256){
+    prepare_prove_qbb(&qbb);
+  }
   uint8_t* b_tilde =
       aes_verify(dsignature_d(sig, params), q, chall_2, dsignature_chall_3(sig, params),
                  dsignature_a_tilde(sig, params), owf_input, owf_output, params);

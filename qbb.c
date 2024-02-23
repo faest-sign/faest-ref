@@ -1,7 +1,9 @@
 #include "qbb.h"
+#include "parameters.h"
+#include "faest_aes.h"
 
-void init_qbb(qbb_t* qbb, unsigned int len, const uint8_t* iv, uint8_t* c,
-              uint8_t* pdec_sig, uint8_t* com_sig, uint8_t* chall3, uint8_t* u_tilde, const faest_paramset_t* params) {
+void init_qbb(qbb_t* qbb, unsigned int len, const uint8_t* iv, uint8_t* c, uint8_t* pdec_sig,
+              uint8_t* com_sig, uint8_t* chall3, uint8_t* u_tilde, const faest_paramset_t* params) {
   qbb->iv        = iv;
   qbb->row_count = len;
   qbb->params    = params;
@@ -31,14 +33,14 @@ void init_qbb(qbb_t* qbb, unsigned int len, const uint8_t* iv, uint8_t* c,
     // TODO compute offset
     if (i < tau0) {
       pdec[i] = pdec_sig + i * (params->faest_param.k0 + 2) * lambda_bytes;
-      com[i]  = com_sig + (i * (params->faest_param.k0 + 2) + params->faest_param.k0) * lambda_bytes;
+      com[i] = com_sig + (i * (params->faest_param.k0 + 2) + params->faest_param.k0) * lambda_bytes;
     } else {
-      pdec[i] =
-          pdec_sig + ((i - tau0) * (params->faest_param.k1 + 2) + tau0 * (params->faest_param.k0 + 2)) *
-                     lambda_bytes;
+      pdec[i] = pdec_sig +
+                ((i - tau0) * (params->faest_param.k1 + 2) + tau0 * (params->faest_param.k0 + 2)) *
+                    lambda_bytes;
       com[i] = com_sig + ((i - tau0) * (params->faest_param.k1 + 2) + params->faest_param.k1 +
-                      tau0 * (params->faest_param.k0 + 2)) *
-                         lambda_bytes;
+                          tau0 * (params->faest_param.k0 + 2)) *
+                             lambda_bytes;
     }
   }
   vole_reconstruct(iv, chall3, pdec, com, qbb->com_hash, qprime, ell_hat, params);
@@ -62,14 +64,13 @@ void init_qbb(qbb_t* qbb, unsigned int len, const uint8_t* iv, uint8_t* c,
 
     // Step 11
     uint8_t delta[MAX_DEPTH];
-    ChalDec(chall3, i, params->faest_param.k0, params->faest_param.t0,
-            params->faest_param.k1, params->faest_param.t1, delta);
+    ChalDec(chall3, i, params->faest_param.k0, params->faest_param.t0, params->faest_param.k1,
+            params->faest_param.t1, delta);
     // Step 16
     for (unsigned int j = 0; j != depth; ++j, ++Dtilde_idx) {
       // for scan-build
       assert(Dtilde_idx < lambda);
-      masked_xor_u8_array(Dtilde[Dtilde_idx], u_tilde, Dtilde[Dtilde_idx],
-                          delta[j], utilde_bytes);
+      masked_xor_u8_array(Dtilde[Dtilde_idx], u_tilde, Dtilde[Dtilde_idx], delta[j], utilde_bytes);
     }
 
     if (i == 0) {
@@ -79,23 +80,36 @@ void init_qbb(qbb_t* qbb, unsigned int len, const uint8_t* iv, uint8_t* c,
     } else {
       // Step 14
       for (unsigned int d = 0; d < depth; ++d, ++q_idx) {
-        masked_xor_u8_array(qprime[q_idx], c + (i - 1)*ell_hat_bytes, q[q_idx], delta[d],
+        masked_xor_u8_array(qprime[q_idx], c + (i - 1) * ell_hat_bytes, q[q_idx], delta[d],
                             ell_hat_bytes);
       }
     }
   }
   free(qprime[0]);
   free(qprime);
-  qprime = NULL;
+  qprime            = NULL;
   qbb->vole_Q_cache = q[0];
+  qbb->vole_Q_cache_index = q;
 }
 
 uint8_t* get_vole_q_hash(qbb_t* qbb, unsigned int idx) {
+  qbb->cache_idx = 0;
   const unsigned int ellhat =
       qbb->params->faest_param.l + qbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
   unsigned int offset       = idx - qbb->cache_idx;
   return qbb->vole_Q_cache + offset * ellhat_bytes;
+}
+
+void prepare_prove_qbb(qbb_t* qbb) {
+  qbb->cache_idx                   = 0;
+  const unsigned int lambda        = qbb->params->faest_param.lambda;
+  const unsigned int l             = qbb->params->faest_param.l;
+  const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  const unsigned int ell_hat_bytes = ell_hat / 8;
+
+  qbb->vole_Q_cache = (uint8_t*)column_to_row_major_and_shrink_V_256(qbb->vole_Q_cache_index, FAEST_256F_L);
+
 }
 
 uint8_t* get_vole_q_prove(qbb_t* qbb, unsigned int idx) {
