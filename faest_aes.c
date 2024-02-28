@@ -76,7 +76,7 @@ static const bf8_t Rcon[30] = {
     0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
 };
 
-static bf128_t* column_to_row_major_and_shrink_V_128(uint8_t** v, unsigned int ell) {
+bf128_t* column_to_row_major_and_shrink_V_128(uint8_t** v, unsigned int ell) {
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
   // rows and \lambda columns storing in row-major order
@@ -92,7 +92,7 @@ static bf128_t* column_to_row_major_and_shrink_V_128(uint8_t** v, unsigned int e
   return new_v;
 }
 
-static bf192_t* column_to_row_major_and_shrink_V_192(uint8_t** v, unsigned int ell) {
+bf192_t* column_to_row_major_and_shrink_V_192(uint8_t** v, unsigned int ell) {
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
   // rows and \lambda columns storing in row-major order
@@ -820,20 +820,23 @@ static void aes_prove_128(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const
   zk_hash_128_finalize(b_tilde, &a0_ctx, bf128_sum_poly_vbb(vbb, FAEST_128F_L));
 }
 
-static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
+static uint8_t* aes_verify_128(const uint8_t* d, qbb_t* qbb, const uint8_t* chall_2,
                                const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                                const uint8_t* out, const faest_paramset_t* params) {
+  /*
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
   const unsigned int t1  = params->faest_param.t1;
   const unsigned int k1  = params->faest_param.k1;
+  */
 
   // Step: 1
   const uint8_t* delta = chall_3;
   // Step: 2,3
   // do nothing
 
+  /*
   // Step: 4..10
   for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
@@ -848,23 +851,24 @@ static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* cha
 
   // Step: 11..12
   bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, FAEST_128F_L);
+  */
 
   // Step: 13 + 21
   bf128_t* qk = faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t) * ((FAEST_128F_R + 1) * 128));
   // instead of storing B_0 in an array, we process the values with zk_hash_128
   zk_hash_128_ctx b0_ctx;
   zk_hash_128_init(&b0_ctx, chall_2);
-  aes_key_schedule_constraints_Mkey_1_128(bf_q, delta, &b0_ctx, qk);
+  aes_key_schedule_constraints_Mkey_1_128((bf128_t*)qbb->vole_Q_cache_RMO, delta, &b0_ctx, qk);
 
   // Step: 14
-  aes_enc_constraints_Mkey_1_128(in, out, bf_q + FAEST_128F_Lke, qk, delta, &b0_ctx);
+  aes_enc_constraints_Mkey_1_128(in, out, (bf128_t*)qbb->vole_Q_cache_RMO + FAEST_128F_Lke, qk, delta, &b0_ctx);
   // Step: 18 (beta == 1)
   faest_aligned_free(qk);
 
   // Step: 20+21
   uint8_t* q_tilde = malloc(FAEST_128F_LAMBDA / 8);
-  zk_hash_128_finalize(q_tilde, &b0_ctx, bf128_sum_poly(bf_q + FAEST_128F_L));
-  faest_aligned_free(bf_q);
+  zk_hash_128_finalize(q_tilde, &b0_ctx, bf128_sum_poly((bf128_t*)qbb->vole_Q_cache_RMO + FAEST_128F_L));
+  //faest_aligned_free(bf_q);
 
   bf128_t bf_qtilde = bf128_load(q_tilde);
   bf128_store(q_tilde, bf128_add(bf_qtilde, bf128_mul(bf128_load(a_tilde), bf128_load(delta))));
@@ -1484,20 +1488,22 @@ static void aes_prove_192(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const
   zk_hash_192_finalize(b_tilde, &a0_ctx, bf192_sum_poly_vbb(vbb, FAEST_192F_L));
 }
 
-static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
+static uint8_t* aes_verify_192(const uint8_t* d, qbb_t* qbb, const uint8_t* chall_2,
                                const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                                const uint8_t* out, const faest_paramset_t* params) {
+  /*
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
   const unsigned int t1  = params->faest_param.t1;
   const unsigned int k1  = params->faest_param.k1;
+  */
 
   // Step: 1
   const uint8_t* delta = chall_3;
   // Step: 2,3
   // do nothing
-
+  /*
   // Step: 4..10
   for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
@@ -1512,26 +1518,27 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
 
   // Step: 11..12
   bf192_t* bf_q = column_to_row_major_and_shrink_V_192(Q, FAEST_192F_L);
+  */
 
   // Step: 13 + 21
   bf192_t* qk = faest_aligned_alloc(BF192_ALIGN, sizeof(bf192_t) * ((FAEST_192F_R + 1) * 128));
   // instead of storing B_0 in an array, we process the values with zk_hash_128
   zk_hash_192_ctx b0_ctx;
   zk_hash_192_init(&b0_ctx, chall_2);
-  aes_key_schedule_constraints_Mkey_1_192(bf_q, delta, &b0_ctx, qk);
+  aes_key_schedule_constraints_Mkey_1_192((bf192_t*)qbb->vole_Q_cache_RMO, delta, &b0_ctx, qk);
 
   // Step: 14
-  aes_enc_constraints_Mkey_1_192(in, out, bf_q + FAEST_192F_Lke, qk, delta, &b0_ctx);
+  aes_enc_constraints_Mkey_1_192(in, out, (bf192_t*)qbb->vole_Q_cache_RMO + FAEST_192F_Lke, qk, delta, &b0_ctx);
 
   // Step: 18
-  aes_enc_constraints_Mkey_1_192(in + 16, out + 16, bf_q + FAEST_192F_Lke + FAEST_192F_Lenc, qk,
+  aes_enc_constraints_Mkey_1_192(in + 16, out + 16, (bf192_t*)qbb->vole_Q_cache_RMO + FAEST_192F_Lke + FAEST_192F_Lenc, qk,
                                  delta, &b0_ctx);
   faest_aligned_free(qk);
 
   // Step: 20+21
   uint8_t* q_tilde = malloc(FAEST_192F_LAMBDA / 8);
-  zk_hash_192_finalize(q_tilde, &b0_ctx, bf192_sum_poly(bf_q + FAEST_192F_L));
-  faest_aligned_free(bf_q);
+  zk_hash_192_finalize(q_tilde, &b0_ctx, bf192_sum_poly((bf192_t*)qbb->vole_Q_cache_RMO + FAEST_192F_L));
+  //faest_aligned_free(bf_q);
 
   bf192_t bf_qtilde = bf192_load(q_tilde);
   bf192_store(q_tilde, bf192_add(bf_qtilde, bf192_mul(bf192_load(a_tilde), bf192_load(delta))));
@@ -2165,14 +2172,16 @@ static void aes_prove_256(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const
   zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly_vbb(vbb, FAEST_256F_L));
 }
 
-static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
+static uint8_t* aes_verify_256(const uint8_t* d, qbb_t* qbb, const uint8_t* chall_2,
                                const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                                const uint8_t* out, const faest_paramset_t* params) {
+  /*
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
   const unsigned int t1  = params->faest_param.t1;
   const unsigned int k1  = params->faest_param.k1;
+  */
 
   // Step: 1
   const uint8_t* delta = chall_3;
@@ -2180,38 +2189,40 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   // do nothing
 
   // Step: 4..10
+  /*
   for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
     ChalDec(chall_3, i, k0, t0, k1, t1, decoded_challenge);
     for (unsigned int j = 0; j < depth; j++, ++col) {
       if (decoded_challenge[j] == 1) {
-        xor_u8_array(d, Q[col], Q[col], (FAEST_256F_L + 7) / 8);
+        xor_u8_array(d, qbb->vole_Q_cache_index[col], qbb->vole_Q_cache_index[col], (FAEST_256F_L + 7) / 8);
       }
     }
   }
 
   // Step: 11..12
   bf256_t* bf_q = column_to_row_major_and_shrink_V_256(Q, FAEST_256F_L);
+  */
 
   // Step: 13, 21
   bf256_t* qk = faest_aligned_alloc(BF256_ALIGN, sizeof(bf256_t) * ((FAEST_256F_R + 1) * 128));
   zk_hash_256_ctx b0_ctx;
 
   zk_hash_256_init(&b0_ctx, chall_2);
-  aes_key_schedule_constraints_Mkey_1_256(bf_q, delta, &b0_ctx, qk);
+  aes_key_schedule_constraints_Mkey_1_256((bf256_t*)qbb->vole_Q_cache_RMO, delta, &b0_ctx, qk);
 
   // Step: 14
-  aes_enc_constraints_Mkey_1_256(in, out, bf_q + FAEST_256F_Lke, qk, delta, &b0_ctx);
+  aes_enc_constraints_Mkey_1_256(in, out, (bf256_t*)qbb->vole_Q_cache_RMO + FAEST_256F_Lke, qk, delta, &b0_ctx);
   // Step: 18
-  aes_enc_constraints_Mkey_1_256(in + 16, out + 16, bf_q + FAEST_256F_Lke + FAEST_256F_Lenc, qk,
+  aes_enc_constraints_Mkey_1_256(in + 16, out + 16, (bf256_t*)qbb->vole_Q_cache_RMO + FAEST_256F_Lke + FAEST_256F_Lenc, qk,
                                  delta, &b0_ctx);
   faest_aligned_free(qk);
 
   // Step: 20, 21
   uint8_t* q_tilde = malloc(FAEST_256F_LAMBDA / 8);
-  zk_hash_256_finalize(q_tilde, &b0_ctx, bf256_sum_poly(bf_q + FAEST_256F_L));
-  faest_aligned_free(bf_q);
+  zk_hash_256_finalize(q_tilde, &b0_ctx, bf256_sum_poly((bf256_t*)qbb->vole_Q_cache_RMO + FAEST_256F_L));
+  //faest_aligned_free(bf_q);
 
   bf256_t bf_qtilde = bf256_load(q_tilde);
   bf256_store(q_tilde, bf256_add(bf_qtilde, bf256_mul(bf256_load(a_tilde), bf256_load(delta))));
@@ -2569,17 +2580,19 @@ static void em_prove_128(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const 
   zk_hash_128_finalize(b_tilde, &a0_ctx, bf128_sum_poly_vbb(vbb, FAEST_EM_128F_Lenc));
 }
 
-static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
+static uint8_t* em_verify_128(const uint8_t* d, qbb_t* qbb, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                               const uint8_t* out, const faest_paramset_t* params) {
+  /*
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
   const unsigned int t1  = params->faest_param.t1;
   const unsigned int k1  = params->faest_param.k1;
+  */
 
   const uint8_t* delta = chall_3;
-
+  /*
   for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
@@ -2592,6 +2605,7 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   }
 
   bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, FAEST_EM_128F_Lenc);
+  */
 
   // copy expanded key in to an array
   uint8_t x[FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8];
@@ -2609,11 +2623,11 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   zk_hash_128_ctx b0_ctx;
   zk_hash_128_init(&b0_ctx, chall_2);
-  em_enc_constraints_Mkey_1_128(out, x, bf_q, delta, &b0_ctx);
+  em_enc_constraints_Mkey_1_128(out, x, (bf128_t*)qbb->vole_Q_cache_RMO, delta, &b0_ctx);
 
   uint8_t* q_tilde = malloc(FAEST_EM_128F_LAMBDA / 8);
-  zk_hash_128_finalize(q_tilde, &b0_ctx, bf128_sum_poly(bf_q + FAEST_EM_128F_Lenc));
-  faest_aligned_free(bf_q);
+  zk_hash_128_finalize(q_tilde, &b0_ctx, bf128_sum_poly((bf128_t*)qbb->vole_Q_cache_RMO + FAEST_EM_128F_Lenc));
+  //faest_aligned_free(bf_q);
 
   bf128_t bf_qtilde = bf128_load(q_tilde);
   bf128_store(q_tilde, bf128_add(bf_qtilde, bf128_mul(bf128_load(a_tilde), bf128_load(delta))));
@@ -2971,17 +2985,19 @@ static void em_prove_192(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const 
   zk_hash_192_finalize(b_tilde, &a0_ctx, bf192_sum_poly_vbb(vbb, FAEST_EM_192F_Lenc));
 }
 
-static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
+static uint8_t* em_verify_192(const uint8_t* d, qbb_t* qbb, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                               const uint8_t* out, const faest_paramset_t* params) {
+  /*
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
   const unsigned int t1  = params->faest_param.t1;
   const unsigned int k1  = params->faest_param.k1;
+  */
 
   const uint8_t* delta = chall_3;
-
+  /*
   for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
@@ -2994,6 +3010,7 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   }
 
   bf192_t* bf_q = column_to_row_major_and_shrink_V_192(Q, FAEST_EM_192F_Lenc);
+  */
 
   // copy expanded key in to an array
   uint8_t x[FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8];
@@ -3011,11 +3028,11 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   zk_hash_192_ctx b0_ctx;
   zk_hash_192_init(&b0_ctx, chall_2);
-  em_enc_constraints_Mkey_1_192(out, x, bf_q, delta, &b0_ctx);
+  em_enc_constraints_Mkey_1_192(out, x, (bf192_t*)qbb->vole_Q_cache_RMO, delta, &b0_ctx);
 
   uint8_t* q_tilde = malloc(FAEST_EM_192F_LAMBDA / 8);
-  zk_hash_192_finalize(q_tilde, &b0_ctx, bf192_sum_poly(bf_q + FAEST_EM_192F_Lenc));
-  faest_aligned_free(bf_q);
+  zk_hash_192_finalize(q_tilde, &b0_ctx, bf192_sum_poly((bf192_t*)qbb->vole_Q_cache_RMO + FAEST_EM_192F_Lenc));
+  //faest_aligned_free(bf_q);
 
   bf192_t bf_qtilde = bf192_load(q_tilde);
   bf192_store(q_tilde, bf192_add(bf_qtilde, bf192_mul(bf192_load(a_tilde), bf192_load(delta))));
@@ -3382,17 +3399,20 @@ static void em_prove_256(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const 
   zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly_vbb(vbb, FAEST_EM_256F_Lenc));
 }
 
-static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
+static uint8_t* em_verify_256(const uint8_t* d, qbb_t* qbb, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                               const uint8_t* out, const faest_paramset_t* params) {
+  /*
   const unsigned int tau = params->faest_param.tau;
   const unsigned int t0  = params->faest_param.t0;
   const unsigned int k0  = params->faest_param.k0;
   const unsigned int t1  = params->faest_param.t1;
   const unsigned int k1  = params->faest_param.k1;
+  */
 
   const uint8_t* delta = chall_3;
 
+  /*
   for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
@@ -3405,6 +3425,7 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   }
 
   bf256_t* bf_q = column_to_row_major_and_shrink_V_256(Q, FAEST_EM_256F_Lenc);
+  */
 
   // copy expanded key in to an array
   uint8_t x[FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8];
@@ -3422,11 +3443,11 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   zk_hash_256_ctx b0_ctx;
   zk_hash_256_init(&b0_ctx, chall_2);
-  em_enc_constraints_Mkey_1_256(out, x, bf_q, delta, &b0_ctx);
+  em_enc_constraints_Mkey_1_256(out, x, (bf256_t*)qbb->vole_Q_cache_RMO, delta, &b0_ctx);
 
   uint8_t* q_tilde = malloc(FAEST_EM_256F_LAMBDA / 8);
-  zk_hash_256_finalize(q_tilde, &b0_ctx, bf256_sum_poly(bf_q + FAEST_EM_256F_Lenc));
-  faest_aligned_free(bf_q);
+  zk_hash_256_finalize(q_tilde, &b0_ctx, bf256_sum_poly((bf256_t*)qbb->vole_Q_cache_RMO + FAEST_EM_256F_Lenc));
+  //faest_aligned_free(bf_q);
 
   bf256_t bf_qtilde = bf256_load(q_tilde);
   bf256_store(q_tilde, bf256_add(bf_qtilde, bf256_mul(bf256_load(a_tilde), bf256_load(delta))));
@@ -3463,27 +3484,27 @@ void aes_prove(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const uint8_t* o
   }
 }
 
-uint8_t* aes_verify(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8_t* chall_3,
+uint8_t* aes_verify(const uint8_t* d, qbb_t* qbb, const uint8_t* chall_2, const uint8_t* chall_3,
                     const uint8_t* a_tilde, const uint8_t* in, const uint8_t* out,
                     const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
     if (params->faest_param.Lke) {
-      return aes_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return aes_verify_256(d, qbb, chall_2, chall_3, a_tilde, in, out, params);
     } else {
-      return em_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return em_verify_256(d, qbb, chall_2, chall_3, a_tilde, in, out, params);
     }
   case 192:
     if (params->faest_param.Lke) {
-      return aes_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return aes_verify_192(d, qbb, chall_2, chall_3, a_tilde, in, out, params);
     } else {
-      return em_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return em_verify_192(d, qbb, chall_2, chall_3, a_tilde, in, out, params);
     }
   default:
     if (params->faest_param.Lke) {
-      return aes_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return aes_verify_128(d, qbb, chall_2, chall_3, a_tilde, in, out, params);
     } else {
-      return em_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return em_verify_128(d, qbb, chall_2, chall_3, a_tilde, in, out, params);
     }
   }
 }

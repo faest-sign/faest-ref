@@ -148,7 +148,7 @@ ATTR_PURE static inline const uint8_t* dsignature_a_tilde(const uint8_t* base_pt
   return base_ptr + (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes + ell_bytes;
 }
 
-ATTR_PURE static inline const uint8_t* dsignature_pdec(const uint8_t* base_ptr, unsigned int index,
+ATTR_PURE inline const uint8_t* dsignature_pdec(const uint8_t* base_ptr, unsigned int index,
                                                        const faest_paramset_t* params) {
   const unsigned int tau0    = params->faest_param.t0;
   const size_t lambda_bytes  = params->faest_param.lambda / 8;
@@ -167,7 +167,7 @@ ATTR_PURE static inline const uint8_t* dsignature_pdec(const uint8_t* base_ptr, 
   }
 }
 
-ATTR_PURE static inline const uint8_t* dsignature_com(const uint8_t* base_ptr, unsigned int index,
+ATTR_PURE inline const uint8_t* dsignature_com(const uint8_t* base_ptr, unsigned int index,
                                                       const faest_paramset_t* params) {
   const unsigned int tau0    = params->faest_param.t0;
   const size_t lambda_bytes  = params->faest_param.lambda / 8;
@@ -365,12 +365,13 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   qbb_t qbb;
   init_qbb(&qbb, ell_hat, dsignature_iv(sig, params), dsignature_c(sig, 0, params),
            dsignature_pdec(sig, 0, params), dsignature_com(sig, 0, params),
-           dsignature_chall_3(sig, params), dsignature_u_tilde(sig, params), params);
+           dsignature_chall_3(sig, params), dsignature_u_tilde(sig, params), params, sig);
 
-      // Step: 3
-      uint8_t mu[MAX_LAMBDA_BYTES * 2];
+  // Step: 3
+  uint8_t mu[MAX_LAMBDA_BYTES * 2];
   hash_mu(mu, owf_input, owf_output, params->faest_param.pkSize / 2, msg, msglen, lambda);
 
+  /*
   // Step: 5
   // q prime is a \hat \ell \times \lambda matrix
   uint8_t** qprime = malloc(lambda * sizeof(uint8_t*));
@@ -390,12 +391,13 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     vole_reconstruct(dsignature_iv(sig, params), dsignature_chall_3(sig, params), pdec, com, hcom,
                      qprime, ell_hat, params);
   }
+  */
 
   // Step: 5
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
-  hash_challenge_1(chall_1, mu, hcom, dsignature_c(sig, 0, params), dsignature_iv(sig, params),
+  hash_challenge_1(chall_1, mu, qbb.com_hash, dsignature_c(sig, 0, params), dsignature_iv(sig, params),
                    lambda, l, tau);
-
+  /*
   // Step: 8..14
   uint8_t** q = malloc(lambda * sizeof(uint8_t*));
   q[0]        = calloc(lambda, ell_hat_bytes);
@@ -441,6 +443,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   free(qprime[0]);
   free(qprime);
   qprime = NULL;
+  */
 
   // Step 15 and 16
   uint8_t h_v[MAX_LAMBDA_BYTES * 2];
@@ -453,15 +456,17 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
       // Step 15
       vole_hash(Q_tilde, chall_1, get_vole_q_hash(&qbb, i), l, lambda);
       // Step 16
-      xor_u8_array(Q_tilde, Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
+      xor_u8_array(Q_tilde, qbb.Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     // Step: 16
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
+  /*
   free(Dtilde[0]);
   free(Dtilde);
   Dtilde = NULL;
+  */
 
   // Step 17
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
@@ -469,15 +474,15 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
                    dsignature_d(sig, params), lambda, l);
 
   // Step 18
-  if(params->faest_param.lambda == 256){
-    prepare_prove_qbb(&qbb);
-  }
-  uint8_t* b_tilde =
-      aes_verify(dsignature_d(sig, params), q, chall_2, dsignature_chall_3(sig, params),
-                 dsignature_a_tilde(sig, params), owf_input, owf_output, params);
+  prepare_verify_qbb(&qbb,dsignature_d(sig, params),dsignature_chall_3(sig, params));
+  uint8_t* b_tilde = aes_verify(dsignature_d(sig, params), &qbb, chall_2,
+                                dsignature_chall_3(sig, params), dsignature_a_tilde(sig, params),
+                                owf_input, owf_output, params);
+  /*
   free(q[0]);
   free(q);
   q = NULL;
+  */
 
   // Step: 20
   uint8_t chall_3[MAX_LAMBDA_BYTES];
