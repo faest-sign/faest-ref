@@ -26,7 +26,6 @@ struct vbb_t {
   // QBB fields
   const uint8_t* c;
   uint8_t** Dtilde;
-  uint8_t* vole_Q_cache_RMO;
   uint8_t* vole_Q_cache;
   uint8_t** vole_Q_cache_index;
 };
@@ -46,13 +45,15 @@ void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8
                           uint8_t* sig_com, unsigned int depth);
 
 // QBB signatures
-void init_qbb(vbb_t* qbb, unsigned int len, const uint8_t* iv, uint8_t* c, uint8_t* pdec_sig,
+void init_qbb(vbb_t* vbb, unsigned int len, const uint8_t* iv, uint8_t* c, uint8_t* pdec_sig,
               uint8_t* com_sig, uint8_t* chall3, uint8_t* u_tilde, const faest_paramset_t* params,
               const uint8_t* sig);
-uint8_t* get_vole_q_hash(vbb_t* qbb, unsigned int idx);
-void prepare_verify_qbb(vbb_t* qbb, const uint8_t* sig_d, const uint8_t* sig_chall_3);
-bf128_t* get_vole_q_verify_128(vbb_t* qbb, unsigned int idx);
-bf192_t* get_vole_q_verify_192(vbb_t* qbb, unsigned int idx);
-bf256_t* get_vole_q_prove_256(vbb_t* qbb, unsigned int idx);
+uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx);
+void prepare_verify(vbb_t* vbb, const uint8_t* sig_d, const uint8_t* sig_chall_3);
+/*
+bf128_t* get_vole_q_verify_128(vbb_t* vbb, unsigned int idx);
+bf192_t* get_vole_q_verify_192(vbb_t* vbb, unsigned int idx);
+bf256_t* get_vole_q_prove_256(vbb_t* vbb, unsigned int idx);
+*/
 
 #endif

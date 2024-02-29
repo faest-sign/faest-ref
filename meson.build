@@ -25,6 +25,7 @@ if cc.get_id() != 'msvc'
     '-Werror=implicit-function-declaration',
     '-Werror=vla',
     '-Werror=incompatible-pointer-types',
+    '-O2',
   ]
   flags += '-Wshadow'
   defines += '-D_GNU_SOURCE'

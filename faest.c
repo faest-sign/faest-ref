@@ -399,7 +399,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
                    dsignature_d(sig, params), lambda, l);
 
   // Step 18
-  prepare_verify_qbb(&vbb,dsignature_d(sig, params),dsignature_chall_3(sig, params));
+  prepare_verify(&vbb,dsignature_d(sig, params),dsignature_chall_3(sig, params));
   uint8_t* b_tilde = aes_verify(dsignature_d(sig, params), &vbb, chall_2,
                                 dsignature_chall_3(sig, params), dsignature_a_tilde(sig, params),
                                 owf_input, owf_output, params);
