@@ -15,7 +15,6 @@
 #include "vole.h"
 #include "universal_hashing.h"
 #include "vbb.h"
-#include "qbb.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -362,8 +361,8 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   const unsigned int k0            = params->faest_param.k0;
   const unsigned int k1            = params->faest_param.k1;
 
-  qbb_t qbb;
-  init_qbb(&qbb, ell_hat, dsignature_iv(sig, params), dsignature_c(sig, 0, params),
+  vbb_t vbb;
+  init_qbb(&vbb, ell_hat, dsignature_iv(sig, params), dsignature_c(sig, 0, params),
            dsignature_pdec(sig, 0, params), dsignature_com(sig, 0, params),
            dsignature_chall_3(sig, params), dsignature_u_tilde(sig, params), params, sig);
 
@@ -371,79 +370,10 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
   hash_mu(mu, owf_input, owf_output, params->faest_param.pkSize / 2, msg, msglen, lambda);
 
-  /*
-  // Step: 5
-  // q prime is a \hat \ell \times \lambda matrix
-  uint8_t** qprime = malloc(lambda * sizeof(uint8_t*));
-  qprime[0]        = calloc(lambda, ell_hat_bytes);
-  for (unsigned int i = 1; i < lambda; ++i) {
-    qprime[i] = qprime[0] + i * ell_hat_bytes;
-  }
-  uint8_t hcom[MAX_LAMBDA_BYTES * 2];
-  {
-    // TODO: change vole_reconstruct interface to make this less ugly
-    const uint8_t* pdec[MAX_TAU];
-    const uint8_t* com[MAX_TAU];
-    for (unsigned int i = 0; i < tau; ++i) {
-      pdec[i] = dsignature_pdec(sig, i, params);
-      com[i]  = dsignature_com(sig, i, params);
-    }
-    vole_reconstruct(dsignature_iv(sig, params), dsignature_chall_3(sig, params), pdec, com, hcom,
-                     qprime, ell_hat, params);
-  }
-  */
-
   // Step: 5
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
-  hash_challenge_1(chall_1, mu, qbb.com_hash, dsignature_c(sig, 0, params), dsignature_iv(sig, params),
+  hash_challenge_1(chall_1, mu, vbb.com_hash, dsignature_c(sig, 0, params), dsignature_iv(sig, params),
                    lambda, l, tau);
-  /*
-  // Step: 8..14
-  uint8_t** q = malloc(lambda * sizeof(uint8_t*));
-  q[0]        = calloc(lambda, ell_hat_bytes);
-  for (unsigned int i = 1; i < lambda; ++i) {
-    q[i] = q[0] + i * ell_hat_bytes;
-  }
-
-  uint8_t** Dtilde = malloc(lambda * sizeof(uint8_t*));
-  Dtilde[0]        = calloc(lambda, (lambdaBytes + UNIVERSAL_HASH_B));
-  for (unsigned int i = 1; i < lambda; ++i) {
-    Dtilde[i] = Dtilde[0] + i * (lambdaBytes + UNIVERSAL_HASH_B);
-  }
-
-  unsigned int Dtilde_idx = 0;
-  unsigned int q_idx      = 0;
-  for (unsigned int i = 0; i < tau; i++) {
-    const unsigned int depth = i < tau0 ? k0 : k1;
-
-    // Step 11
-    uint8_t delta[MAX_DEPTH];
-    ChalDec(dsignature_chall_3(sig, params), i, params->faest_param.k0, params->faest_param.t0,
-            params->faest_param.k1, params->faest_param.t1, delta);
-    // Step 16
-    for (unsigned int j = 0; j != depth; ++j, ++Dtilde_idx) {
-      // for scan-build
-      assert(Dtilde_idx < lambda);
-      masked_xor_u8_array(Dtilde[Dtilde_idx], dsignature_u_tilde(sig, params), Dtilde[Dtilde_idx],
-                          delta[j], utilde_bytes);
-    }
-
-    if (i == 0) {
-      // Step 8
-      memcpy(q[q_idx], qprime[q_idx], ell_hat_bytes * depth);
-      q_idx += depth;
-    } else {
-      // Step 14
-      for (unsigned int d = 0; d < depth; ++d, ++q_idx) {
-        masked_xor_u8_array(qprime[q_idx], dsignature_c(sig, i - 1, params), q[q_idx], delta[d],
-                            ell_hat_bytes);
-      }
-    }
-  }
-  free(qprime[0]);
-  free(qprime);
-  qprime = NULL;
-  */
 
   // Step 15 and 16
   uint8_t h_v[MAX_LAMBDA_BYTES * 2];
@@ -454,19 +384,14 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     uint8_t Q_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
     for (unsigned int i = 0; i != lambda; ++i) {
       // Step 15
-      vole_hash(Q_tilde, chall_1, get_vole_q_hash(&qbb, i), l, lambda);
+      vole_hash(Q_tilde, chall_1, get_vole_q_hash(&vbb, i), l, lambda);
       // Step 16
-      xor_u8_array(Q_tilde, qbb.Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
+      xor_u8_array(Q_tilde, vbb.Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     // Step: 16
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
-  /*
-  free(Dtilde[0]);
-  free(Dtilde);
-  Dtilde = NULL;
-  */
 
   // Step 17
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
@@ -474,15 +399,10 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
                    dsignature_d(sig, params), lambda, l);
 
   // Step 18
-  prepare_verify_qbb(&qbb,dsignature_d(sig, params),dsignature_chall_3(sig, params));
-  uint8_t* b_tilde = aes_verify(dsignature_d(sig, params), &qbb, chall_2,
+  prepare_verify_qbb(&vbb,dsignature_d(sig, params),dsignature_chall_3(sig, params));
+  uint8_t* b_tilde = aes_verify(dsignature_d(sig, params), &vbb, chall_2,
                                 dsignature_chall_3(sig, params), dsignature_a_tilde(sig, params),
                                 owf_input, owf_output, params);
-  /*
-  free(q[0]);
-  free(q);
-  q = NULL;
-  */
 
   // Step: 20
   uint8_t chall_3[MAX_LAMBDA_BYTES];
