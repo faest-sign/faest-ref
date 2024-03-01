@@ -44,7 +44,7 @@ static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
 
 // len is the number of OLE v's that is allowed to be stored in memory.
 // Hence we store (at most) len*lambda in memory.
-void init_vbb(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv, uint8_t* c,
+void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv, uint8_t* c,
               const faest_paramset_t* params) {
   vbb->iv       = iv;
   vbb->com_hash = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
@@ -99,7 +99,7 @@ void prepare_hash(vbb_t* vbb) {
   recompute_hash(vbb, 0, vbb->column_count);
 }
 
-void prepare_prove(vbb_t* vbb) {
+void prepare_aes_prove(vbb_t* vbb) {
   vbb->cache_idx = 0;
   if (vbb->full_size) {
     return;
@@ -108,7 +108,7 @@ void prepare_prove(vbb_t* vbb) {
   recompute_prove(vbb, 0, len);
 }
 
-inline uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
+uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
   const unsigned int ellhat =
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
@@ -124,7 +124,7 @@ inline uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
   return vbb->vole_V_cache + offset * ellhat_bytes;
 }
 
-static inline uint8_t* get_vole_v_prove(vbb_t* vbb, unsigned int idx) {
+static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
   unsigned int lambda       = vbb->params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat       = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
@@ -147,16 +147,16 @@ static inline uint8_t* get_vole_v_prove(vbb_t* vbb, unsigned int idx) {
   return vbb->vole_V_cache + offset;
 }
 
-bf256_t* get_vole_v_prove_256(vbb_t* vbb, unsigned int idx) {
-  return (bf256_t*)get_vole_v_prove(vbb, idx);
+bf256_t* get_vole_aes_256(vbb_t* vbb, unsigned int idx) {
+  return (bf256_t*)get_vole_aes(vbb, idx);
 }
 
-bf192_t* get_vole_v_prove_192(vbb_t* vbb, unsigned int idx) {
-  return (bf192_t*)get_vole_v_prove(vbb, idx);
+bf192_t* get_vole_aes_192(vbb_t* vbb, unsigned int idx) {
+  return (bf192_t*)get_vole_aes(vbb, idx);
 }
 
-bf128_t* get_vole_v_prove_128(vbb_t* vbb, unsigned int idx) {
-  return (bf128_t*)get_vole_v_prove(vbb, idx);
+bf128_t* get_vole_aes_128(vbb_t* vbb, unsigned int idx) {
+  return (bf128_t*)get_vole_aes(vbb, idx);
 }
 
 uint8_t* get_vole_u(vbb_t* vbb) {
@@ -184,9 +184,8 @@ void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8
 }
 
 // QBB Implementation
-void init_qbb(vbb_t* vbb, unsigned int len, const uint8_t* iv, uint8_t* c, uint8_t* pdec_sig,
-              uint8_t* com_sig, uint8_t* chall3, uint8_t* u_tilde, const faest_paramset_t* params,
-              const uint8_t* sig) {
+void init_vbb_verify(vbb_t* vbb, unsigned int len, const uint8_t* iv, uint8_t* c, uint8_t* chall3,
+              uint8_t* u_tilde, const faest_paramset_t* params, const uint8_t* sig) {
   vbb->iv        = iv;
   vbb->row_count = len;
   vbb->params    = params;
@@ -281,7 +280,7 @@ uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx) {
   return vbb->vole_Q_cache + offset * ellhat_bytes;
 }
 
-void prepare_verify(vbb_t* vbb, const uint8_t* sig_d, const uint8_t* sig_chall_3) {
+void prepare_aes_verify(vbb_t* vbb, const uint8_t* sig_d, const uint8_t* sig_chall_3) {
   vbb->cache_idx                   = 0;
   const unsigned int lambda        = vbb->params->faest_param.lambda;
   const unsigned int l             = vbb->params->faest_param.l;
@@ -310,22 +309,3 @@ void prepare_verify(vbb_t* vbb, const uint8_t* sig_d, const uint8_t* sig_chall_3
 
   vbb->vole_V_cache = vbb->vole_Q_cache_index[0];
 }
-
-/*
-uint8_t* get_vole_q_verify(vbb_t* vbb, unsigned int idx) {
-  unsigned int offset = (idx - vbb->cache_idx) * (vbb->params->faest_param.lambda / 8);
-  return vbb->vole_Q_cache_RMO + offset;
-}
-
-bf128_t* get_vole_q_verify_128(vbb_t* vbb, unsigned int idx) {
-  return (bf128_t*)get_vole_q_verify(vbb, idx);
-}
-
-bf192_t* get_vole_q_verify_192(vbb_t* vbb, unsigned int idx) {
-  return (bf192_t*)get_vole_q_verify(vbb, idx);
-}
-
-bf256_t* get_vole_q_verify_256(vbb_t* vbb, unsigned int idx) {
-  return (bf256_t*)get_vole_q_verify(vbb, idx);
-}
-*/
