@@ -221,7 +221,7 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const uint8_t* iv, uint8_t* c
     com[i]  = dsignature_com(sig, i, params);
   }
 
-  vole_reconstruct(iv, chall3, pdec, com, vbb->com_hash, qprime, ell_hat, params);
+  partial_vole_reconstruct_cmo(iv, chall3, pdec, com, vbb->com_hash, qprime, ell_hat, params, 0, ell_hat);
 
   uint8_t** q = malloc(lambda * sizeof(uint8_t*));
   q[0]        = calloc(lambda, ell_hat_bytes);
