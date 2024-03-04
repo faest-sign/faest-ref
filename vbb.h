@@ -27,7 +27,6 @@ struct vbb_t {
   const uint8_t* c;
   uint8_t** Dtilde;
   uint8_t* vole_Q_cache;
-  uint8_t** vole_Q_cache_index;
 };
 
 void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,

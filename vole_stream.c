@@ -324,7 +324,7 @@ static void ReconstructVoleCMO(const uint8_t* iv, stream_vec_com_rec_t* sVecComR
 
 void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
                                   const uint8_t* const* pdec, const uint8_t* const* com_j,
-                                  uint8_t* hcom, uint8_t** q, unsigned int ellhat,
+                                  uint8_t* hcom, uint8_t* q, unsigned int ellhat,
                                   const faest_paramset_t* params, unsigned int start,
                                   unsigned int len) {
   unsigned int lambda       = params->faest_param.lambda;
@@ -368,7 +368,8 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
         q_idx = tree_start - start;
       }
 
-      ReconstructVoleCMO(iv, &sVecComRec, lambda, ellhat_bytes, q[q_idx], h, lbegin, lend);
+      ReconstructVoleCMO(iv, &sVecComRec, lambda, ellhat_bytes, q + q_idx * ellhat_bytes, h, lbegin,
+                         lend);
 
       H1_update(&h1_ctx, h, lambda_bytes * 2);
     }
