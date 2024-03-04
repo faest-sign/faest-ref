@@ -44,8 +44,8 @@ static void recompute_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
 
 // len is the number of OLE v's that is allowed to be stored in memory.
 // Hence we store (at most) len*lambda in memory.
-void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv, uint8_t* c,
-              const faest_paramset_t* params) {
+void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
+                    uint8_t* c, const faest_paramset_t* params) {
   vbb->iv       = iv;
   vbb->com_hash = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
   vbb->params   = params;
@@ -184,15 +184,17 @@ void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8
 }
 
 // QBB Implementation
-void init_vbb_verify(vbb_t* vbb, unsigned int len, const uint8_t* iv, uint8_t* c, uint8_t* chall3,
-              uint8_t* u_tilde, const faest_paramset_t* params, const uint8_t* sig) {
-  vbb->iv        = iv;
+void init_vbb_verify(vbb_t* vbb, unsigned int len,
+                     const faest_paramset_t* params, const uint8_t* sig) {
+  vbb->iv        = dsignature_iv(sig, params);
   vbb->row_count = len;
   vbb->params    = params;
-  vbb->iv        = iv;
-  vbb->c         = c;
+  vbb->c         = dsignature_c(sig, 0, params);
   vbb->com_hash  = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
   vbb->full_size = true;
+
+  const uint8_t* chall3  = dsignature_chall_3(sig, params);
+  const uint8_t* u_tilde = dsignature_u_tilde(sig, params);
 
   const unsigned int lambda        = params->faest_param.lambda;
   const unsigned int l             = params->faest_param.l;
@@ -221,7 +223,8 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const uint8_t* iv, uint8_t* c
     com[i]  = dsignature_com(sig, i, params);
   }
 
-  partial_vole_reconstruct_cmo(iv, chall3, pdec, com, vbb->com_hash, qprime, ell_hat, params, 0, ell_hat);
+  partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, vbb->com_hash, qprime, ell_hat, params, 0,
+                               ell_hat);
 
   uint8_t** q = malloc(lambda * sizeof(uint8_t*));
   q[0]        = calloc(lambda, ell_hat_bytes);
@@ -259,7 +262,7 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const uint8_t* iv, uint8_t* c
     } else {
       // Step 14
       for (unsigned int d = 0; d < depth; ++d, ++q_idx) {
-        masked_xor_u8_array(qprime[q_idx], c + (i - 1) * ell_hat_bytes, q[q_idx], delta[d],
+        masked_xor_u8_array(qprime[q_idx], vbb->c + (i - 1) * ell_hat_bytes, q[q_idx], delta[d],
                             ell_hat_bytes);
       }
     }
@@ -281,17 +284,14 @@ uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx) {
 }
 
 void prepare_aes_verify(vbb_t* vbb, const uint8_t* sig_d, const uint8_t* sig_chall_3) {
-  vbb->cache_idx                   = 0;
-  const unsigned int lambda        = vbb->params->faest_param.lambda;
-  const unsigned int l             = vbb->params->faest_param.l;
-  const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  const unsigned int ell_hat_bytes = ell_hat / 8;
   const unsigned int tau           = vbb->params->faest_param.tau;
   const unsigned int t0            = vbb->params->faest_param.t0;
   const unsigned int k0            = vbb->params->faest_param.k0;
   const unsigned int t1            = vbb->params->faest_param.t1;
   const unsigned int k1            = vbb->params->faest_param.k1;
 
+  vbb->cache_idx                   = 0;
+  
   // TODO: Actually EM use Lenc, but Lenc == L for all EM..
   unsigned int size = vbb->params->faest_param.l;
 

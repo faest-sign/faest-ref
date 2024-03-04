@@ -23,15 +23,15 @@ struct vbb_t {
   // Optimized parameters
   bool full_size;
   uint8_t* v_buf;
-  // QBB fields
+  // Verifier fields
   const uint8_t* c;
   uint8_t** Dtilde;
   uint8_t* vole_Q_cache;
   uint8_t** vole_Q_cache_index;
 };
 
-void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv, uint8_t* c,
-              const faest_paramset_t* params);
+void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
+                    uint8_t* c, const faest_paramset_t* params);
 void clean_vbb(vbb_t* vbb);
 void prepare_hash(vbb_t* vbb);
 void prepare_aes_prove(vbb_t* vbb);
@@ -44,9 +44,9 @@ uint8_t* get_com_hash(vbb_t* vbb);
 void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8_t* sig_pdec,
                           uint8_t* sig_com, unsigned int depth);
 
-// QBB signatures
-void init_vbb_verify(vbb_t* vbb, unsigned int len, const uint8_t* iv, uint8_t* c, uint8_t* chall3,
-              uint8_t* u_tilde, const faest_paramset_t* params, const uint8_t* sig);
+// Verifier
+void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* params,
+                     const uint8_t* sig);
 uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx);
 void prepare_aes_verify(vbb_t* vbb, const uint8_t* sig_d, const uint8_t* sig_chall_3);
 

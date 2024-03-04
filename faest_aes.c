@@ -642,7 +642,7 @@ static void aes_prove_128(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const
 
 static uint8_t* aes_verify_128(vbb_t* vbb, const uint8_t* chall_2,
                                const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
-                               const uint8_t* out, const faest_paramset_t* params) {
+                               const uint8_t* out) {
   // Step: 1
   const uint8_t* delta = chall_3;
 
@@ -1104,7 +1104,7 @@ static void aes_prove_192(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const
 
 static uint8_t* aes_verify_192(vbb_t* vbb, const uint8_t* chall_2,
                                const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
-                               const uint8_t* out, const faest_paramset_t* params) {
+                               const uint8_t* out) {
   // Step: 1
   const uint8_t* delta = chall_3;
   // Step: 2,3
@@ -1586,7 +1586,7 @@ static void aes_prove_256(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const
 
 static uint8_t* aes_verify_256(vbb_t* vbb, const uint8_t* chall_2,
                                const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
-                               const uint8_t* out, const faest_paramset_t* params) {
+                               const uint8_t* out) {
   // Step: 1
   const uint8_t* delta = chall_3;
   // Step: 2,3
@@ -1920,7 +1920,7 @@ static void em_prove_128(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const 
 
 static uint8_t* em_verify_128(vbb_t* vbb, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
-                              const uint8_t* out, const faest_paramset_t* params) {
+                              const uint8_t* out) {
   const uint8_t* delta = chall_3;
 
   // copy expanded key in to an array
@@ -2252,7 +2252,7 @@ static void em_prove_192(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const 
 
 static uint8_t* em_verify_192(vbb_t* vbb, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
-                              const uint8_t* out, const faest_paramset_t* params) {
+                              const uint8_t* out) {
   const uint8_t* delta = chall_3;
 
   // copy expanded key in to an array
@@ -2596,7 +2596,7 @@ static void em_prove_256(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const 
 
 static uint8_t* em_verify_256(vbb_t* vbb, const uint8_t* chall_2,
                               const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
-                              const uint8_t* out, const faest_paramset_t* params) {
+                              const uint8_t* out) {
   const uint8_t* delta = chall_3;
 
   // copy expanded key in to an array
@@ -2661,21 +2661,21 @@ uint8_t* aes_verify(vbb_t* vbb, const uint8_t* chall_2, const uint8_t* chall_3,
   switch (params->faest_param.lambda) {
   case 256:
     if (params->faest_param.Lke) {
-      return aes_verify_256(vbb, chall_2, chall_3, a_tilde, in, out, params);
+      return aes_verify_256(vbb, chall_2, chall_3, a_tilde, in, out);
     } else {
-      return em_verify_256(vbb, chall_2, chall_3, a_tilde, in, out, params);
+      return em_verify_256(vbb, chall_2, chall_3, a_tilde, in, out);
     }
   case 192:
     if (params->faest_param.Lke) {
-      return aes_verify_192(vbb, chall_2, chall_3, a_tilde, in, out, params);
+      return aes_verify_192(vbb, chall_2, chall_3, a_tilde, in, out);
     } else {
-      return em_verify_192(vbb, chall_2, chall_3, a_tilde, in, out, params);
+      return em_verify_192(vbb, chall_2, chall_3, a_tilde, in, out);
     }
   default:
     if (params->faest_param.Lke) {
-      return aes_verify_128(vbb, chall_2, chall_3, a_tilde, in, out, params);
+      return aes_verify_128(vbb, chall_2, chall_3, a_tilde, in, out);
     } else {
-      return em_verify_128(vbb, chall_2, chall_3, a_tilde, in, out, params);
+      return em_verify_128(vbb, chall_2, chall_3, a_tilde, in, out);
     }
   }
 }

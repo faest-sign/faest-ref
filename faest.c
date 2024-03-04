@@ -109,8 +109,8 @@ ATTR_PURE static inline uint8_t* signature_iv(uint8_t* base_ptr, const faest_par
 
 // helpers to compute position in signature (verify)
 
-ATTR_PURE static inline const uint8_t* dsignature_c(const uint8_t* base_ptr, unsigned int index,
-                                                    const faest_paramset_t* params) {
+ATTR_PURE inline const uint8_t* dsignature_c(const uint8_t* base_ptr, unsigned int index,
+                                             const faest_paramset_t* params) {
   const size_t lambda_bytes  = params->faest_param.lambda / 8;
   const size_t ell_bytes     = params->faest_param.l / 8;
   const size_t ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
@@ -118,8 +118,8 @@ ATTR_PURE static inline const uint8_t* dsignature_c(const uint8_t* base_ptr, uns
   return base_ptr + index * ell_hat_bytes;
 }
 
-ATTR_PURE static inline const uint8_t* dsignature_u_tilde(const uint8_t* base_ptr,
-                                                          const faest_paramset_t* params) {
+ATTR_PURE inline const uint8_t* dsignature_u_tilde(const uint8_t* base_ptr,
+                                                   const faest_paramset_t* params) {
   const size_t lambda_bytes  = params->faest_param.lambda / 8;
   const size_t ell_bytes     = params->faest_param.l / 8;
   const size_t ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
@@ -186,14 +186,14 @@ ATTR_PURE inline const uint8_t* dsignature_com(const uint8_t* base_ptr, unsigned
   }
 }
 
-ATTR_PURE static inline const uint8_t* dsignature_chall_3(const uint8_t* base_ptr,
-                                                          const faest_paramset_t* params) {
+ATTR_PURE inline const uint8_t* dsignature_chall_3(const uint8_t* base_ptr,
+                                                   const faest_paramset_t* params) {
   const size_t lambda_bytes = params->faest_param.lambda / 8;
   return base_ptr + params->faest_param.sigSize - IV_SIZE - lambda_bytes;
 }
 
-ATTR_PURE static inline const uint8_t* dsignature_iv(const uint8_t* base_ptr,
-                                                     const faest_paramset_t* params) {
+ATTR_PURE inline const uint8_t* dsignature_iv(const uint8_t* base_ptr,
+                                              const faest_paramset_t* params) {
   return base_ptr + params->faest_param.sigSize - IV_SIZE;
 }
 
@@ -282,7 +282,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
   // Step: 3
   vbb_t vbb;
   // TODO: find a solution for setting argument (dynamic or static)?
-  init_vbb_prove(&vbb, ell_hat, rootkey, signature_iv(sig, params), signature_c(sig, 0, params), params);
+  init_vbb_prove(&vbb, ell_hat, rootkey, signature_iv(sig, params), signature_c(sig, 0, params),
+                 params);
 
   // Step: 4
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
@@ -350,22 +351,14 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
 
 int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,
                  const uint8_t* owf_output, const faest_paramset_t* params) {
-  const unsigned int l             = params->faest_param.l;
-  const unsigned int lambda        = params->faest_param.lambda;
-  const unsigned int lambdaBytes   = lambda / 8;
-  const unsigned int tau           = params->faest_param.tau;
-  const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  /*
-  const unsigned int tau0          = params->faest_param.t0;
-  const unsigned int ell_hat_bytes = ell_hat / 8;
-  const unsigned int utilde_bytes  = lambdaBytes + UNIVERSAL_HASH_B;
-  const unsigned int k0            = params->faest_param.k0;
-  const unsigned int k1            = params->faest_param.k1;
-  */
+  const unsigned int l           = params->faest_param.l;
+  const unsigned int lambda      = params->faest_param.lambda;
+  const unsigned int lambdaBytes = lambda / 8;
+  const unsigned int tau         = params->faest_param.tau;
+  const unsigned int ell_hat     = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
 
   vbb_t vbb;
-  init_vbb_verify(&vbb, ell_hat, dsignature_iv(sig, params), dsignature_c(sig, 0, params),
-           dsignature_chall_3(sig, params), dsignature_u_tilde(sig, params), params, sig);
+  init_vbb_verify(&vbb, ell_hat, params, sig);
 
   // Step: 3
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
@@ -401,9 +394,8 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // Step 18
   prepare_aes_verify(&vbb, dsignature_d(sig, params), dsignature_chall_3(sig, params));
-  uint8_t* b_tilde =
-      aes_verify(&vbb, chall_2, dsignature_chall_3(sig, params),
-                 dsignature_a_tilde(sig, params), owf_input, owf_output, params);
+  uint8_t* b_tilde = aes_verify(&vbb, chall_2, dsignature_chall_3(sig, params),
+                                dsignature_a_tilde(sig, params), owf_input, owf_output, params);
 
   // Step: 20
   uint8_t chall_3[MAX_LAMBDA_BYTES];
