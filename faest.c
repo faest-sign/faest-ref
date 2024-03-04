@@ -127,8 +127,8 @@ ATTR_PURE inline const uint8_t* dsignature_u_tilde(const uint8_t* base_ptr,
   return base_ptr + (params->faest_param.tau - 1) * ell_hat_bytes;
 }
 
-ATTR_PURE static inline const uint8_t* dsignature_d(const uint8_t* base_ptr,
-                                                    const faest_paramset_t* params) {
+ATTR_PURE inline const uint8_t* dsignature_d(const uint8_t* base_ptr,
+                                             const faest_paramset_t* params) {
   const size_t lambda_bytes  = params->faest_param.lambda / 8;
   const size_t ell_bytes     = params->faest_param.l / 8;
   const size_t ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
@@ -356,7 +356,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     uint8_t Q_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
     for (unsigned int i = 0; i != lambda; ++i) {
       vole_hash(Q_tilde, chall_1, get_vole_q_hash(&vbb, i), l, lambda);
-      xor_u8_array(Q_tilde, vbb.Dtilde[i], Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
+      xor_u8_array(Q_tilde, get_dtilde(&vbb, i), Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
       H1_update(&h1_ctx_1, Q_tilde, lambdaBytes + UNIVERSAL_HASH_B);
     }
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
@@ -366,7 +366,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   hash_challenge_2(chall_2, chall_1, dsignature_u_tilde(sig, params), h_v,
                    dsignature_d(sig, params), lambda, l);
 
-  prepare_aes_verify(&vbb, dsignature_d(sig, params), dsignature_chall_3(sig, params));
+  prepare_aes_verify(&vbb);
   uint8_t* b_tilde = aes_verify(&vbb, chall_2, dsignature_chall_3(sig, params),
                                 dsignature_a_tilde(sig, params), owf_input, owf_output, params);
 

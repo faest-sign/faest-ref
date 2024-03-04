@@ -28,5 +28,6 @@ ATTR_PURE const uint8_t* dsignature_u_tilde(const uint8_t* base_ptr,
                                             const faest_paramset_t* params);
 ATTR_PURE const uint8_t* dsignature_c(const uint8_t* base_ptr, unsigned int index,
                                       const faest_paramset_t* params);
+ATTR_PURE const uint8_t* dsignature_d(const uint8_t* base_ptr, const faest_paramset_t* params);
 
 #endif
