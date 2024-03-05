@@ -288,7 +288,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
 
   vole_hash(signature_u_tilde(sig, params), chall_1, get_vole_u(&vbb), l, lambda);
 
-  prepare_hash(&vbb);
+  prepare_hash_prove(&vbb);
   uint8_t h_v[MAX_LAMBDA_BYTES * 2];
   {
     H1_context_t h1_ctx_1;
@@ -339,7 +339,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   const unsigned int ell_hat     = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
 
   vbb_t vbb;
-  init_vbb_verify(&vbb, ell_hat, params, sig);
+  init_vbb_verify(&vbb, ell_hat-100, params, sig);
 
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
   hash_mu(mu, owf_input, owf_output, params->faest_param.pkSize / 2, msg, msglen, lambda);
@@ -348,6 +348,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   hash_challenge_1(chall_1, mu, vbb.com_hash, dsignature_c(sig, 0, params),
                    dsignature_iv(sig, params), lambda, l, tau);
 
+  prepare_hash_verify(&vbb);
   uint8_t h_v[MAX_LAMBDA_BYTES * 2];
   {
     H1_context_t h1_ctx_1;

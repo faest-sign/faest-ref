@@ -24,6 +24,9 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
                                   uint8_t* hcom, uint8_t* q, unsigned int ellhat,
                                   const faest_paramset_t* params, unsigned int start,
                                   unsigned int len);
+void vole_reconstruct_hcom(const uint8_t* iv, const uint8_t* chall, const uint8_t* const* pdec,
+                           const uint8_t* const* com_j, uint8_t* hcom, unsigned int ellhat,
+                           const faest_paramset_t* params);
 
 FAEST_END_C_DECL
 
