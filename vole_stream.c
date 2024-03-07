@@ -514,7 +514,7 @@ void partial_vole_reconstruct_rmo(const uint8_t* iv, const uint8_t* chall,
   sVecComRec.com_j       = alloca(lambda_bytes * 2);
   sVecComRec.path        = alloca(lambda_bytes * (max_depth - 1));
 
-  memset(q, 0, len * ellhat_bytes);
+  memset(q, 0, len * lambda_bytes);
 
 
   unsigned int col_idx = 0;

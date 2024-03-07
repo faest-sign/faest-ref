@@ -288,18 +288,14 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
     uint8_t delta[MAX_DEPTH];
     ChalDec(chall3, i, vbb->params->faest_param.k0, vbb->params->faest_param.t0,
             vbb->params->faest_param.k1, vbb->params->faest_param.t1, delta);
+    uint8_t byte = chall3[i]; // FIXME Only for fast (8 bits). loop for small variants
+    /*
+    for (unsigned int b = 0; b < 8; b++) {
+      byte |= delta[b] << b;
+    }
+    */
 
     const uint8_t* c_idx = c + (i - 1) * ell_hat_bytes;
-    // Construct q inplace of qprime
-    // Q  [ - q1 - ]
-    //    [ - q2 - ]
-    //    [ - q3 - ]
-
-    // C  [0] in memory: C: [01011]
-    //    [1]
-    //    [0]
-    //    [1]
-    //    [1]
     for (unsigned int row_idx = 0; row_idx < len; row_idx++) {
       unsigned int c_byte = (row_idx + start) / 8;
       unsigned int c_bit  = (row_idx + start) % 8;
@@ -307,16 +303,13 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
       if (bit == 0) {
         continue;
       }
-      uint8_t byte = 0xFF; // FIXME Only for fast (8 bits). loop for small variants
       vbb->vole_Q_cache[row_idx * lambda_bytes + col_idx / 8] ^= byte;
-      //vbb->vole_Q_cache[row_idx * lambda_bytes + col_idx / 8] = ~vbb->vole_Q_cache[row_idx * lambda_bytes + col_idx / 8];
     }
     col_idx += depth;
   }
   
   // FIXME apply transposed witness values
   
-  /*
   // NOTE: Actually EM use Lenc, but Lenc == L for EM.
   // L = Lenc + Lke
   // EM => Lke = 0
@@ -325,16 +318,20 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
   
 
   unsigned int full_col_idx = 0;
+  unsigned int end_row_idx = MIN(len, ell - start);
   for (unsigned int i = 0; i < tau; i++) {
     unsigned int depth = i < tau0 ? k0 : k1;
-    uint8_t decoded_challenge[MAX_DEPTH];
-    ChalDec(dsignature_chall_3(vbb->sig, vbb->params), i, k0, tau0, k1, tau1, decoded_challenge);
+    uint8_t delta[MAX_DEPTH];
+    ChalDec(dsignature_chall_3(vbb->sig, vbb->params), i, k0, tau0, k1, tau1, delta);
     for (unsigned int col_idx = 0; col_idx < depth; col_idx++) {
-      uint8_t delta_i = decoded_challenge[col_idx];
+      uint8_t delta_i = delta[col_idx];
       if(delta_i == 0) {
         continue;
       }
-      for (unsigned int row_idx = 0; row_idx < len; row_idx++) {
+      for (unsigned int row_idx = 0; row_idx < end_row_idx; row_idx++) {
+        if(row_idx + start > ell){
+          break;
+        }
         unsigned int d_byte = (row_idx + start) / 8;
         unsigned int d_bit  = (row_idx + start) % 8;
         uint8_t bit         = d[d_byte] >> d_bit & 1;
@@ -348,7 +345,7 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
     }
     full_col_idx += depth;
   }
-  */
+  
   vbb->cache_idx = start;
 }
 
@@ -461,17 +458,7 @@ void prepare_aes_verify(vbb_t* vbb) {
   // FIXME Recomputes full size - Remove later
   vbb->vole_V_cache = vbb->vole_Q_cache;
   vbb->full_size    = true;
-  bf128_t q_real;
-  if(lambda == 128){
-    q_real = *get_vole_aes_128(vbb, 0);
-  }
-  
-  free(vbb->vole_Q_cache);
-  vbb->vole_Q_cache = calloc(lambda, ell_hat_bytes);
-  vbb->full_size = false;
-  recompute_aes_verify(vbb, 0, lambda);
-
-  /*
+  // CMO witness
   unsigned int size = vbb->params->faest_param.l;
 
   for (unsigned int i = 0, col = 0; i < tau; i++) {
@@ -485,7 +472,17 @@ void prepare_aes_verify(vbb_t* vbb) {
       }
     }
   }
-  */
+  bf128_t q_real;
+  if(lambda == 128){
+    q_real = *get_vole_aes_128(vbb, ell+10);
+  }
+  
+  free(vbb->vole_Q_cache);
+  vbb->vole_Q_cache = calloc(lambda, ell_hat_bytes);
+  vbb->full_size = false;
+  recompute_aes_verify(vbb, 0, ell_hat);
+
+  
   vbb->vole_V_cache = vbb->vole_Q_cache; // FIXME merge to one cache?
 
   if(lambda == 128){
@@ -496,7 +493,7 @@ void prepare_aes_verify(vbb_t* vbb) {
     printf("\n");
 
     printf("new OLE: ");
-    bf128_t q_new = *get_vole_aes_128(vbb, 0);
+    bf128_t q_new = *get_vole_aes_128(vbb, ell+10);
     for (unsigned int i = 0; i < 2; i++) {
       printf("%016lx ", q_new.values[i]);
     }
