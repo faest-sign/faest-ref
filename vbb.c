@@ -275,39 +275,42 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
                                start, len);
 
   // FIXME apply transposed correction values
-  
+  uint8_t buf[MAX_LAMBDA_BYTES] = {0};
   const uint8_t* c   = dsignature_c(vbb->sig, 0, vbb->params);
-  unsigned int col_idx = 0;
-  for (unsigned int i = 0; i < tau; i++) {
-    const unsigned int depth = i < tau0 ? k0 : k1;
-    if (i == 0) {
-      col_idx += depth;
-      continue;
-    }
 
-    uint8_t delta[MAX_DEPTH];
-    ChalDec(chall3, i, vbb->params->faest_param.k0, vbb->params->faest_param.t0,
-            vbb->params->faest_param.k1, vbb->params->faest_param.t1, delta);
-    uint8_t byte = chall3[i]; // FIXME Only for fast (8 bits). loop for small variants
-    /*
-    for (unsigned int b = 0; b < 8; b++) {
-      byte |= delta[b] << b;
-    }
-    */
-
-    const uint8_t* c_idx = c + (i - 1) * ell_hat_bytes;
-    for (unsigned int row_idx = 0; row_idx < len; row_idx++) {
+  for(unsigned int row_idx = 0; row_idx < len; row_idx++) {
+    memset(buf, 0, sizeof(buf));
+    //uint8_t* buf_prt = buf + 1;
+    uint8_t byte = 0;
+    unsigned int bit_counter = k0;
+    // Pack all c_i into buf lambda
+    for (unsigned int t = 1; t < tau; t++) {
+      unsigned int depth = t < tau0 ? k0 : k1;
+      
+      const uint8_t* c_idx = c + (t - 1) * ell_hat_bytes;
       unsigned int c_byte = (row_idx + start) / 8;
       unsigned int c_bit  = (row_idx + start) % 8;
       uint8_t bit         = c_idx[c_byte] >> c_bit & 1;
-      if (bit == 0) {
-        continue;
+      //pack bit into buf
+      for (unsigned int i = 0; i < depth; i++) {
+        byte <<= 1;
+        byte |= bit;
+        bit_counter++;
+        if(bit_counter % 8 == 0) {
+          buf[bit_counter / 8 - 1] = byte;
+          byte = 0;
+        }
       }
-      vbb->vole_Q_cache[row_idx * lambda_bytes + col_idx / 8] ^= byte;
     }
-    col_idx += depth;
+
+    // AND buf with Delta
+    for (unsigned int i = 1; i < lambda_bytes; i++) {
+      buf[i] &= chall3[i];
+      vbb->vole_Q_cache[row_idx * lambda_bytes + i] ^= buf[i];
+    }
+
   }
-  
+
   // FIXME apply transposed witness values
   
   // NOTE: Actually EM use Lenc, but Lenc == L for EM.
@@ -316,7 +319,6 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
   unsigned int size = vbb->params->faest_param.l;
   uint8_t* d = dsignature_d(vbb->sig, vbb->params);
   
-
   unsigned int full_col_idx = 0;
   unsigned int end_row_idx = MIN(len, ell - start);
   for (unsigned int i = 0; i < tau; i++) {
@@ -460,7 +462,7 @@ void prepare_aes_verify(vbb_t* vbb) {
   vbb->full_size    = true;
   // CMO witness
   unsigned int size = vbb->params->faest_param.l;
-
+  
   for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
@@ -472,6 +474,7 @@ void prepare_aes_verify(vbb_t* vbb) {
       }
     }
   }
+  
   bf128_t q_real;
   if(lambda == 128){
     q_real = *get_vole_aes_128(vbb, ell+10);
