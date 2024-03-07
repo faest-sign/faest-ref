@@ -452,3 +452,80 @@ void vole_reconstruct_hcom(const uint8_t* iv, const uint8_t* chall, const uint8_
 
   H1_final(&h1_ctx, hcom, lambda_bytes * 2);
 }
+
+static void ReconstructVoleRMO(const uint8_t* iv, stream_vec_com_rec_t* sVecComRec,
+                             unsigned int lambda, unsigned int outLenBytes, uint8_t* q,
+                             unsigned int start, unsigned int len, unsigned int col_idx) {
+  unsigned int depth               = sVecComRec->depth;
+  const unsigned int num_instances = 1 << depth;
+  const unsigned int lambda_bytes  = lambda / 8;
+
+  uint8_t* sd              = malloc(lambda_bytes);
+  uint8_t* com             = malloc(lambda_bytes * 2);
+  uint8_t* r               = malloc(outLenBytes);
+  unsigned int bit_offset  = (col_idx % 8);
+  unsigned int byte_offset = (col_idx / 8);
+
+  unsigned int offset = NumRec(depth, sVecComRec->b);
+
+  for (unsigned int i = 0; i < num_instances; i++) {
+    unsigned int offset_index = i ^ offset;
+    get_sd_com_rec(sVecComRec, iv, lambda, i, sd, com);
+    prg(sd, iv, r, lambda, outLenBytes);
+
+    for (unsigned int row_idx = 0; row_idx < len; row_idx++) {
+      unsigned int byte_idx = (row_idx + start) / 8;
+      unsigned int bit_idx  = (row_idx + start) % 8;
+      uint8_t bit           = (r[byte_idx] >> (bit_idx)) & 1;
+      if (bit == 0) {
+        continue;
+      }
+      unsigned int base_idx = row_idx * lambda_bytes + byte_offset;
+      unsigned int amount   = (bit_offset + depth + 7) / 8;
+      // Avoid carry by breaking into two steps
+      q[base_idx] ^= offset_index << bit_offset;
+      for (unsigned int j = 1; j < amount; j++) {
+        q[base_idx + j] ^= offset_index >> (j * 8 - bit_offset);
+      }
+    }
+  }
+  free(sd);
+  free(com);
+  free(r);
+}
+
+void partial_vole_reconstruct_rmo(const uint8_t* iv, const uint8_t* chall,
+                                  const uint8_t* const* pdec, const uint8_t* const* com_j,
+                                  uint8_t* q, unsigned int ellhat, const faest_paramset_t* params,
+                                  unsigned int start, unsigned int len) {
+  unsigned int lambda       = params->faest_param.lambda;
+  unsigned int lambda_bytes = lambda / 8;
+  unsigned int ellhat_bytes = (ellhat + 7) / 8;
+  unsigned int tau          = params->faest_param.tau;
+  unsigned int tau0         = params->faest_param.t0;
+  unsigned int tau1         = params->faest_param.t1;
+  unsigned int k0           = params->faest_param.k0;
+  unsigned int k1           = params->faest_param.k1;
+
+  stream_vec_com_rec_t sVecComRec;
+  unsigned int max_depth = MAX(k0, k1);
+  sVecComRec.b           = alloca(max_depth * sizeof(uint8_t));
+  sVecComRec.nodes       = calloc(max_depth, lambda_bytes);
+  sVecComRec.com_j       = alloca(lambda_bytes * 2);
+  sVecComRec.path        = alloca(lambda_bytes * (max_depth - 1));
+
+  memset(q, 0, len * ellhat_bytes);
+
+
+  unsigned int col_idx = 0;
+  for (unsigned int i = 0; i < tau; i++) {
+    unsigned int depth = i < tau0 ? k0 : k1;
+    uint8_t chalout[MAX_DEPTH];
+    ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
+    stream_vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, &sVecComRec);
+    ReconstructVoleRMO(iv, &sVecComRec, lambda, ellhat_bytes, q, start, len, col_idx);
+    col_idx += depth;
+  }
+
+  free(sVecComRec.nodes);
+}

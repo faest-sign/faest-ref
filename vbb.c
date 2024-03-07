@@ -209,17 +209,16 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
 
   partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, NULL, vbb->vole_Q_cache, ell_hat,
                                vbb->params, start, amount);
-
   const uint8_t* c   = dsignature_c(vbb->sig, 0, vbb->params);
-  unsigned int q_idx = 0;
+  unsigned int col_idx = 0;
   for (unsigned int i = 0; i < tau; i++) {
     const unsigned int depth = i < tau0 ? k0 : k1;
-    if (start >= q_idx + depth) {
-      q_idx += depth;
+    if (start >= col_idx + depth) {
+      col_idx += depth;
       continue;
     }
     if (i == 0) { // FIXME remove this first iteration
-      q_idx += depth;
+      col_idx += depth;
       continue;
     }
 
@@ -228,18 +227,18 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
             vbb->params->faest_param.k1, vbb->params->faest_param.t1, delta);
 
     // Construct q inplace of qprime
-    for (unsigned int d = 0; d < depth; ++d, ++q_idx) {
-      if (start > q_idx) {
+    for (unsigned int d = 0; d < depth; ++d, ++col_idx) {
+      if (start > col_idx) {
         continue;
       }
       masked_xor_u8_array(
-          vbb->vole_Q_cache + (q_idx - start) * ell_hat_bytes, c + (i - 1) * ell_hat_bytes,
-          vbb->vole_Q_cache + (q_idx - start) * ell_hat_bytes, delta[d], ell_hat_bytes);
-      if (start + amount <= q_idx) {
+          vbb->vole_Q_cache + (col_idx - start) * ell_hat_bytes, c + (i - 1) * ell_hat_bytes,
+          vbb->vole_Q_cache + (col_idx - start) * ell_hat_bytes, delta[d], ell_hat_bytes);
+      if (start + amount <= col_idx) {
         break;
       }
     }
-    if (start + amount <= q_idx) {
+    if (start + amount <= col_idx) {
       break;
     }
   }
@@ -247,31 +246,136 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
   vbb->cache_idx = start;
 }
 
+static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int len) {
+  unsigned int lambda        = vbb->params->faest_param.lambda;
+  unsigned int lambda_bytes  = lambda / 8;
+  unsigned int ell           = vbb->params->faest_param.l;
+  unsigned int tau           = vbb->params->faest_param.tau;
+  unsigned int ell_hat       = ell + lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  unsigned int ell_hat_bytes = ell_hat / 8;
+  unsigned int tau0          = vbb->params->faest_param.t0;
+  unsigned int tau1          = vbb->params->faest_param.t1;
+  unsigned int k0            = vbb->params->faest_param.k0;
+  unsigned int k1            = vbb->params->faest_param.k1;
+
+  if (len >= ell + lambda) {
+    start = 0;
+  } else if (start + len > ell + lambda) {
+    start = ell + lambda - len;
+  }
+
+  const uint8_t* chall3 = dsignature_chall_3(vbb->sig, vbb->params);
+  const uint8_t* pdec[MAX_TAU];
+  const uint8_t* com[MAX_TAU]; // FIXME could be removed (unused since no hash)
+  for (unsigned int i = 0; i < tau; ++i) {
+    pdec[i] = dsignature_pdec(vbb->sig, i, vbb->params);
+    com[i]  = dsignature_com(vbb->sig, i, vbb->params);
+  }
+  partial_vole_reconstruct_rmo(vbb->iv, chall3, pdec, com, vbb->vole_Q_cache, ell_hat, vbb->params,
+                               start, len);
+
+  // FIXME apply transposed correction values
+  
+  const uint8_t* c   = dsignature_c(vbb->sig, 0, vbb->params);
+  unsigned int col_idx = 0;
+  for (unsigned int i = 0; i < tau; i++) {
+    const unsigned int depth = i < tau0 ? k0 : k1;
+    if (i == 0) {
+      col_idx += depth;
+      continue;
+    }
+
+    uint8_t delta[MAX_DEPTH];
+    ChalDec(chall3, i, vbb->params->faest_param.k0, vbb->params->faest_param.t0,
+            vbb->params->faest_param.k1, vbb->params->faest_param.t1, delta);
+
+    const uint8_t* c_idx = c + (i - 1) * ell_hat_bytes;
+    // Construct q inplace of qprime
+    // Q  [ - q1 - ]
+    //    [ - q2 - ]
+    //    [ - q3 - ]
+
+    // C  [0] in memory: C: [01011]
+    //    [1]
+    //    [0]
+    //    [1]
+    //    [1]
+    for (unsigned int row_idx = 0; row_idx < len; row_idx++) {
+      unsigned int c_byte = (row_idx + start) / 8;
+      unsigned int c_bit  = (row_idx + start) % 8;
+      uint8_t bit         = c_idx[c_byte] >> c_bit & 1;
+      if (bit == 0) {
+        continue;
+      }
+      uint8_t byte = 0xFF; // FIXME Only for fast (8 bits). loop for small variants
+      vbb->vole_Q_cache[row_idx * lambda_bytes + col_idx / 8] ^= byte;
+      //vbb->vole_Q_cache[row_idx * lambda_bytes + col_idx / 8] = ~vbb->vole_Q_cache[row_idx * lambda_bytes + col_idx / 8];
+    }
+    col_idx += depth;
+  }
+  
+  // FIXME apply transposed witness values
+  
+  /*
+  // NOTE: Actually EM use Lenc, but Lenc == L for EM.
+  // L = Lenc + Lke
+  // EM => Lke = 0
+  unsigned int size = vbb->params->faest_param.l;
+  uint8_t* d = dsignature_d(vbb->sig, vbb->params);
+  
+
+  unsigned int full_col_idx = 0;
+  for (unsigned int i = 0; i < tau; i++) {
+    unsigned int depth = i < tau0 ? k0 : k1;
+    uint8_t decoded_challenge[MAX_DEPTH];
+    ChalDec(dsignature_chall_3(vbb->sig, vbb->params), i, k0, tau0, k1, tau1, decoded_challenge);
+    for (unsigned int col_idx = 0; col_idx < depth; col_idx++) {
+      uint8_t delta_i = decoded_challenge[col_idx];
+      if(delta_i == 0) {
+        continue;
+      }
+      for (unsigned int row_idx = 0; row_idx < len; row_idx++) {
+        unsigned int d_byte = (row_idx + start) / 8;
+        unsigned int d_bit  = (row_idx + start) % 8;
+        uint8_t bit         = d[d_byte] >> d_bit & 1;
+        if (bit == 0) {
+          continue;
+        }
+        unsigned int q_byte = (full_col_idx + col_idx) / 8;
+
+        vbb->vole_Q_cache[row_idx * lambda_bytes + q_byte] ^= bit << (full_col_idx + col_idx) % 8;
+      }
+    }
+    full_col_idx += depth;
+  }
+  */
+  vbb->cache_idx = start;
+}
+
 void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* params,
                      const uint8_t* sig) {
-  vbb->params    = params;
+  vbb->params                      = params;
   const unsigned int lambda        = params->faest_param.lambda;
   const size_t lambda_bytes        = params->faest_param.lambda / 8;
   const unsigned int l             = params->faest_param.l;
   const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
   const unsigned int tau           = vbb->params->faest_param.tau;
-  
+
   vbb->iv        = dsignature_iv(sig, params);
   vbb->com_hash  = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
   vbb->full_size = len >= ell_hat;
   vbb->full_size = true; // FIXME
   vbb->sig       = sig;
 
-
   if (vbb->full_size) {
     vbb->v_buf = malloc(lambda_bytes);
   }
 
   unsigned int row_count = len;
-  vbb->row_count = row_count;
-  uint8_t* qprime   = calloc(lambda, ell_hat_bytes); // FIXME shrink to row_count (aka len) times lambda_bytes (broken right now)
-  vbb->vole_Q_cache = qprime;
+  vbb->row_count         = row_count;
+  uint8_t* qprime        = calloc(row_count, lambda_bytes);
+  vbb->vole_Q_cache      = qprime;
 
   // HASH cache
   unsigned int column_count = (size_t)vbb->row_count * (size_t)lambda_bytes / (size_t)ell_hat_bytes;
@@ -347,21 +451,27 @@ void prepare_aes_verify(vbb_t* vbb) {
   const unsigned int k0  = vbb->params->faest_param.k0;
   const unsigned int t1  = vbb->params->faest_param.t1;
   const unsigned int k1  = vbb->params->faest_param.k1;
+  const unsigned int ell  = vbb->params->faest_param.l;
 
   const unsigned int lambda        = vbb->params->faest_param.lambda;
   const unsigned int l             = vbb->params->faest_param.l;
   const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = ell_hat / 8;
 
+  // FIXME Recomputes full size - Remove later
+  vbb->vole_V_cache = vbb->vole_Q_cache;
+  vbb->full_size    = true;
+  bf128_t q_real;
+  if(lambda == 128){
+    q_real = *get_vole_aes_128(vbb, 0);
+  }
+  
+  free(vbb->vole_Q_cache);
+  vbb->vole_Q_cache = calloc(lambda, ell_hat_bytes);
+  vbb->full_size = false;
+  recompute_aes_verify(vbb, 0, lambda);
 
-   // FIXME Recomputes full size - Remove later
-  //free(vbb->vole_Q_cache);
-  //vbb->vole_Q_cache = calloc(lambda, ell_hat_bytes);
-  recompute_hash_verify(vbb, 0, lambda);
-
-
-
-  // TODO: Actually EM use Lenc, but Lenc == L for all EM..
+  /*
   unsigned int size = vbb->params->faest_param.l;
 
   for (unsigned int i = 0, col = 0; i < tau; i++) {
@@ -375,6 +485,22 @@ void prepare_aes_verify(vbb_t* vbb) {
       }
     }
   }
-
+  */
   vbb->vole_V_cache = vbb->vole_Q_cache; // FIXME merge to one cache?
+
+  if(lambda == 128){
+    printf("old OLE: ");
+    for (unsigned int i = 0; i < 2; i++) {
+      printf("%016lx ", q_real.values[i]);
+    }
+    printf("\n");
+
+    printf("new OLE: ");
+    bf128_t q_new = *get_vole_aes_128(vbb, 0);
+    for (unsigned int i = 0; i < 2; i++) {
+      printf("%016lx ", q_new.values[i]);
+    }
+    printf("\n");
+  }
+
 }
