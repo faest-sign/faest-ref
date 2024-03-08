@@ -242,7 +242,7 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
       break;
     }
   }
-
+  
   vbb->cache_idx = start;
 }
 
@@ -277,7 +277,6 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
   // FIXME apply transposed correction values
   uint8_t buf[MAX_LAMBDA_BYTES] = {0};
   const uint8_t* c   = dsignature_c(vbb->sig, 0, vbb->params);
-
   for(unsigned int row_idx = 0; row_idx < len; row_idx++) {
     memset(buf, 0, sizeof(buf));
     //uint8_t* buf_prt = buf + 1;
@@ -293,8 +292,8 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
       uint8_t bit         = c_idx[c_byte] >> c_bit & 1;
       //pack bit into buf
       for (unsigned int i = 0; i < depth; i++) {
-        byte <<= 1;
-        byte |= bit;
+        byte = byte >> 1;
+        byte |= (bit << 7);
         bit_counter++;
         if(bit_counter % 8 == 0) {
           buf[bit_counter / 8 - 1] = byte;
@@ -304,13 +303,12 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
     }
 
     // AND buf with Delta
-    for (unsigned int i = 1; i < lambda_bytes; i++) {
+    for (unsigned int i = 0; i < lambda_bytes; i++) {
       buf[i] &= chall3[i];
       vbb->vole_Q_cache[row_idx * lambda_bytes + i] ^= buf[i];
     }
-
   }
-
+  
   // FIXME apply transposed witness values
   
   // NOTE: Actually EM use Lenc, but Lenc == L for EM.
@@ -460,9 +458,10 @@ void prepare_aes_verify(vbb_t* vbb) {
   // FIXME Recomputes full size - Remove later
   vbb->vole_V_cache = vbb->vole_Q_cache;
   vbb->full_size    = true;
+  /*
   // CMO witness
   unsigned int size = vbb->params->faest_param.l;
-  
+    
   for (unsigned int i = 0, col = 0; i < tau; i++) {
     unsigned int depth = i < t0 ? k0 : k1;
     uint8_t decoded_challenge[MAX_DEPTH];
@@ -474,11 +473,7 @@ void prepare_aes_verify(vbb_t* vbb) {
       }
     }
   }
-  
-  bf128_t q_real;
-  if(lambda == 128){
-    q_real = *get_vole_aes_128(vbb, ell+10);
-  }
+  */
   
   free(vbb->vole_Q_cache);
   vbb->vole_Q_cache = calloc(lambda, ell_hat_bytes);
@@ -487,20 +482,5 @@ void prepare_aes_verify(vbb_t* vbb) {
 
   
   vbb->vole_V_cache = vbb->vole_Q_cache; // FIXME merge to one cache?
-
-  if(lambda == 128){
-    printf("old OLE: ");
-    for (unsigned int i = 0; i < 2; i++) {
-      printf("%016lx ", q_real.values[i]);
-    }
-    printf("\n");
-
-    printf("new OLE: ");
-    bf128_t q_new = *get_vole_aes_128(vbb, ell+10);
-    for (unsigned int i = 0; i < 2; i++) {
-      printf("%016lx ", q_new.values[i]);
-    }
-    printf("\n");
-  }
 
 }
