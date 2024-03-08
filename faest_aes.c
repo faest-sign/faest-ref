@@ -218,7 +218,7 @@ static void aes_key_schedule_forward_128_vbb(vbb_t* vbb, bf128_t* bf_out) {
   for (unsigned int j = FAEST_128F_Nwd; j < 4 * (FAEST_128F_R + 1); j++) {
     if ((j % FAEST_128F_Nwd) == 0 || (FAEST_128F_Nwd > 6 && (j % FAEST_128F_Nwd) == 4)) {
       for (unsigned int i = 0; i < 32; i++) {
-        memcpy(bf_out + j * 32 + i, get_vole_aes_256(vbb, i_wd + i), sizeof(bf256_t));
+        memcpy(bf_out + j * 32 + i, get_vole_aes_128(vbb, i_wd + i), sizeof(bf128_t));
       }
       i_wd += 32;
     } else {

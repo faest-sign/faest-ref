@@ -50,7 +50,7 @@ static void recompute_aes_prove(vbb_t* vbb, unsigned int start, unsigned int len
 // Hence we store (at most) len*lambda in memory.
 void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
                     uint8_t* c, const faest_paramset_t* params) {
-  vbb->party = SIGNER;
+  vbb->party    = SIGNER;
   vbb->iv       = iv;
   vbb->com_hash = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
   vbb->params   = params;
@@ -72,7 +72,7 @@ void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const
   if (vbb->full_size) {
     vbb->v_buf = malloc(lambda_bytes);
     partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, vbb->params, sVecCom, vbb->vole_cache,
-                            0, ellhat, vbb->vole_U, vbb->com_hash, c);
+                            0, lambda, vbb->vole_U, vbb->com_hash, c);
   } else {
     vole_commit_u_hcom_c(vbb->root_key, vbb->iv, ellhat, vbb->params, vbb->com_hash, sVecCom, c,
                          vbb->vole_U);
@@ -126,8 +126,8 @@ void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8
 
 // Verifier implementation
 static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int len) {
-  const unsigned int lambda = vbb->params->faest_param.lambda;
-  const unsigned int l      = vbb->params->faest_param.l;
+  const unsigned int lambda        = vbb->params->faest_param.lambda;
+  const unsigned int l             = vbb->params->faest_param.l;
   const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
   const unsigned int tau           = vbb->params->faest_param.tau;
@@ -166,6 +166,7 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
     ChalDec(chall3, i, vbb->params->faest_param.k0, vbb->params->faest_param.t0,
             vbb->params->faest_param.k1, vbb->params->faest_param.t1, delta);
 
+    
     // Construct q inplace of qprime
     for (unsigned int d = 0; d < depth; d++, col_idx++) {
       if (start > col_idx) {
@@ -174,15 +175,16 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
       masked_xor_u8_array(
           vbb->vole_cache + (col_idx - start) * ell_hat_bytes, c + (i - 1) * ell_hat_bytes,
           vbb->vole_cache + (col_idx - start) * ell_hat_bytes, delta[d], ell_hat_bytes);
+
       if (col_idx + 1 >= start + amount) {
+        col_idx++;
         break;
       }
     }
-    if (col_idx + 1 >= start + amount) {
+    if (col_idx >= start + amount) {
       break;
     }
   }
-
   vbb->cache_idx = start;
 }
 
@@ -206,7 +208,7 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
 
   const uint8_t* chall3 = dsignature_chall_3(vbb->sig, vbb->params);
   const uint8_t* pdec[MAX_TAU];
-  const uint8_t* com[MAX_TAU]; 
+  const uint8_t* com[MAX_TAU];
   for (unsigned int i = 0; i < tau; ++i) {
     pdec[i] = dsignature_pdec(vbb->sig, i, vbb->params);
     com[i]  = dsignature_com(vbb->sig, i, vbb->params);
@@ -250,7 +252,7 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
   }
 
   // Apply transposed witness values
-  const uint8_t* d = dsignature_d(vbb->sig, vbb->params);
+  const uint8_t* d          = dsignature_d(vbb->sig, vbb->params);
   unsigned int full_col_idx = 0;
   unsigned int end_row_idx  = MIN(len, ell - start);
   for (unsigned int i = 0; i < tau; i++) {
@@ -285,7 +287,7 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
 
 void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* params,
                      const uint8_t* sig) {
-  vbb->party = VERIFIER;
+  vbb->party                       = VERIFIER;
   vbb->params                      = params;
   const unsigned int lambda        = params->faest_param.lambda;
   const size_t lambda_bytes        = params->faest_param.lambda / 8;
@@ -298,10 +300,6 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* param
   vbb->com_hash  = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
   vbb->full_size = len >= ell_hat;
   vbb->sig       = sig;
-
-  if (vbb->full_size) {
-    vbb->v_buf = malloc(lambda_bytes);
-  }
 
   unsigned int row_count = len;
   vbb->row_count         = row_count;
@@ -320,17 +318,21 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* param
     pdec[i] = dsignature_pdec(vbb->sig, i, vbb->params);
     com[i]  = dsignature_com(vbb->sig, i, vbb->params);
   }
-  vole_reconstruct_hcom(vbb->iv, chall3, pdec, com, vbb->com_hash, ell_hat, vbb->params);
+  if (vbb->full_size) {
+    vbb->v_buf = malloc(lambda_bytes);
+    partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, vbb->com_hash, vbb->vole_cache,
+                                 ell_hat, vbb->params, 0, lambda);
+  } else {
+    vole_reconstruct_hcom(vbb->iv, chall3, pdec, com, vbb->com_hash, ell_hat, vbb->params);
+  }
 
   vbb->Dtilde_buf = malloc(lambda_bytes + UNIVERSAL_HASH_B);
 }
 
 void prepare_hash_verify(vbb_t* vbb) {
-  /* // FIXME reintroduce
   if (vbb->full_size) {
     return;
   }
-  */
   recompute_hash_verify(vbb, 0, vbb->column_count);
 }
 
@@ -361,8 +363,6 @@ const uint8_t* get_dtilde(vbb_t* vbb, unsigned int idx) {
 
   return vbb->Dtilde_buf;
 }
-
-
 
 void prepare_aes_verify(vbb_t* vbb) {
   if (vbb->full_size) {
@@ -412,9 +412,12 @@ const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
 }
 
 const uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx) {
+  unsigned int lambda = vbb->params->faest_param.lambda;
   const unsigned int ellhat =
-      vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
+      vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
+
+  assert(idx < lambda);
   if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
     recompute_hash_verify(vbb, idx, vbb->column_count);
   }
@@ -440,7 +443,7 @@ static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
   }
 
   if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->row_count)) {
-    if(vbb->party == VERIFIER){
+    if (vbb->party == VERIFIER) {
       recompute_aes_verify(vbb, idx, vbb->row_count);
     } else {
       recompute_aes_prove(vbb, idx, vbb->row_count);
