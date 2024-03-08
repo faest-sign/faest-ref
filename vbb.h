@@ -10,7 +10,13 @@ typedef struct vbb_t vbb_t;
 #include "fields.h"
 #include "faest_aes.h"
 
+typedef enum party_t {
+  VERIFIER,
+  SIGNER,
+} party_t;
+
 struct vbb_t {
+  party_t party;
   unsigned int row_count;
   unsigned int column_count;
   unsigned int cache_idx;

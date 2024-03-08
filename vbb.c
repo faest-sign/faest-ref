@@ -50,6 +50,7 @@ static void recompute_aes_prove(vbb_t* vbb, unsigned int start, unsigned int len
 // Hence we store (at most) len*lambda in memory.
 void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
                     uint8_t* c, const faest_paramset_t* params) {
+  vbb->party = SIGNER;
   vbb->iv       = iv;
   vbb->com_hash = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
   vbb->params   = params;
@@ -110,65 +111,6 @@ void prepare_aes_prove(vbb_t* vbb) {
   recompute_aes_prove(vbb, 0, len);
 }
 
-const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
-  const unsigned int ellhat =
-      vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  unsigned int ellhat_bytes = (ellhat + 7) / 8;
-
-  assert(idx < vbb->params->faest_param.lambda);
-  if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
-    recompute_hash_prove(vbb, idx, vbb->column_count);
-  }
-
-  // FIXME - should it be ell + lambda instead? (also change offset in partial_vole_commit_cmo
-  // then!)
-  unsigned int offset = idx - vbb->cache_idx;
-  return vbb->vole_cache + offset * ellhat_bytes;
-}
-
-static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
-  unsigned int lambda       = vbb->params->faest_param.lambda;
-  unsigned int lambda_bytes = lambda / 8;
-  unsigned int ellhat       = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  unsigned int ellhat_bytes = (ellhat + 7) / 8;
-
-  if (vbb->full_size) {
-    memset(vbb->v_buf, 0, lambda_bytes);
-    // Transpose on the fly into v_buf
-    for (unsigned int column = 0; column != lambda; ++column) {
-      ptr_set_bit(vbb->v_buf, ptr_get_bit(vbb->vole_cache + column * ellhat_bytes, idx), column);
-    }
-    return vbb->v_buf;
-  }
-
-  // FIXME: non-full size for verifier
-  if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->row_count)) {
-    recompute_aes_prove(vbb, idx, vbb->row_count);
-  }
-  unsigned int offset = (idx - vbb->cache_idx) * lambda_bytes;
-  return vbb->vole_cache + offset;
-}
-
-const bf256_t* get_vole_aes_256(vbb_t* vbb, unsigned int idx) {
-  return (bf256_t*)get_vole_aes(vbb, idx);
-}
-
-const bf192_t* get_vole_aes_192(vbb_t* vbb, unsigned int idx) {
-  return (bf192_t*)get_vole_aes(vbb, idx);
-}
-
-const bf128_t* get_vole_aes_128(vbb_t* vbb, unsigned int idx) {
-  return (bf128_t*)get_vole_aes(vbb, idx);
-}
-
-const uint8_t* get_vole_u(vbb_t* vbb) {
-  return vbb->vole_U;
-}
-
-const uint8_t* get_com_hash(vbb_t* vbb) {
-  return vbb->com_hash;
-}
-
 // TODO - refactor this stuff
 void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8_t* sig_pdec,
                           uint8_t* sig_com, unsigned int depth) {
@@ -205,7 +147,7 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
     com[i]  = dsignature_com(vbb->sig, i, vbb->params);
   }
 
-  unsigned int amount = MIN(len, vbb->params->faest_param.lambda - start);
+  unsigned int amount = MIN(len, lambda - start);
 
   partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, NULL, vbb->vole_cache, ell_hat,
                                vbb->params, start, amount);
@@ -348,6 +290,7 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
 
 void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* params,
                      const uint8_t* sig) {
+  vbb->party = VERIFIER;
   vbb->params                      = params;
   const unsigned int lambda        = params->faest_param.lambda;
   const size_t lambda_bytes        = params->faest_param.lambda / 8;
@@ -425,17 +368,7 @@ const uint8_t* get_dtilde(vbb_t* vbb, unsigned int idx) {
   return vbb->Dtilde_buf;
 }
 
-const uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx) {
-  const unsigned int ellhat =
-      vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  unsigned int ellhat_bytes = (ellhat + 7) / 8;
-  if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
-    recompute_hash_verify(vbb, idx, vbb->column_count);
-  }
 
-  unsigned int offset = idx - vbb->cache_idx;
-  return vbb->vole_cache + offset * ellhat_bytes;
-}
 
 void prepare_aes_verify(vbb_t* vbb) {
   if (vbb->full_size) {
@@ -467,4 +400,81 @@ void prepare_aes_verify(vbb_t* vbb) {
 
   // Compute first chunk with withness applied
   recompute_aes_verify(vbb, 0, vbb->row_count);
+}
+
+// Get voles for hashing
+const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
+  const unsigned int ellhat =
+      vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  unsigned int ellhat_bytes = (ellhat + 7) / 8;
+
+  assert(idx < vbb->params->faest_param.lambda);
+  if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
+    recompute_hash_prove(vbb, idx, vbb->column_count);
+  }
+
+  // FIXME - should it be ell + lambda instead? (also change offset in partial_vole_commit_cmo
+  // then!)
+  unsigned int offset = idx - vbb->cache_idx;
+  return vbb->vole_cache + offset * ellhat_bytes;
+}
+
+const uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx) {
+  const unsigned int ellhat =
+      vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  unsigned int ellhat_bytes = (ellhat + 7) / 8;
+  if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
+    recompute_hash_verify(vbb, idx, vbb->column_count);
+  }
+
+  unsigned int offset = idx - vbb->cache_idx;
+  return vbb->vole_cache + offset * ellhat_bytes;
+}
+
+// Get voles for AES
+static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
+  unsigned int lambda       = vbb->params->faest_param.lambda;
+  unsigned int lambda_bytes = lambda / 8;
+  unsigned int ellhat       = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  unsigned int ellhat_bytes = (ellhat + 7) / 8;
+
+  if (vbb->full_size) {
+    memset(vbb->v_buf, 0, lambda_bytes);
+    // Transpose on the fly into v_buf
+    for (unsigned int column = 0; column != lambda; ++column) {
+      ptr_set_bit(vbb->v_buf, ptr_get_bit(vbb->vole_cache + column * ellhat_bytes, idx), column);
+    }
+    return vbb->v_buf;
+  }
+
+  // FIXME: non-full size for verifier
+  if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->row_count)) {
+    if(vbb->party == VERIFIER){
+      recompute_aes_verify(vbb, idx, vbb->row_count);
+    } else {
+      recompute_aes_prove(vbb, idx, vbb->row_count);
+    }
+  }
+  unsigned int offset = (idx - vbb->cache_idx) * lambda_bytes;
+  return vbb->vole_cache + offset;
+}
+
+const bf256_t* get_vole_aes_256(vbb_t* vbb, unsigned int idx) {
+  return (bf256_t*)get_vole_aes(vbb, idx);
+}
+
+const bf192_t* get_vole_aes_192(vbb_t* vbb, unsigned int idx) {
+  return (bf192_t*)get_vole_aes(vbb, idx);
+}
+
+const bf128_t* get_vole_aes_128(vbb_t* vbb, unsigned int idx) {
+  return (bf128_t*)get_vole_aes(vbb, idx);
+}
+
+const uint8_t* get_vole_u(vbb_t* vbb) {
+  return vbb->vole_U;
+}
+
+const uint8_t* get_com_hash(vbb_t* vbb) {
+  return vbb->com_hash;
 }
