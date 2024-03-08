@@ -519,7 +519,6 @@ void partial_vole_reconstruct_rmo(const uint8_t* iv, const uint8_t* chall,
 
   memset(q, 0, len * lambda_bytes);
 
-
   unsigned int col_idx = 0;
   for (unsigned int i = 0; i < tau; i++) {
     unsigned int depth = i < tau0 ? k0 : k1;

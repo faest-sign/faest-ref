@@ -63,9 +63,6 @@ void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const
   vbb->full_size            = len >= ellhat;
   vbb->vole_U               = malloc(ellhat_bytes);
 
-  // PROVE cache
-  // FIXME - would MAX(len, vbb->params->faest_param.Lenc) be correct for all variants?
-  // FIXME - do not allocate too much memory...
   unsigned int row_count = len;
   vbb->row_count         = row_count;
   vbb->vole_cache        = calloc(row_count, lambda_bytes);
@@ -131,9 +128,8 @@ void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8
 static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int len) {
   const unsigned int lambda = vbb->params->faest_param.lambda;
   const unsigned int l      = vbb->params->faest_param.l;
-  // FIXME is this ell_hat correct?
   const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  const unsigned int ell_hat_bytes = ell_hat / 8;
+  const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
   const unsigned int tau           = vbb->params->faest_param.tau;
   const unsigned int tau0          = vbb->params->faest_param.t0;
   const unsigned int k0            = vbb->params->faest_param.k0;
@@ -151,6 +147,8 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
 
   partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, NULL, vbb->vole_cache, ell_hat,
                                vbb->params, start, amount);
+
+  // Apply correction values
   const uint8_t* c     = dsignature_c(vbb->sig, 0, vbb->params);
   unsigned int col_idx = 0;
   for (unsigned int i = 0; i < tau; i++) {
@@ -169,18 +167,18 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
             vbb->params->faest_param.k1, vbb->params->faest_param.t1, delta);
 
     // Construct q inplace of qprime
-    for (unsigned int d = 0; d < depth; ++d, ++col_idx) {
+    for (unsigned int d = 0; d < depth; d++, col_idx++) {
       if (start > col_idx) {
         continue;
       }
       masked_xor_u8_array(
           vbb->vole_cache + (col_idx - start) * ell_hat_bytes, c + (i - 1) * ell_hat_bytes,
           vbb->vole_cache + (col_idx - start) * ell_hat_bytes, delta[d], ell_hat_bytes);
-      if (start + amount <= col_idx) {
+      if (col_idx + 1 >= start + amount) {
         break;
       }
     }
-    if (start + amount <= col_idx) {
+    if (col_idx + 1 >= start + amount) {
       break;
     }
   }
@@ -206,11 +204,9 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
     start = ell + lambda - len;
   }
 
-  memset(vbb->vole_cache, 0, len * lambda_bytes);
-
   const uint8_t* chall3 = dsignature_chall_3(vbb->sig, vbb->params);
   const uint8_t* pdec[MAX_TAU];
-  const uint8_t* com[MAX_TAU]; // FIXME could be removed (unused since no hash)
+  const uint8_t* com[MAX_TAU]; 
   for (unsigned int i = 0; i < tau; ++i) {
     pdec[i] = dsignature_pdec(vbb->sig, i, vbb->params);
     com[i]  = dsignature_com(vbb->sig, i, vbb->params);
@@ -255,7 +251,6 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
 
   // Apply transposed witness values
   const uint8_t* d = dsignature_d(vbb->sig, vbb->params);
-
   unsigned int full_col_idx = 0;
   unsigned int end_row_idx  = MIN(len, ell - start);
   for (unsigned int i = 0; i < tau; i++) {
@@ -361,7 +356,6 @@ const uint8_t* get_dtilde(vbb_t* vbb, unsigned int idx) {
   ChalDec(dsignature_chall_3(vbb->sig, vbb->params), i, k0, tau0, k1, tau1, delta);
 
   memset(vbb->Dtilde_buf, 0, utilde_bytes);
-  // FIXME: this is not optimal (XOR with 0...).
   masked_xor_u8_array(vbb->Dtilde_buf, dsignature_u_tilde(vbb->sig, vbb->params), vbb->Dtilde_buf,
                       delta[j], utilde_bytes);
 
@@ -413,8 +407,6 @@ const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
     recompute_hash_prove(vbb, idx, vbb->column_count);
   }
 
-  // FIXME - should it be ell + lambda instead? (also change offset in partial_vole_commit_cmo
-  // then!)
   unsigned int offset = idx - vbb->cache_idx;
   return vbb->vole_cache + offset * ellhat_bytes;
 }
@@ -447,7 +439,6 @@ static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
     return vbb->v_buf;
   }
 
-  // FIXME: non-full size for verifier
   if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->row_count)) {
     if(vbb->party == VERIFIER){
       recompute_aes_verify(vbb, idx, vbb->row_count);
@@ -455,6 +446,7 @@ static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
       recompute_aes_prove(vbb, idx, vbb->row_count);
     }
   }
+
   unsigned int offset = (idx - vbb->cache_idx) * lambda_bytes;
   return vbb->vole_cache + offset;
 }
