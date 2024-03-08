@@ -84,17 +84,9 @@ void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const
   vbb->column_count = column_count;
 }
 
-void clean_vbb(vbb_t* vbb) {
-  free(vbb->com_hash);
-  free(vbb->vole_U);
-  free(vbb->vole_cache);
-  if (vbb->full_size) {
-    free(vbb->v_buf);
-  }
-}
-
 void prepare_hash_prove(vbb_t* vbb) {
   if (vbb->full_size) {
+    vbb->cache_idx = 0;
     return;
   }
   recompute_hash_prove(vbb, 0, vbb->column_count);
@@ -102,6 +94,7 @@ void prepare_hash_prove(vbb_t* vbb) {
 
 void prepare_aes_prove(vbb_t* vbb) {
   if (vbb->full_size) {
+    vbb->cache_idx = 0;
     return;
   }
   unsigned int len = vbb->row_count;
@@ -124,8 +117,7 @@ void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8
   free(expanded_keys);
 }
 
-// Verifier implementation
-static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int len) {
+static inline void apply_correction_values(vbb_t* vbb, unsigned int start, unsigned int len) {
   const unsigned int lambda        = vbb->params->faest_param.lambda;
   const unsigned int l             = vbb->params->faest_param.l;
   const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
@@ -136,19 +128,7 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
   const unsigned int k1            = vbb->params->faest_param.k1;
   const uint8_t* chall3            = dsignature_chall_3(vbb->sig, vbb->params);
 
-  const uint8_t* pdec[MAX_TAU];
-  const uint8_t* com[MAX_TAU];
-  for (unsigned int i = 0; i < tau; ++i) {
-    pdec[i] = dsignature_pdec(vbb->sig, i, vbb->params);
-    com[i]  = dsignature_com(vbb->sig, i, vbb->params);
-  }
 
-  unsigned int amount = MIN(len, lambda - start);
-
-  partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, NULL, vbb->vole_cache, ell_hat,
-                               vbb->params, start, amount);
-
-  // Apply correction values
   const uint8_t* c     = dsignature_c(vbb->sig, 0, vbb->params);
   unsigned int col_idx = 0;
   for (unsigned int i = 0; i < tau; i++) {
@@ -166,7 +146,6 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
     ChalDec(chall3, i, vbb->params->faest_param.k0, vbb->params->faest_param.t0,
             vbb->params->faest_param.k1, vbb->params->faest_param.t1, delta);
 
-    
     // Construct q inplace of qprime
     for (unsigned int d = 0; d < depth; d++, col_idx++) {
       if (start > col_idx) {
@@ -176,15 +155,40 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
           vbb->vole_cache + (col_idx - start) * ell_hat_bytes, c + (i - 1) * ell_hat_bytes,
           vbb->vole_cache + (col_idx - start) * ell_hat_bytes, delta[d], ell_hat_bytes);
 
-      if (col_idx + 1 >= start + amount) {
+      if (col_idx + 1 >= start + len) {
         col_idx++;
         break;
       }
     }
-    if (col_idx >= start + amount) {
+    if (col_idx >= start + len) {
       break;
     }
   }
+  vbb->cache_idx = start;
+}
+
+// Verifier implementation
+static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int len) {
+  const unsigned int lambda        = vbb->params->faest_param.lambda;
+  const unsigned int l             = vbb->params->faest_param.l;
+  const unsigned int ell_hat       = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  const unsigned int tau           = vbb->params->faest_param.tau;
+  const uint8_t* chall3            = dsignature_chall_3(vbb->sig, vbb->params);
+
+  const uint8_t* pdec[MAX_TAU];
+  const uint8_t* com[MAX_TAU];
+  for (unsigned int i = 0; i < tau; ++i) {
+    pdec[i] = dsignature_pdec(vbb->sig, i, vbb->params);
+    com[i]  = dsignature_com(vbb->sig, i, vbb->params);
+  }
+
+  unsigned int amount = MIN(len, lambda - start);
+
+  partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, NULL, vbb->vole_cache, ell_hat,
+                               vbb->params, start, amount);
+
+  apply_correction_values(vbb, start, amount);
+  
   vbb->cache_idx = start;
 }
 
@@ -299,7 +303,8 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* param
   vbb->iv        = dsignature_iv(sig, params);
   vbb->com_hash  = calloc(MAX_LAMBDA_BYTES * 2, sizeof(uint8_t));
   vbb->full_size = len >= ell_hat;
-  vbb->sig       = sig;
+  //vbb->full_size = false;
+  vbb->sig = sig;
 
   unsigned int row_count = len;
   vbb->row_count         = row_count;
@@ -320,8 +325,13 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* param
   }
   if (vbb->full_size) {
     vbb->v_buf = malloc(lambda_bytes);
+    /* // TODO: make this more pretty
+    vole_reconstruct_hcom(vbb->iv, chall3, pdec, com, vbb->com_hash, ell_hat, vbb->params);
+    recompute_hash_verify(vbb, 0, lambda);
+    */
     partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, vbb->com_hash, vbb->vole_cache,
                                  ell_hat, vbb->params, 0, lambda);
+    apply_correction_values(vbb, 0, lambda);
   } else {
     vole_reconstruct_hcom(vbb->iv, chall3, pdec, com, vbb->com_hash, ell_hat, vbb->params);
   }
@@ -331,6 +341,7 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* param
 
 void prepare_hash_verify(vbb_t* vbb) {
   if (vbb->full_size) {
+    vbb->cache_idx = 0;
     return;
   }
   recompute_hash_verify(vbb, 0, vbb->column_count);
@@ -389,6 +400,8 @@ void prepare_aes_verify(vbb_t* vbb) {
         }
       }
     }
+
+    vbb->cache_idx = 0;
     return;
   }
 
@@ -398,11 +411,11 @@ void prepare_aes_verify(vbb_t* vbb) {
 
 // Get voles for hashing
 const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
-  const unsigned int ellhat =
-      vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  unsigned int lambda       = vbb->params->faest_param.lambda;
+  unsigned int ellhat = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
 
-  assert(idx < vbb->params->faest_param.lambda);
+  assert(idx < lambda);
   if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
     recompute_hash_prove(vbb, idx, vbb->column_count);
   }
@@ -412,9 +425,8 @@ const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
 }
 
 const uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx) {
-  unsigned int lambda = vbb->params->faest_param.lambda;
-  const unsigned int ellhat =
-      vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
+  unsigned int lambda       = vbb->params->faest_param.lambda;
+  unsigned int ellhat       = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
 
   assert(idx < lambda);
@@ -472,4 +484,19 @@ const uint8_t* get_vole_u(vbb_t* vbb) {
 
 const uint8_t* get_com_hash(vbb_t* vbb) {
   return vbb->com_hash;
+}
+
+void clean_vbb(vbb_t* vbb) {
+  free(vbb->vole_cache);
+  free(vbb->com_hash);
+
+  if (vbb->full_size) {
+    free(vbb->v_buf);
+  }
+
+  if (vbb->party == VERIFIER) {
+    free(vbb->Dtilde_buf);
+  } else {
+    free(vbb->vole_U);
+  }
 }

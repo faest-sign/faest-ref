@@ -339,7 +339,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   const unsigned int ell_hat     = l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
 
   vbb_t vbb;
-  init_vbb_verify(&vbb, ell_hat/2, params, sig);
+  init_vbb_verify(&vbb, ell_hat, params, sig);
 
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
   hash_mu(mu, owf_input, owf_output, params->faest_param.pkSize / 2, msg, msglen, lambda);
@@ -375,6 +375,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   hash_challenge_3(chall_3, chall_2, dsignature_a_tilde(sig, params), b_tilde, lambda);
   free(b_tilde);
   b_tilde = NULL;
+  clean_vbb(&vbb);
 
   return memcmp(chall_3, dsignature_chall_3(sig, params), lambdaBytes) == 0 ? 0 : -1;
 }

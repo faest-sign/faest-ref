@@ -16,22 +16,24 @@ typedef enum party_t {
 } party_t;
 
 struct vbb_t {
+  // Signer
+  uint8_t* vole_U;
+  // Verifier
+  const uint8_t* sig;
+  uint8_t* Dtilde_buf;
+  // Common
   party_t party;
   unsigned int row_count;
   unsigned int column_count;
   unsigned int cache_idx;
-  uint8_t* vole_cache;
-  uint8_t* vole_U;
-  uint8_t* com_hash;
   const uint8_t* root_key;
   const faest_paramset_t* params;
   const uint8_t* iv;
+  uint8_t* vole_cache;
+  uint8_t* com_hash;
   // Optimized parameters
   bool full_size;
   uint8_t* v_buf;
-  // Verifier fields
-  const uint8_t* sig;
-  uint8_t* Dtilde_buf;
 };
 
 void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
