@@ -36,11 +36,11 @@ struct vbb_t {
   uint8_t* v_buf;
 };
 
-void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
+void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
                     uint8_t* c, const faest_paramset_t* params);
 void clean_vbb(vbb_t* vbb);
-void prepare_hash_prove(vbb_t* vbb);
-void prepare_aes_prove(vbb_t* vbb);
+void prepare_hash_sign(vbb_t* vbb);
+void prepare_aes_sign(vbb_t* vbb);
 const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx);
 const bf256_t* get_vole_aes_256(vbb_t* vbb, unsigned int idx);
 const bf192_t* get_vole_aes_192(vbb_t* vbb, unsigned int idx);

@@ -14,7 +14,7 @@
 #include "parameters.h"
 #include "utils.h"
 
-static void recompute_hash_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
+static void recompute_hash_sign(vbb_t* vbb, unsigned int start, unsigned int len) {
   const unsigned int ellhat =
       vbb->params->faest_param.l + vbb->params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
 
@@ -27,7 +27,7 @@ static void recompute_hash_prove(vbb_t* vbb, unsigned int start, unsigned int le
   vbb->cache_idx = start;
 }
 
-static void recompute_aes_prove(vbb_t* vbb, unsigned int start, unsigned int len) {
+static void recompute_aes_sign(vbb_t* vbb, unsigned int start, unsigned int len) {
   unsigned int lambda = vbb->params->faest_param.lambda;
   unsigned int ell    = vbb->params->faest_param.l;
   unsigned int tau    = vbb->params->faest_param.tau;
@@ -48,7 +48,7 @@ static void recompute_aes_prove(vbb_t* vbb, unsigned int start, unsigned int len
 
 // len is the number of OLE v's that is allowed to be stored in memory.
 // Hence we store (at most) len*lambda in memory.
-void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
+void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
                     uint8_t* c, const faest_paramset_t* params) {
   vbb->party    = SIGNER;
   vbb->iv       = iv;
@@ -84,21 +84,21 @@ void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const
   vbb->column_count = column_count;
 }
 
-void prepare_hash_prove(vbb_t* vbb) {
+void prepare_hash_sign(vbb_t* vbb) {
   if (vbb->full_size) {
     vbb->cache_idx = 0;
     return;
   }
-  recompute_hash_prove(vbb, 0, vbb->column_count);
+  recompute_hash_sign(vbb, 0, vbb->column_count);
 }
 
-void prepare_aes_prove(vbb_t* vbb) {
+void prepare_aes_sign(vbb_t* vbb) {
   if (vbb->full_size) {
     vbb->cache_idx = 0;
     return;
   }
   unsigned int len = vbb->row_count;
-  recompute_aes_prove(vbb, 0, len);
+  recompute_aes_sign(vbb, 0, len);
 }
 
 // TODO - refactor this stuff
@@ -417,7 +417,7 @@ const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
 
   assert(idx < lambda);
   if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
-    recompute_hash_prove(vbb, idx, vbb->column_count);
+    recompute_hash_sign(vbb, idx, vbb->column_count);
   }
 
   unsigned int offset = idx - vbb->cache_idx;
@@ -458,7 +458,7 @@ static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
     if (vbb->party == VERIFIER) {
       recompute_aes_verify(vbb, idx, vbb->row_count);
     } else {
-      recompute_aes_prove(vbb, idx, vbb->row_count);
+      recompute_aes_sign(vbb, idx, vbb->row_count);
     }
   }
 
