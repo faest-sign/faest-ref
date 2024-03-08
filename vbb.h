@@ -14,7 +14,7 @@ struct vbb_t {
   unsigned int row_count;
   unsigned int column_count;
   unsigned int cache_idx;
-  uint8_t* vole_V_cache;
+  uint8_t* vole_cache;
   uint8_t* vole_U;
   uint8_t* com_hash;
   const uint8_t* root_key;
@@ -26,7 +26,6 @@ struct vbb_t {
   // Verifier fields
   const uint8_t* sig;
   uint8_t* Dtilde_buf;
-  uint8_t* vole_Q_cache;
 };
 
 void init_vbb_prove(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,

@@ -139,6 +139,9 @@ void get_sd_com_rec(stream_vec_com_rec_t* sVecComRec, const uint8_t* iv, uint32_
   uint8_t* l_child = children;
   uint8_t* r_child = l_child + lambdaBytes;
 
+  // Assert we do not request the unknown leaf. (alternatively return zeroes)
+  assert(index != NumRec(depth, sVecComRec->b));
+
   size_t lo = 0;
   size_t leaf_count = (1 << depth);
   size_t hi = leaf_count - 1;
@@ -164,7 +167,6 @@ void get_sd_com_rec(stream_vec_com_rec_t* sVecComRec, const uint8_t* iv, uint32_
       }
     }
   }
-  // NOTE: we could have reaced the unknown leaf if malformed signature
   uint8_t* node = sVecComRec->nodes + lambdaBytes * i;
   ++i;
   

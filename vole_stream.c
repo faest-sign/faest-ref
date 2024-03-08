@@ -470,6 +470,9 @@ static void ReconstructVoleRMO(const uint8_t* iv, stream_vec_com_rec_t* sVecComR
 
   for (unsigned int i = 0; i < num_instances; i++) {
     unsigned int offset_index = i ^ offset;
+    if (offset_index == 0) {
+      continue;
+    }
     get_sd_com_rec(sVecComRec, iv, lambda, i, sd, com);
     prg(sd, iv, r, lambda, outLenBytes);
 
