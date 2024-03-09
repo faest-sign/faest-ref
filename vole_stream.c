@@ -114,9 +114,8 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
 }
 
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                             const faest_paramset_t* params, stream_vec_com_t* sVecCom, uint8_t* v,
-                             unsigned int start, unsigned int len, uint8_t* u, uint8_t* hcom,
-                             uint8_t* c) {
+                             const faest_paramset_t* params, uint8_t* v, unsigned int start,
+                             unsigned int len, uint8_t* u, uint8_t* hcom, uint8_t* c) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
@@ -136,6 +135,8 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
     H1_init(&h1_ctx, lambda);
     h = malloc(lambda_bytes * 2);
   }
+
+  stream_vec_com_t* sVecCom = calloc(tau, sizeof(stream_vec_com_t));
 
   unsigned int end        = start + len;
   unsigned int tree_start = 0;
@@ -188,13 +189,13 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
     free(h);
   }
 
+  free(sVecCom);
   free(expanded_keys);
   free(path);
 }
 
 void vole_commit_u_hcom_c(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                          const faest_paramset_t* params, uint8_t* hcom, stream_vec_com_t* sVecCom,
-                          uint8_t* c, uint8_t* u) {
+                          const faest_paramset_t* params, uint8_t* hcom, uint8_t* c, uint8_t* u) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
@@ -211,6 +212,8 @@ void vole_commit_u_hcom_c(const uint8_t* rootKey, const uint8_t* iv, unsigned in
   H1_init(&h1_ctx, lambda);
   uint8_t* h    = malloc(lambda_bytes * 2);
   uint8_t* path = malloc(lambda_bytes * max_depth);
+
+  stream_vec_com_t* sVecCom = calloc(tau, sizeof(stream_vec_com_t));
 
   for (unsigned int i = 0; i < tau; i++) {
     unsigned int depth = i < tau0 ? k0 : k1;
@@ -234,14 +237,14 @@ void vole_commit_u_hcom_c(const uint8_t* rootKey, const uint8_t* iv, unsigned in
   }
 
   H1_final(&h1_ctx, hcom, lambda_bytes * 2);
+  free(sVecCom);
   free(expanded_keys);
   free(h);
   free(path);
 }
 
 void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int start,
-                             unsigned int len, const faest_paramset_t* params,
-                             stream_vec_com_t* sVecCom, uint8_t* v) {
+                             unsigned int len, const faest_paramset_t* params, uint8_t* v) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ell_hat =
@@ -256,8 +259,8 @@ void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
   uint8_t* expanded_keys = malloc(tau * lambda_bytes);
   prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
 
-  uint8_t* path = malloc(lambda_bytes * max_depth);
-
+  uint8_t* path             = malloc(lambda_bytes * max_depth);
+  stream_vec_com_t* sVecCom = calloc(tau, sizeof(stream_vec_com_t));
   memset(v, 0, ((size_t)len) * (size_t)lambda_bytes);
 
   unsigned int col_idx = 0;
@@ -271,7 +274,7 @@ void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 
     col_idx += depth;
   }
-
+  free(sVecCom);
   free(expanded_keys);
   free(path);
 }
@@ -454,8 +457,8 @@ void vole_reconstruct_hcom(const uint8_t* iv, const uint8_t* chall, const uint8_
 }
 
 static void ReconstructVoleRMO(const uint8_t* iv, stream_vec_com_rec_t* sVecComRec,
-                             unsigned int lambda, unsigned int outLenBytes, uint8_t* q,
-                             unsigned int start, unsigned int len, unsigned int col_idx) {
+                               unsigned int lambda, unsigned int outLenBytes, uint8_t* q,
+                               unsigned int start, unsigned int len, unsigned int col_idx) {
   unsigned int depth               = sVecComRec->depth;
   const unsigned int num_instances = 1 << depth;
   const unsigned int lambda_bytes  = lambda / 8;
