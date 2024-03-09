@@ -16,7 +16,7 @@ conf_data = configuration_data()
 
 # compile flags and defines
 flags = []
-c_flags = []
+c_flags = ['-O2']
 cpp_flags = []
 defines = []
 
@@ -451,6 +451,7 @@ faest_sources = files(
   'vbb.c',
   'vole_stream.c',
   'vc_stream.c',
+  'vk_box.c',
 )
 
 # header files to install

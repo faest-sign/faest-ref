@@ -14,6 +14,8 @@
 #include "parameters.h"
 #include "utils.h"
 
+#define ACCESS_PATTERN_TEST 0
+
 static void recompute_hash_sign(vbb_t* vbb, unsigned int start, unsigned int len) {
   const unsigned int lambda = vbb->params->faest_param.lambda;
   const unsigned int ell    = vbb->params->faest_param.l;
@@ -29,7 +31,9 @@ static void recompute_aes_sign(vbb_t* vbb, unsigned int start, unsigned int len)
   const unsigned int lambda = vbb->params->faest_param.lambda;
   const unsigned int ell    = vbb->params->faest_param.l;
 
-  if (len >= ell + lambda) {
+  if(start > ell){
+    start = start - len;
+  }else if (len >= ell + lambda) {
     start = 0;
   } else if (start + len > ell + lambda) {
     start = ell + lambda - len;
@@ -61,6 +65,11 @@ void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const 
   vbb->vole_cache   = calloc(row_count, lambda_bytes);
   vbb->column_count = column_count;
 
+  // Setup vk_buf if we are not in an EM variant
+  if(vbb->params->faest_paramid < 7){
+    vbb->vk_buf = malloc(lambda_bytes);
+  }
+
   if (vbb->full_size) {
     vbb->v_buf = malloc(lambda_bytes);
     partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, vbb->params, vbb->vole_cache, 0, lambda,
@@ -85,6 +94,7 @@ void prepare_aes_sign(vbb_t* vbb) {
     return;
   }
   recompute_aes_sign(vbb, 0, vbb->row_count);
+  setup_Vk_cache(vbb);
 }
 
 void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8_t* sig_pdec,
@@ -423,6 +433,13 @@ static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
   unsigned int ellhat       = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
 
+#if ACCESS_PATTERN_TEST
+  // Store the idx value in a file
+  FILE* file = fopen("access_pattern.txt", "a");
+  fprintf(file, "%d\n", idx);
+  fclose(file);
+#endif
+
   if (vbb->full_size) {
     memset(vbb->v_buf, 0, lambda_bytes);
     // Transpose on the fly into v_buf
@@ -475,6 +492,49 @@ void clean_vbb(vbb_t* vbb) {
   if (vbb->party == VERIFIER) {
     free(vbb->Dtilde_buf);
   } else {
+    if(vbb->params->faest_paramid < 7){
+      free(vbb->vk_buf);
+      if(!vbb->full_size){
+        free(vbb->vk_OLE_cache);
+      }
+    }
     free(vbb->vole_U);
   }
+}
+
+// V_k cache
+void setup_Vk_cache(vbb_t* vbb) {
+  if(vbb->params->faest_paramid > 6 ){
+    return;
+  }
+  unsigned int lambda_bytes = vbb->params->faest_param.lambda / 8;
+  vbb->vk_OLE_cache         = calloc(vbb->params->faest_param.Lke, lambda_bytes);
+
+  for (unsigned int i = 0; i < vbb->params->faest_param.Lke; i++) {
+    unsigned int offset = i * lambda_bytes;
+    memcpy(vbb->vk_OLE_cache + offset, get_vole_aes(vbb, i), lambda_bytes);
+  }
+}
+
+uint8_t* get_V_k(vbb_t* vbb, unsigned int idx) {
+  if (vbb->full_size) {
+    return get_vole_aes(vbb, idx);
+  } else {
+    assert(idx < vbb->params->faest_param.Lke);
+    unsigned int offset = idx * (vbb->params->faest_param.lambda / 8);
+
+    return (vbb->vk_OLE_cache + offset);
+  }
+}
+
+bf128_t* get_V_k_128(vbb_t* vbb, unsigned int idx) {
+  return (bf128_t*)get_V_k(vbb, idx);
+}
+
+bf192_t* get_V_k_192(vbb_t* vbb, unsigned int idx) {
+  return (bf192_t*)get_V_k(vbb, idx);
+}
+
+bf256_t* get_V_k_256(vbb_t* vbb, unsigned int idx) {
+  return (bf256_t*)get_V_k(vbb, idx);
 }

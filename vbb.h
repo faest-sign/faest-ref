@@ -34,6 +34,9 @@ struct vbb_t {
   // Optimized parameters
   bool full_size;
   uint8_t* v_buf;
+  // Vk_box
+  uint8_t* vk_buf;
+  uint8_t* vk_OLE_cache;
 };
 
 void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
@@ -57,5 +60,11 @@ void prepare_hash_verify(vbb_t* vbb);
 const uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx);
 void prepare_aes_verify(vbb_t* vbb);
 const uint8_t* get_dtilde(vbb_t* vbb, unsigned int idx);
+
+// Vk_box
+bf128_t* get_V_k_128(vbb_t* vbb, unsigned int idx);
+bf192_t* get_V_k_192(vbb_t* vbb, unsigned int idx);
+bf256_t* get_V_k_256(vbb_t* vbb, unsigned int idx);
+void setup_Vk_cache(vbb_t* vbb);
 
 #endif

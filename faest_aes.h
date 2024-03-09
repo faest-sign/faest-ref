@@ -11,6 +11,7 @@
 #include "instances.h"
 #include "aes.h"
 #include "vbb.h"
+#include "vk_box.h"
 
 FAEST_BEGIN_C_DECL
 

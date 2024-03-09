@@ -70,6 +70,7 @@ typedef struct {
 // Placed after bitfield types
 #include "vbb.h"
 
+
 #define BF128_NUM_BYTES (128 / 8)
 #define BF192_NUM_BYTES (192 / 8)
 #define BF256_NUM_BYTES (256 / 8)
@@ -379,6 +380,9 @@ bf192_t bf192_sum_poly_vbb(vbb_t* vbb, unsigned int offset);
 bf192_t bf192_byte_combine_vbb(vbb_t* vbb, unsigned int offset);
 bf128_t bf128_sum_poly_vbb(vbb_t* vbb, unsigned int offset);
 bf128_t bf128_byte_combine_vbb(vbb_t* vbb, unsigned int offset);
+
+#include "vk_box.h"
+bf128_t bf128_byte_combine_vk(vbb_t* vbb, unsigned int offset);
 FAEST_END_C_DECL
 
 #endif
