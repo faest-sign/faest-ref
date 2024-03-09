@@ -383,6 +383,8 @@ bf128_t bf128_byte_combine_vbb(vbb_t* vbb, unsigned int offset);
 
 #include "vk_box.h"
 bf128_t bf128_byte_combine_vk(vbb_t* vbb, unsigned int offset);
+bf192_t bf192_byte_combine_vk(vbb_t* vbb, unsigned int offset);
+bf256_t bf256_byte_combine_vk(vbb_t* vbb, unsigned int offset);
 FAEST_END_C_DECL
 
 #endif

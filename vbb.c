@@ -31,9 +31,9 @@ static void recompute_aes_sign(vbb_t* vbb, unsigned int start, unsigned int len)
   const unsigned int lambda = vbb->params->faest_param.lambda;
   const unsigned int ell    = vbb->params->faest_param.l;
 
-  if(start > ell){
+  if (start > ell) {
     start = start - len;
-  }else if (len >= ell + lambda) {
+  } else if (len >= ell + lambda) {
     start = 0;
   } else if (start + len > ell + lambda) {
     start = ell + lambda - len;
@@ -66,7 +66,7 @@ void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const 
   vbb->column_count = column_count;
 
   // Setup vk_buf if we are not in an EM variant
-  if(vbb->params->faest_paramid < 7){
+  if (vbb->params->faest_paramid < 7) {
     vbb->vk_buf = malloc(lambda_bytes);
   }
 
@@ -406,7 +406,7 @@ const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
   if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
     recompute_hash_sign(vbb, idx, vbb->column_count);
   }
-  const unsigned int offset        = idx - vbb->cache_idx;
+  const unsigned int offset = idx - vbb->cache_idx;
 
   return vbb->vole_cache + offset * ell_hat_bytes;
 }
@@ -492,9 +492,9 @@ void clean_vbb(vbb_t* vbb) {
   if (vbb->party == VERIFIER) {
     free(vbb->Dtilde_buf);
   } else {
-    if(vbb->params->faest_paramid < 7){
+    if (vbb->params->faest_paramid < 7) {
       free(vbb->vk_buf);
-      if(!vbb->full_size){
+      if (!vbb->full_size) {
         free(vbb->vk_OLE_cache);
       }
     }
@@ -504,7 +504,7 @@ void clean_vbb(vbb_t* vbb) {
 
 // V_k cache
 void setup_Vk_cache(vbb_t* vbb) {
-  if(vbb->params->faest_paramid > 6 ){
+  if (vbb->params->faest_paramid > 6) {
     return;
   }
   unsigned int lambda_bytes = vbb->params->faest_param.lambda / 8;
@@ -517,14 +517,12 @@ void setup_Vk_cache(vbb_t* vbb) {
 }
 
 uint8_t* get_V_k(vbb_t* vbb, unsigned int idx) {
+  assert(idx < vbb->params->faest_param.Lke);
   if (vbb->full_size) {
     return get_vole_aes(vbb, idx);
-  } else {
-    assert(idx < vbb->params->faest_param.Lke);
-    unsigned int offset = idx * (vbb->params->faest_param.lambda / 8);
-
-    return (vbb->vk_OLE_cache + offset);
   }
+  unsigned int offset = idx * (vbb->params->faest_param.lambda / 8);
+  return (vbb->vk_OLE_cache + offset);
 }
 
 bf128_t* get_V_k_128(vbb_t* vbb, unsigned int idx) {
