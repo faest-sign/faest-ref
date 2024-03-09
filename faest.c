@@ -16,8 +16,10 @@
 #include "universal_hashing.h"
 #include "vbb.h"
 
+// TODO remove includes
 #include <string.h>
 #include <stdio.h>
+#include "util.h"
 
 // helpers to compute position in signature (sign)
 

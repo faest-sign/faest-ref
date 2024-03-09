@@ -391,12 +391,12 @@ const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
   const unsigned int ell           = vbb->params->faest_param.l;
   const unsigned int ell_hat       = ell + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-  const unsigned int offset        = idx - vbb->cache_idx;
 
   assert(idx < lambda);
   if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
     recompute_hash_sign(vbb, idx, vbb->column_count);
   }
+  const unsigned int offset        = idx - vbb->cache_idx;
 
   return vbb->vole_cache + offset * ell_hat_bytes;
 }
