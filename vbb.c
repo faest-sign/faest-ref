@@ -334,6 +334,11 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* param
   vbb->vole_cache   = calloc(row_count, lambda_bytes);
   vbb->column_count = column_count;
   vbb->Dtilde_buf   = malloc(lambda_bytes + UNIVERSAL_HASH_B);
+  
+  // Setup vk_buf if we are not in an EM variant
+  if (vbb->params->faest_paramid < 7) {
+    vbb->vk_buf = malloc(lambda_bytes);
+  }
 
   const uint8_t* chall3 = dsignature_chall_3(vbb->sig, vbb->params);
   const uint8_t* pdec[MAX_TAU];
@@ -388,6 +393,7 @@ const uint8_t* get_dtilde(vbb_t* vbb, unsigned int idx) {
 void prepare_aes_verify(vbb_t* vbb) {
   if (!vbb->full_size) {
     recompute_aes_verify(vbb, 0, vbb->row_count);
+    setup_Vk_cache(vbb);
     return;
   }
 

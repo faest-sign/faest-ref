@@ -1684,11 +1684,11 @@ static void aes_key_schedule_constraints_Mkey_0_256(const uint8_t* w, vbb_t* vbb
 }
 
 static void aes_key_schedule_constraints_Mkey_1_256(vbb_t* vbb, const uint8_t* delta,
-                                                    zk_hash_256_ctx* b0_ctx, bf256_t* qk) {
+                                                    zk_hash_256_ctx* b0_ctx) {
   // Step: 19..20
-  aes_key_schedule_forward_256_vbb(vbb, qk);
+  //aes_key_schedule_forward_256_vbb(vbb, qk);
   bf256_t q_w_dash[FAEST_256F_Ske * 8];
-  aes_key_schedule_backward_256_vbb(vbb, qk, 0, 1, delta, q_w_dash);
+  aes_key_schedule_backward_256_vbb_vk(vbb, 0, 1, delta, q_w_dash);
 
   const bf256_t bf_delta         = bf256_load(delta);
   const bf256_t bf_delta_squared = bf256_mul(bf_delta, bf_delta);
@@ -1702,10 +1702,10 @@ static void aes_key_schedule_constraints_Mkey_1_256(vbb_t* vbb, const uint8_t* d
     for (unsigned int r = 0; r <= 3; r++) {
       // Step: 25..26
       if (rotate_word) {
-        bf_q_hat_k[(r + 3) % 4] = bf256_byte_combine(qk + ((iwd + 8 * r)));
+        bf_q_hat_k[(r + 3) % 4] = bf256_byte_combine_vk(vbb, ((iwd + 8 * r)));
         bf_q_hat_w_dash[r]      = bf256_byte_combine(q_w_dash + ((32 * j + 8 * r)));
       } else {
-        bf_q_hat_k[r]      = bf256_byte_combine(qk + ((iwd + 8 * r)));
+        bf_q_hat_k[r]      = bf256_byte_combine_vk(vbb, ((iwd + 8 * r)));
         bf_q_hat_w_dash[r] = bf256_byte_combine(q_w_dash + ((32 * j + 8 * r)));
       }
     }
@@ -2056,13 +2056,13 @@ static void aes_enc_constraints_Mkey_0_256(const uint8_t* in, const uint8_t* out
 }
 
 static void aes_enc_constraints_Mkey_1_256(const uint8_t* in, const uint8_t* out, vbb_t* vbb,
-                                           unsigned int offset, const bf256_t* qk,
-                                           const uint8_t* delta, zk_hash_256_ctx* b0_ctx) {
+                                           unsigned int offset, const uint8_t* delta, 
+                                           zk_hash_256_ctx* b0_ctx) {
   // Step: 11..12
   bf256_t qs[FAEST_256F_Senc];
   bf256_t qs_dash[FAEST_256F_Senc];
-  aes_enc_forward_256_vbb(vbb, offset, qk, in, 0, 1, delta, qs);
-  aes_enc_backward_256_vbb(vbb, offset, qk, 0, 1, delta, out, qs_dash);
+  aes_enc_forward_256_vbb_vk(vbb, offset, in, 0, 1, delta, qs);
+  aes_enc_backward_256_vbb_linear_access(vbb, offset, 0, 1, delta, out, qs_dash);
 
   // Step: 13..14
   bf256_t minus_part = bf256_mul(bf256_load(delta), bf256_load(delta));
@@ -2117,18 +2117,18 @@ static uint8_t* aes_verify_256(vbb_t* vbb, const uint8_t* chall_2,
   // do nothing
 
   // Step: 13, 21
-  bf256_t* qk = faest_aligned_alloc(BF256_ALIGN, sizeof(bf256_t) * ((FAEST_256F_R + 1) * 128));
+  //bf256_t* qk = faest_aligned_alloc(BF256_ALIGN, sizeof(bf256_t) * ((FAEST_256F_R + 1) * 128));
   zk_hash_256_ctx b0_ctx;
 
   zk_hash_256_init(&b0_ctx, chall_2);
-  aes_key_schedule_constraints_Mkey_1_256(vbb, delta, &b0_ctx, qk);
+  aes_key_schedule_constraints_Mkey_1_256(vbb, delta, &b0_ctx);
 
   // Step: 14
-  aes_enc_constraints_Mkey_1_256(in, out, vbb, FAEST_256F_Lke, qk, delta, &b0_ctx);
+  aes_enc_constraints_Mkey_1_256(in, out, vbb, FAEST_256F_Lke, delta, &b0_ctx);
   // Step: 18
-  aes_enc_constraints_Mkey_1_256(in + 16, out + 16, vbb, FAEST_256F_Lke + FAEST_256F_Lenc, qk,
+  aes_enc_constraints_Mkey_1_256(in + 16, out + 16, vbb, FAEST_256F_Lke + FAEST_256F_Lenc,
                                  delta, &b0_ctx);
-  faest_aligned_free(qk);
+  //faest_aligned_free(qk);
 
   // Step: 20, 21
   uint8_t* q_tilde = malloc(FAEST_256F_LAMBDA / 8);
