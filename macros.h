@@ -193,10 +193,11 @@
 #endif
 
 /* vector_size attribute */
-#if GNUC_CHECK(4, 8) || __has_attribute(vector_size)
+#define USE_VECTORIZATION 0
+#if USE_VECTORIZATION && (GNUC_CHECK(4, 8) || __has_attribute(vector_size))
 #define HAVE_ATTR_VECTOR_SIZE
 #define ATTR_VECTOR_SIZE(s) __attribute__((vector_size(s)))
-#elif __has_attribute(__vector_size__)
+#elif USE_VECTORIZATION && __has_attribute(__vector_size__)
 #define HAVE_ATTR_VECTOR_SIZE
 #define ATTR_VECTOR_SIZE(s) __attribute__((__vector_size__(s)))
 #else

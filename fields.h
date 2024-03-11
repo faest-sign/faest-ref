@@ -22,7 +22,6 @@ typedef uint64_t bf64_t;
 typedef uint64_t bf128_t ATTR_VECTOR_SIZE(16);
 typedef uint64_t bf192_t ATTR_VECTOR_SIZE(32);
 typedef uint64_t bf256_t ATTR_VECTOR_SIZE(32);
-#include "vbb.h"
 
 #define BF128_ALIGN 16
 #define BF192_ALIGN 32
@@ -35,6 +34,7 @@ typedef uint64_t bf256_t ATTR_VECTOR_SIZE(32);
 #define BF256C(x0, x1, x2, x3)                                                                     \
   { x0, x1, x2, x3 }
 #else
+
 #define BF_VALUE(v, i) ((v).values[i])
 
 typedef struct {
@@ -66,6 +66,9 @@ typedef struct {
 #define BF192_ALIGN 16
 #define BF256_ALIGN 32
 #endif
+
+// Placed after bitfield types
+#include "vbb.h"
 
 #define BF128_NUM_BYTES (128 / 8)
 #define BF192_NUM_BYTES (192 / 8)

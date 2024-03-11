@@ -115,9 +115,9 @@ bf128_t bf128_byte_combine(const bf128_t* x) {
 }
 
 bf128_t bf128_byte_combine_vbb(vbb_t* vbb, unsigned int offset) {
-  bf128_t bf_out = *get_vole_v_prove_128(vbb, offset);
+  bf128_t bf_out = *get_vole_aes_128(vbb, offset);
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf128_add(bf_out, bf128_mul(*get_vole_v_prove_128(vbb, offset + i), bf128_alpha[i - 1]));
+    bf_out = bf128_add(bf_out, bf128_mul(*get_vole_aes_128(vbb, offset + i), bf128_alpha[i - 1]));
   }
   return bf_out;
 }
@@ -235,9 +235,9 @@ bf128_t bf128_sum_poly(const bf128_t* xs) {
 }
 
 bf128_t bf128_sum_poly_vbb(vbb_t* vbb, unsigned int offset) {
-  bf128_t ret = *get_vole_v_prove_128(vbb, offset + 128 - 1);
+  bf128_t ret = *get_vole_aes_128(vbb, offset + 128 - 1);
   for (size_t i = 1; i < 128; ++i) {
-    ret = bf128_add(bf128_dbl(ret), *get_vole_v_prove_128(vbb, offset + 128 - 1 - i));
+    ret = bf128_add(bf128_dbl(ret), *get_vole_aes_128(vbb, offset + 128 - 1 - i));
   }
   return ret;
 }
@@ -277,9 +277,9 @@ bf192_t bf192_byte_combine(const bf192_t* x) {
 }
 
 bf192_t bf192_byte_combine_vbb(vbb_t* vbb, unsigned int offset) {
-  bf192_t bf_out = *get_vole_v_prove_192(vbb, offset);
+  bf192_t bf_out = *get_vole_aes_192(vbb, offset);
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf192_add(bf_out, bf192_mul(*get_vole_v_prove_192(vbb, offset + i), bf192_alpha[i - 1]));
+    bf_out = bf192_add(bf_out, bf192_mul(*get_vole_aes_192(vbb, offset + i), bf192_alpha[i - 1]));
   }
   return bf_out;
 }
@@ -403,9 +403,9 @@ bf192_t bf192_sum_poly(const bf192_t* xs) {
 }
 
 bf192_t bf192_sum_poly_vbb(vbb_t* vbb, unsigned int offset) {
-  bf192_t ret = *get_vole_v_prove_192(vbb, offset + 192 - 1);
+  bf192_t ret = *get_vole_aes_192(vbb, offset + 192 - 1);
   for (size_t i = 1; i < 192; ++i) {
-    ret = bf192_add(bf192_dbl(ret), *get_vole_v_prove_192(vbb, offset + 192 - 1 - i));
+    ret = bf192_add(bf192_dbl(ret), *get_vole_aes_192(vbb, offset + 192 - 1 - i));
   }
   return ret;
 }
@@ -452,9 +452,9 @@ bf256_t bf256_byte_combine(const bf256_t* x) {
 }
 
 bf256_t bf256_byte_combine_vbb(vbb_t* vbb, unsigned int offset) {
-  bf256_t bf_out = *get_vole_v_prove_256(vbb, offset);
+  bf256_t bf_out = *get_vole_aes_256(vbb, offset);
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf256_add(bf_out, bf256_mul(*get_vole_v_prove_256(vbb, offset + i), bf256_alpha[i - 1]));
+    bf_out = bf256_add(bf_out, bf256_mul(*get_vole_aes_256(vbb, offset + i), bf256_alpha[i - 1]));
   }
   return bf_out;
 }
@@ -594,9 +594,9 @@ bf256_t bf256_sum_poly(const bf256_t* xs) {
 }
 
 bf256_t bf256_sum_poly_vbb(vbb_t* vbb, unsigned int offset) {
-  bf256_t ret = *get_vole_v_prove_256(vbb, offset + 256 - 1);
+  bf256_t ret = *get_vole_aes_256(vbb, offset + 256 - 1);
   for (size_t i = 1; i < 256; ++i) {
-    ret = bf256_add(bf256_dbl(ret), *get_vole_v_prove_256(vbb, offset + 256 - 1 - i));
+    ret = bf256_add(bf256_dbl(ret), *get_vole_aes_256(vbb, offset + 256 - 1 - i));
   }
   return ret;
 }
