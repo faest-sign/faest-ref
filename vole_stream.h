@@ -10,9 +10,6 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
                              const faest_paramset_t* params, uint8_t* v, unsigned int start,
                              unsigned int len, uint8_t* u, uint8_t* hcom, uint8_t* c);
 
-void vole_commit_u_hcom_c(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                          const faest_paramset_t* params, uint8_t* hcom, uint8_t* c, uint8_t* u);
-
 void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int start,
                              unsigned int len, const faest_paramset_t* params, uint8_t* v);
 

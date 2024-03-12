@@ -59,16 +59,13 @@ void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const 
   vbb->vole_U       = malloc(ellhat_bytes);
   vbb->row_count    = row_count;
   vbb->vole_cache   = calloc(row_count, lambda_bytes);
+  vbb->v_buf = malloc(lambda_bytes);
   vbb->column_count = column_count;
 
-  if (vbb->full_size) {
-    vbb->v_buf = malloc(lambda_bytes);
-    partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, vbb->params, vbb->vole_cache, 0, lambda,
+  uint8_t* compute_v = vbb->full_size ? vbb->vole_cache : NULL;
+
+  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, vbb->params, compute_v, 0, lambda,
                             vbb->vole_U, vbb->com_hash, c);
-  } else {
-    vole_commit_u_hcom_c(vbb->root_key, vbb->iv, ellhat, vbb->params, vbb->com_hash, c,
-                         vbb->vole_U);
-  }
 }
 
 void prepare_hash_sign(vbb_t* vbb) {
