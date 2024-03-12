@@ -14,14 +14,14 @@
 #include "parameters.h"
 #include "utils.h"
 
-static void recompute_hash_sign(vbb_t* vbb, unsigned int start, unsigned int len) {
+static void recompute_hash_sign(vbb_t* vbb, unsigned int start, unsigned int end) {
   const unsigned int lambda = vbb->params->faest_param.lambda;
   const unsigned int ell    = vbb->params->faest_param.l;
   const unsigned int ellhat = ell + lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  unsigned int amount       = MIN(len, vbb->params->faest_param.lambda - start);
+  unsigned int capped_end   = MIN(end, vbb->params->faest_param.lambda);
 
   partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat,
-                          start, amount,
+                          start, capped_end,
                           vbb->vole_cache,  NULL, NULL, NULL,
                           vbb->params);
   vbb->cache_idx = start;
@@ -395,7 +395,7 @@ const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
 
   assert(idx < lambda);
   if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
-    recompute_hash_sign(vbb, idx, vbb->column_count);
+    recompute_hash_sign(vbb, idx, idx+vbb->column_count);
   }
   const unsigned int offset        = idx - vbb->cache_idx;
 

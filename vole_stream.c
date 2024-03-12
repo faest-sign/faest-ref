@@ -114,7 +114,7 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
 }
 
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                             unsigned int start, unsigned int len,
+                             unsigned int start, unsigned int end,
                              uint8_t* v, uint8_t* u, uint8_t* hcom, uint8_t* c,
                              const faest_paramset_t* params) {
   unsigned int lambda       = params->faest_param.lambda;
@@ -139,7 +139,6 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 
   stream_vec_com_t* sVecCom = calloc(tau, sizeof(stream_vec_com_t));
 
-  unsigned int end        = start + len;
   unsigned int tree_start = 0;
   for (unsigned int i = 0; i < tau; i++) {
     unsigned int depth = i < tau0 ? k0 : k1;

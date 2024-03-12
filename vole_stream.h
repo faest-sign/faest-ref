@@ -7,7 +7,7 @@
 FAEST_BEGIN_C_DECL
 
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                             unsigned int start, unsigned int len,
+                             unsigned int start, unsigned int end,
                              uint8_t* v, uint8_t* u, uint8_t* hcom, uint8_t* c,
                              const faest_paramset_t* params);
 
