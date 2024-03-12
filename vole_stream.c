@@ -114,7 +114,7 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
 }
 
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                             unsigned int start, unsigned int end,
+                             unsigned int chunk_start, unsigned int chunk_end,
                              uint8_t* v, uint8_t* u, uint8_t* hcom, uint8_t* c,
                              const faest_paramset_t* params) {
   unsigned int lambda       = params->faest_param.lambda;
@@ -139,56 +139,48 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 
   stream_vec_com_t* sVecCom = calloc(tau, sizeof(stream_vec_com_t));
 
-  unsigned int tree_start = 0;
+  unsigned int tree_depth_sum = 0;
   for (unsigned int i = 0; i < tau; i++) {
-    unsigned int depth = i < tau0 ? k0 : k1;
+    const bool is_first_tree = (i == 0);
+    unsigned int tree_depth = i < tau0 ? k0 : k1;
+    if (tree_depth_sum >= chunk_end) break;
 
-    if (tree_start + depth > start) {
-      stream_vector_commitment(expanded_keys + i * lambda_bytes, lambda, &sVecCom[i], depth);
+    unsigned int lbegin = (tree_depth_sum < chunk_start) ? chunk_start - tree_depth_sum : 0;
+    unsigned int lend  = (tree_depth_sum < chunk_end) ? chunk_end - tree_depth_sum : 0;
+    unsigned int v_idx = (tree_depth_sum > chunk_start) ? tree_depth_sum - chunk_start : 0;
 
-      unsigned int lbegin = 0;
-      if (start > tree_start) {
-        lbegin = start - tree_start;
-      }
-
-      unsigned int lend  = MIN(depth, end - tree_start);
-      unsigned int v_idx = 0;
-      if (tree_start > start) {
-        v_idx = tree_start - start;
-      }
-
-      // This is for optimization when len = ell_hat
-      uint8_t* u_ptr = NULL;
-      if (u != NULL && i == 0) {
-        u_ptr = u;
-      } else if (c != NULL && i != 0) {
-        u_ptr = c + (i - 1) * ellhat_bytes;
-      }
-
-      uint8_t* v_ptr = NULL;
-      if (v != NULL) {
-        v_ptr = v + ellhat_bytes * v_idx;
-      }
-
-      sVecCom[i].path = path;
-      ConstructVoleCMO(iv, &sVecCom[i], lambda, ellhat_bytes, u_ptr, v_ptr, h,
-                       lbegin, lend);
-      sVecCom[i].path = NULL;
-
-      if (c != NULL && u != NULL && i >= 1) {
-        xor_u8_array(u, u_ptr, u_ptr, ellhat_bytes);
-      }
-
-      if (hcom != NULL) {
-        H1_update(&h1_ctx, h, lambda_bytes * 2);
-      }
+    tree_depth_sum += tree_depth;
+    if (tree_depth_sum < chunk_start) continue;
+    
+    // At this point chunk_end > tree_depth_sum > chunk_start
+    stream_vector_commitment(expanded_keys + i * lambda_bytes, lambda, &sVecCom[i], tree_depth);
+    
+    uint8_t* u_ptr = NULL;
+    if (u != NULL) {
+      u_ptr = is_first_tree ? u : c + (i - 1) * ellhat_bytes;
     }
 
-    tree_start += depth;
-    if (tree_start >= end) {
-      break;
+    uint8_t* v_ptr = NULL;
+    if (v != NULL) {
+      v_ptr = v + ellhat_bytes * v_idx;
+    }
+
+    sVecCom[i].path = path;
+    ConstructVoleCMO(iv, &sVecCom[i], lambda, ellhat_bytes, u_ptr, v_ptr, h,
+                      lbegin, lend);
+    sVecCom[i].path = NULL;
+
+    // c != NULL && u != NULL && hcom != NULL can all be checked by
+    //  "mode of operation" of this function. I.e. either V or u, hcom, c.
+    if (c != NULL && u != NULL && !is_first_tree) {
+      xor_u8_array(u, u_ptr, u_ptr, ellhat_bytes);
+    }
+
+    if (hcom != NULL) {
+      H1_update(&h1_ctx, h, lambda_bytes * 2);
     }
   }
+
   if (hcom != NULL) {
     H1_final(&h1_ctx, hcom, lambda_bytes * 2);
     free(h);

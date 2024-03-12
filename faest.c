@@ -281,7 +281,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
 
   vbb_t vbb;
   // TODO: find a solution for setting argument (dynamic or static)?
-  init_vbb_sign(&vbb, ell_hat, rootkey, signature_iv(sig, params), signature_c(sig, 0, params),
+  init_vbb_sign(&vbb, ell_hat/2, rootkey, signature_iv(sig, params), signature_c(sig, 0, params),
                  params);
 
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
