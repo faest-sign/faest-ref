@@ -102,8 +102,8 @@ static void ConstructVoleCMO(const uint8_t* iv, vec_com_t* vec_com, unsigned int
 
 // NOTE - Assumes v is cleared (initially)!!
 static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int len,
-                             vec_com_t* vec_com, unsigned int lambda,
-                             unsigned int outLenBytes, uint8_t* v, unsigned int offset) {
+                             vec_com_t* vec_com, unsigned int lambda, unsigned int outLenBytes,
+                             uint8_t* v, unsigned int offset) {
   unsigned int depth               = vec_com->depth;
   const unsigned int num_instances = 1 << depth;
   const unsigned int lambda_bytes  = lambda / 8;
@@ -233,7 +233,7 @@ void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
   uint8_t* expanded_keys = malloc(tau * lambda_bytes);
   prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
 
-  uint8_t* path             = malloc(lambda_bytes * max_depth);
+  uint8_t* path = malloc(lambda_bytes * max_depth);
   vec_com_t vec_com;
   memset(v, 0, ((size_t)len) * (size_t)lambda_bytes);
 
@@ -253,9 +253,9 @@ void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 }
 
 // reconstruction
-static void ReconstructVoleCMO(const uint8_t* iv, vec_com_rec_t* vec_com_rec,
-                               unsigned int lambda, unsigned int outLenBytes, uint8_t* q,
-                               uint8_t* h, unsigned int begin, unsigned int end) {
+static void ReconstructVoleCMO(const uint8_t* iv, vec_com_rec_t* vec_com_rec, unsigned int lambda,
+                               unsigned int outLenBytes, uint8_t* q, uint8_t* h, unsigned int begin,
+                               unsigned int end) {
   unsigned int depth               = vec_com_rec->depth;
   const unsigned int num_instances = 1 << depth;
   const unsigned int lambda_bytes  = lambda / 8;
@@ -434,9 +434,9 @@ void vole_reconstruct_hcom(const uint8_t* iv, const uint8_t* chall, const uint8_
   H1_final(&h1_ctx, hcom, lambda_bytes * 2);
 }
 
-static void ReconstructVoleRMO(const uint8_t* iv, vec_com_rec_t* vec_com_rec,
-                               unsigned int lambda, unsigned int outLenBytes, uint8_t* q,
-                               unsigned int start, unsigned int len, unsigned int col_idx) {
+static void ReconstructVoleRMO(const uint8_t* iv, vec_com_rec_t* vec_com_rec, unsigned int lambda,
+                               unsigned int outLenBytes, uint8_t* q, unsigned int start,
+                               unsigned int len, unsigned int col_idx) {
   unsigned int depth               = vec_com_rec->depth;
   const unsigned int num_instances = 1 << depth;
   const unsigned int lambda_bytes  = lambda / 8;

@@ -37,7 +37,7 @@ struct vbb_t {
 };
 
 void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
-                    uint8_t* c, const faest_paramset_t* params);
+                   uint8_t* c, const faest_paramset_t* params);
 void clean_vbb(vbb_t* vbb);
 void prepare_hash_sign(vbb_t* vbb);
 void prepare_aes_sign(vbb_t* vbb);
