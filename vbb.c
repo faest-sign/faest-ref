@@ -94,10 +94,9 @@ void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8
   uint8_t* expanded_keys          = malloc(tau * lambda_bytes);
   prg(vbb->root_key, vbb->iv, expanded_keys, lambda, lambda_bytes * tau);
 
-  vec_com_t* vec_com = calloc(vbb->params->faest_param.tau, sizeof(vec_com_t));
-  vector_commitment(expanded_keys + lambda_bytes * idx, lambda, &vec_com[idx], depth);
-  vector_open(&vec_com[idx], s_, sig_pdec, sig_com, depth, vbb->iv, lambda);
-  free(vec_com);
+  vec_com_t vec_com;
+  vector_commitment(expanded_keys + lambda_bytes * idx, lambda, &vec_com, depth);
+  vector_open(&vec_com, s_, sig_pdec, sig_com, depth, vbb->iv, lambda);
   free(expanded_keys);
 }
 
