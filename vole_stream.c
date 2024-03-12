@@ -114,8 +114,9 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
 }
 
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                             const faest_paramset_t* params, uint8_t* v, unsigned int start,
-                             unsigned int len, uint8_t* u, uint8_t* hcom, uint8_t* c) {
+                             unsigned int start, unsigned int len,
+                             uint8_t* v, uint8_t* u, uint8_t* hcom, uint8_t* c,
+                             const faest_paramset_t* params) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;

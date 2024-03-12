@@ -20,8 +20,10 @@ static void recompute_hash_sign(vbb_t* vbb, unsigned int start, unsigned int len
   const unsigned int ellhat = ell + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   unsigned int amount       = MIN(len, vbb->params->faest_param.lambda - start);
 
-  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, vbb->params, vbb->vole_cache, start,
-                          amount, NULL, NULL, NULL);
+  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat,
+                          start, amount,
+                          vbb->vole_cache,  NULL, NULL, NULL,
+                          vbb->params);
   vbb->cache_idx = start;
 }
 
@@ -64,8 +66,10 @@ void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const 
 
   uint8_t* compute_v = vbb->full_size ? vbb->vole_cache : NULL;
 
-  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, vbb->params, compute_v, 0, lambda,
-                            vbb->vole_U, vbb->com_hash, c);
+  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, 
+                          0, lambda,
+                          compute_v, vbb->vole_U, vbb->com_hash, c,
+                          vbb->params);
 }
 
 void prepare_hash_sign(vbb_t* vbb) {
