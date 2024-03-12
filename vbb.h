@@ -31,9 +31,12 @@ struct vbb_t {
   const uint8_t* iv;
   uint8_t* vole_cache;
   uint8_t* com_hash;
-  // Optimized parameters
+  // Optimizing parameters
   bool full_size;
   uint8_t* v_buf;
+  // Vk_cache
+  uint8_t* vk_buf;
+  uint8_t* vk_cache;
 };
 
 void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const uint8_t* iv,
@@ -57,5 +60,10 @@ void prepare_hash_verify(vbb_t* vbb);
 const uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx);
 void prepare_aes_verify(vbb_t* vbb);
 const uint8_t* get_dtilde(vbb_t* vbb, unsigned int idx);
+
+// Vk_box
+const bf128_t* get_vk_128(vbb_t* vbb, unsigned int idx);
+const bf192_t* get_vk_192(vbb_t* vbb, unsigned int idx);
+const bf256_t* get_vk_256(vbb_t* vbb, unsigned int idx);
 
 #endif

@@ -16,7 +16,7 @@ conf_data = configuration_data()
 
 # compile flags and defines
 flags = []
-c_flags = []
+c_flags = ['-O2']
 cpp_flags = []
 defines = []
 
