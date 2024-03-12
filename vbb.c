@@ -4,8 +4,6 @@
 #include "macros.h"
 #include "vbb.h"
 #include "vole.h"
-#include "vole_stream.h"
-#include "vc_stream.h"
 #include "vc.h"
 #include "instances.h"
 #include "faest.h"
