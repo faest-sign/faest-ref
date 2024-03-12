@@ -39,7 +39,7 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
   return 1;
 }
 
-static void ConstructVoleCMO(const uint8_t* iv, stream_vec_com_t* vec_com, unsigned int lambda,
+static void ConstructVoleCMO(const uint8_t* iv, vec_com_t* vec_com, unsigned int lambda,
                              unsigned int outLenBytes, uint8_t* u, uint8_t* v, uint8_t* h,
                              unsigned int begin, unsigned int end) {
   unsigned int depth               = vec_com->depth;
@@ -102,7 +102,7 @@ static void ConstructVoleCMO(const uint8_t* iv, stream_vec_com_t* vec_com, unsig
 
 // NOTE - Assumes v is cleared (initially)!!
 static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int len,
-                             stream_vec_com_t* vec_com, unsigned int lambda,
+                             vec_com_t* vec_com, unsigned int lambda,
                              unsigned int outLenBytes, uint8_t* v, unsigned int offset) {
   unsigned int depth               = vec_com->depth;
   const unsigned int num_instances = 1 << depth;
@@ -163,7 +163,7 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
     h = malloc(lambda_bytes * 2);
   }
 
-  stream_vec_com_t vec_com;
+  vec_com_t vec_com;
 
   unsigned int tree_depth_sum = 0;
   for (unsigned int i = 0; i < tau; i++) {
@@ -181,7 +181,7 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       continue;
 
     // At this point chunk_end > tree_depth_sum > chunk_start
-    stream_vector_commitment(expanded_keys + i * lambda_bytes, lambda, &vec_com, tree_depth);
+    vector_commitment(expanded_keys + i * lambda_bytes, lambda, &vec_com, tree_depth);
 
     uint8_t* u_ptr = NULL;
     if (u != NULL) {
@@ -234,14 +234,14 @@ void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
   prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
 
   uint8_t* path             = malloc(lambda_bytes * max_depth);
-  stream_vec_com_t vec_com;
+  vec_com_t vec_com;
   memset(v, 0, ((size_t)len) * (size_t)lambda_bytes);
 
   unsigned int col_idx = 0;
   for (unsigned int i = 0; i < tau; i++) {
     unsigned int depth = i < tau0 ? k0 : k1;
 
-    stream_vector_commitment(expanded_keys + i * lambda_bytes, lambda, &vec_com, depth);
+    vector_commitment(expanded_keys + i * lambda_bytes, lambda, &vec_com, depth);
     vec_com.path.nodes = path;
     ConstructVoleRMO(iv, start, len, &vec_com, lambda, ellhat_bytes, v, col_idx);
     vec_com.path.nodes = NULL;
@@ -253,7 +253,7 @@ void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 }
 
 // reconstruction
-static void ReconstructVoleCMO(const uint8_t* iv, stream_vec_com_rec_t* vec_com_rec,
+static void ReconstructVoleCMO(const uint8_t* iv, vec_com_rec_t* vec_com_rec,
                                unsigned int lambda, unsigned int outLenBytes, uint8_t* q,
                                uint8_t* h, unsigned int begin, unsigned int end) {
   unsigned int depth               = vec_com_rec->depth;
@@ -334,7 +334,7 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
   }
 
   unsigned int max_depth = MAX(k0, k1);
-  stream_vec_com_rec_t vec_com_rec;
+  vec_com_rec_t vec_com_rec;
   vec_com_rec.b          = malloc(max_depth * sizeof(uint8_t));
   vec_com_rec.nodes      = calloc(max_depth, lambda_bytes);
   vec_com_rec.com_j      = malloc(lambda_bytes * 2);
@@ -364,7 +364,7 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
 
       uint8_t chalout[MAX_DEPTH];
       ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
-      stream_vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, &vec_com_rec);
+      vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, &vec_com_rec);
       ReconstructVoleCMO(iv, &vec_com_rec, lambda, ellhat_bytes, q + q_idx * ellhat_bytes, h,
                          lbegin, lend);
       if (hcom != NULL) {
@@ -404,7 +404,7 @@ void vole_reconstruct_hcom(const uint8_t* iv, const uint8_t* chall, const uint8_
   H1_init(&h1_ctx, lambda);
 
   unsigned int max_depth = MAX(k0, k1);
-  stream_vec_com_rec_t vec_com_rec;
+  vec_com_rec_t vec_com_rec;
   vec_com_rec.b          = malloc(max_depth * sizeof(uint8_t));
   vec_com_rec.nodes      = calloc(max_depth, lambda_bytes);
   vec_com_rec.com_j      = malloc(lambda_bytes * 2);
@@ -418,7 +418,7 @@ void vole_reconstruct_hcom(const uint8_t* iv, const uint8_t* chall, const uint8_
 
     uint8_t chalout[MAX_DEPTH];
     ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
-    stream_vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, &vec_com_rec);
+    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, &vec_com_rec);
     ReconstructVoleCMO(iv, &vec_com_rec, lambda, ellhat_bytes, NULL, h, 0, depth);
     H1_update(&h1_ctx, h, lambda_bytes * 2);
 
@@ -434,7 +434,7 @@ void vole_reconstruct_hcom(const uint8_t* iv, const uint8_t* chall, const uint8_
   H1_final(&h1_ctx, hcom, lambda_bytes * 2);
 }
 
-static void ReconstructVoleRMO(const uint8_t* iv, stream_vec_com_rec_t* vec_com_rec,
+static void ReconstructVoleRMO(const uint8_t* iv, vec_com_rec_t* vec_com_rec,
                                unsigned int lambda, unsigned int outLenBytes, uint8_t* q,
                                unsigned int start, unsigned int len, unsigned int col_idx) {
   unsigned int depth               = vec_com_rec->depth;
@@ -492,7 +492,7 @@ void partial_vole_reconstruct_rmo(const uint8_t* iv, const uint8_t* chall,
   unsigned int k1           = params->faest_param.k1;
 
   unsigned int max_depth = MAX(k0, k1);
-  stream_vec_com_rec_t vec_com_rec;
+  vec_com_rec_t vec_com_rec;
   vec_com_rec.b          = malloc(max_depth * sizeof(uint8_t));
   vec_com_rec.nodes      = calloc(max_depth, lambda_bytes);
   vec_com_rec.com_j      = malloc(lambda_bytes * 2);
@@ -505,7 +505,7 @@ void partial_vole_reconstruct_rmo(const uint8_t* iv, const uint8_t* chall,
     unsigned int depth = i < tau0 ? k0 : k1;
     uint8_t chalout[MAX_DEPTH];
     ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
-    stream_vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, &vec_com_rec);
+    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, &vec_com_rec);
     ReconstructVoleRMO(iv, &vec_com_rec, lambda, ellhat_bytes, q, start, len, col_idx);
     col_idx += depth;
   }

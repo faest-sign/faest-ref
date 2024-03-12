@@ -34,7 +34,7 @@ static void H0(const uint8_t* node, uint32_t lambda, const uint8_t* iv, uint8_t*
 }
 
 // index is the index i for (sd_i, com_i)
-void get_sd_com(stream_vec_com_t* vec_com, const uint8_t* iv, uint32_t lambda, unsigned int index,
+void get_sd_com(vec_com_t* vec_com, const uint8_t* iv, uint32_t lambda, unsigned int index,
                 uint8_t* sd, uint8_t* com) {
   const unsigned int lambda_bytes = lambda / 8;
 
@@ -95,15 +95,16 @@ void get_sd_com(stream_vec_com_t* vec_com, const uint8_t* iv, uint32_t lambda, u
   free(children);
 }
 
-void stream_vector_commitment(const uint8_t* rootKey, uint32_t lambda, stream_vec_com_t* vec_com,
+void vector_commitment(const uint8_t* rootKey, uint32_t lambda, vec_com_t* vec_com,
                               uint32_t depth) {
   const unsigned int lambda_bytes = lambda / 8;
   memcpy(vec_com->rootKey, rootKey, lambda_bytes);
   vec_com->depth = depth;
   vec_com->path.empty = true;
+  vec_com->path.nodes = NULL;
 }
 
-void stream_vector_open(stream_vec_com_t* vec_com, const uint8_t* b, uint8_t* cop, uint8_t* com_j,
+void vector_open(vec_com_t* vec_com, const uint8_t* b, uint8_t* cop, uint8_t* com_j,
                         uint32_t depth, const uint8_t* iv, uint32_t lambda) {
   // Step: 1
   const unsigned int lambda_bytes = lambda / 8;
@@ -135,18 +136,19 @@ void stream_vector_open(stream_vec_com_t* vec_com, const uint8_t* b, uint8_t* co
 }
 
 // Reconstruction
-void stream_vector_reconstruction(const uint8_t* cop, const uint8_t* com_j, const uint8_t* b,
+void vector_reconstruction(const uint8_t* cop, const uint8_t* com_j, const uint8_t* b,
                                   uint32_t lambda, uint32_t depth,
-                                  stream_vec_com_rec_t* vec_com_rec) {
+                                  vec_com_rec_t* vec_com_rec) {
   const unsigned int lambda_bytes = lambda / 8;
-  vec_com_rec->depth             = depth;
-  vec_com_rec->path.empty        = true; // Signals no path yet
-  memcpy(vec_com_rec->b, b, depth);
   memcpy(vec_com_rec->nodes, cop, lambda_bytes * depth);
+  memcpy(vec_com_rec->b, b, depth);
   memcpy(vec_com_rec->com_j, com_j, lambda_bytes * 2);
+  vec_com_rec->depth             = depth;
+  vec_com_rec->path.empty        = true;
+  vec_com_rec->path.nodes = NULL;
 }
 
-void get_sd_com_rec(stream_vec_com_rec_t* vec_com_rec, const uint8_t* iv, uint32_t lambda,
+void get_sd_com_rec(vec_com_rec_t* vec_com_rec, const uint8_t* iv, uint32_t lambda,
                     unsigned int index, uint8_t* sd, uint8_t* com) {
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int depth       = vec_com_rec->depth;
