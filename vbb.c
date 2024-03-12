@@ -12,7 +12,6 @@
 #include "faest_aes.h"
 #include "fields.h"
 #include "parameters.h"
-#include "utils.h"
 
 #define ACCESS_PATTERN_TEST 0
 

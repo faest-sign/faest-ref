@@ -5,7 +5,7 @@
 #include "instances.h"
 #include "vbb.h"
 
-static void print_chall1(uint8_t* chall1, int lambda_bytes){
+void print_chall1(uint8_t* chall1, int lambda_bytes){
     printf("### chall 1 ###\n");
     for(int i = 0; i < (5 * lambda_bytes) + 8; i++){
         printf("%02x", chall1[i]);
@@ -13,7 +13,7 @@ static void print_chall1(uint8_t* chall1, int lambda_bytes){
     printf("\n");
 }
 
-static void print_chall2(uint8_t* chall2, int lambda_bytes){
+void print_chall2(uint8_t* chall2, int lambda_bytes){
     printf("### chall 2 ###\n");
     for(int i = 0; i < 3 * lambda_bytes + 8; i++){
         printf("%02x", chall2[i]);
@@ -21,7 +21,7 @@ static void print_chall2(uint8_t* chall2, int lambda_bytes){
     printf("\n");
 }
 
-static void print_b_tilde(uint8_t* b_tilde, int lambda_bytes){
+void print_b_tilde(uint8_t* b_tilde, int lambda_bytes){
     printf("### b_tilde ###\n");
     for(int i = 0; i < lambda_bytes; i++){
         printf("%02x", b_tilde[i]);
@@ -29,7 +29,7 @@ static void print_b_tilde(uint8_t* b_tilde, int lambda_bytes){
     printf("\n");
 }
 
-static void print_hv(uint8_t* hv, int lambda_bytes){
+void print_hv(uint8_t* hv, int lambda_bytes){
     printf("### hv ###\n");
     for(int i = 0; i < lambda_bytes*2; i++){
         printf("%02x", hv[i]);
@@ -37,7 +37,7 @@ static void print_hv(uint8_t* hv, int lambda_bytes){
     printf("\n");
 }
 
-static void compare_OLEs_cmo(vbb_t* vbb_full, vbb_t* vbb_nonfull){
+void compare_OLEs_cmo(vbb_t* vbb_full, vbb_t* vbb_nonfull){
     prepare_hash_sign(vbb_full);
     printf("### Comparing OLEs CMO ###\n");
     const unsigned int l           = vbb_nonfull->params->faest_param.l;
@@ -56,7 +56,7 @@ static void compare_OLEs_cmo(vbb_t* vbb_full, vbb_t* vbb_nonfull){
     }
 }
 
-static void compare_OLEs(vbb_t* vbb_full, vbb_t* vbb_nonfull){
+void compare_OLEs(vbb_t* vbb_full, vbb_t* vbb_nonfull){
     prepare_aes_sign(vbb_full);
     printf("### Comparing OLEs ###\n");
     const unsigned int l           = vbb_full->params->faest_param.l;
