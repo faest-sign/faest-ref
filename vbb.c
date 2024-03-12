@@ -15,6 +15,12 @@
 
 #define ACCESS_PATTERN_TEST 0
 
+static void setup_vk_cache(vbb_t* vbb);
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bool is_em_variant(faest_paramid_t id) {
+  return id > 6;
+}
+
 static void recompute_hash_sign(vbb_t* vbb, unsigned int start, unsigned int len) {
   const unsigned int lambda = vbb->params->faest_param.lambda;
   const unsigned int ell    = vbb->params->faest_param.l;
@@ -65,7 +71,7 @@ void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const 
   vbb->column_count = column_count;
 
   // Setup vk_buf if we are not in an EM variant
-  if (vbb->params->faest_paramid < 7) {
+  if (!is_em_variant(vbb->params->faest_paramid)) {
     vbb->vk_buf = malloc(lambda_bytes);
   }
 
@@ -93,7 +99,7 @@ void prepare_aes_sign(vbb_t* vbb) {
     return;
   }
   recompute_aes_sign(vbb, 0, vbb->row_count);
-  setup_Vk_cache(vbb);
+  setup_vk_cache(vbb);
 }
 
 void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8_t* sig_pdec,
@@ -333,9 +339,9 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* param
   vbb->vole_cache   = calloc(row_count, lambda_bytes);
   vbb->column_count = column_count;
   vbb->Dtilde_buf   = malloc(lambda_bytes + UNIVERSAL_HASH_B);
-  
+
   // Setup vk_buf if we are not in an EM variant
-  if (vbb->params->faest_paramid < 7) {
+  if (!is_em_variant(vbb->params->faest_paramid)) {
     vbb->vk_buf = malloc(lambda_bytes);
   }
 
@@ -390,14 +396,14 @@ const uint8_t* get_dtilde(vbb_t* vbb, unsigned int idx) {
 }
 
 void prepare_aes_verify(vbb_t* vbb) {
-  if (!vbb->full_size) {
-    recompute_aes_verify(vbb, 0, vbb->row_count);
-    setup_Vk_cache(vbb);
+  if (vbb->full_size) {
+    apply_witness_values_cmo(vbb);
+    vbb->cache_idx = 0;
     return;
   }
 
-  apply_witness_values_cmo(vbb);
-  vbb->cache_idx = 0;
+  recompute_aes_verify(vbb, 0, vbb->row_count);
+  setup_vk_cache(vbb);
 }
 
 // Get voles for hashing
@@ -497,47 +503,132 @@ void clean_vbb(vbb_t* vbb) {
   if (vbb->party == VERIFIER) {
     free(vbb->Dtilde_buf);
   } else {
-    if (vbb->params->faest_paramid < 7) {
-      free(vbb->vk_buf);
-      if (!vbb->full_size) {
-        free(vbb->vk_OLE_cache);
-      }
-    }
     free(vbb->vole_U);
+  }
+
+  // V_k cache
+  if (!is_em_variant(vbb->params->faest_paramid)) {
+    free(vbb->vk_buf);
+    if (!vbb->full_size) {
+      free(vbb->vk_cache);
+    }
   }
 }
 
 // V_k cache
-void setup_Vk_cache(vbb_t* vbb) {
-  if (vbb->params->faest_paramid > 6) {
+
+static void setup_vk_cache(vbb_t* vbb) {
+  unsigned int lambda_bytes = vbb->params->faest_param.lambda / 8;
+  if (is_em_variant(vbb->params->faest_paramid)) {
     return;
   }
-  unsigned int lambda_bytes = vbb->params->faest_param.lambda / 8;
-  vbb->vk_OLE_cache         = calloc(vbb->params->faest_param.Lke, lambda_bytes);
+
+  vbb->vk_cache = calloc(vbb->params->faest_param.Lke, lambda_bytes);
 
   for (unsigned int i = 0; i < vbb->params->faest_param.Lke; i++) {
     unsigned int offset = i * lambda_bytes;
-    memcpy(vbb->vk_OLE_cache + offset, get_vole_aes(vbb, i), lambda_bytes);
+    memcpy(vbb->vk_cache + offset, get_vole_aes(vbb, i), lambda_bytes);
   }
 }
 
-uint8_t* get_V_k(vbb_t* vbb, unsigned int idx) {
+static inline uint8_t* get_vk(vbb_t* vbb, unsigned int idx) {
   assert(idx < vbb->params->faest_param.Lke);
   if (vbb->full_size) {
     return get_vole_aes(vbb, idx);
   }
   unsigned int offset = idx * (vbb->params->faest_param.lambda / 8);
-  return (vbb->vk_OLE_cache + offset);
+  return (vbb->vk_cache + offset);
 }
 
-bf128_t* get_V_k_128(vbb_t* vbb, unsigned int idx) {
-  return (bf128_t*)get_V_k(vbb, idx);
+const bf128_t* get_vk_128(vbb_t* vbb, unsigned int idx) {
+  if (idx < FAEST_128F_LAMBDA) {
+    const bf128_t* vk = (bf128_t*)get_vk(vbb, idx);
+    memcpy(vbb->vk_buf, vk, sizeof(bf128_t));
+    return (bf128_t*)vbb->vk_buf;
+  }
+
+  unsigned int j = idx / 32 + FAEST_128F_Nwd;
+  if ((j % FAEST_128F_Nwd) == 0 || (FAEST_128F_Nwd > 6 && (j % FAEST_128F_Nwd) == 4)) {
+    unsigned int i_wd       = FAEST_128F_LAMBDA;
+    unsigned int factor_128 = (idx / 128) - 1;
+    unsigned int offset_128 = idx % 128;
+    unsigned int index      = i_wd + factor_128 * 32 + offset_128;
+    const bf128_t* vk       = (bf128_t*)get_vk(vbb, index);
+    memcpy(vbb->vk_buf, vk, sizeof(bf128_t));
+    return (bf128_t*)vbb->vk_buf;
+  }
+
+  // Lhs recursive call
+  const bf128_t* lhs_ptr = get_vk_128(vbb, idx - FAEST_128F_Nwd * 32);
+  bf128_t lhs            = *lhs_ptr;
+  // Rhs recursive call
+  const bf128_t* rhs_ptr = get_vk_128(vbb, idx - 32);
+  bf128_t rhs            = *rhs_ptr;
+
+  bf128_t vk = bf128_add(lhs, rhs);
+  memcpy(vbb->vk_buf, &vk, sizeof(bf128_t));
+  return (bf128_t*)vbb->vk_buf;
 }
 
-bf192_t* get_V_k_192(vbb_t* vbb, unsigned int idx) {
-  return (bf192_t*)get_V_k(vbb, idx);
+const bf192_t* get_vk_192(vbb_t* vbb, unsigned int idx) {
+  if (idx < FAEST_192F_LAMBDA) {
+    const bf192_t* vk = (bf192_t*)get_vk(vbb, idx);
+    memcpy(vbb->vk_buf, vk, sizeof(bf192_t));
+    return (bf192_t*)vbb->vk_buf;
+  }
+
+  unsigned int j = idx / 32 + FAEST_192F_Nwd;
+  if ((j % FAEST_192F_Nwd) == 0 || (FAEST_192F_Nwd > 6 && (j % FAEST_192F_Nwd) == 4)) {
+    unsigned int i_wd       = FAEST_192F_LAMBDA;
+    unsigned int factor_192 = (idx / 192) - 1;
+    unsigned int offset_192 = idx % 192;
+    unsigned int index      = i_wd + factor_192 * 32 + offset_192;
+    const bf192_t* vk       = (bf192_t*)get_vk(vbb, index);
+    memcpy(vbb->vk_buf, vk, sizeof(bf192_t));
+    return (bf192_t*)vbb->vk_buf;
+  }
+
+  // Lhs recursive call
+  const bf192_t* lhs_ptr = get_vk_192(vbb, idx - FAEST_192F_Nwd * 32);
+  bf192_t lhs            = *lhs_ptr;
+  // Rhs recursive call
+  const bf192_t* rhs_ptr = get_vk_192(vbb, idx - 32);
+  bf192_t rhs            = *rhs_ptr;
+
+  bf192_t vk = bf192_add(lhs, rhs);
+  memcpy(vbb->vk_buf, &vk, 3 * sizeof(uint64_t));
+  return (bf192_t*)vbb->vk_buf;
 }
 
-bf256_t* get_V_k_256(vbb_t* vbb, unsigned int idx) {
-  return (bf256_t*)get_V_k(vbb, idx);
+const bf256_t* get_vk_256(vbb_t* vbb, unsigned int idx) {
+  if (idx < FAEST_256F_LAMBDA) {
+    const bf256_t* vk = (bf256_t*)get_vk(vbb, idx);
+    memcpy(vbb->vk_buf, vk, sizeof(bf256_t));
+    return (bf256_t*)vbb->vk_buf;
+  }
+
+  // We go from j=N_k to j=4(R+1)
+  // In our case this is j=8 to j=4(14+1)=60
+  // Based on each j we have 32 tags in vk
+  unsigned int j = idx / 32 + FAEST_256F_Nwd;
+  if ((j % FAEST_256F_Nwd) == 0 || (FAEST_256F_Nwd > 6 && (j % FAEST_256F_Nwd) == 4)) {
+    unsigned int i_wd       = FAEST_256F_LAMBDA;
+    unsigned int factor_128 = (idx / 128) - 2;
+    unsigned int offset_128 = idx % 128;
+    unsigned int index      = i_wd + factor_128 * 32 + offset_128;
+    const bf256_t* vk       = (bf256_t*)get_vk(vbb, index);
+    memcpy(vbb->vk_buf, vk, sizeof(bf256_t));
+    return (bf256_t*)vbb->vk_buf;
+  }
+
+  // Lhs recursive call
+  const bf256_t* lhs_ptr = get_vk_256(vbb, idx - FAEST_256F_Nwd * 32);
+  bf256_t lhs            = *lhs_ptr;
+  // Rhs recursive call
+  const bf256_t* rhs_ptr = get_vk_256(vbb, idx - 32);
+  bf256_t rhs            = *rhs_ptr;
+
+  bf256_t vk = bf256_add(lhs, rhs);
+  memcpy(vbb->vk_buf, &vk, sizeof(bf256_t));
+  return (bf256_t*)vbb->vk_buf;
 }
