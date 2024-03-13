@@ -16,10 +16,12 @@ static void recompute_hash_sign(vbb_t* vbb, unsigned int start, unsigned int end
   const unsigned int lambda = vbb->params->faest_param.lambda;
   const unsigned int ell    = vbb->params->faest_param.l;
   const unsigned int ellhat = ell + lambda * 2 + UNIVERSAL_HASH_B_BITS;
-  unsigned int capped_end   = MIN(end, vbb->params->faest_param.lambda);
+  unsigned int capped_end   = MIN(end, lambda);
 
-  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, start, capped_end, vbb->vole_cache, NULL,
-                          NULL, NULL, vbb->params);
+  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, 
+                          start, capped_end,
+                          vole_mode_v(vbb->vole_cache),
+                          vbb->params);
   vbb->cache_idx = start;
 }
 
@@ -60,10 +62,10 @@ void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const 
   vbb->v_buf        = malloc(lambda_bytes);
   vbb->column_count = column_count;
 
-  uint8_t* compute_v = vbb->full_size ? vbb->vole_cache : NULL;
+  vole_mode_t mode = vbb->full_size ? vole_mode_all(vbb->vole_cache, vbb->vole_U, vbb->com_hash, c)
+                                    : vole_mode_u_hcom_c(vbb->vole_U, vbb->com_hash, c);
 
-  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, 0, lambda, compute_v, vbb->vole_U,
-                          vbb->com_hash, c, vbb->params);
+  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, 0, lambda, mode, vbb->params);
 }
 
 void prepare_hash_sign(vbb_t* vbb) {
@@ -91,7 +93,7 @@ void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8
   prg(vbb->root_key, vbb->iv, expanded_keys, lambda, lambda_bytes * tau);
 
   vec_com_t vec_com;
-  vector_commitment(expanded_keys + lambda_bytes * idx, lambda, &vec_com, depth);
+  vector_commitment(expanded_keys + lambda_bytes * idx, lambda, depth, NULL, &vec_com);
   vector_open(&vec_com, s_, sig_pdec, sig_com, depth, vbb->iv, lambda);
   free(expanded_keys);
 }

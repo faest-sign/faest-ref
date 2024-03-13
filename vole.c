@@ -140,9 +140,8 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
 }
 
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                             unsigned int chunk_start, unsigned int chunk_end, uint8_t* v,
-                             uint8_t* u, uint8_t* hcom, uint8_t* c,
-                             const faest_paramset_t* params) {
+                             unsigned int chunk_start, unsigned int chunk_end,
+                             vole_mode_t vole_mode, const faest_paramset_t* params) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
@@ -158,58 +157,61 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 
   H1_context_t h1_ctx;
   uint8_t* h = NULL;
-  if (hcom != NULL) {
+  if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
     H1_init(&h1_ctx, lambda);
     h = malloc(lambda_bytes * 2);
   }
 
   vec_com_t vec_com;
 
+  // Compute the cummulative sum of the tree depths until the requested chunk_start
   unsigned int tree_depth_sum = 0;
-  for (unsigned int i = 0; i < tau; i++) {
-    const bool is_first_tree = (i == 0);
-    unsigned int tree_depth  = i < tau0 ? k0 : k1;
-    if (tree_depth_sum >= chunk_end)
+  unsigned int tree_num       = 0;
+
+  unsigned int k0_leaves = tau0 * k0;
+  unsigned int k0_trees  = (chunk_start < k0_leaves) ? chunk_start / k0 : tau0;
+  unsigned int k1_trees  = (chunk_start < k0_leaves) ? 0 : (chunk_start - k0_leaves) / k1;
+  tree_depth_sum         = k0 * k0_trees + k1 * k1_trees;
+  tree_num               = k0_trees + k1_trees;
+
+  // At this point chunk_end > tree_depth_sum > chunk_start
+  for (; tree_num < tau; tree_num++) {
+    if (tree_depth_sum >= chunk_end) {
       break;
+    }
 
-    unsigned int lbegin = (tree_depth_sum < chunk_start) ? chunk_start - tree_depth_sum : 0;
-    unsigned int lend   = (tree_depth_sum < chunk_end) ? chunk_end - tree_depth_sum : 0;
-    unsigned int v_idx  = (tree_depth_sum > chunk_start) ? tree_depth_sum - chunk_start : 0;
+    bool is_first_tree      = (tree_num == 0);
+    unsigned int tree_depth = tree_num < tau0 ? k0 : k1;
 
-    tree_depth_sum += tree_depth;
-    if (tree_depth_sum < chunk_start)
-      continue;
+    unsigned int layer_begin = (tree_depth_sum > chunk_start) ? 0 : chunk_start - tree_depth_sum;
+    unsigned int v_idx       = (tree_depth_sum > chunk_start) ? tree_depth_sum - chunk_start : 0;
+    unsigned int layer_end   = chunk_end - tree_depth_sum;
 
-    // At this point chunk_end > tree_depth_sum > chunk_start
-    vector_commitment(expanded_keys + i * lambda_bytes, lambda, &vec_com, tree_depth);
+    vector_commitment(expanded_keys + tree_num * lambda_bytes, lambda, tree_depth, path, &vec_com);
 
     uint8_t* u_ptr = NULL;
-    if (u != NULL) {
-      u_ptr = is_first_tree ? u : c + (i - 1) * ellhat_bytes;
-    }
-
     uint8_t* v_ptr = NULL;
-    if (v != NULL) {
-      v_ptr = v + ellhat_bytes * v_idx;
+    if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
+      u_ptr = is_first_tree ? vole_mode.u : vole_mode.c + (tree_num - 1) * ellhat_bytes;
+    }
+    if (vole_mode.mode != EXCLUDE_V) {
+      v_ptr = vole_mode.v + ellhat_bytes * v_idx;
     }
 
-    vec_com.path.nodes = path;
-    ConstructVoleCMO(iv, &vec_com, lambda, ellhat_bytes, u_ptr, v_ptr, h, lbegin, lend);
-    vec_com.path.nodes = NULL;
+    ConstructVoleCMO(iv, &vec_com, lambda, ellhat_bytes, u_ptr, v_ptr, h, layer_begin, layer_end);
 
-    // c != NULL && u != NULL && hcom != NULL can all be checked by
-    //  "mode of operation" of this function. I.e. either V or u, hcom, c.
-    if (c != NULL && u != NULL && !is_first_tree) {
-      xor_u8_array(u, u_ptr, u_ptr, ellhat_bytes);
-    }
-
-    if (hcom != NULL) {
+    if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
+      if (!is_first_tree) {
+        xor_u8_array(vole_mode.u, u_ptr, u_ptr, ellhat_bytes);
+      }
       H1_update(&h1_ctx, h, lambda_bytes * 2);
     }
+
+    tree_depth_sum += tree_depth;
   }
 
-  if (hcom != NULL) {
-    H1_final(&h1_ctx, hcom, lambda_bytes * 2);
+  if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
+    H1_final(&h1_ctx, vole_mode.hcom, lambda_bytes * 2);
     free(h);
   }
 
@@ -241,10 +243,8 @@ void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
   for (unsigned int i = 0; i < tau; i++) {
     unsigned int depth = i < tau0 ? k0 : k1;
 
-    vector_commitment(expanded_keys + i * lambda_bytes, lambda, &vec_com, depth);
-    vec_com.path.nodes = path;
+    vector_commitment(expanded_keys + i * lambda_bytes, lambda, depth, path, &vec_com);
     ConstructVoleRMO(iv, start, len, &vec_com, lambda, ellhat_bytes, v, col_idx);
-    vec_com.path.nodes = NULL;
 
     col_idx += depth;
   }
@@ -335,10 +335,10 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
 
   unsigned int max_depth = MAX(k0, k1);
   vec_com_rec_t vec_com_rec;
-  vec_com_rec.b          = malloc(max_depth * sizeof(uint8_t));
-  vec_com_rec.nodes      = calloc(max_depth, lambda_bytes);
-  vec_com_rec.com_j      = malloc(lambda_bytes * 2);
-  vec_com_rec.path.nodes = malloc(lambda_bytes * (max_depth - 1));
+  vec_com_rec.b       = malloc(max_depth * sizeof(uint8_t));
+  vec_com_rec.nodes   = calloc(max_depth, lambda_bytes);
+  vec_com_rec.com_j   = malloc(lambda_bytes * 2);
+  uint8_t* tree_nodes = malloc(lambda_bytes * (max_depth - 1));
 
   uint8_t* h = NULL;
   if (hcom != NULL) {
@@ -364,7 +364,7 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
 
       uint8_t chalout[MAX_DEPTH];
       ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
-      vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, &vec_com_rec);
+      vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, tree_nodes, &vec_com_rec);
       ReconstructVoleCMO(iv, &vec_com_rec, lambda, ellhat_bytes, q + q_idx * ellhat_bytes, h,
                          lbegin, lend);
       if (hcom != NULL) {
@@ -381,7 +381,7 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
   free(vec_com_rec.b);
   free(vec_com_rec.nodes);
   free(vec_com_rec.com_j);
-  free(vec_com_rec.path.nodes);
+  free(tree_nodes);
   if (hcom != NULL) {
     free(h);
     H1_final(&h1_ctx, hcom, lambda_bytes * 2);
@@ -405,10 +405,10 @@ void vole_reconstruct_hcom(const uint8_t* iv, const uint8_t* chall, const uint8_
 
   unsigned int max_depth = MAX(k0, k1);
   vec_com_rec_t vec_com_rec;
-  vec_com_rec.b          = malloc(max_depth * sizeof(uint8_t));
-  vec_com_rec.nodes      = calloc(max_depth, lambda_bytes);
-  vec_com_rec.com_j      = malloc(lambda_bytes * 2);
-  vec_com_rec.path.nodes = malloc(lambda_bytes * (max_depth - 1));
+  vec_com_rec.b       = malloc(max_depth * sizeof(uint8_t));
+  vec_com_rec.nodes   = calloc(max_depth, lambda_bytes);
+  vec_com_rec.com_j   = malloc(lambda_bytes * 2);
+  uint8_t* tree_nodes = malloc(lambda_bytes * (max_depth - 1));
 
   uint8_t* h              = malloc(lambda_bytes * 2);
   unsigned int tree_start = 0;
@@ -418,7 +418,7 @@ void vole_reconstruct_hcom(const uint8_t* iv, const uint8_t* chall, const uint8_
 
     uint8_t chalout[MAX_DEPTH];
     ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
-    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, &vec_com_rec);
+    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, tree_nodes, &vec_com_rec);
     ReconstructVoleCMO(iv, &vec_com_rec, lambda, ellhat_bytes, NULL, h, 0, depth);
     H1_update(&h1_ctx, h, lambda_bytes * 2);
 
@@ -428,7 +428,7 @@ void vole_reconstruct_hcom(const uint8_t* iv, const uint8_t* chall, const uint8_
   free(vec_com_rec.b);
   free(vec_com_rec.nodes);
   free(vec_com_rec.com_j);
-  free(vec_com_rec.path.nodes);
+  free(tree_nodes);
   free(h);
 
   H1_final(&h1_ctx, hcom, lambda_bytes * 2);
@@ -493,10 +493,10 @@ void partial_vole_reconstruct_rmo(const uint8_t* iv, const uint8_t* chall,
 
   unsigned int max_depth = MAX(k0, k1);
   vec_com_rec_t vec_com_rec;
-  vec_com_rec.b          = malloc(max_depth * sizeof(uint8_t));
-  vec_com_rec.nodes      = calloc(max_depth, lambda_bytes);
-  vec_com_rec.com_j      = malloc(lambda_bytes * 2);
-  vec_com_rec.path.nodes = malloc(lambda_bytes * (max_depth - 1));
+  vec_com_rec.b       = malloc(max_depth * sizeof(uint8_t));
+  vec_com_rec.nodes   = calloc(max_depth, lambda_bytes);
+  vec_com_rec.com_j   = malloc(lambda_bytes * 2);
+  uint8_t* tree_nodes = malloc(lambda_bytes * (max_depth - 1));
 
   memset(q, 0, len * lambda_bytes);
 
@@ -505,7 +505,7 @@ void partial_vole_reconstruct_rmo(const uint8_t* iv, const uint8_t* chall,
     unsigned int depth = i < tau0 ? k0 : k1;
     uint8_t chalout[MAX_DEPTH];
     ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
-    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, &vec_com_rec);
+    vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, tree_nodes, &vec_com_rec);
     ReconstructVoleRMO(iv, &vec_com_rec, lambda, ellhat_bytes, q, start, len, col_idx);
     col_idx += depth;
   }
@@ -513,5 +513,5 @@ void partial_vole_reconstruct_rmo(const uint8_t* iv, const uint8_t* chall,
   free(vec_com_rec.b);
   free(vec_com_rec.nodes);
   free(vec_com_rec.com_j);
-  free(vec_com_rec.path.nodes);
+  free(tree_nodes);
 }

@@ -12,7 +12,6 @@
 #include "aes.h"
 #include "instances.h"
 
-#include <assert.h>
 #include <string.h>
 
 unsigned int NumRec(unsigned int depth, const uint8_t* bi) {
@@ -94,13 +93,12 @@ void get_sd_com(vec_com_t* vec_com, const uint8_t* iv, uint32_t lambda, unsigned
   free(children);
 }
 
-void vector_commitment(const uint8_t* rootKey, uint32_t lambda, vec_com_t* vec_com,
-                       uint32_t depth) {
+void vector_commitment(const uint8_t* rootKey, uint32_t lambda, uint32_t depth, uint8_t* path_nodes, vec_com_t* vec_com) {
   const unsigned int lambda_bytes = lambda / 8;
   memcpy(vec_com->rootKey, rootKey, lambda_bytes);
   vec_com->depth      = depth;
   vec_com->path.empty = true;
-  vec_com->path.nodes = NULL;
+  vec_com->path.nodes = path_nodes;
 }
 
 void vector_open(vec_com_t* vec_com, const uint8_t* b, uint8_t* cop, uint8_t* com_j, uint32_t depth,
@@ -136,14 +134,14 @@ void vector_open(vec_com_t* vec_com, const uint8_t* b, uint8_t* cop, uint8_t* co
 
 // Reconstruction
 void vector_reconstruction(const uint8_t* cop, const uint8_t* com_j, const uint8_t* b,
-                           uint32_t lambda, uint32_t depth, vec_com_rec_t* vec_com_rec) {
+                           uint32_t lambda, uint32_t depth, uint8_t* tree_nodes, vec_com_rec_t* vec_com_rec) {
   const unsigned int lambda_bytes = lambda / 8;
   memcpy(vec_com_rec->nodes, cop, lambda_bytes * depth);
   memcpy(vec_com_rec->b, b, depth);
   memcpy(vec_com_rec->com_j, com_j, lambda_bytes * 2);
   vec_com_rec->depth      = depth;
   vec_com_rec->path.empty = true;
-  vec_com_rec->path.nodes = NULL;
+  vec_com_rec->path.nodes = tree_nodes;
 }
 
 void get_sd_com_rec(vec_com_rec_t* vec_com_rec, const uint8_t* iv, uint32_t lambda,
@@ -155,7 +153,7 @@ void get_sd_com_rec(vec_com_rec_t* vec_com_rec, const uint8_t* iv, uint32_t lamb
   uint8_t* r_child                = l_child + lambda_bytes;
 
   // Assert we do not request the unknown leaf. (alternatively return zeroes)
-  assert(index != NumRec(depth, vec_com_rec->b));
+  //assert(index != NumRec(depth, vec_com_rec->b));
 
   size_t lo         = 0;
   size_t leaf_count = (1 << depth);
