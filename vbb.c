@@ -4,8 +4,6 @@
 #include "macros.h"
 #include "vbb.h"
 #include "vole.h"
-#include "vole_stream.h"
-#include "vc_stream.h"
 #include "vc.h"
 #include "instances.h"
 #include "faest.h"
@@ -20,10 +18,8 @@ static void recompute_hash_sign(vbb_t* vbb, unsigned int start, unsigned int end
   const unsigned int ellhat = ell + lambda * 2 + UNIVERSAL_HASH_B_BITS;
   unsigned int capped_end   = MIN(end, vbb->params->faest_param.lambda);
 
-  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat,
-                          start, capped_end,
-                          vbb->vole_cache,  NULL, NULL, NULL,
-                          vbb->params);
+  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, start, capped_end, vbb->vole_cache, NULL,
+                          NULL, NULL, vbb->params);
   vbb->cache_idx = start;
 }
 
@@ -61,15 +57,13 @@ void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const 
   vbb->vole_U       = malloc(ellhat_bytes);
   vbb->row_count    = row_count;
   vbb->vole_cache   = calloc(row_count, lambda_bytes);
-  vbb->v_buf = malloc(lambda_bytes);
+  vbb->v_buf        = malloc(lambda_bytes);
   vbb->column_count = column_count;
 
   uint8_t* compute_v = vbb->full_size ? vbb->vole_cache : NULL;
 
-  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, 
-                          0, lambda,
-                          compute_v, vbb->vole_U, vbb->com_hash, c,
-                          vbb->params);
+  partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, 0, lambda, compute_v, vbb->vole_U,
+                          vbb->com_hash, c, vbb->params);
 }
 
 void prepare_hash_sign(vbb_t* vbb) {
@@ -96,10 +90,9 @@ void vector_open_ondemand(vbb_t* vbb, unsigned int idx, const uint8_t* s_, uint8
   uint8_t* expanded_keys          = malloc(tau * lambda_bytes);
   prg(vbb->root_key, vbb->iv, expanded_keys, lambda, lambda_bytes * tau);
 
-  stream_vec_com_t* sVecCom = calloc(vbb->params->faest_param.tau, sizeof(stream_vec_com_t));
-  stream_vector_commitment(expanded_keys + lambda_bytes * idx, lambda, &sVecCom[idx], depth);
-  stream_vector_open(&sVecCom[idx], s_, sig_pdec, sig_com, depth, vbb->iv, lambda);
-  free(sVecCom);
+  vec_com_t vec_com;
+  vector_commitment(expanded_keys + lambda_bytes * idx, lambda, &vec_com, depth);
+  vector_open(&vec_com, s_, sig_pdec, sig_com, depth, vbb->iv, lambda);
   free(expanded_keys);
 }
 
@@ -395,9 +388,9 @@ const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
 
   assert(idx < lambda);
   if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->column_count)) {
-    recompute_hash_sign(vbb, idx, idx+vbb->column_count);
+    recompute_hash_sign(vbb, idx, idx + vbb->column_count);
   }
-  const unsigned int offset        = idx - vbb->cache_idx;
+  const unsigned int offset = idx - vbb->cache_idx;
 
   return vbb->vole_cache + offset * ell_hat_bytes;
 }

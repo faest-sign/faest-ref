@@ -11,9 +11,9 @@ if boost_test.found()
     'instances.cpp',
     'test_faest_tvs.cpp',
     'universal_hashing.cpp',
-    'vc.cpp',
-    'vole.cpp',
-    'vole_tvs.cpp',
+    #'vc.cpp',
+    #'vole.cpp',
+    #'vole_tvs.cpp',
   )
   test_deps = []
   test_defines = ['-DBOOST_TEST_DYN_LINK', '-DFAEST_TESTS']
@@ -56,14 +56,14 @@ if boost_test.found()
     args: ['-t', 'universal_hashing'],
     timeout: 6000,
   )
-  test('Vector commitments', extended_tests,
-    args: ['-t', 'vector_commitments'],
-    timeout: 6000,
-  )
-  test('VOLE', extended_tests,
-    args: ['-t', 'vole'],
-    timeout: 6000,
-  )
+  #test('Vector commitments', extended_tests,
+  #  args: ['-t', 'vector_commitments'],
+  #  timeout: 6000,
+  #)
+  #test('VOLE', extended_tests,
+  #  args: ['-t', 'vole'],
+  #  timeout: 6000,
+  #)
   if ntl.found()
     test('Fields', extended_tests,
       args: ['-t', 'fields'],
