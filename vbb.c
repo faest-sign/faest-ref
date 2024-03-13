@@ -19,6 +19,13 @@ ATTR_CONST ATTR_ALWAYS_INLINE static bool is_column_cached(vbb_t* vbb, unsigned 
   return above_cache_start && below_cache_end;
 }
 
+ATTR_CONST ATTR_ALWAYS_INLINE static bool is_row_cached(vbb_t* vbb, unsigned int index) {
+  bool above_cache_start = index >= vbb->cache_idx;
+  bool below_cache_end = index < vbb->cache_idx + vbb->row_count;
+  return above_cache_start && below_cache_end;
+}
+
+
 static void recompute_hash_sign(vbb_t* vbb, unsigned int start, unsigned int end) {
   const unsigned int lambda = vbb->params->faest_param.lambda;
   const unsigned int ell    = vbb->params->faest_param.l;
@@ -396,7 +403,8 @@ const uint8_t* get_vole_v_hash(vbb_t* vbb, unsigned int idx) {
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
 
   if (!is_column_cached(vbb, idx)) {
-    recompute_hash_sign(vbb, idx, idx + vbb->column_count);
+    unsigned int cmo_budget = vbb->column_count;
+    recompute_hash_sign(vbb, idx, idx + cmo_budget);
   }
   const unsigned int offset = idx - vbb->cache_idx;
 
@@ -411,7 +419,8 @@ const uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx) {
 
 
   if (!is_column_cached(vbb, idx)) {
-    recompute_hash_verify(vbb, idx, vbb->column_count);
+    unsigned int cmo_budget = vbb->column_count;
+    recompute_hash_verify(vbb, idx, cmo_budget);
   }
 
   unsigned int offset = idx - vbb->cache_idx;
@@ -434,11 +443,12 @@ static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
     return vbb->v_buf;
   }
 
-  if (!(idx >= vbb->cache_idx && idx < vbb->cache_idx + vbb->row_count)) {
+  if (!is_row_cached(vbb, idx)) {
+    unsigned int rmo_budget = vbb->row_count;
     if (vbb->party == VERIFIER) {
-      recompute_aes_verify(vbb, idx, vbb->row_count);
+      recompute_aes_verify(vbb, idx, rmo_budget);
     } else {
-      recompute_aes_sign(vbb, idx, vbb->row_count);
+      recompute_aes_sign(vbb, idx, rmo_budget);
     }
   }
 

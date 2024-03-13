@@ -23,8 +23,8 @@ struct vbb_t {
   uint8_t* Dtilde_buf;
   // Common
   party_t party;
-  unsigned int row_count;
-  unsigned int column_count;
+  unsigned int row_count;    // Budget of RMO computation
+  unsigned int column_count; // Budget of CMO computation
   unsigned int cache_idx;
   const uint8_t* root_key;
   const faest_paramset_t* params;
