@@ -334,19 +334,17 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* param
   vbb->vole_cache   = calloc(row_count, lambda_bytes);
   vbb->column_count = column_count;
   vbb->Dtilde_buf   = malloc(lambda_bytes + UNIVERSAL_HASH_B);
+  vbb->v_buf = malloc(lambda_bytes);
 
   const uint8_t* chall3 = dsignature_chall_3(vbb->sig, vbb->params);
   const uint8_t* pdec[MAX_TAU];
   const uint8_t* com[MAX_TAU];
   setup_pdec_com(vbb, pdec, com);
 
+  uint8_t* cache_ptr = (vbb->full_size) ? vbb->vole_cache : NULL;
+  partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, vbb->com_hash, cache_ptr, ell_hat, vbb->params, 0, lambda);
   if (vbb->full_size) {
-    vbb->v_buf = malloc(lambda_bytes);
-    partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, vbb->com_hash, vbb->vole_cache,
-                                 ell_hat, vbb->params, 0, lambda);
     apply_correction_values_cmo(vbb, 0, lambda);
-  } else {
-    vole_reconstruct_hcom(vbb->iv, chall3, pdec, com, vbb->com_hash, ell_hat, vbb->params);
   }
 }
 
