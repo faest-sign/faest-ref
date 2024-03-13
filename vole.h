@@ -13,36 +13,58 @@
 
 FAEST_BEGIN_C_DECL
 
-typedef enum { EXCLUDE_U_HCOM_C, EXCLUDE_V, INCLUDE_ALL } vole_mode_of_operation_t;
+typedef enum { EXCLUDE_U_HCOM_C, EXCLUDE_HCOM, EXCLUDE_V, EXCLUDE_Q, INCLUDE_ALL } vole_mode_t;
 
-typedef struct vole_mode_t {
-  vole_mode_of_operation_t mode;
+typedef struct sign_vole_mode_ctx_t {
+  vole_mode_t mode;
   uint8_t* v;
   uint8_t* u;
   uint8_t* hcom;
   uint8_t* c;
-} vole_mode_t;
+} sign_vole_mode_ctx_t;
 
-ATTR_CONST ATTR_ALWAYS_INLINE inline vole_mode_t vole_mode_all(uint8_t* v, uint8_t* u,
+ATTR_CONST ATTR_ALWAYS_INLINE inline sign_vole_mode_ctx_t vole_mode_all_sign(uint8_t* v, uint8_t* u,
                                                                uint8_t* hcom, uint8_t* c) {
   assert(v != NULL);
   assert(u != NULL);
   assert(hcom != NULL);
   assert(c != NULL);
-  return (vole_mode_t){.mode = INCLUDE_ALL, .v = v, .u = u, .hcom = hcom, .c = c};
+  return (sign_vole_mode_ctx_t){.mode = INCLUDE_ALL, .v = v, .u = u, .hcom = hcom, .c = c};
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE inline vole_mode_t vole_mode_u_hcom_c(uint8_t* u, uint8_t* hcom,
+ATTR_CONST ATTR_ALWAYS_INLINE inline sign_vole_mode_ctx_t vole_mode_u_hcom_c(uint8_t* u, uint8_t* hcom,
                                                                     uint8_t* c) {
   assert(u != NULL);
   assert(hcom != NULL);
   assert(c != NULL);
-  return (vole_mode_t){.mode = EXCLUDE_V, .v = NULL, .u = u, .hcom = hcom, .c = c};
+  return (sign_vole_mode_ctx_t){.mode = EXCLUDE_V, .v = NULL, .u = u, .hcom = hcom, .c = c};
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE inline vole_mode_t vole_mode_v(uint8_t* v) {
+ATTR_CONST ATTR_ALWAYS_INLINE inline sign_vole_mode_ctx_t vole_mode_v(uint8_t* v) {
   assert(v != NULL);
-  return (vole_mode_t){.mode = EXCLUDE_U_HCOM_C, .v = v, .u = NULL, .hcom = NULL, .c = NULL};
+  return (sign_vole_mode_ctx_t){.mode = EXCLUDE_U_HCOM_C, .v = v, .u = NULL, .hcom = NULL, .c = NULL};
+}
+
+typedef struct verify_vole_mode_ctx_t {
+  vole_mode_t mode;
+  uint8_t* q;
+  uint8_t* hcom;
+} verify_vole_mode_ctx_t;
+
+ATTR_CONST ATTR_ALWAYS_INLINE inline verify_vole_mode_ctx_t vole_mode_all_verify(uint8_t* q, uint8_t* hcom) {
+  assert(q != NULL);
+  assert(hcom != NULL);
+  return (verify_vole_mode_ctx_t){.mode = INCLUDE_ALL, .q = q, .hcom = hcom};
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE inline verify_vole_mode_ctx_t vole_mode_q(uint8_t* q) {
+  assert(q != NULL);
+  return (verify_vole_mode_ctx_t){.mode = EXCLUDE_HCOM, .q = q, .hcom = NULL};
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE inline verify_vole_mode_ctx_t vole_mode_hcom(uint8_t* hcom) {
+  assert(hcom != NULL);
+  return (verify_vole_mode_ctx_t){.mode = EXCLUDE_Q, .q = NULL, .hcom = hcom};
 }
 
 // k_b is at most 12, so chalout needs to point to an array of at most 12 bytes
@@ -52,17 +74,17 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
 // Signer
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                              unsigned int chunk_start, unsigned int chunk_end,
-                             vole_mode_t vole_mode, const faest_paramset_t* params);
+                             sign_vole_mode_ctx_t vole_mode, const faest_paramset_t* params);
 
 void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int start,
                              unsigned int len, const faest_paramset_t* params, uint8_t* v);
 
 // Verifier
-void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
-                                  const uint8_t* const* pdec, const uint8_t* const* com_j,
-                                  uint8_t* hcom, uint8_t* q, unsigned int ellhat,
-                                  const faest_paramset_t* params, unsigned int start,
-                                  unsigned int len);
+void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall, const uint8_t* const* pdec, 
+                                  const uint8_t* const* com_j, unsigned int ellhat,
+                                  unsigned int start, unsigned int len,
+                                  verify_vole_mode_ctx_t vole_mode, 
+                                  const faest_paramset_t* params);
 
 void partial_vole_reconstruct_rmo(const uint8_t* iv, const uint8_t* chall,
                                   const uint8_t* const* pdec, const uint8_t* const* com_j,

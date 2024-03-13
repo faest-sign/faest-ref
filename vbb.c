@@ -76,7 +76,7 @@ void init_vbb_sign(vbb_t* vbb, unsigned int len, const uint8_t* root_key, const 
   vbb->v_buf        = malloc(lambda_bytes);
   vbb->column_count = column_count;
 
-  vole_mode_t mode = vbb->full_size ? vole_mode_all(vbb->vole_cache, vbb->vole_U, vbb->com_hash, c)
+  sign_vole_mode_ctx_t mode = vbb->full_size ? vole_mode_all_sign(vbb->vole_cache, vbb->vole_U, vbb->com_hash, c)
                                     : vole_mode_u_hcom_c(vbb->vole_U, vbb->com_hash, c);
 
   partial_vole_commit_cmo(vbb->root_key, vbb->iv, ellhat, 0, lambda, mode, vbb->params);
@@ -175,8 +175,10 @@ static void recompute_hash_verify(vbb_t* vbb, unsigned int start, unsigned int l
   const uint8_t* com[MAX_TAU];
   setup_pdec_com(vbb, pdec, com);
 
-  partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, NULL, vbb->vole_cache, ell_hat,
-                               vbb->params, start, amount);
+  partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, ell_hat,
+                               start, amount,
+                               vole_mode_q(vbb->vole_cache),
+                               vbb->params);
   apply_correction_values_cmo(vbb, start, amount);
   vbb->cache_idx = start;
 }
@@ -334,15 +336,16 @@ void init_vbb_verify(vbb_t* vbb, unsigned int len, const faest_paramset_t* param
   vbb->vole_cache   = calloc(row_count, lambda_bytes);
   vbb->column_count = column_count;
   vbb->Dtilde_buf   = malloc(lambda_bytes + UNIVERSAL_HASH_B);
-  vbb->v_buf = malloc(lambda_bytes);
+  vbb->v_buf        = malloc(lambda_bytes);
 
   const uint8_t* chall3 = dsignature_chall_3(vbb->sig, vbb->params);
   const uint8_t* pdec[MAX_TAU];
   const uint8_t* com[MAX_TAU];
   setup_pdec_com(vbb, pdec, com);
 
-  uint8_t* cache_ptr = (vbb->full_size) ? vbb->vole_cache : NULL;
-  partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, vbb->com_hash, cache_ptr, ell_hat, vbb->params, 0, lambda);
+  verify_vole_mode_ctx_t vole_mode = (vbb->full_size) ? vole_mode_all_verify(vbb->vole_cache, vbb->com_hash)
+                                                      : vole_mode_hcom(vbb->com_hash);
+  partial_vole_reconstruct_cmo(vbb->iv, chall3, pdec, com, ell_hat, 0, lambda, vole_mode, vbb->params);
   if (vbb->full_size) {
     apply_correction_values_cmo(vbb, 0, lambda);
   }

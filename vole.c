@@ -141,7 +141,7 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
 
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                              unsigned int chunk_start, unsigned int chunk_end,
-                             vole_mode_t vole_mode, const faest_paramset_t* params) {
+                             sign_vole_mode_ctx_t vole_mode, const faest_paramset_t* params) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
@@ -314,11 +314,11 @@ static void ReconstructVoleCMO(const uint8_t* iv, vec_com_rec_t* vec_com_rec, un
   }
 }
 
-void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
-                                  const uint8_t* const* pdec, const uint8_t* const* com_j,
-                                  uint8_t* hcom, uint8_t* q, unsigned int ellhat,
-                                  const faest_paramset_t* params, unsigned int start,
-                                  unsigned int len) {
+void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall, const uint8_t* const* pdec, 
+                                  const uint8_t* const* com_j, unsigned int ellhat,
+                                  unsigned int start, unsigned int len,
+                                  verify_vole_mode_ctx_t vole_mode, 
+                                  const faest_paramset_t* params) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
@@ -329,7 +329,7 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
   unsigned int k1           = params->faest_param.k1;
 
   H1_context_t h1_ctx;
-  if (hcom != NULL) {
+  if (vole_mode.mode != EXCLUDE_HCOM) {
     H1_init(&h1_ctx, lambda);
   }
 
@@ -341,7 +341,7 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
   uint8_t* tree_nodes = malloc(lambda_bytes * (max_depth - 1));
 
   uint8_t* h = NULL;
-  if (hcom != NULL) {
+  if (vole_mode.mode != EXCLUDE_HCOM) {
     h = malloc(lambda_bytes * 2);
   }
 
@@ -363,8 +363,8 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
       }
 
       uint8_t* q_ptr = NULL;
-      if (q != NULL) {
-        q_ptr = q + q_idx * ellhat_bytes;
+      if (vole_mode.mode != EXCLUDE_Q) {
+        q_ptr = vole_mode.q + q_idx * ellhat_bytes;
       }
 
       uint8_t chalout[MAX_DEPTH];
@@ -372,7 +372,7 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
       vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, tree_nodes, &vec_com_rec);
       ReconstructVoleCMO(iv, &vec_com_rec, lambda, ellhat_bytes, q_ptr, h,
                          lbegin, lend);
-      if (hcom != NULL) {
+      if (vole_mode.mode != EXCLUDE_HCOM) {
         H1_update(&h1_ctx, h, lambda_bytes * 2);
       }
     }
@@ -387,9 +387,9 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
   free(vec_com_rec.nodes);
   free(vec_com_rec.com_j);
   free(tree_nodes);
-  if (hcom != NULL) {
+  if (vole_mode.mode != EXCLUDE_HCOM) {
     free(h);
-    H1_final(&h1_ctx, hcom, lambda_bytes * 2);
+    H1_final(&h1_ctx, vole_mode.hcom, lambda_bytes * 2);
   }
 }
 
