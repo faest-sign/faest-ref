@@ -227,7 +227,7 @@ static void apply_correction_values_rmo(vbb_t* vbb, unsigned int start, unsigned
   }
 }
 
-static void apply_witness_values(vbb_t* vbb, unsigned int start, unsigned int len) {
+static void apply_witness_values_rmo(vbb_t* vbb, unsigned int start, unsigned int len) {
   const unsigned int lambda       = vbb->params->faest_param.lambda;
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int ell          = vbb->params->faest_param.l;
@@ -308,7 +308,7 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
   partial_vole_reconstruct_rmo(vbb->iv, chall3, pdec, com, vbb->vole_cache, ell_hat, vbb->params,
                                start, len);
   apply_correction_values_rmo(vbb, start, len);
-  apply_witness_values(vbb, start, len);
+  apply_witness_values_rmo(vbb, start, len);
   vbb->cache_idx = start;
 }
 
