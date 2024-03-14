@@ -446,7 +446,12 @@ static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
 
 #if ACCESS_PATTERN_TEST
   // Store the idx value in a file
-  FILE* file = fopen("access_pattern.txt", "a");
+  FILE* file;
+  if (vbb->party == VERIFIER) {
+    file = fopen("access_pattern_verifier.txt", "a");
+  } else {
+    file = fopen("access_pattern_prover.txt", "a");
+  }
   fprintf(file, "%d\n", idx);
   fclose(file);
 #endif
