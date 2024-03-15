@@ -96,9 +96,9 @@ void prepare_hash_sign(vbb_t* vbb) {
 void prepare_aes_sign(vbb_t* vbb) {
   if (vbb->full_size) {
     vbb->cache_idx = 0;
-    return;
+  } else {
+    recompute_aes_sign(vbb, 0, vbb->row_count);
   }
-  recompute_aes_sign(vbb, 0, vbb->row_count);
   setup_vk_cache(vbb);
 }
 
@@ -399,10 +399,9 @@ void prepare_aes_verify(vbb_t* vbb) {
   if (vbb->full_size) {
     apply_witness_values_cmo(vbb);
     vbb->cache_idx = 0;
-    return;
+  } else {
+    recompute_aes_verify(vbb, 0, vbb->row_count);
   }
-
-  recompute_aes_verify(vbb, 0, vbb->row_count);
   setup_vk_cache(vbb);
 }
 
@@ -446,7 +445,12 @@ static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
 
 #if ACCESS_PATTERN_TEST
   // Store the idx value in a file
-  FILE* file = fopen("access_pattern.txt", "a");
+  FILE* file;
+  if (vbb->party == VERIFIER) {
+    file = fopen("access_pattern_verifier.txt", "a");
+  } else {
+    file = fopen("access_pattern_prover.txt", "a");
+  }
   fprintf(file, "%d\n", idx);
   fclose(file);
 #endif
@@ -533,9 +537,6 @@ static void setup_vk_cache(vbb_t* vbb) {
 
 static inline uint8_t* get_vk(vbb_t* vbb, unsigned int idx) {
   assert(idx < vbb->params->faest_param.Lke);
-  if (vbb->full_size) {
-    return get_vole_aes(vbb, idx);
-  }
   unsigned int offset = idx * (vbb->params->faest_param.lambda / 8);
   return (vbb->vk_cache + offset);
 }
