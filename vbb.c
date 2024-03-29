@@ -50,9 +50,10 @@ static void recompute_aes_sign(vbb_t* vbb, unsigned int start, unsigned int len)
   const unsigned int lambda = vbb->params->faest_param.lambda;
   const unsigned int ell    = vbb->params->faest_param.l;
 
-  if (start > ell) {
-    start = start - len;
-  } else if (len >= ell + lambda) {
+  if(start >= ell){
+    start = start - len + 1;
+  }
+  if (len >= ell + lambda) {
     start = 0;
   } else if (start + len > ell + lambda) {
     start = ell + lambda - len;
@@ -312,6 +313,9 @@ static void recompute_aes_verify(vbb_t* vbb, unsigned int start, unsigned int le
   const unsigned int ell     = vbb->params->faest_param.l;
   const unsigned int ell_hat = ell + lambda * 2 + UNIVERSAL_HASH_B_BITS;
 
+  if(start >= ell){
+    start = start - len + 1;
+  }
   if (len >= ell + lambda) {
     start = 0;
   } else if (start + len > ell + lambda) {
