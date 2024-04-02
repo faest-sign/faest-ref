@@ -164,35 +164,33 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 
   vec_com_t vec_com;
 
+  unsigned int k0_leaves       = tau0 * k0;
+
+  unsigned int k0_trees_begin  = (chunk_start < k0_leaves) ? chunk_start / k0 : tau0;
+  unsigned int k1_trees_begin  = (chunk_start < k0_leaves) ? 0 : (chunk_start - k0_leaves) / k1;
+  // Ceil the k0+k1 end trees
+  unsigned int k0_trees_end    = (chunk_end < k0_leaves) ? (chunk_end + (k0-1)) / k0 : tau0;
+  unsigned int k1_trees_end    = (chunk_end < k0_leaves) ? 0 : (chunk_end - k0_leaves + (k1-1)) / k1;
+
+  unsigned int tree_start = k0_trees_begin+k1_trees_begin;
+  unsigned int tree_end   = k0_trees_end+k1_trees_end;
+
   // Compute the cummulative sum of the tree depths until the requested chunk_start
-  unsigned int tree_depth_sum = 0;
-  unsigned int tree_num       = 0;
-
-  unsigned int k0_leaves = tau0 * k0;
-  unsigned int k0_trees  = (chunk_start < k0_leaves) ? chunk_start / k0 : tau0;
-  unsigned int k1_trees  = (chunk_start < k0_leaves) ? 0 : (chunk_start - k0_leaves) / k1;
-  tree_depth_sum         = k0 * k0_trees + k1 * k1_trees;
-  tree_num               = k0_trees + k1_trees;
-
-  // At this point chunk_end > tree_depth_sum > chunk_start
-  for (; tree_num < tau; tree_num++) {
-    if (tree_depth_sum >= chunk_end) {
-      break;
-    }
-
-    bool is_first_tree      = (tree_num == 0);
-    unsigned int tree_depth = tree_num < tau0 ? k0 : k1;
+  unsigned int tree_depth_sum = k0 * k0_trees_begin + k1 * k1_trees_begin;
+  for (unsigned int i = tree_start; i < tree_end; i++) {
+    bool is_first_tree      = (i == 0);
+    unsigned int tree_depth = i < tau0 ? k0 : k1;
 
     unsigned int layer_begin = (tree_depth_sum > chunk_start) ? 0 : chunk_start - tree_depth_sum;
     unsigned int v_idx       = (tree_depth_sum > chunk_start) ? tree_depth_sum - chunk_start : 0;
     unsigned int layer_end   = chunk_end - tree_depth_sum;
 
-    vector_commitment(expanded_keys + tree_num * lambda_bytes, lambda, tree_depth, path, &vec_com);
+    vector_commitment(expanded_keys + i * lambda_bytes, lambda, tree_depth, path, &vec_com);
 
     uint8_t* u_ptr = NULL;
     uint8_t* v_ptr = NULL;
     if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
-      u_ptr = is_first_tree ? vole_mode.u : vole_mode.c + (tree_num - 1) * ellhat_bytes;
+      u_ptr = is_first_tree ? vole_mode.u : vole_mode.c + (i - 1) * ellhat_bytes;
     }
     if (vole_mode.mode != EXCLUDE_V) {
       v_ptr = vole_mode.v + ellhat_bytes * v_idx;
