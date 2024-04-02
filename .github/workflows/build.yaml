@@ -24,7 +24,7 @@ jobs:
       with:
         action: test
         options: --verbose
-        setup-options: -Dbenchmarks=disabled -Db_build_type=debugoptimized
+        setup-options: -Dbenchmarks=disabled --buildtype=debugoptimized
 
   build-base-i386:
     name: Test on Ubuntu with gcc (32 bit)
@@ -42,7 +42,7 @@ jobs:
     - name: Build and test
       run: |
         mkdir build
-        meson setup --cross-file .github/workflows/i686-cross-build.meson build -Dbenchmarks=disabled -Db_build_type=release
+        meson setup --cross-file .github/workflows/i686-cross-build.meson build -Dbenchmarks=disabled --buildtype=release
         ninja -C build
         ninja -C build test
 
@@ -74,7 +74,7 @@ jobs:
       with:
         action: test
         options: --verbose
-        setup-options: -Dbenchmarks=disabled -Db_lto=false -Db_build_type=release
+        setup-options: -Dbenchmarks=disabled -Db_lto=false --buildtype=release
       env:
         CC: ${{ matrix.cfg.compiler }}
         CXX: ${{ matrix.cfg.cxxcompiler }}
@@ -100,7 +100,7 @@ jobs:
       with:
         action: test
         options: --verbose
-        setup-options: -Dbenchmarks=disabled -Db_build_type=release
+        setup-options: -Dbenchmarks=disabled --buildtype=release
 
   build-flags-windows:
     name: Test on Windows with MSVC
@@ -124,7 +124,7 @@ jobs:
       uses: BSFishy/meson-build@v1.0.3
       with:
         action: test
-        setup-options: --vsenv -Dbenchmarks=disabled -Db_build_type=release
+        setup-options: --vsenv -Dbenchmarks=disabled --buildtype=release
         options: --verbose
 
   build-scan-build:
@@ -142,7 +142,7 @@ jobs:
     - name: Configure, build and test
       run: |
         mkdir -p build
-        scan-build meson setup build -Dbenchmarks=disabled -Db_lto=false -Db_build_type=release
+        scan-build meson setup build -Dbenchmarks=disabled -Db_lto=false --buildtype=release
         scan-build --exclude "sha3/" --status-bugs ninja -C build
 
   build-archs:
@@ -175,7 +175,7 @@ jobs:
             apt-get -q -y install ${{ matrix.cfg.cxxcompiler }}
           run: |
             mkdir build
-            meson setup build -Dbenchmarks=disabled -Db_lto=false -Db_build_type=release
+            meson setup build -Dbenchmarks=disabled -Db_lto=false --buildtype=release
             ninja -C build
             ninja -C build test
           env: |
