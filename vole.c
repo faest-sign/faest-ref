@@ -94,11 +94,12 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
   prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
   uint8_t* path = malloc(lambda_bytes * max_depth);
 
-  H1_context_t h1_outer_ctx;
+  H1_context_t hcom_ctx;
+  H1_context_t com_ctx;
   uint8_t* h = NULL;
   if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
-    H1_init(&h1_outer_ctx, lambda);
     h = malloc(lambda_bytes * 2);
+    H1_init(&hcom_ctx, lambda);
   }
 
   // STEP 1: To commit to [start,end] we first compute which trees we need to consider
@@ -126,23 +127,15 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
     unsigned int v_begin         = MAX(v_progress, start); 
     unsigned int v_end           = MIN(end, v_progress+tree_depth);
 
-    vec_com_t vec_com;
-    vector_commitment(expanded_keys + t * lambda_bytes, lambda, tree_depth, path, &vec_com);
-
     // (Setup for STEP 2.1)
-    const unsigned int num_instances = 1 << tree_depth;
+    const unsigned int num_seeds = 1 << tree_depth;
     uint8_t* sd  = malloc(lambda_bytes);
     uint8_t* com = malloc(lambda_bytes * 2);
-    H1_context_t* h1_ctx;
-    if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
-      h1_ctx = malloc(sizeof(H1_context_t));
-      H1_init(h1_ctx, lambda);
-    }
-
     uint8_t* r = malloc(ellhat_bytes);
 
     uint8_t* u_ptr = NULL;
     if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
+      H1_init(&com_ctx, lambda);
       u_ptr = is_first_tree ? vole_mode.u : vole_mode.c + (t - 1) * ellhat_bytes;
       memset(u_ptr, 0, ellhat_bytes);
     }
@@ -151,13 +144,16 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       memset(vole_mode.v+(v_cache_offset*ellhat_bytes), 0, v_count*ellhat_bytes);
     }
 
+    vec_com_t vec_com;
+    vector_commitment(expanded_keys + t * lambda_bytes, lambda, tree_depth, path, &vec_com);
+
     // STEP 2.1: For this tree, extract all seeds and commitments and compute according to the VOLE-mode
-    for (unsigned int i = 0; i < num_instances; i++) {
+    for (unsigned int i = 0; i < num_seeds; i++) {
       get_sd_com(&vec_com, iv, lambda, i, sd, com);
       prg(sd, iv, r, lambda, ellhat_bytes); // Seed expansion
 
       if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
-        H1_update(h1_ctx, com, lambda_bytes * 2);
+        H1_update(&com_ctx, com, lambda_bytes * 2);
         xor_u8_array(u_ptr, r, u_ptr, ellhat_bytes);
       }
       if (vole_mode.mode != EXCLUDE_V) {
@@ -170,7 +166,6 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
           }
         }
       }
-
     }
 
     free(sd);
@@ -181,16 +176,15 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       if (!is_first_tree) {
         xor_u8_array(vole_mode.u, u_ptr, u_ptr, ellhat_bytes); // Correction values
       }
-      H1_final(h1_ctx, h, lambda_bytes * 2);
-      H1_update(&h1_outer_ctx, h, lambda_bytes * 2);
-      free(h1_ctx);
+      H1_final(&com_ctx, h, lambda_bytes * 2);
+      H1_update(&hcom_ctx, h, lambda_bytes * 2);
     }
 
     v_progress += tree_depth;
   }
 
   if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
-    H1_final(&h1_outer_ctx, vole_mode.hcom, lambda_bytes * 2);
+    H1_final(&hcom_ctx, vole_mode.hcom, lambda_bytes * 2);
     free(h);
   }
 
