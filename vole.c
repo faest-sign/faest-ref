@@ -130,8 +130,8 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
     // (Setup for STEP 2.1)
     const unsigned int num_seeds = 1 << tree_depth;
     uint8_t* sd  = malloc(lambda_bytes);
-    uint8_t* com = malloc(lambda_bytes * 2);
-    uint8_t* r = malloc(ellhat_bytes);
+    uint8_t* com = malloc(lambda_bytes*2);
+    uint8_t* r   = malloc(ellhat_bytes);
 
     uint8_t* u_ptr = NULL;
     if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
@@ -160,8 +160,9 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
         for (unsigned int j = v_begin; j < v_end; j++) {
           // Instead of writing v_j at V[j], use the v_cache_offset
           uint8_t *write_idx = (vole_mode.v+(j-v_begin+v_cache_offset) * ellhat_bytes);
-          // Apply r if the i/2^j is odd
-          if ((i >> (j-v_progress)) & 1) {
+          unsigned int t_v = j-v_progress; // That is; t provides [0, depth] v's where t_v reflects the current v \in [0, depth]
+          // Apply r if the i/2^t_v is odd
+          if ((i >> t_v) & 1) {
             xor_u8_array(write_idx, r, write_idx, ellhat_bytes);
           }
         }
