@@ -139,7 +139,7 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
 }
 
 void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                             unsigned int chunk_start, unsigned int chunk_end,
+                             unsigned int start, unsigned int end,
                              sign_vole_mode_ctx_t vole_mode, const faest_paramset_t* params) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
@@ -165,32 +165,30 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 
   unsigned int k0_leaves       = tau0 * k0;
 
-  unsigned int k0_trees_begin  = (chunk_start < k0_leaves) ? chunk_start / k0 : tau0;
-  unsigned int k1_trees_begin  = (chunk_start < k0_leaves) ? 0 : (chunk_start - k0_leaves) / k1;
+  unsigned int k0_trees_begin  = (start < k0_leaves) ? start / k0 : tau0;
+  unsigned int k1_trees_begin  = (start < k0_leaves) ? 0 : (start - k0_leaves) / k1;
   // Ceil the k0+k1 end trees
-  unsigned int k0_trees_end    = (chunk_end < k0_leaves) ? (chunk_end + (k0-1)) / k0 : tau0;
-  unsigned int k1_trees_end    = (chunk_end < k0_leaves) ? 0 : (chunk_end - k0_leaves + (k1-1)) / k1;
+  unsigned int k0_trees_end    = (end < k0_leaves) ? (end + (k0-1)) / k0 : tau0;
+  unsigned int k1_trees_end    = (end < k0_leaves) ? 0 : (end - k0_leaves + (k1-1)) / k1;
 
   unsigned int tree_start = k0_trees_begin+k1_trees_begin;
   unsigned int tree_end   = k0_trees_end+k1_trees_end;
 
-  // Compute the cummulative sum of the tree depths until the requested chunk_start
+  // Compute the cummulative sum of the tree depths until the requested start
   unsigned int v_progress = k0 * k0_trees_begin + k1 * k1_trees_begin;
-  printf("(partial_vole_commit_cmo): start: %d, end: %d\n", chunk_start, chunk_end);
+  printf("(partial_vole_commit_cmo): start: %d, end: %d\n", start, end);
   
   // STEP 1: Iterate through all trees we need to consider
   for (unsigned int t = tree_start; t < tree_end; t++) {
     bool is_first_tree      = (t == 0);
     unsigned int tree_depth = t < tau0 ? k0 : k1;
 
-    unsigned int v_idx   = (v_progress > chunk_start) ? v_progress - chunk_start : 0;
-    unsigned int v_begin = (v_progress > chunk_start) ? 0 : chunk_start - v_progress;
-    unsigned int v_end   = MIN(chunk_end - v_progress, tree_depth);
-    v_begin += v_idx;
-    v_end += v_idx;
+    unsigned int virtual_v  = (v_progress > start) ? v_progress - start : 0;
+    unsigned int v_begin    = (v_progress > start) ? v_progress : start;
+    unsigned int v_end      = MIN(end, v_progress+tree_depth);
 
     if (vole_mode.mode != EXCLUDE_V) {
-      printf("tree no. %d, v_begin: %d, v_idx: %d, v_end: %d, \n", t, v_begin, v_idx, v_end);
+      printf("tree no. %d, v_begin: %d, v_end: %d, memory_idx: %d\n", t, v_begin, v_end, virtual_v);
     }
     
     vector_commitment(expanded_keys + t * lambda_bytes, lambda, tree_depth, path, &vec_com);
@@ -201,14 +199,13 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       u_ptr = is_first_tree ? vole_mode.u : vole_mode.c + (t - 1) * ellhat_bytes;
     }
     if (vole_mode.mode != EXCLUDE_V) {
-      v_ptr = vole_mode.v; //+ ellhat_bytes * v_idx;
+      v_ptr = vole_mode.v;
     }
-
 
     // STEP 2: For this tree, extract all seeds and commit
     // ConstructVoleCMO
     const unsigned int num_instances = 1 << tree_depth;
-    unsigned int v_len                 = v_end - v_begin;
+    unsigned int v_len               = v_end - v_begin;
     uint8_t* sd  = malloc(lambda_bytes);
     uint8_t* com = malloc(lambda_bytes * 2);
     H1_context_t* h1_ctx;
@@ -224,7 +221,7 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       memset(u_ptr, 0, ellhat_bytes);
     }
     if (v_ptr != NULL) {
-      memset(v_ptr+(v_idx*ellhat_bytes), 0, v_len * ellhat_bytes);
+      memset(v_ptr+(virtual_v*ellhat_bytes), 0, v_len * ellhat_bytes);
     }
 
     for (unsigned int i = 0; i < num_instances; i++) {
@@ -238,11 +235,12 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       if (u_ptr != NULL) {
         xor_u8_array(u_ptr, r, u_ptr, ellhat_bytes);
       }
+
       if (v_ptr != NULL) {
         for (unsigned int j = v_begin; j < v_end; j++) {
-          uint8_t *write_idx = (v_ptr + (j-v_begin+v_idx) * ellhat_bytes);
+          uint8_t *write_idx = (v_ptr + (j-v_begin+virtual_v) * ellhat_bytes);
           // Apply r if the j'th bit is set
-          if ((i >> (j-v_idx)) & 1) {
+          if ((i >> (j-v_progress)) & 1) {
             xor_u8_array(write_idx, r, write_idx, ellhat_bytes);
           }
         }
