@@ -39,66 +39,6 @@ int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t
   return 1;
 }
 
-static void ConstructVoleCMO(const uint8_t* iv, vec_com_t* vec_com, unsigned int lambda,
-                             unsigned int out_len_bytes, uint8_t* u, uint8_t* v, uint8_t* h,
-                             unsigned int begin, unsigned int end, unsigned int v_idx) {
-  unsigned int depth               = vec_com->depth;
-  const unsigned int num_instances = 1 << depth;
-  const unsigned int lambda_bytes  = lambda / 8;
-  unsigned int len                 = end - begin;
-
-  uint8_t* sd  = malloc(lambda_bytes);
-  uint8_t* com = malloc(lambda_bytes * 2);
-  H1_context_t* h1_ctx;
-  if (h != NULL) {
-    h1_ctx = malloc(sizeof(H1_context_t));
-    H1_init(h1_ctx, lambda);
-  }
-
-  uint8_t* r = malloc(out_len_bytes);
-
-  // Clear initial memory
-  if (u != NULL) {
-    memset(u, 0, out_len_bytes);
-  }
-  if (v != NULL) {
-    memset(v+(v_idx*out_len_bytes), 0, len * out_len_bytes);
-  }
-
-  for (unsigned int i = 0; i < num_instances; i++) {
-    get_sd_com(vec_com, iv, lambda, i, sd, com);
-    if (h != NULL) {
-      H1_update(h1_ctx, com, lambda_bytes * 2);
-    }
-
-    // Seed expansion
-    prg(sd, iv, r, lambda, out_len_bytes);
-    if (u != NULL) {
-      xor_u8_array(u, r, u, out_len_bytes);
-    }
-    if (v != NULL) {
-      for (unsigned int j = begin; j < end; j++) {
-        uint8_t *write_idx = (v + (j-begin+v_idx) * out_len_bytes);
-        // Apply r if the j'th bit is set
-        if ((i >> (j-v_idx)) & 1) {
-          xor_u8_array(write_idx, r, write_idx, out_len_bytes);
-        }
-      }
-    }
-  }
-
-  if (h != NULL) {
-    H1_final(h1_ctx, h, lambda_bytes * 2);
-  }
-
-  if (h != NULL) {
-    free(h1_ctx);
-  }
-  free(sd);
-  free(com);
-  free(r);
-}
-
 // NOTE - Assumes v is cleared (initially)!!
 static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int len,
                              vec_com_t* vec_com, unsigned int lambda, unsigned int out_len_bytes,
@@ -163,34 +103,30 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 
   vec_com_t vec_com;
 
+  // STEP 1: To commit to [start,end] we first compute which trees we need to consider
   unsigned int k0_leaves       = tau0 * k0;
 
   unsigned int k0_trees_begin  = (start < k0_leaves) ? start / k0 : tau0;
   unsigned int k1_trees_begin  = (start < k0_leaves) ? 0 : (start - k0_leaves) / k1;
-  // Ceil the k0+k1 end trees
-  unsigned int k0_trees_end    = (end < k0_leaves) ? (end + (k0-1)) / k0 : tau0;
-  unsigned int k1_trees_end    = (end < k0_leaves) ? 0 : (end - k0_leaves + (k1-1)) / k1;
+  unsigned int k0_trees_end    = (end < k0_leaves) ? (end + (k0-1)) / k0 : tau0; // ceiled
+  unsigned int k1_trees_end    = (end < k0_leaves) ? 0 : (end - k0_leaves + (k1-1)) / k1;  // ceiled
 
   unsigned int tree_start = k0_trees_begin+k1_trees_begin;
   unsigned int tree_end   = k0_trees_end+k1_trees_end;
 
   // Compute the cummulative sum of the tree depths until the requested start
   unsigned int v_progress = k0 * k0_trees_begin + k1 * k1_trees_begin;
-  printf("(partial_vole_commit_cmo): start: %d, end: %d\n", start, end);
   
-  // STEP 1: Iterate through all trees we need to consider
+  // STEP 2: Iterate through all trees we need to consider
   for (unsigned int t = tree_start; t < tree_end; t++) {
     bool is_first_tree      = (t == 0);
     unsigned int tree_depth = t < tau0 ? k0 : k1;
 
-    unsigned int virtual_v  = (v_progress > start) ? v_progress - start : 0;
-    unsigned int v_begin    = (v_progress > start) ? v_progress : start;
-    unsigned int v_end      = MIN(end, v_progress+tree_depth);
+    // v_cache_offset is used to compute the index we should write v to relative to our cache
+    unsigned int v_cache_offset  = (v_progress > start) ? v_progress - start : 0; // MAX(v_progress-start, 0)
+    unsigned int v_begin         = MAX(v_progress, start); 
+    unsigned int v_end           = MIN(end, v_progress+tree_depth);
 
-    if (vole_mode.mode != EXCLUDE_V) {
-      printf("tree no. %d, v_begin: %d, v_end: %d, memory_idx: %d\n", t, v_begin, v_end, virtual_v);
-    }
-    
     vector_commitment(expanded_keys + t * lambda_bytes, lambda, tree_depth, path, &vec_com);
 
     uint8_t* u_ptr = NULL;
@@ -202,8 +138,7 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       v_ptr = vole_mode.v;
     }
 
-    // STEP 2: For this tree, extract all seeds and commit
-    // ConstructVoleCMO
+    // STEP 2.1: For this tree, extract all seeds and commit
     const unsigned int num_instances = 1 << tree_depth;
     unsigned int v_len               = v_end - v_begin;
     uint8_t* sd  = malloc(lambda_bytes);
@@ -221,7 +156,7 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       memset(u_ptr, 0, ellhat_bytes);
     }
     if (v_ptr != NULL) {
-      memset(v_ptr+(virtual_v*ellhat_bytes), 0, v_len * ellhat_bytes);
+      memset(v_ptr+(v_cache_offset*ellhat_bytes), 0, v_len * ellhat_bytes);
     }
 
     for (unsigned int i = 0; i < num_instances; i++) {
@@ -238,7 +173,8 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 
       if (v_ptr != NULL) {
         for (unsigned int j = v_begin; j < v_end; j++) {
-          uint8_t *write_idx = (v_ptr + (j-v_begin+virtual_v) * ellhat_bytes);
+          // Instead of writing v_j at mem idx j, use the v_cache_offset
+          uint8_t *write_idx = (v_ptr + (j-v_begin+v_cache_offset) * ellhat_bytes);
           // Apply r if the j'th bit is set
           if ((i >> (j-v_progress)) & 1) {
             xor_u8_array(write_idx, r, write_idx, ellhat_bytes);
@@ -257,7 +193,6 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
     free(sd);
     free(com);
     free(r);
-    // end ConstructVoleCMO
 
     if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
       if (!is_first_tree) {
