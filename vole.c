@@ -101,8 +101,6 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
     h = malloc(lambda_bytes * 2);
   }
 
-  vec_com_t vec_com;
-
   // STEP 1: To commit to [start,end] we first compute which trees we need to consider
   unsigned int k0_leaves       = tau0 * k0;
 
@@ -123,82 +121,69 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
     unsigned int tree_depth = t < tau0 ? k0 : k1;
 
     // v_cache_offset is used to compute the index we should write v to relative to our cache
-    unsigned int v_cache_offset  = (v_progress > start) ? v_progress - start : 0; // MAX(v_progress-start, 0)
+    unsigned int v_cache_offset  = (v_progress > start) ? v_progress - start : 0; // (i.e. MAX(v_progress-start, 0))
+    // [v_begin, v_begin] is the v's that t provides (capped by requested start/end)
     unsigned int v_begin         = MAX(v_progress, start); 
     unsigned int v_end           = MIN(end, v_progress+tree_depth);
 
+    vec_com_t vec_com;
     vector_commitment(expanded_keys + t * lambda_bytes, lambda, tree_depth, path, &vec_com);
 
-    uint8_t* u_ptr = NULL;
-    uint8_t* v_ptr = NULL;
-    if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
-      u_ptr = is_first_tree ? vole_mode.u : vole_mode.c + (t - 1) * ellhat_bytes;
-    }
-    if (vole_mode.mode != EXCLUDE_V) {
-      v_ptr = vole_mode.v;
-    }
-
-    // STEP 2.1: For this tree, extract all seeds and commit
+    // (Setup for STEP 2.1)
     const unsigned int num_instances = 1 << tree_depth;
-    unsigned int v_len               = v_end - v_begin;
     uint8_t* sd  = malloc(lambda_bytes);
     uint8_t* com = malloc(lambda_bytes * 2);
     H1_context_t* h1_ctx;
-    if (h != NULL) {
+    if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
       h1_ctx = malloc(sizeof(H1_context_t));
       H1_init(h1_ctx, lambda);
     }
 
     uint8_t* r = malloc(ellhat_bytes);
 
-    // Clear initial memory
-    if (u_ptr != NULL) {
+    uint8_t* u_ptr = NULL;
+    if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
+      u_ptr = is_first_tree ? vole_mode.u : vole_mode.c + (t - 1) * ellhat_bytes;
       memset(u_ptr, 0, ellhat_bytes);
     }
-    if (v_ptr != NULL) {
-      memset(v_ptr+(v_cache_offset*ellhat_bytes), 0, v_len * ellhat_bytes);
+    if (vole_mode.mode != EXCLUDE_V) {
+      unsigned int v_count = v_end-v_begin;
+      memset(vole_mode.v+(v_cache_offset*ellhat_bytes), 0, v_count*ellhat_bytes);
     }
 
+    // STEP 2.1: For this tree, extract all seeds and commitments and compute according to the VOLE-mode
     for (unsigned int i = 0; i < num_instances; i++) {
       get_sd_com(&vec_com, iv, lambda, i, sd, com);
-      if (h != NULL) {
-        H1_update(h1_ctx, com, lambda_bytes * 2);
-      }
+      prg(sd, iv, r, lambda, ellhat_bytes); // Seed expansion
 
-      // Seed expansion
-      prg(sd, iv, r, lambda, ellhat_bytes);
-      if (u_ptr != NULL) {
+      if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
+        H1_update(h1_ctx, com, lambda_bytes * 2);
         xor_u8_array(u_ptr, r, u_ptr, ellhat_bytes);
       }
-
-      if (v_ptr != NULL) {
+      if (vole_mode.mode != EXCLUDE_V) {
         for (unsigned int j = v_begin; j < v_end; j++) {
-          // Instead of writing v_j at mem idx j, use the v_cache_offset
-          uint8_t *write_idx = (v_ptr + (j-v_begin+v_cache_offset) * ellhat_bytes);
-          // Apply r if the j'th bit is set
+          // Instead of writing v_j at V[j], use the v_cache_offset
+          uint8_t *write_idx = (vole_mode.v+(j-v_begin+v_cache_offset) * ellhat_bytes);
+          // Apply r if the i/2^j is odd
           if ((i >> (j-v_progress)) & 1) {
             xor_u8_array(write_idx, r, write_idx, ellhat_bytes);
           }
         }
       }
+
     }
 
-    if (h != NULL) {
-      H1_final(h1_ctx, h, lambda_bytes * 2);
-    }
-
-    if (h != NULL) {
-      free(h1_ctx);
-    }
     free(sd);
     free(com);
     free(r);
 
     if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
       if (!is_first_tree) {
-        xor_u8_array(vole_mode.u, u_ptr, u_ptr, ellhat_bytes);
+        xor_u8_array(vole_mode.u, u_ptr, u_ptr, ellhat_bytes); // Correction values
       }
+      H1_final(h1_ctx, h, lambda_bytes * 2);
       H1_update(&h1_outer_ctx, h, lambda_bytes * 2);
+      free(h1_ctx);
     }
 
     v_progress += tree_depth;
