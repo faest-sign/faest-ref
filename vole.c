@@ -54,7 +54,7 @@ static void ConstructVoleRMO(const uint8_t* iv, unsigned int start, unsigned int
   unsigned int byte_offset = (offset / 8);
 
   for (unsigned int i = 0; i < num_instances; i++) {
-    get_sd_com(vec_com, iv, lambda, i, sd, com);
+    extract_sd_com(vec_com, iv, lambda, i, sd, com);
     prg(sd, iv, r, lambda, out_len_bytes);
 
     for (unsigned int row_idx = 0; row_idx < len; row_idx++) {
@@ -103,12 +103,12 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
   }
 
   // STEP 1: To commit to [start,end] we first compute which trees we need to consider
-  unsigned int k0_leaves       = tau0 * k0;
+  unsigned int depth_tau_0     = tau0 * k0;
 
-  unsigned int k0_trees_begin  = (start < k0_leaves) ? start / k0 : tau0;
-  unsigned int k1_trees_begin  = (start < k0_leaves) ? 0 : (start - k0_leaves) / k1;
-  unsigned int k0_trees_end    = (end < k0_leaves) ? (end + (k0-1)) / k0 : tau0; // ceiled
-  unsigned int k1_trees_end    = (end < k0_leaves) ? 0 : (end - k0_leaves + (k1-1)) / k1;  // ceiled
+  unsigned int k0_trees_begin  = (start < depth_tau_0) ? start / k0 : tau0;
+  unsigned int k1_trees_begin  = (start < depth_tau_0) ? 0 : (start - depth_tau_0) / k1;
+  unsigned int k0_trees_end    = (end < depth_tau_0) ? (end + (k0-1)) / k0 : tau0; // ceiled
+  unsigned int k1_trees_end    = (end < depth_tau_0) ? 0 : (end - depth_tau_0 + (k1-1)) / k1;  // ceiled
 
   unsigned int tree_start = k0_trees_begin+k1_trees_begin;
   unsigned int tree_end   = k0_trees_end+k1_trees_end;
@@ -123,8 +123,8 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 
     // v_cache_offset is used to compute the index we should write v to relative to our cache
     unsigned int v_cache_offset  = (v_progress > start) ? v_progress - start : 0; // (i.e. MAX(v_progress-start, 0))
-    // [v_begin, v_begin] is the v's that t provides (capped by requested start/end)
-    unsigned int v_begin         = MAX(v_progress, start); 
+    // [v_start, v_end] is the v's that t provides (capped by requested start/end)
+    unsigned int v_start         = MAX(v_progress, start); 
     unsigned int v_end           = MIN(end, v_progress+tree_depth);
 
     // (Setup for STEP 2.1)
@@ -140,7 +140,7 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
       memset(u_ptr, 0, ellhat_bytes);
     }
     if (vole_mode.mode != EXCLUDE_V) {
-      unsigned int v_count = v_end-v_begin;
+      unsigned int v_count = v_end-v_start;
       memset(vole_mode.v+(v_cache_offset*ellhat_bytes), 0, v_count*ellhat_bytes);
     }
 
@@ -149,7 +149,7 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
 
     // STEP 2.1: For this tree, extract all seeds and commitments and compute according to the VOLE-mode
     for (unsigned int i = 0; i < num_seeds; i++) {
-      get_sd_com(&vec_com, iv, lambda, i, sd, com);
+      extract_sd_com(&vec_com, iv, lambda, i, sd, com);
       prg(sd, iv, r, lambda, ellhat_bytes); // Seed expansion
 
       if (vole_mode.mode != EXCLUDE_U_HCOM_C) {
@@ -157,9 +157,9 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
         xor_u8_array(u_ptr, r, u_ptr, ellhat_bytes);
       }
       if (vole_mode.mode != EXCLUDE_V) {
-        for (unsigned int j = v_begin; j < v_end; j++) {
+        for (unsigned int j = v_start; j < v_end; j++) {
           // Instead of writing v_j at V[j], use the v_cache_offset
-          uint8_t* write_idx = (vole_mode.v+(j-v_begin+v_cache_offset) * ellhat_bytes);
+          uint8_t* write_idx = (vole_mode.v+(j-v_start+v_cache_offset) * ellhat_bytes);
           unsigned int t_v = j-v_progress; // That is; t provides depth num of v's where t_v reflects the current v \in [0, depth]
           // Apply r if the i/2^t_v is odd
           if ((i >> t_v) & 1) {
@@ -259,7 +259,7 @@ static void ReconstructVoleCMO(const uint8_t* iv, vec_com_rec_t* vec_com_rec, un
       continue;
     }
 
-    get_sd_com_rec(vec_com_rec, iv, lambda, i, sd, com);
+    extract_sd_com_rec(vec_com_rec, iv, lambda, i, sd, com);
     if (h != NULL) {
       H1_update(&h1_ctx, com, lambda_bytes * 2);
     }
@@ -385,7 +385,7 @@ static void ReconstructVoleRMO(const uint8_t* iv, vec_com_rec_t* vec_com_rec, un
     if (offset_index == 0) {
       continue;
     }
-    get_sd_com_rec(vec_com_rec, iv, lambda, i, sd, com);
+    extract_sd_com_rec(vec_com_rec, iv, lambda, i, sd, com);
     prg(sd, iv, r, lambda, out_len_bytes);
 
     for (unsigned int row_idx = 0; row_idx < len; row_idx++) {

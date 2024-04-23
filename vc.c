@@ -32,7 +32,7 @@ static void H0(const uint8_t* node, uint32_t lambda, const uint8_t* iv, uint8_t*
 }
 
 // index is the index i for (sd_i, com_i)
-void get_sd_com(vec_com_t* vec_com, const uint8_t* iv, uint32_t lambda, unsigned int index,
+void extract_sd_com(vec_com_t* vec_com, const uint8_t* iv, uint32_t lambda, unsigned int index,
                 uint8_t* sd, uint8_t* com) {
   const unsigned int lambda_bytes = lambda / 8;
 
@@ -65,11 +65,8 @@ void get_sd_com(vec_com_t* vec_com, const uint8_t* iv, uint32_t lambda, unsigned
   }
 
   // Set starting node
-  uint8_t* node;
-  if (i > 0)
-    node = path_nodes + (i - 1) * lambda_bytes;
-  else
-    node = vec_com->rootKey;
+  uint8_t* node = (i > 0) ? path_nodes + (i - 1) * lambda_bytes 
+                          : vec_com->rootKey;
 
   // Continue computing until leaf is reached
   for (; i < vec_com->depth; i++) {
@@ -129,7 +126,7 @@ void vector_open(vec_com_t* vec_com, const uint8_t* b, uint8_t* cop, uint8_t* co
   // Step: 7
   uint64_t leaf_index = NumRec(depth, b);
   uint8_t* sd         = alloca(lambda_bytes); // Byproduct
-  get_sd_com(vec_com, iv, lambda, leaf_index, sd, com_j);
+  extract_sd_com(vec_com, iv, lambda, leaf_index, sd, com_j);
 }
 
 // Reconstruction
@@ -144,16 +141,14 @@ void vector_reconstruction(const uint8_t* cop, const uint8_t* com_j, const uint8
   vec_com_rec->path.nodes = tree_nodes;
 }
 
-void get_sd_com_rec(vec_com_rec_t* vec_com_rec, const uint8_t* iv, uint32_t lambda,
+void extract_sd_com_rec(vec_com_rec_t* vec_com_rec, const uint8_t* iv, uint32_t lambda,
                     unsigned int index, uint8_t* sd, uint8_t* com) {
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int depth        = vec_com_rec->depth;
-  uint8_t* children               = alloca(lambda_bytes * 2);
+
+  uint8_t* children               = malloc(lambda_bytes * 2);
   uint8_t* l_child                = children;
   uint8_t* r_child                = l_child + lambda_bytes;
-
-  // Assert we do not request the unknown leaf. (alternatively return zeroes)
-  //assert(index != NumRec(depth, vec_com_rec->b));
 
   size_t lo         = 0;
   size_t leaf_count = (1 << depth);
@@ -162,10 +157,9 @@ void get_sd_com_rec(vec_com_rec_t* vec_com_rec, const uint8_t* iv, uint32_t lamb
   uint8_t* b = vec_com_rec->b;
 
   // Find first known node on path
-  size_t i = 0;
-  for (; i < depth; i++) {
-    uint8_t left_node_known = b[depth - i - 1];
-
+  size_t j = 0;
+  for (; j < depth; j++) {
+    uint8_t left_node_known = b[depth - j - 1];
     center = (hi - lo) / 2 + lo;
     if (index <= center) { // Left
       hi = center;
@@ -179,15 +173,15 @@ void get_sd_com_rec(vec_com_rec_t* vec_com_rec, const uint8_t* iv, uint32_t lamb
       }
     }
   }
-  uint8_t* node = vec_com_rec->nodes + lambda_bytes * i;
-  ++i;
+  j += 1;
 
-  size_t j = 0;
-  // Continue in path memory
+  // Find starting point from path memory
+  size_t i = 0;
   unsigned int path_index = vec_com_rec->path.index;
+  bool path_index_outside_search = (path_index > hi) || (path_index < lo);
   uint8_t* path_nodes     = vec_com_rec->path.nodes;
-  if (path_nodes != NULL && !vec_com_rec->path.empty && path_index <= hi && path_index >= lo) {
-    for (; i < depth; i++, j++) {
+  if (path_nodes != NULL && !vec_com_rec->path.empty && !path_index_outside_search) {
+    for (; i < depth; i++) {
       center = (hi - lo) / 2 + lo;
       if (index <= center) { // Left
         if (path_index > center)
@@ -200,13 +194,13 @@ void get_sd_com_rec(vec_com_rec_t* vec_com_rec, const uint8_t* iv, uint32_t lamb
       }
     }
   }
-
+  
   // Set starting node
-  if (j > 0)
-    node = path_nodes + (j - 1) * lambda_bytes;
+  uint8_t* node = (i > 0) ? node = path_nodes + (i - 1) * lambda_bytes
+                          : vec_com_rec->nodes + (j - 1) * lambda_bytes;
 
   // Continue computing until leaf is reached
-  for (; i < depth; i++, j++) {
+  for (; j < depth; j++, i++) {
     prg(node, iv, children, lambda, lambda_bytes * 2);
 
     center = (hi - lo) / 2 + lo;
@@ -218,10 +212,11 @@ void get_sd_com_rec(vec_com_rec_t* vec_com_rec, const uint8_t* iv, uint32_t lamb
       lo   = center + 1;
     }
     if (path_nodes != NULL)
-      memcpy(path_nodes + j * lambda_bytes, node, lambda_bytes);
+      memcpy(path_nodes + i * lambda_bytes, node, lambda_bytes);
   }
 
   vec_com_rec->path.index = index;
 
   H0(node, lambda, iv, sd, com);
+  free(children);
 }
