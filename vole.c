@@ -116,7 +116,6 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
   // Compute the cummulative sum of the tree depths until the requested start
   unsigned int v_progress = k0 * k0_trees_begin + k1 * k1_trees_begin;
   
-  // STEP 2: Iterate through all trees we need to consider
   for (unsigned int t = tree_start; t < tree_end; t++) {
     bool is_first_tree      = (t == 0);
     unsigned int tree_depth = t < tau0 ? k0 : k1;
@@ -127,7 +126,7 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
     unsigned int v_start         = MAX(v_progress, start); 
     unsigned int v_end           = MIN(end, v_progress+tree_depth);
 
-    // (Setup for STEP 2.1)
+    // (Setup for STEP 2)
     const unsigned int num_seeds = 1 << tree_depth;
     uint8_t sd[MAX_LAMBDA_BYTES];
     uint8_t com[2*MAX_LAMBDA_BYTES];
@@ -147,7 +146,7 @@ void partial_vole_commit_cmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
     vec_com_t vec_com;
     vector_commitment(expanded_keys + t * lambda_bytes, lambda, tree_depth, path, &vec_com);
 
-    // STEP 2.1: For this tree, extract all seeds and commitments and compute according to the VOLE-mode
+    // STEP 2: For this tree, extract all seeds and commitments and compute according to the VOLE-mode
     for (unsigned int i = 0; i < num_seeds; i++) {
       extract_sd_com(&vec_com, iv, lambda, i, sd, com);
       prg(sd, iv, r, lambda, ellhat_bytes); // Seed expansion
