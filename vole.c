@@ -293,7 +293,6 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall, const
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat_bytes = (ellhat + 7) / 8;
-  unsigned int tau          = params->faest_param.tau;
   unsigned int tau0         = params->faest_param.t0;
   unsigned int tau1         = params->faest_param.t1;
   unsigned int k0           = params->faest_param.k0;
@@ -317,41 +316,52 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall, const
   }
 
   unsigned int end        = start + len;
-  unsigned int tree_start = 0;
 
-  for (unsigned int i = 0; i < tau; i++) {
-    unsigned int depth = i < tau0 ? k0 : k1;
-    if (tree_start + depth > start) {
-      unsigned int lbegin = 0;
-      if (start > tree_start) {
-        lbegin = start - tree_start;
-      }
+  // STEP 1: To commit to [start,end] we first compute which trees we need to consider
+  unsigned int depth_tau_0     = tau0 * k0;
 
-      unsigned int lend  = MIN(depth, end - tree_start);
-      unsigned int q_idx = 0;
-      if (tree_start > start) {
-        q_idx = tree_start - start;
-      }
+  unsigned int k0_trees_begin  = (start < depth_tau_0) ? start / k0 : tau0;
+  unsigned int k1_trees_begin  = (start < depth_tau_0) ? 0 : (start - depth_tau_0) / k1;
+  unsigned int k0_trees_end    = (end < depth_tau_0) ? (end + (k0-1)) / k0 : tau0; // ceiled
+  unsigned int k1_trees_end    = (end < depth_tau_0) ? 0 : (end - depth_tau_0 + (k1-1)) / k1;  // ceiled
 
-      uint8_t* q_ptr = NULL;
-      if (vole_mode.mode != EXCLUDE_Q) {
-        q_ptr = vole_mode.q + q_idx * ellhat_bytes;
-      }
+  unsigned int tree_start = k0_trees_begin+k1_trees_begin;
+  unsigned int tree_end   = k0_trees_end+k1_trees_end;
 
-      uint8_t chalout[MAX_DEPTH];
-      ChalDec(chall, i, k0, tau0, k1, tau1, chalout);
-      vector_reconstruction(pdec[i], com_j[i], chalout, lambda, depth, tree_nodes, &vec_com_rec);
-      ReconstructVoleCMO(iv, &vec_com_rec, lambda, ellhat_bytes, q_ptr, h,
-                         lbegin, lend);
-      if (vole_mode.mode != EXCLUDE_HCOM) {
-        H1_update(&h1_ctx, h, lambda_bytes * 2);
-      }
+  // Compute the cummulative sum of the tree depths until the requested start
+  unsigned int v_progress = k0 * k0_trees_begin + k1 * k1_trees_begin;
+
+  for (unsigned int t = tree_start; t < tree_end; t++) {
+    unsigned int depth  = t < tau0 ? k0 : k1;
+    unsigned int lbegin = 0;
+    if (start > v_progress) {
+      lbegin = start - v_progress;
     }
 
-    tree_start += depth;
-    if (tree_start >= end) {
-      break;
+    unsigned int lend  = MIN(depth, end - v_progress);
+    unsigned int q_idx = 0;
+    if (v_progress > start) {
+      q_idx = v_progress - start;
     }
+
+    uint8_t* q_ptr = NULL;
+    if (vole_mode.mode != EXCLUDE_Q) {
+      q_ptr = vole_mode.q + q_idx * ellhat_bytes;
+    }
+
+    uint8_t chalout[MAX_DEPTH];
+    ChalDec(chall, t, k0, tau0, k1, tau1, chalout);
+    vector_reconstruction(pdec[t], com_j[t], chalout, lambda, depth, tree_nodes, &vec_com_rec);
+    
+    
+    ReconstructVoleCMO(iv, &vec_com_rec, lambda, ellhat_bytes, q_ptr, h, lbegin, lend);
+
+
+    if (vole_mode.mode != EXCLUDE_HCOM) {
+      H1_update(&h1_ctx, h, lambda_bytes * 2);
+    }
+
+    v_progress += depth;
   }
 
   free(vec_com_rec.b);
