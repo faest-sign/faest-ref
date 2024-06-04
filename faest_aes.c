@@ -1411,54 +1411,34 @@ static void aes_enc_backward_256_vbb_linear_access(vbb_t* vbb, unsigned int offs
       bf256_mul_bit(bf256_add(bf256_mul_bit(bf_delta, Mkey), bf256_from_bit(1 ^ Mkey)), 1 ^ Mtag);
   // Access pattern friendly for OLEs
   bf256_t bf_x_tilde[8];
-  for (unsigned int i = 0; i < (FAEST_256F_R - 1) * 8 * 16; i++) {
-    unsigned int j = i / 128;
-    unsigned int r = ((i - (128 * j)) % 32) / 8;
-    unsigned int c = ((i - 128 * j - 8 * r) / 32 + r) % 4;
+  for (unsigned int ird = 0; ird < FAEST_256F_R*128; ird++) {
+    unsigned int j = ird / 128;
+    unsigned int r = ((ird - (128 * j)) % 32) / 8;
+    unsigned int c = ((ird - 128 * j - 8 * r) / 32 + r) % 4;
 
-    memcpy(bf_x_tilde + (i % 8), get_vole_aes_256(vbb, i + offset), sizeof(bf256_t));
-
-    if (i % 8 == 7) {
-      bf256_t bf_y_tilde[8];
-      for (unsigned int k = 0; k < 8; ++k) {
-        bf_y_tilde[k] = bf256_add(bf256_add(bf_x_tilde[(k + 7) % 8], bf_x_tilde[(k + 5) % 8]),
-                                  bf_x_tilde[(k + 2) % 8]);
-      }
-      bf_y_tilde[0] = bf256_add(bf_y_tilde[0], factor);
-      bf_y_tilde[2] = bf256_add(bf_y_tilde[2], factor);
-
-      // Step: 18
-      y_out[16 * j + 4 * c + r] = bf256_byte_combine(bf_y_tilde);
-    }
-  }
-
-  unsigned int j = FAEST_256F_R - 1;
-  for (unsigned int c = 0; c <= 3; c++) {
-    for (unsigned int r = 0; r <= 3; r++) {
+    if (j != FAEST_256F_R - 1) {
+      memcpy(bf_x_tilde + (ird % 8), get_vole_aes_256(vbb, ird + offset), sizeof(bf256_t));
+    } else {
       memset(bf_x_tilde, 0, sizeof(bf256_t));
-      // Step: 5
-      unsigned int ird = (128 * j) + (32 * ((c - r + 4) % 4)) + (8 * r);
+      unsigned int z = (ird/8)*8;
 
-      // Step: 10
       for (unsigned int i = 0; i < 8; ++i) {
-        // Step: 11
         bf256_t bf_xout =
-            bf256_mul_bit(factor, get_bit(out[(ird - 128 * (FAEST_256F_R - 1)) / 8], i));
-        // Step: 12
-        bf_x_tilde[i] = bf256_add(bf_xout, *get_vk_256(vbb, 128 + ird + i));
+            bf256_mul_bit(factor, get_bit(out[(z - 128*(FAEST_256F_R-1)) / 8], i));
+        bf_x_tilde[i] = bf256_add(bf_xout, *get_vk_256(vbb, 128+z + i));
       }
+    }
 
-      // Step: 13..17
-      bf256_t bf_y_tilde[8];
-      for (unsigned int i = 0; i < 8; ++i) {
-        bf_y_tilde[i] = bf256_add(bf256_add(bf_x_tilde[(i + 7) % 8], bf_x_tilde[(i + 5) % 8]),
-                                  bf_x_tilde[(i + 2) % 8]);
-      }
-      bf_y_tilde[0] = bf256_add(bf_y_tilde[0], factor);
-      bf_y_tilde[2] = bf256_add(bf_y_tilde[2], factor);
+    if (ird % 8 == 7) {
+        bf256_t bf_y_tilde[8];
+        for (unsigned int i = 0; i < 8; ++i) {
+          bf_y_tilde[i] = bf256_add(bf256_add(bf_x_tilde[(i + 7) % 8], bf_x_tilde[(i + 5) % 8]),
+                                    bf_x_tilde[(i + 2) % 8]);
+        }
+        bf_y_tilde[0] = bf256_add(bf_y_tilde[0], factor);
+        bf_y_tilde[2] = bf256_add(bf_y_tilde[2], factor);
 
-      // Step: 18
-      y_out[16 * j + 4 * c + r] = bf256_byte_combine(bf_y_tilde);
+        y_out[16 * j + 4 * c + r] = bf256_byte_combine(bf_y_tilde);
     }
   }
 }
@@ -1537,7 +1517,7 @@ static void aes_prove_256(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const
 
   // Step: 16..18
   zk_hash_256_finalize(a_tilde, &a1_ctx, bf256_load(get_vole_u(vbb) + FAEST_256F_L / 8));
-  zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly_vbb(vbb, FAEST_256F_L));
+  zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly_vbb(vbb, FAEST_256F_L, 0));
 }
 
 static uint8_t* aes_verify_256(vbb_t* vbb, const uint8_t* chall_2, const uint8_t* chall_3,
@@ -1563,7 +1543,7 @@ static uint8_t* aes_verify_256(vbb_t* vbb, const uint8_t* chall_2, const uint8_t
 
   // Step: 20, 21
   uint8_t* q_tilde = malloc(FAEST_256F_LAMBDA / 8);
-  zk_hash_256_finalize(q_tilde, &b0_ctx, bf256_sum_poly_vbb(vbb, FAEST_256F_L));
+  zk_hash_256_finalize(q_tilde, &b0_ctx, bf256_sum_poly_vbb(vbb, FAEST_256F_L, 0));
 
   bf256_t bf_qtilde = bf256_load(q_tilde);
   bf256_store(q_tilde, bf256_add(bf_qtilde, bf256_mul(bf256_load(a_tilde), bf256_load(delta))));
@@ -2646,7 +2626,7 @@ static void em_prove_256(const uint8_t* w, vbb_t* vbb, const uint8_t* in, const 
   em_enc_constraints_Mkey_0_256(out, x, w, vbb, &a0_ctx, &a1_ctx);
 
   zk_hash_256_finalize(a_tilde, &a1_ctx, bf256_load(get_vole_u(vbb) + FAEST_EM_256F_Lenc / 8));
-  zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly_vbb(vbb, FAEST_EM_256F_Lenc));
+  zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly_vbb(vbb, FAEST_EM_256F_Lenc, 0));
 }
 
 static uint8_t* em_verify_256(vbb_t* vbb, const uint8_t* chall_2, const uint8_t* chall_3,
@@ -2672,7 +2652,7 @@ static uint8_t* em_verify_256(vbb_t* vbb, const uint8_t* chall_2, const uint8_t*
   em_enc_constraints_Mkey_1_256(out, x, vbb, delta, &b0_ctx);
 
   uint8_t* q_tilde = malloc(FAEST_EM_256F_LAMBDA / 8);
-  zk_hash_256_finalize(q_tilde, &b0_ctx, bf256_sum_poly_vbb(vbb, FAEST_EM_256F_Lenc));
+  zk_hash_256_finalize(q_tilde, &b0_ctx, bf256_sum_poly_vbb(vbb, FAEST_EM_256F_Lenc, 0));
 
   bf256_t bf_qtilde = bf256_load(q_tilde);
   bf256_store(q_tilde, bf256_add(bf_qtilde, bf256_mul(bf256_load(a_tilde), bf256_load(delta))));
