@@ -392,18 +392,18 @@ const uint8_t* get_dtilde(vbb_t* vbb, unsigned int idx) {
   const unsigned int k0           = vbb->params->faest_param.k0;
   const unsigned int k1           = vbb->params->faest_param.k1;
 
-  unsigned int i = 0;
-  unsigned int j = 0;
+  unsigned int t;
+  unsigned int j;
   if (idx < k0 * tau0) {
-    i = idx / k0;
+    t = idx / k0;
     j = idx % k0;
   } else {
-    i = tau0 + (idx - k0 * tau0) / k1;
+    t = tau0 + (idx - k0 * tau0) / k1;
     j = (idx - k0 * tau0) % k1;
   }
 
   uint8_t delta[MAX_DEPTH];
-  ChalDec(dsignature_chall_3(vbb->sig, vbb->params), i, k0, tau0, k1, tau1, delta);
+  ChalDec(dsignature_chall_3(vbb->sig, vbb->params), t, k0, tau0, k1, tau1, delta);
   memset(vbb->Dtilde_buf, 0, utilde_bytes);
   masked_xor_u8_array(vbb->Dtilde_buf, dsignature_u_tilde(vbb->sig, vbb->params), vbb->Dtilde_buf,
                       delta[j], utilde_bytes);
@@ -453,7 +453,7 @@ const uint8_t* get_vole_q_hash(vbb_t* vbb, unsigned int idx) {
 }
 
 // Get voles for AES
-static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
+static inline uint8_t* get_vole_rmo(vbb_t* vbb, unsigned int idx) {
   unsigned int lambda       = vbb->params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
   unsigned int ellhat       = vbb->params->faest_param.l + lambda * 2 + UNIVERSAL_HASH_B_BITS;
@@ -494,15 +494,15 @@ static inline uint8_t* get_vole_aes(vbb_t* vbb, unsigned int idx) {
 }
 
 const bf256_t* get_vole_aes_256(vbb_t* vbb, unsigned int idx) {
-  return (bf256_t*)get_vole_aes(vbb, idx);
+  return (bf256_t*)get_vole_rmo(vbb, idx);
 }
 
 const bf192_t* get_vole_aes_192(vbb_t* vbb, unsigned int idx) {
-  return (bf192_t*)get_vole_aes(vbb, idx);
+  return (bf192_t*)get_vole_rmo(vbb, idx);
 }
 
 const bf128_t* get_vole_aes_128(vbb_t* vbb, unsigned int idx) {
-  return (bf128_t*)get_vole_aes(vbb, idx);
+  return (bf128_t*)get_vole_rmo(vbb, idx);
 }
 
 const uint8_t* get_vole_u(vbb_t* vbb) {
@@ -548,7 +548,7 @@ static void setup_vk_cache(vbb_t* vbb) {
 
   for (unsigned int i = 0; i < vbb->params->faest_param.Lke; i++) {
     unsigned int offset = i * lambda_bytes;
-    memcpy(vbb->vk_cache + offset, get_vole_aes(vbb, i), lambda_bytes);
+    memcpy(vbb->vk_cache + offset, get_vole_rmo(vbb, i), lambda_bytes);
   }
 }
 

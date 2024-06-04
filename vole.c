@@ -203,92 +203,65 @@ void partial_vole_commit_rmo(const uint8_t* rootKey, const uint8_t* iv, unsigned
   unsigned int k1           = params->faest_param.k1;
   unsigned int max_depth    = MAX(k0, k1);
 
-  uint8_t* expanded_keys = malloc(tau * lambda_bytes);
-  prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
+  unsigned int end = start + len;
 
-  uint8_t* path = malloc(lambda_bytes * max_depth);
+  uint8_t* expanded_keys = malloc(tau * lambda_bytes);
+  uint8_t * sd           = malloc(lambda_bytes);
+  uint8_t* com           = malloc(lambda_bytes * 2);
+  uint8_t* r             = malloc(ellhat_bytes);
+  uint8_t* path          = malloc(lambda_bytes * max_depth);
+
   vec_com_t vec_com;
   memset(v, 0, ((size_t)len) * (size_t)lambda_bytes);
-
+  prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
+  
   unsigned int col_idx = 0;
-  for (unsigned int i = 0; i < tau; i++) {
-    unsigned int depth = i < tau0 ? k0 : k1;
+  for (unsigned int t = 0; t < tau; t++) {
+    unsigned int depth = t < tau0 ? k0 : k1;
 
-    vector_commitment(expanded_keys + i * lambda_bytes, lambda, depth, path, &vec_com);
-    ConstructVoleRMO(iv, start, len, &vec_com, lambda, ellhat_bytes, v, col_idx);
+    vector_commitment(expanded_keys + t * lambda_bytes, lambda, depth, path, &vec_com);
+    
+    unsigned int byte_offset = (col_idx / 8);
+    unsigned int bit_offset  = (col_idx % 8);
+    
+    const unsigned int num_instances = 1 << depth;
+    for (unsigned int i = 0; i < num_instances; i++) {
+      extract_sd_com(&vec_com, iv, lambda, i, sd, com);
+      prg(sd, iv, r, lambda, ellhat_bytes);
+
+      for (unsigned int row_idx = start; row_idx < end; row_idx++) {
+        unsigned int byte_idx = row_idx / 8;
+        unsigned int bit_idx  = row_idx % 8;
+        // bit is r[row_idx]
+        uint8_t bit           = (r[byte_idx] >> (bit_idx)) & 1;
+        if (bit == 0) {
+          continue;
+        }
+        unsigned int write_idx = (row_idx-start) * lambda_bytes + byte_offset;
+        unsigned int amount   = (bit_offset + depth + 7) / 8;
+        // Avoid carry by breaking into two steps
+          v[write_idx + 0] ^= i << bit_offset;
+        for (unsigned int j = 1; j < amount; j++) {
+          v[write_idx + j] ^= i >> (j * 8 - bit_offset);
+        }
+      }
+    }
 
     col_idx += depth;
   }
+
+  free(sd);
+  free(com);
+  free(r);
   free(expanded_keys);
   free(path);
 }
 
-// reconstruction
-static void ReconstructVoleCMO(const uint8_t* iv, vec_com_rec_t* vec_com_rec, unsigned int lambda,
-                               unsigned int out_len_bytes, uint8_t* q, uint8_t* h, unsigned int begin,
-                               unsigned int end) {
-  unsigned int depth               = vec_com_rec->depth;
-  const unsigned int num_instances = 1 << depth;
-  const unsigned int lambda_bytes  = lambda / 8;
-  unsigned int len                 = end - begin;
 
-#define Q_CMO(idx) (q + ((idx)-begin) * out_len_bytes)
-
-  H1_context_t h1_ctx;
-  if (h != NULL) {
-    H1_init(&h1_ctx, lambda);
-  }
-  uint8_t* sd  = malloc(lambda_bytes);
-  uint8_t* com = malloc(lambda_bytes * 2);
-  uint8_t* r;
-
-  unsigned int offset = NumRec(depth, vec_com_rec->b);
-
-  if (q != NULL) {
-    r = malloc(out_len_bytes);
-    memset(q, 0, len * out_len_bytes);
-  }
-
-  for (unsigned int i = 0; i < num_instances; i++) {
-    unsigned int offset_index = i ^ offset;
-    if (offset_index == 0) {
-      if (h != NULL) {
-        H1_update(&h1_ctx, vec_com_rec->com_j, lambda_bytes * 2);
-      }
-      continue;
-    }
-
-    extract_sd_com_rec(vec_com_rec, iv, lambda, i, sd, com);
-    if (h != NULL) {
-      H1_update(&h1_ctx, com, lambda_bytes * 2);
-    }
-
-    if (q == NULL) {
-      continue;
-    }
-
-    prg(sd, iv, r, lambda, out_len_bytes);
-    for (unsigned int j = begin; j < end; j++) {
-      // Apply r if the j'th bit is set
-      if ((offset_index >> j) & 1) {
-        xor_u8_array(Q_CMO(j), r, Q_CMO(j), out_len_bytes);
-      }
-    }
-  }
-  if (q != NULL) {
-    free(r);
-  }
-  free(sd);
-  free(com);
-  if (h != NULL) {
-    H1_final(&h1_ctx, h, lambda_bytes * 2);
-  }
-}
-
-void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall, const uint8_t* const* pdec, 
-                                  const uint8_t* const* com_j, unsigned int ellhat,
-                                  unsigned int start, unsigned int len,
-                                  verify_vole_mode_ctx_t vole_mode, 
+void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall,
+                                  const uint8_t* const* pdec, const uint8_t* const* com_j,
+                                  unsigned int ellhat, unsigned int start, unsigned int len,
+                                  verify_vole_mode_ctx_t vole_mode,
                                   const faest_paramset_t* params) {
   unsigned int lambda       = params->faest_param.lambda;
   unsigned int lambda_bytes = lambda / 8;
@@ -298,28 +271,25 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall, const
   unsigned int k0           = params->faest_param.k0;
   unsigned int k1           = params->faest_param.k1;
 
-  H1_context_t h1_ctx;
+  H1_context_t hcom_ctx;
+  H1_context_t com_ctx;
+  uint8_t* h = NULL;
   if (vole_mode.mode != EXCLUDE_HCOM) {
-    H1_init(&h1_ctx, lambda);
+    H1_init(&hcom_ctx, lambda);
+    h = malloc(lambda_bytes * 2);
   }
 
   unsigned int max_depth = MAX(k0, k1);
   vec_com_rec_t vec_com_rec;
-  vec_com_rec.b       = malloc(max_depth * sizeof(uint8_t));
-  vec_com_rec.nodes   = calloc(max_depth, lambda_bytes);
+  vec_com_rec.b     = malloc(max_depth * sizeof(uint8_t));
+  vec_com_rec.nodes = malloc(max_depth * lambda_bytes);
+  memset(vec_com_rec.nodes, 0, max_depth * lambda_bytes);
   vec_com_rec.com_j   = malloc(lambda_bytes * 2);
-  uint8_t* tree_nodes = malloc(lambda_bytes * (max_depth - 1));
-
-  uint8_t* h = NULL;
-  if (vole_mode.mode != EXCLUDE_HCOM) {
-    h = malloc(lambda_bytes * 2);
-  }
+  uint8_t* tree_nodes = malloc(lambda_bytes * (max_depth - 1) * 2);
 
   unsigned int end        = start + len;
-
   // STEP 1: To commit to [start,end] we first compute which trees we need to consider
   unsigned int depth_tau_0     = tau0 * k0;
-
   unsigned int k0_trees_begin  = (start < depth_tau_0) ? start / k0 : tau0;
   unsigned int k1_trees_begin  = (start < depth_tau_0) ? 0 : (start - depth_tau_0) / k1;
   unsigned int k0_trees_end    = (end < depth_tau_0) ? (end + (k0-1)) / k0 : tau0; // ceiled
@@ -329,50 +299,88 @@ void partial_vole_reconstruct_cmo(const uint8_t* iv, const uint8_t* chall, const
   unsigned int tree_end   = k0_trees_end+k1_trees_end;
 
   // Compute the cummulative sum of the tree depths until the requested start
-  unsigned int v_progress = k0 * k0_trees_begin + k1 * k1_trees_begin;
+  unsigned int q_progress = k0 * k0_trees_begin + k1 * k1_trees_begin;
 
   for (unsigned int t = tree_start; t < tree_end; t++) {
-    unsigned int depth  = t < tau0 ? k0 : k1;
-    unsigned int lbegin = 0;
-    if (start > v_progress) {
-      lbegin = start - v_progress;
-    }
+    unsigned int tree_depth = t < tau0 ? k0 : k1;
 
-    unsigned int lend  = MIN(depth, end - v_progress);
-    unsigned int q_idx = 0;
-    if (v_progress > start) {
-      q_idx = v_progress - start;
-    }
-
-    uint8_t* q_ptr = NULL;
-    if (vole_mode.mode != EXCLUDE_Q) {
-      q_ptr = vole_mode.q + q_idx * ellhat_bytes;
-    }
+    // q_cache_offset is used to compute the index we should write q to relative to our cache
+    unsigned int q_cache_offset  = (q_progress > start) ? q_progress - start : 0; // (i.e. MAX(q_progress-start, 0))
+    // [q_begin, q_end] is the q's that t provides (capped by requested start/end)
+    unsigned int q_begin         = MAX(q_progress, start); 
+    unsigned int q_end           = MIN(end, q_progress+tree_depth);
 
     uint8_t chalout[MAX_DEPTH];
     ChalDec(chall, t, k0, tau0, k1, tau1, chalout);
-    vector_reconstruction(pdec[t], com_j[t], chalout, lambda, depth, tree_nodes, &vec_com_rec);
-    
-    
-    ReconstructVoleCMO(iv, &vec_com_rec, lambda, ellhat_bytes, q_ptr, h, lbegin, lend);
+    vector_reconstruction(pdec[t], com_j[t], chalout, lambda, tree_depth, tree_nodes, &vec_com_rec);
+    unsigned int offset = NumRec(tree_depth, vec_com_rec.b);
 
+    const unsigned int num_seeds = 1 << tree_depth;
+    unsigned int q_count = q_end - q_begin;
+    uint8_t* sd  = malloc(lambda_bytes);
+    uint8_t* com = malloc(lambda_bytes * 2);
+    uint8_t* r;
 
     if (vole_mode.mode != EXCLUDE_HCOM) {
-      H1_update(&h1_ctx, h, lambda_bytes * 2);
+      H1_init(&com_ctx, lambda);
+    }
+    if (vole_mode.mode != EXCLUDE_Q) {
+      r = malloc(ellhat_bytes);
+      memset(vole_mode.q+(q_cache_offset*ellhat_bytes), 0, q_count * ellhat_bytes);
     }
 
-    v_progress += depth;
-  }
+    for (unsigned int i = 0; i < num_seeds; i++) {
+      unsigned int offset_index = i ^ offset;
+      if (offset_index == 0) {
+        // As a verifier, we do not have the first seed (i.e. seed i with offset)
+        if (vole_mode.mode != EXCLUDE_HCOM) {
+          H1_update(&com_ctx, vec_com_rec.com_j, lambda_bytes * 2);
+        }
+        continue; // Skip the first seed
+      }
 
+      extract_sd_com_rec(&vec_com_rec, iv, lambda, i, sd, com);
+
+      if (vole_mode.mode != EXCLUDE_HCOM) {
+        H1_update(&com_ctx, com, lambda_bytes * 2);
+      }
+      if (vole_mode.mode != EXCLUDE_Q) {
+        prg(sd, iv, r, lambda, ellhat_bytes);
+        for (unsigned int j = q_begin; j < q_end; j++) {
+          uint8_t* write_idx = (vole_mode.q+(j-q_begin+q_cache_offset) * ellhat_bytes);
+          unsigned int q_v   = j-q_progress;
+
+          // Apply r if i/2^q_v is odd
+          if ((offset_index >> q_v) & 1) {
+            xor_u8_array(write_idx, r, write_idx, ellhat_bytes);
+          }
+        }
+      }
+    }
+    if (vole_mode.mode != EXCLUDE_Q) {
+      free(r);
+    }
+    free(sd);
+    free(com);
+    if (vole_mode.mode != EXCLUDE_HCOM) {
+      H1_final(&com_ctx, h, lambda_bytes * 2);
+      H1_update(&hcom_ctx, h, lambda_bytes * 2);
+    }
+
+    q_progress += tree_depth;
+  }
+  
   free(vec_com_rec.b);
   free(vec_com_rec.nodes);
   free(vec_com_rec.com_j);
   free(tree_nodes);
+  free(h);
   if (vole_mode.mode != EXCLUDE_HCOM) {
-    free(h);
-    H1_final(&h1_ctx, vole_mode.hcom, lambda_bytes * 2);
+    H1_final(&hcom_ctx, vole_mode.hcom, lambda_bytes * 2);
   }
 }
+
+
 
 static void ReconstructVoleRMO(const uint8_t* iv, vec_com_rec_t* vec_com_rec, unsigned int lambda,
                                unsigned int out_len_bytes, uint8_t* q, unsigned int start,
