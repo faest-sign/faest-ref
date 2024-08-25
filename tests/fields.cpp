@@ -956,8 +956,8 @@ namespace {
        0x15},
   }};
   constexpr std::array<uint8_t, 16> poly128_sum_poly_output                                 = {
-      0x78, 0xcf, 0x09, 0x12, 0x87, 0x15, 0x78, 0x57,
-      0x76, 0x1e, 0x81, 0x14, 0x32, 0xd4, 0x30, 0x50,
+      0xbc, 0xac, 0x7b, 0x9e, 0x36, 0xea, 0xd6, 0x8f,
+      0xdb, 0x5f, 0x99, 0xde, 0x1d, 0x8e, 0x71, 0xaa,
   };
 
   constexpr std::array<uint8_t, 192 * TEST_VEC_LEN> poly192_from_8_poly192_input = {
@@ -1201,8 +1201,8 @@ namespace {
        0x55, 0x23, 0x74, 0xb3, 0xa1, 0x75, 0x76, 0xf6, 0xc1, 0x1d, 0x8a, 0x57},
   }};
   constexpr std::array<uint8_t, 24> poly192_sum_poly_output                                 = {
-      0x6b, 0xf5, 0x07, 0x8c, 0x03, 0x30, 0x2d, 0x08, 0x33, 0x06, 0x60, 0x41,
-      0x6c, 0xa0, 0x9e, 0x03, 0x3f, 0xa1, 0x0a, 0xd1, 0xcd, 0x4c, 0x84, 0x25,
+      0xb9, 0x55, 0xe7, 0x40, 0xa1, 0x82, 0x82, 0x4c, 0x48, 0x40, 0x44, 0xd9,
+      0xf6, 0xc5, 0x4a, 0x5a, 0xfc, 0xb0, 0xf5, 0x92, 0x77, 0x78, 0x72, 0x43,
   };
 
   constexpr std::array<uint8_t, 256 * TEST_VEC_LEN> poly256_from_8_poly256_input = {
@@ -1747,15 +1747,12 @@ BOOST_AUTO_TEST_CASE(test_bf128_sum_poly) {
   bf128_t polys[128];
   for (size_t bit = 0; bit < 128; ++bit) {
     bf128::bytes tmp;
-    std::copy(inputs.data() + bit * 32, inputs.data() + (bit + 1) * 32, tmp.begin());
+    std::copy(inputs.data() + bit * 16, inputs.data() + (bit + 1) * 16, tmp.begin());
     polys[bit] = bf128(tmp).as_internal();
   }
 
-  bf128::bytes out;
-  std::copy(output.begin(), output.end(), out.begin());
-
   bf128 sum = bf128_sum_poly(polys);
-  BOOST_TEST(sum == bf128(out));
+  BOOST_TEST(sum == bf128(output));
 }
 
 BOOST_AUTO_TEST_CASE(test_bf192_sum_poly) {
@@ -1765,15 +1762,12 @@ BOOST_AUTO_TEST_CASE(test_bf192_sum_poly) {
   bf192_t polys[192];
   for (size_t bit = 0; bit < 192; ++bit) {
     bf192::bytes tmp;
-    std::copy(inputs.data() + bit * 32, inputs.data() + (bit + 1) * 32, tmp.begin());
+    std::copy(inputs.data() + bit * 24, inputs.data() + (bit + 1) * 24, tmp.begin());
     polys[bit] = bf192(tmp).as_internal();
   }
 
-  bf192::bytes out;
-  std::copy(output.begin(), output.end(), out.begin());
-
   bf192 sum = bf192_sum_poly(polys);
-  BOOST_TEST(sum == bf192(out));
+  BOOST_TEST(sum == bf192(output));
 }
 
 BOOST_AUTO_TEST_CASE(test_bf256_sum_poly) {
@@ -1787,11 +1781,8 @@ BOOST_AUTO_TEST_CASE(test_bf256_sum_poly) {
     polys[bit] = bf256(tmp).as_internal();
   }
 
-  bf256::bytes out;
-  std::copy(output.begin(), output.end(), out.begin());
-
   bf256 sum = bf256_sum_poly(polys);
-  BOOST_TEST(sum == bf256(out));
+  BOOST_TEST(sum == bf256(output));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
