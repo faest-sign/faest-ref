@@ -1740,6 +1740,66 @@ BOOST_AUTO_TEST_CASE(test_bf256_byte_combine) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(test_bf128_sum_poly_invariants) {
+  bf128_t polys[128];
+  for (size_t bit = 0; bit < 128; ++bit) {
+    polys[bit] = bf128::zero().as_internal();
+  }
+
+  bf128 sum = bf128_sum_poly(polys);
+  BOOST_TEST(sum == bf128::zero());
+
+  for (size_t bit = 0; bit < 128; ++bit) {
+    polys[bit] = bf128::one().as_internal();
+  }
+
+  bf128::bytes all_ones;
+  all_ones.fill(0xff);
+
+  sum = bf128_sum_poly(polys);
+  BOOST_TEST(sum == bf128(all_ones));
+}
+
+BOOST_AUTO_TEST_CASE(test_bf192_sum_poly_invariants) {
+  bf192_t polys[192];
+  for (size_t bit = 0; bit < 192; ++bit) {
+    polys[bit] = bf192::zero().as_internal();
+  }
+
+  bf192 sum = bf192_sum_poly(polys);
+  BOOST_TEST(sum == bf192::zero());
+
+  for (size_t bit = 0; bit < 192; ++bit) {
+    polys[bit] = bf192::one().as_internal();
+  }
+
+  bf192::bytes all_ones;
+  all_ones.fill(0xff);
+
+  sum = bf192_sum_poly(polys);
+  BOOST_TEST(sum == bf192(all_ones));
+}
+
+BOOST_AUTO_TEST_CASE(test_bf256_sum_poly_invariants) {
+  bf256_t polys[256];
+  for (size_t bit = 0; bit < 256; ++bit) {
+    polys[bit] = bf256::zero().as_internal();
+  }
+
+  bf256 sum = bf256_sum_poly(polys);
+  BOOST_TEST(sum == bf256::zero());
+
+  for (size_t bit = 0; bit < 256; ++bit) {
+    polys[bit] = bf256::one().as_internal();
+  }
+
+  bf256::bytes all_ones;
+  all_ones.fill(0xff);
+
+  sum = bf256_sum_poly(polys);
+  BOOST_TEST(sum == bf256(all_ones));
+}
+
 BOOST_AUTO_TEST_CASE(test_bf128_sum_poly) {
   const auto& inputs = poly128_from_8_poly128_input;
   const auto& output = poly128_sum_poly_output;
