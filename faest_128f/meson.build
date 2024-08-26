@@ -37,6 +37,7 @@ if openssl.found()
     include_directories: include_directories,
     c_args: defines + c_flags + ['-DHAVE_RANDOMBYTES'],
     cpp_args: defines + cpp_flags + ['-DHAVE_RANDOMBYTES'],
+    link_args: linker_flags,
     override_options: ['b_lto=false'],
   )
 endif
@@ -46,7 +47,8 @@ if boost_program_options.found() and get_option('benchmarks').enabled()
     dependencies: [libfaest_128f_dependency, boost_program_options, threads],
     include_directories: include_directories,
     c_args: defines + c_flags,
-    cpp_args: defines + cpp_flags
+    cpp_args: defines + cpp_flags,
+    link_args: linker_flags
   )
 endif
 test_sources = files(join_paths(meson.project_source_root(), 'tests', 'api_test.c'))
@@ -54,6 +56,7 @@ faest_128f_test = executable('faest_128f_api_test', test_sources,
   dependencies: [libfaest_128f_dependency, valgrind],
   include_directories: include_directories,
   c_args: defines + c_flags + valgrind_defines,
+  link_args: linker_flags,
   override_options: ['b_lto=false'],
 )
 test('faest_128f_api_test', faest_128f_test,
@@ -83,6 +86,7 @@ if get_option('catch2').enabled() and get_option('benchmarks').enabled()
     dependencies: [libfaest_128f_dependency, boost_program_options, catch2],
     include_directories: include_directories,
     c_args: defines + c_flags,
-    cpp_args: defines + cpp_flags
+    cpp_args: defines + cpp_flags,
+    link_args: linker_flags
   )
 endif

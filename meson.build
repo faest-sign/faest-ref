@@ -1,4 +1,6 @@
-project('faest-ref', ['c', 'cpp'],
+project(
+  'faest-ref',
+  ['c', 'cpp'],
   version: '1.0.1',
   meson_version: '>=0.57',
   default_options: [
@@ -26,7 +28,7 @@ if cc.get_id() != 'msvc'
     '-Werror=vla',
     '-Werror=incompatible-pointer-types',
   ]
-  flags += '-Wshadow'
+  flags += ['-Wshadow', '-Wno-psabi']
   defines += '-D_GNU_SOURCE'
 
   if get_option('march-native').enabled()
@@ -62,21 +64,46 @@ else
   defines += '-D_CRT_SECURE_NO_WARNINGS'
 endif
 c_flags = cc.get_supported_arguments(flags) + cc.get_supported_arguments(c_flags)
-cpp_flags = cpp.get_supported_arguments(flags) +  cc.get_supported_arguments(cpp_flags)
+cpp_flags = cpp.get_supported_arguments(flags) + cc.get_supported_arguments(cpp_flags)
+linker_flags = cc.get_supported_link_arguments(flags)
 
 # check availability of some headers
 conf_data.set('HAVE_SYS_RANDOM_H', cc.has_header('sys/random.h'))
 
 # check availability of some functions
-conf_data.set('HAVE_ALIGNED_ALLOC', cc.has_header_symbol('stdlib.h', 'aligned_alloc', args: defines))
-conf_data.set('HAVE_POSIX_MEMALIGN', cc.has_header_symbol('stdlib.h', 'posix_memalign', args: defines))
+conf_data.set(
+  'HAVE_ALIGNED_ALLOC',
+  cc.has_header_symbol('stdlib.h', 'aligned_alloc', args: defines),
+)
+conf_data.set(
+  'HAVE_POSIX_MEMALIGN',
+  cc.has_header_symbol('stdlib.h', 'posix_memalign', args: defines),
+)
 conf_data.set('HAVE_MEMALIGN', cc.has_header_symbol('malloc.h', 'memalign', args: defines))
-conf_data.set('HAVE_GETRANDOM', cc.has_header_symbol('sys/random.h', 'getrandom', args: defines))
-conf_data.set('HAVE_ARC4RANDOM_BUF', cc.has_header_symbol('stdlib.h', 'arc4random_buf', args: defines))
-conf_data.set('HAVE_EXPLICIT_BZERO', cc.has_header_symbol('string.h', 'explicit_bzero', args: defines))
-conf_data.set('HAVE_CONSTTIME_MEMEQUAL', cc.has_header_symbol('string.h', 'consttime_memequal', args: defines))
-conf_data.set('HAVE_TIMINGSAFE_BCMP', cc.has_header_symbol('string.h', 'timingsafe_bcmp', args: defines))
-conf_data.set('HAVE_PTHREAD_SETAFFINITY_NP', cc.has_header_symbol('pthread.h', 'pthread_setaffinity_np', args: defines))
+conf_data.set(
+  'HAVE_GETRANDOM',
+  cc.has_header_symbol('sys/random.h', 'getrandom', args: defines),
+)
+conf_data.set(
+  'HAVE_ARC4RANDOM_BUF',
+  cc.has_header_symbol('stdlib.h', 'arc4random_buf', args: defines),
+)
+conf_data.set(
+  'HAVE_EXPLICIT_BZERO',
+  cc.has_header_symbol('string.h', 'explicit_bzero', args: defines),
+)
+conf_data.set(
+  'HAVE_CONSTTIME_MEMEQUAL',
+  cc.has_header_symbol('string.h', 'consttime_memequal', args: defines),
+)
+conf_data.set(
+  'HAVE_TIMINGSAFE_BCMP',
+  cc.has_header_symbol('string.h', 'timingsafe_bcmp', args: defines),
+)
+conf_data.set(
+  'HAVE_PTHREAD_SETAFFINITY_NP',
+  cc.has_header_symbol('pthread.h', 'pthread_setaffinity_np', args: defines),
+)
 
 # parameter sets
 # After changing the parameter sets, be sure to run crypto_sign_generator.py to create the corresponding meson files.
@@ -408,29 +435,29 @@ endif
 
 # catch2 for benchmarks
 if get_option('benchmarks').enabled() and get_option('catch2').enabled()
-  libcatch2 = static_library('catch2',
-    files(join_paths(meson.project_source_root(), 'catch2', 'extras', 'catch_amalgamated.cpp')),
+  libcatch2 = static_library(
+    'catch2',
+    files(
+      join_paths(
+        meson.project_source_root(),
+        'catch2',
+        'extras',
+        'catch_amalgamated.cpp',
+      ),
+    ),
   )
   catch2 = declare_dependency(
     link_with: libcatch2,
-    include_directories: include_directories(join_paths('catch2', 'extras'))
+    include_directories: include_directories(join_paths('catch2', 'extras')),
   )
 endif
 
 # generate config.h
-config_header = configure_file(
-  output: 'config.h',
-  output_format: 'c',
-  configuration: conf_data
-)
+config_header = configure_file(output: 'config.h', output_format: 'c', configuration: conf_data)
 defines += '-DHAVE_CONFIG_H'
 
 # generate parameters.h
-config_header = configure_file(
-  output: 'parameters.h',
-  output_format: 'c',
-  configuration: parameter_data
-)
+config_header = configure_file(output: 'parameters.h', output_format: 'c', configuration: parameter_data)
 
 include_directories = [include_directories('.')]
 
@@ -446,13 +473,11 @@ faest_sources = files(
   'random_oracle.c',
   'universal_hashing.c',
   'vc.c',
-  'vole.c'
+  'vole.c',
 )
 
 # header files to install
-headers = files(
-  'faest_defines.h'
-)
+headers = files('faest_defines.h')
 
 # SHA3 implementation
 sha3 = get_option('SHA3')
@@ -471,9 +496,9 @@ else
   defines += '-DWITH_KECCAK_X4'
   faest_sources += files(
     'sha3/KeccakHash.c',
+    'sha3/KeccakHashtimes4.c',
     'sha3/KeccakSponge.c',
     'sha3/KeccakSpongetimes4.c',
-    'sha3/KeccakHashtimes4.c',
   )
 
   if sha3 == 'avx2'
@@ -509,38 +534,46 @@ foreach parameter_set : parameter_sets
   headers += configure_file(
     input: 'faest_param.h.in',
     output: 'faest_@0@.h'.format(parameter_set.get('PARAM_L')),
-    configuration: parameter_set
+    configuration: parameter_set,
   )
   faest_sources += configure_file(
     input: 'faest_param.c.in',
     output: 'faest_@0@.c'.format(parameter_set.get('PARAM_L')),
-    configuration: parameter_set
+    configuration: parameter_set,
   )
 endforeach
 
 # static faest library
-libfaest_no_random_static = static_library('faest_no_random',
+libfaest_no_random_static = static_library(
+  'faest_no_random',
   faest_sources,
   dependencies: build_dependencies + [valgrind],
   include_directories: include_directories,
-  c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT=', '-DFAEST_TESTS'] + valgrind_defines,
+  c_args: defines
+  + c_flags
+  + ['-DFAEST_STATIC', '-DFAEST_EXPORT=', '-DFAEST_TESTS']
+  + valgrind_defines,
 )
 libfaest_no_random_static_dependency = declare_dependency(
   link_with: libfaest_no_random_static,
   include_directories: include_directories,
-  compile_args: ['-DFAEST_EXPORT=']
+  compile_args: ['-DFAEST_EXPORT='],
 )
 
-libfaest_static = static_library('faest',
+libfaest_static = static_library(
+  'faest',
   files('randomness.c'),
   dependencies: build_dependencies + [libfaest_no_random_static_dependency, valgrind],
   include_directories: include_directories,
-  c_args: defines + c_flags + ['-DFAEST_STATIC', '-DFAEST_EXPORT=', '-DFAEST_TESTS'] + valgrind_defines,
+  c_args: defines
+  + c_flags
+  + ['-DFAEST_STATIC', '-DFAEST_EXPORT=', '-DFAEST_TESTS']
+  + valgrind_defines,
 )
 libfaest_static_dependency = declare_dependency(
   link_with: libfaest_static,
   include_directories: include_directories,
-  compile_args: ['-DFAEST_EXPORT=']
+  compile_args: ['-DFAEST_EXPORT='],
 )
 
 # shared library
@@ -550,30 +583,25 @@ if host_machine.system() == 'windows'
 elif cc.has_function_attribute('visibility:default')
   visibility_define += '-DFAEST_EXPORT=__attribute__((visibility("default")))'
 endif
-libfaest = shared_library('faest',
+libfaest = shared_library(
+  'faest',
   faest_sources + files('randomness.c'),
   dependencies: build_dependencies,
   include_directories: include_directories,
   c_args: defines + c_flags + visibility_define,
+  link_args: linker_flags,
   install: true,
   version: '0.0.1',
-  gnu_symbol_visibility: 'hidden'
+  gnu_symbol_visibility: 'hidden',
 )
-libfaest_dependency = declare_dependency(
-  link_with: libfaest,
-  include_directories: include_directories
-)
+libfaest_dependency = declare_dependency(link_with: libfaest, include_directories: include_directories)
 
 # install headers
 install_headers(headers)
 
 # install pkg config file
 pkg = import('pkgconfig')
-pkg.generate(
-  name: 'faest',
-  description: 'FAEST signature scheme',
-  libraries: [libfaest]
-)
+pkg.generate(name: 'faest', description: 'FAEST signature scheme', libraries: [libfaest])
 
 # SUPERCOP / NIST files
 all_names = []
@@ -581,16 +609,18 @@ foreach parameter_set : parameter_sets
   all_names += 'faest_@0@'.format(parameter_set.get('PARAM_L'))
   subdir('faest_@0@'.format(parameter_set.get('PARAM_L')))
 endforeach
-run_target('prepare_nist',
+run_target(
+  'prepare_nist',
   command: [
     python,
     [
       join_paths(meson.project_source_root(), 'tools', 'prepare_nist.py'),
       meson.project_source_root(),
       meson.project_build_root(),
-      join_paths(meson.project_build_root(), 'submission')
-    ] + all_names
-  ]
+      join_paths(meson.project_build_root(), 'submission'),
+    ]
+    + all_names,
+  ],
 )
 
 subdir('tests')

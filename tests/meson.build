@@ -26,52 +26,73 @@ if boost_test.found()
     test_sources += configure_file(
       input: 'basic.cpp.in',
       output: 'faest_@0@_basic.cpp'.format(parameter_set.get('PARAM_L')),
-      configuration: parameter_set
+      configuration: parameter_set,
     )
   endforeach
 
-  extended_tests = executable('test_extended_tests', test_sources,
+  extended_tests = executable(
+    'test_extended_tests',
+    test_sources,
     dependencies: [libfaest_static_dependency, boost_test] + test_deps,
     include_directories: include_directories,
     cpp_args: defines + cpp_flags + test_defines,
-    override_options: ['b_lto=false']
+    link_args: linker_flags,
+    override_options: ['b_lto=false'],
   )
-  test('AES', extended_tests,
+  test(
+    'AES',
+    extended_tests,
     args: ['-t', 'aes'],
     timeout: 6000,
   )
-  test('AES prove', extended_tests,
+  test(
+    'AES prove',
+    extended_tests,
     args: ['-t', 'test_aes_prove'],
     timeout: 6000,
   )
-  test('SHAKE', extended_tests,
+  test(
+    'SHAKE',
+    extended_tests,
     args: ['-t', 'hash_shake'],
     timeout: 6000,
   )
-  test('Instances', extended_tests,
+  test(
+    'Instances',
+    extended_tests,
     args: ['-t', 'instances'],
     timeout: 6000,
   )
-  test('Universal hashing', extended_tests,
+  test(
+    'Universal hashing',
+    extended_tests,
     args: ['-t', 'universal_hashing'],
     timeout: 6000,
   )
-  test('Vector commitments', extended_tests,
+  test(
+    'Vector commitments',
+    extended_tests,
     args: ['-t', 'vector_commitments'],
     timeout: 6000,
   )
-  test('VOLE', extended_tests,
+  test(
+    'VOLE',
+    extended_tests,
     args: ['-t', 'vole'],
     timeout: 6000,
   )
   if ntl.found()
-    test('Fields', extended_tests,
+    test(
+      'Fields',
+      extended_tests,
       args: ['-t', 'fields'],
       timeout: 6000,
     )
   endif
   foreach parameter_set : parameter_sets
-    test('FAEST_@0@'.format(parameter_set.get('PARAM')), extended_tests,
+    test(
+      'FAEST_@0@'.format(parameter_set.get('PARAM')),
+      extended_tests,
       args: ['-t', 'faest_@0@'.format(parameter_set.get('PARAM_L'))],
       timeout: 6000,
     )
