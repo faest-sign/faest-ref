@@ -17,21 +17,21 @@ static bf64_t compute_h1(const uint8_t* t, const uint8_t* x, unsigned int lambda
                          unsigned int ell) {
   const bf64_t b_t = bf64_load(t);
 
-  unsigned int lambdaBytes         = lambda / 8;
+  unsigned int lambda_bytes        = lambda / 8;
   const unsigned int length_lambda = (ell + lambda + lambda - 1) / lambda;
 
   uint8_t tmp[MAX_LAMBDA_BYTES] = {0};
-  memcpy(tmp, x + (length_lambda - 1) * lambdaBytes,
-         (ell + lambda) % lambda == 0 ? lambdaBytes : ((ell + lambda) % lambda) / 8);
+  memcpy(tmp, x + (length_lambda - 1) * lambda_bytes,
+         (ell + lambda) % lambda == 0 ? lambda_bytes : ((ell + lambda) % lambda) / 8);
 
   bf64_t h1        = bf64_zero();
   bf64_t running_t = bf64_one();
   unsigned int i   = 0;
-  for (; i < lambdaBytes; i += 8, running_t = bf64_mul(running_t, b_t)) {
-    h1 = bf64_add(h1, bf64_mul(running_t, bf64_load(tmp + (lambdaBytes - i - 8))));
+  for (; i < lambda_bytes; i += 8, running_t = bf64_mul(running_t, b_t)) {
+    h1 = bf64_add(h1, bf64_mul(running_t, bf64_load(tmp + (lambda_bytes - i - 8))));
   }
-  for (; i < length_lambda * lambdaBytes; i += 8, running_t = bf64_mul(running_t, b_t)) {
-    h1 = bf64_add(h1, bf64_mul(running_t, bf64_load(x + (length_lambda * lambdaBytes - i - 8))));
+  for (; i < length_lambda * lambda_bytes; i += 8, running_t = bf64_mul(running_t, b_t)) {
+    h1 = bf64_add(h1, bf64_mul(running_t, bf64_load(x + (length_lambda * lambda_bytes - i - 8))));
   }
 
   return h1;
