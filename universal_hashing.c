@@ -62,9 +62,9 @@ void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
                    bf128_mul(running_s, bf128_load(x + (length_lambda - 1 - i) * BF128_NUM_BYTES)));
   }
 
-  bf128_t h1p = bf128_from_bf64(compute_h1(t, x, BF128_NUM_BYTES * 8, ell));
-  bf128_t h2  = bf128_add(bf128_mul(bf128_load(r0), h0), bf128_mul(bf128_load(r1), h1p));
-  bf128_t h3  = bf128_add(bf128_mul(bf128_load(r2), h0), bf128_mul(bf128_load(r3), h1p));
+  bf64_t h1  = compute_h1(t, x, BF128_NUM_BYTES * 8, ell);
+  bf128_t h2 = bf128_add(bf128_mul(bf128_load(r0), h0), bf128_mul_64(bf128_load(r1), h1));
+  bf128_t h3 = bf128_add(bf128_mul(bf128_load(r2), h0), bf128_mul_64(bf128_load(r3), h1));
 
   bf128_store(h, h2);
   bf128_store(tmp, h3);
@@ -97,9 +97,9 @@ void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
                    bf192_mul(running_s, bf192_load(x + (length_lambda - 1 - i) * BF192_NUM_BYTES)));
   }
 
-  bf192_t h1p = bf192_from_bf64(compute_h1(t, x, BF192_NUM_BYTES * 8, ell));
-  bf192_t h2  = bf192_add(bf192_mul(bf192_load(r0), h0), bf192_mul(bf192_load(r1), h1p));
-  bf192_t h3  = bf192_add(bf192_mul(bf192_load(r2), h0), bf192_mul(bf192_load(r3), h1p));
+  bf64_t h1  = compute_h1(t, x, BF192_NUM_BYTES * 8, ell);
+  bf192_t h2 = bf192_add(bf192_mul(bf192_load(r0), h0), bf192_mul_64(bf192_load(r1), h1));
+  bf192_t h3 = bf192_add(bf192_mul(bf192_load(r2), h0), bf192_mul_64(bf192_load(r3), h1));
 
   bf192_store(h, h2);
   bf192_store(tmp, h3);
@@ -132,9 +132,9 @@ void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
                    bf256_mul(running_s, bf256_load(x + (length_lambda - 1 - i) * BF256_NUM_BYTES)));
   }
 
-  bf256_t h1p = bf256_from_bf64(compute_h1(t, x, BF256_NUM_BYTES * 8, ell));
-  bf256_t h2  = bf256_add(bf256_mul(bf256_load(r0), h0), bf256_mul(bf256_load(r1), h1p));
-  bf256_t h3  = bf256_add(bf256_mul(bf256_load(r2), h0), bf256_mul(bf256_load(r3), h1p));
+  bf64_t h1  = compute_h1(t, x, BF256_NUM_BYTES * 8, ell);
+  bf256_t h2 = bf256_add(bf256_mul(bf256_load(r0), h0), bf256_mul_64(bf256_load(r1), h1));
+  bf256_t h3 = bf256_add(bf256_mul(bf256_load(r2), h0), bf256_mul_64(bf256_load(r3), h1));
 
   bf256_store(h, h2);
   bf256_store(tmp, h3);
