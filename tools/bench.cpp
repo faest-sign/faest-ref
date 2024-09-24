@@ -74,7 +74,9 @@ namespace {
       }
 
 #if defined(HAVE_PTHREAD_SETAFFINITY_NP)
-      set_thread_affinity(vm["cpu"].as<std::vector<unsigned int>>());
+      if (vm.count("cpu")) {
+        set_thread_affinity(vm["cpu"].as<std::vector<unsigned int>>());
+      }
 #endif
 
       return vm["iter"].as<unsigned int>();
