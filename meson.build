@@ -1,7 +1,7 @@
 project(
   'faest-ref',
   ['c', 'cpp'],
-  version: '1.0.1',
+  version: '1.0.2',
   meson_version: '>=0.57',
   default_options: [
     'c_std=c11',
@@ -624,3 +624,4 @@ run_target(
 )
 
 subdir('tests')
+

@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 1.0.2 -- 2024-12-19
+
+* Extend test coverage.
+* Use compiler's support (GCC's vector size attribute) for vectorized implementations.
+* Reduce memory consumption.
+* Refactor for more efficient code generation.
+
 ## Version 1.0.1 -- 2023-10-02
 
 * Post NIST PQC submission clean up.
