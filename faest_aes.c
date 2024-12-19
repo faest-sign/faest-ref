@@ -1042,7 +1042,7 @@ static void aes_enc_constraints_Mkey_0_192(const uint8_t* in, const uint8_t* out
   aes_enc_backward_192(v, vk, 1, 0, NULL, out, vs_dash);
 
   for (unsigned int j = 0; j < FAEST_192F_Senc; j++) {
-    // instead of storing in A0, A!, hash it
+    // instead of storing in A0, A1, hash it
     const bf192_t tmp = bf192_mul(vs[j], vs_dash[j]);
     zk_hash_192_update(a0_ctx, tmp);
     zk_hash_192_update(a1_ctx, bf192_add(bf192_add(bf192_mul(bf192_add(s[j], vs[j]),
