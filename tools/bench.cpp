@@ -80,8 +80,8 @@ namespace {
 #endif
 
       return vm["iter"].as<unsigned int>();
-    } catch (const boost::exception& e) {
-      std::cout << options << std::endl;
+    } catch (const error& e) {
+      std::cout << "Error occurred!\n" << options << std::endl;
       return 0;
     }
   }
