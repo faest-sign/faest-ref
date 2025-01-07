@@ -9,6 +9,7 @@ if boost_test.found()
     'fields.cpp',
     'hash_shake.cpp',
     'instances.cpp',
+    'prg.cpp',
     'test_faest_tvs.cpp',
     'universal_hashing.cpp',
     'vc.cpp',
@@ -61,6 +62,12 @@ if boost_test.found()
     'Instances',
     extended_tests,
     args: ['-t', 'instances'],
+    timeout: 6000,
+  )
+  test(
+    'PRG',
+    extended_tests,
+    args: ['-t', 'prg'],
     timeout: 6000,
   )
   test(
