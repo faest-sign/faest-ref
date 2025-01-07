@@ -105,10 +105,17 @@ FAEST_END_C_DECL
 
 /* helper macros/functions for checked integer subtraction */
 #if GNUC_CHECK(5, 0) || __has_builtin(__builtin_add_overflow)
+#define add_overflow_u64(x, y, sum) __builtin_add_overflow(x, y, sum)
 #define sub_overflow_size_t(x, y, diff) __builtin_sub_overflow(x, y, diff)
 #else
 #include <stdbool.h>
 #include <stddef.h>
+
+ATTR_ARTIFICIAL
+static inline bool add_overflow_u64(const uint64_t x, const uint64_t y, uint64_t* sum) {
+  *sum = x + y;
+  return *sum < x;
+}
 
 ATTR_ARTIFICIAL
 static inline bool sub_overflow_size_t(const size_t x, const size_t y, size_t* diff) {

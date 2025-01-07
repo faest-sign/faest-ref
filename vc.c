@@ -59,7 +59,7 @@ static void expand_seeds(tree_t* tree, const uint8_t* iv, const faest_paramset_t
 
   for (size_t i = 0; i <= lastNonLeaf; i++) {
     // the nodes are located other in memory consecutively
-    prg(NODE(*tree, i, lambda_bytes), iv, NODE(*tree, 2 * i + 1, lambda_bytes),
+    prg(NODE(*tree, i, lambda_bytes), iv, NULL, NODE(*tree, 2 * i + 1, lambda_bytes),
         params->faest_param.lambda, lambda_bytes * 2);
   }
 }
@@ -202,7 +202,8 @@ void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t*
       }
 
       uint8_t out[2 * MAX_LAMBDA_BYTES];
-      prg(vecComRec->k + (lambdaBytes * getNodeIndex(i - 1, j)), iv, out, lambda, lambdaBytes * 2);
+      prg(vecComRec->k + (lambdaBytes * getNodeIndex(i - 1, j)), iv, NULL, out, lambda,
+          lambdaBytes * 2);
       memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * j)), out, lambdaBytes);
       memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, (2 * j) + 1)), out + lambdaBytes,
              lambdaBytes);

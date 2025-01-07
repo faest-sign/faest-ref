@@ -60,14 +60,16 @@ static bf8_t compute_sbox(bf8_t in) {
 }
 
 void aes_increment_iv(uint8_t* iv) {
-  for (unsigned int i = 16; i > 0; i--) {
-    if (iv[i - 1] == 0xff) {
-      iv[i - 1] = 0x00;
-      continue;
-    }
-    iv[i - 1] += 0x01;
-    break;
-  }
+  uint64_t low, high;
+  memcpy(&low, iv, sizeof(uint64_t));
+  memcpy(&high, iv + sizeof(uint64_t), sizeof(uint64_t));
+  low  = le64toh(low);
+  high = le64toh(high);
+  add_overflow_u64(high, add_overflow_u64(low, 1, &low), &high);
+  low  = htole64(low);
+  high = htole64(high);
+  memcpy(iv, &low, sizeof(uint64_t));
+  memcpy(iv + sizeof(uint64_t), &high, sizeof(uint64_t));
 }
 
 // ## AES ##
@@ -294,11 +296,21 @@ int rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaint
   return ret;
 }
 
-void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, unsigned int seclvl, size_t outlen) {
-#if !defined(HAVE_OPENSSL)
-  uint8_t internal_iv[16];
-  memcpy(internal_iv, iv, sizeof(internal_iv));
+static void add_to_upper_word(uint8_t* iv, const uint8_t* tweak) {
+  uint32_t alpha, iv3;
+  memcpy(&iv3, iv + IV_SIZE - sizeof(uint32_t), sizeof(uint32_t));
+  memcpy(&alpha, tweak, sizeof(uint32_t));
+  iv3 = htole32(le32toh(iv3) + le32toh(alpha));
+  memcpy(iv + IV_SIZE - sizeof(uint32_t), &iv3, sizeof(uint32_t));
+}
 
+void prg(const uint8_t* key, const uint8_t* iv, const uint8_t* tweak, uint8_t* out,
+         unsigned int seclvl, size_t outlen) {
+  uint8_t internal_iv[IV_SIZE];
+  memcpy(internal_iv, iv, IV_SIZE);
+  add_to_upper_word(internal_iv, tweak);
+
+#if !defined(HAVE_OPENSSL)
   aes_round_keys_t round_key;
 
   switch (seclvl) {
@@ -361,31 +373,32 @@ void prg(const uint8_t* key, const uint8_t* iv, uint8_t* out, unsigned int seclv
   const EVP_CIPHER* cipher;
   switch (seclvl) {
   case 256:
-    cipher = EVP_aes_256_ctr();
+    cipher = EVP_aes_256_ecb();
     break;
   case 192:
-    cipher = EVP_aes_192_ctr();
+    cipher = EVP_aes_192_ecb();
     break;
   default:
-    cipher = EVP_aes_128_ctr();
+    cipher = EVP_aes_128_ecb();
     break;
   }
+  assert(cipher);
 
   EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
   assert(ctx);
 
-  EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv);
-
-  static const uint8_t plaintext[16] = {0};
+  EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
 
   int len = 0;
-  for (size_t idx = 0; idx < outlen / 16; idx += 1, out += 16) {
-    EVP_EncryptUpdate(ctx, out, &len, plaintext, sizeof(plaintext));
+  for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
+    EVP_EncryptUpdate(ctx, out, &len, internal_iv, IV_SIZE);
+    aes_increment_iv(internal_iv);
   }
-  if (outlen % 16) {
-    EVP_EncryptUpdate(ctx, out, &len, plaintext, outlen % 16);
+  if (outlen % IV_SIZE) {
+    EVP_EncryptUpdate(ctx, out, &len, internal_iv, outlen % IV_SIZE);
   }
-  EVP_EncryptFinal_ex(ctx, out, &len);
+  // write to unused buffer
+  EVP_EncryptFinal_ex(ctx, internal_iv, &len);
   EVP_CIPHER_CTX_free(ctx);
 #endif
 }

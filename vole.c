@@ -27,16 +27,16 @@ static
   uint8_t* r = calloc(2 * num_instances, outLenBytes);
 
 #define R(row, column) (r + (((row) % 2) * num_instances + (column)) * outLenBytes)
-#define V(idx) (v + (idx)*outLenBytes)
+#define V(idx) (v + (idx) * outLenBytes)
 
   // Step: 2
   if (!sd0_bot) {
-    prg(sd, iv, R(0, 0), lambda, outLenBytes);
+    prg(sd, iv, NULL, R(0, 0), lambda, outLenBytes);
   }
 
   // Step: 3..4
   for (unsigned int i = 1; i < num_instances; i++) {
-    prg(sd + (lambda_bytes * i), iv, R(0, i), lambda, outLenBytes);
+    prg(sd + (lambda_bytes * i), iv, NULL, R(0, i), lambda, outLenBytes);
   }
 
   // Step: 5..9
@@ -95,7 +95,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   // Step 1
   uint8_t* expanded_keys = malloc(tau * lambda_bytes);
-  prg(rootKey, iv, expanded_keys, lambda, lambda_bytes * tau);
+  prg(rootKey, iv, NULL, expanded_keys, lambda, lambda_bytes * tau);
 
   // for Step 12
   H1_context_t h1_ctx;
