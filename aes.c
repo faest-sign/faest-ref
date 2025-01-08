@@ -59,15 +59,24 @@ static bf8_t compute_sbox(bf8_t in) {
   return t0 ^ (1 | (1 << 1) | (1 << 5) | (1 << 6));
 }
 
-void aes_increment_iv(uint8_t* iv) {
+#if defined(FAEST_TESTS)
+void aes_increment_iv(uint8_t* iv)
+#else
+static inline void aes_increment_iv(uint8_t* iv)
+#endif
+{
   uint64_t low, high;
   memcpy(&low, iv, sizeof(uint64_t));
   memcpy(&high, iv + sizeof(uint64_t), sizeof(uint64_t));
+#if defined(FAEST_IS_BIG_ENDIAN)
   low  = le64toh(low);
   high = le64toh(high);
+#endif
   add_overflow_u64(high, add_overflow_u64(low, 1, &low), &high);
+#if defined(FAEST_IS_BIG_ENDIAN)
   low  = htole64(low);
   high = htole64(high);
+#endif
   memcpy(iv, &low, sizeof(uint64_t));
   memcpy(iv + sizeof(uint64_t), &high, sizeof(uint64_t));
 }
