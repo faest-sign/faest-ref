@@ -59,6 +59,11 @@ void zk_hash_256_init(zk_hash_256_ctx* ctx, const uint8_t* sd);
 void zk_hash_256_update(zk_hash_256_ctx* ctx, bf256_t v);
 void zk_hash_256_finalize(uint8_t* h, zk_hash_256_ctx* ctx, bf256_t x1);
 
+void leaf_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x);
+void leaf_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x);
+void leaf_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x);
+void leaf_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int lambda);
+
 FAEST_END_C_DECL
 
 #endif
