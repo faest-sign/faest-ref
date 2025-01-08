@@ -56,8 +56,8 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
 int expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
                unsigned int block_words, unsigned int num_rounds);
 
-void prg(const uint8_t* key, const uint8_t* iv, const uint8_t* tweak, uint8_t* out,
-         unsigned int bits, size_t outlen);
+void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, unsigned int bits,
+         size_t outlen);
 FAEST_END_C_DECL
 
 #endif

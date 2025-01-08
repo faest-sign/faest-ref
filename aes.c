@@ -305,16 +305,15 @@ int rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaint
   return ret;
 }
 
-static void add_to_upper_word(uint8_t* iv, const uint8_t* tweak) {
-  uint32_t alpha, iv3;
+static void add_to_upper_word(uint8_t* iv, uint32_t tweak) {
+  uint32_t iv3;
   memcpy(&iv3, iv + IV_SIZE - sizeof(uint32_t), sizeof(uint32_t));
-  memcpy(&alpha, tweak, sizeof(uint32_t));
-  iv3 = htole32(le32toh(iv3) + le32toh(alpha));
+  iv3 = htole32(le32toh(iv3) + tweak);
   memcpy(iv + IV_SIZE - sizeof(uint32_t), &iv3, sizeof(uint32_t));
 }
 
-void prg(const uint8_t* key, const uint8_t* iv, const uint8_t* tweak, uint8_t* out,
-         unsigned int seclvl, size_t outlen) {
+void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, unsigned int seclvl,
+         size_t outlen) {
   uint8_t internal_iv[IV_SIZE];
   memcpy(internal_iv, iv, IV_SIZE);
   add_to_upper_word(internal_iv, tweak);
