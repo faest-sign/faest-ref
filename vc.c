@@ -11,6 +11,7 @@
 #include "compat.h"
 #include "aes.h"
 #include "instances.h"
+#include "universal_hashing.h"
 
 #include <assert.h>
 #include <string.h>
@@ -106,6 +107,25 @@ unsigned int NumRec(unsigned int depth, const uint8_t* bi) {
     out += ((unsigned int)bi[i]) << i;
   }
   return out;
+}
+
+// FAEST.LeafCommit
+static void faest_leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* iv,
+                              uint32_t tweak, const uint8_t* uhash, unsigned int lambda) {
+  const unsigned int lambda_bytes = lambda / 8;
+
+  uint8_t buffer[MAX_LAMBDA_BYTES];
+  prg(key, iv, tweak, buffer, lambda, lambda_bytes * 4);
+  leaf_hash(com, uhash, buffer, lambda);
+  memcpy(sd, buffer, lambda_bytes);
+}
+
+// FAEST-EM.LeafCommit
+static void faest_em_leaf_commit(uint8_t* com, const uint8_t* key, const uint8_t* iv,
+                                 uint32_t tweak, unsigned int lambda) {
+  const unsigned int lambda_bytes = lambda / 8;
+
+  prg(key, iv, tweak, com, lambda, lambda_bytes * 2);
 }
 
 void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
