@@ -24,11 +24,23 @@ void H0_update(H0_context_t* ctx, const uint8_t* src, size_t len) {
 
 void H0_final(H0_context_t* ctx, uint8_t* seed, size_t seed_len, uint8_t* commitment,
               size_t commitment_len) {
-  hash_update(ctx, &domain_sep_H0, sizeof(domain_sep_H0));
-  hash_final(ctx);
+  H0_final_for_squeeze(ctx);
   hash_squeeze(ctx, seed, seed_len);
   hash_squeeze(ctx, commitment, commitment_len);
   hash_clear(ctx);
+}
+
+void H0_final_for_squeeze(H0_context_t* ctx) {
+  hash_update(ctx, &domain_sep_H0, sizeof(domain_sep_H0));
+  hash_final(ctx);
+}
+
+void H0_squeeze(H0_context_t* H0_ctx, uint8_t* dst, size_t len) {
+  hash_squeeze(H0_ctx, dst, len);
+}
+
+void H0_clear(H0_context_t* H0_ctx) {
+  hash_clear(H0_ctx);
 }
 
 void H0_x4_init(H0_context_x4_t* ctx, unsigned int security_param) {

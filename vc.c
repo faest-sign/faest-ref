@@ -128,6 +128,18 @@ static void faest_em_leaf_commit(uint8_t* com, const uint8_t* key, const uint8_t
   prg(key, iv, tweak, com, lambda, lambda_bytes * 2);
 }
 
+// BAVC.PosInTree
+static inline ATTR_CONST uint32_t pos_in_tree(unsigned int i, unsigned int j, unsigned int tau,
+                                              unsigned int tau1, unsigned int N_i, unsigned int L,
+                                              unsigned int k) {
+  const unsigned int depth = 1 << (k - 1);
+  if (j < depth) {
+    return L - 1 + tau * j + i;
+  }
+  const unsigned int mask = depth - 1;
+  return L - 1 + tau * depth + tau1 * (j & mask) + i;
+}
+
 void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
                        uint32_t lambda, vec_com_t* vecCom, uint32_t depth) {
   const unsigned int lambdaBytes      = lambda / 8;

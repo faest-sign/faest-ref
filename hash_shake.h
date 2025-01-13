@@ -229,7 +229,8 @@ static inline void hash_squeeze(hash_context* ctx, uint8_t* buffer, size_t bufle
   Keccak_HashSqueeze(ctx, buffer, buflen << 3);
 }
 
-#define hash_clear(ctx)
+#define hash_clear(ctx)                                                                            \
+  { (void)ctx; }
 #endif
 
 static inline void hash_update_uint16_le(hash_context* ctx, uint16_t data) {
