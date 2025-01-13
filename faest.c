@@ -314,7 +314,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
     // Step: 8
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
-  // Step: 9, 10
+  // Step: 9, 10 (added the zero input define here)
   uint8_t* w = aes_extend_witness(owf_key, owf_input, params);
   // Step: 11
   xor_u8_array(w, u, signature_d(sig, params), ell_bytes);
@@ -490,3 +490,4 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   // Step 21
   return memcmp(chall_3, dsignature_chall_3(sig, params), lambdaBytes) == 0 ? 0 : -1;
 }
+
