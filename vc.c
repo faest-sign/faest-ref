@@ -140,10 +140,76 @@ static inline ATTR_CONST uint32_t pos_in_tree(unsigned int i, unsigned int j, un
   return L - 1 + tau * depth + tau1 * (j & mask) + i;
 }
 
-void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
-                       uint32_t lambda, vec_com_t* vecCom, uint32_t depth) {
+// BAVC.Commit for FAEST
+static void vector_commitment_faest(const uint8_t* rootKey, const uint8_t* iv,
+                                    const faest_paramset_t* params, uint32_t lambda,
+                                    vec_com_t* vecCom, uint32_t depth) {
   const unsigned int lambdaBytes      = lambda / 8;
-  const unsigned int numVoleInstances = 1 << depth;
+  const unsigned int numVoleInstances = 1 << depth; // N_i
+
+  // L = number of leaves in the GGM tree
+
+  H0_context_t h0_ctx;
+  H0_init(&h0_ctx, lambda);
+  H0_update(&h0_ctx, iv, IV_SIZE);
+  H0_final_for_squeeze(&h0_ctx);
+
+  H1_context_t h1_com_ctx;
+  H1_init(&h1_com_ctx, lambda);
+
+  // Generating the tree
+  tree_t tree = generate_seeds(rootKey, iv, params, depth);
+
+  // Initialzing stuff
+  vecCom->h   = malloc(lambdaBytes * 2);
+  vecCom->com = malloc(numVoleInstances * lambdaBytes * 3);
+  vecCom->sd  = malloc(numVoleInstances * lambdaBytes);
+
+  // Step: 1..3
+  vecCom->k = NODE(tree, 0, lambdaBytes);
+
+  // Step: 4..5
+  const size_t base_index = tree.numNodes - tree.numLeaves;
+  // compute commitments for remaining instances
+  for (unsigned int i = 0, offset = 0; i < numVoleInstances; ++i) {
+    uint8_t uhash[MAX_LAMBDA_BYTES * 3];
+    H0_squeeze(&h0_ctx, uhash, 3 * lambdaBytes);
+
+    H1_context_t h1_ctx;
+    H1_init(&h0_ctx, lambda);
+
+    for (unsigned int j = 0; j < tree.numLeaves; ++j, ++offset) {
+      const uint32_t alpha = pos_in_tree(i, j, tau, tau1, numVoleInstances, tree.numLeaves, k);
+      faest_leaf_commit(vecCom->sd + offset * lambdaBytes, vecCom->com + offset * lambdaBytes * 3,
+                        NODE(tree, alpha, lambdaBytes), iv, i + L - 1, uhash, lambda);
+      H1_update(&h1_ctx, vecCom->com + offset * lambdaBytes * 3, lambdaBytes * 3);
+    }
+
+    uint8_t hi[MAX_LAMBDA_BYTES * 2];
+    // Step 11
+    H1_final(&h1_ctx, hi, lambdaBytes * 2);
+    // Step 12
+    H1_update(&h1_com_ctx, hi, lambdaBytes * 2);
+  }
+  H0_clear(&h0_ctx);
+
+  tree.nodes = NULL;
+
+  // Step 12
+  H1_final(&h1_com_ctx, vecCom->h, lambdaBytes * 2);
+}
+
+// BAVC.Commit for FAEST-EM
+static void vector_commitment_faest_em(const uint8_t* rootKey, const uint8_t* iv,
+                                       const faest_paramset_t* params, uint32_t lambda,
+                                       vec_com_t* vecCom, uint32_t depth) {
+  const unsigned int lambdaBytes      = lambda / 8;
+  const unsigned int numVoleInstances = 1 << depth; // N_i
+
+  // L = number of leaves in the GGM tree
+
+  H1_context_t h1_com_ctx;
+  H1_init(&h1_com_ctx, lambda);
 
   // Generating the tree
   tree_t tree = generate_seeds(rootKey, iv, params, depth);
@@ -158,41 +224,39 @@ void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_pa
 
   // Step: 4..5
   const size_t base_index = tree.numNodes - tree.numLeaves;
-  unsigned int i          = 0;
-  // compute commitments for 4 instances in parallel
-  for (; i < numVoleInstances / 4 * 4; i += 4) {
-    H0_context_x4_t h0_ctx;
-    H0_x4_init(&h0_ctx, lambda);
-    H0_x4_update(&h0_ctx, NODE(tree, base_index + i, lambdaBytes),
-                 NODE(tree, base_index + i + 1, lambdaBytes),
-                 NODE(tree, base_index + i + 2, lambdaBytes),
-                 NODE(tree, base_index + i + 3, lambdaBytes), lambdaBytes);
-    H0_x4_update(&h0_ctx, iv, iv, iv, iv, IV_SIZE);
-    H0_x4_final(&h0_ctx, vecCom->sd + i * lambdaBytes, vecCom->sd + (i + 1) * lambdaBytes,
-                vecCom->sd + (i + 2) * lambdaBytes, vecCom->sd + (i + 3) * lambdaBytes, lambdaBytes,
-                vecCom->com + i * lambdaBytes * 2, vecCom->com + (i + 1) * lambdaBytes * 2,
-                vecCom->com + (i + 2) * lambdaBytes * 2, vecCom->com + (i + 3) * lambdaBytes * 2,
-                (lambdaBytes * 2));
-  }
   // compute commitments for remaining instances
-  for (; i < numVoleInstances; i++) {
-    H0_context_t h0_ctx;
-    H0_init(&h0_ctx, lambda);
-    H0_update(&h0_ctx, NODE(tree, base_index + i, lambdaBytes), lambdaBytes);
-    H0_update(&h0_ctx, iv, 16);
-    H0_final(&h0_ctx, vecCom->sd + (i * lambdaBytes), lambdaBytes,
-             vecCom->com + (i * (lambdaBytes * 2)), (lambdaBytes * 2));
+  for (unsigned int i = 0, offset = 0; i < numVoleInstances; ++i) {
+    H1_context_t h1_ctx;
+    H1_init(&h1_ctx, lambda);
+
+    for (unsigned int j = 0; j < tree.numLeaves; ++j, ++offset) {
+      const uint32_t alpha = pos_in_tree(i, j, tau, tau1, numVoleInstances, tree.numLeaves, k);
+      faest_em_leaf_commit(vecCom->sd + offset * lambdaBytes,
+                           vecCom->com + offset * lambdaBytes * 2, NODE(tree, alpha, lambdaBytes),
+                           iv, i + L - 1, lambda);
+      H1_update(&h1_ctx, vecCom->com + offset * lambdaBytes * 2, lambdaBytes * 3);
+    }
+
+    uint8_t hi[MAX_LAMBDA_BYTES * 2];
+    // Step 11
+    H1_final(&h1_ctx, hi, lambdaBytes * 2);
+    // Step 12
+    H1_update(&h1_com_ctx, hi, lambdaBytes * 2);
   }
 
   tree.nodes = NULL;
 
-  // Step: 6
-  H1_context_t h1_ctx;
-  H1_init(&h1_ctx, lambda);
-  for (unsigned int j = 0; j < numVoleInstances; j++) {
-    H1_update(&h1_ctx, vecCom->com + (j * (lambdaBytes * 2)), (lambdaBytes * 2));
+  // Step 12
+  H1_final(&h1_com_ctx, vecCom->h, lambdaBytes * 2);
+}
+
+void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
+                       uint32_t lambda, vec_com_t* vecCom, uint32_t depth) {
+  if (faest_is_em(params)) {
+    vector_commitment_faest_em(rootKey, iv, params, lambda, vecCom, depth);
+  } else {
+    vector_commitment_faest(rootKey, iv, params, lambda, vecCom, depth);
   }
-  H1_final(&h1_ctx, vecCom->h, lambdaBytes * 2);
 }
 
 void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t* cop,

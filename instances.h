@@ -9,6 +9,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #define MAX_LAMBDA 256
 #define MAX_LAMBDA_BYTES (MAX_LAMBDA / 8)
@@ -71,6 +72,20 @@ typedef struct faest_paramset_t {
 
 const char* ATTR_CONST faest_get_param_name(faest_paramid_t paramid);
 faest_paramset_t ATTR_CONST faest_get_paramset(faest_paramid_t paramid);
+
+static inline bool faest_is_em(const faest_paramset_t* params) {
+  switch (params->faest_paramid) {
+  case FAEST_EM_128S:
+  case FAEST_EM_128F:
+  case FAEST_EM_192S:
+  case FAEST_EM_192F:
+  case FAEST_EM_256S:
+  case FAEST_EM_256F:
+    return true;
+  default:
+    return false;
+  }
+}
 
 FAEST_END_C_DECL
 
