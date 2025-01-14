@@ -448,6 +448,7 @@ faest_sources = files(
   'owf.c',
   'random_oracle.c',
   'universal_hashing.c',
+  'utils.c',
   'vc.c',
   # 'vole.c',
 ) + [config_header, parameters_header]
