@@ -62,7 +62,7 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
 #define FAEST_EM_256S_PARAMS PARAMS(FAEST_EM_256S)
 #define FAEST_EM_256F_PARAMS PARAMS(FAEST_EM_256F)
 #define FAEST_INVALID_PARAMS                                                                       \
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
 faest_paramset_t faest_get_paramset(faest_paramid_t paramid) {
   switch (paramid) {
