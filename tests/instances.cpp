@@ -28,7 +28,8 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
     BOOST_TEST(faest_param.Lke % 8 == 0);
     BOOST_TEST(faest_param.Lenc % 8 == 0);
     BOOST_TEST(faest_param.l % 8 == 0);
-    BOOST_TEST(faest_param.k <= MAX_DEPTH);
+    BOOST_TEST(faest_param.k <= sizeof(uint16_t) * 8);
+    BOOST_TEST(faest_param.tau <= MAX_TAU);
   }
 }
 
