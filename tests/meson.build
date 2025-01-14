@@ -12,6 +12,7 @@ if boost_test.found()
     'prg.cpp',
     # 'test_faest_tvs.cpp',
     'universal_hashing.cpp',
+    'utils.cpp',
     # 'vc.cpp',
     # 'vole.cpp',
     # 'vole_tvs.cpp',
@@ -74,6 +75,12 @@ if boost_test.found()
     'Universal hashing',
     extended_tests,
     args: ['-t', 'universal_hashing'],
+    timeout: 6000,
+  )
+  test(
+    'Uitls',
+    extended_tests,
+    args: ['-t', 'utils'],
     timeout: 6000,
   )
   test(

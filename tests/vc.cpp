@@ -51,11 +51,6 @@ BOOST_AUTO_TEST_CASE(test_numrec_bitdec) {
   BOOST_TEST(idx_4 == 13);
 }
 
-BOOST_AUTO_TEST_CASE(log2) {
-  const unsigned int depth = 7;
-  BOOST_TEST(ceil_log2(1 << depth) == depth);
-}
-
 BOOST_AUTO_TEST_CASE(test_vector_open_128) {
   uint8_t rootKey[16] = {
       0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
