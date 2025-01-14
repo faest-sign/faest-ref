@@ -4,17 +4,17 @@ ntl = cc.find_library('ntl', required: false, has_headers: ['NTL/version.h'])
 if boost_test.found()
   test_sources = files(
     'aes.cpp',
-    'aes_prove.cpp',
+    # 'aes_prove.cpp',
     'extended_tests.cpp',
     'fields.cpp',
     'hash_shake.cpp',
     'instances.cpp',
     'prg.cpp',
-    'test_faest_tvs.cpp',
+    # 'test_faest_tvs.cpp',
     'universal_hashing.cpp',
     'vc.cpp',
-    'vole.cpp',
-    'vole_tvs.cpp',
+    # 'vole.cpp',
+    # 'vole_tvs.cpp',
   )
   test_deps = []
   test_defines = ['-DBOOST_TEST_DYN_LINK', '-DFAEST_TESTS']

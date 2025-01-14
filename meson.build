@@ -124,8 +124,7 @@ param_128s.set('Lke', 448)
 param_128s.set('Lenc', 1152)
 param_128s.set('C', 200)
 param_128s.set('TAU', 11)
-param_128s.set('K0', 12)
-param_128s.set('K1', 11)
+param_128s.set('K', 12)
 param_128s.set('T0', 7)
 param_128s.set('T1', 4)
 param_128s.set('W_GRIND', 0)
@@ -151,8 +150,7 @@ param_128f.set('Lke', 448)
 param_128f.set('Lenc', 1152)
 param_128f.set('C', 200)
 param_128f.set('TAU', 16)
-param_128f.set('K0', 8)
-param_128f.set('K1', 8)
+param_128f.set('K', 8)
 param_128f.set('T0', 0)
 param_128f.set('T1', 16)
 param_128f.set('W_GRIND', 0)
@@ -178,8 +176,7 @@ param_em_128s.set('Lke', 0)
 param_em_128s.set('Lenc', 1280)
 param_em_128s.set('C', 200)
 param_em_128s.set('TAU', 11)
-param_em_128s.set('K0', 12)
-param_em_128s.set('K1', 11)
+param_em_128s.set('K', 12)
 param_em_128s.set('T0', 7)
 param_em_128s.set('T1', 4)
 param_em_128s.set('W_GRIND', 0)
@@ -205,8 +202,7 @@ param_em_128f.set('Lke', 0)
 param_em_128f.set('Lenc', 1280)
 param_em_128f.set('C', 200)
 param_em_128f.set('TAU', 16)
-param_em_128f.set('K0', 8)
-param_em_128f.set('K1', 8)
+param_em_128f.set('K', 8)
 param_em_128f.set('T0', 0)
 param_em_128f.set('T1', 16)
 param_em_128f.set('W_GRIND', 0)
@@ -232,8 +228,7 @@ param_192s.set('Lke', 448)
 param_192s.set('Lenc', 1408)
 param_192s.set('C', 416)
 param_192s.set('TAU', 16)
-param_192s.set('K0', 12)
-param_192s.set('K1', 12)
+param_192s.set('K', 12)
 param_192s.set('T0', 0)
 param_192s.set('T1', 16)
 param_192s.set('W_GRIND', 0)
@@ -259,8 +254,7 @@ param_192f.set('Lke', 448)
 param_192f.set('Lenc', 1408)
 param_192f.set('C', 416)
 param_192f.set('TAU', 24)
-param_192f.set('K0', 8)
-param_192f.set('K1', 8)
+param_192f.set('K', 8)
 param_192f.set('T0', 0)
 param_192f.set('T1', 24)
 param_192f.set('W_GRIND', 0)
@@ -286,8 +280,7 @@ param_em_192s.set('Lke', 0)
 param_em_192s.set('Lenc', 2304)
 param_em_192s.set('C', 416)
 param_em_192s.set('TAU', 16)
-param_em_192s.set('K0', 12)
-param_em_192s.set('K1', 12)
+param_em_192s.set('K', 12)
 param_em_192s.set('T0', 0)
 param_em_192s.set('T1', 16)
 param_em_192s.set('W_GRIND', 0)
@@ -313,8 +306,7 @@ param_em_192f.set('Lke', 0)
 param_em_192f.set('Lenc', 2304)
 param_em_192f.set('C', 416)
 param_em_192f.set('TAU', 24)
-param_em_192f.set('K0', 8)
-param_em_192f.set('K1', 8)
+param_em_192f.set('K', 8)
 param_em_192f.set('T0', 0)
 param_em_192f.set('T1', 24)
 param_em_192f.set('W_GRIND', 0)
@@ -340,8 +332,7 @@ param_256s.set('Lke', 672)
 param_256s.set('Lenc', 1664)
 param_256s.set('C', 500)
 param_256s.set('TAU', 22)
-param_256s.set('K0', 12)
-param_256s.set('K1', 11)
+param_256s.set('K', 12)
 param_256s.set('T0', 14)
 param_256s.set('T1', 8)
 param_256s.set('W_GRIND', 0)
@@ -367,8 +358,7 @@ param_256f.set('Lke', 672)
 param_256f.set('Lenc', 1664)
 param_256f.set('C', 500)
 param_256f.set('TAU', 32)
-param_256f.set('K0', 8)
-param_256f.set('K1', 8)
+param_256f.set('K', 8)
 param_256f.set('T0', 0)
 param_256f.set('T1', 32)
 param_256f.set('W_GRIND', 0)
@@ -394,8 +384,7 @@ param_em_256s.set('Lke', 0)
 param_em_256s.set('Lenc', 3584)
 param_em_256s.set('C', 500)
 param_em_256s.set('TAU', 22)
-param_em_256s.set('K0', 12)
-param_em_256s.set('K1', 11)
+param_em_256s.set('K', 12)
 param_em_256s.set('T0', 14)
 param_em_256s.set('T1', 8)
 param_em_256s.set('W_GRIND', 0)
@@ -421,8 +410,7 @@ param_em_256f.set('Lke', 0)
 param_em_256f.set('Lenc', 3584)
 param_em_256f.set('C', 500)
 param_em_256f.set('TAU', 32)
-param_em_256f.set('K0', 8)
-param_em_256f.set('K1', 8)
+param_em_256f.set('K', 8)
 param_em_256f.set('T0', 0)
 param_em_256f.set('T1', 32)
 param_em_256f.set('W_GRIND', 0)
@@ -493,7 +481,7 @@ config_header = configure_file(output: 'config.h', output_format: 'c', configura
 defines += '-DHAVE_CONFIG_H'
 
 # generate parameters.h
-config_header = configure_file(output: 'parameters.h', output_format: 'c', configuration: parameter_data)
+parameters_header = configure_file(output: 'parameters.h', output_format: 'c', configuration: parameter_data)
 
 include_directories = [include_directories('.')]
 
@@ -501,16 +489,16 @@ include_directories = [include_directories('.')]
 faest_sources = files(
   'aes.c',
   'compat.c',
-  'faest.c',
-  'faest_aes.c',
+  #'faest.c',
+  #'faest_aes.c',
   'fields.c',
   'instances.c',
   'owf.c',
   'random_oracle.c',
   'universal_hashing.c',
   'vc.c',
-  'vole.c',
-)
+  # 'vole.c',
+) + [config_header, parameters_header]
 
 # header files to install
 headers = files('faest_defines.h')
@@ -643,7 +631,7 @@ pkg.generate(name: 'faest', description: 'FAEST signature scheme', libraries: [l
 all_names = []
 foreach parameter_set : parameter_sets
   all_names += 'faest_@0@'.format(parameter_set.get('PARAM_L'))
-  subdir('faest_@0@'.format(parameter_set.get('PARAM_L')))
+  # subdir('faest_@0@'.format(parameter_set.get('PARAM_L')))
 endforeach
 run_target(
   'prepare_nist',

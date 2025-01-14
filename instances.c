@@ -45,7 +45,7 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
 #define PARAMS(name)                                                                               \
   {                                                                                                \
     name##_LAMBDA, name##_TAU, name##_W_GRIND, name##_T_OPEN, name##_ELL, name##_K, name##_T0,     \
-        name##_T1, name##_L, name##_NwD, name##_Ske, name##_R, name##_Senc, name##_Lke,            \
+        name##_T1, name##_L, name##_Nwd, name##_Ske, name##_R, name##_Senc, name##_Lke,            \
         name##_Lenc, name##_SIG_SIZE, name##_PK_SIZE,                                              \
   }
 
