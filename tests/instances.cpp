@@ -20,14 +20,14 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
         (faest_param.lambda == 128 || faest_param.lambda == 192 || faest_param.lambda == 256));
 
     BOOST_TEST(faest_param.tau1 == (faest_param.lambda - faest_param.w_grind) % faest_param.tau);
-    BOOST_TEST(faest_param.tau0 = faest_param.tau - faest_param.tau1);
+    BOOST_TEST(faest_param.tau0 == faest_param.tau - faest_param.tau1);
     BOOST_TEST(faest_param.k ==
                std::ceil((faest_param.lambda - faest_param.w_grind) / (1.0 * faest_param.tau)));
     BOOST_TEST(faest_param.L == faest_param.tau1 * (1 << faest_param.k) +
                                     faest_param.tau0 * (1 << (faest_param.k - 1)));
     BOOST_TEST(faest_param.Lke % 8 == 0);
     BOOST_TEST(faest_param.Lenc % 8 == 0);
-    BOOST_TEST(faest_param.ell % 8 == 0);
+    BOOST_TEST(faest_param.l % 8 == 0);
     BOOST_TEST(faest_param.k <= MAX_DEPTH);
   }
 }

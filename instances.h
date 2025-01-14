@@ -50,7 +50,7 @@ typedef struct faest_param_t {
   uint16_t k;
   uint16_t tau0;
   uint16_t tau1;
-  uint16_t L;
+  uint32_t L;
 
   // OWF parameters (Table 1.1 and TODO)
   uint16_t Nwd;
