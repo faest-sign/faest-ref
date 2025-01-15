@@ -22,71 +22,27 @@ typedef struct tree_t {
   size_t numLeaves; /* The total number of leaves in the tree */
 } tree_t;
 
-#define NODE(tree, node, lambda_bytes) (&(tree).nodes[(node) * (lambda_bytes)])
+#define NODE(nodes, node, lambda_bytes) (&nodes[(node) * (lambda_bytes)])
 
-static ATTR_CONST int is_left_child(size_t node) {
-  assert(node != 0);
-  return (node % 2 == 1);
-}
-
-static tree_t create_tree(const faest_paramset_t* params, unsigned int depth) {
-  tree_t tree;
-  uint32_t lambdaBytes = params->faest_param.lambda / 8;
-
-  tree.numNodes  = getBinaryTreeNodeCount(depth);
-  tree.numLeaves = ((size_t)1) << depth;
-  tree.nodes     = calloc(tree.numNodes, lambdaBytes);
-
-  return tree;
-}
-
-static ATTR_CONST size_t get_parent(size_t node) {
-  assert(node != 0);
-
-  if (is_left_child(node)) {
-    return (node - 1) / 2;
-  }
-  return (node - 2) / 2;
-}
-
-static void expand_seeds(tree_t* tree, const uint8_t* iv, const faest_paramset_t* params) {
+static void expand_seeds(uint8_t* nodes, const uint8_t* iv, const faest_paramset_t* params) {
   const unsigned int lambda_bytes = params->faest_param.lambda / 8;
 
-  /* Walk the tree, expanding seeds where possible. Compute children of
-   * non-leaf nodes. */
-  size_t lastNonLeaf = get_parent(tree->numNodes - 1);
-  // for scan build
-  assert(2 * lastNonLeaf + 2 < tree->numNodes);
-
-  for (size_t i = 0; i <= lastNonLeaf; i++) {
+  for (unsigned int alpha = 0; alpha <= params->faest_param.L - 2; ++alpha) {
     // the nodes are located other in memory consecutively
-    prg(NODE(*tree, i, lambda_bytes), iv, NULL, NODE(*tree, 2 * i + 1, lambda_bytes),
+    prg(NODE(nodes, alpha, lambda_bytes), iv, alpha, NODE(nodes, 2 * alpha + 1, lambda_bytes),
         params->faest_param.lambda, lambda_bytes * 2);
   }
 }
 
-static tree_t generate_seeds(const uint8_t* rootSeed, const uint8_t* iv,
-                             const faest_paramset_t* params, unsigned int depth) {
-  uint32_t lambdaBytes = params->faest_param.lambda / 8;
-  tree_t tree          = create_tree(params, depth);
+static uint8_t* generate_seeds(const uint8_t* root_seed, const uint8_t* iv,
+                               const faest_paramset_t* params) {
+  unsigned int lambda_bytes = params->faest_param.lambda / 8;
+  uint8_t* nodes            = calloc(2 * params->faest_param.L - 1, lambda_bytes);
 
-  memcpy(NODE(tree, 0, lambdaBytes), rootSeed, lambdaBytes);
-  expand_seeds(&tree, iv, params);
+  memcpy(NODE(nodes, 0, lambda_bytes), root_seed, lambda_bytes);
+  expand_seeds(nodes, iv, params);
 
-  return tree;
-}
-
-/* Gets how many nodes will be there in the tree in total including root node */
-uint64_t getBinaryTreeNodeCount(unsigned int depth) {
-  return (1 << (depth + 1)) - 1;
-}
-
-/* Calculates the flat array index of the binary tree position */
-uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex) {
-  if (depth == 0) {
-    return 0;
-  }
-  return (((2 << (depth - 1)) - 2) + (levelIndex + 1));
+  return nodes;
 }
 
 /* Gets the bit string of a node according to its position in the binary tree */
@@ -114,40 +70,39 @@ static void faest_leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, con
                               uint32_t tweak, const uint8_t* uhash, unsigned int lambda) {
   const unsigned int lambda_bytes = lambda / 8;
 
-  uint8_t buffer[MAX_LAMBDA_BYTES];
+  uint8_t buffer[MAX_LAMBDA_BYTES * 4];
   prg(key, iv, tweak, buffer, lambda, lambda_bytes * 4);
   leaf_hash(com, uhash, buffer, lambda);
   memcpy(sd, buffer, lambda_bytes);
 }
 
 // FAEST-EM.LeafCommit
-static void faest_em_leaf_commit(uint8_t* com, const uint8_t* key, const uint8_t* iv,
+static void faest_em_leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* iv,
                                  uint32_t tweak, unsigned int lambda) {
   const unsigned int lambda_bytes = lambda / 8;
 
+  memcpy(sd, key, lambda_bytes);
   prg(key, iv, tweak, com, lambda, lambda_bytes * 2);
 }
 
 // BAVC.PosInTree
-static inline ATTR_CONST uint32_t pos_in_tree(unsigned int i, unsigned int j, unsigned int tau,
-                                              unsigned int tau1, unsigned int N_i, unsigned int L,
-                                              unsigned int k) {
-  const unsigned int depth = 1 << (k - 1);
-  if (j < depth) {
-    return L - 1 + tau * j + i;
+static inline unsigned int pos_in_tree(unsigned int i, unsigned int j,
+                                       const faest_paramset_t* params) {
+  const unsigned int tmp = 1 << (params->faest_param.k - 1);
+  if (j < tmp) {
+    return params->faest_param.L - 1 + params->faest_param.tau * j + i;
   }
-  const unsigned int mask = depth - 1;
-  return L - 1 + tau * depth + tau1 * (j & mask) + i;
+  const unsigned int mask = tmp - 1;
+  return params->faest_param.L - 1 + params->faest_param.tau * tmp +
+         params->faest_param.tau1 * (j & mask) + i;
 }
 
 // BAVC.Commit for FAEST
 static void vector_commitment_faest(const uint8_t* rootKey, const uint8_t* iv,
-                                    const faest_paramset_t* params, uint32_t lambda,
-                                    vec_com_t* vecCom, uint32_t depth) {
-  const unsigned int lambdaBytes      = lambda / 8;
-  const unsigned int numVoleInstances = 1 << depth; // N_i
-
-  // L = number of leaves in the GGM tree
+                                    const faest_paramset_t* params, vec_com_t* vecCom) {
+  const unsigned int lambda       = params->faest_param.lambda;
+  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda_bytes = lambda / 8;
 
   H0_context_t h0_ctx;
   H0_init(&h0_ctx, lambda);
@@ -157,232 +112,366 @@ static void vector_commitment_faest(const uint8_t* rootKey, const uint8_t* iv,
   H1_context_t h1_com_ctx;
   H1_init(&h1_com_ctx, lambda);
 
-  // Generating the tree
-  tree_t tree = generate_seeds(rootKey, iv, params, depth);
+  // Generating the tree (k)
+  uint8_t* nodes = generate_seeds(rootKey, iv, params);
 
   // Initialzing stuff
-  vecCom->h   = malloc(lambdaBytes * 2);
-  vecCom->com = malloc(numVoleInstances * lambdaBytes * 3);
-  vecCom->sd  = malloc(numVoleInstances * lambdaBytes);
+  vecCom->h   = malloc(lambda_bytes * 2);
+  vecCom->com = malloc(L * lambda_bytes * 3);
+  vecCom->sd  = malloc(L * lambda_bytes);
 
   // Step: 1..3
-  vecCom->k = NODE(tree, 0, lambdaBytes);
+  vecCom->k = NODE(nodes, 0, lambda_bytes);
 
   // Step: 4..5
-  const size_t base_index = tree.numNodes - tree.numLeaves;
   // compute commitments for remaining instances
-  for (unsigned int i = 0, offset = 0; i < numVoleInstances; ++i) {
+  for (unsigned int i = 0, offset = 0; i < params->faest_param.tau; ++i) {
     uint8_t uhash[MAX_LAMBDA_BYTES * 3];
-    H0_squeeze(&h0_ctx, uhash, 3 * lambdaBytes);
+    H0_squeeze(&h0_ctx, uhash, 3 * lambda_bytes);
 
     H1_context_t h1_ctx;
-    H1_init(&h0_ctx, lambda);
+    H1_init(&h1_ctx, lambda);
 
-    for (unsigned int j = 0; j < tree.numLeaves; ++j, ++offset) {
-      const uint32_t alpha = pos_in_tree(i, j, tau, tau1, numVoleInstances, tree.numLeaves, k);
-      faest_leaf_commit(vecCom->sd + offset * lambdaBytes, vecCom->com + offset * lambdaBytes * 3,
-                        NODE(tree, alpha, lambdaBytes), iv, i + L - 1, uhash, lambda);
-      H1_update(&h1_ctx, vecCom->com + offset * lambdaBytes * 3, lambdaBytes * 3);
+    const unsigned int N_i =
+        bavc_max_node_index(i, params->faest_param.tau1, params->faest_param.k);
+    for (unsigned int j = 0; j < N_i; ++j, ++offset) {
+      const unsigned int alpha = pos_in_tree(i, j, params);
+      faest_leaf_commit(vecCom->sd + offset * lambda_bytes, vecCom->com + offset * lambda_bytes * 3,
+                        NODE(nodes, alpha, lambda_bytes), iv, i + L - 1, uhash, lambda);
+      H1_update(&h1_ctx, vecCom->com + offset * lambda_bytes * 3, lambda_bytes * 3);
     }
 
     uint8_t hi[MAX_LAMBDA_BYTES * 2];
     // Step 11
-    H1_final(&h1_ctx, hi, lambdaBytes * 2);
+    H1_final(&h1_ctx, hi, lambda_bytes * 2);
     // Step 12
-    H1_update(&h1_com_ctx, hi, lambdaBytes * 2);
+    H1_update(&h1_com_ctx, hi, lambda_bytes * 2);
   }
   H0_clear(&h0_ctx);
 
-  tree.nodes = NULL;
-
   // Step 12
-  H1_final(&h1_com_ctx, vecCom->h, lambdaBytes * 2);
+  H1_final(&h1_com_ctx, vecCom->h, lambda_bytes * 2);
 }
 
 // BAVC.Commit for FAEST-EM
 static void vector_commitment_faest_em(const uint8_t* rootKey, const uint8_t* iv,
-                                       const faest_paramset_t* params, uint32_t lambda,
-                                       vec_com_t* vecCom, uint32_t depth) {
-  const unsigned int lambdaBytes      = lambda / 8;
-  const unsigned int numVoleInstances = 1 << depth; // N_i
-
-  // L = number of leaves in the GGM tree
+                                       const faest_paramset_t* params, vec_com_t* vecCom) {
+  const unsigned int lambda       = params->faest_param.lambda;
+  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda_bytes = lambda / 8;
 
   H1_context_t h1_com_ctx;
   H1_init(&h1_com_ctx, lambda);
 
   // Generating the tree
-  tree_t tree = generate_seeds(rootKey, iv, params, depth);
+  uint8_t* nodes = generate_seeds(rootKey, iv, params);
 
   // Initialzing stuff
-  vecCom->h   = malloc(lambdaBytes * 2);
-  vecCom->com = malloc(numVoleInstances * lambdaBytes * 2);
-  vecCom->sd  = malloc(numVoleInstances * lambdaBytes);
+  vecCom->h   = malloc(lambda_bytes * 2);
+  vecCom->com = malloc(L * lambda_bytes * 3);
+  vecCom->sd  = malloc(L * lambda_bytes);
 
   // Step: 1..3
-  vecCom->k = NODE(tree, 0, lambdaBytes);
+  vecCom->k = NODE(nodes, 0, lambda_bytes);
 
   // Step: 4..5
-  const size_t base_index = tree.numNodes - tree.numLeaves;
   // compute commitments for remaining instances
-  for (unsigned int i = 0, offset = 0; i < numVoleInstances; ++i) {
+  for (unsigned int i = 0, offset = 0; i < params->faest_param.tau; ++i) {
     H1_context_t h1_ctx;
     H1_init(&h1_ctx, lambda);
 
-    for (unsigned int j = 0; j < tree.numLeaves; ++j, ++offset) {
-      const uint32_t alpha = pos_in_tree(i, j, tau, tau1, numVoleInstances, tree.numLeaves, k);
-      faest_em_leaf_commit(vecCom->sd + offset * lambdaBytes,
-                           vecCom->com + offset * lambdaBytes * 2, NODE(tree, alpha, lambdaBytes),
-                           iv, i + L - 1, lambda);
-      H1_update(&h1_ctx, vecCom->com + offset * lambdaBytes * 2, lambdaBytes * 3);
+    const unsigned int N_i =
+        bavc_max_node_index(i, params->faest_param.tau1, params->faest_param.k);
+    for (unsigned int j = 0; j < N_i; ++j, ++offset) {
+      const unsigned int alpha = pos_in_tree(i, j, params);
+      faest_em_leaf_commit(vecCom->sd + offset * lambda_bytes,
+                           vecCom->com + offset * lambda_bytes * 2,
+                           NODE(nodes, alpha, lambda_bytes), iv, i + L - 1, lambda);
+      H1_update(&h1_ctx, vecCom->com + offset * lambda_bytes * 2, lambda_bytes * 3);
     }
 
     uint8_t hi[MAX_LAMBDA_BYTES * 2];
     // Step 11
-    H1_final(&h1_ctx, hi, lambdaBytes * 2);
+    H1_final(&h1_ctx, hi, lambda_bytes * 2);
     // Step 12
-    H1_update(&h1_com_ctx, hi, lambdaBytes * 2);
+    H1_update(&h1_com_ctx, hi, lambda_bytes * 2);
   }
 
-  tree.nodes = NULL;
-
   // Step 12
-  H1_final(&h1_com_ctx, vecCom->h, lambdaBytes * 2);
+  H1_final(&h1_com_ctx, vecCom->h, lambda_bytes * 2);
 }
 
 void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
-                       uint32_t lambda, vec_com_t* vecCom, uint32_t depth) {
+                       vec_com_t* vecCom) {
   if (faest_is_em(params)) {
-    vector_commitment_faest_em(rootKey, iv, params, lambda, vecCom, depth);
+    vector_commitment_faest_em(rootKey, iv, params, vecCom);
   } else {
-    vector_commitment_faest(rootKey, iv, params, lambda, vecCom, depth);
+    vector_commitment_faest(rootKey, iv, params, vecCom);
   }
 }
 
-void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t* cop,
-                 uint8_t* com_j, uint32_t depth, uint32_t lambdaBytes) {
-  // Step: 1
-  uint64_t leafIndex = NumRec(depth, b);
+bool vector_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
+                 const faest_paramset_t* params) {
+  const unsigned int lambda       = params->faest_param.lambda;
+  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda_bytes = lambda / 8;
+  const unsigned int k            = params->faest_param.k;
+  const unsigned int tau          = params->faest_param.tau;
+  const unsigned int tau_1        = params->faest_param.tau1;
+  const unsigned int com_size     = faest_is_em(params) ? (2 * lambda_bytes) : (3 * lambda_bytes);
 
-  // Step: 3..6
-  uint32_t a = 0;
-  for (uint32_t i = 0; i < depth; i++) {
-    memcpy(cop + (lambdaBytes * i),
-           k + (lambdaBytes * getNodeIndex(i + 1, (2 * a) + !b[depth - 1 - i])), lambdaBytes);
-    a = (2 * a) + b[depth - 1 - i];
+  // Step 5
+  uint8_t* s = calloc((2 * L - 1 + 7) >> 3, 1);
+  // Step 6
+  unsigned int nh = 0;
+
+  // Step 7..15
+  for (unsigned int i = 0; i < tau; ++i) {
+    unsigned int alpha = pos_in_tree(i, i_delta[i], params);
+    ptr_set_bit(s, 1, alpha);
+    ++nh;
+
+    while (alpha > 0 && ptr_get_bit(s, (alpha - 1) >> 1) == 0) {
+      alpha = (alpha - 1) >> 1;
+      ptr_set_bit(s, 1, alpha);
+      ++nh;
+    }
   }
 
-  // Step: 7
-  memcpy(com_j, com + (leafIndex * lambdaBytes * 2), lambdaBytes * 2);
+  // Step 16..17
+  if (nh - 2 * tau + 1 > params->faest_param.T_open) {
+    free(s);
+    return false;
+  }
+
+  // Step 3
+  const uint8_t* com = vc->com;
+  for (unsigned int i = 0; i < tau; ++i) {
+    memcpy(decom_i, com + i_delta[i] * com_size, com_size);
+    com += bavc_max_node_index(i, tau_1, k);
+    decom_i += com_size;
+  }
+
+  // Step 19..25
+  for (unsigned int j = L - 2 + 1; j > 0; --j) {
+    unsigned int i = j - 1;
+    ptr_set_bit(s, ptr_get_bit(s, 2 * i + 1) | ptr_get_bit(s, 2 * i + 2), i);
+    if ((ptr_get_bit(s, 2 * i + 1) ^ ptr_get_bit(s, 2 * i + 2)) == 1) {
+      const unsigned int alpha = 2 * i + 1 + ptr_get_bit(s, 2 * i + 1);
+      memcpy(decom_i, NODE(vc->k, alpha, lambda_bytes), lambda_bytes);
+    }
+  }
+
+  free(s);
+  return true;
 }
 
-void vector_reconstruction(const uint8_t* iv, const uint8_t* cop, const uint8_t* com_j,
-                           const uint8_t* b, uint32_t lambda, uint32_t depth,
-                           vec_com_rec_t* vecComRec) {
+static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* i_delta,
+                                        const uint8_t* iv, const faest_paramset_t* params,
+                                        vec_com_rec_t* vecComRec) {
   // Initializing
-  const unsigned int lambdaBytes      = lambda / 8;
-  const unsigned int numVoleInstances = 1 << depth;
-  const uint64_t leafIndex            = NumRec(depth, b);
+  const unsigned int lambda       = params->faest_param.lambda;
+  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda_bytes = lambda / 8;
+  const unsigned int k            = params->faest_param.k;
+  const unsigned int tau          = params->faest_param.tau;
+  const unsigned int tau_1        = params->faest_param.tau1;
 
-  // Step: 3..9
-  uint32_t a = 0;
-  for (uint32_t i = 1; i <= depth; i++) {
-    memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * a + !b[depth - i])),
-           cop + (lambdaBytes * (i - 1)), lambdaBytes);
-    memset(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * a + b[depth - i])), 0, lambdaBytes);
+  const uint8_t* nodes = decom_i + 2 * tau * lambda_bytes;
+  const uint8_t* end   = nodes + params->faest_param.T_open * lambda_bytes;
 
-    const uint32_t current_depth = (1 << (i - 1));
-    for (uint32_t j = 0; j < current_depth; j++) {
-      if (j == a) {
-        continue;
+  // Step 6
+  uint8_t* s    = calloc((2 * L - 1 + 7) >> 3, 1);
+  uint8_t* keys = calloc(2 * params->faest_param.L - 1, lambda_bytes);
+
+  // Step 7..10
+  for (unsigned int i = 0; i < tau; ++i) {
+    unsigned int alpha = pos_in_tree(i, i_delta[i], params);
+    ptr_set_bit(s, 1, alpha);
+  }
+
+  // Step 12.12
+  for (unsigned int j = L - 2 + 1; j > 0; --j) {
+    unsigned int i = j - 1;
+    ptr_set_bit(s, ptr_get_bit(s, 2 * i + 1) | ptr_get_bit(s, 2 * i + 2), i);
+    if ((ptr_get_bit(s, 2 * i + 1) ^ ptr_get_bit(s, 2 * i + 2)) == 1) {
+      if (nodes == end) {
+        free(keys);
+        free(s);
+        return false;
       }
 
-      uint8_t out[2 * MAX_LAMBDA_BYTES];
-      prg(vecComRec->k + (lambdaBytes * getNodeIndex(i - 1, j)), iv, NULL, out, lambda,
-          lambdaBytes * 2);
-      memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, 2 * j)), out, lambdaBytes);
-      memcpy(vecComRec->k + (lambdaBytes * getNodeIndex(i, (2 * j) + 1)), out + lambdaBytes,
-             lambdaBytes);
+      const unsigned int alpha = 2 * i + 1 + ptr_get_bit(s, 2 * i + 1);
+      memcpy(keys + alpha * lambda_bytes, nodes, lambda_bytes);
+      nodes += lambda_bytes;
+    }
+  }
+
+  for (; nodes != end; ++nodes) {
+    if (*nodes) {
+      free(keys);
+      free(s);
+      return false;
+    }
+  }
+
+  for (unsigned int i = 0; i != L - 1; ++i) {
+    if (!ptr_get_bit(s, i)) {
+      prg(keys + i * lambda_bytes, iv, i, keys + 2 * i * lambda_bytes, lambda, 2 * lambda_bytes);
+    }
+  }
+
+  H0_context_t h0_ctx;
+  H0_init(&h0_ctx, lambda);
+  H0_update(&h0_ctx, iv, IV_SIZE);
+  H0_final_for_squeeze(&h0_ctx);
+
+  H1_context_t h1_com_ctx;
+  H1_init(&h1_com_ctx, lambda);
+
+  for (unsigned int i = 0, offset = 0; i != tau; ++i) {
+    uint8_t uhash[MAX_LAMBDA_BYTES * 3];
+    H0_squeeze(&h0_ctx, uhash, 3 * lambda_bytes);
+
+    H1_context_t h1_ctx;
+    H1_init(&h1_ctx, lambda);
+
+    const unsigned int N_i = bavc_max_node_index(i, tau_1, k);
+    for (unsigned int j = 0; j != N_i; ++j, ++offset) {
+      const unsigned int alpha = pos_in_tree(i, j, params);
+      // Fix index: alpha + L - 1 is too big
+      if (ptr_get_bit(s, alpha)) {
+        H1_update(&h1_ctx, decom_i + i * lambda_bytes * 3, lambda_bytes * 3);
+      } else {
+        uint8_t com[3 * MAX_LAMBDA_BYTES];
+        // Check index of k
+        faest_leaf_commit(vecComRec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
+                          iv, i + L - 1, uhash, lambda);
+        H1_update(&h1_ctx, com, 3 * lambda_bytes);
+      }
     }
 
-    a = a * 2 + b[depth - i];
+    uint8_t hi[MAX_LAMBDA_BYTES * 2];
+    H1_final(&h1_ctx, hi, lambda_bytes * 2);
+    H1_update(&h1_com_ctx, hi, lambda_bytes * 2);
+  }
+  H0_clear(&h0_ctx);
+
+  H1_final(&h1_com_ctx, vecComRec->h, lambda_bytes * 2);
+
+  free(keys);
+  free(s);
+  return true;
+}
+
+static bool vector_reconstruction_faest_em(const uint8_t* decom_i, const uint16_t* i_delta,
+                                           const uint8_t* iv, const faest_paramset_t* params,
+                                           vec_com_rec_t* vecComRec) {
+  // Initializing
+  const unsigned int lambda       = params->faest_param.lambda;
+  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda_bytes = lambda / 8;
+  const unsigned int k            = params->faest_param.k;
+  const unsigned int tau          = params->faest_param.tau;
+  const unsigned int tau_1        = params->faest_param.tau1;
+
+  const uint8_t* nodes = decom_i + 2 * tau * lambda_bytes;
+  const uint8_t* end   = nodes + params->faest_param.T_open * lambda_bytes;
+
+  // Step 6
+  uint8_t* s    = calloc((2 * L - 1 + 7) >> 3, 1);
+  uint8_t* keys = calloc(2 * params->faest_param.L - 1, lambda_bytes);
+
+  // Step 7..10
+  for (unsigned int i = 0; i < tau; ++i) {
+    unsigned int alpha = pos_in_tree(i, i_delta[i], params);
+    ptr_set_bit(s, 1, alpha);
   }
 
-  // Step: 10..11
-  unsigned int j = 0;
-  // reconstruct commitments for 4 instances in parallel
-  for (; j < leafIndex / 4 * 4; j += 4) {
-    H0_context_x4_t h0_ctx;
-    H0_x4_init(&h0_ctx, lambda);
-    H0_x4_update(&h0_ctx, vecComRec->k + (getNodeIndex(depth, j) * lambdaBytes),
-                 vecComRec->k + (getNodeIndex(depth, j + 1) * lambdaBytes),
-                 vecComRec->k + (getNodeIndex(depth, j + 2) * lambdaBytes),
-                 vecComRec->k + (getNodeIndex(depth, j + 3) * lambdaBytes), lambdaBytes);
-    H0_x4_update(&h0_ctx, iv, iv, iv, iv, IV_SIZE);
-    H0_x4_final(&h0_ctx, vecComRec->s + j * lambdaBytes, vecComRec->s + (j + 1) * lambdaBytes,
-                vecComRec->s + (j + 2) * lambdaBytes, vecComRec->s + (j + 3) * lambdaBytes,
-                lambdaBytes, vecComRec->com + j * lambdaBytes * 2,
-                vecComRec->com + (j + 1) * lambdaBytes * 2,
-                vecComRec->com + (j + 2) * lambdaBytes * 2,
-                vecComRec->com + (j + 3) * lambdaBytes * 2, lambdaBytes * 2);
-  }
-  // reconstruct commitments up until the leafIndex
-  for (; j < leafIndex; ++j) {
-    H0_context_t h0_ctx;
-    H0_init(&h0_ctx, lambda);
-    H0_update(&h0_ctx, vecComRec->k + getNodeIndex(depth, j) * lambdaBytes, lambdaBytes);
-    H0_update(&h0_ctx, iv, IV_SIZE);
-    H0_final(&h0_ctx, vecComRec->s + j * lambdaBytes, lambdaBytes,
-             vecComRec->com + j * lambdaBytes * 2, lambdaBytes * 2);
-  }
-  // skip leafIndex
-  ++j;
-  // reconstruct until index is divisible by 4 again
-  for (; j < numVoleInstances && j % 4; ++j) {
-    H0_context_t h0_ctx;
-    H0_init(&h0_ctx, lambda);
-    H0_update(&h0_ctx, vecComRec->k + getNodeIndex(depth, j) * lambdaBytes, lambdaBytes);
-    H0_update(&h0_ctx, iv, IV_SIZE);
-    H0_final(&h0_ctx, vecComRec->s + j * lambdaBytes, lambdaBytes,
-             vecComRec->com + j * lambdaBytes * 2, lambdaBytes * 2);
-  }
-  // reconstruct 4 instances in parallel
-  for (; j < numVoleInstances / 4 * 4; j += 4) {
-    H0_context_x4_t h0_ctx;
-    H0_x4_init(&h0_ctx, lambda);
-    H0_x4_update(&h0_ctx, vecComRec->k + (getNodeIndex(depth, j) * lambdaBytes),
-                 vecComRec->k + (getNodeIndex(depth, j + 1) * lambdaBytes),
-                 vecComRec->k + (getNodeIndex(depth, j + 2) * lambdaBytes),
-                 vecComRec->k + (getNodeIndex(depth, j + 3) * lambdaBytes), lambdaBytes);
-    H0_x4_update(&h0_ctx, iv, iv, iv, iv, IV_SIZE);
-    H0_x4_final(&h0_ctx, vecComRec->s + j * lambdaBytes, vecComRec->s + (j + 1) * lambdaBytes,
-                vecComRec->s + (j + 2) * lambdaBytes, vecComRec->s + (j + 3) * lambdaBytes,
-                lambdaBytes, vecComRec->com + j * lambdaBytes * 2,
-                vecComRec->com + (j + 1) * lambdaBytes * 2,
-                vecComRec->com + (j + 2) * lambdaBytes * 2,
-                vecComRec->com + (j + 3) * lambdaBytes * 2, lambdaBytes * 2);
-  }
-  // reconstruct remaining instances
-  for (; j < numVoleInstances; ++j) {
-    H0_context_t h0_ctx;
-    H0_init(&h0_ctx, lambda);
-    H0_update(&h0_ctx, vecComRec->k + getNodeIndex(depth, j) * lambdaBytes, lambdaBytes);
-    H0_update(&h0_ctx, iv, IV_SIZE);
-    H0_final(&h0_ctx, vecComRec->s + j * lambdaBytes, lambdaBytes,
-             vecComRec->com + j * lambdaBytes * 2, lambdaBytes * 2);
+  // Step 12.12
+  for (unsigned int j = L - 2 + 1; j > 0; --j) {
+    unsigned int i = j - 1;
+    ptr_set_bit(s, ptr_get_bit(s, 2 * i + 1) | ptr_get_bit(s, 2 * i + 2), i);
+    if ((ptr_get_bit(s, 2 * i + 1) ^ ptr_get_bit(s, 2 * i + 2)) == 1) {
+      if (nodes == end) {
+        free(keys);
+        free(s);
+        return false;
+      }
+
+      const unsigned int alpha = 2 * i + 1 + ptr_get_bit(s, 2 * i + 1);
+      memcpy(keys + alpha * lambda_bytes, nodes, lambda_bytes);
+      nodes += lambda_bytes;
+    }
   }
 
-  // Step: 12..13
-  memcpy(vecComRec->com + (lambdaBytes * 2 * leafIndex), com_j, lambdaBytes * 2);
-  H1_context_t h1_ctx;
-  H1_init(&h1_ctx, lambda);
-  H1_update(&h1_ctx, vecComRec->com, lambdaBytes * 2 * numVoleInstances);
-  H1_final(&h1_ctx, vecComRec->h, lambdaBytes * 2);
+  for (; nodes != end; ++nodes) {
+    if (*nodes) {
+      free(keys);
+      free(s);
+      return false;
+    }
+  }
+
+  for (unsigned int i = 0; i != L - 1; ++i) {
+    if (!ptr_get_bit(s, i)) {
+      // TODO: check tweak
+      prg(keys + i * lambda_bytes, iv, i, keys + 2 * i * lambda_bytes, lambda, 2 * lambda_bytes);
+    }
+  }
+
+  H0_context_t h0_ctx;
+  H0_init(&h0_ctx, lambda);
+  H0_update(&h0_ctx, iv, IV_SIZE);
+  H0_final_for_squeeze(&h0_ctx);
+
+  H1_context_t h1_com_ctx;
+  H1_init(&h1_com_ctx, lambda);
+
+  for (unsigned int i = 0, offset = 0; i != tau; ++i) {
+    uint8_t uhash[MAX_LAMBDA_BYTES * 3];
+    H0_squeeze(&h0_ctx, uhash, 3 * lambda_bytes);
+
+    H1_context_t h1_ctx;
+    H1_init(&h1_ctx, lambda);
+
+    const unsigned int N_i = bavc_max_node_index(i, tau_1, k);
+    for (unsigned int j = 0; j != N_i; ++j, ++offset) {
+      const unsigned int alpha = pos_in_tree(i, j, params);
+      if (ptr_get_bit(s, alpha)) {
+        H1_update(&h1_ctx, decom_i + i * lambda_bytes * 2, lambda_bytes * 2);
+      } else {
+        uint8_t com[3 * MAX_LAMBDA_BYTES];
+        faest_em_leaf_commit(vecComRec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
+                             iv, i + L - 1, lambda);
+        H1_update(&h1_ctx, com, 2 * lambda_bytes);
+      }
+    }
+
+    uint8_t hi[MAX_LAMBDA_BYTES * 2];
+    H1_final(&h1_ctx, hi, lambda_bytes * 2);
+    H1_update(&h1_com_ctx, hi, lambda_bytes * 2);
+  }
+  H0_clear(&h0_ctx);
+
+  H1_final(&h1_com_ctx, vecComRec->h, lambda_bytes * 2);
+
+  free(keys);
+  free(s);
+  return true;
+}
+
+bool vector_reconstruction(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
+                           const faest_paramset_t* params, vec_com_rec_t* vecComRec) {
+  return faest_is_em(params)
+             ? vector_reconstruction_faest_em(decom_i, i_delta, iv, params, vecComRec)
+             : vector_reconstruction_faest(decom_i, i_delta, iv, params, vecComRec);
 }
 
 #if defined(FAEST_TESTS)
-int vector_verify(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b,
-                  uint32_t lambda, uint32_t depth, vec_com_rec_t* rec, const uint8_t* vecComH) {
+int vector_verify(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
+                  const uint8_t* vecComH, const faest_paramset_t* params) {
+#if 0
   const unsigned int lambdaBytes      = lambda / 8;
   const unsigned int numVoleInstances = 1 << depth;
 
@@ -409,6 +498,9 @@ int vector_verify(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j, 
   } else {
     return 0;
   }
+#endif
+
+  return 0;
 }
 #endif
 
@@ -421,7 +513,5 @@ void vec_com_clear(vec_com_t* com) {
 
 void vec_com_rec_clear(vec_com_rec_t* rec) {
   free(rec->s);
-  free(rec->com);
-  free(rec->k);
   free(rec->h);
 }

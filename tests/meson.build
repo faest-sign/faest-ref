@@ -13,7 +13,7 @@ if boost_test.found()
     # 'test_faest_tvs.cpp',
     'universal_hashing.cpp',
     'utils.cpp',
-    # 'vc.cpp',
+    'vc.cpp',
     # 'vole.cpp',
     # 'vole_tvs.cpp',
   )

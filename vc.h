@@ -17,29 +17,28 @@ typedef struct vec_com_t {
 
 typedef struct vec_com_rec_t {
   uint8_t* h;
-  uint8_t* k;
-  uint8_t* com;
   uint8_t* s;
 } vec_com_rec_t;
-
-ATTR_CONST uint64_t getBinaryTreeNodeCount(unsigned int depth);
-ATTR_CONST uint64_t getNodeIndex(uint64_t depth, uint64_t levelIndex);
 
 int BitDec(unsigned int leafIndex, unsigned int depth, uint8_t* out);
 unsigned int NumRec(unsigned int depth, const uint8_t* bi);
 
+static inline ATTR_CONST unsigned int bavc_max_node_index(unsigned int i, unsigned int tau_1,
+                                                          unsigned int k) {
+  return (i < tau_1) ? (1 << k) : (1 << (k - 1));
+}
+
 void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
-                       uint32_t lambda, vec_com_t* vecCom, uint32_t depth);
+                       vec_com_t* vecCom);
 
-void vector_open(const uint8_t* k, const uint8_t* com, const uint8_t* b, uint8_t* pdec,
-                 uint8_t* com_j, uint32_t depth, uint32_t lambdaBytes);
+bool vector_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
+                 const faest_paramset_t* params);
 
-void vector_reconstruction(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j,
-                           const uint8_t* b, uint32_t lambda, uint32_t depth,
-                           vec_com_rec_t* vecComRec);
+bool vector_reconstruction(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
+                           const faest_paramset_t* params, vec_com_rec_t* vecComRec);
 #if defined(FAEST_TESTS)
-int vector_verify(const uint8_t* iv, const uint8_t* pdec, const uint8_t* com_j, const uint8_t* b,
-                  uint32_t lambda, uint32_t depth, vec_com_rec_t* rec, const uint8_t* vecComH);
+int vector_verify(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
+                  const uint8_t* vecComH, const faest_paramset_t* params);
 #endif
 
 void vec_com_clear(vec_com_t* com);
