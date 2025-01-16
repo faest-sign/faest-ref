@@ -356,7 +356,7 @@ static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* 
     H1_init(&h1_ctx, lambda);
 
     const unsigned int N_i = bavc_max_node_index(i, tau_1, k);
-    for (unsigned int j = 0; j != N_i; ++j, ++offset) {
+    for (unsigned int j = 0; j != N_i; ++j) {
       const unsigned int alpha = pos_in_tree(i, j, params);
       if (ptr_get_bit(s, alpha)) {
         H1_update(&h1_ctx, decom_i + i * com_size, com_size);
@@ -364,6 +364,7 @@ static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* 
         uint8_t com[3 * MAX_LAMBDA_BYTES];
         faest_leaf_commit(vecComRec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
                           iv, i + L - 1, uhash, lambda);
+        ++offset;
         H1_update(&h1_ctx, com, com_size);
       }
     }
@@ -412,7 +413,7 @@ static bool vector_reconstruction_faest_em(const uint8_t* decom_i, const uint16_
     H1_init(&h1_ctx, lambda);
 
     const unsigned int N_i = bavc_max_node_index(i, tau_1, k);
-    for (unsigned int j = 0; j != N_i; ++j, ++offset) {
+    for (unsigned int j = 0; j != N_i; ++j) {
       const unsigned int alpha = pos_in_tree(i, j, params);
       if (ptr_get_bit(s, alpha)) {
         H1_update(&h1_ctx, decom_i + i * com_size, com_size);
@@ -420,6 +421,7 @@ static bool vector_reconstruction_faest_em(const uint8_t* decom_i, const uint16_
         uint8_t com[2 * MAX_LAMBDA_BYTES];
         faest_em_leaf_commit(vecComRec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
                              iv, i + L - 1, lambda);
+        ++offset;
         H1_update(&h1_ctx, com, com_size);
       }
     }
