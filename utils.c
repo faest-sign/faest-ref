@@ -22,7 +22,6 @@ bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigned int i
     return false;
   }
 
-  const unsigned int t0 = params->faest_param.tau0;
   const unsigned int t1 = params->faest_param.tau1;
   const unsigned int k  = params->faest_param.k;
 
@@ -54,4 +53,5 @@ bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall, faest_par
     }
     decoded_chall[i] = num_rec_2(tmp);
   }
+  return true;
 }

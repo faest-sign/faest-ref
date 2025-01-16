@@ -570,12 +570,16 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
     while (!ret) {
       for (unsigned int i = 0; i != params.faest_param.tau; ++i) {
         std::uniform_int_distribution<> distribution{
-            0, bavc_max_node_index(i, params.faest_param.tau1, params.faest_param.k) - 1};
+            0, static_cast<int>(
+                   bavc_max_node_index(i, params.faest_param.tau1, params.faest_param.k)) -
+                   1};
         i_delta[i] = distribution(rd);
       }
 
       decom_i.clear();
-      decom_i.resize((2 * params.faest_param.tau + params.faest_param.T_open) * lambda_bytes);
+      decom_i.resize(
+          ((faest_is_em(&params) ? 2 : 3) * params.faest_param.tau + params.faest_param.T_open) *
+          lambda_bytes);
 
       ret = vector_open(&vc, i_delta.data(), decom_i.data(), &params);
     }

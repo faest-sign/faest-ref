@@ -276,7 +276,7 @@ static bool reconstruct_keys(uint8_t* s, uint8_t* keys, const uint8_t* decom_i,
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int tau          = params->faest_param.tau;
 
-  const uint8_t* nodes = decom_i + 2 * tau * lambda_bytes;
+  const uint8_t* nodes = decom_i + (faest_is_em(params) ? 2 : 3) * tau * lambda_bytes;
   const uint8_t* end   = nodes + params->faest_param.T_open * lambda_bytes;
 
   // Step 7..10
