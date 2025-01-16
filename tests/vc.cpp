@@ -28,6 +28,22 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(vector_commitments)
 
+BOOST_DATA_TEST_CASE(test_node_indices, all_parameters, param_id) {
+  BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
+    const auto params = faest_get_paramset(param_id);
+    const auto tau    = params.faest_param.tau;
+    const auto tau_1  = params.faest_param.tau1;
+    const auto k      = params.faest_param.k;
+    const auto L      = params.faest_param.L;
+
+    unsigned int recomputed_L = 0;
+    for (unsigned int i = 0; i != tau; ++i) {
+      recomputed_L += bavc_max_node_index(i, tau_1, k);
+    }
+    BOOST_TEST(L == recomputed_L);
+  }
+}
+
 BOOST_AUTO_TEST_CASE(test_numrec_bitdec) {
   uint8_t expect_out_1[2] = {0x00, 0x01};
   uint8_t b_1[2];
