@@ -222,7 +222,7 @@ bool vector_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
   const unsigned int com_size     = faest_is_em(params) ? (2 * lambda_bytes) : (3 * lambda_bytes);
 
   // Step 5
-  uint8_t* s = calloc((2 * L - 1 + 7) >> 3, 1);
+  uint8_t* s = calloc((2 * L - 1 + 7) / 8, 1);
   // Step 6
   unsigned int nh = 0;
 
@@ -232,8 +232,8 @@ bool vector_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
     ptr_set_bit(s, 1, alpha);
     ++nh;
 
-    while (alpha > 0 && ptr_get_bit(s, (alpha - 1) >> 1) == 0) {
-      alpha = (alpha - 1) >> 1;
+    while (alpha > 0 && ptr_get_bit(s, (alpha - 1) / 2) == 0) {
+      alpha = (alpha - 1) / 2;
       ptr_set_bit(s, 1, alpha);
       ++nh;
     }
@@ -249,7 +249,7 @@ bool vector_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
   const uint8_t* com = vc->com;
   for (unsigned int i = 0; i < tau; ++i) {
     memcpy(decom_i, com + i_delta[i] * com_size, com_size);
-    com += bavc_max_node_index(i, tau_1, k);
+    com += bavc_max_node_index(i, tau_1, k) * com_size;
     decom_i += com_size;
   }
 
@@ -260,6 +260,7 @@ bool vector_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
     if ((ptr_get_bit(s, 2 * i + 1) ^ ptr_get_bit(s, 2 * i + 2)) == 1) {
       const unsigned int alpha = 2 * i + 1 + ptr_get_bit(s, 2 * i + 1);
       memcpy(decom_i, NODE(vc->k, alpha, lambda_bytes), lambda_bytes);
+      decom_i += lambda_bytes;
     }
   }
 
