@@ -92,6 +92,7 @@ static inline unsigned int pos_in_tree(unsigned int i, unsigned int j,
   if (j < tmp) {
     return params->faest_param.L - 1 + params->faest_param.tau * j + i;
   }
+  // mod 2^(k-1) is the same as & 2^(k-1)-1
   const unsigned int mask = tmp - 1;
   return params->faest_param.L - 1 + params->faest_param.tau * tmp +
          params->faest_param.tau1 * (j & mask) + i;
@@ -104,10 +105,10 @@ static void vector_commitment_faest(const uint8_t* rootKey, const uint8_t* iv,
   const unsigned int L            = params->faest_param.L;
   const unsigned int lambda_bytes = lambda / 8;
 
-  H0_context_t h0_ctx;
-  H0_init(&h0_ctx, lambda);
-  H0_update(&h0_ctx, iv, IV_SIZE);
-  H0_final_for_squeeze(&h0_ctx);
+  H0_context_t uhash_ctx;
+  H0_init(&uhash_ctx, lambda);
+  H0_update(&uhash_ctx, iv, IV_SIZE);
+  H0_final_for_squeeze(&uhash_ctx);
 
   H1_context_t h1_com_ctx;
   H1_init(&h1_com_ctx, lambda);
@@ -127,7 +128,7 @@ static void vector_commitment_faest(const uint8_t* rootKey, const uint8_t* iv,
   // compute commitments for remaining instances
   for (unsigned int i = 0, offset = 0; i < params->faest_param.tau; ++i) {
     uint8_t uhash[MAX_LAMBDA_BYTES * 3];
-    H0_squeeze(&h0_ctx, uhash, 3 * lambda_bytes);
+    H0_squeeze(&uhash_ctx, uhash, 3 * lambda_bytes);
 
     H1_context_t h1_ctx;
     H1_init(&h1_ctx, lambda);
@@ -147,7 +148,7 @@ static void vector_commitment_faest(const uint8_t* rootKey, const uint8_t* iv,
     // Step 12
     H1_update(&h1_com_ctx, hi, lambda_bytes * 2);
   }
-  H0_clear(&h0_ctx);
+  H0_clear(&uhash_ctx);
 
   // Step 12
   H1_final(&h1_com_ctx, vecCom->h, lambda_bytes * 2);
@@ -168,7 +169,7 @@ static void vector_commitment_faest_em(const uint8_t* rootKey, const uint8_t* iv
 
   // Initialzing stuff
   vecCom->h   = malloc(lambda_bytes * 2);
-  vecCom->com = malloc(L * lambda_bytes * 3);
+  vecCom->com = malloc(L * lambda_bytes * 2);
   vecCom->sd  = malloc(L * lambda_bytes);
 
   // Step: 1..3
@@ -187,7 +188,7 @@ static void vector_commitment_faest_em(const uint8_t* rootKey, const uint8_t* iv
       faest_em_leaf_commit(vecCom->sd + offset * lambda_bytes,
                            vecCom->com + offset * lambda_bytes * 2,
                            NODE(nodes, alpha, lambda_bytes), iv, i + L - 1, lambda);
-      H1_update(&h1_ctx, vecCom->com + offset * lambda_bytes * 2, lambda_bytes * 3);
+      H1_update(&h1_ctx, vecCom->com + offset * lambda_bytes * 2, lambda_bytes * 2);
     }
 
     uint8_t hi[MAX_LAMBDA_BYTES * 2];
@@ -266,23 +267,16 @@ bool vector_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
   return true;
 }
 
-static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* i_delta,
-                                        const uint8_t* iv, const faest_paramset_t* params,
-                                        vec_com_rec_t* vecComRec) {
-  // Initializing
+static bool reconstruct_keys(uint8_t* s, uint8_t* keys, const uint8_t* decom_i,
+                             const uint16_t* i_delta, const uint8_t* iv,
+                             const faest_paramset_t* params) {
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int L            = params->faest_param.L;
   const unsigned int lambda_bytes = lambda / 8;
-  const unsigned int k            = params->faest_param.k;
   const unsigned int tau          = params->faest_param.tau;
-  const unsigned int tau_1        = params->faest_param.tau1;
 
   const uint8_t* nodes = decom_i + 2 * tau * lambda_bytes;
   const uint8_t* end   = nodes + params->faest_param.T_open * lambda_bytes;
-
-  // Step 6
-  uint8_t* s    = calloc((2 * L - 1 + 7) >> 3, 1);
-  uint8_t* keys = calloc(2 * params->faest_param.L - 1, lambda_bytes);
 
   // Step 7..10
   for (unsigned int i = 0; i < tau; ++i) {
@@ -296,8 +290,6 @@ static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* 
     ptr_set_bit(s, ptr_get_bit(s, 2 * i + 1) | ptr_get_bit(s, 2 * i + 2), i);
     if ((ptr_get_bit(s, 2 * i + 1) ^ ptr_get_bit(s, 2 * i + 2)) == 1) {
       if (nodes == end) {
-        free(keys);
-        free(s);
         return false;
       }
 
@@ -309,8 +301,6 @@ static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* 
 
   for (; nodes != end; ++nodes) {
     if (*nodes) {
-      free(keys);
-      free(s);
       return false;
     }
   }
@@ -321,17 +311,41 @@ static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* 
     }
   }
 
-  H0_context_t h0_ctx;
-  H0_init(&h0_ctx, lambda);
-  H0_update(&h0_ctx, iv, IV_SIZE);
-  H0_final_for_squeeze(&h0_ctx);
+  return true;
+}
+
+static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* i_delta,
+                                        const uint8_t* iv, const faest_paramset_t* params,
+                                        vec_com_rec_t* vecComRec) {
+  // Initializing
+  const unsigned int lambda       = params->faest_param.lambda;
+  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda_bytes = lambda / 8;
+  const unsigned int k            = params->faest_param.k;
+  const unsigned int tau          = params->faest_param.tau;
+  const unsigned int tau_1        = params->faest_param.tau1;
+
+  // Step 6
+  uint8_t* s    = calloc((2 * L - 1 + 7) >> 3, 1);
+  uint8_t* keys = calloc(2 * params->faest_param.L - 1, lambda_bytes);
+
+  if (!reconstruct_keys(s, keys, decom_i, i_delta, iv, params)) {
+    free(keys);
+    free(s);
+    return false;
+  }
+
+  H0_context_t uhash_ctx;
+  H0_init(&uhash_ctx, lambda);
+  H0_update(&uhash_ctx, iv, IV_SIZE);
+  H0_final_for_squeeze(&uhash_ctx);
 
   H1_context_t h1_com_ctx;
   H1_init(&h1_com_ctx, lambda);
 
   for (unsigned int i = 0, offset = 0; i != tau; ++i) {
     uint8_t uhash[MAX_LAMBDA_BYTES * 3];
-    H0_squeeze(&h0_ctx, uhash, 3 * lambda_bytes);
+    H0_squeeze(&uhash_ctx, uhash, 3 * lambda_bytes);
 
     H1_context_t h1_ctx;
     H1_init(&h1_ctx, lambda);
@@ -344,7 +358,6 @@ static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* 
         H1_update(&h1_ctx, decom_i + i * lambda_bytes * 3, lambda_bytes * 3);
       } else {
         uint8_t com[3 * MAX_LAMBDA_BYTES];
-        // Check index of k
         faest_leaf_commit(vecComRec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
                           iv, i + L - 1, uhash, lambda);
         H1_update(&h1_ctx, com, 3 * lambda_bytes);
@@ -355,7 +368,7 @@ static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* 
     H1_final(&h1_ctx, hi, lambda_bytes * 2);
     H1_update(&h1_com_ctx, hi, lambda_bytes * 2);
   }
-  H0_clear(&h0_ctx);
+  H0_clear(&uhash_ctx);
 
   H1_final(&h1_com_ctx, vecComRec->h, lambda_bytes * 2);
 
@@ -375,63 +388,21 @@ static bool vector_reconstruction_faest_em(const uint8_t* decom_i, const uint16_
   const unsigned int tau          = params->faest_param.tau;
   const unsigned int tau_1        = params->faest_param.tau1;
 
-  const uint8_t* nodes = decom_i + 2 * tau * lambda_bytes;
-  const uint8_t* end   = nodes + params->faest_param.T_open * lambda_bytes;
-
   // Step 6
   uint8_t* s    = calloc((2 * L - 1 + 7) >> 3, 1);
   uint8_t* keys = calloc(2 * params->faest_param.L - 1, lambda_bytes);
 
   // Step 7..10
-  for (unsigned int i = 0; i < tau; ++i) {
-    unsigned int alpha = pos_in_tree(i, i_delta[i], params);
-    ptr_set_bit(s, 1, alpha);
+  if (!reconstruct_keys(s, keys, decom_i, i_delta, iv, params)) {
+    free(keys);
+    free(s);
+    return false;
   }
-
-  // Step 12.12
-  for (unsigned int j = L - 2 + 1; j > 0; --j) {
-    unsigned int i = j - 1;
-    ptr_set_bit(s, ptr_get_bit(s, 2 * i + 1) | ptr_get_bit(s, 2 * i + 2), i);
-    if ((ptr_get_bit(s, 2 * i + 1) ^ ptr_get_bit(s, 2 * i + 2)) == 1) {
-      if (nodes == end) {
-        free(keys);
-        free(s);
-        return false;
-      }
-
-      const unsigned int alpha = 2 * i + 1 + ptr_get_bit(s, 2 * i + 1);
-      memcpy(keys + alpha * lambda_bytes, nodes, lambda_bytes);
-      nodes += lambda_bytes;
-    }
-  }
-
-  for (; nodes != end; ++nodes) {
-    if (*nodes) {
-      free(keys);
-      free(s);
-      return false;
-    }
-  }
-
-  for (unsigned int i = 0; i != L - 1; ++i) {
-    if (!ptr_get_bit(s, i)) {
-      // TODO: check tweak
-      prg(keys + i * lambda_bytes, iv, i, keys + 2 * i * lambda_bytes, lambda, 2 * lambda_bytes);
-    }
-  }
-
-  H0_context_t h0_ctx;
-  H0_init(&h0_ctx, lambda);
-  H0_update(&h0_ctx, iv, IV_SIZE);
-  H0_final_for_squeeze(&h0_ctx);
 
   H1_context_t h1_com_ctx;
   H1_init(&h1_com_ctx, lambda);
 
   for (unsigned int i = 0, offset = 0; i != tau; ++i) {
-    uint8_t uhash[MAX_LAMBDA_BYTES * 3];
-    H0_squeeze(&h0_ctx, uhash, 3 * lambda_bytes);
-
     H1_context_t h1_ctx;
     H1_init(&h1_ctx, lambda);
 
@@ -441,7 +412,7 @@ static bool vector_reconstruction_faest_em(const uint8_t* decom_i, const uint16_
       if (ptr_get_bit(s, alpha)) {
         H1_update(&h1_ctx, decom_i + i * lambda_bytes * 2, lambda_bytes * 2);
       } else {
-        uint8_t com[3 * MAX_LAMBDA_BYTES];
+        uint8_t com[2 * MAX_LAMBDA_BYTES];
         faest_em_leaf_commit(vecComRec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
                              iv, i + L - 1, lambda);
         H1_update(&h1_ctx, com, 2 * lambda_bytes);
@@ -452,7 +423,6 @@ static bool vector_reconstruction_faest_em(const uint8_t* decom_i, const uint16_
     H1_final(&h1_ctx, hi, lambda_bytes * 2);
     H1_update(&h1_com_ctx, hi, lambda_bytes * 2);
   }
-  H0_clear(&h0_ctx);
 
   H1_final(&h1_com_ctx, vecComRec->h, lambda_bytes * 2);
 
