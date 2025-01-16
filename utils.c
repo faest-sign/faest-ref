@@ -17,7 +17,7 @@ static inline uint16_t num_rec_2(const uint8_t* v) {
 }
 
 bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigned int i,
-                    faest_paramset_t* params) {
+                    const faest_paramset_t* params) {
   if (i >= params->faest_param.tau) {
     return false;
   }
@@ -45,7 +45,8 @@ bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigned int i
   return true;
 }
 
-bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall, faest_paramset_t* params) {
+bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
+                        const faest_paramset_t* params) {
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
     uint8_t tmp[2];
     if (!decode_chall_3(tmp, chall, i, params)) {
