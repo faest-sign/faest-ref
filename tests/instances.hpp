@@ -8,8 +8,6 @@
 #include "instances.h"
 #include "parameters.h"
 
-#include <boost/test/unit_test.hpp>
-#include <boost/test/data/test_case.hpp>
 #include <cmath>
 
 constexpr faest_paramid_t aes_ctr_instances[] = {
