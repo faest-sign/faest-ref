@@ -15,8 +15,6 @@
 #include "vole.h"
 #include "universal_hashing.h"
 
-#define NOT_ALLOW_ZERO_SBOX
-
 #include <string.h>
 
 // helpers to compute position in signature (sign)

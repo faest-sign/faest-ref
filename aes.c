@@ -12,6 +12,9 @@
 #include "compat.h"
 #include "utils.h"
 
+// TODO: Make it central somewhere
+#define ALLOW_ZERO_SBOX
+
 #if defined(HAVE_OPENSSL)
 #include <openssl/evp.h>
 #endif

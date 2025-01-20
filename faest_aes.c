@@ -17,6 +17,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+// TODO: Make it central somewhere
+#define ALLOW_ZERO_SBOX
+
 static_assert(FAEST_128F_ELL == FAEST_128S_ELL, "Invalid parameters");
 static_assert(FAEST_128F_LAMBDA == FAEST_128S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_128F_Lke == FAEST_128S_Lke, "Invalid parameters");
