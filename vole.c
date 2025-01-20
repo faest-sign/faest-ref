@@ -114,13 +114,15 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_t* chall_3,
                       const uint8_t* decom_i, const uint8_t* c, unsigned int ellhat,
                       const faest_paramset_t* params) {
-  const unsigned int lambda       = params->faest_param.lambda;
-  const unsigned int lambda_bytes = lambda / 8;
-  const unsigned int ellhat_bytes = (ellhat + 7) / 8;
-  const unsigned int tau          = params->faest_param.tau;
-  const unsigned int tau1         = params->faest_param.tau1;
-  const unsigned int L            = params->faest_param.L;
-  const unsigned int k            = params->faest_param.k;
+                        
+  unsigned int lambda       = params->faest_param.lambda;
+  unsigned int lambda_bytes = lambda / 8;
+  unsigned int ellhat_bytes = (ellhat + 7) / 8;
+  unsigned int tau          = params->faest_param.tau;
+  unsigned int tau0         = params->faest_param.t0;
+  unsigned int tau1         = params->faest_param.t1;
+  unsigned int k0           = params->faest_param.k0;
+  unsigned int k1           = params->faest_param.k1;
 
   uint16_t i_delta[MAX_TAU];
   if (!decode_all_chall_3(i_delta, chall_3, params)) {

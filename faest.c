@@ -15,6 +15,8 @@
 #include "vole.h"
 #include "universal_hashing.h"
 
+#define NOT_ALLOW_ZERO_SBOX
+
 #include <string.h>
 
 // helpers to compute position in signature (sign)
@@ -314,7 +316,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
     // Step: 8
     H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
   }
-  // Step: 9, 10 (added the zero input define here)
+  // Step: 9, 10
   uint8_t* w = aes_extend_witness(owf_key, owf_input, params);
   // Step: 11
   xor_u8_array(w, u, signature_d(sig, params), ell_bytes);

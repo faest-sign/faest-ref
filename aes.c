@@ -29,8 +29,6 @@
 #define RIJNDAEL_BLOCK_WORDS_192 6
 #define RIJNDAEL_BLOCK_WORDS_256 8
 
-#define ALLOW_ZERO_SBOX
-
 static const bf8_t round_constants[30] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
     0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
@@ -94,9 +92,8 @@ static void add_round_key(unsigned int round, aes_block_t state, const aes_round
 
 static int sub_bytes(aes_block_t state, unsigned int block_words) {
   int ret = 0;
-
   for (unsigned int c = 0; c < block_words; c++) {
-
+    // Here we allow/not allow zero input to the sbox
     #if !defined(ALLOW_ZERO_SBOX)
     ret |= contains_zero(&state[c][0]);
     #endif

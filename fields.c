@@ -114,6 +114,38 @@ bf128_t bf128_byte_combine(const bf128_t* x) {
   return bf_out;
 }
 
+#if defined(ALLOW_ZERO_SBOX)
+bf128_t bf128_byte_combine_sq(const bf128_t* x) {
+
+  bf128_t bf_tmp[8];
+  bf_tmp[0] = x[0];
+  bf_tmp[1] = x[1];
+  bf_tmp[2] = x[2];
+  bf_tmp[3] = x[3];
+  bf_tmp[4] = x[4];
+  bf_tmp[5] = x[5];
+  bf_tmp[6] = x[6];
+  bf_tmp[7] = x[7];
+
+  // first we square here
+  bf_tmp[0] = bf_tmp[0] ^ bf_tmp[4] ^ bf_tmp[6];
+  bf_tmp[1] = bf_tmp[4] ^ bf_tmp[6] ^ bf_tmp[7];
+  bf_tmp[2] = bf_tmp[1] ^ bf_tmp[5];
+  bf_tmp[3] = bf_tmp[4] ^ bf_tmp[5] ^ bf_tmp[6] ^ bf_tmp[7];
+  bf_tmp[4] = bf_tmp[2] ^ bf_tmp[4] ^ bf_tmp[7];
+  bf_tmp[5] = bf_tmp[5] ^ bf_tmp[6];
+  bf_tmp[6] = bf_tmp[3] ^ bf_tmp[5];
+  bf_tmp[7] = bf_tmp[6] ^ bf_tmp[7];
+
+  // now we lift the squared mac values
+  bf128_t bf_out = bf_tmp[0];
+  for (unsigned int i = 1; i < 8; ++i) {
+    bf_out = bf128_add(bf_out, bf128_mul(bf_tmp[i], bf128_alpha[i - 1]));
+  }
+  return bf_out;
+}
+#endif
+
 bf128_t bf128_byte_combine_bits(uint8_t x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   return bf128_from_bit(x & 1) ^ bf128_mul_bit(bf128_alpha[1 - 1], (x >> 1) & 1) ^
@@ -131,6 +163,47 @@ bf128_t bf128_byte_combine_bits(uint8_t x) {
   return bf_out;
 #endif
 }
+
+#if defined(ALLOW_ZERO_SBOX)
+bf128_t bf128_byte_combine_bits_sq(uint8_t x) {
+
+  // first we do the squaring
+  uint8_t bits[8];
+  for(unsigned int i = 0; i < 8; i++) {
+    bits[i] = (x >> i) & 1;
+  }
+  bits[0] = bits[0] ^ bits[4] ^ bits[6];
+  bits[1] = bits[4] ^ bits[6] ^ bits[7];
+  bits[2] = bits[1] ^ bits[5];
+  bits[3] = bits[4] ^ bits[5] ^ bits[6] ^ bits[7];
+  bits[4] = bits[2] ^ bits[4] ^ bits[7];
+  bits[5] = bits[5] ^ bits[6];
+  bits[6] = bits[3] ^ bits[5];
+  bits[7] = bits[6] ^ bits[7];
+  uint8_t sq_x = 0;
+  for(unsigned int i = 0; i < 8; i++) {
+    sq_x ^= (bits[i] << i);
+  }
+
+  // now we lift the squared value
+  #if defined(HAVE_ATTR_VECTOR_SIZE)
+    return bf128_from_bit(sq_x & 1) ^ bf128_mul_bit(bf128_alpha[1 - 1], (sq_x >> 1) & 1) ^
+          bf128_mul_bit(bf128_alpha[2 - 1], (sq_x >> 2) & 1) ^
+          bf128_mul_bit(bf128_alpha[3 - 1], (sq_x >> 3) & 1) ^
+          bf128_mul_bit(bf128_alpha[4 - 1], (sq_x >> 4) & 1) ^
+          bf128_mul_bit(bf128_alpha[5 - 1], (sq_x >> 5) & 1) ^
+          bf128_mul_bit(bf128_alpha[6 - 1], (sq_x >> 6) & 1) ^
+          bf128_mul_bit(bf128_alpha[7 - 1], (sq_x >> 7) & 1);
+  #else
+    bf128_t bf_out_sq = bf128_from_bit(sq_x & 1);
+    for (unsigned int i = 1; i < 8; ++i) {
+      bf_out_sq = bf128_add(bf_out, bf128_mul_bit(bf128_alpha[i - 1], (sq_x >> i) & 1));
+    }
+    return bf_out_sq;
+  #endif
+
+}
+#endif
 
 bf128_t bf128_rand(void) {
   uint8_t buf[BF128_NUM_BYTES];
