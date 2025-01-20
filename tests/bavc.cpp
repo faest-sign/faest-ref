@@ -106,16 +106,19 @@ namespace {
     const std::vector<uint8_t> h{vc.h, vc.h + HSize},
         expected_h_vec{expected_h.begin(), expected_h.end()};
     BOOST_TEST(h == expected_h_vec);
-    auto hashed_k = hash_array(vc.k, (2 * params.faest_param.L - 1) * lambda_bytes);
+    // compare hashed k_alpha to reduce size of the TVs
+    const auto hashed_k = hash_array(vc.k, (2 * params.faest_param.L - 1) * lambda_bytes);
     BOOST_TEST(hashed_k == expected_hashed_k);
-    auto hashed_sd = hash_array(vc.sd, params.faest_param.L * lambda_bytes);
+    // compare hashed sd_ij to reduce size of the TVs
+    const auto hashed_sd = hash_array(vc.sd, params.faest_param.L * lambda_bytes);
     BOOST_TEST(hashed_sd == expected_hashed_sd);
 
     std::vector<uint8_t> decom_i;
     decom_i.resize(com_size * params.faest_param.tau + params.faest_param.T_open * lambda_bytes);
     BOOST_TEST(bavc_open(&vc, i_delta.data(), decom_i.data(), &params));
 
-    auto hashed_decom_i = hash_array(decom_i.data(), decom_i.size());
+    // compare hashed decom_i to reduce size of the TVs
+    const auto hashed_decom_i = hash_array(decom_i.data(), decom_i.size());
     BOOST_TEST(hashed_decom_i == expected_hashed_decom_i);
 
     std::vector<uint8_t> rec_h, rec_s;
@@ -129,6 +132,7 @@ namespace {
     BOOST_TEST(bavc_reconstruct(decom_i.data(), i_delta.data(), iv.data(), &params, &vc_rec));
     BOOST_TEST(rec_h == expected_h_vec);
 
+    // compare hashed sd_ij to reduce size of the TVs
     const auto hashed_rec_sd = hash_array(rec_s.data(), rec_s.size());
     BOOST_TEST(hashed_rec_sd == expected_hashed_rec_sd);
   }
