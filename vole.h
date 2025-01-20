@@ -18,8 +18,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, vec_com_t* vecCom, uint8_t* c, uint8_t* u,
                  uint8_t** v);
 
-bool vole_reconstruct(const uint8_t* iv, const uint8_t* chall_3, const uint8_t* const* decom_i,
-                      uint8_t** q, unsigned int ellhat, const faest_paramset_t* params);
+bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_t* chall_3,
+                      const uint8_t* decom_i, const uint8_t* c, unsigned int ellhat,
+                      const faest_paramset_t* params);
 
 #if defined(FAEST_TESTS)
 int ConvertToVole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,

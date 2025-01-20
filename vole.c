@@ -111,13 +111,15 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   free(ui);
 }
 
-bool vole_reconstruct(const uint8_t* iv, const uint8_t* chall_3, const uint8_t* const* decom_i,
-                      uint8_t** q, unsigned int ellhat, const faest_paramset_t* params) {
+bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_t* chall_3,
+                      const uint8_t* decom_i, const uint8_t* c, unsigned int ellhat,
+                      const faest_paramset_t* params) {
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int ellhat_bytes = (ellhat + 7) / 8;
   const unsigned int tau          = params->faest_param.tau;
   const unsigned int tau1         = params->faest_param.tau1;
+  const unsigned int L            = params->faest_param.L;
   const unsigned int k            = params->faest_param.k;
 
   uint16_t i_delta[MAX_TAU];
@@ -125,32 +127,50 @@ bool vole_reconstruct(const uint8_t* iv, const uint8_t* chall_3, const uint8_t* 
     return false;
   }
 
-  vec_com_rec_t vecComRec;
-  vecComRec.h = malloc(lambda_bytes * 2);
-  vecComRec.s = malloc(k * lambda_bytes);
+  vec_com_rec_t vec_com_rec;
+  vec_com_rec.h = com;
+  vec_com_rec.s = malloc((L - tau) * lambda_bytes);
 
-  if (!vector_reconstruction(decom_i, i_delta, iv, params, &vecComRec)) {
-    vec_com_rec_clear(&vecComRec);
+  if (!vector_reconstruction(decom_i, i_delta, iv, params, &vec_com_rec)) {
+    vec_com_rec_clear(&vec_com_rec);
+    return false;
   }
 
-  uint8_t* sd = malloc(k * lambda_bytes);
+  uint8_t* sd   = malloc((1 << k) * lambda_bytes);
+  uint8_t* qtmp = malloc(MAX_DEPTH * ellhat_bytes);
 
   // Step: 1
   unsigned int q_idx = 0;
   for (unsigned int i = 0; i < tau; i++) {
     // Step: 2
-    unsigned int Ni = bavc_max_node_index(i, tau1, k);
+    const unsigned int Ni = bavc_max_node_index(i, tau1, k);
 
     // Step: 6
     for (unsigned int j = 1; j < Ni; j++) {
-      memcpy(sd + j * lambda_bytes, vecComRec.s + (lambda_bytes * (j ^ i_delta[i])), lambda_bytes);
+      memcpy(sd + j * lambda_bytes, vec_com_rec.s + lambda_bytes * (j ^ i_delta[i]), lambda_bytes);
     }
 
     // Step: 7..8
-    q_idx += ConvertToVole(iv, sd, true, i, ellhat_bytes, NULL, q[q_idx], params);
+    const unsigned int ki = ConvertToVole(iv, sd, true, i, ellhat_bytes, NULL, qtmp, params);
+
+    // Step 11
+    uint8_t delta[MAX_DEPTH];
+    BitDec(i_delta[i], ki, delta);
+    if (i == 0) {
+      // Step 8
+      memcpy(q[q_idx], qtmp, ellhat_bytes * ki);
+      q_idx += ki;
+    } else {
+      // Step 14
+      for (unsigned int d = 0; d < ki; ++d, ++q_idx) {
+        masked_xor_u8_array(qtmp + q_idx * ellhat_bytes, c + (i - 1) * ellhat_bytes, q[q_idx],
+                            delta[d], ellhat_bytes);
+      }
+    }
   }
 
+  free(qtmp);
   free(sd);
-  vec_com_rec_clear(&vecComRec);
+  free(vec_com_rec.s);
   return true;
 }
