@@ -4,7 +4,7 @@
 #include <array>
 #include <cstdint>
 
-namespace vc_tvs {
+namespace bavc_tvs {
   namespace FAEST_128F {
     extern const std::array<uint8_t, 32> h;
     extern const std::array<uint8_t, 64> hashed_k;
@@ -112,6 +112,6 @@ namespace vc_tvs {
     extern const std::array<uint8_t, 64> hashed_decom_i;
     extern const std::array<uint8_t, 64> hashed_rec_sd;
   } // namespace FAEST_EM_256S
-} // namespace vc_tvs
+} // namespace bavc_tvs
 
 #endif

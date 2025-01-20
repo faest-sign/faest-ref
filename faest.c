@@ -351,7 +351,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msglen, const uint8_t* 
             params->faest_param.k1, params->faest_param.t1, s_);
     // Step 21
     const unsigned int depth = i < tau0 ? params->faest_param.k0 : params->faest_param.k1;
-    vector_open(vecCom[i].k, vecCom[i].com, s_, signature_pdec(sig, i, params),
+    bavc_open(vecCom[i].k, vecCom[i].com, s_, signature_pdec(sig, i, params),
                 signature_com(sig, i, params), depth, lambdaBytes);
     vec_com_clear(&vecCom[i]);
   }

@@ -440,6 +440,7 @@ include_directories = [include_directories('.')]
 # source files
 faest_sources = files(
   'aes.c',
+  'bavc.c',
   'compat.c',
   #'faest.c',
   #'faest_aes.c',
@@ -449,7 +450,6 @@ faest_sources = files(
   'random_oracle.c',
   'universal_hashing.c',
   'utils.c',
-  'vc.c',
   'vole.c',
 ) + [config_header, parameters_header]
 

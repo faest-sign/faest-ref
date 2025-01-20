@@ -6,13 +6,9 @@
 #include <config.h>
 #endif
 
-#include "vc.h"
-#include "fields.h"
 #include "compat.h"
 
-#include <array>
 #include <boost/test/unit_test.hpp>
-#include <vector>
 
 BOOST_AUTO_TEST_SUITE(utils)
 

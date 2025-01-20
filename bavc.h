@@ -28,14 +28,19 @@ static inline ATTR_CONST unsigned int bavc_max_node_index(unsigned int i, unsign
   return (i < tau_1) ? (1 << k) : (1 << (k - 1));
 }
 
-void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
-                       vec_com_t* vecCom);
+static inline ATTR_CONST unsigned int bavc_max_node_depth(unsigned int i, unsigned int tau_1,
+                                                          unsigned int k) {
+  return (i < tau_1) ? k : (k - 1);
+}
 
-bool vector_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
-                 const faest_paramset_t* params);
+void bavc_commit(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
+                 vec_com_t* vecCom);
 
-bool vector_reconstruction(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
-                           const faest_paramset_t* params, vec_com_rec_t* vecComRec);
+bool bavc_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
+               const faest_paramset_t* params);
+
+bool bavc_reconstruct(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
+                      const faest_paramset_t* params, vec_com_rec_t* vecComRec);
 #if defined(FAEST_TESTS)
 int vector_verify(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
                   const uint8_t* vecComH, const faest_paramset_t* params);

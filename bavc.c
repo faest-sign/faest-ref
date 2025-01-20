@@ -6,7 +6,7 @@
 #include <config.h>
 #endif
 
-#include "vc.h"
+#include "bavc.h"
 #include "random_oracle.h"
 #include "compat.h"
 #include "aes.h"
@@ -98,8 +98,8 @@ static inline unsigned int pos_in_tree(unsigned int i, unsigned int j,
 }
 
 // BAVC.Commit for FAEST
-static void vector_commitment_faest(const uint8_t* rootKey, const uint8_t* iv,
-                                    const faest_paramset_t* params, vec_com_t* vecCom) {
+static void bavc_commit_faest(const uint8_t* rootKey, const uint8_t* iv,
+                              const faest_paramset_t* params, vec_com_t* vecCom) {
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int L            = params->faest_param.L;
   const unsigned int lambda_bytes = lambda / 8;
@@ -155,8 +155,8 @@ static void vector_commitment_faest(const uint8_t* rootKey, const uint8_t* iv,
 }
 
 // BAVC.Commit for FAEST-EM
-static void vector_commitment_faest_em(const uint8_t* rootKey, const uint8_t* iv,
-                                       const faest_paramset_t* params, vec_com_t* vecCom) {
+static void bavc_commit_faest_em(const uint8_t* rootKey, const uint8_t* iv,
+                                 const faest_paramset_t* params, vec_com_t* vecCom) {
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int L            = params->faest_param.L;
   const unsigned int lambda_bytes = lambda / 8;
@@ -202,17 +202,17 @@ static void vector_commitment_faest_em(const uint8_t* rootKey, const uint8_t* iv
   H1_final(&h1_com_ctx, vecCom->h, lambda_bytes * 2);
 }
 
-void vector_commitment(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
-                       vec_com_t* vecCom) {
+void bavc_commit(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
+                 vec_com_t* vecCom) {
   if (faest_is_em(params)) {
-    vector_commitment_faest_em(rootKey, iv, params, vecCom);
+    bavc_commit_faest_em(rootKey, iv, params, vecCom);
   } else {
-    vector_commitment_faest(rootKey, iv, params, vecCom);
+    bavc_commit_faest(rootKey, iv, params, vecCom);
   }
 }
 
-bool vector_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
-                 const faest_paramset_t* params) {
+bool bavc_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
+               const faest_paramset_t* params) {
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int L            = params->faest_param.L;
   const unsigned int lambda_bytes = lambda / 8;
@@ -318,9 +318,9 @@ static bool reconstruct_keys(uint8_t* s, uint8_t* keys, const uint8_t* decom_i,
   return true;
 }
 
-static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* i_delta,
-                                        const uint8_t* iv, const faest_paramset_t* params,
-                                        vec_com_rec_t* vecComRec) {
+static bool bavc_reconstruct_faest(const uint8_t* decom_i, const uint16_t* i_delta,
+                                   const uint8_t* iv, const faest_paramset_t* params,
+                                   vec_com_rec_t* vecComRec) {
   // Initializing
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int L            = params->faest_param.L;
@@ -382,9 +382,9 @@ static bool vector_reconstruction_faest(const uint8_t* decom_i, const uint16_t* 
   return true;
 }
 
-static bool vector_reconstruction_faest_em(const uint8_t* decom_i, const uint16_t* i_delta,
-                                           const uint8_t* iv, const faest_paramset_t* params,
-                                           vec_com_rec_t* vecComRec) {
+static bool bavc_reconstruct_faest_em(const uint8_t* decom_i, const uint16_t* i_delta,
+                                      const uint8_t* iv, const faest_paramset_t* params,
+                                      vec_com_rec_t* vecComRec) {
   // Initializing
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int L            = params->faest_param.L;
@@ -438,11 +438,10 @@ static bool vector_reconstruction_faest_em(const uint8_t* decom_i, const uint16_
   return true;
 }
 
-bool vector_reconstruction(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
-                           const faest_paramset_t* params, vec_com_rec_t* vecComRec) {
-  return faest_is_em(params)
-             ? vector_reconstruction_faest_em(decom_i, i_delta, iv, params, vecComRec)
-             : vector_reconstruction_faest(decom_i, i_delta, iv, params, vecComRec);
+bool bavc_reconstruct(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
+                      const faest_paramset_t* params, vec_com_rec_t* vecComRec) {
+  return faest_is_em(params) ? bavc_reconstruct_faest_em(decom_i, i_delta, iv, params, vecComRec)
+                             : bavc_reconstruct_faest(decom_i, i_delta, iv, params, vecComRec);
 }
 
 #if defined(FAEST_TESTS)
@@ -459,7 +458,7 @@ int vector_verify(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t
   vecComRec.s   = malloc(numVoleInstances * lambdaBytes);
 
   // Step: 2
-  vector_reconstruction(iv, pdec, com_j, b, lambda, depth, &vecComRec);
+  bavc_reconstruct(iv, pdec, com_j, b, lambda, depth, &vecComRec);
 
   // Step: 3
   int ret = memcmp(vecComH, vecComRec.h, lambdaBytes * 2);

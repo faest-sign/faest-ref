@@ -4266,7 +4266,7 @@ BOOST_AUTO_TEST_CASE(vole_128_tv) {
     pdec[i]  = new uint8_t[depth * lambdaBytes];
     com_j[i] = new uint8_t[lambdaBytes * 2];
 
-    vector_open(vec_com[i].k, vec_com[i].com, b.data(), pdec[i], com_j[i], depth, lambdaBytes);
+    bavc_open(vec_com[i].k, vec_com[i].com, b.data(), pdec[i], com_j[i], depth, lambdaBytes);
     vec_com_clear(&vec_com[i]);
   }
 

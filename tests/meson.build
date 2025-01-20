@@ -4,6 +4,19 @@ ntl = cc.find_library('ntl', required: false, has_headers: ['NTL/version.h'])
 if boost_test.found()
   test_sources = files(
     'aes.cpp',
+    'bavc.cpp',
+    'bavc_tvs_faest_128f.cpp',
+    'bavc_tvs_faest_128s.cpp',
+    'bavc_tvs_faest_192f.cpp',
+    'bavc_tvs_faest_192s.cpp',
+    'bavc_tvs_faest_256f.cpp',
+    'bavc_tvs_faest_256s.cpp',
+    'bavc_tvs_faest_em_128f.cpp',
+    'bavc_tvs_faest_em_128s.cpp',
+    'bavc_tvs_faest_em_192f.cpp',
+    'bavc_tvs_faest_em_192s.cpp',
+    'bavc_tvs_faest_em_256f.cpp',
+    'bavc_tvs_faest_em_256s.cpp',
     # 'aes_prove.cpp',
     'extended_tests.cpp',
     'fields.cpp',
@@ -13,19 +26,6 @@ if boost_test.found()
     # 'test_faest_tvs.cpp',
     'universal_hashing.cpp',
     'utils.cpp',
-    'vc.cpp',
-    'vc_tvs_faest_128f.cpp',
-    'vc_tvs_faest_128s.cpp',
-    'vc_tvs_faest_192f.cpp',
-    'vc_tvs_faest_192s.cpp',
-    'vc_tvs_faest_256f.cpp',
-    'vc_tvs_faest_256s.cpp',
-    'vc_tvs_faest_em_128f.cpp',
-    'vc_tvs_faest_em_128s.cpp',
-    'vc_tvs_faest_em_192f.cpp',
-    'vc_tvs_faest_em_192s.cpp',
-    'vc_tvs_faest_em_256f.cpp',
-    'vc_tvs_faest_em_256s.cpp',
     # 'vole.cpp',
     # 'vole_tvs.cpp',
   )
@@ -90,15 +90,15 @@ if boost_test.found()
     timeout: 6000,
   )
   test(
-    'Uitls',
+    'Utils',
     extended_tests,
     args: ['-t', 'utils'],
     timeout: 6000,
   )
   test(
-    'Vector commitments',
+    'BAVC',
     extended_tests,
-    args: ['-t', 'vector_commitments'],
+    args: ['-t', 'bavc'],
     timeout: 6000,
   )
   test(

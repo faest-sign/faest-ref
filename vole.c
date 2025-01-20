@@ -92,7 +92,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   const unsigned int ellhat_bytes = (ellhat + 7) / 8;
   const unsigned int tau          = params->faest_param.tau;
 
-  vector_commitment(rootKey, iv, params, vecCom);
+  bavc_commit(rootKey, iv, params, vecCom);
 
   uint8_t* ui = malloc(tau * ellhat_bytes);
 
@@ -131,7 +131,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
   vec_com_rec.h = com;
   vec_com_rec.s = malloc((L - tau) * lambda_bytes);
 
-  if (!vector_reconstruction(decom_i, i_delta, iv, params, &vec_com_rec)) {
+  if (!bavc_reconstruct(decom_i, i_delta, iv, params, &vec_com_rec)) {
     vec_com_rec_clear(&vec_com_rec);
     return false;
   }

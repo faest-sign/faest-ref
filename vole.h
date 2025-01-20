@@ -5,7 +5,7 @@
 #ifndef FAEST_VOLE_H
 #define FAEST_VOLE_H
 
-#include "vc.h"
+#include "bavc.h"
 #include <stdbool.h>
 
 FAEST_BEGIN_C_DECL
