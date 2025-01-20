@@ -444,42 +444,6 @@ bool bavc_reconstruct(const uint8_t* decom_i, const uint16_t* i_delta, const uin
                              : bavc_reconstruct_faest(decom_i, i_delta, iv, params, vecComRec);
 }
 
-#if defined(FAEST_TESTS)
-int vector_verify(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
-                  const uint8_t* vecComH, const faest_paramset_t* params) {
-#if 0
-  const unsigned int lambdaBytes      = lambda / 8;
-  const unsigned int numVoleInstances = 1 << depth;
-
-  vec_com_rec_t vecComRec;
-  vecComRec.h   = malloc(lambdaBytes * 2);
-  vecComRec.k   = calloc(getBinaryTreeNodeCount(depth), lambdaBytes);
-  vecComRec.com = malloc(numVoleInstances * lambdaBytes * 2);
-  vecComRec.s   = malloc(numVoleInstances * lambdaBytes);
-
-  // Step: 2
-  bavc_reconstruct(iv, pdec, com_j, b, lambda, depth, &vecComRec);
-
-  // Step: 3
-  int ret = memcmp(vecComH, vecComRec.h, lambdaBytes * 2);
-  if (!rec || ret) {
-    vec_com_rec_clear(&vecComRec);
-  }
-
-  if (ret == 0) {
-    if (rec) {
-      *rec = vecComRec;
-    }
-    return 1;
-  } else {
-    return 0;
-  }
-#endif
-
-  return 0;
-}
-#endif
-
 void vec_com_clear(vec_com_t* com) {
   free(com->sd);
   free(com->com);

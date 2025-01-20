@@ -41,10 +41,6 @@ bool bavc_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
 
 bool bavc_reconstruct(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
                       const faest_paramset_t* params, vec_com_rec_t* vecComRec);
-#if defined(FAEST_TESTS)
-int vector_verify(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
-                  const uint8_t* vecComH, const faest_paramset_t* params);
-#endif
 
 void vec_com_clear(vec_com_t* com);
 void vec_com_rec_clear(vec_com_rec_t* rec);
