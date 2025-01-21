@@ -950,11 +950,7 @@ static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   const unsigned int t0  = params->faest_param.tau0;
   const unsigned int k0  = params->faest_param.k;
   const unsigned int t1  = params->faest_param.tau1;
-  if (t0 != 0) {
-    const unsigned int k1  = k0 - 1;
-  } else {
-    const unsigned int k1 =  k0;
-  }
+  const unsigned int k1  = (t0 != 0) ? k0 - 1 : k0;
 
   // Step: 1
   const uint8_t* delta = chall_3;
@@ -1785,11 +1781,7 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   const unsigned int t0  = params->faest_param.tau0;
   const unsigned int k0  = params->faest_param.k;
   const unsigned int t1  = params->faest_param.tau1;
-  if (t0 != 0) {
-    const unsigned int k1  = k0 - 1;
-  } else {
-    const unsigned int k1 =  k0;
-  }
+  const unsigned int k1  = (t0 != 0) ? k0 - 1 : k0;
 
   // Step: 1
   const uint8_t* delta = chall_3;
@@ -2660,11 +2652,7 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
   const unsigned int t0  = params->faest_param.tau0;
   const unsigned int k0  = params->faest_param.k;
   const unsigned int t1  = params->faest_param.tau1;
-  if (t0 != 0) {
-    const unsigned int k1  = k0 - 1;
-  } else {
-    const unsigned int k1 =  k0;
-  }
+  const unsigned int k1  = (t0 != 0) ? k0 - 1 : k0;
 
   // Step: 1
   const uint8_t* delta = chall_3;
@@ -2724,7 +2712,6 @@ static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x,
 static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, bf128_t* bf_y)
 #endif
 {
-  
   // Step: 2
   for (unsigned int j = 0; j < 4 * FAEST_EM_128F_Nwd; j++) {
 
@@ -2775,7 +2762,6 @@ static void em_enc_forward_128_1(const uint8_t* z, const uint8_t* x, bf128_t* bf
         bf_z_hat[r] = bf128_byte_combine_bits(z[(i + 8 * r) / 8]);
         bf_x_hat[r] = bf128_byte_combine_bits(x[(i + 8 * r) / 8]);
         #endif
-        
       }
 
       #if defined(ALLOW_ZERO_SBOX)
@@ -2936,7 +2922,6 @@ static void em_enc_forward_128(const bf128_t* bf_z, const bf128_t* bf_x,
       bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf128_mul(bf_z_hat[3], bf_two));
       bf_y[iy + 3] = bf128_add(bf_y[iy + 3], bf_x_hat[3]);
       #endif
-
     }
   }
 }
@@ -2987,7 +2972,8 @@ static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const 
                                 bf128_t* y_out, bf128_t* y_out_sq)
 #else
 static void em_enc_backward_128(const bf128_t* bf_z, const bf128_t* bf_x, const bf128_t* bf_z_out,
-                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf128_t* y_out)
+                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, 
+                                bf128_t* y_out)
 #endif
 {
   // Step: 1
@@ -3231,11 +3217,7 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   const unsigned int t0  = params->faest_param.tau0;
   const unsigned int k0  = params->faest_param.k;
   const unsigned int t1  = params->faest_param.tau1;
-  if (t0 != 0) {
-    const unsigned int k1  = k0 - 1;
-  } else {
-    const unsigned int k1 =  k0;
-  }
+  const unsigned int k1  = (t0 != 0) ? k0 - 1 : k0;
 
   const uint8_t* delta = chall_3;
 
@@ -3284,28 +3266,83 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 // ##################################           LAMBDA = EM-192            ###################################################################
 // ###########################################################################################################################################
 
-static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, bf192_t* bf_y) {
+#if defined(ALLOW_ZERO_SBOX)
+static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, bf192_t* bf_y, bf192_t* bf_y_sq)
+#else
+static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, bf192_t* bf_y)
+#endif
+{
   // Step: 2
   for (unsigned int j = 0; j < 4 * FAEST_EM_192F_Nwd; j++) {
+
     bf_y[j] = bf192_add(bf192_byte_combine_bits(z[j]), bf192_byte_combine_bits(x[j]));
+    #if defined(ALLOW_ZERO_SBOX)
+    uint8_t tmp;
+    for (unsigned int bit_j = 0; bit_j < 8; ++bit_j) {
+      tmp ^= (  ( (z[j] >> bit_j) ^ (x[j] >> bit_j)  ) & 1 ) << bit_j;
+    }
+    bf_y_sq[j] = bf192_byte_combine_bits_sq(tmp);
+    #endif
   }
 
   const bf192_t bf_two   = bf192_byte_combine_bits(2);
   const bf192_t bf_three = bf192_byte_combine_bits(3);
 
   for (unsigned int j = 1; j < FAEST_EM_192F_R; j++) {
+
     for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
+
       const unsigned int i  = 32 * FAEST_EM_192F_Nwd * j + 32 * c;
       const unsigned int iy = 4 * FAEST_EM_192F_Nwd * j + 4 * c;
 
       bf192_t bf_x_hat[4];
       bf192_t bf_z_hat[4];
-      for (unsigned int r = 0; r <= 3; r++) {
+      #if defined(ALLOW_ZERO_SBOX)
+      uint8_t z_bits[4*8];
+      uint8_t z_bits_by_two[8];
+      #endif
+
+      for (unsigned int r = 0; r < 4; r++) {
+
+        #if defined(ALLOW_ZERO_SBOX)
+        for (unsigned int bit_l = 0; bit_l < 8; ++bit_l) {
+          z_bits[r*8 + bit_l] = (z[(i + 8 * r) / 8] >> bit_l) & 1;
+        }
+        // mul by two
+        z_bits_by_two[0] = z_bits[r*8 + 7];
+        z_bits_by_two[1] = z_bits[r*8 + 7] ^ z_bits[r*8 + 0];
+        z_bits_by_two[2] = z_bits[r*8 + 1];
+        z_bits_by_two[3] = z_bits[r*8 + 7] ^ z_bits[r*8 + 2];
+        z_bits_by_two[4] = z_bits[r*8 + 7] ^ z_bits[r*8 + 3];
+        z_bits_by_two[5] = z_bits[r*8 + 4];
+        z_bits_by_two[6] = z_bits[r*8 + 5];
+        z_bits_by_two[7] = z_bits[r*8 + 6];
+        #else
         // Step: 12..13
         bf_z_hat[r] = bf192_byte_combine_bits(z[(i + 8 * r) / 8]);
         bf_x_hat[r] = bf192_byte_combine_bits(x[(i + 8 * r) / 8]);
+        #endif
       }
 
+      #if defined(ALLOW_ZERO_SBOX)
+      for (unsigned int r = 0; r < 4; ++r) {
+        uint8_t output_bits = 0;
+        // Similar to the else
+        for (unsigned int bit_l = 0; bit_l < 8; ++bit_l) {
+          output_bits ^= (z_bits_by_two[r*8 + bit_l] ^ 
+                            (z_bits[((r + 2) % 4) * 8 + bit_l]  ^ 
+                              (z_bits[((r + 3) % 4) * 8 + bit_l] ^
+                                (z_bits[((r + 1) % 4) * 8 + bit_l] ^
+                                  (z_bits_by_two[((r + 1) % 4) * 8 + bit_l] ^ x[(i + 8 * r) / 8])
+                                )
+                              )
+                            )
+                          ) << bit_l;
+        }
+        bf_y[iy + r] = bf192_byte_combine_bits(output_bits);
+        bf_y_sq[iy + r] = bf192_byte_combine_bits_sq(output_bits);
+      }
+      #else
       bf_y[iy + 0] = bf192_add(bf192_mul(bf_z_hat[0], bf_two), bf192_mul(bf_z_hat[1], bf_three));
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[2]);
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[3]);
@@ -3325,30 +3362,78 @@ static void em_enc_forward_192_1(const uint8_t* z, const uint8_t* x, bf192_t* bf
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_z_hat[2]);
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_z_hat[3], bf_two));
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_x_hat[3]);
+      #endif
+      
     }
   }
 }
 
-static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t* bf_y) {
+#if defined(ALLOW_ZERO_SBOX)
+static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, 
+                              bf192_t* bf_y, bf192_t* bf_y_sq)
+#else
+static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, 
+                                bf192_t* bf_y)
+#endif
+{
+
+
   // Step: 2
   for (unsigned int j = 0; j < 4 * FAEST_EM_192F_Nwd; j++) {
+
     bf_y[j] = bf192_byte_combine(bf_z + 8 * j);
     if (bf_x) {
       bf_y[j] = bf192_add(bf_y[j], bf192_byte_combine(bf_x + 8 * j));
     }
+
+    #if defined(ALLOW_ZERO_SBOX)
+    if(bf_x) {
+      bf192_t tmp[8];
+      for (unsigned int bit_j = 0; bit_j < 8; ++bit_j) {
+        tmp[bit_j] = bf_z[j * 8 + bit_j] ^ bf_x[j * 8 + bit_j];
+      }
+      bf_y_sq[j] = bf192_byte_combine_sq(tmp);
+    } 
+    else {
+      bf_y_sq[j] = bf192_byte_combine_sq(bf_z + 8 * j);
+    }
+    #endif
   }
 
   const bf192_t bf_two   = bf192_byte_combine_bits(2);
   const bf192_t bf_three = bf192_byte_combine_bits(3);
 
   for (unsigned int j = 1; j < FAEST_EM_192F_R; j++) {
+
     for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
+
       const unsigned int i  = 32 * FAEST_EM_192F_Nwd * j + 32 * c;
       const unsigned int iy = 4 * FAEST_EM_192F_Nwd * j + 4 * c;
 
       bf192_t bf_x_hat[4];
       bf192_t bf_z_hat[4];
-      for (unsigned int r = 0; r <= 3; r++) {
+      #if defined(ALLOW_ZERO_SBOX)
+      bf192_t bf_z_bits[4*8];
+      bf192_t bf_z_bits_by_two[8];
+      bf192_t output_bits[8];
+      #endif
+
+      for (unsigned int r = 0; r < 4; r++) {
+
+        #if defined(ALLOW_ZERO_SBOX)
+        for (unsigned int bit_l = 0; bit_l < 8; ++bit_l) {
+          bf_z_bits[r*8 + bit_l] = bf_z[(i + 8 * r) + bit_l];
+        }
+        // mul by two
+        bf_z_bits_by_two[0] = bf_z_bits[r*8 + 7];
+        bf_z_bits_by_two[1] = bf_z_bits[r*8 + 7] ^ bf_z_bits[r*8 + 0];
+        bf_z_bits_by_two[2] = bf_z_bits[r*8 + 1];
+        bf_z_bits_by_two[3] = bf_z_bits[r*8 + 7] ^ bf_z_bits[r*8 + 2];
+        bf_z_bits_by_two[4] = bf_z_bits[r*8 + 7] ^ bf_z_bits[r*8 + 3];
+        bf_z_bits_by_two[5] = bf_z_bits[r*8 + 4];
+        bf_z_bits_by_two[6] = bf_z_bits[r*8 + 5];
+        bf_z_bits_by_two[7] = bf_z_bits[r*8 + 6];
+        #else
         // Step: 12..13
         bf_z_hat[r] = bf192_byte_combine(bf_z + (i + 8 * r));
         if (bf_x) {
@@ -3356,8 +3441,28 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t
         } else {
           bf_x_hat[r] = bf192_zero();
         }
+        #endif
       }
 
+      #if defined(ALLOW_ZERO_SBOX)
+      for (unsigned int r = 0; r < 4; ++r) {
+        bf192_t output_bits[8];
+        // Similar to the else
+        for (unsigned int bit_l = 0; bit_l < 8; ++bit_l) {
+          output_bits[bit_l] = (bf_z_bits_by_two[r*8 + bit_l] ^ 
+                            (bf_z_bits[((r + 2) % 4) * 8 + bit_l]  ^ 
+                              (bf_z_bits[((r + 3) % 4) * 8 + bit_l] ^
+                                (bf_z_bits[((r + 1) % 4) * 8 + bit_l] ^
+                                  (bf_z_bits_by_two[((r + 1) % 4) * 8 + bit_l] ^ bf_x[(i + 8 * r) / 8])
+                                )
+                              )
+                            )
+                          );
+        }
+        bf_y[iy + r] = bf192_byte_combine(output_bits);
+        bf_y_sq[iy + r] = bf192_byte_combine_sq(output_bits);
+      }
+      #else
       bf_y[iy + 0] = bf192_add(bf192_mul(bf_z_hat[0], bf_two), bf192_mul(bf_z_hat[1], bf_three));
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[2]);
       bf_y[iy + 0] = bf192_add(bf_y[iy + 0], bf_z_hat[3]);
@@ -3377,17 +3482,27 @@ static void em_enc_forward_192(const bf192_t* bf_z, const bf192_t* bf_x, bf192_t
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_z_hat[2]);
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf192_mul(bf_z_hat[3], bf_two));
       bf_y[iy + 3] = bf192_add(bf_y[iy + 3], bf_x_hat[3]);
+      #endif
     }
   }
 }
 
+#if defined(ALLOW_ZERO_SBOX)
 static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
-                                  bf192_t* y_out) {
+                                  bf192_t* y_out, bf192_t* y_out_sq)
+#else
+static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint8_t* z_out,
+                                  bf192_t* y_out)
+#endif
+{
   // only called with Mtag == Mkey == 0
 
   for (unsigned int j = 0; j < FAEST_EM_192F_R; j++) {
+
     for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
-      for (unsigned int r = 0; r <= 3; r++) {
+
+      for (unsigned int r = 0; r < 4; r++) {
+
         const unsigned int icol = (c - r + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
         const unsigned int ird =
             FAEST_EM_192F_LAMBDA + 32 * FAEST_EM_192F_Nwd * j + 32 * icol + 8 * r;
@@ -3398,27 +3513,41 @@ static void em_enc_backward_192_1(const uint8_t* z, const uint8_t* x, const uint
           z_tilde = z_out[(ird - 32 * FAEST_EM_192F_Nwd * (j + 1)) / 8] ^ x[ird / 8];
         }
 
-        // delta is always bot
+        // (bit spliced)
         // set_bit((1 ^ Mtag) & (1 ^ Mkey), 0) ^ set_bit((1 ^ Mtag) & (1 ^ Mkey), 2) == 0x5
         const uint8_t y_tilde = rotr8(z_tilde, 7) ^ rotr8(z_tilde, 5) ^ rotr8(z_tilde, 2) ^ 0x5;
 
         // Step: 18
         y_out[4 * FAEST_EM_192F_Nwd * j + 4 * c + r] = bf192_byte_combine_bits(y_tilde);
+        #if defined(ALLOW_ZERO_SBOX)
+        y_out_sq[4 * FAEST_EM_192F_Nwd * j + 4 * c + r] = bf192_byte_combine_bits_sq(y_tilde);
+        #endif
       }
     }
   }
 }
 
+#if defined(ALLOW_ZERO_SBOX)
 static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const bf192_t* bf_z_out,
-                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, bf192_t* y_out) {
+                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, 
+                                bf192_t* y_out, bf192_t* y_out_sq)
+#else
+static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const bf192_t* bf_z_out,
+                                uint8_t Mtag, uint8_t Mkey, const uint8_t* delta, 
+                                bf192_t* y_out, bf192_t* y_out_sq)
+#endif
+{
   // Step: 1
   const bf192_t bf_delta = delta ? bf192_load(delta) : bf192_zero();
   const bf192_t factor =
       bf192_mul_bit(bf192_add(bf192_mul_bit(bf_delta, Mkey), bf192_from_bit(1 ^ Mkey)), 1 ^ Mtag);
 
   for (unsigned int j = 0; j < FAEST_EM_192F_R; j++) {
+
     for (unsigned int c = 0; c < FAEST_EM_192F_Nwd; c++) {
-      for (unsigned int r = 0; r <= 3; r++) {
+
+      for (unsigned int r = 0; r < 4; r++) {
+
         bf192_t bf_z_tilde[8];
         const unsigned int icol = (c - r + FAEST_EM_192F_Nwd) % FAEST_EM_192F_Nwd;
         const unsigned int ird =
@@ -3446,11 +3575,15 @@ static void em_enc_backward_192(const bf192_t* bf_z, const bf192_t* bf_x, const 
 
         // Step: 18
         y_out[4 * FAEST_EM_192F_Nwd * j + 4 * c + r] = bf192_byte_combine(bf_y_tilde);
+        #if defined(ALLOW_ZERO_SBOX)
+        y_out_sq[4 * FAEST_EM_192F_Nwd * j + 4 * c + r] = bf192_byte_combine_sq(bf_y_tilde);
+        #endif
       }
     }
   }
 }
 
+// Mkey = 0, this is for the prover
 static void em_enc_constraints_Mkey_0_192(const uint8_t* out, const uint8_t* x, const uint8_t* w,
                                           const bf192_t* bf_v, zk_hash_192_ctx* a0_ctx,
                                           zk_hash_192_ctx* a1_ctx) {
@@ -3458,26 +3591,88 @@ static void em_enc_constraints_Mkey_0_192(const uint8_t* out, const uint8_t* x, 
   uint8_t w_out[FAEST_EM_192F_LAMBDA / 8];
   xor_u8_array(out, w, w_out, sizeof(w_out));
 
-  bf192_t bf_s[FAEST_EM_192F_Senc];
-  bf192_t bf_vs[FAEST_EM_192F_Senc];
-  bf192_t bf_s_dash[FAEST_EM_192F_Senc];
-  bf192_t bf_vs_dash[FAEST_EM_192F_Senc];
+  bf192_t bf_s[FAEST_EM_192F_Senc]; // inverse input
+  bf192_t bf_vs[FAEST_EM_192F_Senc]; // inverse input tag
+  #if defined(ALLOW_ZERO_SBOX)
+  bf192_t bf_s_sq[FAEST_EM_192F_Senc]; // inverse input sq
+  bf192_t bf_vs_sq[FAEST_EM_192F_Senc]; // input input tag sq
+  em_enc_forward_192_1(w, x, bf_s, bf_s_sq);
+  em_enc_forward_192(bf_v, NULL, bf_vs, bf_vs_sq);
+  #else
   em_enc_forward_192_1(w, x, bf_s);
   em_enc_forward_192(bf_v, NULL, bf_vs);
+  #endif
+
+
+  bf192_t bf_s_dash[FAEST_EM_192F_Senc]; // inverse output
+  bf192_t bf_vs_dash[FAEST_EM_192F_Senc]; // inverse output tag
+  #if defined(ALLOW_ZERO_SBOX)
+  bf192_t bf_s_dash_sq[FAEST_EM_192F_Senc]; // inverse output sq
+  bf192_t bf_vs_dash_sq[FAEST_EM_192F_Senc]; // inverse output tag sq
+  em_enc_backward_192_1(w, x, w_out, bf_s_dash, bf_s_dash_sq);
+  em_enc_backward_192(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash, bf_vs_dash_sq);
+  #else
   em_enc_backward_192_1(w, x, w_out, bf_s_dash);
   em_enc_backward_192(bf_v, NULL, bf_v, 1, 0, NULL, bf_vs_dash);
+  #endif  
+  
 
   for (unsigned int j = 0; j < FAEST_EM_192F_Senc; j++) {
-    const bf192_t tmp = bf192_mul(bf_vs[j], bf_vs_dash[j]);
-    zk_hash_192_update(a0_ctx, tmp);
-    zk_hash_192_update(a1_ctx,
-                       bf192_add(bf192_add(bf192_mul(bf192_add(bf_s[j], bf_vs[j]),
-                                                     bf192_add(bf_s_dash[j], bf_vs_dash[j])),
-                                           tmp),
-                                 bf192_one()));
+
+    #if defined(ALLOW_ZERO_SBOX)
+    // Psuedoinverse contraint
+    // Quicksilver multiplication
+    // multiply the tags
+    const bf192_t mul_tag_1 = bf192_mul(bf_vs_sq[j], bf_vs_dash[j]);   // mul1.mac0
+    const bf192_t mul_tag_2 = bf192_mul(bf_vs[j], bf_vs_dash_sq[j]);   // mul2.mac0
+    // add the tags with the values and multiply the results
+    const bf192_t mul_val_1 = bf192_mul(                        // mul1.mac1
+                        bf192_add(bf_s_sq[j], bf_vs_sq[j]), 
+                        bf192_add(bf_s_dash[j], bf_vs_dash[j])
+                        );
+    const bf192_t mul_val_2 = bf192_mul(                        // mul2.mac1
+                        bf192_add(bf_s[j], bf_vs[j]),
+                        bf192_add(bf_s_dash_sq[j], bf_vs_dash_sq[j])
+                        );
+
+    // the constnat term
+    zk_hash_192_update(a0_ctx, mul_tag_1);
+    // the linear term
+    zk_hash_192_update(a1_ctx, bf192_add(
+                                        bf192_add(mul_tag_1, bf_s[j]),   // mul1.mac0 + x.val  (because here we check x^2*y = x)
+                                        bf192_add(mul_val_1, bf_vs[j])   // mul1.mac1 + x.mac
+                                        )
+                      );
+    // the constant term
+    zk_hash_192_update(a0_ctx, mul_tag_2);
+    // the linear term
+    zk_hash_192_update(a1_ctx, bf192_add(
+                                        bf192_add(mul_tag_2, bf_s_dash[j]),  // mul2.mac0 + y.val  (because here we check x*y^2 = y)
+                                        bf192_add(mul_val_2, bf_vs_dash[j])  // mul2.mac1 + y.mac
+                                        )
+                      );    
+    #else
+    // Inverse contraint
+    // Quicksilver multiplication
+    // multiply the tags
+    const bf192_t mul_tag = bf192_mul(bf_vs[j], bf_vs_dash[j]); // mac0
+    // add the tags with the values and multiply the results
+    const bf192_t mul_val = bf192_mul(bf192_add(bf_s[j], bf_vs[j]), bf192_add(bf_s_dash[j], bf_vs_dash[j])); // mac1
+    
+    // this is the constant term
+    zk_hash_192_update(a0_ctx, mul_tag);
+    // this is the linear term
+    zk_hash_192_update(a1_ctx, bf192_add(
+                                        bf192_add(mul_tag, bf192_one),    // mac0 + 1     (because here we check x*y = 1)
+                                        mul_val                             // (mac0 + 1) + mac1
+                                        )
+                      );
+
+    #endif
   }
 }
 
+// Mkey = 1, this is for the verifier
 static void em_enc_constraints_Mkey_1_192(const uint8_t* out, const uint8_t* x, const bf192_t* bf_q,
                                           const uint8_t* delta, zk_hash_192_ctx* b0_ctx) {
   // Step: 18, 19
@@ -3495,15 +3690,47 @@ static void em_enc_constraints_Mkey_1_192(const uint8_t* out, const uint8_t* x, 
 
   bf192_t bf_qs[FAEST_EM_192F_Senc];
   bf192_t bf_qs_dash[FAEST_EM_192F_Senc];
+  #if defined(ALLOW_ZERO_SBOX)
+  bf192_t bf_qs_sq[FAEST_EM_192F_Senc];
+  bf192_t bf_qs_dash_sq[FAEST_EM_192F_Senc];
+  em_enc_forward_192(bf_q, bf_x, bf_qs, bf_qs_sq);
+  em_enc_backward_192(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash, bf_qs_dash_sq);
+  #else
   em_enc_forward_192(bf_q, bf_x, bf_qs);
   em_enc_backward_192(bf_q, bf_x, bf_q_out, 0, 1, delta, bf_qs_dash);
+  #endif
   faest_aligned_free(bf_q_out);
   faest_aligned_free(bf_x);
 
   // Step: 13..14
-  bf192_t minus_part = bf192_mul(bf_delta, bf_delta);
+  bf192_t delta_squared = bf192_mul(bf_delta, bf_delta);
+
   for (unsigned int j = 0; j < FAEST_EM_192F_Senc; j++) {
-    zk_hash_192_update(b0_ctx, bf192_add(bf192_mul(bf_qs[j], bf_qs_dash[j]), minus_part));
+
+    #if defined(ALLOW_ZERO_SBOX)
+    // Quicksilver multiplication
+    // multiply the tags
+    const bf192_t mul_tag_1 = bf192_mul(bf_qs_sq[j], bf_qs_dash[j]);   // mul1.mac0
+    const bf192_t mul_tag_2 = bf192_mul(bf_qs[j], bf_qs_dash_sq[j]);   // mul2.mac0
+
+    // the constnat term
+    zk_hash_192_update(b0_ctx, bf192_add(
+                                        mul_tag_1,
+                                        bf192_mul(delta_squared, bf_qs[j])
+                                        )
+    );
+    // the constnat term
+    zk_hash_192_update(b0_ctx, bf192_add(
+                                        mul_tag_2,
+                                        bf192_mul(delta_squared, bf_qs_dash[j])
+                                        )
+    );
+    #else
+    // the constant term
+    zk_hash_192_update(b0_ctx, bf192_add(
+                                        bf192_mul(bf_qs[j], bf_qs_dash[j]), 
+                                        delta_squared));
+    #endif
   }
 }
 
@@ -3545,11 +3772,7 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   const unsigned int t0  = params->faest_param.tau0;
   const unsigned int k0  = params->faest_param.k;
   const unsigned int t1  = params->faest_param.tau1;
-  if (t0 != 0) {
-    const unsigned int k1  = k0 - 1;
-  } else {
-    const unsigned int k1 =  k0;
-  }
+  const unsigned int k1  = (t0 != 0) ? k0 - 1 : k0;
 
   const uint8_t* delta = chall_3;
 
@@ -3594,7 +3817,11 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   return q_tilde;
 }
 
-// EM-256
+// ###########################################################################################################################################
+// ##################################           LAMBDA = EM-256            ###################################################################
+// ###########################################################################################################################################
+
+
 
 static void em_enc_forward_256_1(const uint8_t* z, const uint8_t* x, bf256_t* bf_y) {
   // Step: 2
@@ -3863,11 +4090,7 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   const unsigned int t0  = params->faest_param.tau0;
   const unsigned int k0  = params->faest_param.k;
   const unsigned int t1  = params->faest_param.tau1;
-  if (t0 != 0) {
-    const unsigned int k1  = k0 - 1;
-  } else {
-    const unsigned int k1 =  k0;
-  }
+  const unsigned int k1  = (t0 != 0) ? k0 - 1 : k0;
 
   const uint8_t* delta = chall_3;
 
