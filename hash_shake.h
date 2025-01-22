@@ -191,8 +191,14 @@ static inline void hash_clear_x4(hash_context_x4* ctx) {
 }
 #else
 #if !defined(SUPERCOP)
+#if defined(__cplusplus)
+extern "C" {
+#endif
 /* use SHAKE implementation in sha3/ */
 #include "sha3/KeccakHash.h"
+#if defined(__cplusplus)
+}
+#endif
 #else
 /* use SUPERCOP implementation */
 #include <libkeccak.a.headers/KeccakHash.h>

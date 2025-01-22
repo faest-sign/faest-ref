@@ -9,7 +9,7 @@
 #include "bavc.h"
 #include "fields.h"
 #include "compat.h"
-#include "random_oracle.h"
+#include "hash_shake.h"
 #include "instances.hpp"
 #include "bavc_tvs.hpp"
 
@@ -79,14 +79,18 @@ BOOST_AUTO_TEST_CASE(test_numrec_bitdec) {
 
 namespace {
   std::array<uint8_t, 64> hash_array(const uint8_t* data, size_t len) {
-    H0_context_t ctx;
-    H0_init(&ctx, 256);
-    H0_update(&ctx, data, len);
-    H0_final_for_squeeze(&ctx);
+    hash_context ctx;
+    hash_init(&ctx, 256);
+    hash_update(&ctx, data, len);
+    hash_final(&ctx);
 
     std::array<uint8_t, 64> ret;
-    H0_squeeze(&ctx, ret.data(), ret.size());
+    hash_squeeze(&ctx, ret.data(), ret.size());
     return ret;
+  }
+
+  std::array<uint8_t, 64> hash_array(const std::vector<uint8_t>& data) {
+    return hash_array(data.data(), data.size());
   }
 
   template <size_t HSize, size_t IDeltaSize>
@@ -118,7 +122,7 @@ namespace {
     BOOST_TEST(bavc_open(&vc, i_delta.data(), decom_i.data(), &params));
 
     // compare hashed decom_i to reduce size of the TVs
-    const auto hashed_decom_i = hash_array(decom_i.data(), decom_i.size());
+    const auto hashed_decom_i = hash_array(decom_i);
     BOOST_TEST(hashed_decom_i == expected_hashed_decom_i);
 
     std::vector<uint8_t> rec_h, rec_s;
@@ -133,7 +137,7 @@ namespace {
     BOOST_TEST(rec_h == expected_h_vec);
 
     // compare hashed sd_ij to reduce size of the TVs
-    const auto hashed_rec_sd = hash_array(rec_s.data(), rec_s.size());
+    const auto hashed_rec_sd = hash_array(rec_s);
     BOOST_TEST(hashed_rec_sd == expected_hashed_rec_sd);
   }
 } // namespace
