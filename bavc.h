@@ -23,14 +23,14 @@ typedef struct vec_com_rec_t {
 int BitDec(unsigned int leafIndex, unsigned int depth, uint8_t* out);
 unsigned int NumRec(unsigned int depth, const uint8_t* bi);
 
-static inline ATTR_CONST unsigned int bavc_max_node_index(unsigned int i, unsigned int tau_1,
-                                                          unsigned int k) {
-  return (i < tau_1) ? (1 << k) : (1 << (k - 1));
-}
-
 static inline ATTR_CONST unsigned int bavc_max_node_depth(unsigned int i, unsigned int tau_1,
                                                           unsigned int k) {
   return (i < tau_1) ? k : (k - 1);
+}
+
+static inline ATTR_CONST unsigned int bavc_max_node_index(unsigned int i, unsigned int tau_1,
+                                                          unsigned int k) {
+  return 1 << bavc_max_node_depth(i, tau_1, k);
 }
 
 void bavc_commit(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
