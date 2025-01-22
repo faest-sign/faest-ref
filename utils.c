@@ -48,7 +48,7 @@ bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigned int i
 bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
                         const faest_paramset_t* params) {
   for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
-    uint8_t tmp[2];
+    uint8_t tmp[2] = {0};
     if (!decode_chall_3(tmp, chall, i, params)) {
       return false;
     }
