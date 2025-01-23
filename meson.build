@@ -601,4 +601,3 @@ run_target(
 )
 
 subdir('tests')
-

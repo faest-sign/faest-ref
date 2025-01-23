@@ -6,6 +6,7 @@
 #include "instances.hpp"
 #include "randomness.h"
 #include "universal_hashing.h"
+#include "utils.hpp"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
@@ -140,5 +141,65 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
     }
   }
 }
+
+namespace {
+  template <std::size_t HSize, std::size_t CSize>
+  void test_tv(const faest_paramset_t* params, const std::array<uint8_t, CSize>& challenge,
+               const std::array<uint8_t, HSize>& expected_h,
+               const std::array<uint8_t, 64>& expected_hashed_c,
+               const std::array<uint8_t, 64>& expected_hashed_u,
+               const std::array<uint8_t, 64>& expected_hashed_v,
+               const std::array<uint8_t, 64>& expected_hashed_q) {
+    const unsigned int lambda       = params->faest_param.lambda;
+    const unsigned int lambda_bytes = lambda / 8;
+    const unsigned int ell_hat =
+        params->faest_param.l + params->faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
+    const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
+    const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
+
+    vec_com_t bavc_com;
+
+    std::vector<uint8_t> chal, c, decom_i, u, q_storage, v_storage;
+    chal.resize(lambda_bytes);
+    c.resize((params->faest_param.tau - 1) * ell_hat_bytes);
+    decom_i.resize(com_size * params->faest_param.tau + params->faest_param.T_open * lambda_bytes);
+    u.resize(ell_hat_bytes * params->faest_param.tau);
+
+    std::vector<uint8_t*> q, v;
+    q.resize(lambda);
+    v.resize(lambda);
+
+    q_storage.resize(lambda * ell_hat_bytes);
+    v_storage.resize(lambda * ell_hat_bytes);
+
+    q[0] = q_storage.data();
+    v[0] = v_storage.data();
+    for (unsigned int i = 1; i < lambda; ++i) {
+      q[i] = q[0] + i * ell_hat_bytes;
+      v[i] = v[0] + i * ell_hat_bytes;
+    }
+
+    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), u.data(),
+                v.data());
+    std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2},
+        expected_h_vec{expected_h.begin(), expected_h.end()};
+    BOOST_TEST(hcom == expected_h_vec);
+    BOOST_TEST(expected_hashed_c == hash_array(c));
+    BOOST_TEST(expected_hashed_u == hash_array(u));
+    BOOST_TEST(expected_hashed_v == hash_array(v_storage));
+
+    uint16_t i_delta[MAX_TAU];
+    BOOST_TEST(decode_all_chall_3(i_delta, challenge.data(), params));
+    BOOST_TEST(bavc_open(&bavc_com, i_delta, decom_i.data(), params));
+
+    std::vector<uint8_t> hcom_rec;
+    hcom_rec.resize(lambda_bytes * 2);
+    BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
+                                c.data(), ell_hat, params));
+    BOOST_TEST(hcom_rec == expected_h_vec);
+    BOOST_TEST(expected_hashed_q == hash_array(q_storage));
+    vec_com_clear(&bavc_com);
+  }
+} // namespace
 
 BOOST_AUTO_TEST_SUITE_END()

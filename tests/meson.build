@@ -144,4 +144,13 @@ if get_option('tv-generators').enabled()
     link_args: linker_flags,
     override_options: ['b_lto=false'],
   )
+  executable(
+    'generate_vole_tv',
+    files('generate_vole_tv.cpp'),
+    dependencies: [libfaest_static_dependency],
+    include_directories: include_directories,
+    cpp_args: defines + cpp_flags,
+    link_args: linker_flags,
+    override_options: ['b_lto=false'],
+  )
 endif
