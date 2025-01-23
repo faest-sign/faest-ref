@@ -45,19 +45,19 @@ BOOST_AUTO_TEST_CASE(test_increment_counter) {
 }
 
 BOOST_AUTO_TEST_CASE(test_prg_128) {
-  std::array<uint8_t, 15 * 16> output_256;
-  prg(key_256.data(), iv_256.data(), tweak_256, output_256.data(), 256, output_256.size());
-  BOOST_TEST(output_256 == expected_256);
+  std::array<uint8_t, expected_128.size()> output_128;
+  prg(key_128.data(), iv_128.data(), tweak_128, output_128.data(), 128, output_128.size());
+  BOOST_TEST(output_128 == expected_128);
 }
 
 BOOST_AUTO_TEST_CASE(test_prg_192) {
-  std::array<uint8_t, 15 * 16> output_192;
+  std::array<uint8_t, expected_192.size()> output_192;
   prg(key_192.data(), iv_192.data(), tweak_192, output_192.data(), 192, output_192.size());
   BOOST_TEST(output_192 == expected_192);
 }
 
 BOOST_AUTO_TEST_CASE(test_prg_256) {
-  std::array<uint8_t, 15 * 16> output_256;
+  std::array<uint8_t, expected_256.size()> output_256;
   prg(key_256.data(), iv_256.data(), tweak_256, output_256.data(), 256, output_256.size());
   BOOST_TEST(output_256 == expected_256);
 }
