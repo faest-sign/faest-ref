@@ -1,31 +1,43 @@
-option('openssl',
+option(
+  'openssl',
   type: 'feature',
   value: 'auto',
-  description: 'Use OpenSSL for AES-CTR implementation'
+  description: 'Use OpenSSL for AES-CTR implementation',
 )
-option('SHA3',
+option(
+  'SHA3',
   type: 'combo',
   choices: ['auto', 'opt64', 'plain32', 'avx2', 'armv8a-neon', 's390-cpacf'],
   value: 'auto',
-  description: 'Select SHA3 implementation'
+  description: 'Select SHA3 implementation',
 )
-option('valgrind',
+option(
+  'valgrind',
   type: 'feature',
   value: 'disabled',
-  description: 'Use valgrind for timing checks'
+  description: 'Use valgrind for timing checks',
 )
-option('benchmarks',
+option(
+  'benchmarks',
   type: 'feature',
   value: 'auto',
-  description: 'Build benchmark executables'
+  description: 'Build benchmark executables',
 )
-option('catch2',
+option(
+  'catch2',
   type: 'feature',
   value: 'auto',
-  description: 'Use catch2 for benchmarks'
+  description: 'Use catch2 for benchmarks',
 )
-option('march-native',
+option(
+  'march-native',
   type: 'feature',
   value: 'disabled',
-  description: 'Build with -march=native'
+  description: 'Build with -march=native',
+)
+option(
+  'tv-generators',
+  type: 'feature',
+  value: 'disabled',
+  description: 'Build with test vector generators',
 )
