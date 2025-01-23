@@ -124,3 +124,22 @@ if boost_test.found()
     )
   endforeach
 endif
+
+executable(
+  'generate_bavc_tv',
+  files('generate_bavc_tv.cpp'),
+  dependencies: [libfaest_static_dependency],
+  include_directories: include_directories,
+  cpp_args: defines + cpp_flags,
+  link_args: linker_flags,
+  override_options: ['b_lto=false'],
+)
+executable(
+  'generate_prg_tv',
+  files('generate_prg_tv.cpp'),
+  dependencies: [libfaest_static_dependency],
+  include_directories: include_directories,
+  cpp_args: defines + cpp_flags,
+  link_args: linker_flags,
+  override_options: ['b_lto=false'],
+)

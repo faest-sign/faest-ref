@@ -9,9 +9,9 @@
 #include "bavc.h"
 #include "fields.h"
 #include "compat.h"
-#include "hash_shake.h"
 #include "instances.hpp"
 #include "bavc_tvs.hpp"
+#include "utils.hpp"
 
 #include <array>
 #include <boost/test/unit_test.hpp>
@@ -78,21 +78,6 @@ BOOST_AUTO_TEST_CASE(test_numrec_bitdec) {
 }
 
 namespace {
-  std::array<uint8_t, 64> hash_array(const uint8_t* data, size_t len) {
-    hash_context ctx;
-    hash_init(&ctx, 256);
-    hash_update(&ctx, data, len);
-    hash_final(&ctx);
-
-    std::array<uint8_t, 64> ret;
-    hash_squeeze(&ctx, ret.data(), ret.size());
-    return ret;
-  }
-
-  std::array<uint8_t, 64> hash_array(const std::vector<uint8_t>& data) {
-    return hash_array(data.data(), data.size());
-  }
-
   template <size_t HSize, size_t IDeltaSize>
   void test_vc_tv(const faest_paramset_t& params, const std::array<uint16_t, IDeltaSize>& i_delta,
                   const std::array<uint8_t, HSize>& expected_h,
