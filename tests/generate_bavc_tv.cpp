@@ -14,7 +14,6 @@
 #include <array>
 #include <random>
 #include <vector>
-#include <boost/lexical_cast.hpp>
 
 namespace {
   constexpr std::array<uint8_t, 16> iv{};
@@ -25,78 +24,72 @@ namespace {
   };
 } // namespace
 
-int main(int argc, char** argv) {
-  if (argc != 2) {
-    return 1;
-  }
-
-  const auto param = boost::lexical_cast<unsigned int>(argv[1]);
-
+int main() {
   std::mt19937_64 rd;
 
-  std::cout << "#include \"bavc_tvs.hpp\"\n" << std::endl;
-  std::cout << "namespace bavc_tvs {" << std::endl;
+  std::cout << "#ifndef TESTS_BAVC_TVS_HPP\n";
+  std::cout << "#define TESTS_BAVC_TVS_HPP\n\n";
+  std::cout << "#include <array>\n";
+  std::cout << "#include <cstdint>\n\n";
+  std::cout << "namespace bavc_tvs {\n";
 
-  const auto params       = faest_get_paramset(static_cast<faest_paramid_t>(param));
-  const auto lambda       = params.faest_param.lambda;
-  const auto lambda_bytes = lambda / 8;
-  const auto com_size     = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
+  for (const auto param_id : all_parameters) {
+    const auto params       = faest_get_paramset(param_id);
+    const auto lambda       = params.faest_param.lambda;
+    const auto lambda_bytes = lambda / 8;
+    const auto com_size     = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
 
-  vec_com_t vc;
-  bavc_commit(root_key.data(), iv.data(), &params, &vc);
+    vec_com_t vc;
+    bavc_commit(root_key.data(), iv.data(), &params, &vc);
 
-  auto hashed_k  = hash_array(vc.k, (2 * params.faest_param.L - 1) * lambda_bytes);
-  auto hashed_sd = hash_array(vc.sd, params.faest_param.L * lambda_bytes);
+    auto hashed_k  = hash_array(vc.k, (2 * params.faest_param.L - 1) * lambda_bytes);
+    auto hashed_sd = hash_array(vc.sd, params.faest_param.L * lambda_bytes);
 
-  std::cout << "namespace " << faest_get_param_name(static_cast<faest_paramid_t>(param)) << "{\n";
-  std::cout << "const std::array<uint8_t, " << (2 * lambda_bytes) << "> h";
-  print_array(vc.h, 2 * lambda_bytes);
-  std::cout << "const std::array<uint8_t, 64> hashed_k";
-  print_array(hashed_k.data(), hashed_k.size());
-  std::cout << "const std::array<uint8_t, 64> hashed_sd";
-  print_array(hashed_sd.data(), hashed_sd.size());
+    std::cout << "namespace " << faest_get_param_name(param_id) << "{\n";
+    print_named_array("h", "uint8_t", vc.h, 2 * lambda_bytes);
+    print_named_array("hashed_k", "uint8_t", hashed_k);
+    print_named_array("hashed_sd", "uint8_t", hashed_sd);
 
-  std::vector<uint8_t> decom_i;
-  std::vector<uint16_t> i_delta;
-  i_delta.resize(params.faest_param.tau);
+    std::vector<uint8_t> decom_i;
+    std::vector<uint16_t> i_delta;
+    i_delta.resize(params.faest_param.tau);
 
-  bool ret = false;
-  while (!ret) {
-    for (unsigned int i = 0; i != params.faest_param.tau; ++i) {
-      std::uniform_int_distribution<> distribution{
-          0,
-          static_cast<int>(bavc_max_node_index(i, params.faest_param.tau1, params.faest_param.k)) -
-              1};
-      i_delta[i] = distribution(rd);
+    bool ret = false;
+    while (!ret) {
+      for (unsigned int i = 0; i != params.faest_param.tau; ++i) {
+        std::uniform_int_distribution<> distribution{
+            0, static_cast<int>(
+                   bavc_max_node_index(i, params.faest_param.tau1, params.faest_param.k)) -
+                   1};
+        i_delta[i] = distribution(rd);
+      }
+
+      decom_i.clear();
+      decom_i.resize(com_size * params.faest_param.tau + params.faest_param.T_open * lambda_bytes);
+
+      ret = bavc_open(&vc, i_delta.data(), decom_i.data(), &params);
     }
 
-    decom_i.clear();
-    decom_i.resize(com_size * params.faest_param.tau + params.faest_param.T_open * lambda_bytes);
+    auto hashed_decom_i = hash_array(decom_i);
 
-    ret = bavc_open(&vc, i_delta.data(), decom_i.data(), &params);
+    print_named_array("i_delta", "uint16_t", i_delta);
+    print_named_array("hashed_decom_i", "uint8_t", hashed_decom_i);
+    vec_com_clear(&vc);
+
+    std::vector<uint8_t> rec_h, rec_s;
+    rec_h.resize(2 * lambda_bytes);
+    rec_s.resize((params.faest_param.L - params.faest_param.tau) * lambda_bytes);
+
+    vec_com_rec_t vc_rec;
+    vc_rec.h = rec_h.data();
+    vc_rec.s = rec_s.data();
+
+    bavc_reconstruct(decom_i.data(), i_delta.data(), iv.data(), &params, &vc_rec);
+
+    auto hashed_rec_sd = hash_array(rec_s);
+    print_named_array("hashed_rec_sd", "uint8_t", hashed_rec_sd);
+    std::cout << "}\n" << std::endl;
   }
 
-  auto hashed_decom_i = hash_array(decom_i);
-
-  std::cout << "const std::array<uint16_t, " << i_delta.size() << "> i_delta";
-  print_array(i_delta.data(), i_delta.size());
-  std::cout << "const std::array<uint8_t, 64> hashed_decom_i";
-  print_array(hashed_decom_i.data(), hashed_decom_i.size());
-  vec_com_clear(&vc);
-
-  std::vector<uint8_t> rec_h, rec_s;
-  rec_h.resize(2 * lambda_bytes);
-  rec_s.resize((params.faest_param.L - params.faest_param.tau) * lambda_bytes);
-
-  vec_com_rec_t vc_rec;
-  vc_rec.h = rec_h.data();
-  vc_rec.s = rec_s.data();
-
-  bavc_reconstruct(decom_i.data(), i_delta.data(), iv.data(), &params, &vc_rec);
-
-  auto hashed_rec_sd = hash_array(rec_s);
-  std::cout << "const std::array<uint8_t, 64> hashed_rec_sd";
-  print_array(hashed_rec_sd.data(), hashed_rec_sd.size());
-
-  std::cout << "}\n}" << std::endl;
+  std::cout << "}\n\n#endif" << std::endl;
 }

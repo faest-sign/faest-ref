@@ -31,7 +31,7 @@ int main() {
   std::cout << "#define TEST_VOLE_TVS_HPP\n\n";
   std::cout << "#include <array>\n";
   std::cout << "#include <cstdint>\n\n";
-  std::cout << "namespace bavc_tvs {\n";
+  std::cout << "namespace vole_tvs {\n";
   for (const auto param_id : all_parameters) {
     const auto params               = faest_get_paramset(param_id);
     const unsigned int lambda       = params.faest_param.lambda;
