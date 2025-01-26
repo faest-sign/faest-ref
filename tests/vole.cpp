@@ -29,12 +29,10 @@ BOOST_AUTO_TEST_SUITE(vole)
 
 BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const faest_paramset_t params   = faest_get_paramset(param_id);
-    const unsigned int lambda       = params.faest_param.lambda;
-    const unsigned int lambda_bytes = lambda / 8;
-    const unsigned int ell_hat =
-        params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
-    const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
+    const faest_paramset_t params    = faest_get_paramset(param_id);
+    const unsigned int lambda        = params.faest_param.lambda;
+    const unsigned int lambda_bytes  = lambda / 8;
+    const unsigned int ell_hat_bytes = 16;
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
 
     vec_com_t bavc_com;
@@ -59,8 +57,8 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       v[i] = v[0] + i * ell_hat_bytes;
     }
 
-    vole_commit(rootKey.data(), iv.data(), ell_hat, &params, &bavc_com, c.data(), u.data(),
-                v.data());
+    vole_commit(rootKey.data(), iv.data(), ell_hat_bytes * 8, &params, &bavc_com, c.data(),
+                u.data(), v.data());
 
     std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2};
 
@@ -80,7 +78,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       std::vector<uint8_t> hcom_rec;
       hcom_rec.resize(lambda_bytes * 2);
       BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
-                                  c.data(), ell_hat, &params));
+                                  c.data(), ell_hat_bytes * 8, &params));
       BOOST_TEST(hcom == hcom_rec);
       tested = true;
     }
@@ -92,12 +90,10 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
   std::mt19937_64 rd;
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const faest_paramset_t params   = faest_get_paramset(param_id);
-    const unsigned int lambda       = params.faest_param.lambda;
-    const unsigned int lambda_bytes = lambda / 8;
-    const unsigned int ell_hat =
-        params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
-    const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
+    const faest_paramset_t params    = faest_get_paramset(param_id);
+    const unsigned int lambda        = params.faest_param.lambda;
+    const unsigned int lambda_bytes  = lambda / 8;
+    const unsigned int ell_hat_bytes = 16;
     const unsigned int max_depth     = params.faest_param.k;
     const unsigned int max_nodes     = 1 << max_depth;
     const unsigned int tau           = params.faest_param.tau;
