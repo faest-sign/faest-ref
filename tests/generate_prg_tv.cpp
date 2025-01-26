@@ -20,6 +20,10 @@ int main() {
   std::uniform_int_distribution<uint8_t> distrib(0, 255);
   std::uniform_int_distribution<uint32_t> distrib_u32(0, std::numeric_limits<uint32_t>::max());
 
+  std::cout << "#ifndef TESTS_PRG_TVS_HPP\n";
+  std::cout << "#define TESTS_PRG_TVS_HPP\n\n";
+  std::cout << "#include <array>\n";
+  std::cout << "#include <cstdint>\n\n";
   std::cout << "namespace prg_tvs {\n";
   for (const auto lambda : {128, 192, 256}) {
     std::vector<uint8_t> key, output;
@@ -43,5 +47,5 @@ int main() {
     std::cout << "constexpr std::array<uint8_t, " << output.size() << "> expected_" << lambda;
     print_array(output.data(), output.size());
   }
-  std::cout << "}" << std::endl;
+  std::cout << "}\n\n#endif" << std::endl;
 }
