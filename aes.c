@@ -68,10 +68,10 @@ void aes_increment_iv(uint8_t* iv)
 static inline void aes_increment_iv(uint8_t* iv)
 #endif
 {
-  uint32_t iv3;
-  memcpy(&iv3, iv + IV_SIZE - sizeof(uint32_t), sizeof(uint32_t));
-  iv3 = htole32(le32toh(iv3) + 1);
-  memcpy(iv + IV_SIZE - sizeof(uint32_t), &iv3, sizeof(uint32_t));
+  uint32_t iv0;
+  memcpy(&iv0, iv, sizeof(uint32_t));
+  iv0 = htole32(le32toh(iv0) + 1);
+  memcpy(iv, &iv0, sizeof(uint32_t));
 }
 
 // ## AES ##
