@@ -219,10 +219,22 @@ static void hash_2_1(uint8_t* chall_1, const uint8_t* mu, const vec_com_t* vecCo
   H2_init(&h2_ctx, lambda);
 
   H2_update(&h2_ctx, mu, lambda/8 * 2);
-  H2_update(&h2_ctx, vecCom->com, (params->faest_param.L * (lambda/8) * 3));  // TODO: chekc if len is correct
-  H2_update(&h2_ctx, c, (params->faest_param.l / 8) + 2 * (lambda/8) + UNIVERSAL_HASH_B); // TODO: check if len is correct
+  H2_update(&h2_ctx, vecCom->com, (params->faest_param.L * (lambda/8) * 3)); // L * com_size (where com_size = lambda/8 * 3)  // TODO: check if len is correct
+  H2_update(&h2_ctx, c, ((params->faest_param.l/8) + 2 * (lambda/8) + UNIVERSAL_HASH_B) * params->faest_param.tau); // TODO: check if len is correct
   H2_update(&h2_ctx, iv, 16);
   H2_final(&h2_ctx, chall_1, (5 * lambda / 8) + 8);
+}
+
+// Called in FAEST.Sign()::15
+static void hash_2_2(uint8_t* chall_2, const uint8_t* chall_1, const uint8_t* u_tilde, const uint8_t* h_v, const uint8_t* d, unsigned int lambda, const faest_paramset_t* params) {
+  H2_context_t h2_ctx;
+  H2_init(&h2_ctx, lambda);
+
+  H2_update(&h2_ctx, chall_1, (5 * lambda/8) + 8);
+  H2_update(&h2_ctx, u_tilde, lambda/8 + UNIVERSAL_HASH_B);  // TODO: check if len is correct
+  H2_update(&h2_ctx, h_v, lambda/8 * 2);
+  H2_update(&h2_ctx, d, params->faest_param.l / 8); // ell_bytes
+  H2_final(&h2_ctx, chall_2, (3 * lambda / 8) + 8);
 }
 
 // Called in FAEST.Sign()::4
@@ -360,15 +372,15 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     H5_final(&h5_ctx_1, h_v, lambda/8 * 2);
   }
 
-  // Step: 9, 10
+  // ::13
   uint8_t* w = aes_extend_witness(owf_key, owf_input, params);
-  // Step: 11
+  // ::14
   xor_u8_array(w, u, signature_d(sig, params), ell_bytes);
 
-  // Step: 12
+  // ::15
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
-  hash_challenge_2(chall_2, chall_1, signature_u_tilde(sig, params), h_v, signature_d(sig, params),
-                   lambda, l);
+  hash_2_2(chall_2, chall_1, signature_u_tilde(sig, params), h_v, signature_d(sig, params), lambda, params);
+  
 
   // Step: 14..15
   // transpose is computed in aes_prove
