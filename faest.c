@@ -203,24 +203,26 @@ ATTR_PURE static inline const uint8_t* dsignature_iv(const uint8_t* base_ptr,
   return base_ptr + params->faest_param.sig_size - IV_SIZE;
 }
 
-// static void hash_mu(uint8_t* mu, const uint8_t* owf_input, const uint8_t* owf_output,
-//                     size_t owf_size, const uint8_t* msg, size_t msglen, unsigned int lambda) {
-//   H1_context_t h1_ctx;
-//   H1_init(&h1_ctx, lambda);
-//   H1_update(&h1_ctx, owf_input, owf_size);
-//   H1_update(&h1_ctx, owf_output, owf_size);
-//   H1_update(&h1_ctx, msg, msglen);
-//   H1_final(&h1_ctx, mu, 2 * lambda / 8);
-// }
-
 // Called in FAEST.Sign()::3
-static void hash_0_2(uint8_t* mu, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* msg, unsigned int owf_size, unsigned int msg_len, unsigned int lambda) {
+static void hash_2_0(uint8_t* mu, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* msg, unsigned int owf_size, unsigned int msg_len, unsigned int lambda) {
   H2_context_t h2_ctx;
   H2_init(&h2_ctx, lambda);
   H2_update(&h2_ctx, owf_in, owf_size);
   H2_update(&h2_ctx, owf_out, owf_size);
   H2_update(&h2_ctx, msg, msg_len);
   H2_final(&h2_ctx, mu, 2 * lambda / 8);
+}
+
+// Called in FAEST.Sign()::3
+static void hash_2_1(uint8_t* chall_1, const uint8_t* mu, const vec_com_t* vecCom, const uint8_t* c, const uint8_t* iv, unsigned int lambda, const faest_paramset_t* params) {
+  H2_context_t h2_ctx;
+  H2_init(&h2_ctx, lambda);
+
+  H2_update(&h2_ctx, mu, lambda/8 * 2);
+  H2_update(&h2_ctx, vecCom->com, (params->faest_param.L * (lambda/8) * 3));  // TODO: chekc if len is correct
+  H2_update(&h2_ctx, c, (params->faest_param.l / 8) + 2 * (lambda/8) + UNIVERSAL_HASH_B); // TODO: check if len is correct
+  H2_update(&h2_ctx, iv, 16);
+  H2_final(&h2_ctx, chall_1, (5 * lambda / 8) + 8);
 }
 
 // Called in FAEST.Sign()::4
@@ -311,7 +313,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // ::3
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
   unsigned int owf_size = params->faest_param.pk_size / 2;
-  hash_0_2(mu, owf_input, owf_output, owf_size, msg, msg_len, lambda);    // random oracle
+  hash_2_0(mu, owf_input, owf_output, owf_size, msg, msg_len, lambda);    // hash function for the j-th Fiat-Shamir challenge; modeled as a random oracle
 
   // ::4
   uint8_t r[MAX_LAMBDA_BYTES];      // root key
@@ -322,8 +324,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   uint8_t iv[128];  // the real iv
   hash_4(iv, iv_pre, lambda); // hash function for IV derivation
 
-  // Step: 3
-  uint8_t hcom[MAX_LAMBDA_BYTES * 2];
+  // ::6-7
   vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
   uint8_t* u        = malloc(ell_hat_bytes);
   // v has \hat \ell rows, \lambda columns, storing in column-major order
@@ -332,13 +333,11 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   for (unsigned int i = 1; i < lambda; ++i) {
     V[i] = V[0] + i * ell_hat_bytes;
   }
-  vole_commit(r, signature_iv(sig, params), ell_hat, params, vecCom,
-              signature_c(sig, 0, params), u, V);
+  vole_commit(r, signature_iv(sig, params), ell_hat, params, vecCom, signature_c(sig, 0, params), u, V);
 
-  // Step: 4
+  // ::8
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
-  hash_challenge_1(chall_1, mu, hcom, signature_c(sig, 0, params), signature_iv(sig, params),
-                   lambda, l, tau);
+  hash_2_1(chall_1, mu, vecCom, signature_c(sig, 0, params), iv, lambda, params);
 
   // Step: 6
   vole_hash(signature_u_tilde(sig, params), chall_1, u, l, lambda);
