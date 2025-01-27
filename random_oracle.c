@@ -12,6 +12,7 @@ static const uint8_t domain_sep_H0 = 0;
 static const uint8_t domain_sep_H1 = 1;
 static const uint8_t domain_sep_H2 = 2;
 static const uint8_t domain_sep_H3 = 3;
+static const uint8_t domain_sep_H4 = 4;
 
 // H_0
 void H0_init(H0_context_t* ctx, unsigned int security_param) {
@@ -108,5 +109,21 @@ void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len, uint8_t* iv) {
   hash_final(ctx);
   hash_squeeze(ctx, digest, len);
   hash_squeeze(ctx, iv, 16);
+  hash_clear(ctx);
+}
+
+// H_4
+void H4_init(H4_context_t* ctx, unsigned int security_param) {
+  hash_init(ctx, security_param == 128 ? 128 : 256);
+}
+
+void H4_update(H4_context_t* ctx, const uint8_t* src, size_t len) {
+  hash_update(ctx, src, len);
+}
+
+void H4_final(H4_context_t* ctx, uint8_t* digest) {
+  hash_update(ctx, &domain_sep_H4, sizeof(domain_sep_H4));
+  hash_final(ctx);
+  hash_squeeze(ctx, digest, 16);
   hash_clear(ctx);
 }

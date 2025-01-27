@@ -56,6 +56,14 @@ void H3_init(H3_context_t* ctx, unsigned int security_param);
 void H3_update(H3_context_t* ctx, const uint8_t* src, size_t len);
 void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len, uint8_t* iv);
 
+// implementation for H_4
+
+typedef hash_context H4_context_t;
+
+void H4_init(H4_context_t* ctx, unsigned int security_param);
+void H4_update(H4_context_t* ctx, const uint8_t* src, size_t len);
+void H4_final(H4_context_t* ctx, uint8_t* digest);
+
 FAEST_END_C_DECL
 
 #endif
