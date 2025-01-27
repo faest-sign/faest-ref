@@ -8,10 +8,14 @@
 
 #include "random_oracle.h"
 
-static const uint8_t domain_sep_H0 = 0;
-static const uint8_t domain_sep_H1 = 1;
-static const uint8_t domain_sep_H2 = 2;
-static const uint8_t domain_sep_H3 = 3;
+static const uint8_t domain_sep_H0   = 0;
+static const uint8_t domain_sep_H1   = 1;
+static const uint8_t domain_sep_H2_0 = 8 + 0;
+static const uint8_t domain_sep_H2_1 = 8 + 1;
+static const uint8_t domain_sep_H2_2 = 8 + 2;
+static const uint8_t domain_sep_H2_3 = 8 + 3;
+static const uint8_t domain_sep_H3   = 3;
+static const uint8_t domain_sep_H4   = 4;
 
 // H_0
 void H0_init(H0_context_t* ctx, unsigned int security_param) {
@@ -87,8 +91,29 @@ void H2_update(H2_context_t* ctx, const uint8_t* src, size_t len) {
   hash_update(ctx, src, len);
 }
 
-void H2_final(H2_context_t* ctx, uint8_t* digest, size_t len) {
-  hash_update(ctx, &domain_sep_H2, sizeof(domain_sep_H2));
+void H2_0_final(H2_context_t* ctx, uint8_t* digest, size_t len) {
+  hash_update(ctx, &domain_sep_H2_0, sizeof(domain_sep_H2_0));
+  hash_final(ctx);
+  hash_squeeze(ctx, digest, len);
+  hash_clear(ctx);
+}
+
+void H2_1_final(H2_context_t* ctx, uint8_t* digest, size_t len) {
+  hash_update(ctx, &domain_sep_H2_1, sizeof(domain_sep_H2_1));
+  hash_final(ctx);
+  hash_squeeze(ctx, digest, len);
+  hash_clear(ctx);
+}
+
+void H2_2_final(H2_context_t* ctx, uint8_t* digest, size_t len) {
+  hash_update(ctx, &domain_sep_H2_2, sizeof(domain_sep_H2_2));
+  hash_final(ctx);
+  hash_squeeze(ctx, digest, len);
+  hash_clear(ctx);
+}
+
+void H2_3_final(H2_context_t* ctx, uint8_t* digest, size_t len) {
+  hash_update(ctx, &domain_sep_H2_3, sizeof(domain_sep_H2_3));
   hash_final(ctx);
   hash_squeeze(ctx, digest, len);
   hash_clear(ctx);
