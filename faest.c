@@ -324,6 +324,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   uint8_t iv[128];  // the real iv
   hash_4(iv, iv_pre, lambda); // hash function for IV derivation
 
+  // TODO: For now Line number shifted by 1 due to gray comment
+
   // ::6-7
   vec_com_t* vecCom = calloc(tau, sizeof(vec_com_t));
   uint8_t* u        = malloc(ell_hat_bytes);
@@ -339,25 +341,25 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
   hash_2_1(chall_1, mu, vecCom, signature_c(sig, 0, params), iv, lambda, params);
 
-  // Step: 6
+  // ::9-10 // TODO: I will assume this works fine for now
   vole_hash(signature_u_tilde(sig, params), chall_1, u, l, lambda);
 
-  // Step: 7 and 8
+  // TODO: remove this comment
+  // ::11-12 (H1 and H5 seems to be same, let's anyway name it H5 for consistency)
   uint8_t h_v[MAX_LAMBDA_BYTES * 2];
   {
-    H1_context_t h1_ctx_1;
-    H1_init(&h1_ctx_1, lambda);
+    H5_context_t h5_ctx_1;
+    H5_init(&h5_ctx_1, lambda);
 
     uint8_t V_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
     for (unsigned int i = 0; i != lambda; ++i) {
-      // Step 7
       vole_hash(V_tilde, chall_1, V[i], l, lambda);
-      // Step 8
-      H1_update(&h1_ctx_1, V_tilde, lambdaBytes + UNIVERSAL_HASH_B);
+      H5_update(&h5_ctx_1, V_tilde, lambda/8 + UNIVERSAL_HASH_B);
     }
-    // Step: 8
-    H1_final(&h1_ctx_1, h_v, lambdaBytes * 2);
+
+    H5_final(&h5_ctx_1, h_v, lambda/8 * 2);
   }
+
   // Step: 9, 10
   uint8_t* w = aes_extend_witness(owf_key, owf_input, params);
   // Step: 11

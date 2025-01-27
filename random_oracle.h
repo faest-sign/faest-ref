@@ -64,6 +64,14 @@ void H4_init(H4_context_t* ctx, unsigned int security_param);
 void H4_update(H4_context_t* ctx, const uint8_t* src, size_t len);
 void H4_final(H4_context_t* ctx, uint8_t* digest);
 
+// implementation of H_5
+
+typedef hash_context H5_context_t;
+
+void H5_init(H5_context_t* H5_ctx, unsigned int security_param);
+void H5_update(H5_context_t* H5_ctx, const uint8_t* src, size_t len);
+void H5_final(H5_context_t* H5_ctx, uint8_t* digest, size_t len);
+
 FAEST_END_C_DECL
 
 #endif
