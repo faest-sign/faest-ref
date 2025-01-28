@@ -442,7 +442,7 @@ faest_sources = files(
   'aes.c',
   'bavc.c',
   'compat.c',
-  #'faest.c',
+  'faest.c',
   #'faest_aes.c',
   'fields.c',
   'instances.c',
