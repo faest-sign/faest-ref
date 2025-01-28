@@ -270,6 +270,20 @@ static void hash_challenge_3_init(H2_context_t* h2_ctx, const uint8_t* chall_2,
   H2_update(&h2_ctx, a2_tilde, lambda_bytes);
 }
 
+static void hash_challenge_3_final(uint8_t* chall_3, const H2_context_t* ctx, uint32_t ctr,
+                                   unsigned int lambda) {
+  const unsigned int lambda_bytes = lambda / 8;
+
+  H2_context_t ctx_copy;
+  H2_copy(&ctx_copy, ctx);
+
+  uint8_t buffer[sizeof(uint32_t)];
+  ctr = htole32(ctr);
+  memcpy(buffer, &ctr, sizeof(uint32_t));
+
+  H2_3_final(&ctx_copy, chall_3, lambda_bytes);
+}
+
 static bool check_challenge_3(const uint8_t* chall_3, unsigned int start, unsigned int lambda) {
   for (unsigned int bit_i = start; bit_i != lambda; ++bit_i) {
     if (ptr_get_bit(chall_3, bit_i)) {
@@ -371,29 +385,34 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   free(u);
   u = NULL;
 
+  // Step 22: hash everything up to the counter
   H2_context_t chall_3_ctx;
   hash_challenge_3_init(&chall_3_ctx, chall_2, a0_tilde, a1_tilde, a2_tilde, lambda);
 
   // ::20-27
+  // TODO: add an abort condition
   for (uint32_t ctr = 0; true; ++ctr) {
+    // Step 22: hash counter
     uint8_t chall_3[MAX_LAMBDA_BYTES];
-    H2_context_t chall_3_copy;
-    H2_copy(&chall_3_copy, &chall_3_ctx);
-    H2_2_final(&chall_3_copy, chall_3, lambdaBytes);
+    hash_challenge_3_final(chall_3, &chall_3_ctx, ctr, lambda);
 
+    // Step 23
     if (!check_challenge_3(chall_3, lambda - w_grind, lambda)) {
       continue;
     }
 
+    // Step 26: decode challenge
     uint16_t decoded_chall_3[MAX_TAU];
     if (!decode_all_chall_3(decoded_chall_3, chall_3, params)) {
       continue;
     }
 
+    // Step 27
     if (bavc_open(&bavc, decode_chall_3, signature_pdec(sig, 0, params), params)) {
       break;
     }
   }
+  hash_clear(&chall_3_ctx);
 
   vec_com_clear(&bavc);
 }
