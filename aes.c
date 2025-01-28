@@ -228,6 +228,36 @@ static void load_state(aes_block_t state, const uint8_t* src, unsigned int block
   }
 }
 
+static uint8_t invnorm(uint8_t in) {
+  bf8_t x = bf8_byte_combine_bits(in);
+  if (x == 0) {
+    return 0;
+  } else {
+    bf8_t bf_x_17 = bf8_inv(x);
+    for (unsigned int i = 0; i < 4; i++) {
+      bf_x_17 = bf8_mul(bf_x_17, bf_x_17);
+    }
+    bf_x_17 = bf8_mul(bf_x_17, bf8_inv(x));
+    uint8_t y_prime = 0;
+    bf8_store(y_prime, bf_x_17);
+    uint8_t y = 0;
+    y ^= ((y_prime >> 0) & 1) << 0;
+    y ^= ((y_prime >> 2) & 1) << 1;
+    y ^= ((y_prime >> 6) & 1) << 2;
+    y ^= ((y_prime >> 7) & 1) << 3;
+    return y;
+  }
+}
+
+static void store_invnorm_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
+
+  for (unsigned int i = 0; i != block_words * 4; ++i) { // going thorugh each block
+    uint8_t normstate = invnorm(state[i / 4][i % 4]);
+    bf8_store(&dst[i], normstate);
+  }
+
+}
+
 static void store_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
   for (unsigned int i = 0; i != block_words * 4; ++i) {
     bf8_store(&dst[i], state[i / 4][i % 4]);
@@ -495,18 +525,28 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
     // Step 13
     add_round_key(0, state, &round_keys, block_words);
 
-    for (unsigned int round = 1; round < num_rounds; ++round) {
+    for (unsigned int round = 0; round < num_rounds-1; ++round) {
+
+      if (round % 2 == 0) {
+        // save inverse norm of the S-box inputs, in coloumn major order
+        store_invnorm_state(w, state, block_words);
+        w += sizeof(aes_word_t) * block_words;
+      }
       // Step 15
       sub_bytes(state, block_words);
       // Step 16
       shift_row(state, block_words);
-      // Step 17
-      store_state(w, state, block_words);
-      w += sizeof(aes_word_t) * block_words;
+      if (round % 2 == 1) {
+        // Step 17
+        store_state(w, state, block_words);
+        w += sizeof(aes_word_t) * block_words;
+      }
       // Step 18
       mix_column(state, block_words);
       // Step 19
-      add_round_key(round, state, &round_keys, block_words);
+      add_round_key(round + 1, state, &round_keys, block_words);
+
+
     }
     // last round is not commited to, so not computed
   }

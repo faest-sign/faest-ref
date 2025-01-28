@@ -943,6 +943,8 @@ static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   zk_hash_128_finalize(b_tilde, &a0_ctx, bf128_sum_poly(bf_v + FAEST_128F_ELL));
   faest_aligned_free(bf_v);
 }
+
+
 static uint8_t* aes_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                                const uint8_t* chall_3, const uint8_t* a_tilde, const uint8_t* in,
                                const uint8_t* out, const faest_paramset_t* params) {

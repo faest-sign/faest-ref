@@ -194,6 +194,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_one(void) {
   return ret;
 }
 
+ATTR_PURE bf8_t bf8_byte_combine_bits(uint8_t x);
 ATTR_PURE bf128_t bf128_byte_combine(const bf128_t* x);
 ATTR_PURE bf128_t bf128_byte_combine_bits(uint8_t x);
 #if defined(ALLOW_ZERO_SBOX)
