@@ -87,15 +87,14 @@ static bf128_t* column_to_row_major_and_shrink_V_128(uint8_t** v, unsigned int e
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
   // rows and \lambda columns storing in row-major order
-  bf128_t* new_v = faest_aligned_alloc(BF128_ALIGN, (ell + FAEST_128F_LAMBDA) * sizeof(bf128_t));
-  for (unsigned int row = 0; row != ell + FAEST_128F_LAMBDA; ++row) {
+  bf128_t* new_v = faest_aligned_alloc(BF128_ALIGN, (ell + FAEST_128F_LAMBDA*2) * sizeof(bf128_t));
+  for (unsigned int row = 0; row != ell + FAEST_128F_LAMBDA*2; ++row) {
     uint8_t new_row[BF128_NUM_BYTES] = {0};
     for (unsigned int column = 0; column != FAEST_128F_LAMBDA; ++column) {
       ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
     }
     new_v[row] = bf128_load(new_row);
   }
-
   return new_v;
 }
 
@@ -908,11 +907,23 @@ static void aes_enc_constraints_Mkey_1_128(const uint8_t* in, const uint8_t* out
   }
 }
 
-static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
-                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
-                          uint8_t* b_tilde, const faest_paramset_t* params) {
+static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
+                          const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
+                          uint8_t* a12_tilde, const faest_paramset_t* params) {
+
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int lambda_bytes = lambda / 8;
+
+  // ::1-2
+  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, FAEST_128F_ELL); // This is the mac for w
+  // we have w in its f2 form
+
+  // ::3-6 embed VOLE masks
+  bf128_t bf_u_0 = bf128_load(u);
+  bf128_t bf_u_1 = bf128_load(u + lambda_bytes);
+
   // Step: 1..2
-  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, FAEST_128F_ELL);
+  
 
   // Step: 3..4
   // do nothing
@@ -1738,9 +1749,9 @@ static void aes_enc_constraints_Mkey_1_192(const uint8_t* in, const uint8_t* out
   }
 }
 
-static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
-                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
-                          uint8_t* b_tilde, const faest_paramset_t* params) {
+static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
+                          const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
+                          uint8_t* a12_tilde, const faest_paramset_t* params) {
   // Step: 1..2
   bf192_t* bf_v = column_to_row_major_and_shrink_V_192(V, FAEST_192F_ELL);
 
@@ -2609,9 +2620,9 @@ static void aes_enc_constraints_Mkey_1_256(const uint8_t* in, const uint8_t* out
   }
 }
 
-static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
-                          const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
-                          uint8_t* b_tilde, const faest_paramset_t* params) {
+static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
+                          const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
+                          uint8_t* a12_tilde, const faest_paramset_t* params) {
   // Step: 1..2
   bf256_t* bf_v = column_to_row_major_and_shrink_V_256(V, FAEST_256F_ELL);
 
@@ -3181,9 +3192,9 @@ static void em_enc_constraints_Mkey_1_128(const uint8_t* out, const uint8_t* x, 
   }
 }
 
-static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
-                         const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
-                         uint8_t* b_tilde) {
+static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
+                          const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
+                          uint8_t* a12_tilde, const faest_paramset_t* params) {
   // copy expanded key in to an array
   uint8_t x[FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1)];
   {
@@ -3734,9 +3745,9 @@ static void em_enc_constraints_Mkey_1_192(const uint8_t* out, const uint8_t* x, 
   }
 }
 
-static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
-                         const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
-                         uint8_t* b_tilde) {
+static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
+                          const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
+                          uint8_t* a12_tilde, const faest_paramset_t* params) {
   // copy expanded key in to an array
   uint8_t x[FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8];
   {
@@ -4292,9 +4303,9 @@ static void em_enc_constraints_Mkey_1_256(const uint8_t* out, const uint8_t* x, 
   }
 }
 
-static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
-                         const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde,
-                         uint8_t* b_tilde) {
+static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
+                          const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
+                          uint8_t* a12_tilde, const faest_paramset_t* params) {
   // copy expanded key in to an array
   uint8_t x[FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8];
   {
@@ -4377,29 +4388,29 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
 // dispatchers
 
-void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* in,
-               const uint8_t* out, const uint8_t* chall, uint8_t* a_tilde, uint8_t* b_tilde,
+void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
+               const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde, uint8_t* a12_tilde,
                const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
     if (params->faest_param.Lke) {
-      aes_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+      aes_prove_256(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
     } else {
-      em_prove_256(w, u, V, in, out, chall, a_tilde, b_tilde);
+      em_prove_256(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
     }
     break;
   case 192:
     if (params->faest_param.Lke) {
-      aes_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+      aes_prove_192(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
     } else {
-      em_prove_192(w, u, V, in, out, chall, a_tilde, b_tilde);
+      em_prove_192(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
     }
     break;
   default:
     if (params->faest_param.Lke) {
-      aes_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde, params);
+      aes_prove_128(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
     } else {
-      em_prove_128(w, u, V, in, out, chall, a_tilde, b_tilde);
+      em_prove_128(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
     }
   }
 }
