@@ -41,7 +41,7 @@ int main() {
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
 
-    vec_com_t bavc_com;
+    bavc_t bavc_com;
 
     std::vector<uint8_t> chal, c, decom_i, u, q_storage, v_storage;
     chal.resize(lambda_bytes);
@@ -92,7 +92,7 @@ int main() {
       print_named_array("hashed_q", "uint8_t", hash_array(q_storage));
       break;
     }
-    vec_com_clear(&bavc_com);
+    bavc_clear(&bavc_com);
     std::cout << "}\n";
   }
 

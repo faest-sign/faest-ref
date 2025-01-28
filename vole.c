@@ -61,33 +61,8 @@ static
   return depth;
 }
 
-int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t0, unsigned int k1,
-            unsigned int t1, uint8_t* chalout) {
-  if (i >= t0 + t1) {
-    return 0;
-  }
-
-  unsigned int lo;
-  unsigned int hi;
-  if (i < t0) {
-    lo = i * k0;
-    hi = ((i + 1) * k0);
-  } else {
-    unsigned int t = i - t0;
-    lo             = (t0 * k0) + (t * k1);
-    hi             = (t0 * k0) + ((t + 1) * k1);
-  }
-
-  assert(hi - lo == k0 || hi - lo == k1);
-  for (unsigned int j = lo; j < hi; ++j) {
-    // set_bit(chalout, i - lo, get_bit(chal, i));
-    chalout[j - lo] = ptr_get_bit(chal, j);
-  }
-  return 1;
-}
-
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                 const faest_paramset_t* params, vec_com_t* bavc, uint8_t* c, uint8_t* u,
+                 const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* u,
                  uint8_t** v) {
   const unsigned int ellhat_bytes = (ellhat + 7) / 8;
   const unsigned int tau          = params->faest_param.tau;
@@ -127,12 +102,12 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
     return false;
   }
 
-  vec_com_rec_t vec_com_rec;
+  bavc_rec_t vec_com_rec;
   vec_com_rec.h = com;
   vec_com_rec.s = malloc((L - tau) * lambda_bytes);
 
   if (!bavc_reconstruct(decom_i, i_delta, iv, params, &vec_com_rec)) {
-    vec_com_rec_clear(&vec_com_rec);
+    free(vec_com_rec.s);
     return false;
   }
 

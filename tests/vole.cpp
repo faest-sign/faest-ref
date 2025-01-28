@@ -35,7 +35,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     const unsigned int ell_hat_bytes = 16;
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
 
-    vec_com_t bavc_com;
+    bavc_t bavc_com;
 
     std::vector<uint8_t> chal, c, decom_i, u, q_storage, v_storage;
     chal.resize(lambda_bytes);
@@ -83,7 +83,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       tested = true;
     }
     BOOST_TEST(tested);
-    vec_com_clear(&bavc_com);
+    bavc_clear(&bavc_com);
   }
 }
 
@@ -153,7 +153,7 @@ namespace {
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
 
-    vec_com_t bavc_com;
+    bavc_t bavc_com;
 
     std::vector<uint8_t> chal, c, decom_i, u, q_storage, v_storage;
     chal.resize(lambda_bytes);
@@ -194,7 +194,7 @@ namespace {
                                 c.data(), ell_hat, params));
     BOOST_TEST(hcom_rec == expected_h_vec);
     BOOST_TEST(expected_hashed_q == hash_array(q_storage));
-    vec_com_clear(&bavc_com);
+    bavc_clear(&bavc_com);
   }
 } // namespace
 

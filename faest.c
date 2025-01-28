@@ -305,7 +305,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   hash_r_iv(rootkey, signature_iv_pre(sig, params), iv, owf_key, mu, rho, rholen, lambda);
 
   // Step 8
-  vec_com_t bavc;
+  bavc_t bavc;
   uint8_t* u = malloc(ell_hat_bytes);
 
   // v has \hat \ell rows, \lambda columns, storing in column-major order
@@ -393,7 +393,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     }
   }
   hash_clear(&chall_3_ctx);
-  vec_com_clear(&bavc);
+  bavc_clear(&bavc);
 
   uint8_t buffer[sizeof(uint32_t)];
   ctr = htole32(ctr);

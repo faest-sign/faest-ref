@@ -10,12 +10,8 @@
 
 FAEST_BEGIN_C_DECL
 
-// k_b is at most 12, so chalout needs to point to an array of at most 12 bytes
-int ChalDec(const uint8_t* chal, unsigned int i, unsigned int k0, unsigned int t0, unsigned int k1,
-            unsigned int t1, uint8_t* chalout);
-
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                 const faest_paramset_t* params, vec_com_t* vecCom, uint8_t* c, uint8_t* u,
+                 const faest_paramset_t* params, bavc_t* vecCom, uint8_t* c, uint8_t* u,
                  uint8_t** v);
 
 bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_t* chall_3,

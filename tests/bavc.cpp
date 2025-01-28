@@ -89,7 +89,7 @@ namespace {
     const auto lambda_bytes = lambda / 8;
     const auto com_size     = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
 
-    vec_com_t vc;
+    bavc_t vc;
     bavc_commit(root_key.data(), iv.data(), &params, &vc);
 
     const std::vector<uint8_t> h{vc.h, vc.h + HSize},
@@ -114,7 +114,7 @@ namespace {
     rec_h.resize(2 * lambda_bytes);
     rec_s.resize((params.faest_param.L - params.faest_param.tau) * lambda_bytes);
 
-    vec_com_rec_t vc_rec;
+    bavc_rec_t vc_rec;
     vc_rec.h = rec_h.data();
     vc_rec.s = rec_s.data();
 
@@ -213,7 +213,7 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
     const auto lambda       = params.faest_param.lambda;
     const auto lambda_bytes = lambda / 8;
 
-    vec_com_t vc;
+    bavc_t vc;
     bavc_commit(root_key.data(), iv.data(), &params, &vc);
 
     std::vector<uint8_t> decom_i;
@@ -243,14 +243,14 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
     rec_h.resize(2 * lambda_bytes);
     rec_s.resize((params.faest_param.L - params.faest_param.tau) * lambda_bytes);
 
-    vec_com_rec_t vc_rec;
+    bavc_rec_t vc_rec;
     vc_rec.h = rec_h.data();
     vc_rec.s = rec_s.data();
 
     BOOST_TEST(bavc_reconstruct(decom_i.data(), i_delta.data(), iv.data(), &params, &vc_rec));
     BOOST_TEST(memcmp(vc.h, vc_rec.h, 2 * lambda_bytes) == 0);
 
-    vec_com_clear(&vc);
+    bavc_clear(&vc);
   }
 }
 

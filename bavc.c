@@ -99,7 +99,7 @@ static inline unsigned int pos_in_tree(unsigned int i, unsigned int j,
 
 // BAVC.Commit for FAEST
 static void bavc_commit_faest(const uint8_t* rootKey, const uint8_t* iv,
-                              const faest_paramset_t* params, vec_com_t* vecCom) {
+                              const faest_paramset_t* params, bavc_t* vecCom) {
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int L            = params->faest_param.L;
   const unsigned int lambda_bytes = lambda / 8;
@@ -156,7 +156,7 @@ static void bavc_commit_faest(const uint8_t* rootKey, const uint8_t* iv,
 
 // BAVC.Commit for FAEST-EM
 static void bavc_commit_faest_em(const uint8_t* rootKey, const uint8_t* iv,
-                                 const faest_paramset_t* params, vec_com_t* vecCom) {
+                                 const faest_paramset_t* params, bavc_t* vecCom) {
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int L            = params->faest_param.L;
   const unsigned int lambda_bytes = lambda / 8;
@@ -203,7 +203,7 @@ static void bavc_commit_faest_em(const uint8_t* rootKey, const uint8_t* iv,
 }
 
 void bavc_commit(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
-                 vec_com_t* vecCom) {
+                 bavc_t* vecCom) {
   if (faest_is_em(params)) {
     bavc_commit_faest_em(rootKey, iv, params, vecCom);
   } else {
@@ -211,7 +211,7 @@ void bavc_commit(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset
   }
 }
 
-bool bavc_open(const vec_com_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
+bool bavc_open(const bavc_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
                const faest_paramset_t* params) {
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int L            = params->faest_param.L;
@@ -320,7 +320,7 @@ static bool reconstruct_keys(uint8_t* s, uint8_t* keys, const uint8_t* decom_i,
 
 static bool bavc_reconstruct_faest(const uint8_t* decom_i, const uint16_t* i_delta,
                                    const uint8_t* iv, const faest_paramset_t* params,
-                                   vec_com_rec_t* vecComRec) {
+                                   bavc_rec_t* vecComRec) {
   // Initializing
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int L            = params->faest_param.L;
@@ -384,7 +384,7 @@ static bool bavc_reconstruct_faest(const uint8_t* decom_i, const uint16_t* i_del
 
 static bool bavc_reconstruct_faest_em(const uint8_t* decom_i, const uint16_t* i_delta,
                                       const uint8_t* iv, const faest_paramset_t* params,
-                                      vec_com_rec_t* vecComRec) {
+                                      bavc_rec_t* vecComRec) {
   // Initializing
   const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int L            = params->faest_param.L;
@@ -439,19 +439,19 @@ static bool bavc_reconstruct_faest_em(const uint8_t* decom_i, const uint16_t* i_
 }
 
 bool bavc_reconstruct(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
-                      const faest_paramset_t* params, vec_com_rec_t* vecComRec) {
+                      const faest_paramset_t* params, bavc_rec_t* vecComRec) {
   return faest_is_em(params) ? bavc_reconstruct_faest_em(decom_i, i_delta, iv, params, vecComRec)
                              : bavc_reconstruct_faest(decom_i, i_delta, iv, params, vecComRec);
 }
 
-void vec_com_clear(vec_com_t* com) {
+void bavc_clear(bavc_t* com) {
   free(com->sd);
   free(com->com);
   free(com->k);
   free(com->h);
 }
 
-void vec_com_rec_clear(vec_com_rec_t* rec) {
+void bavc_rec_clear(bavc_rec_t* rec) {
   free(rec->s);
   free(rec->h);
 }

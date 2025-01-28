@@ -39,7 +39,7 @@ int main() {
     const auto lambda_bytes = lambda / 8;
     const auto com_size     = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
 
-    vec_com_t vc;
+    bavc_t vc;
     bavc_commit(root_key.data(), iv.data(), &params, &vc);
 
     auto hashed_k  = hash_array(vc.k, (2 * params.faest_param.L - 1) * lambda_bytes);
@@ -74,13 +74,13 @@ int main() {
 
     print_named_array("i_delta", "uint16_t", i_delta);
     print_named_array("hashed_decom_i", "uint8_t", hashed_decom_i);
-    vec_com_clear(&vc);
+    bavc_clear(&vc);
 
     std::vector<uint8_t> rec_h, rec_s;
     rec_h.resize(2 * lambda_bytes);
     rec_s.resize((params.faest_param.L - params.faest_param.tau) * lambda_bytes);
 
-    vec_com_rec_t vc_rec;
+    bavc_rec_t vc_rec;
     vc_rec.h = rec_h.data();
     vc_rec.s = rec_s.data();
 
