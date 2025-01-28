@@ -907,52 +907,85 @@ static void aes_enc_constraints_Mkey_1_128(const uint8_t* in, const uint8_t* out
   }
 }
 
-static void aes_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
-                          const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
-                          uint8_t* a12_tilde, const faest_paramset_t* params) {
 
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int lambda_bytes = lambda / 8;
+static void aes_constraints(bf128_t* z, bf128_t* z_tag, const uint8_t* w, const bf128_t* w_tag, const uint8_t* owf_in, const uint8_t* owf_out, const faest_paramset_t* params) {
 
-  // ::1-2
-  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, FAEST_128F_ELL); // This is the mac for w
-  // we have w in its f2 form
+  // TODO: From where we call the key contrainst and the enc constraints
 
-  // ::3-6 embed VOLE masks
-  bf128_t bf_u_0 = bf128_load(u);
-  bf128_t bf_u_1 = bf128_load(u + lambda_bytes);
+  // TODO: putting all this here for now
+  // uint8_t* k  = malloc((FAEST_128F_R + 1) * 128 / 8);
+  // bf128_t* vk = faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t) * ((FAEST_128F_R + 1) * 128));
+  // zk_hash_128_ctx a0_ctx;
+  // zk_hash_128_ctx a1_ctx;
+  // zk_hash_128_init(&a0_ctx, chall_2);
+  // zk_hash_128_init(&a1_ctx, chall_2);
 
-  // Step: 1..2
-  
-
-  // Step: 3..4
-  // do nothing
-  // Step: 6
-
-  // Step: 7 + 18
-  uint8_t* k  = malloc((FAEST_128F_R + 1) * 128 / 8);
-  bf128_t* vk = faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t) * ((FAEST_128F_R + 1) * 128));
-  zk_hash_128_ctx a0_ctx;
-  zk_hash_128_ctx a1_ctx;
-
-  zk_hash_128_init(&a0_ctx, chall);
-  zk_hash_128_init(&a1_ctx, chall);
-  aes_key_schedule_constraints_Mkey_0_128(w, bf_v, &a0_ctx, &a1_ctx, k, vk, params);
+  // aes_key_schedule_constraints_Mkey_0_128(w, bf_v, &a0_ctx, &a1_ctx, k, vk, params);
 
   // Step: Skipping 8 in implementation
   // Step: 9
 
   // Step: 10,11
-  aes_enc_constraints_Mkey_0_128(in, out, w + FAEST_128F_Lke / 8, bf_v + FAEST_128F_Lke, k, vk,
-                                 &a0_ctx, &a1_ctx);
+  // aes_enc_constraints_Mkey_0_128(in, out, w + FAEST_128F_Lke / 8, bf_v + FAEST_128F_Lke, k, vk, &a0_ctx, &a1_ctx);
   // Step: 12 (beta == 1)
-  faest_aligned_free(vk);
-  free(k);
+  // faest_aligned_free(vk);
+  // free(k);
+  // faest_aligned_free(bf_v);
+
+}
+
+static void aes_prove_128(bf128_t* a0_tilde, bf128_t* a1_tilde, bf128_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
+                          uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params) {
+
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int lambda_bytes = lambda / 8;
+  unsigned int ske = params->faest_param.Ske;
+  unsigned int senc = params->faest_param.Senc;
+  // TODO: CHANGE THIS FOR OTHER SETTING WHEN COPY PASTING!!!!!
+  unsigned int beta = 1;
+  unsigned int c = 2*ske + (3/2)*senc + 1;
+
+  // ::1-5
+  // also includes the lifting of V at ::5
+  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, FAEST_128F_ELL); // This is the mac for w
+  // we have w in its f2 form
+
+  // ::6-9 embed VOLE masks
+  bf128_t bf_u_star_0 = bf128_load(u);
+  bf128_t bf_u_star_1 = bf128_load(u + lambda);
+  bf128_t bf_v_star_0 = bf128_sum_poly(bf_v);
+  bf128_t bf_v_star_1 = bf128_sum_poly(bf_v + lambda);
+
+  // ::10-12
+  bf128_t bf_z[c*3];
+  bf128_t bf_z_tag[c*3];
+  aes_constraints(bf_z, bf_z_tag, w, bf_v, owf_in, owf_out, params);
+
+  // ::13
+  bf128_t a0[c];
+  bf128_t a1[c];
+  bf128_t a2[c];
+  // TODO: the magical parsing, asked Peter already
 
   // Step: 16..18
-  zk_hash_128_finalize(a_tilde, &a1_ctx, bf128_load(u + FAEST_128F_ELL / 8));
-  zk_hash_128_finalize(b_tilde, &a0_ctx, bf128_sum_poly(bf_v + FAEST_128F_ELL));
-  faest_aligned_free(bf_v);
+  zk_hash_128_ctx a0_ctx;
+  zk_hash_128_ctx a1_ctx;
+  zk_hash_128_ctx a2_ctx;
+  zk_hash_128_init(&a0_ctx, chall_2);
+  zk_hash_128_init(&a1_ctx, chall_2);
+  zk_hash_128_init(&a2_ctx, chall_2);
+
+  // TODO: ugly zk update here
+  for (unsigned int i = 0; i < c; i++) {
+    zk_hash_128_update(&a0_ctx, a0[i]);
+    zk_hash_128_update(&a1_ctx, a1[i]);
+    zk_hash_128_update(&a2_ctx, a2[i]);
+  }
+
+  zk_hash_128_finalize(a0_tilde, &a0_ctx, bf_u_star_0);
+  zk_hash_128_finalize(a1_tilde, &a1_ctx, bf_v_star_0 + bf_u_star_1);
+  zk_hash_128_finalize(a2_tilde, &a2_ctx, bf_v_star_1);
+
 }
 
 
