@@ -237,6 +237,19 @@ static void hash_2_2(uint8_t* chall_2, const uint8_t* chall_1, const uint8_t* u_
   H2_final(&h2_ctx, chall_2, (3 * lambda / 8) + 8);
 }
 
+// Called in FAEST.Sign()::21
+static void hash_2_3(uint8_t* chall_3, const uint8_t* chall_2, const uint8_t* a_tilde_0, const uint8_t* a_tilde_1, const uint8_t* a_tilde_2, unsigned int ctr, unsigned int lambda, const faest_paramset_t* params) {
+  H2_context_t h2_ctx;
+  H2_init(&h2_ctx, lambda);
+
+  H2_update(&h2_ctx, chall_2, (3 * lambda/8) + 8);
+  H2_update(&h2_ctx, a_tilde_0, 999999999999999);  // TODO: FIX a_tilde_0 LEN
+  H2_update(&h2_ctx, a_tilde_1, 999999999999999);  // TODO: FIX a_tilde_1 LEN
+  H2_update(&h2_ctx, a_tilde_2, 999999999999999);  // TODO: FIX a_tilde_2 LEN
+  H2_update(&h2_ctx, ctr, sizeof(unsigned int));
+  H2_final(&h2_ctx, chall_3, lambda/8);
+}
+
 // Called in FAEST.Sign()::4
 static void hash_3(uint8_t* r, uint8_t* sig, const uint8_t* owf_sk, const uint8_t* mu, const uint8_t* rho, unsigned int lambda, const faest_paramset_t* params) {
   H3_context_t h3_ctx;
@@ -314,6 +327,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   const unsigned int ell_hat_bytes = ell_hat / 8;
   const unsigned int k0 = params->faest_param.k;
   const unsigned int k1  = (params->faest_param.tau0 != 0) ? k0 - 1 : k0;
+  const unsigned int w_grind = params->faest_param.w_grind;
+
 
   // ::1
   unsigned int ctr = 0;
@@ -380,12 +395,10 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // ::15
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
   hash_2_2(chall_2, chall_1, signature_u_tilde(sig, params), h_v, signature_d(sig, params), lambda, params);
-  
 
-  // Step: 14..15
-  // transpose is computed in aes_prove
-
-  // Step: 16
+  // TODO: fix this a0, a1, a2 mess T.T
+  // TODO: skipping for now
+  // ::16-19
   uint8_t b_tilde[MAX_LAMBDA_BYTES];
   aes_prove(w, u, V, owf_input, owf_output, chall_2, signature_a_tilde(sig, params), b_tilde,
             params);
@@ -397,21 +410,49 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   free(u);
   u = NULL;
 
-  // Step: 17
-  hash_challenge_3(signature_chall_3(sig, params), chall_2, signature_a_tilde(sig, params), b_tilde,
-                   lambda);
+  // ::20-27
+  uint8_t chall_3[lambda/8];
+  // TODO: For now putting this empty
+  uint8_t* a_tilde_0;
+  uint8_t* a_tilde_1;
+  uint8_t* a_tilde_2;
+  uint16_t* decoded_chall_3;
+  do {
+    hash_2_3(chall_3, chall_2, a_tilde_0, a_tilde_1, a_tilde_2, ctr, lambda, params);
 
-  // Step: 19..21
-  for (unsigned int i = 0; i < tau; i++) {
-    // Step 20
-    uint8_t s_[MAX_DEPTH];
-    ChalDec(signature_chall_3(sig, params), i, k0, tau0,
-            k1, tau1, s_);
-    // Step 21
-    const unsigned int depth = i < tau0 ? k0 : k1;
-    bavc_open(vecCom, i, signature_pdec(sig, i, params), params); // TODO: I think this is fine or ?
-    vec_com_clear(&vecCom[i]);
-  }
+    uint8_t flag = 0;
+    for (unsigned int bit_i = lambda - w_grind; bit_i < lambda; bit_i++) {
+      unsigned int byte_pos = bit_i/8;
+      unsigned int bit_pos = bit_i%8;
+      if (((chall_3[byte_pos] >> bit_pos) & 1) != 0) {
+        ctr += 1;
+        flag = 1;
+        break;
+      }
+    }
+    if (flag) { continue; }
+    // I guess we do not care about the rest anyway if this fails? This could be fixed in the spec?
+
+    bool flag_i = decode_all_chall_3(decoded_chall_3, chall_3, params);    
+    // TODO: update the bavc.open
+
+    break;
+
+  } while (true);
+
+
+  // // Step: 19..21
+  // for (unsigned int i = 0; i < tau; i++) {
+  //   // Step 20
+  //   uint8_t s_[MAX_DEPTH];
+  //   ChalDec(signature_chall_3(sig, params), i, k0, tau0,
+  //           k1, tau1, s_);
+  //   // Step 21
+  //   const unsigned int depth = i < tau0 ? k0 : k1;
+  //   bavc_open(vecCom, i, signature_pdec(sig, i, params), params); // TODO: I think this is fine or ?
+  //   vec_com_clear(&vecCom[i]);
+  // }
+
   free(vecCom);
   vecCom = NULL;
 }
