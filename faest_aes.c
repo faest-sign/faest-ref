@@ -988,7 +988,7 @@ static void aes_prove_128(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tild
 }
 
 
-static uint8_t* aes_verify_128(uint8_t* a0_tilde, const uint8_t* d, const uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
+static uint8_t* aes_verify_128(const uint8_t* d, const uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params) {
 
   const unsigned int tau = params->faest_param.tau;
@@ -1042,7 +1042,9 @@ static uint8_t* aes_verify_128(uint8_t* a0_tilde, const uint8_t* d, const uint8_
   bf128_t tmp2 = bf128_mul(bf128_load(a2_tilde), bf_delta_sq);
   bf128_t tmp3 = bf128_add(tmp1, tmp2);
   bf128_t ret = bf128_add(bf128_load(q_tilde), tmp3);
+  uint8_t* a0_tilde = malloc(lambda/8*3);   // freed in faest_verify
   bf128_store(a0_tilde, ret);
+  return a0_tilde;
 
 }
 
@@ -1787,7 +1789,7 @@ static void aes_enc_constraints_Mkey_1_192(const uint8_t* in, const uint8_t* out
   }
 }
 
-static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
+/* static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
                           const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
                           uint8_t* a12_tilde, const faest_paramset_t* params) {
   // Step: 1..2
@@ -1803,18 +1805,18 @@ static void aes_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const
   zk_hash_192_ctx a0_ctx;
   zk_hash_192_ctx a1_ctx;
 
-  zk_hash_192_init(&a0_ctx, chall);
-  zk_hash_192_init(&a1_ctx, chall);
+  zk_hash_192_init(&a0_ctx, chall_2);
+  zk_hash_192_init(&a1_ctx, chall_2);
   aes_key_schedule_constraints_Mkey_0_192(w, bf_v, &a0_ctx, &a1_ctx, k, vk, params);
 
   // Step: Skipping 8 in implementation
   // Step: 9
 
   // Step: 10,11
-  aes_enc_constraints_Mkey_0_192(in, out, w + FAEST_192F_Lke / 8, bf_v + FAEST_192F_Lke, k, vk,
+  aes_enc_constraints_Mkey_0_192(owf_in, owf_out, w + FAEST_192F_Lke / 8, bf_v + FAEST_192F_Lke, k, vk,
                                  &a0_ctx, &a1_ctx);
   // Step: 12-15
-  aes_enc_constraints_Mkey_0_192(in + 16, out + 16, w + (FAEST_192F_Lke + FAEST_192F_Lenc) / 8,
+  aes_enc_constraints_Mkey_0_192(owf_in + 16, owf_out + 16, w + (FAEST_192F_Lke + FAEST_192F_Lenc) / 8,
                                  bf_v + FAEST_192F_Lke + FAEST_192F_Lenc, k, vk, &a0_ctx, &a1_ctx);
   faest_aligned_free(vk);
   free(k);
@@ -1879,6 +1881,8 @@ static uint8_t* aes_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* cha
 
   return q_tilde;
 }
+
+ */
 
 
 // ###########################################################################################################################################
@@ -2658,6 +2662,7 @@ static void aes_enc_constraints_Mkey_1_256(const uint8_t* in, const uint8_t* out
   }
 }
 
+/* 
 static void aes_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
                           const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
                           uint8_t* a12_tilde, const faest_paramset_t* params) {
@@ -2749,7 +2754,7 @@ static uint8_t* aes_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* cha
 
   return q_tilde;
 }
-
+ */
 
 // ###########################################################################################################################################
 // ##################################           LAMBDA = EM-128            ###################################################################
@@ -3230,6 +3235,7 @@ static void em_enc_constraints_Mkey_1_128(const uint8_t* out, const uint8_t* x, 
   }
 }
 
+/* 
 static void em_prove_128(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
                           const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
                           uint8_t* a12_tilde, const faest_paramset_t* params) {
@@ -3312,6 +3318,8 @@ static uint8_t* em_verify_128(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   return q_tilde;
 }
+
+ */
 
 // ###########################################################################################################################################
 // ##################################           LAMBDA = EM-192            ###################################################################
@@ -3783,6 +3791,8 @@ static void em_enc_constraints_Mkey_1_192(const uint8_t* out, const uint8_t* x, 
   }
 }
 
+/* 
+
 static void em_prove_192(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
                           const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
                           uint8_t* a12_tilde, const faest_paramset_t* params) {
@@ -3865,6 +3875,8 @@ static uint8_t* em_verify_192(const uint8_t* d, uint8_t** Q, const uint8_t* chal
 
   return q_tilde;
 }
+
+ */
 
 // ###########################################################################################################################################
 // ##################################           LAMBDA = EM-256            ###################################################################
@@ -4341,6 +4353,7 @@ static void em_enc_constraints_Mkey_1_256(const uint8_t* out, const uint8_t* x, 
   }
 }
 
+/* 
 static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
                           const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde,
                           uint8_t* a12_tilde, const faest_paramset_t* params) {
@@ -4348,7 +4361,7 @@ static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   uint8_t x[FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8];
   {
     aes_round_keys_t round_keys;
-    rijndael256_init_round_keys(&round_keys, in);
+    rijndael256_init_round_keys(&round_keys, owf_in);
     uint8_t* tmp_x = x;
     for (unsigned int r = 0; r != FAEST_EM_256F_R + 1; ++r) {
       for (unsigned int i = 0; i != FAEST_EM_256F_Nwd; ++i) {
@@ -4362,9 +4375,9 @@ static void em_prove_256(const uint8_t* w, const uint8_t* u, uint8_t** V, const 
   zk_hash_256_ctx a0_ctx;
   zk_hash_256_ctx a1_ctx;
 
-  zk_hash_256_init(&a0_ctx, chall);
-  zk_hash_256_init(&a1_ctx, chall);
-  em_enc_constraints_Mkey_0_256(out, x, w, bf_v, &a0_ctx, &a1_ctx);
+  zk_hash_256_init(&a0_ctx, chall_2);
+  zk_hash_256_init(&a1_ctx, chall_2);
+  em_enc_constraints_Mkey_0_256(owf_out, x, w, bf_v, &a0_ctx, &a1_ctx);
 
   zk_hash_256_finalize(a_tilde, &a1_ctx, bf256_load(u + FAEST_EM_256F_Lenc / 8));
   zk_hash_256_finalize(b_tilde, &a0_ctx, bf256_sum_poly(bf_v + FAEST_EM_256F_Lenc));
@@ -4424,56 +4437,57 @@ static uint8_t* em_verify_256(const uint8_t* d, uint8_t** Q, const uint8_t* chal
   return q_tilde;
 }
 
+ */
+
 // dispatchers
 
-void aes_prove(const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
-               const uint8_t* owf_out, const uint8_t* chall_2, uint8_t* a0_tilde, uint8_t* a12_tilde,
-               const faest_paramset_t* params) {
+void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
+               const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
     if (params->faest_param.Lke) {
-      aes_prove_256(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
+      // aes_prove_256(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
     } else {
-      em_prove_256(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
+      // em_prove_256(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
     }
     break;
   case 192:
     if (params->faest_param.Lke) {
-      aes_prove_192(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
+      // aes_prove_192(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
     } else {
-      em_prove_192(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
+      // em_prove_192(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
     }
     break;
   default:
     if (params->faest_param.Lke) {
-      aes_prove_128(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
+      aes_prove_128(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params);
     } else {
-      em_prove_128(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
+      // em_prove_128(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
     }
   }
 }
 
 uint8_t* aes_verify(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8_t* chall_3,
-                    const uint8_t* a_tilde, const uint8_t* in, const uint8_t* out,
+                    const uint8_t* a1_tilde, const uint8_t* a2_tilde, const uint8_t* owf_in, const uint8_t* owf_out,
                     const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
     if (params->faest_param.Lke) {
-      return aes_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      // return aes_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     } else {
-      return em_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      // return em_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     }
   case 192:
     if (params->faest_param.Lke) {
-      return aes_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      // return aes_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     } else {
-      return em_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      // return em_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     }
   default:
     if (params->faest_param.Lke) {
-      return aes_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return aes_verify_128(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params);
     } else {
-      return em_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      // return em_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     }
   }
 }
