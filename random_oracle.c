@@ -89,7 +89,7 @@ void H2_init(H2_context_t* ctx, unsigned int security_param) {
   hash_init(ctx, security_param == 128 ? 128 : 256);
 }
 
-void H2_copy(H2_context_t* new_ctx, H2_context_t* ctx) {
+void H2_copy(H2_context_t* new_ctx, const H2_context_t* ctx) {
   memcpy(new_ctx, ctx, sizeof(*ctx));
 }
 

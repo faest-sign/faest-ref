@@ -45,7 +45,7 @@ void H1_final(H1_context_t* H1_ctx, uint8_t* digest, size_t len);
 typedef hash_context H2_context_t;
 
 void H2_init(H2_context_t* ctx, unsigned int security_param);
-void H2_copy(H2_context_t* new_ctx, H2_context_t* ctx);
+void H2_copy(H2_context_t* new_ctx, const H2_context_t* ctx);
 void H2_update(H2_context_t* ctx, const uint8_t* src, size_t len);
 void H2_0_final(H2_context_t* ctx, uint8_t* digest, size_t len);
 void H2_1_final(H2_context_t* ctx, uint8_t* digest, size_t len);
