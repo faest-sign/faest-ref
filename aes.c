@@ -237,9 +237,9 @@ static uint8_t invnorm(uint8_t in) {
     for (unsigned int i = 0; i < 4; i++) {
       bf_x_17 = bf8_mul(bf_x_17, bf_x_17);
     }
-    bf_x_17 = bf8_mul(bf_x_17, bf8_inv(x));
+    bf_x_17         = bf8_mul(bf_x_17, bf8_inv(x));
     uint8_t y_prime = 0;
-    bf8_store(y_prime, bf_x_17);
+    bf8_store(&y_prime, bf_x_17);
     uint8_t y = 0;
     y ^= ((y_prime >> 0) & 1) << 0;
     y ^= ((y_prime >> 2) & 1) << 1;
