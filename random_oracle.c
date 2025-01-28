@@ -7,6 +7,7 @@
 #endif
 
 #include "random_oracle.h"
+#include "instances.h"
 
 static const uint8_t domain_sep_H0   = 0;
 static const uint8_t domain_sep_H1   = 1;
@@ -87,6 +88,10 @@ void H2_init(H2_context_t* ctx, unsigned int security_param) {
   hash_init(ctx, security_param == 128 ? 128 : 256);
 }
 
+void H2_copy(H2_context_t* new_ctx, H2_context_t* ctx) {
+  memcpy(new_ctx, ctx, sizeof(*ctx));
+}
+
 void H2_update(H2_context_t* ctx, const uint8_t* src, size_t len) {
   hash_update(ctx, src, len);
 }
@@ -132,6 +137,22 @@ void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len, uint8_t* iv) {
   hash_update(ctx, &domain_sep_H3, sizeof(domain_sep_H3));
   hash_final(ctx);
   hash_squeeze(ctx, digest, len);
-  hash_squeeze(ctx, iv, 16);
+  hash_squeeze(ctx, iv, IV_SIZE);
+  hash_clear(ctx);
+}
+
+// H_4
+void H4_init(H4_context_t* ctx, unsigned int security_param) {
+  hash_init(ctx, security_param == 128 ? 128 : 256);
+}
+
+void H4_update(H4_context_t* ctx, const uint8_t* iv) {
+  hash_update(ctx, iv, IV_SIZE);
+}
+
+void H4_final(H4_context_t* ctx, uint8_t* iv) {
+  hash_update(ctx, &domain_sep_H4, sizeof(domain_sep_H4));
+  hash_final(ctx);
+  hash_squeeze(ctx, iv, IV_SIZE);
   hash_clear(ctx);
 }
