@@ -46,8 +46,8 @@ ATTR_PURE static inline uint8_t* signature_d(uint8_t* base_ptr, const faest_para
   return base_ptr + (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes;
 }
 
-ATTR_PURE static inline uint8_t* signature_a_tilde(uint8_t* base_ptr,
-                                                   const faest_paramset_t* params) {
+ATTR_PURE static inline uint8_t* signature_a1_tilde(uint8_t* base_ptr,
+                                                    const faest_paramset_t* params) {
   const unsigned int lambda_bytes  = params->faest_param.lambda / 8;
   const unsigned int ell_bytes     = params->faest_param.l / 8;
   const unsigned int ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
@@ -56,52 +56,41 @@ ATTR_PURE static inline uint8_t* signature_a_tilde(uint8_t* base_ptr,
   return base_ptr + (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes + ell_bytes;
 }
 
-ATTR_PURE static inline uint8_t* signature_pdec(uint8_t* base_ptr, unsigned int index,
-                                                const faest_paramset_t* params) {
-  const unsigned int tau0          = params->faest_param.tau0;
+ATTR_PURE static inline uint8_t* signature_a2_tilde(uint8_t* base_ptr,
+                                                    const faest_paramset_t* params) {
   const unsigned int lambda_bytes  = params->faest_param.lambda / 8;
   const unsigned int ell_bytes     = params->faest_param.l / 8;
   const unsigned int ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
   const unsigned int utilde_bytes  = lambda_bytes + UNIVERSAL_HASH_B;
-  const unsigned int k0            = params->faest_param.k;
-  const unsigned int k1            = (params->faest_param.tau0 != 0) ? k0 - 1 : k0;
 
-  base_ptr +=
-      (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes + ell_bytes + lambda_bytes;
-  if (index < tau0) {
-    return base_ptr + index * (k0 + 2) * lambda_bytes;
-  } else {
-    return base_ptr + ((index - tau0) * (k1 + 2) + tau0 * (k0 + 2)) * lambda_bytes;
-  }
+  return base_ptr + (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes + ell_bytes +
+         lambda_bytes;
 }
 
-ATTR_PURE static inline uint8_t* signature_com(uint8_t* base_ptr, unsigned int index,
-                                               const faest_paramset_t* params) {
-  const unsigned int tau0          = params->faest_param.tau0;
+ATTR_PURE static inline uint8_t* signature_decom_i(uint8_t* base_ptr,
+                                                   const faest_paramset_t* params) {
   const unsigned int lambda_bytes  = params->faest_param.lambda / 8;
   const unsigned int ell_bytes     = params->faest_param.l / 8;
   const unsigned int ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
   const unsigned int utilde_bytes  = lambda_bytes + UNIVERSAL_HASH_B;
-  const unsigned int k0            = params->faest_param.k;
-  const unsigned int k1            = (params->faest_param.tau0 != 0) ? k0 - 1 : k0;
 
-  base_ptr +=
-      (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes + ell_bytes + lambda_bytes;
-  if (index < tau0) {
-    return base_ptr + (index * (k0 + 2) + k0) * lambda_bytes;
-  } else {
-    return base_ptr + ((index - tau0) * (k1 + 2) + k1 + tau0 * (k0 + 2)) * lambda_bytes;
-  }
+  return base_ptr + (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes + ell_bytes +
+         2 * lambda_bytes;
 }
 
 ATTR_PURE static inline uint8_t* signature_chall_3(uint8_t* base_ptr,
                                                    const faest_paramset_t* params) {
   const unsigned int lambda_bytes = params->faest_param.lambda / 8;
-  return base_ptr + params->faest_param.sig_size - IV_SIZE - lambda_bytes;
+  return base_ptr + params->faest_param.sig_size - sizeof(uint32_t) - IV_SIZE - lambda_bytes;
 }
 
-ATTR_PURE static inline uint8_t* signature_iv(uint8_t* base_ptr, const faest_paramset_t* params) {
-  return base_ptr + params->faest_param.sig_size - IV_SIZE;
+ATTR_PURE static inline uint8_t* signature_iv_pre(uint8_t* base_ptr,
+                                                  const faest_paramset_t* params) {
+  return base_ptr + params->faest_param.sig_size - sizeof(uint32_t) - IV_SIZE;
+}
+
+ATTR_PURE static inline uint8_t* signature_ctr(uint8_t* base_ptr, const faest_paramset_t* params) {
+  return base_ptr + params->faest_param.sig_size - sizeof(uint32_t);
 }
 
 // helpers to compute position in signature (verify)
@@ -134,8 +123,8 @@ ATTR_PURE static inline const uint8_t* dsignature_d(const uint8_t* base_ptr,
   return base_ptr + (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes;
 }
 
-ATTR_PURE static inline const uint8_t* dsignature_a_tilde(const uint8_t* base_ptr,
-                                                          const faest_paramset_t* params) {
+ATTR_PURE static inline const uint8_t* dsignature_a1_tilde(const uint8_t* base_ptr,
+                                                           const faest_paramset_t* params) {
   const unsigned int lambda_bytes  = params->faest_param.lambda / 8;
   const unsigned int ell_bytes     = params->faest_param.l / 8;
   const unsigned int ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
@@ -144,53 +133,42 @@ ATTR_PURE static inline const uint8_t* dsignature_a_tilde(const uint8_t* base_pt
   return base_ptr + (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes + ell_bytes;
 }
 
-ATTR_PURE static inline const uint8_t* dsignature_pdec(const uint8_t* base_ptr, unsigned int index,
-                                                       const faest_paramset_t* params) {
-  const unsigned int tau0          = params->faest_param.tau0;
+ATTR_PURE static inline const uint8_t* dsignature_a2_tilde(const uint8_t* base_ptr,
+                                                           const faest_paramset_t* params) {
   const unsigned int lambda_bytes  = params->faest_param.lambda / 8;
   const unsigned int ell_bytes     = params->faest_param.l / 8;
   const unsigned int ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
   const unsigned int utilde_bytes  = lambda_bytes + UNIVERSAL_HASH_B;
-  const unsigned int k0            = params->faest_param.k;
-  const unsigned int k1            = (params->faest_param.tau0 != 0) ? k0 - 1 : k0;
 
-  base_ptr +=
-      (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes + ell_bytes + lambda_bytes;
-  if (index < tau0) {
-    return base_ptr + index * (k0 + 2) * lambda_bytes;
-  } else {
-    return base_ptr + ((index - tau0) * (k1 + 2) + tau0 * (k0 + 2)) * lambda_bytes;
-  }
+  return base_ptr + (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes + ell_bytes +
+         lambda_bytes;
 }
 
-ATTR_PURE static inline const uint8_t* dsignature_com(const uint8_t* base_ptr, unsigned int index,
-                                                      const faest_paramset_t* params) {
-  const unsigned int tau0          = params->faest_param.tau0;
+ATTR_PURE static inline const uint8_t* dsignature_decom_i(const uint8_t* base_ptr,
+                                                          const faest_paramset_t* params) {
   const unsigned int lambda_bytes  = params->faest_param.lambda / 8;
   const unsigned int ell_bytes     = params->faest_param.l / 8;
   const unsigned int ell_hat_bytes = ell_bytes + 2 * lambda_bytes + UNIVERSAL_HASH_B;
   const unsigned int utilde_bytes  = lambda_bytes + UNIVERSAL_HASH_B;
-  const unsigned int k0            = params->faest_param.k;
-  const unsigned int k1            = (params->faest_param.tau0 != 0) ? k0 - 1 : k0;
 
-  base_ptr +=
-      (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes + ell_bytes + lambda_bytes;
-  if (index < tau0) {
-    return base_ptr + (index * (k0 + 2) + k0) * lambda_bytes;
-  } else {
-    return base_ptr + ((index - tau0) * (k1 + 2) + k1 + tau0 * (k0 + 2)) * lambda_bytes;
-  }
+  return base_ptr + (params->faest_param.tau - 1) * ell_hat_bytes + utilde_bytes + ell_bytes +
+         2 * lambda_bytes;
 }
 
 ATTR_PURE static inline const uint8_t* dsignature_chall_3(const uint8_t* base_ptr,
                                                           const faest_paramset_t* params) {
   const unsigned int lambda_bytes = params->faest_param.lambda / 8;
-  return base_ptr + params->faest_param.sig_size - IV_SIZE - lambda_bytes;
+  return base_ptr + params->faest_param.sig_size - sizeof(uint32_t) - IV_SIZE - lambda_bytes;
 }
 
-ATTR_PURE static inline const uint8_t* dsignature_iv(const uint8_t* base_ptr,
-                                                     const faest_paramset_t* params) {
-  return base_ptr + params->faest_param.sig_size - IV_SIZE;
+ATTR_PURE static inline const uint8_t* dsignature_iv_pre(const uint8_t* base_ptr,
+                                                         const faest_paramset_t* params) {
+  return base_ptr + params->faest_param.sig_size - sizeof(uint32_t) - IV_SIZE;
+}
+
+ATTR_PURE static inline const uint8_t* dsignature_ctr(const uint8_t* base_ptr,
+                                                      const faest_paramset_t* params) {
+  return base_ptr + params->faest_param.sig_size - sizeof(uint32_t);
 }
 
 // FAEST.Sign: line 3
@@ -205,11 +183,10 @@ static void hash_mu(uint8_t* mu, const uint8_t* owf_input, const uint8_t* owf_ou
 }
 
 // FAEST.Sign: line 4 + line 5
-static void hash_r_iv(uint8_t* root_key, uint8_t* iv, const uint8_t* owf_key, const uint8_t* mu,
-                      const uint8_t* rho, size_t rho_size, unsigned int lambda) {
+static void hash_r_iv(uint8_t* root_key, uint8_t* iv_pre, uint8_t* iv, const uint8_t* owf_key,
+                      const uint8_t* mu, const uint8_t* rho, size_t rho_size, unsigned int lambda) {
   const unsigned int lambda_bytes = lambda / 8;
 
-  uint8_t iv_pre[IV_SIZE];
   {
     H3_context_t h3_ctx;
     H3_init(&h3_ctx, lambda);
@@ -311,8 +288,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   hash_mu(mu, owf_input, owf_output, params->faest_param.pk_size / 2, msg, msg_len, lambda);
 
   // Step 4 and 5
-  uint8_t rootkey[MAX_LAMBDA_BYTES];
-  hash_r_iv(rootkey, signature_iv(sig, params), owf_key, mu, rho, rholen, lambda);
+  uint8_t rootkey[MAX_LAMBDA_BYTES], iv[MAX_LAMBDA_BYTES];
+  hash_r_iv(rootkey, signature_iv_pre(sig, params), iv, owf_key, mu, rho, rholen, lambda);
 
   // Step 8
   vec_com_t bavc;
@@ -325,13 +302,11 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     V[i] = V[0] + i * ell_hat_bytes;
   }
 
-  vole_commit(rootkey, signature_iv(sig, params), ell_hat, params, &bavc,
-              signature_c(sig, 0, params), u, V);
+  vole_commit(rootkey, iv, ell_hat, params, &bavc, signature_c(sig, 0, params), u, V);
 
   // Step 9
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
-  hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), signature_iv(sig, params),
-                   lambda, l, tau);
+  hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), iv, lambda, l, tau);
 
   // Step 11
   vole_hash(signature_u_tilde(sig, params), chall_1, u, l, lambda);
@@ -366,10 +341,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // TODO: skipping for now
   // ::16-19
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  uint8_t a1_tilde[MAX_LAMBDA_BYTES];
-  uint8_t a2_tilde[MAX_LAMBDA_BYTES];
-  uint8_t b_tilde[MAX_LAMBDA_BYTES];
-  aes_prove(w, u, V, owf_input, owf_output, chall_2, signature_a_tilde(sig, params), b_tilde,
+  aes_prove(w, u, V, owf_input, owf_output, chall_2, a0_tilde, signature_a1_tilde(sig, params),
             params);
   free(V[0]);
   free(V);
@@ -381,11 +353,13 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   // Step 22: hash everything up to the counter
   H2_context_t chall_3_ctx;
-  hash_challenge_3_init(&chall_3_ctx, chall_2, a0_tilde, a1_tilde, a2_tilde, lambda);
+  hash_challenge_3_init(&chall_3_ctx, chall_2, a0_tilde, signature_a1_tilde(sig, params),
+                        signature_a2_tilde(sig, params), lambda);
 
   // ::20-27
   // TODO: add an abort condition
-  for (uint32_t ctr = 0; true; ++ctr) {
+  uint32_t ctr = 0;
+  for (; true; ++ctr) {
     // Step 22: hash counter
     uint8_t chall_3[MAX_LAMBDA_BYTES];
     hash_challenge_3_final(chall_3, &chall_3_ctx, ctr, lambda);
@@ -402,12 +376,16 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     }
 
     // Step 27
-    if (bavc_open(&bavc, decoded_chall_3, signature_pdec(sig, 0, params), params)) {
+    if (bavc_open(&bavc, decoded_chall_3, signature_decom_i(sig, params), params)) {
       break;
     }
   }
   hash_clear(&chall_3_ctx);
   vec_com_clear(&bavc);
+
+  uint8_t buffer[sizeof(uint32_t)];
+  ctr = htole32(ctr);
+  memcpy(signature_ctr(sig, params), buffer, sizeof(uint32_t));
 }
 
 int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,
