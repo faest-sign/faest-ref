@@ -886,30 +886,41 @@ static void aes_key_schedule_constraints_Mkey_0_128(const uint8_t* w, const bf12
 }
 
 static void aes_keyexp_forward(uint8_t* k, bf128_t* k_tag, const uint8_t* w, const bf128_t* w_tag, 
-                                uint8_t* out, const faest_paramset_t* params) {
-  // Step: 1 skipped (sanity check)
+                                const faest_paramset_t* params) {
 
-  const unsigned int lambda      = params->faest_param.lambda;
-  const unsigned int R           = params->faest_param.R;
-  const unsigned int Nwd         = params->faest_param.Nwd;
-  const unsigned int lambdaBytes = lambda / 8;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Nk = lambda/8;
+  unsigned int R = params->faest_param.R;
 
-  const unsigned int out_len = (R + 1) * 128 / 8;
-  // Step 3
-  memcpy(out, x, lambdaBytes);
-  memset(out + lambdaBytes, 0, out_len - lambdaBytes);
+  // ::1-3 copying the Nk words
+  for (unsigned int i = 0; i < Nk; i++) {
+    k[i] = w[i];  // unit8 contains 8 bits
+  }
+  for (unsigned int i = 0; i < lambda; i++) {
+    k_tag[i] = w_tag[i];  // each bf128 is tag for one bit
+  }
 
-  // Step: 4
-  unsigned int i_wd = lambda;
-  // Step: 5..10
-  for (unsigned int j = Nwd; j < 4 * (R + 1); j++) {
-    if ((j % Nwd) == 0 || (Nwd > 6 && (j % Nwd) == 4)) {
-      memcpy(out + 32 * j / 8, x + i_wd / 8, 4);
-      i_wd += 32;
+  unsigned int i_wd = Nk;
+
+  for (unsigned int j = Nk; j < 4*(R + 1); j++) {
+
+    if (j % Nk == 0) {
+
+      for (unsigned int word_idx = i_wd; word_idx < 4; word_idx++) {
+        k[4*j + word_idx] = w[i_wd + word_idx];   // storing byte by byte
+      }
+      for (unsigned int word_bit_idx = i_wd*8; word_bit_idx < 4*8; word_bit_idx++) {
+        k_tag[4*8*j + word_bit_idx] = w_tag[i_wd*8 + word_bit_idx]; // storing bit tags, "bit by bit"
+      }
+      i_wd += 4;    // 32 bits -> 4 words
     } else {
-      for (unsigned int i = 0; i < 32; i += 8) {
-        // bit spliced
-        out[(32 * j + i) / 8] |= out[(32 * (j - Nwd) + i) / 8] ^ out[(32 * (j - 1) + i) / 8];
+
+      for (unsigned int word_idx = 0; word_idx < 4; word_idx++) {
+        k[4*j + word_idx] = k[4*(j - Nk) + word_idx] ^ k[4*(j - 1) + word_idx]; // adding bitwise
+      }
+
+      for (unsigned int word_bit_idx = 0; word_bit_idx < 32; word_bit_idx++) {
+        k_tag[4*8*j + word_bit_idx] = bf128_add(k_tag[4*8*(j - Nk) + word_bit_idx], k_tag[4*8*(j -1) + word_bit_idx]);  // adding the tags in F2lambda "bitwwise"
       }
     }
   }
