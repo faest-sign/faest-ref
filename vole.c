@@ -14,6 +14,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+static const uint32_t TWEAK_OFFSET = 1 << 31;
+
 #if !defined(FAEST_TESTS)
 static
 #endif
@@ -30,6 +32,8 @@ static
 
   // (depth + 1) x num_instances array of outLenBytes; but we only need two rows at a time
   uint8_t* r = calloc(2 * num_instances, outLenBytes);
+
+  i += 1 << 31;
 
 #define R(row, column) (r + (((row) % 2) * num_instances + (column)) * outLenBytes)
 #define V(idx) (v + (idx) * outLenBytes)
@@ -74,8 +78,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   unsigned int v_idx = 0;
   for (unsigned int i = 0; i < tau; ++i) {
     // Step 6
-    v_idx += ConvertToVole(iv, bavc->sd, false, i, ellhat_bytes, ui + i * ellhat_bytes, v[v_idx],
-                           params);
+    v_idx += ConvertToVole(iv, bavc->sd, false, i + TWEAK_OFFSET, ellhat_bytes,
+                           ui + i * ellhat_bytes, v[v_idx], params);
   }
   // Step 9
   memcpy(u, ui, ellhat_bytes);
@@ -126,7 +130,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
     }
 
     // Step: 7..8
-    const unsigned int ki = ConvertToVole(iv, sd, true, i, ellhat_bytes, NULL, qtmp, params);
+    const unsigned int ki =
+        ConvertToVole(iv, sd, true, i + TWEAK_OFFSET, ellhat_bytes, NULL, qtmp, params);
 
     // Step 11
     uint8_t delta[MAX_DEPTH];
