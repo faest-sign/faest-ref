@@ -102,49 +102,7 @@ static bf128_t* column_to_row_major_and_shrink_V_128(const uint8_t** v, unsigned
 
 static void aes_key_schedule_backward_1(const uint8_t* x, const uint8_t* xk, uint8_t* out,
                                         const faest_paramset_t* params) {
-  // Step: 1 skipped (sanity check)
-
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int Ske    = params->faest_param.Ske;
-
-  // Step: 2
-  unsigned int iwd   = 0;
-  unsigned int c     = 0;
-  bool rmvRcon       = true;
-  unsigned int ircon = 0;
-
-  for (unsigned int j = 0; j < Ske; j++) {
-    // Step 7 (bit sliced)
-    uint8_t x_tilde = x[j] ^ xk[iwd + c];
-
-    // Step 8
-    // this function is only called with Mtag == Mkey == 0
-    if (/* Mtag == 0 && */ rmvRcon == true && c == 0) {
-      // Steps 12 and 13, bitsliced; delta is always 0
-      x_tilde ^= Rcon[ircon];
-      ++ircon;
-    }
-
-    // Step: 15..19 (bit spliced)
-    const uint8_t y_tilde = rotr8(x_tilde, 7) ^ rotr8(x_tilde, 5) ^ rotr8(x_tilde, 2);
-    // this function is only called with Mtag == Mkey == 0
-    // set_bit((1 ^ Mtag) & (1 ^ Mkey), 0) ^ set_bit((1 ^ Mtag) & (1 ^ Mkey), 2) == 0x5
-    out[j] = y_tilde ^ 0x5;
-
-    // Step: 20
-    ++c;
-    if (c == 4) {
-      c = 0;
-      if (lambda == 192) {
-        iwd += 192 / 8;
-      } else {
-        iwd += 128 / 8;
-        if (lambda == 256) {
-          rmvRcon = !rmvRcon;
-        }
-      }
-    }
-  }
+  
 }
 
 static void aes_key_schedule_forward_128(const bf128_t* v, bf128_t* bf_out) {
@@ -885,52 +843,153 @@ static void aes_key_schedule_constraints_Mkey_0_128(const uint8_t* w, const bf12
 
 }
 
-static void aes_keyexp_forward(uint8_t* k, bf128_t* k_tag, const uint8_t* w, const bf128_t* w_tag, 
-                                const faest_paramset_t* params) {
+
+static void aes_inverse_affine(uint8_t* y, bf128_t* y_tag, uint8_t x, bf128_t* x_tag, bool isprover, bf128_t delta) {
+  
+  if (isprover) {
+    y[0] = (rotr8(x, 7) ^ rotr8(x, 5) ^ rotr8(x, 2)) ^ 0x05; // the compressed form
+  }
+  for (unsigned int i = 0; i < 8; ++i) {
+    y_tag[i] = bf128_add(bf128_add(x_tag[(i + 7) % 8], x_tag[(i + 5) % 8]),
+                                  x_tag[(i + 2) % 8]);
+    
+    // TODO: The below part is missing in the InverseAffine(), 
+    // this was present in Round 1, re-check later
+    if (!isprover) {
+      y_tag[0] = bf128_add(y_tag[0], delta);
+      y_tag[2] = bf128_add(y_tag[2], delta);
+    }
+  }
+}
+
+
+static void aes_keyexp_backward(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, uint8_t* key, bf128_t* key_tag,
+                                const faest_paramset_t* params, bool isprover, bf128_t delta) {
+
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Ske    = params->faest_param.Ske;
+
+  // ::2
+  uint8_t x_tilde;  // contains all (F_2)^8 bits
+  bf128_t x_tilde_tag[8];
+  // ::3
+  unsigned int iwd   = 0;
+  // ::4
+  bool rmvRcon       = true;
+  unsigned int ircon = 0;
+  // ::5-6
+  for (unsigned int j = 0; j < Ske; j++) {
+
+    // ::7
+    if (isprover) {
+      x_tilde = x[j] ^ key[iwd/8 + j%4];  // for the witness
+    }
+    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+      x_tilde_tag[bit_i] = bf128_add(x_tag[j*8 + bit_i], key_tag[iwd + (j%4)*8 + bit_i]); // for the tags of each witness bit
+    }
+
+    // ::8-10
+    if (rmvRcon == true && j % 4 == 0) {
+      if (isprover) {
+        // adding round constant to the witness
+        x_tilde = x_tilde ^ Rcon[ircon];
+      }
+      // adding round constant to the tags
+      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+        // for prover, no multiplication with delta
+        bf128_t rcon_tag;
+        if (isprover) {
+          rcon_tag = bf128_from_bit(get_bit(Rcon[ircon], bit_i));
+        } 
+        // for verifier, multiplication with delta
+        else {
+          rcon_tag = bf128_mul_bit(delta, get_bit(Rcon[ircon], bit_i));
+        }
+        x_tilde_tag[bit_i] = bf128_add(x_tilde_tag[bit_i], rcon_tag);
+
+      }
+      ++ircon;
+    }
+
+    // ::11
+    aes_inverse_affine(y, y_tag, x_tilde, x_tilde_tag, isprover, delta);
+
+    // ::12-16 lines only relavant for aes-128
+    if (j%4 == 4) {
+      iwd += 128;
+    }
+  }
+}
+
+static void aes_keyexp_forward(uint8_t* y, bf128_t* y_tag, const uint8_t* w, const bf128_t* w_tag, 
+                                const faest_paramset_t* params, bool isprover, bf128_t delta) {
 
   unsigned int lambda = params->faest_param.lambda;
   unsigned int Nk = lambda/8;
   unsigned int R = params->faest_param.R;
 
   // ::1-3 copying the Nk words
-  for (unsigned int i = 0; i < Nk; i++) {
-    k[i] = w[i];  // unit8 contains 8 bits
+  if (isprover) { // witness exists only for prover
+    for (unsigned int i = 0; i < Nk; i++) {
+      y[i] = w[i];  // unit8 contains 8 bits
+    }
   }
+  // used for tag (prover) or key (verifier) 
   for (unsigned int i = 0; i < lambda; i++) {
-    k_tag[i] = w_tag[i];  // each bf128 is tag for one bit
+    y_tag[i] = w_tag[i];  // each bf128 is tag for one bit
   }
-
   unsigned int i_wd = Nk;
 
+  // ::4-10
   for (unsigned int j = Nk; j < 4*(R + 1); j++) {
 
+    // ::5
     if (j % Nk == 0) {
 
-      for (unsigned int word_idx = i_wd; word_idx < 4; word_idx++) {
-        k[4*j + word_idx] = w[i_wd + word_idx];   // storing byte by byte
+      // ::6
+      if (isprover) {
+        for (unsigned int word_idx = i_wd; word_idx < 4; word_idx++) {
+          y[4*j + word_idx] = w[i_wd + word_idx];   // storing byte by byte
+        }
       }
       for (unsigned int word_bit_idx = i_wd*8; word_bit_idx < 4*8; word_bit_idx++) {
-        k_tag[4*8*j + word_bit_idx] = w_tag[i_wd*8 + word_bit_idx]; // storing bit tags, "bit by bit"
+        y_tag[4*8*j + word_bit_idx] = w_tag[i_wd*8 + word_bit_idx]; // storing bit tags, "bit by bit"
       }
+      // ::7
       i_wd += 4;    // 32 bits -> 4 words
+    // ::8
     } else {
-
-      for (unsigned int word_idx = 0; word_idx < 4; word_idx++) {
-        k[4*j + word_idx] = k[4*(j - Nk) + word_idx] ^ k[4*(j - 1) + word_idx]; // adding bitwise
+      // ::9-10
+      if (isprover) {
+        for (unsigned int word_idx = 0; word_idx < 4; word_idx++) {
+          y[4*j + word_idx] = y[4*(j - Nk) + word_idx] ^ y[4*(j - 1) + word_idx]; // adding bitwise
+        }
       }
-
       for (unsigned int word_bit_idx = 0; word_bit_idx < 32; word_bit_idx++) {
-        k_tag[4*8*j + word_bit_idx] = bf128_add(k_tag[4*8*(j - Nk) + word_bit_idx], k_tag[4*8*(j -1) + word_bit_idx]);  // adding the tags in F2lambda "bitwwise"
+        y_tag[4*8*j + word_bit_idx] = bf128_add(y_tag[4*8*(j - Nk) + word_bit_idx], y_tag[4*8*(j -1) + word_bit_idx]);  // adding the tags in F2lambda "bitwwise"
       }
     }
   }
 }
 
 
+static void aes_expkey_constraints(bf128_t* z0, bf128_t* z1, const uint8_t* w, const bf128_t* w_tag, 
+                                    const faest_paramset_t* params, bool isprover, bf128_t delta) {
 
-static void aes_expkey_constraints(bf128_t* z0, bf128_t* z1, uint8_t* k, bf128_t* k_tag, const uint8_t* w, const bf128_t* w_tag, const faest_paramset_t* params, bool isprover) {
+
+  unsigned int Ske = params->faest_param.Ske;
+  unsigned int R = params->faest_param.R;
+  unsigned int lambda = params->faest_param.lambda;
 
   // ::1
+  uint8_t k[(R+1)*lambda/8];
+  bf128_t k_tag[(R+1)*lambda];
+  aes_keyexp_forward(k, k_tag, w, w_tag, params, isprover, delta);
+  // ::2
+  uint8_t w_flat[Ske];
+  bf128_t w_flat_tag[8*Ske];
+  aes_keyexp_backward(w_flat, w_flat_tag, w, w_tag, k, k_tag, params, isprover, delta);
+
 
 
 }
