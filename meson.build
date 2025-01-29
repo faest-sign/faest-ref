@@ -508,16 +508,16 @@ endif
 
 # generate files for parameter sets
 foreach parameter_set : parameter_sets
-  # headers += configure_file(
-  #   input: 'faest_param.h.in',
-  #   output: 'faest_@0@.h'.format(parameter_set.get('PARAM_L')),
-  #   configuration: parameter_set,
-  # )
-  # faest_sources += configure_file(
-  #   input: 'faest_param.c.in',
-  #   output: 'faest_@0@.c'.format(parameter_set.get('PARAM_L')),
-  #   configuration: parameter_set,
-  # )
+  headers += configure_file(
+    input: 'faest_param.h.in',
+    output: 'faest_@0@.h'.format(parameter_set.get('PARAM_L')),
+    configuration: parameter_set,
+  )
+  faest_sources += configure_file(
+    input: 'faest_param.c.in',
+    output: 'faest_@0@.c'.format(parameter_set.get('PARAM_L')),
+    configuration: parameter_set,
+  )
 endforeach
 
 # static faest library
