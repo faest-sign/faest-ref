@@ -10,6 +10,7 @@ if boost_test.found()
     'fields.cpp',
     'hash_shake.cpp',
     'instances.cpp',
+    'owf.cpp',
     'prg.cpp',
     # 'test_faest_tvs.cpp',
     'universal_hashing.cpp',
@@ -62,6 +63,12 @@ if boost_test.found()
     'Instances',
     extended_tests,
     args: ['-t', 'instances'],
+    timeout: 6000,
+  )
+  test(
+    'OWF',
+    extended_tests,
+    args: ['-t', 'owf'],
     timeout: 6000,
   )
   test(
@@ -125,6 +132,15 @@ if get_option('tv-generators').enabled()
   executable(
     'generate_prg_tv',
     files('generate_prg_tv.cpp'),
+    dependencies: [libfaest_static_dependency],
+    include_directories: include_directories,
+    cpp_args: defines + cpp_flags,
+    link_args: linker_flags,
+    override_options: ['b_lto=false'],
+  )
+  executable(
+    'generate_owf_tv',
+    files('generate_owf_tv.cpp'),
     dependencies: [libfaest_static_dependency],
     include_directories: include_directories,
     cpp_args: defines + cpp_flags,

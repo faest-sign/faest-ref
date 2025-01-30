@@ -82,9 +82,9 @@ namespace {
   void test_vc_tv(const faest_paramset_t& params, const std::array<uint16_t, IDeltaSize>& i_delta,
                   const std::array<uint8_t, HSize>& expected_h,
                   const std::array<uint8_t, 64>& expected_hashed_k,
-                  const std::array<uint8_t, 64> expected_hashed_sd,
-                  const std::array<uint8_t, 64> expected_hashed_decom_i,
-                  const std::array<uint8_t, 64> expected_hashed_rec_sd) {
+                  const std::array<uint8_t, 64>& expected_hashed_sd,
+                  const std::array<uint8_t, 64>& expected_hashed_decom_i,
+                  const std::array<uint8_t, 64>& expected_hashed_rec_sd) {
     const auto lambda       = params.faest_param.lambda;
     const auto lambda_bytes = lambda / 8;
     const auto com_size     = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
