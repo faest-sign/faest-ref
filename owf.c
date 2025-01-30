@@ -8,6 +8,7 @@
 
 #include "owf.h"
 #include "aes.h"
+#include "utils.h"
 
 #include <string.h>
 
@@ -107,16 +108,12 @@ void owf_em_128(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   EVP_EncryptUpdate(ctx, output, &len, key, IV_SIZE);
   EVP_EncryptFinal_ex(ctx, output + IV_SIZE, &len);
   EVP_CIPHER_CTX_free(ctx);
-  for (unsigned int i = 0; i != 16; ++i) {
-    output[i] ^= key[i];
-  }
+  xor_u8_array(output, key, output, 16);
 #else
   aes_round_keys_t round_keys;
   aes128_init_round_keys(&round_keys, input);
   aes128_encrypt_block(&round_keys, key, output);
-  for (unsigned int i = 0; i != 16; ++i) {
-    output[i] ^= key[i];
-  }
+  xor_u8_array(output, key, output, 16);
 #endif
 }
 
@@ -124,16 +121,12 @@ void owf_em_192(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   aes_round_keys_t round_keys;
   rijndael192_init_round_keys(&round_keys, input);
   rijndael192_encrypt_block(&round_keys, key, output);
-  for (unsigned int i = 0; i != 24; ++i) {
-    output[i] ^= key[i];
-  }
+  xor_u8_array(output, key, output, 24);
 }
 
 void owf_em_256(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   aes_round_keys_t round_keys;
   rijndael256_init_round_keys(&round_keys, input);
   rijndael256_encrypt_block(&round_keys, key, output);
-  for (unsigned int i = 0; i != 32; ++i) {
-    output[i] ^= key[i];
-  }
+  xor_u8_array(output, key, output, 32);
 }
