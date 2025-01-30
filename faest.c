@@ -300,7 +300,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // Step 3
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
   hash_mu(mu, owf_input, params->faest_param.owf_input_size, owf_output,
-          params->faest_param.owf_outpu_size, msg, msg_len, lambda);
+          params->faest_param.owf_output_size, msg, msg_len, lambda);
 
   // Step 4 and 5
   uint8_t rootkey[MAX_LAMBDA_BYTES], iv[MAX_LAMBDA_BYTES];
@@ -423,7 +423,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   // Step 2
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
   hash_mu(mu, owf_input, params->faest_param.owf_input_size, owf_output,
-          params->faest_param.owf_outpu_size, msg, msglen, lambda);
+          params->faest_param.owf_output_size, msg, msglen, lambda);
 
   // Step 3
   uint8_t iv[IV_SIZE];

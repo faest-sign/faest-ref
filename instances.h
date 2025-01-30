@@ -63,7 +63,7 @@ typedef struct faest_param_t {
   // additional parameters
   uint16_t sig_size;
   uint8_t owf_input_size;
-  uint8_t owf_outpu_size;
+  uint8_t owf_output_size;
 } faest_param_t;
 
 typedef struct faest_paramset_t {
