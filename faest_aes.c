@@ -872,14 +872,70 @@ static aes_128_enc_constraints(bf128_t* z0, bf128_t* z1, uint8_t* owf_in,
       // TODO:
 
       // ::18
-      
+      for (unsigned int b = 0; b < 2; b++) {
+        // TODO:
+        aes_128_sbox_affine();
+        aes_128_shiftrows();
+        aes_128_mix_coloumns();
+        aes_128_add_round_key();
+      }
+
+      if (r == R/2 - 1) {
+        aes_128_add_round_key();
+      } else {
+
+      }
+
 
 
 
 
     }
+}
+
+// TODO: 
+void aes_128_inv_norm_to_conjugates(bf128_t* y, bf128_t* y_tag, uint8_t x,
+                                          const bf128_t* x_tag, uint8_t isprover) {
+  
+                                      
+    bf128_t beta_4 = bf128_add(bf128_get_alpha(6), bf128_get_alpha(3));
 
 }
+
+// TODO:
+void aes_128_inv_norm_constraints(bf128_t* z0, bf128_t* z1, const bf128_t* state_bits,
+                                          const bf128_t* state_bits_tags, const uint8_t* y, 
+                                          const bf128_t* y_tag, uint8_t isprover) {
+
+}
+
+// TODO:
+void aes_128_state_to_bytes(bf8_t* out, const uint8_t* state) {
+  for (unsigned int i = 0; i < 16; i++) {
+      out[i] = bf8_byte_combine_bits(state[i]);
+  }
+}
+
+// TODO:
+static void aes_128_sbox_affine() {
+
+}
+
+// TODO:
+static void aes_128_shiftrows() {
+
+}
+
+// TODO:
+static void aes_128_mix_coloumns() {
+
+}
+
+// TODO:
+static void aes_128_add_round_key() {
+
+}
+
 
 // TODO:
 static void aes_128_conjugates(uint8_t* state_conj, bf128_t* state_conj_tag, const uint8_t* state, const bf128_t* state_tag, bool isprover, bf128_t delta) {
@@ -958,11 +1014,14 @@ static void aes_constraints_128(bf128_t* z0, bf128_t* z1, const uint8_t* w, cons
   // ::20 not needed for aes128
   // ::21
   bf128_t z_tilde_0[Senc];
+  bf128_t z_tilde_1[Senc];
 
-  aes_128_enc_constraints();
+  aes_128_enc_constraints(z_tilde_0, z_tilde_1, owf_in, owf_out, w, w_tag, k, k_tag, params, isprover, delta);
 
-
-
+  for (unsigned int i = 0; i < Senc; i++) {
+    z0[1+(FAEST_128F_Ske / 4 + 2*4) + i] = z_tilde_0[i];
+    z1[1+(FAEST_128F_Ske / 4 + 2*4) + i] = z_tilde_1[i];
+  }
 
 }
 

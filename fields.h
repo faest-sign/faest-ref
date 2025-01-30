@@ -192,12 +192,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_one(void) {
   return ret;
 }
 
-ATTR_PURE void aes_128_state_to_bytes(bf8_t* out, const uint8_t* state);
-ATTR_PURE void aes_128_inv_norm_to_conjugates(bf128_t* y, bf128_t* y_tag, uint8_t x,
-                                          const bf128_t* x_tag, uint8_t isprover, bf128_t delta);
-ATTR_PURE void aes_128_inv_norm_constraints(bf128_t* z0, bf128_t* z1, const bf128_t* state_bits,
-                                          const bf128_t* state_bits_tags, const uint8_t* y, 
-                                          const bf128_t* y_tag, uint8_t isprover, bf128_t delta);
+ATTR_PURE bf128_t bf128_get_alpha(unsigned int idx);
 ATTR_PURE bf8_t bf8_byte_combine_bits(uint8_t x);
 ATTR_PURE bf128_t bf128_byte_combine(const bf128_t* x);
 ATTR_PURE bf128_t bf128_byte_combine_bits(uint8_t x);

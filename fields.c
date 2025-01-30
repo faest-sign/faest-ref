@@ -116,26 +116,8 @@ static const bf128_t bf128_alpha[7] = {
            U64C(0xe0, 0x8f, 0xb7, 0x4f, 0x1a, 0x31, 0x50, 0x09)),
 };
 
-// TODO: 
-void aes_128_inv_norm_to_conjugates(bf128_t* y, bf128_t* y_tag, uint8_t x,
-                                          const bf128_t* x_tag, uint8_t isprover) {
-  
-    bf128_t beta_4 = bf128_add(bf128_alpha[6], bf128_alpha[3]);
-
-}
-
-// TODO:
-void aes_128_inv_norm_constraints(bf128_t* z0, bf128_t* z1, const bf128_t* state_bits,
-                                          const bf128_t* state_bits_tags, const uint8_t* y, 
-                                          const bf128_t* y_tag, uint8_t isprover) {
-
-}
-
-// TODO:
-void aes_128_state_to_bytes(bf8_t* out, const uint8_t* state) {
-  for (unsigned int i = 0; i < 16; i++) {
-      out[i] = bf8_byte_combine_bits(state[i]);
-  }
+bf128_t bf128_get_alpha(unsigned int idx) {
+  return bf128_alpha[idx];
 }
 
 
