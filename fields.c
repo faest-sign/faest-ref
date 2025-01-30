@@ -9,9 +9,6 @@
 #include "fields.h"
 #include "randomness.h"
 
-// TODO: Make it central somewhere
-#define ALLOW_ZERO_SBOX
-
 // GF(2^8) with X^8 + X^4 + X^3 + X^1 + 1
 #define bf8_modulus (UINT8_C((1 << 4) | (1 << 3) | (1 << 1) | 1))
 // GF(2^64) with X^64 + X^4 + X^3 + X^1 + 1

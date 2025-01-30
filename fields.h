@@ -11,9 +11,6 @@
 #include <stdint.h>
 #include <string.h>
 
-// TODO: Make it central somewhere
-#define ALLOW_ZERO_SBOX
-
 FAEST_BEGIN_C_DECL
 
 typedef uint8_t bf8_t;
@@ -198,10 +195,8 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_one(void) {
 ATTR_PURE bf8_t bf8_byte_combine_bits(uint8_t x);
 ATTR_PURE bf128_t bf128_byte_combine(const bf128_t* x);
 ATTR_PURE bf128_t bf128_byte_combine_bits(uint8_t x);
-#if defined(ALLOW_ZERO_SBOX)
 ATTR_PURE bf128_t bf128_byte_combine_sq(const bf128_t* x);
 ATTR_PURE bf128_t bf128_byte_combine_bits_sq(uint8_t x);
-#endif
 bf128_t bf128_rand(void);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -281,10 +276,8 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_one(void) {
 
 ATTR_PURE bf192_t bf192_byte_combine(const bf192_t* x);
 ATTR_PURE bf192_t bf192_byte_combine_bits(uint8_t x);
-#if defined(ALLOW_ZERO_SBOX)
 ATTR_PURE bf192_t bf192_byte_combine_sq(const bf192_t* x);
 ATTR_PURE bf192_t bf192_byte_combine_bits_sq(uint8_t x);
-#endif
 bf192_t bf192_rand(void);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -361,10 +354,8 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_one(void) {
 
 ATTR_PURE bf256_t bf256_byte_combine(const bf256_t* x);
 ATTR_PURE bf256_t bf256_byte_combine_bits(uint8_t x);
-#if defined(ALLOW_ZERO_SBOX)
 ATTR_PURE bf256_t bf256_byte_combine_sq(const bf256_t* x);
 ATTR_PURE bf256_t bf256_byte_combine_bits_sq(uint8_t x);
-#endif
 bf256_t bf256_rand(void);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
