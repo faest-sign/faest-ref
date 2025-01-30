@@ -390,6 +390,7 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
 
   EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
   assert(ctx);
+  EVP_CIPHER_CTX_set_padding(ctx, 0);
 
   EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
 
@@ -402,7 +403,7 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
     EVP_EncryptUpdate(ctx, out, &len, internal_iv, outlen % IV_SIZE);
   }
   // write to unused buffer
-  EVP_EncryptFinal_ex(ctx, internal_iv, &len);
+  EVP_EncryptFinal_ex(ctx, out + len, &len);
   EVP_CIPHER_CTX_free(ctx);
 #endif
 }
