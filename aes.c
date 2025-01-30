@@ -12,9 +12,6 @@
 #include "compat.h"
 #include "utils.h"
 
-// TODO: Make it central somewhere
-#define ALLOW_ZERO_SBOX
-
 #if defined(HAVE_OPENSSL)
 #include <openssl/evp.h>
 #endif
@@ -36,10 +33,6 @@ static const bf8_t round_constants[30] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
     0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
 };
-
-static int contains_zero(const bf8_t* block) {
-  return !block[0] | !block[1] | !block[2] | !block[3];
-}
 
 static bf8_t compute_sbox(bf8_t in) {
   bf8_t t = bf8_inv(in);
@@ -83,20 +76,12 @@ static void add_round_key(unsigned int round, aes_block_t state, const aes_round
   }
 }
 
-static int sub_bytes(aes_block_t state, unsigned int block_words) {
-  int ret = 0;
+static void sub_bytes(aes_block_t state, unsigned int block_words) {
   for (unsigned int c = 0; c < block_words; c++) {
-    // Here we allow/not allow zero input to the sbox
-    #if !defined(ALLOW_ZERO_SBOX)
-    ret |= contains_zero(&state[c][0]);
-    #endif
-
     for (unsigned int r = 0; r < AES_NR; r++) {
       state[c][r] = compute_sbox(state[c][r]);
     }
   }
-
-  return ret;
 }
 
 static void shift_row(aes_block_t state, unsigned int block_words) {
@@ -159,9 +144,8 @@ static void rot_word(bf8_t* words) {
   words[3]  = tmp;
 }
 
-int expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
-               unsigned int block_words, unsigned int num_rounds) {
-  int ret = 0;
+void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
+                unsigned int block_words, unsigned int num_rounds) {
 
   for (unsigned int k = 0; k < key_words; k++) {
     round_keys->round_keys[k / block_words][k % block_words][0] = bf8_load(&key[4 * k]);
@@ -176,13 +160,11 @@ int expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int ke
 
     if (k % key_words == 0) {
       rot_word(tmp);
-      ret |= contains_zero(tmp);
       sub_words(tmp);
       tmp[0] ^= round_constants[(k / key_words) - 1];
     }
 
     if (key_words > 6 && (k % key_words) == 4) {
-      ret |= contains_zero(tmp);
       sub_words(tmp);
     }
 
@@ -196,30 +178,28 @@ int expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int ke
     round_keys->round_keys[k / block_words][k % block_words][3] =
         round_keys->round_keys[m / block_words][m % block_words][3] ^ tmp[3];
   }
-
-  return ret;
 }
 
 // Calling Functions
 
-int aes128_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
-  return expand_key(round_key, key, KEY_WORDS_128, AES_BLOCK_WORDS, ROUNDS_128);
+void aes128_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
+  expand_key(round_key, key, KEY_WORDS_128, AES_BLOCK_WORDS, ROUNDS_128);
 }
 
-int aes192_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
-  return expand_key(round_key, key, KEY_WORDS_192, AES_BLOCK_WORDS, ROUNDS_192);
+void aes192_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
+  expand_key(round_key, key, KEY_WORDS_192, AES_BLOCK_WORDS, ROUNDS_192);
 }
 
-int aes256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
-  return expand_key(round_key, key, KEY_WORDS_256, AES_BLOCK_WORDS, ROUNDS_256);
+void aes256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
+  expand_key(round_key, key, KEY_WORDS_256, AES_BLOCK_WORDS, ROUNDS_256);
 }
 
-int rijndael192_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
-  return expand_key(round_key, key, KEY_WORDS_192, RIJNDAEL_BLOCK_WORDS_192, ROUNDS_192);
+void rijndael192_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
+  expand_key(round_key, key, KEY_WORDS_192, RIJNDAEL_BLOCK_WORDS_192, ROUNDS_192);
 }
 
-int rijndael256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
-  return expand_key(round_key, key, KEY_WORDS_256, RIJNDAEL_BLOCK_WORDS_256, ROUNDS_256);
+void rijndael256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
+  expand_key(round_key, key, KEY_WORDS_256, RIJNDAEL_BLOCK_WORDS_256, ROUNDS_256);
 }
 
 static void load_state(aes_block_t state, const uint8_t* src, unsigned int block_words) {
@@ -255,7 +235,6 @@ static void store_invnorm_state(uint8_t* dst, aes_block_t state, unsigned int bl
     uint8_t normstate = invnorm(state[i / 4][i % 4]);
     bf8_store(&dst[i], normstate);
   }
-
 }
 
 static void store_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
@@ -264,71 +243,62 @@ static void store_state(uint8_t* dst, aes_block_t state, unsigned int block_word
   }
 }
 
-static int aes_encrypt(const aes_round_keys_t* keys, aes_block_t state, unsigned int block_words,
-                       unsigned int num_rounds) {
-  int ret = 0;
-
+static void aes_encrypt(const aes_round_keys_t* keys, aes_block_t state, unsigned int block_words,
+                        unsigned int num_rounds) {
   // first round
   add_round_key(0, state, keys, block_words);
 
   for (unsigned int round = 1; round < num_rounds; ++round) {
-    ret |= sub_bytes(state, block_words);
+    sub_bytes(state, block_words);
     shift_row(state, block_words);
     mix_column(state, block_words);
     add_round_key(round, state, keys, block_words);
   }
 
   // last round
-  ret |= sub_bytes(state, block_words);
+  sub_bytes(state, block_words);
   shift_row(state, block_words);
   add_round_key(num_rounds, state, keys, block_words);
-
-  return ret;
 }
 
-int aes128_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
-                         uint8_t* ciphertext) {
+void aes128_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
+                          uint8_t* ciphertext) {
   aes_block_t state;
   load_state(state, plaintext, AES_BLOCK_WORDS);
-  const int ret = aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_128);
+  aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_128);
   store_state(ciphertext, state, AES_BLOCK_WORDS);
-  return ret;
 }
 
-int aes192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
-                         uint8_t* ciphertext) {
+void aes192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
+                          uint8_t* ciphertext) {
   aes_block_t state;
   load_state(state, plaintext, AES_BLOCK_WORDS);
-  const int ret = aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_192);
+  aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_192);
   store_state(ciphertext, state, AES_BLOCK_WORDS);
-  return ret;
 }
 
-int aes256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
-                         uint8_t* ciphertext) {
+void aes256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
+                          uint8_t* ciphertext) {
   aes_block_t state;
   load_state(state, plaintext, AES_BLOCK_WORDS);
-  const int ret = aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_256);
+  aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_256);
   store_state(ciphertext, state, AES_BLOCK_WORDS);
-  return ret;
 }
 
-int rijndael192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
-                              uint8_t* ciphertext) {
+void rijndael192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
+                               uint8_t* ciphertext) {
   aes_block_t state;
   load_state(state, plaintext, RIJNDAEL_BLOCK_WORDS_192);
-  const int ret = aes_encrypt(key, state, RIJNDAEL_BLOCK_WORDS_192, ROUNDS_192);
+  aes_encrypt(key, state, RIJNDAEL_BLOCK_WORDS_192, ROUNDS_192);
   store_state(ciphertext, state, RIJNDAEL_BLOCK_WORDS_192);
-  return ret;
 }
 
-int rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
-                              uint8_t* ciphertext) {
+void rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
+                               uint8_t* ciphertext) {
   aes_block_t state;
   load_state(state, plaintext, RIJNDAEL_BLOCK_WORDS_256);
-  const int ret = aes_encrypt(key, state, RIJNDAEL_BLOCK_WORDS_256, ROUNDS_256);
+  aes_encrypt(key, state, RIJNDAEL_BLOCK_WORDS_256, ROUNDS_256);
   store_state(ciphertext, state, RIJNDAEL_BLOCK_WORDS_256);
-  return ret;
 }
 
 static void add_to_upper_word(uint8_t* iv, uint32_t tweak) {
@@ -525,7 +495,7 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
     // Step 13
     add_round_key(0, state, &round_keys, block_words);
 
-    for (unsigned int round = 0; round < num_rounds-1; ++round) {
+    for (unsigned int round = 0; round < num_rounds - 1; ++round) {
 
       if (round % 2 == 0) {
         // save inverse norm of the S-box inputs, in coloumn major order
@@ -545,8 +515,6 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
       mix_column(state, block_words);
       // Step 19
       add_round_key(round + 1, state, &round_keys, block_words);
-
-
     }
     // last round is not commited to, so not computed
   }
