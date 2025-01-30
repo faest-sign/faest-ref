@@ -52,7 +52,8 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
   {                                                                                                \
     name##_LAMBDA, name##_TAU, name##_W_GRIND, name##_T_OPEN, name##_ELL, CALC_K(name),            \
         CALC_TAU0(name), CALC_TAU1(name), CALC_L(name), name##_Nwd, name##_Ske, name##_R,          \
-        name##_Senc, name##_Lke, name##_Lenc, name##_SIG_SIZE, name##_PK_SIZE,                     \
+        name##_Senc, name##_Lke, name##_Lenc, name##_SIG_SIZE, name##_OWF_INPUT_SIZE,              \
+        name##_OWF_OUTPUT_SIZE                                                                     \
   }
 
 #define FAEST_128S_PARAMS PARAMS(FAEST_128S)
@@ -68,7 +69,7 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
 #define FAEST_EM_256S_PARAMS PARAMS(FAEST_EM_256S)
 #define FAEST_EM_256F_PARAMS PARAMS(FAEST_EM_256F)
 #define FAEST_INVALID_PARAMS                                                                       \
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
 faest_paramset_t faest_get_paramset(faest_paramid_t paramid) {
   switch (paramid) {

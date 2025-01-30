@@ -13,17 +13,21 @@
 #include "instances.h"
 #include "faest.h"
 #include "parameters.h"
+#include "utils.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 // memory layout of the public key: OWF input || OWF output
 #define PK_INPUT(pk) (pk)
-#define PK_OUTPUT(pk) (&pk[@PK_SIZE@ / 2])
+#define PK_OUTPUT(pk) (&pk[@OWF_INPUT_SIZE@])
 
 // memory layout of the secret key: OWF input || OWF key
 #define SK_INPUT(sk) (sk)
-#define SK_KEY(sk) (&sk[@PK_SIZE@ / 2])
+#define SK_KEY(sk) (&sk[@OWF_INPUT_SIZE@])
+
+static_assert(@PK_SIZE@ == @OWF_INPUT_SIZE@ + @OWF_OUTPUT_SIZE@);
+static_assert(@SK_SIZE@ == @OWF_INPUT_SIZE@ + @LAMBDA@ / 8);
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
   if (!pk || !sk) {
@@ -32,13 +36,15 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
 
   bool done = false;
   while (!done) {
-    rand_bytes(sk, @SK_SIZE@);
-    // declassify OWF input
-    faest_declassify(SK_INPUT(sk), @PK_SIZE@ / 2);
-    done = faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), PK_OUTPUT(pk));
+    rand_bytes(SK_KEY(sk), @LAMBDA@  / 8);
+    done = (ptr_get_bit(SK_KEY(sk), 0) ^ ptr_get_bit(SK_KEY(sk), 1)) != 0;
     faest_declassify(&done, sizeof(done));
   }
-  memcpy(PK_INPUT(pk), SK_INPUT(sk), @PK_SIZE@ / 2);
+  rand_bytes(SK_INPUT(sk), @OWF_INPUT_SIZE@);
+  // declassify OWF input
+  faest_declassify(SK_INPUT(sk), @OWF_INPUT_SIZE@);
+  faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), PK_OUTPUT(pk));
+  memcpy(PK_INPUT(pk), SK_INPUT(sk), @OWF_INPUT_SIZE@);
 
   // declassify public key
   faest_declassify(pk, @PK_SIZE@);
@@ -50,12 +56,13 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk,
     return -1;
   }
 
-  uint8_t pk_check[@PK_SIZE@];
-  if (!faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), PK_OUTPUT(pk_check))) {
-    // zero bytes in SubBytes input
+  if ((ptr_get_bit(SK_KEY(sk), 0) ^ ptr_get_bit(SK_KEY(sk), 1)) == 0) {
     return 1;
   }
-  memcpy(PK_INPUT(pk_check), SK_INPUT(sk), @PK_SIZE@ / 2);
+
+  uint8_t pk_check[@OWF_OUTPUT_SIZE@];
+  faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), PK_OUTPUT(pk_check));
+  memcpy(PK_INPUT(pk_check), SK_INPUT(sk), @OWF_INPUT_SIZE@);
 
   return faest_timingsafe_bcmp(pk_check, pk, sizeof(pk_check)) == 0 ? 0 : 2;
 }
@@ -65,11 +72,8 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign_with_randomness(const uint8_t*
     return -1;
   }
 
-  uint8_t owf_output[@PK_SIZE@ / 2];
-  if (!faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), owf_output)) {
-    // invalid key
-    return -1;
-  }
+  uint8_t owf_output[@OWF_OUTPUT_SIZE@];
+  faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), owf_output);
   // declassify OWF output
   faest_declassify(owf_output, sizeof(owf_output));
 

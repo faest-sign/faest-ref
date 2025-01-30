@@ -172,12 +172,13 @@ ATTR_PURE static inline const uint8_t* dsignature_ctr(const uint8_t* base_ptr,
 }
 
 // FAEST.Sign: line 3
-static void hash_mu(uint8_t* mu, const uint8_t* owf_input, const uint8_t* owf_output,
-                    size_t owf_size, const uint8_t* msg, size_t msglen, unsigned int lambda) {
+static void hash_mu(uint8_t* mu, const uint8_t* owf_input, size_t owf_input_size,
+                    const uint8_t* owf_output, size_t owf_output_size, const uint8_t* msg,
+                    size_t msglen, unsigned int lambda) {
   H2_context_t h1_ctx;
   H2_init(&h1_ctx, lambda);
-  H2_update(&h1_ctx, owf_input, owf_size);
-  H2_update(&h1_ctx, owf_output, owf_size);
+  H2_update(&h1_ctx, owf_input, owf_input_size);
+  H2_update(&h1_ctx, owf_output, owf_output_size);
   H2_update(&h1_ctx, msg, msglen);
   H2_0_final(&h1_ctx, mu, 2 * lambda / 8);
 }
@@ -298,7 +299,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   // Step 3
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
-  hash_mu(mu, owf_input, owf_output, params->faest_param.pk_size / 2, msg, msg_len, lambda);
+  hash_mu(mu, owf_input, params->faest_param.owf_input_size, owf_output,
+          params->faest_param.owf_outpu_size, msg, msg_len, lambda);
 
   // Step 4 and 5
   uint8_t rootkey[MAX_LAMBDA_BYTES], iv[MAX_LAMBDA_BYTES];
@@ -354,7 +356,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // TODO: skipping for now
   // ::16-19
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w, u, V, owf_input, owf_output, chall_2, params);
+  // aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w, u, V,
+  // owf_input, owf_output, chall_2, params);
   free(V[0]);
   free(V);
   V = NULL;
@@ -419,7 +422,8 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // Step 2
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
-  hash_mu(mu, owf_input, owf_output, params->faest_param.pk_size / 2, msg, msglen, lambda);
+  hash_mu(mu, owf_input, params->faest_param.owf_input_size, owf_output,
+          params->faest_param.owf_outpu_size, msg, msglen, lambda);
 
   // Step 3
   uint8_t iv[IV_SIZE];
@@ -474,8 +478,10 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
                    dsignature_d(sig, params), lambda, l);
 
   // Step 18
-  uint8_t* a0_tilde =
-      aes_verify(dsignature_d(sig, params), q, chall_2, dsignature_chall_3(sig, params), dsignature_a1_tilde(sig, params), dsignature_a2_tilde(sig, params), owf_input, owf_output, params);
+  uint8_t* a0_tilde = NULL;
+  // aes_verify(dsignature_d(sig, params), q, chall_2, dsignature_chall_3(sig, params),
+  // dsignature_a1_tilde(sig, params), dsignature_a2_tilde(sig, params), owf_input, owf_output,
+  // params);
   free(q[0]);
   free(q);
   q = NULL;

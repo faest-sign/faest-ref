@@ -128,6 +128,8 @@ param_128s.set('T_OPEN', 102)
 param_128s.set('SIG_SIZE', 4506)
 param_128s.set('PK_SIZE', 32)
 param_128s.set('SK_SIZE', 32)
+param_128s.set('OWF_INPUT_SIZE', 16)
+param_128s.set('OWF_OUTPUT_SIZE', 16)
 parameter_sets += param_128s
 
 # parameter set: FAEST-128f
@@ -149,6 +151,8 @@ param_128f.set('T_OPEN', 110)
 param_128f.set('SIG_SIZE', 5924)
 param_128f.set('PK_SIZE', 32)
 param_128f.set('SK_SIZE', 32)
+param_128f.set('OWF_INPUT_SIZE', 16)
+param_128f.set('OWF_OUTPUT_SIZE', 16)
 parameter_sets += param_128f
 
 # parameter set: FAEST-EM-128s
@@ -170,6 +174,8 @@ param_em_128s.set('T_OPEN', 103)
 param_em_128s.set('SIG_SIZE', 3906)
 param_em_128s.set('PK_SIZE', 32)
 param_em_128s.set('SK_SIZE', 32)
+param_em_128s.set('OWF_INPUT_SIZE', 16)
+param_em_128s.set('OWF_OUTPUT_SIZE', 16)
 parameter_sets += param_em_128s
 
 # parameter set: FAEST-EM-128f
@@ -191,6 +197,8 @@ param_em_128f.set('T_OPEN', 112)
 param_em_128f.set('SIG_SIZE', 5060)
 param_em_128f.set('PK_SIZE', 32)
 param_em_128f.set('SK_SIZE', 32)
+param_em_128f.set('OWF_INPUT_SIZE', 16)
+param_em_128f.set('OWF_OUTPUT_SIZE', 16)
 parameter_sets += param_em_128f
 
 # parameter set: FAEST-192s
@@ -210,8 +218,10 @@ param_192s.set('TAU', 16)
 param_192s.set('W_GRIND', 12)
 param_192s.set('T_OPEN', 162)
 param_192s.set('SIG_SIZE', 11260)
-param_192s.set('PK_SIZE', 64)
-param_192s.set('SK_SIZE', 56)
+param_192s.set('PK_SIZE', 48)
+param_192s.set('SK_SIZE', 40)
+param_192s.set('OWF_INPUT_SIZE', 16)
+param_192s.set('OWF_OUTPUT_SIZE', 32)
 parameter_sets += param_192s
 
 # parameter set: FAEST-192f
@@ -231,8 +241,10 @@ param_192f.set('TAU', 24)
 param_192f.set('W_GRIND', 8)
 param_192f.set('T_OPEN', 163)
 param_192f.set('SIG_SIZE', 14948)
-param_192f.set('PK_SIZE', 64)
-param_192f.set('SK_SIZE', 56)
+param_192f.set('PK_SIZE', 48)
+param_192f.set('SK_SIZE', 40)
+param_192f.set('OWF_INPUT_SIZE', 16)
+param_192f.set('OWF_OUTPUT_SIZE', 32)
 parameter_sets += param_192f
 
 # parameter set: FAEST-EM-192s
@@ -254,6 +266,8 @@ param_em_192s.set('T_OPEN', 162)
 param_em_192s.set('SIG_SIZE', 9340)
 param_em_192s.set('PK_SIZE', 48)
 param_em_192s.set('SK_SIZE', 48)
+param_em_192s.set('OWF_INPUT_SIZE', 24)
+param_em_192s.set('OWF_OUTPUT_SIZE', 24)
 parameter_sets += param_em_192s
 
 # parameter set: FAEST-EM-192f
@@ -275,6 +289,8 @@ param_em_192f.set('T_OPEN', 176)
 param_em_192f.set('SIG_SIZE', 12380)
 param_em_192f.set('PK_SIZE', 48)
 param_em_192f.set('SK_SIZE', 48)
+param_em_192f.set('OWF_INPUT_SIZE', 24)
+param_em_192f.set('OWF_OUTPUT_SIZE', 24)
 parameter_sets += param_em_192f
 
 # parameter set: FAEST-256s
@@ -294,8 +310,10 @@ param_256s.set('TAU', 22)
 param_256s.set('W_GRIND', 6)
 param_256s.set('T_OPEN', 245)
 param_256s.set('SIG_SIZE', 20696)
-param_256s.set('PK_SIZE', 64)
-param_256s.set('SK_SIZE', 64)
+param_256s.set('PK_SIZE', 48)
+param_256s.set('SK_SIZE', 48)
+param_256s.set('OWF_INPUT_SIZE', 16)
+param_256s.set('OWF_OUTPUT_SIZE', 32)
 parameter_sets += param_256s
 
 # parameter set: FAEST-256f
@@ -315,8 +333,10 @@ param_256f.set('TAU', 32)
 param_256f.set('W_GRIND', 8)
 param_256f.set('T_OPEN', 246)
 param_256f.set('SIG_SIZE', 26548)
-param_256f.set('PK_SIZE', 64)
-param_256f.set('SK_SIZE', 64)
+param_256f.set('PK_SIZE', 48)
+param_256f.set('SK_SIZE', 48)
+param_256f.set('OWF_INPUT_SIZE', 16)
+param_256f.set('OWF_OUTPUT_SIZE', 32)
 parameter_sets += param_256f
 
 # parameter set: FAEST-EM-256s
@@ -338,6 +358,8 @@ param_em_256s.set('T_OPEN', 218)
 param_em_256s.set('SIG_SIZE', 17984)
 param_em_256s.set('PK_SIZE', 64)
 param_em_256s.set('SK_SIZE', 64)
+param_em_256s.set('OWF_INPUT_SIZE', 32)
+param_em_256s.set('OWF_OUTPUT_SIZE', 32)
 parameter_sets += param_em_256s
 
 # parameter set: FAEST-EM-256f
@@ -359,6 +381,8 @@ param_em_256f.set('T_OPEN', 234)
 param_em_256f.set('SIG_SIZE', 23476)
 param_em_256f.set('PK_SIZE', 64)
 param_em_256f.set('SK_SIZE', 64)
+param_em_256f.set('OWF_INPUT_SIZE', 32)
+param_em_256f.set('OWF_OUTPUT_SIZE', 32)
 parameter_sets += param_em_256f
 
 # also make data from all parameter sets available "globally"

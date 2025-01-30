@@ -14,7 +14,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-static const uint32_t TWEAK_OFFSET = 1 << 31;
+static const uint32_t TWEAK_OFFSET = UINT32_C(0x80000000); // 2^31
 
 #if !defined(FAEST_TESTS)
 static
