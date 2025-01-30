@@ -577,189 +577,6 @@ static void aes_enc_constraints_Mkey_1_128(const uint8_t* in, const uint8_t* out
 
 
 
-
-
-// Mkey = 1, this is for the verifier
-static void aes_key_schedule_constraints_Mkey_1_128(const bf128_t* q, const uint8_t* delta,
-                                                    zk_hash_128_ctx* b0_ctx, bf128_t* qk) {
-  // Step: 19..20
-  aes_key_schedule_forward_128(q, qk);
-  bf128_t q_w_dash[FAEST_128F_Ske * 8];
-  aes_key_schedule_backward_128(&q[FAEST_128F_LAMBDA], qk, 0, 1, delta, q_w_dash);
-
-  const bf128_t bf_delta      = bf128_load(delta);
-  const bf128_t delta_squared = bf128_mul(bf_delta, bf_delta);
-
-  // Step 23..24
-  unsigned int iwd = 32 * (FAEST_128F_Nwd - 1);
-  for (unsigned int j = 0; j < FAEST_128F_Ske / 4; j++) {
-
-    bf128_t bf_q_hat_k[4];
-    bf128_t bf_q_hat_w_dash[4];
-    #if defined(ALLOW_ZERO_SBOX)
-    bf128_t bf_q_hat_k_sq[4];
-    bf128_t bf_q_hat_w_dash_sq[4];
-    #endif
-
-    for (unsigned int r = 0; r < 4; r++) {
-
-      // Step: 25..26
-      bf_q_hat_k[(r + 3) % 4] = bf128_byte_combine(qk + ((iwd + 8 * r)));
-      bf_q_hat_w_dash[r]      = bf128_byte_combine(q_w_dash + ((32 * j + 8 * r)));
-      #if defined(ALLOW_ZERO_SBOX)
-      bf_q_hat_k_sq[(r + 3) % 4] = bf128_byte_combine_sq(qk + ((iwd + 8 * r)));
-      bf_q_hat_w_dash_sq[r]      = bf128_byte_combine_sq(q_w_dash + ((32 * j + 8 * r)));
-      #endif
-
-    }
-
-    // Step: 38
-    for (unsigned int r = 0; r < 4; r++) {
-
-      #if defined(ALLOW_ZERO_SBOX)
-      // Quicksilver multiplication
-      // multiply the tags
-      const bf128_t mul_tag_1 = bf128_mul(bf_q_hat_k_sq[r], bf_q_hat_w_dash[r]);  // mul1.mac0
-      const bf128_t mul_tag_2 = bf128_mul(bf_q_hat_k[r], bf_q_hat_w_dash_sq[r]);  // mul2.mac0
-      
-      // the constnat term
-      zk_hash_128_update(b0_ctx, bf128_add(
-                                          mul_tag_1,
-                                          bf128_mul(delta_squared, bf_q_hat_k[r])
-                                          )
-      );
-      // the constnat term
-      zk_hash_128_update(b0_ctx, bf128_add(
-                                          mul_tag_2,
-                                          bf128_mul(delta_squared, bf_q_hat_w_dash[r])
-                                          )
-      );
-
-      #else
-      // the constnat term
-      zk_hash_128_update(b0_ctx, bf128_add(
-                                          bf128_mul(bf_q_hat_k[r], bf_q_hat_w_dash[r]), 
-                                          delta_squared));
-      #endif
-      
-
-    }
-    iwd = iwd + 128;
-  }
-}
-
-
-// Mkey = 0, this is for the prover
-static void aes_key_schedule_constraints_Mkey_0_128(const uint8_t* w, const bf128_t* v,
-                                                    zk_hash_128_ctx* a0_ctx,
-                                                    zk_hash_128_ctx* a1_ctx, uint8_t* k,
-                                                    bf128_t* vk, const faest_paramset_t* params) {
-  // for scan-build
-  assert(FAEST_128F_Ske == params->faest_param.Ske);
-
-  // Step: 2
-  aes_key_schedule_forward_1(w, k, params);
-  // Step: 3
-  aes_key_schedule_forward_128(v, vk);
-
-  // Step: 4, this is for the inverse witness
-  uint8_t w_dash[FAEST_128F_Ske];
-  aes_key_schedule_backward_1(w + FAEST_128F_LAMBDA / 8, k, w_dash, params);
-  // Step: 5, this for the Tags
-  bf128_t v_w_dash[FAEST_128F_Ske * 8];
-  aes_key_schedule_backward_128(v + FAEST_128F_LAMBDA, vk, 1, 0, NULL, v_w_dash);
-
-  // Step: 6..8
-  unsigned int iwd = 32 * (FAEST_128F_Nwd - 1);
-  for (unsigned int j = 0; j < FAEST_128F_Ske / 4; j++) {
-    bf128_t bf_k_hat[4];
-    bf128_t bf_v_k_hat[4];
-    bf128_t bf_w_hat[4];
-    bf128_t bf_v_w_hat[4];
-    #if defined(ALLOW_ZERO_SBOX)
-    bf128_t bf_k_hat_sq[4];
-    bf128_t bf_v_k_hat_sq[4];
-    bf128_t bf_w_hat_sq[4];
-    bf128_t bf_v_w_hat_sq[4];
-    #endif
-
-    for (unsigned int r = 0; r < 4; r++) {
-      // Step: 10..16
-      bf_k_hat[(r + 3) % 4]   = bf128_byte_combine_bits(k[(iwd + 8 * r) / 8]); // lifted inverse input
-      bf_v_k_hat[(r + 3) % 4] = bf128_byte_combine(vk + (iwd + 8 * r));         // lifted inverse input tag
-      bf_w_hat[r]        = bf128_byte_combine_bits(w_dash[(32 * j + 8 * r) / 8]); // lifted inverse output
-      bf_v_w_hat[r]      = bf128_byte_combine(v_w_dash + (32 * j + 8 * r));       // lifted inverse output tag
-
-      // squaring the bits and macs and lifting
-      #if defined(ALLOW_ZERO_SBOX)
-      bf_k_hat_sq[(r + 3) % 4] = bf128_byte_combine_bits_sq(k[(iwd + 8 * r) / 8]);    // lifted inverse input sq
-      bf_v_k_hat_sq[(r + 3) % 4] = bf128_byte_combine_sq(vk + (iwd + 8 * r));         // lifted inverse input tag sq
-      bf_w_hat_sq[r] = bf128_byte_combine_bits_sq(w_dash[(32 * j + 8 * r) / 8]);  // lifted inverse output sq
-      bf_v_w_hat_sq[r] = bf128_byte_combine_sq(v_w_dash + (32 * j + 8 * r));      // lifted inverse output tag sq
-      #endif
-    }
-
-    // Step: 18..20, also ZKhash from AESprove::20-21 is done here
-    for (unsigned int r = 0; r < 4; r++) {
-
-      #if defined(ALLOW_ZERO_SBOX)
-      // Psuedoinverse contraint
-      // QS multiplication
-      const bf128_t mul_tag_1 = bf128_mul(bf_v_k_hat_sq[r], bf_v_w_hat[r]); // mul1.mac0
-      const bf128_t mul_tag_2 = bf128_mul(bf_v_k_hat[r], bf_v_w_hat_sq[r]); // mul2.mac0
-      // multiply the tags with the values and multiply the results
-      const bf128_t mul_val_1 = bf128_mul(                      // mul1.mac1
-                                          bf128_add(bf_k_hat_sq[r], bf_v_k_hat_sq[r]),
-                                          bf128_add(bf_w_hat[r], bf_v_w_hat[r])
-                                          );
-      const bf128_t mul_val_2 = bf128_mul(                      // mul2.mac1
-                                          bf128_add(bf_k_hat[r], bf_v_k_hat[r]),
-                                          bf128_add(bf_w_hat_sq[r], bf_v_w_hat_sq[r])
-                                          );
-
-      // the constant term
-      zk_hash_128_update(a0_ctx, mul_tag_1);
-      // the linear term
-      zk_hash_128_update(a1_ctx, bf128_add(
-                                            bf128_add(mul_tag_1, bf_k_hat[r]), // mul1.mac0 + x.val  (because here we check x^2*y = x)
-                                            bf128_add(mul_val_1, bf_v_k_hat[r]) // mul1.mac1 + x.mac
-                                          )
-                        );
-
-      // the constant term
-      zk_hash_128_update(a0_ctx, mul_tag_2);
-      // the linear term
-      zk_hash_128_update(a1_ctx, bf128_add(
-                                            bf128_add(mul_tag_2, bf_w_hat[r]), // mul2.mac0 + y.val  (because here we check x*y^2 = y)
-                                            bf128_add(mul_val_2, bf_v_w_hat[r]) // mul2.mac1 + y.mac
-                                          )
-                        );
-      #else
-      // Inverse constraint
-      const bf128_t tmp_a0 = bf128_mul(bf_v_k_hat[r], bf_v_w_hat[r]);
-      zk_hash_128_update(a0_ctx, tmp_a0);
-      const bf128_t tmp_a1 = bf128_add(
-                                      bf128_add(
-                                                bf128_mul(
-                                                          bf128_add(
-                                                                    bf_k_hat[r], 
-                                                                    bf_v_k_hat[r]),
-                                                          bf128_add(
-                                                                    bf_w_hat[r], 
-                                                                    bf_v_w_hat[r])),
-                                                bf128_one()),
-                                      tmp_a0);
-
-      zk_hash_128_update(a1_ctx, tmp_a1);
-      #endif
-    }
-
-    iwd = iwd + 128;
-  }
-
-}
-
-
 static void aes_128_inverse_affine(uint8_t* y, bf128_t* y_tag, uint8_t x, bf128_t* x_tag, bool isprover, bf128_t delta) {
   
   if (isprover) {
@@ -960,11 +777,16 @@ static aes_128_enc_constraints(bf128_t* z0, bf128_t* z1, uint8_t* owf_in,
                                 bf128_t* w_tag, uint8_t* k, bf128_t* k_tag, 
                                 const faest_paramset_t* params, bool isprover, bf128_t delta) {
 
+    unsigned int Nst = 4;
+    unsigned int Nstbits = 32 * Nst;
+    unsigned int R = params->faest_param.R;
+    unsigned int Nstbytes = Nstbits/8;
+
     /// ::1 AddRoundKey
-    bf128_t state_bits[16];
-    bf128_t state_bits_tag[16];
+    bf128_t state_bits[Nstbytes];
+    bf128_t state_bits_tag[Nstbytes];
     // TODO: Unsure of the squaring part come here???, spec not defined
-    for (unsigned int i = 0; i < 16; i++) {
+    for (unsigned int i = 0; i < Nstbytes; i++) {
       if (isprover) {
         state_bits[i] = bf128_add(
                         bf128_byte_combine_bits(owf_in[i]), bf128_byte_combine_bits(k[i]));
@@ -981,22 +803,86 @@ static aes_128_enc_constraints(bf128_t* z0, bf128_t* z1, uint8_t* owf_in,
         state_bits_tag[i] = bf128_add(    // For prover we do not multiply with delta 
                         bf128_byte_combine(bf_tmp), bf128_byte_combine(k_tag + i*8));
         // TODO: do we square, I guess yes ???
-        // #if defined(ALLOW_ZERO_SBOX)
         // bf128_t tmp[8];
         // for (unsigned int bit_j = 0; bit_j < 8; ++bit_j) {
         //   tmp[bit_j] = bf_xin[i] ^ bf_xk[i * 8 + bit_j];
         // }
-        // bf_y_sq[i] = bf128_byte_combine_sq(tmp);
-        // #endif          
+        // bf_y_sq[i] = bf128_byte_combine_sq(tmp);       
       } else {
         bf128_t bf_tmp[8];
-        for (unsigned int j = 0; j < 8; j++) {  // here we multiply with delta
+        for (unsigned int j = 0; j < 8; j++) {  // For verifier we multiply in with delta
           bf_tmp[j] = bf128_mul_bit(delta, get_bit(owf_in[i], j));
         }
         state_bits_tag[i] = bf128_add(
                         bf128_byte_combine(bf_tmp), bf128_byte_combine(k_tag + i*8));
       }
     }
+
+    // TODO: here need to be careful with the 0000||4bits invnorm witness values!!
+
+    // ::2
+    for (unsigned int r = 0; r < R/2; r++) {
+
+      // ::3-4
+      bf128_t state_conj[Nstbytes];
+      bf128_t state_conj_tag[Nstbytes];
+      // TODO: not implemented function below
+      aes_128_conjugates(state_conj, state_conj_tag, state_bits, state_bits_tag, 
+                          isprover, delta);
+
+      // ::5-6
+      uint8_t n[Nstbits/2*4]; // 1 uint8 contains 4 bits of the Invnorm 0000||4bits
+      bf128_t n_tag[Nstbits/2]; // tag for each bit
+      for (unsigned int i = 0; i < Nstbits/2; i++) {
+        if (isprover) {
+          // only prover has the witness
+          n[i] = w[(((3*Nstbits)/2)*r)/4];
+        }
+        // verifier has the tags (keys)
+        n_tag[i] = w_tag[(((3*Nstbits)/2)*r)];
+      }
+
+      // ::7
+      bf128_t st[Nstbytes*8];
+      bf128_t st_tag[Nstbytes*8];
+      for (unsigned int i = 0; i < Nstbytes; i++) {
+        // ::8-9
+        uint8_t y[4];
+        bf128_t y_tag[4];
+        // TODO: not implemented function below
+        aes_128_inv_norm_to_conjugates(y, y_tag, n, n_tag, isprover, delta);
+
+        // ::10-11
+        // TODO: not implemented function below
+        aes_128_inv_norm_constraints(z0 + (3*r*Nstbytes), z1 + (3*r*Nstbytes), state_conj, 
+                                      state_conj_tag, y, y_tag, isprover, delta);
+
+        // ::12
+        for (unsigned int j = 0; j < 8; j++) {
+          // ::13-14
+          // TODO: unsure what happens here, help! T.T
+        }
+      }
+
+      // ::15-16
+      // TODO: not implemented function below
+      bf8_t k_0[16];
+      aes_128_state_to_bytes(k_0, k + (Nstbits*(2*r +1)));
+      // ::17
+      // TODO:
+
+      // ::18
+      
+
+
+
+
+    }
+
+}
+
+// TODO:
+static void aes_128_conjugates(uint8_t* state_conj, bf128_t* state_conj_tag, const uint8_t* state, const bf128_t* state_tag, bool isprover, bf128_t delta) {
 
 }
 
@@ -1077,27 +963,6 @@ static void aes_constraints_128(bf128_t* z0, bf128_t* z1, const uint8_t* w, cons
 
 
 
-  // TODO: From where we call the key contrainst and the enc constraints
-
-  // TODO: putting all this here for now
-  // uint8_t* k  = malloc((FAEST_128F_R + 1) * 128 / 8);
-  // bf128_t* vk = faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t) * ((FAEST_128F_R + 1) * 128));
-  // zk_hash_128_ctx a0_ctx;
-  // zk_hash_128_ctx a1_ctx;
-  // zk_hash_128_init(&a0_ctx, chall_2);
-  // zk_hash_128_init(&a1_ctx, chall_2);
-
-  // aes_key_schedule_constraints_Mkey_0_128(w, bf_v, &a0_ctx, &a1_ctx, k, vk, params);
-
-  // Step: Skipping 8 in implementation
-  // Step: 9
-
-  // Step: 10,11
-  // aes_enc_constraints_Mkey_0_128(in, out, w + FAEST_128F_Lke / 8, bf_v + FAEST_128F_Lke, k, vk, &a0_ctx, &a1_ctx);
-  // Step: 12 (beta == 1)
-  // faest_aligned_free(vk);
-  // free(k);
-  // faest_aligned_free(bf_v);
 
 }
 
