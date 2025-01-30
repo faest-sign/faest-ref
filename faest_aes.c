@@ -909,10 +909,13 @@ void aes_128_inv_norm_constraints(bf128_t* z0, bf128_t* z1, const bf128_t* state
 
 }
 
-// TODO:
-void aes_128_state_to_bytes(bf8_t* out, const uint8_t* state) {
+void aes_128_state_to_bytes(bf128_t* out, bf128_t* out_tag, const uint8_t* state, const bf128_t* state_tag, bool isprover) {
+
   for (unsigned int i = 0; i < 16; i++) {
-      out[i] = bf8_byte_combine_bits(state[i]);
+    if (isprover) {
+      out[i] = bf128_byte_combine_bits(state[i]);
+    }
+    out_tag[i] = bf128_byte_combine(state_tag + i*8);
   }
 }
 
