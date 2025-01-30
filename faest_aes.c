@@ -760,7 +760,7 @@ static void aes_key_schedule_constraints_Mkey_0_128(const uint8_t* w, const bf12
 }
 
 
-static void aes_inverse_affine(uint8_t* y, bf128_t* y_tag, uint8_t x, bf128_t* x_tag, bool isprover, bf128_t delta) {
+static void aes_128_inverse_affine(uint8_t* y, bf128_t* y_tag, uint8_t x, bf128_t* x_tag, bool isprover, bf128_t delta) {
   
   if (isprover) {
     y[0] = (rotr8(x, 7) ^ rotr8(x, 5) ^ rotr8(x, 2)) ^ 0x05; // the compressed form
@@ -778,8 +778,7 @@ static void aes_inverse_affine(uint8_t* y, bf128_t* y_tag, uint8_t x, bf128_t* x
   }
 }
 
-
-static void aes_keyexp_backward(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, uint8_t* key, bf128_t* key_tag,
+static void aes_128_keyexp_backward(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, uint8_t* key, bf128_t* key_tag,
                                 const faest_paramset_t* params, bool isprover, bf128_t delta) {
 
   const unsigned int lambda = params->faest_param.lambda;
@@ -837,7 +836,7 @@ static void aes_keyexp_backward(uint8_t* y, bf128_t* y_tag, const uint8_t* x, co
   }
 }
 
-static void aes_keyexp_forward(uint8_t* y, bf128_t* y_tag, const uint8_t* w, const bf128_t* w_tag, 
+static void aes_128_keyexp_forward(uint8_t* y, bf128_t* y_tag, const uint8_t* w, const bf128_t* w_tag, 
                                 const faest_paramset_t* params, bool isprover, bf128_t delta) {
 
   unsigned int lambda = params->faest_param.lambda;
@@ -888,8 +887,7 @@ static void aes_keyexp_forward(uint8_t* y, bf128_t* y_tag, const uint8_t* w, con
   }
 }
 
-
-static void aes_expkey_constraints(bf128_t* z0, bf128_t* z1, const uint8_t* w, const bf128_t* w_tag, 
+static void aes_128_expkey_constraints(bf128_t* z0, bf128_t* z1, uint8_t* k, bf128_t* k_tag, const uint8_t* w, const bf128_t* w_tag, 
                                     const faest_paramset_t* params, bool isprover, bf128_t delta) {
 
 
@@ -899,13 +897,11 @@ static void aes_expkey_constraints(bf128_t* z0, bf128_t* z1, const uint8_t* w, c
   unsigned int Nk = lambda/32;
 
   // ::1
-  uint8_t k[(R+1)*lambda/8];
-  bf128_t k_tag[(R+1)*lambda];
-  aes_keyexp_forward(k, k_tag, w, w_tag, params, isprover, delta);
+  aes_128_keyexp_forward(k, k_tag, w, w_tag, params, isprover, delta);
   // ::2
   uint8_t w_flat[Ske];
   bf128_t w_flat_tag[8*Ske];
-  aes_keyexp_backward(w_flat, w_flat_tag, w, w_tag, k, k_tag, params, isprover, delta);
+  aes_128_keyexp_backward(w_flat, w_flat_tag, w, w_tag, k, k_tag, params, isprover, delta);
 
   // ::3-5
   unsigned int iwd = 32*(Nk - 1);  // as 1 unit8 has 8 bits
@@ -959,13 +955,20 @@ static void aes_expkey_constraints(bf128_t* z0, bf128_t* z1, const uint8_t* w, c
 
 }
 
-static void aes_deg2to3(bf128_t* z0, bf128_t* z1, uint8_t val, bf128_t tag, bool isprover, bf128_t delta) {
+static aes_128_enc_constraints(bf128_t* z0, bf128_t* z1, uint8_t* owf_in, bf128_t* owf_in_tag, 
+                                uint8_t* owf_out, bf128_t* owf_out_tag, uint8_t* w, 
+                                bf128_t* w_tag, uint8_t* k, bf128_t* k_tag, 
+                                const faest_paramset_t* params, bool isprover, bf128_t delta) {
+
+
+}
+
+static void aes_128_deg2to3(bf128_t* z0, bf128_t* z1, bf128_t val, bf128_t tag, bool isprover, bf128_t delta) {
   if(isprover) {
-    // TODO: do we lift here with generator, most likely yes, better confirm later
-    z0[0] = bf128_byte_combine_bits(val);
-    z1[1] = tag;
+    z0[0] = val;
+    z1[0] = tag;
   } else {
-    z0[0] = bf128_mul(bf128_byte_combine_bits(val), delta);
+    // verifier does not have tag
     z1[0] = bf128_mul(tag, delta);
   }
 }
@@ -986,6 +989,12 @@ static void constant_to_vole_128(bf128_t* tag, const uint8_t* val, bool isprover
 
 static void aes_constraints_128(bf128_t* z0, bf128_t* z1, const uint8_t* w, const bf128_t* w_tag, const uint8_t* owf_in, const uint8_t* owf_out, const faest_paramset_t* params, bool isprover, bf128_t delta) {
 
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int R = params->faest_param.R;
+  unsigned int Ske = params->faest_param.Ske;
+  unsigned int Lke = lambda + 8*Ske;
+  unsigned int Lenc = params->faest_param.Lenc;
+  unsigned int Senc = params->faest_param.Senc;
   // ::1-3 owf_in, owf_out, z and z_tag
 
   // ::4-5
@@ -1000,9 +1009,35 @@ static void aes_constraints_128(bf128_t* z0, bf128_t* z1, const uint8_t* w, cons
   constant_to_vole_128(owf_out_tag, owf_out, true, bf128_one());
 
   // ::15 skiped as B = 1
-
   // ::16
+  bf128_t z_tilde_0_expkey[FAEST_128F_Ske / 4 + 2*4];
+  bf128_t z_tilde_1_expkey[FAEST_128F_Ske / 4 + 2*4];
+  uint8_t k[(R+1)*lambda/8];
+  bf128_t k_tag[(R+1)*lambda];
+   // if isprover == true, z_tilde_0 will be empty after aes_128_expkey_constraints() returns
+  aes_128_expkey_constraints(z_tilde_0_expkey, z_tilde_1_expkey, k, k_tag, w, w_tag, params, isprover, delta);
   
+  // ::17
+  for (unsigned int i = 0; i < FAEST_128F_Ske / 4 + 2*4; i++) {
+    aes_128_deg2to3(z0 + 1+i, z1 + 1+i, z_tilde_0_expkey[i], z_tilde_1_expkey[i], isprover, delta);
+  }
+
+  // ::18 b = 0
+  // ::19
+  uint8_t w_tilde[Lenc/8];
+  bf128_t w_tilde_tag[Lenc];
+  for (unsigned int i = 0; i < Lenc/8; i++) {   // can also do a memcpy
+    w_tilde[i] = w[Lke/8 + i];  // copying 8 bits at a time
+  }
+  for (unsigned int i = 0; i < Lenc; i++) {
+    w_tilde_tag[i] = w_tag[Lke + i];  // copying 1 bit's tag at a time
+  }
+  // ::20 not needed for aes128
+  // ::21
+  bf128_t z_tilde_0[Senc];
+
+  aes_128_enc_constraints();
+
 
 
   // TODO: From where we call the key contrainst and the enc constraints
