@@ -10,8 +10,8 @@
 #include "hash_shake.h"
 #include "instances.hpp"
 #include "utils.hpp"
-#include "randomness.h"
 
+#include <algorithm>
 #include <array>
 #include <random>
 #include <vector>
@@ -27,6 +27,9 @@ namespace {
 } // namespace
 
 int main() {
+  std::mt19937 mt;
+  std::uniform_int_distribution<uint8_t> dist(0, 0xff);
+
   std::cout << "#ifndef TEST_VOLE_TVS_HPP\n";
   std::cout << "#define TEST_VOLE_TVS_HPP\n\n";
   std::cout << "#include <array>\n";
@@ -73,7 +76,7 @@ int main() {
     print_named_array("hashed_v", "uint8_t", hash_array(v_storage));
 
     while (true) {
-      rand_bytes(chal.data(), chal.size());
+      std::generate(chal.begin(), chal.end(), [&mt, &dist] { return dist(mt); });
       for (unsigned int i = lambda - params.faest_param.w_grind; i != lambda; ++i) {
         ptr_set_bit(chal.data(), 0, i);
       }

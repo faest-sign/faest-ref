@@ -16,7 +16,7 @@
 #include <vector>
 
 int main() {
-  std::random_device rd;
+  std::mt19937 rd;
   std::uniform_int_distribution<uint8_t> distrib(0, 255);
   std::uniform_int_distribution<uint32_t> distrib_u32(0, std::numeric_limits<uint32_t>::max());
 
