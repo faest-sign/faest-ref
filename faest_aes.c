@@ -955,11 +955,48 @@ static void aes_128_expkey_constraints(bf128_t* z0, bf128_t* z1, uint8_t* k, bf1
 
 }
 
-static aes_128_enc_constraints(bf128_t* z0, bf128_t* z1, uint8_t* owf_in, bf128_t* owf_in_tag, 
-                                uint8_t* owf_out, bf128_t* owf_out_tag, uint8_t* w, 
+static aes_128_enc_constraints(bf128_t* z0, bf128_t* z1, uint8_t* owf_in, 
+                                uint8_t* owf_out, uint8_t* w, 
                                 bf128_t* w_tag, uint8_t* k, bf128_t* k_tag, 
                                 const faest_paramset_t* params, bool isprover, bf128_t delta) {
 
+    /// ::1 AddRoundKey
+    bf128_t state_bits[16];
+    bf128_t state_bits_tag[16];
+    // TODO: Unsure of the squaring part come here???, spec not defined
+    for (unsigned int i = 0; i < 16; i++) {
+      if (isprover) {
+        state_bits[i] = bf128_add(
+                        bf128_byte_combine_bits(owf_in[i]), bf128_byte_combine_bits(k[i]));
+        // TODO: do we square, I guess yes ???
+        // uint8_t tmp;
+        // for (unsigned int bit_j = 0; bit_j < 8; ++bit_j) {
+        //   tmp ^= (  ( (xin >> bit_j) ^ (xk[i] >> bit_j)  ) & 1 ) << bit_j;
+        // }
+        // bf_y_sq[i] = bf128_byte_combine_bits_sq(tmp);
+        bf128_t bf_tmp[8];
+        for (unsigned int j = 0; j < 8; j++) {
+          bf_tmp[j] = bf128_from_bit(get_bit(owf_in[i], j));
+        }
+        state_bits_tag[i] = bf128_add(    // For prover we do not multiply with delta 
+                        bf128_byte_combine(bf_tmp), bf128_byte_combine(k_tag + i*8));
+        // TODO: do we square, I guess yes ???
+        // #if defined(ALLOW_ZERO_SBOX)
+        // bf128_t tmp[8];
+        // for (unsigned int bit_j = 0; bit_j < 8; ++bit_j) {
+        //   tmp[bit_j] = bf_xin[i] ^ bf_xk[i * 8 + bit_j];
+        // }
+        // bf_y_sq[i] = bf128_byte_combine_sq(tmp);
+        // #endif          
+      } else {
+        bf128_t bf_tmp[8];
+        for (unsigned int j = 0; j < 8; j++) {  // here we multiply with delta
+          bf_tmp[j] = bf128_mul_bit(delta, get_bit(owf_in[i], j));
+        }
+        state_bits_tag[i] = bf128_add(
+                        bf128_byte_combine(bf_tmp), bf128_byte_combine(k_tag + i*8));
+      }
+    }
 
 }
 
