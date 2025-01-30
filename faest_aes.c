@@ -925,7 +925,7 @@ static void aes_128_sbox_affine() {
 }
 
 // TODO:
-static void aes_128_shiftrows() {
+static void aes_128_shiftrows(uint8_t* out, bf128_t* out_tag, uint8_t* in, bf128_t* in_tag) {
 
 }
 
