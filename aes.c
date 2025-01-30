@@ -213,11 +213,12 @@ static uint8_t invnorm(uint8_t in) {
   if (x == 0) {
     return 0;
   } else {
-    bf8_t bf_x_17 = bf8_inv(x);
+    const bf8_t bf_x_inv = bf8_inv(x);
+    bf8_t bf_x_17        = bf_x_inv;
     for (unsigned int i = 0; i < 4; i++) {
       bf_x_17 = bf8_mul(bf_x_17, bf_x_17);
     }
-    bf_x_17         = bf8_mul(bf_x_17, bf8_inv(x));
+    bf_x_17         = bf8_mul(bf_x_17, bf_x_inv);
     uint8_t y_prime = 0;
     bf8_store(&y_prime, bf_x_17);
     uint8_t y = 0;
@@ -230,7 +231,6 @@ static uint8_t invnorm(uint8_t in) {
 }
 
 static void store_invnorm_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
-
   for (unsigned int i = 0; i != block_words * 4; ++i) { // going thorugh each block
     uint8_t normstate = invnorm(state[i / 4][i % 4]);
     bf8_store(&dst[i], normstate);
