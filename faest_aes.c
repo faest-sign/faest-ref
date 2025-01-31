@@ -1814,15 +1814,35 @@ static void constant_to_vole_256_verifier(bf256_t* tag, const uint8_t* val, bf25
 }
 
 
-static void aes_128_deg2to3(bf128_t* z0, bf128_t* z1, bf128_t val, bf128_t tag, bool isprover, bf128_t delta) {
-  if(isprover) {
-    z0[0] = val;
-    z1[0] = tag;
-  } else {
-    // verifier does not have tag
-    z1[0] = bf128_mul(tag, delta);
-  }
+// DEG 2 TO 3
+static void aes_128_deg2to3_prover(bf128_t* z0, bf128_t* z1, bf128_t val, bf128_t tag) {
+  z0[0] = val;
+  z1[0] = tag;
 }
+static void aes_128_deg2to3_prover(bf128_t* z0, bf128_t* z1, bf128_t key, bf128_t delta) {
+  // verifier does not have tag
+    z1[0] = bf128_mul(key, delta);
+}
+
+static void aes_192_deg2to3_prover(bf192_t* z0, bf192_t* z1, bf192_t val, bf192_t tag) {
+  z0[0] = val;
+  z1[0] = tag;
+}
+static void aes_192_deg2to3_prover(bf192_t* z0, bf192_t* z1, bf192_t key, bf192_t delta) {
+  // verifier does not have tag
+    z1[0] = bf192_mul(key, delta);
+}
+
+static void aes_256_deg2to3_prover(bf256_t* z0, bf256_t* z1, bf256_t val, bf256_t tag) {
+  z0[0] = val;
+  z1[0] = tag;
+}
+static void aes_256_deg2to3_prover(bf256_t* z0, bf256_t* z1, bf256_t key, bf256_t delta) {
+  // verifier does not have tag
+    z1[0] = bf256_mul(key, delta);
+}
+
+
 
 static void aes_constraints_128(bf128_t* z0, bf128_t* z1, const uint8_t* w, const bf128_t* w_tag, const uint8_t* owf_in, const uint8_t* owf_out, const faest_paramset_t* params, bool isprover, bf128_t delta) {
 
