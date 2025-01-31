@@ -26,8 +26,8 @@
 #define SK_INPUT(sk) (sk)
 #define SK_KEY(sk) (&sk[@OWF_INPUT_SIZE@])
 
-static_assert(@PK_SIZE@ == @OWF_INPUT_SIZE@ + @OWF_OUTPUT_SIZE@);
-static_assert(@SK_SIZE@ == @OWF_INPUT_SIZE@ + @LAMBDA@ / 8);
+static_assert(@PK_SIZE@ == @OWF_INPUT_SIZE@ + @OWF_OUTPUT_SIZE@, "invalid public key size");
+static_assert(@SK_SIZE@ == @OWF_INPUT_SIZE@ + @LAMBDA@ / 8, "invalid secret key size");
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
   if (!pk || !sk) {
