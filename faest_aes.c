@@ -919,8 +919,57 @@ void aes_128_state_to_bytes(bf128_t* out, bf128_t* out_tag, const uint8_t* state
   }
 }
 
-// TODO:
-static void aes_128_sbox_affine(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params, bool isprover) {
+
+static void aes_128_sbox_affine(bf128_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, bool dosq, const faest_paramset_t* params, bool isprover) {
+
+  unsigned int Nst_bytes = params->faest_param.lambda/8;
+
+  unsigned int s, t;
+  if (dosq) {
+    s = 2; t = 1;
+  } else {
+    s = 1; t = 0;
+  }
+
+  bf128_t C[9];
+  uint8_t x[9] = {0x05,0x09,0xf9,0x25,0xf4,0x01,0xb5,0x8f,0x63};
+
+  // ::5-6
+  // TODO: we sq the bits and them do bytecombine?
+  if (dosq) {
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf128_byte_combine_bits_sq(x[i]);
+    }
+  } else {
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf128_byte_combine_bits(x[i]);
+    }
+  }
+
+  // TODO: this looks ugly :(
+  if (dosq) {
+    for (unsigned int i = 0; i < Nst_bytes; i++) {
+      for (unsigned int Cidx = 0; Cidx < 9; Cidx++) {
+        if (isprover) {
+          // TODO: re-check for possible indexing error
+          out[i] += bf128_mul(C[Cidx], bf128_byte_combine_bits_sq(in[i]));  // TODO: I think this is wrong, ask Peter
+        }
+        // TODO: re-check for possible indexing error
+        out_tag[i] += bf128_mul(C[Cidx], bf128_byte_combine_sq(in_tag + i*8));  // TODO: I think this is wrong, ask Peter
+      }
+    }
+  } else {
+    for (unsigned int i = 0; i < Nst_bytes; i++) {
+      for (unsigned int Cidx = 0; Cidx < 9; Cidx++) {
+        if (isprover) {
+          // TODO: re-check for possible indexing error
+          out[i] += bf128_mul(C[Cidx], bf128_byte_combine_bits(in[i]));  // TODO: I think this is wrong, ask Peter
+        }
+        // TODO: re-check for possible indexing error
+          out_tag[i] += bf128_mul(C[Cidx], bf128_byte_combine(in_tag + i*8));  // TODO: I think this is wrong, ask Peter
+      }
+    }
+  }
 
 }
 
@@ -948,6 +997,7 @@ static void aes_128_inverse_shiftrows(uint8_t* out, bf128_t* out_tag, const uint
     }
   }
 }
+
 
 static void aes_128_shiftrows(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params, bool isprover) {
   unsigned int Nst = 4;
