@@ -702,7 +702,7 @@ bf256_t bf256_sum_poly(const bf256_t* xs) {
 
 // GF(2^384)
 
-#define bf128_bit_to_mask(value, bit) -((((uint64_t)BF_VALUE(value, bit / 8)) >> (bit % 8)) & 1)
+#define bf128_bit_to_mask(value, bit) -((((uint64_t)BF_VALUE(value, bit / 64)) >> (bit % 64)) & 1)
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #define bf384_and_64(lhs, rhs) ((lhs) & (rhs))
@@ -775,7 +775,7 @@ bf384_t bf384_mul_128(bf384_t lhs, bf128_t rhs) {
 
 // GF(2^576)
 
-#define bf192_bit_to_mask(value, bit) -((((uint64_t)BF_VALUE(value, bit / 8)) >> (bit % 8)) & 1)
+#define bf192_bit_to_mask(value, bit) -((((uint64_t)BF_VALUE(value, bit / 64)) >> (bit % 64)) & 1)
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #define bf576_and_64(lhs, rhs) ((lhs) & (rhs))
@@ -854,7 +854,7 @@ bf576_t bf576_mul_192(bf576_t lhs, bf192_t rhs) {
 
 // GF(2^768)
 
-#define bf256_bit_to_mask(value, bit) -((((uint64_t)BF_VALUE(value, bit / 8)) >> (bit % 8)) & 1)
+#define bf256_bit_to_mask(value, bit) -((((uint64_t)BF_VALUE(value, bit / 64)) >> (bit % 64)) & 1)
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #define bf768_and_64(lhs, rhs) ((lhs) & (rhs))
