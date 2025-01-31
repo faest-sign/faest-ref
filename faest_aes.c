@@ -924,13 +924,37 @@ static void aes_128_sbox_affine(uint8_t* out, bf128_t* out_tag, const uint8_t* i
 
 }
 
-// TODO:
+static void aes_128_inverse_shiftrows(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params, bool isprover) {
+  unsigned int Nst = 4;
+
+  for (unsigned int r = 0; r < 4; r++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      unsigned int i;
+      if (r <= 1) {
+        i = 4*((c-r)%4) + r;
+      } 
+      else {
+        i = 4*((c-r-1) % 4) + r;
+      }
+
+      if (isprover) {
+        for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
+          out[8*(4*c + r) + byte_idx] = in[8*i + byte_idx];
+        }
+      }
+      for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
+          out_tag[8*(4*c + r) + byte_idx] = in_tag[8*i + byte_idx];
+        }
+    }
+  }
+}
+
 static void aes_128_shiftrows(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params, bool isprover) {
   unsigned int Nst = 4;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
-      if (r == 0) {
+      if (r <= 1) {
         if (isprover) {
           out[4*c + r] = in[4*((c + r) % 4) + r];
         }
