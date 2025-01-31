@@ -22,6 +22,9 @@ typedef uint64_t bf64_t;
 typedef uint64_t bf128_t ATTR_VECTOR_SIZE(16);
 typedef uint64_t bf192_t ATTR_VECTOR_SIZE(32);
 typedef uint64_t bf256_t ATTR_VECTOR_SIZE(32);
+typedef uint64_t bf384_t ATTR_VECTOR_SIZE(64);
+typedef uint64_t bf576_t ATTR_VECTOR_SIZE(128);
+typedef uint64_t bf768_t ATTR_VECTOR_SIZE(128);
 
 #define BF128_ALIGN 16
 #define BF192_ALIGN 32
@@ -33,6 +36,18 @@ typedef uint64_t bf256_t ATTR_VECTOR_SIZE(32);
   { x0, x1, x2, UINT64_C(0) }
 #define BF256C(x0, x1, x2, x3)                                                                     \
   { x0, x1, x2, x3 }
+#define BF384C(x0, x1, x2, x3, x4, x5)                                                             \
+  { x0, x1, x2, x3, x4, x5, UINT64_C(0), UINT64_C(0) }
+#define BF576C(x0, x1, x2, x3, x4, x5, x6, x7, x8)                                                 \
+  {                                                                                                \
+    x0, x1, x2, x3, x4, x5, x6, x7, x8, UINT64_C(0), UINT64_C(0), UINT64_C(0), UINT64_C(0),        \
+        UINT64_C(0), UINT64_C(0), UINT64_C(0), UINT64_C(0)                                         \
+  }
+#define BF768C(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11)                                   \
+  {                                                                                                \
+    x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, UINT64_C(0), UINT64_C(0), UINT64_C(0),       \
+        UINT64_C(0), UINT64_C(0)                                                                   \
+  }
 #else
 #define BF_VALUE(v, i) ((v).values[i])
 
@@ -48,6 +63,18 @@ typedef struct {
   uint64_t values[4];
 } bf256_t;
 
+typedef struct {
+  uint64_t values[6];
+} bf384_t;
+
+typedef struct {
+  uint64_t values[9];
+} bf576_t;
+
+typedef struct {
+  uint64_t values[12];
+} bf768_t;
+
 #define BF128C(x0, x1)                                                                             \
   {                                                                                                \
     { x0, x1 }                                                                                     \
@@ -60,6 +87,12 @@ typedef struct {
   {                                                                                                \
     { x0, x1, x2, x3 }                                                                             \
   }
+#define BF384C(x0, x1, x2, x3, x4, x5)                                                             \
+  { x0, x1, x2, x3, x4, x5 }
+#define BF576C(x0, x1, x2, x3, x4, x5, x6, x7, x8)                                                 \
+  { x0, x1, x2, x3, x4, x5, x6, x7, x8, }
+#define BF768C(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11)                                   \
+  { x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, }
 
 #define BF128_ALIGN 16
 #define BF192_ALIGN 16
@@ -69,6 +102,9 @@ typedef struct {
 #define BF128_NUM_BYTES (128 / 8)
 #define BF192_NUM_BYTES (192 / 8)
 #define BF256_NUM_BYTES (256 / 8)
+#define BF384_NUM_BYTES (384 / 8)
+#define BF576_NUM_BYTES (576 / 8)
+#define BF768_NUM_BYTES (768 / 8)
 
 // GF(2^8) implementation
 
@@ -378,6 +414,201 @@ ATTR_CONST bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs);
 ATTR_CONST bf256_t bf256_mul_bit(bf256_t lhs, uint8_t rhs);
 #endif
 ATTR_PURE bf256_t bf256_sum_poly(const bf256_t* xs);
+
+// GF(2^384) implementation
+
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bf384_t bf384_load(const uint8_t* src) {
+  bf384_t ret;
+#if defined(FAEST_IS_BIG_ENDIAN)
+  for (unsigned int i = 0; i != BF384_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
+    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
+    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+  }
+#else
+  memcpy(&ret, src, BF384_NUM_BYTES);
+#endif
+  return ret;
+}
+
+ATTR_ALWAYS_INLINE static inline void bf384_store(uint8_t* dst, bf384_t src) {
+#if defined(FAEST_IS_BIG_ENDIAN)
+  for (unsigned int i = 0; i != BF384_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
+    uint64_t tmp = htole64(BF_VALUE(src, i));
+    memcpy(dst, &tmp, sizeof(tmp));
+  }
+#else
+  memcpy(dst, &src, BF384_NUM_BYTES);
+#endif
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_from_bf64(bf64_t src) {
+  bf384_t ret      = BF384C(0, 0, 0, 0, 0, 0);
+  BF_VALUE(ret, 0) = src;
+  return ret;
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_from_bf8(bf8_t src) {
+  bf384_t ret      = BF384C(0, 0, 0, 0, 0, 0);
+  BF_VALUE(ret, 0) = src;
+  return ret;
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_from_bit(uint8_t bit) {
+  return bf384_from_bf8(bit & 1);
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_zero(void) {
+  const bf384_t ret = BF384C(0, 0, 0, 0, 0, 0);
+  return ret;
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_one(void) {
+  const bf384_t ret = BF384C(1, 0, 0, 0, 0, 0);
+  return ret;
+}
+
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf384_add(lhs, rhs) ((lhs) ^ (rhs))
+#else
+ATTR_CONST static inline bf384_t bf384_add(bf384_t lhs, bf384_t rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+    lhs.values[i] ^= rhs.values[i];
+  }
+  return lhs;
+}
+#endif
+
+ATTR_CONST bf384_t bf384_mul_128(bf384_t lhs, bf128_t rhs);
+
+// GF(2^576) implementation
+
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bf576_t bf576_load(const uint8_t* src) {
+  bf576_t ret;
+#if defined(FAEST_IS_BIG_ENDIAN)
+  for (unsigned int i = 0; i != BF576_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
+    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
+    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+  }
+#else
+  memcpy(&ret, src, BF576_NUM_BYTES);
+#endif
+  return ret;
+}
+
+ATTR_ALWAYS_INLINE static inline void bf576_store(uint8_t* dst, bf576_t src) {
+#if defined(FAEST_IS_BIG_ENDIAN)
+  for (unsigned int i = 0; i != BF576_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
+    uint64_t tmp = htole64(BF_VALUE(src, i));
+    memcpy(dst, &tmp, sizeof(tmp));
+  }
+#else
+  memcpy(dst, &src, BF576_NUM_BYTES);
+#endif
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_from_bf64(bf64_t src) {
+  bf576_t ret      = BF576C(0, 0, 0, 0, 0, 0, 0, 0, 0);
+  BF_VALUE(ret, 0) = src;
+  return ret;
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_from_bf8(bf8_t src) {
+  bf576_t ret      = BF576C(0, 0, 0, 0, 0, 0, 0, 0, 0);
+  BF_VALUE(ret, 0) = src;
+  return ret;
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_from_bit(uint8_t bit) {
+  return bf576_from_bf8(bit & 1);
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_zero(void) {
+  const bf576_t ret = BF576C(0, 0, 0, 0, 0, 0, 0, 0, 0);
+  return ret;
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_one(void) {
+  const bf576_t ret = BF576C(1, 0, 0, 0, 0, 0, 0, 0, 0);
+  return ret;
+}
+
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf576_add(lhs, rhs) ((lhs) ^ (rhs))
+#else
+ATTR_CONST static inline bf576_t bf576_add(bf576_t lhs, bf576_t rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+    lhs.values[i] ^= rhs.values[i];
+  }
+  return lhs;
+}
+#endif
+
+ATTR_CONST bf576_t bf576_mul_192(bf576_t lhs, bf192_t rhs);
+
+// GF(2^768) implementation
+
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bf768_t bf768_load(const uint8_t* src) {
+  bf768_t ret;
+#if defined(FAEST_IS_BIG_ENDIAN)
+  for (unsigned int i = 0; i != BF768_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
+    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
+    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+  }
+#else
+  memcpy(&ret, src, BF768_NUM_BYTES);
+#endif
+  return ret;
+}
+
+ATTR_ALWAYS_INLINE static inline void bf768_store(uint8_t* dst, bf768_t src) {
+#if defined(FAEST_IS_BIG_ENDIAN)
+  for (unsigned int i = 0; i != BF768_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
+    uint64_t tmp = htole64(BF_VALUE(src, i));
+    memcpy(dst, &tmp, sizeof(tmp));
+  }
+#else
+  memcpy(dst, &src, BF768_NUM_BYTES);
+#endif
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_from_bf64(bf64_t src) {
+  bf768_t ret      = BF768C(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  BF_VALUE(ret, 0) = src;
+  return ret;
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_from_bf8(bf8_t src) {
+  bf768_t ret      = BF768C(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  BF_VALUE(ret, 0) = src;
+  return ret;
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_from_bit(uint8_t bit) {
+  return bf768_from_bf8(bit & 1);
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_zero(void) {
+  const bf768_t ret = BF768C(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  return ret;
+}
+
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_one(void) {
+  const bf768_t ret = BF768C(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  return ret;
+}
+
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+#define bf768_add(lhs, rhs) ((lhs) ^ (rhs))
+#else
+ATTR_CONST static inline bf768_t bf768_add(bf768_t lhs, bf768_t rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+    lhs.values[i] ^= rhs.values[i];
+  }
+  return lhs;
+}
+#endif
+
+ATTR_CONST bf768_t bf768_mul_256(bf768_t lhs, bf256_t rhs);
 
 FAEST_END_C_DECL
 
