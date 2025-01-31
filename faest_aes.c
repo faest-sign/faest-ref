@@ -920,13 +920,30 @@ void aes_128_state_to_bytes(bf128_t* out, bf128_t* out_tag, const uint8_t* state
 }
 
 // TODO:
-static void aes_128_sbox_affine() {
+static void aes_128_sbox_affine(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params, bool isprover) {
 
 }
 
 // TODO:
-static void aes_128_shiftrows(uint8_t* out, bf128_t* out_tag, uint8_t* in, bf128_t* in_tag) {
+static void aes_128_shiftrows(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params, bool isprover) {
+  unsigned int Nst = 4;
 
+  for (unsigned int r = 0; r < 4; r++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      if (r == 0) {
+        if (isprover) {
+          out[4*c + r] = in[4*((c + r) % 4) + r];
+        }
+        out_tag[4*c + r] = in_tag[(4*((c + r) % 4) + r)];
+      } 
+      else {
+        if (isprover) {
+          out[4*c + r] = in[4*((c + r) % 4) + r];
+        }
+        out_tag[4*c + r] = in_tag[(4*((c + r + 1) % 4) + r)];
+      }
+    }
+  }
 }
 
 // TODO:
