@@ -41,12 +41,12 @@ typedef uint64_t bf768_t ATTR_VECTOR_SIZE(128);
 #define BF576C(x0, x1, x2, x3, x4, x5, x6, x7, x8)                                                 \
   {                                                                                                \
     x0, x1, x2, x3, x4, x5, x6, x7, x8, UINT64_C(0), UINT64_C(0), UINT64_C(0), UINT64_C(0),        \
-        UINT64_C(0), UINT64_C(0), UINT64_C(0), UINT64_C(0)                                         \
+        UINT64_C(0), UINT64_C(0), UINT64_C(0),                                                     \
   }
 #define BF768C(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11)                                   \
   {                                                                                                \
     x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, UINT64_C(0), UINT64_C(0), UINT64_C(0),       \
-        UINT64_C(0), UINT64_C(0)                                                                   \
+        UINT64_C(0)                                                                                \
   }
 #else
 #define BF_VALUE(v, i) ((v).values[i])
