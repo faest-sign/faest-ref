@@ -1051,6 +1051,7 @@ static void aes_128_sbox_affine(bf128_t* out, bf128_t* out_tag, const uint8_t* i
 
 }
 
+
 static void aes_128_inverse_shiftrows(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params, bool isprover) {
   unsigned int Nst = 4;
 
@@ -1098,10 +1099,139 @@ static void aes_128_shiftrows(uint8_t* out, bf128_t* out_tag, const uint8_t* in,
   }
 }
 
-// TODO:
-static void aes_128_mix_coloumns() {
+
+static void aes_128_mix_coloumns_prover(bf128_t* y, bf128_t* y_tag, const uint8_t* in, const uint8_t* in_tag, bool dosq, const faest_paramset_t* params) {
+  
+  unsigned int Nst = 3;
+  
+  //  ::2-4
+  bf128_t v1 = bf128_byte_combine_bits(1);
+  bf128_t v2 = bf128_byte_combine_bits(2);
+  bf128_t v3 = bf128_byte_combine_bits(3);
+  if (dosq) {
+    v1 = bf128_mul(v1, v1);
+    v2 = bf128_mul(v2, v2);
+    v3 = bf128_mul(v3, v3);
+  }
+
+  for (unsigned int c = 0; c < Nst; c++) {
+
+    unsigned int i0 = 4*c;
+    unsigned int i1 = 4*c + 1;
+    unsigned int i2 = 4*c + 2;
+    unsigned int i3 = 4*c + 3;
+
+    // ::7
+    bf128_t tmp1_val = bf128_mul(bf128_byte_combine_bits_sq(in[i0]), v2);
+    bf128_t tmp2_val = bf128_mul(bf128_byte_combine_bits_sq(in[i1]), v3);
+    bf128_t tmp3_val = bf128_mul(bf128_byte_combine_bits_sq(in[i2]), v1);
+    bf128_t tmp4_val = bf128_mul(bf128_byte_combine_bits_sq(in[i3]), v1);
+    y[i0] = bf128_add(bf128_add(tmp1_val, tmp2_val), bf128_add(tmp3_val, tmp4_val));
+
+    bf128_t tmp1_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i0]), v2);
+    bf128_t tmp2_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i1]), v3);
+    bf128_t tmp3_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i2]), v1);
+    bf128_t tmp4_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i3]), v1);
+    y_tag[i0] = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
+
+    // ::8
+    tmp1_val = bf128_mul(bf128_byte_combine_bits_sq(in[i0]), v1);
+    tmp2_val = bf128_mul(bf128_byte_combine_bits_sq(in[i1]), v2);
+    tmp3_val = bf128_mul(bf128_byte_combine_bits_sq(in[i2]), v3);
+    tmp4_val = bf128_mul(bf128_byte_combine_bits_sq(in[i3]), v1);
+    y[i1] = bf128_add(bf128_add(tmp1_val, tmp2_val), bf128_add(tmp3_val, tmp4_val));
+
+    tmp1_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i0]), v1);
+    tmp2_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i1]), v2);
+    tmp3_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i2]), v3);
+    tmp4_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i3]), v1);
+    y_tag[i1] = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
+
+    // ::9
+    tmp1_val = bf128_mul(bf128_byte_combine_bits_sq(in[i0]), v1);
+    tmp2_val = bf128_mul(bf128_byte_combine_bits_sq(in[i1]), v1);
+    tmp3_val = bf128_mul(bf128_byte_combine_bits_sq(in[i2]), v2);
+    tmp4_val = bf128_mul(bf128_byte_combine_bits_sq(in[i3]), v3);
+    y[i2] = bf128_add(bf128_add(tmp1_val, tmp2_val), bf128_add(tmp3_val, tmp4_val));
+
+    tmp1_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i0]), v1);
+    tmp2_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i1]), v1);
+    tmp3_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i2]), v2);
+    tmp4_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i3]), v3);
+    y_tag[i2] = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
+
+    // ::10
+    tmp1_val = bf128_mul(bf128_byte_combine_bits_sq(in[i0]), v3);
+    tmp2_val = bf128_mul(bf128_byte_combine_bits_sq(in[i1]), v1);
+    tmp3_val = bf128_mul(bf128_byte_combine_bits_sq(in[i2]), v1);
+    tmp4_val = bf128_mul(bf128_byte_combine_bits_sq(in[i3]), v2);
+    y[i3] = bf128_add(bf128_add(tmp1_val, tmp2_val), bf128_add(tmp3_val, tmp4_val));
+
+    tmp1_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i0]), v1);
+    tmp2_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i1]), v1);
+    tmp3_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i2]), v2);
+    tmp4_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i3]), v3);
+    y_tag[i3] = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
+  
+  }
 
 }
+
+
+static void aes_128_mix_coloumns_prover(bf128_t* y_key, const uint8_t* in_key, bool dosq, const faest_paramset_t* params) {
+  
+  unsigned int Nst = 3;
+  
+  //  ::2-4
+  bf128_t v1 = bf128_byte_combine_bits(1);
+  bf128_t v2 = bf128_byte_combine_bits(2);
+  bf128_t v3 = bf128_byte_combine_bits(3);
+  if (dosq) {
+    v1 = bf128_mul(v1, v1);
+    v2 = bf128_mul(v2, v2);
+    v3 = bf128_mul(v3, v3);
+  }
+
+  for (unsigned int c = 0; c < Nst; c++) {
+
+    unsigned int i0 = 4*c;
+    unsigned int i1 = 4*c + 1;
+    unsigned int i2 = 4*c + 2;
+    unsigned int i3 = 4*c + 3;
+
+    // ::7
+      bf128_t tmp1_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i0]), v2);
+    bf128_t tmp2_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i1]), v3);
+    bf128_t tmp3_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i2]), v1);
+    bf128_t tmp4_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i3]), v1);
+    y_key[i0] = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
+
+    // ::8
+    tmp1_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i0]), v1);
+    tmp2_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i1]), v2);
+    tmp3_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i2]), v3);
+    tmp4_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i3]), v1);
+    y_key[i1] = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
+
+    // ::9
+    tmp1_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i0]), v1);
+    tmp2_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i1]), v1);
+    tmp3_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i2]), v2);
+    tmp4_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i3]), v3);
+    y_key[i2] = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
+
+    // ::10
+    tmp1_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i0]), v1);
+    tmp2_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i1]), v1);
+    tmp3_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i2]), v2);
+    tmp4_tag = bf128_mul(bf128_byte_combine_bits_sq(in_tag[i3]), v3);
+    y_key[i3] = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
+  
+  }
+
+}
+
+
 
 // TODO:
 static void aes_128_add_round_key() {
