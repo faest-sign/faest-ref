@@ -79,341 +79,8 @@ static const bf8_t Rcon[30] = {
     0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
 };
 
-// ###########################################################################################################################################
-// ##################################           LAMBDA = 128            ######################################################################
-// ###########################################################################################################################################
-
-static bf128_t* column_to_row_major_and_shrink_V_128(const uint8_t** v, unsigned int ell) {
-  // V is \hat \ell times \lambda matrix over F_2
-  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
-  // rows and \lambda columns storing in row-major order
-  bf128_t* new_v = faest_aligned_alloc(BF128_ALIGN, (ell + FAEST_128F_LAMBDA*2) * sizeof(bf128_t));
-  for (unsigned int row = 0; row != ell + FAEST_128F_LAMBDA*2; ++row) {
-    uint8_t new_row[BF128_NUM_BYTES] = {0};
-    for (unsigned int column = 0; column != FAEST_128F_LAMBDA; ++column) {
-      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
-    }
-    new_v[row] = bf128_load(new_row);
-  }
-  return new_v;
-}
-
-static void aes_128_inverse_affine(uint8_t* y, bf128_t* y_tag, uint8_t x, bf128_t* x_tag, bool isprover, bf128_t delta) {
-  
-  if (isprover) {
-    y[0] = (rotr8(x, 7) ^ rotr8(x, 5) ^ rotr8(x, 2)) ^ 0x05; // the compressed form
-  }
-  for (unsigned int i = 0; i < 8; ++i) {
-    y_tag[i] = bf128_add(bf128_add(x_tag[(i + 7) % 8], x_tag[(i + 5) % 8]),
-                                  x_tag[(i + 2) % 8]);
-    
-    // TODO: The below part is missing in the InverseAffine(), 
-    // this was present in Round 1, re-check later
-    if (!isprover) {
-      y_tag[0] = bf128_add(y_tag[0], delta);
-      y_tag[2] = bf128_add(y_tag[2], delta);
-    }
-  }
-}
-
-static void aes_128_keyexp_backward(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, uint8_t* key, bf128_t* key_tag,
-                                const faest_paramset_t* params, bool isprover, bf128_t delta) {
-
-  const unsigned int lambda = params->faest_param.lambda;
-  const unsigned int Ske    = params->faest_param.Ske;
-
-  // ::2
-  uint8_t x_tilde;  // contains all (F_2)^8 bits
-  bf128_t x_tilde_tag[8];
-  // ::3
-  unsigned int iwd   = 0;
-  // ::4
-  bool rmvRcon       = true;
-  unsigned int ircon = 0;
-  // ::5-6
-  for (unsigned int j = 0; j < Ske; j++) {
-
-    // ::7
-    if (isprover) {
-      x_tilde = x[j] ^ key[iwd/8 + j%4];  // for the witness
-    }
-    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-      x_tilde_tag[bit_i] = bf128_add(x_tag[j*8 + bit_i], key_tag[iwd + (j%4)*8 + bit_i]); // for the tags of each witness bit
-    }
-
-    // ::8-10
-    if (rmvRcon == true && j % 4 == 0) {
-      if (isprover) {
-        // adding round constant to the witness
-        x_tilde = x_tilde ^ Rcon[ircon];
-      }
-      // adding round constant to the tags
-      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-        // for prover, no multiplication with delta
-        bf128_t rcon_tag;
-        if (isprover) {
-          rcon_tag = bf128_from_bit(get_bit(Rcon[ircon], bit_i));
-        } 
-        // for verifier, multiplication with delta
-        else {
-          rcon_tag = bf128_mul_bit(delta, get_bit(Rcon[ircon], bit_i));
-        }
-        x_tilde_tag[bit_i] = bf128_add(x_tilde_tag[bit_i], rcon_tag);
-
-      }
-      ++ircon;
-    }
-
-    // ::11
-    aes_inverse_affine(y, y_tag, x_tilde, x_tilde_tag, isprover, delta);
-
-    // ::12-16 lines only relavant for aes-128
-    if (j%4 == 4) {
-      iwd += 128;
-    }
-  }
-}
-
-static void aes_128_keyexp_forward(uint8_t* y, bf128_t* y_tag, const uint8_t* w, const bf128_t* w_tag, 
-                                const faest_paramset_t* params, bool isprover, bf128_t delta) {
-
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int Nk = lambda/8;
-  unsigned int R = params->faest_param.R;
-
-  // ::1-3 copying the Nk words
-  if (isprover) { // witness exists only for prover
-    for (unsigned int i = 0; i < Nk; i++) {
-      y[i] = w[i];  // unit8 contains 8 bits
-    }
-  }
-  // used for tag (prover) or key (verifier) 
-  for (unsigned int i = 0; i < lambda; i++) {
-    y_tag[i] = w_tag[i];  // each bf128 is tag for one bit
-  }
-  unsigned int i_wd = Nk;
-
-  // ::4-10
-  for (unsigned int j = Nk; j < 4*(R + 1); j++) {
-
-    // ::5
-    if (j % Nk == 0) {
-
-      // ::6
-      if (isprover) {
-        for (unsigned int word_idx = i_wd; word_idx < 4; word_idx++) {
-          y[4*j + word_idx] = w[i_wd + word_idx];   // storing byte by byte
-        }
-      }
-      for (unsigned int word_bit_idx = i_wd*8; word_bit_idx < 4*8; word_bit_idx++) {
-        y_tag[4*8*j + word_bit_idx] = w_tag[i_wd*8 + word_bit_idx]; // storing bit tags, "bit by bit"
-      }
-      // ::7
-      i_wd += 4;    // 32 bits -> 4 words
-    // ::8
-    } else {
-      // ::9-10
-      if (isprover) {
-        for (unsigned int word_idx = 0; word_idx < 4; word_idx++) {
-          y[4*j + word_idx] = y[4*(j - Nk) + word_idx] ^ y[4*(j - 1) + word_idx]; // adding bitwise
-        }
-      }
-      for (unsigned int word_bit_idx = 0; word_bit_idx < 32; word_bit_idx++) {
-        y_tag[4*8*j + word_bit_idx] = bf128_add(y_tag[4*8*(j - Nk) + word_bit_idx], y_tag[4*8*(j -1) + word_bit_idx]);  // adding the tags in F2lambda "bitwwise"
-      }
-    }
-  }
-}
-
-static void aes_128_expkey_constraints(bf128_t* z0, bf128_t* z1, uint8_t* k, bf128_t* k_tag, const uint8_t* w, const bf128_t* w_tag, 
-                                    const faest_paramset_t* params, bool isprover, bf128_t delta) {
-
-
-  unsigned int Ske = params->faest_param.Ske;
-  unsigned int R = params->faest_param.R;
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int Nk = lambda/32;
-
-  // ::1
-  aes_128_keyexp_forward(k, k_tag, w, w_tag, params, isprover, delta);
-  // ::2
-  uint8_t w_flat[Ske];
-  bf128_t w_flat_tag[8*Ske];
-  aes_128_keyexp_backward(w_flat, w_flat_tag, w, w_tag, k, k_tag, params, isprover, delta);
-
-  // ::3-5
-  unsigned int iwd = 32*(Nk - 1);  // as 1 unit8 has 8 bits
-  // ::6 Used only on AES-256
-  // ::7
-  for (unsigned int j = 0; j < FAEST_128F_Ske / 4; j++) {
-    // ::8
-    bf128_t k_hat[4];     // expnaded key witness
-    bf128_t w_hat[4];     // inverse output
-    bf128_t k_hat_sq[4];  // expanded key witness sq
-    bf128_t w_hat_sq[4];      // inverse output sq
-
-    bf128_t k_hat_tag[4]; // expanded key witness tag
-    bf128_t w_hat_tag[4]; // inverse output tag
-    bf128_t k_hat_tag_sq[4];  // expanded key tag sq
-    bf128_t w_hat_tag_sq[4];  // inverser output tag sq
-    // ::9
-    for (unsigned int r = 0; r < 4; r++) {
-      // ::10
-      unsigned int r_prime = (r + 3)%4;
-      // ::11 used only for AES-256
-      // ::12-15
-      if(isprover) { // only prover has the witness
-        k_hat[r_prime] = bf128_byte_combine_bits(k[(iwd + 8 * r) / 8]); // lifted key witness        
-        k_hat_sq[r_prime] = bf128_byte_combine_bits_sq(k[(iwd + 8 * r) / 8]); // lifted key witness sq
-
-        w_hat[r] = bf128_byte_combine_bits(w_flat[(32 * j + 8 * r) / 8]); // lifted output
-        w_hat_sq[r] = bf128_byte_combine_bits_sq(w_flat[(32 * j + 8 * r) / 8]);  // lifted output sq
-      }
-      // done by both prover and verifier
-      k_hat_tag[r_prime] = bf128_byte_combine(k_tag + (iwd + 8 * r)); // lifted key tag
-      k_hat_tag_sq[r_prime] = bf128_byte_combine_sq(k_tag + (iwd + 8 * r)); // lifted key tag sq
-
-      w_hat_tag[r] = bf128_byte_combine(w_flat_tag + ((32 * j + 8 * r))); // lifted output tag
-      w_hat_tag_sq[r] = bf128_byte_combine_sq(w_flat_tag + (32 * j + 8 * r)); // lifted output tag sq
-    }
-    // ::16 used only for AES-256
-    // ::17
-    for (unsigned int r = 0; r < 4; r++) {
-      // ::18-19
-      if (isprover) { // only prover has the witness vals
-        z0[8*j + 2*r] = bf128_add(bf128_mul(k_hat_sq[r], w_hat[r]), k_hat[r]);
-        z0[8*j + 2*r + 1] = bf128_add(bf128_mul(k_hat[r], w_hat_sq[r]), w_hat[r]);
-      }
-      // for both prover and verifier
-      z1[8*j + 2*r] = bf128_add(bf128_mul(k_hat_tag_sq[r], w_hat_tag[r]), k_hat_tag[r]);
-      z1[8*j + 2*r + 1] = bf128_add(bf128_mul(k_hat_tag[r], w_hat_tag_sq[r]), k_hat_tag[r]);
-    }
-    iwd = iwd + 128;
-  }
-
-}
-
-static aes_128_enc_constraints(bf128_t* z0, bf128_t* z1, uint8_t* owf_in, 
-                                uint8_t* owf_out, uint8_t* w, 
-                                bf128_t* w_tag, uint8_t* k, bf128_t* k_tag, 
-                                const faest_paramset_t* params, bool isprover, bf128_t delta) {
-
-    unsigned int Nst = 4;
-    unsigned int Nstbits = 32 * Nst;
-    unsigned int R = params->faest_param.R;
-    unsigned int Nstbytes = Nstbits/8;
-
-    /// ::1 AddRoundKey
-    bf128_t state_bits[Nstbytes];
-    bf128_t state_bits_tag[Nstbytes];
-    // TODO: Unsure of the squaring part come here???, spec not defined
-    for (unsigned int i = 0; i < Nstbytes; i++) {
-      if (isprover) {
-        state_bits[i] = bf128_add(
-                        bf128_byte_combine_bits(owf_in[i]), bf128_byte_combine_bits(k[i]));
-        // TODO: do we square, I guess yes ???
-        // uint8_t tmp;
-        // for (unsigned int bit_j = 0; bit_j < 8; ++bit_j) {
-        //   tmp ^= (  ( (xin >> bit_j) ^ (xk[i] >> bit_j)  ) & 1 ) << bit_j;
-        // }
-        // bf_y_sq[i] = bf128_byte_combine_bits_sq(tmp);
-        bf128_t bf_tmp[8];
-        for (unsigned int j = 0; j < 8; j++) {
-          bf_tmp[j] = bf128_from_bit(get_bit(owf_in[i], j));
-        }
-        state_bits_tag[i] = bf128_add(    // For prover we do not multiply with delta 
-                        bf128_byte_combine(bf_tmp), bf128_byte_combine(k_tag + i*8));
-        // TODO: do we square, I guess yes ???
-        // bf128_t tmp[8];
-        // for (unsigned int bit_j = 0; bit_j < 8; ++bit_j) {
-        //   tmp[bit_j] = bf_xin[i] ^ bf_xk[i * 8 + bit_j];
-        // }
-        // bf_y_sq[i] = bf128_byte_combine_sq(tmp);       
-      } else {
-        bf128_t bf_tmp[8];
-        for (unsigned int j = 0; j < 8; j++) {  // For verifier we multiply in with delta
-          bf_tmp[j] = bf128_mul_bit(delta, get_bit(owf_in[i], j));
-        }
-        state_bits_tag[i] = bf128_add(
-                        bf128_byte_combine(bf_tmp), bf128_byte_combine(k_tag + i*8));
-      }
-    }
-
-    // TODO: here need to be careful with the 0000||4bits invnorm witness values!!
-
-    // ::2
-    for (unsigned int r = 0; r < R/2; r++) {
-
-      // ::3-4
-      bf128_t state_conj[Nstbytes];
-      bf128_t state_conj_tag[Nstbytes];
-      // TODO: not implemented function below
-      aes_128_conjugates(state_conj, state_conj_tag, state_bits, state_bits_tag, 
-                          isprover, delta);
-
-      // ::5-6
-      uint8_t n[Nstbits/2*4]; // 1 uint8 contains 4 bits of the Invnorm 0000||4bits
-      bf128_t n_tag[Nstbits/2]; // tag for each bit
-      for (unsigned int i = 0; i < Nstbits/2; i++) {
-        if (isprover) {
-          // only prover has the witness
-          n[i] = w[(((3*Nstbits)/2)*r)/4];
-        }
-        // verifier has the tags (keys)
-        n_tag[i] = w_tag[(((3*Nstbits)/2)*r)];
-      }
-
-      // ::7
-      bf128_t st[Nstbytes*8];
-      bf128_t st_tag[Nstbytes*8];
-      for (unsigned int i = 0; i < Nstbytes; i++) {
-        // ::8-9
-        uint8_t y[4];
-        bf128_t y_tag[4];
-        // TODO: not implemented function below
-        aes_128_inv_norm_to_conjugates(y, y_tag, n, n_tag, isprover, delta);
-
-        // ::10-11
-        // TODO: not implemented function below
-        aes_128_inv_norm_constraints(z0 + (3*r*Nstbytes), z1 + (3*r*Nstbytes), state_conj, 
-                                      state_conj_tag, y, y_tag, isprover, delta);
-
-        // ::12
-        for (unsigned int j = 0; j < 8; j++) {
-          // ::13-14
-          // TODO: unsure what happens here, help! T.T
-        }
-      }
-
-      // ::15-16
-      // TODO: not implemented function below
-      bf8_t k_0[16];
-      aes_128_state_to_bytes(k_0, k + (Nstbits*(2*r +1)));
-      // ::17
-      // TODO:
-
-      // ::18
-      for (unsigned int b = 0; b < 2; b++) {
-        // TODO:
-        aes_128_sbox_affine();
-        aes_128_shiftrows();
-        aes_128_mix_coloumns();
-        aes_128_add_round_key();
-      }
-
-      if (r == R/2 - 1) {
-        aes_128_add_round_key();
-      } else {
-
-      }
-
-    }
-
-}
-
 
 // Arranged in first occurance in EncSctrnts basis
-
 // ADD ROUND KEY
 static void aes_128_add_round_key_prover(bf128_t* out, bf128_t* out_tag, const bf128_t* in, const bf128_t* in_tag, const bf128_t* k, const bf128_t* k_tag, const faest_paramset_t* params) {
 
@@ -474,7 +141,6 @@ static void aes_256_add_round_key_verifier(bf256_t* out_tag, const bf256_t* in_t
     out_tag[i] = bf256_add(in_tag[i], k_tag[i]);
   }
 }
-
 
 // F256/F2.CONJUGATES
 static void aes_128_f256_f2_conjugates_1(bf128_t* y, const uint8_t* state) {
@@ -596,7 +262,6 @@ static void aes_em_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state) 
   }
 }
 
-
 // INV NORM TO CONJUGATES
 static void aes_128_inv_norm_to_conjugates_prover(bf128_t* y, uint8_t x) {
   bf128_t beta_4        = bf128_add(bf128_get_alpha(5), bf128_get_alpha(3));
@@ -688,8 +353,6 @@ static void aes_256_inv_norm_to_conjugates_lambda(bf256_t* y, const bf256_t* x) 
   }
 }
 
-
-
 // INV NORM CONSTRAINTS
 void aes_128_inv_norm_constraints_prover(bf128_t* z0, bf128_t* z1, const bf128_t* state_bits, const bf128_t* state_bits_tag, const uint8_t* y, const bf128_t* y_tag) {
   
@@ -769,8 +432,6 @@ void aes_256_inv_norm_constraints_verifier(bf256_t* z1, const bf256_t* state_bit
               state_bits_key[0]);
 }
 
-
-
 // STATE TO BYTES
 void aes_128_state_to_bytes_prover(bf128_t* out, bf128_t* out_tag, const uint8_t* state, const bf128_t* state_tag) {
   for (unsigned int i = 0; i < 16; i++) {
@@ -807,8 +468,6 @@ void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* state_key)
     out_key[i] = bf256_byte_combine(state_key + i*8);
   }
 }
-
-
 
 // SBOX AFFINE
 static void aes_128_sbox_affine_prover(bf128_t* out, bf128_t* out_tag, const bf128_t* in, const bf128_t* in_tag, bool dosq, const faest_paramset_t* params) {
@@ -967,8 +626,6 @@ static void aes_256_sbox_affine_verify(bf256_t* out_tag, const bf256_t* in_tag, 
   }
 }
 
-
-
 // SHIFT ROWS
 static void aes_128_shiftrows_prover(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params) {
   unsigned int Nst = 4;
@@ -1062,8 +719,6 @@ static void aes_256_shiftrows_verifier(bf256_t* out_tag, const bf256_t* in_tag, 
     }
   }
 }
-
-
 
 // MIX COLOUMNS
 static void aes_128_mix_coloumns_prover(bf128_t* y, bf128_t* y_tag, const uint8_t* in, const uint8_t* in_tag, bool dosq, const faest_paramset_t* params) {
@@ -1453,8 +1108,6 @@ static void aes_256_mix_coloumns_verifier(bf256_t* y_key, const uint8_t* in_key,
 
 }
 
-
-
 // ADD ROUND KEY BYTES
 static void aes_128_add_round_key_bytes_prover(bf128_t* out, bf128_t* out_tag, const bf128_t* in, const bf128_t* in_tag, const bf128_t* k, const bf128_t* k_tag, const faest_paramset_t* params) {
 
@@ -1515,8 +1168,6 @@ static void aes_256_add_round_key_bytes_verifier(bf256_t* out_tag, const bf256_t
     out_tag[i] = bf256_add(in_tag[i], k_tag[i]);
   }
 }
-
-
 
 // INVERSE SHIFT ROWS
 static void aes_128_inverse_shiftrows_prover(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params) {
@@ -1639,8 +1290,6 @@ static void aes_256_inverse_shiftrows_verifier(bf256_t* out_tag, const bf256_t* 
   }
 }
 
-
-
 // INVERSE AFFINE
 static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, const faest_paramset_t* params) {
   
@@ -1663,7 +1312,7 @@ static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint
       } else {
         c = 0;
       }
-      bf128_t c_tag;  // we don't really need to call constant to cole but keeping it for similarity with spec
+      bf128_t c_tag;  // we don't really need to call constant to vole but keeping it for similarity with spec
       constant_to_vole_128_prover(&c_tag, c);
       y_bits[bit_i] = x_bits[(bit_i - 1 + 8)%8] ^ x_bits[(bit_i - 3 + 8)%8] ^ x_bits[(bit_i - 6 + 8)%8] ^ c;
       y_bits_tag[bit_i] = bf128_add(
@@ -1839,8 +1488,6 @@ static void aes_256_inverse_affine_verifier(bf256_t* y_key, const bf256_t* x_key
     }
   }
 }
-
-
 
 // BITWISE MIX COLOUMNS
 static void aes_128_bitwise_mix_coloumn_prover(bf128_t* out, bf128_t* out_tag, uint8_t* s, bf128_t* s_tag) {
@@ -2329,8 +1976,6 @@ static void aes_256_bitwise_mix_coloumn_verifier(bf256_t* out_key, bf256_t* s_ke
   }
 }
 
-
-
 // CONSTANT TO VOLE
 static void constant_to_vole_128_prover(bf128_t* tag, const uint8_t* val) {
   // the val stay the same as the val is a pub const!
@@ -2368,8 +2013,6 @@ static void constant_to_vole_256_verifier(bf256_t* tag, const uint8_t* val, bf25
   }  
 }
 
-
-
 // DEG 2 TO 3
 static void aes_128_deg2to3_prover(bf128_t* z0, bf128_t* z1, bf128_t val, bf128_t tag) {
   z0[0] = val;
@@ -2397,10 +2040,706 @@ static void aes_256_deg2to3_prover(bf256_t* z0, bf256_t* z1, bf256_t key, bf256_
   // verifier does not have tag
     z1[0] = bf256_mul(key, delta);
 }
+// EncSctrnts internal functions end!!
+
+// COLOUM TO ROW MAJOR
+static bf128_t* column_to_row_major_and_shrink_V_128(const uint8_t** v, unsigned int ell) {
+  // V is \hat \ell times \lambda matrix over F_2
+  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
+  // rows and \lambda columns storing in row-major order
+  bf128_t* new_v = faest_aligned_alloc(BF128_ALIGN, (ell + FAEST_128F_LAMBDA*2) * sizeof(bf128_t));
+  for (unsigned int row = 0; row != ell + FAEST_128F_LAMBDA*2; ++row) {
+    uint8_t new_row[BF128_NUM_BYTES] = {0};
+    for (unsigned int column = 0; column != FAEST_128F_LAMBDA; ++column) {
+      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
+    }
+    new_v[row] = bf128_load(new_row);
+  }
+  return new_v;
+}
+static bf192_t* column_to_row_major_and_shrink_V_192(const uint8_t** v, unsigned int ell) {
+  // V is \hat \ell times \lambda matrix over F_2
+  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
+  // rows and \lambda columns storing in row-major order
+  bf192_t* new_v = faest_aligned_alloc(BF192_ALIGN, (ell + FAEST_192F_LAMBDA) * sizeof(bf192_t));
+  for (unsigned int row = 0; row != ell + FAEST_192F_LAMBDA; ++row) {
+    uint8_t new_row[BF192_NUM_BYTES] = {0};
+    for (unsigned int column = 0; column != FAEST_192F_LAMBDA; ++column) {
+      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
+    }
+    new_v[row] = bf192_load(new_row);
+  }
+
+  return new_v;
+}
+static bf256_t* column_to_row_major_and_shrink_V_256(const uint8_t** v, unsigned int ell) {
+  // V is \hat \ell times \lambda matrix over F_2
+  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
+  // rows and \lambda columns storing in row-major order
+  bf256_t* new_v = faest_aligned_alloc(BF256_ALIGN, (ell + FAEST_256F_LAMBDA) * sizeof(bf256_t));
+  for (unsigned int row = 0; row != ell + FAEST_256F_LAMBDA; ++row) {
+    uint8_t new_row[BF256_NUM_BYTES] = {0};
+    for (unsigned int column = 0; column != FAEST_256F_LAMBDA; ++column) {
+      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
+    }
+    new_v[row] = bf256_load(new_row);
+  }
+
+  return new_v;
+}
+
+// KEY EXP BKWD
+static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, uint8_t* key, bf128_t* key_tag,
+                                const faest_paramset_t* params, bf128_t delta) {
+
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Ske    = params->faest_param.Ske;
+
+  // ::2
+  uint8_t x_tilde;  // contains all (F_2)^8 bits
+  bf128_t x_tilde_tag[8];
+  // ::3
+  unsigned int iwd   = 0;
+  // ::4
+  bool rmvRcon       = true;
+  unsigned int ircon = 0;
+  // ::5-6
+  for (unsigned int j = 0; j < Ske; j++) {
+
+    // ::7
+    if (isprover) {
+      x_tilde = x[j] ^ key[iwd/8 + j%4];  // for the witness
+    }
+    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+      x_tilde_tag[bit_i] = bf128_add(x_tag[j*8 + bit_i], key_tag[iwd + (j%4)*8 + bit_i]); // for the tags of each witness bit
+    }
+
+    // ::8-10
+    if (rmvRcon == true && j % 4 == 0) {
+      if (isprover) {
+        // adding round constant to the witness
+        x_tilde = x_tilde ^ Rcon[ircon];
+      }
+      // adding round constant to the tags
+      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+        // for prover, no multiplication with delta
+        bf128_t rcon_tag;
+        if (isprover) {
+          rcon_tag = bf128_from_bit(get_bit(Rcon[ircon], bit_i));
+        } 
+        // for verifier, multiplication with delta
+        else {
+          rcon_tag = bf128_mul_bit(delta, get_bit(Rcon[ircon], bit_i));
+        }
+        x_tilde_tag[bit_i] = bf128_add(x_tilde_tag[bit_i], rcon_tag);
+
+      }
+      ++ircon;
+    }
+
+    // ::11
+    aes_inverse_affine(y, y_tag, x_tilde, x_tilde_tag, isprover, delta);
+
+    // ::12-16 lines only relavant for aes-128
+    if (j%4 == 4) {
+      iwd += 128;
+    }
+  }
+}
+static void aes_128_keyexp_backward_verifier(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, uint8_t* key, bf128_t* key_tag,
+                                const faest_paramset_t* params, bf128_t delta) {
+
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Ske    = params->faest_param.Ske;
+
+  // ::2
+  uint8_t x_tilde;  // contains all (F_2)^8 bits
+  bf128_t x_tilde_tag[8];
+  // ::3
+  unsigned int iwd   = 0;
+  // ::4
+  bool rmvRcon       = true;
+  unsigned int ircon = 0;
+  // ::5-6
+  for (unsigned int j = 0; j < Ske; j++) {
+
+    // ::7
+    if (isprover) {
+      x_tilde = x[j] ^ key[iwd/8 + j%4];  // for the witness
+    }
+    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+      x_tilde_tag[bit_i] = bf128_add(x_tag[j*8 + bit_i], key_tag[iwd + (j%4)*8 + bit_i]); // for the tags of each witness bit
+    }
+
+    // ::8-10
+    if (rmvRcon == true && j % 4 == 0) {
+      if (isprover) {
+        // adding round constant to the witness
+        x_tilde = x_tilde ^ Rcon[ircon];
+      }
+      // adding round constant to the tags
+      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+        // for prover, no multiplication with delta
+        bf128_t rcon_tag;
+        if (isprover) {
+          rcon_tag = bf128_from_bit(get_bit(Rcon[ircon], bit_i));
+        } 
+        // for verifier, multiplication with delta
+        else {
+          rcon_tag = bf128_mul_bit(delta, get_bit(Rcon[ircon], bit_i));
+        }
+        x_tilde_tag[bit_i] = bf128_add(x_tilde_tag[bit_i], rcon_tag);
+
+      }
+      ++ircon;
+    }
+
+    // ::11
+    aes_inverse_affine(y, y_tag, x_tilde, x_tilde_tag, isprover, delta);
+
+    // ::12-16 lines only relavant for aes-128
+    if (j%4 == 4) {
+      iwd += 128;
+    }
+  }
+}
+
+// KEY EXP FWD
+static void aes_128_keyexp_forward_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* w, const bf128_t* w_tag, 
+                                const faest_paramset_t* params, bf128_t delta) {
+
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Nk = lambda/8;
+  unsigned int R = params->faest_param.R;
+
+  // ::1-3 copying the Nk words
+  if (isprover) { // witness exists only for prover
+    for (unsigned int i = 0; i < Nk; i++) {
+      y[i] = w[i];  // unit8 contains 8 bits
+    }
+  }
+  // used for tag (prover) or key (verifier) 
+  for (unsigned int i = 0; i < lambda; i++) {
+    y_tag[i] = w_tag[i];  // each bf128 is tag for one bit
+  }
+  unsigned int i_wd = Nk;
+
+  // ::4-10
+  for (unsigned int j = Nk; j < 4*(R + 1); j++) {
+
+    // ::5
+    if (j % Nk == 0) {
+
+      // ::6
+      if (isprover) {
+        for (unsigned int word_idx = i_wd; word_idx < 4; word_idx++) {
+          y[4*j + word_idx] = w[i_wd + word_idx];   // storing byte by byte
+        }
+      }
+      for (unsigned int word_bit_idx = i_wd*8; word_bit_idx < 4*8; word_bit_idx++) {
+        y_tag[4*8*j + word_bit_idx] = w_tag[i_wd*8 + word_bit_idx]; // storing bit tags, "bit by bit"
+      }
+      // ::7
+      i_wd += 4;    // 32 bits -> 4 words
+    // ::8
+    } else {
+      // ::9-10
+      if (isprover) {
+        for (unsigned int word_idx = 0; word_idx < 4; word_idx++) {
+          y[4*j + word_idx] = y[4*(j - Nk) + word_idx] ^ y[4*(j - 1) + word_idx]; // adding bitwise
+        }
+      }
+      for (unsigned int word_bit_idx = 0; word_bit_idx < 32; word_bit_idx++) {
+        y_tag[4*8*j + word_bit_idx] = bf128_add(y_tag[4*8*(j - Nk) + word_bit_idx], y_tag[4*8*(j -1) + word_bit_idx]);  // adding the tags in F2lambda "bitwwise"
+      }
+    }
+  }
+}
+static void aes_128_keyexp_forward_verifier(uint8_t* y, bf128_t* y_tag, const uint8_t* w, const bf128_t* w_tag, 
+                                const faest_paramset_t* params, bf128_t delta) {
+
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Nk = lambda/8;
+  unsigned int R = params->faest_param.R;
+
+  // ::1-3 copying the Nk words
+  if (isprover) { // witness exists only for prover
+    for (unsigned int i = 0; i < Nk; i++) {
+      y[i] = w[i];  // unit8 contains 8 bits
+    }
+  }
+  // used for tag (prover) or key (verifier) 
+  for (unsigned int i = 0; i < lambda; i++) {
+    y_tag[i] = w_tag[i];  // each bf128 is tag for one bit
+  }
+  unsigned int i_wd = Nk;
+
+  // ::4-10
+  for (unsigned int j = Nk; j < 4*(R + 1); j++) {
+
+    // ::5
+    if (j % Nk == 0) {
+
+      // ::6
+      if (isprover) {
+        for (unsigned int word_idx = i_wd; word_idx < 4; word_idx++) {
+          y[4*j + word_idx] = w[i_wd + word_idx];   // storing byte by byte
+        }
+      }
+      for (unsigned int word_bit_idx = i_wd*8; word_bit_idx < 4*8; word_bit_idx++) {
+        y_tag[4*8*j + word_bit_idx] = w_tag[i_wd*8 + word_bit_idx]; // storing bit tags, "bit by bit"
+      }
+      // ::7
+      i_wd += 4;    // 32 bits -> 4 words
+    // ::8
+    } else {
+      // ::9-10
+      if (isprover) {
+        for (unsigned int word_idx = 0; word_idx < 4; word_idx++) {
+          y[4*j + word_idx] = y[4*(j - Nk) + word_idx] ^ y[4*(j - 1) + word_idx]; // adding bitwise
+        }
+      }
+      for (unsigned int word_bit_idx = 0; word_bit_idx < 32; word_bit_idx++) {
+        y_tag[4*8*j + word_bit_idx] = bf128_add(y_tag[4*8*(j - Nk) + word_bit_idx], y_tag[4*8*(j -1) + word_bit_idx]);  // adding the tags in F2lambda "bitwwise"
+      }
+    }
+  }
+}
+
+// KEY EXP CSTRNTS
+static void aes_128_expkey_constraints_prover(bf128_t* z0, bf128_t* z1, uint8_t* k, bf128_t* k_tag, const uint8_t* w, const bf128_t* w_tag, 
+                                    const faest_paramset_t* params, bf128_t delta) {
 
 
+  unsigned int Ske = params->faest_param.Ske;
+  unsigned int R = params->faest_param.R;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Nk = lambda/32;
 
-static void aes_constraints_128(bf128_t* z0, bf128_t* z1, const uint8_t* w, const bf128_t* w_tag, const uint8_t* owf_in, const uint8_t* owf_out, const faest_paramset_t* params, bool isprover, bf128_t delta) {
+  // ::1
+  aes_128_keyexp_forward(k, k_tag, w, w_tag, params, isprover, delta);
+  // ::2
+  uint8_t w_flat[Ske];
+  bf128_t w_flat_tag[8*Ske];
+  aes_128_keyexp_backward(w_flat, w_flat_tag, w, w_tag, k, k_tag, params, isprover, delta);
+
+  // ::3-5
+  unsigned int iwd = 32*(Nk - 1);  // as 1 unit8 has 8 bits
+  // ::6 Used only on AES-256
+  // ::7
+  for (unsigned int j = 0; j < FAEST_128F_Ske / 4; j++) {
+    // ::8
+    bf128_t k_hat[4];     // expnaded key witness
+    bf128_t w_hat[4];     // inverse output
+    bf128_t k_hat_sq[4];  // expanded key witness sq
+    bf128_t w_hat_sq[4];      // inverse output sq
+
+    bf128_t k_hat_tag[4]; // expanded key witness tag
+    bf128_t w_hat_tag[4]; // inverse output tag
+    bf128_t k_hat_tag_sq[4];  // expanded key tag sq
+    bf128_t w_hat_tag_sq[4];  // inverser output tag sq
+    // ::9
+    for (unsigned int r = 0; r < 4; r++) {
+      // ::10
+      unsigned int r_prime = (r + 3)%4;
+      // ::11 used only for AES-256
+      // ::12-15
+      if(isprover) { // only prover has the witness
+        k_hat[r_prime] = bf128_byte_combine_bits(k[(iwd + 8 * r) / 8]); // lifted key witness        
+        k_hat_sq[r_prime] = bf128_byte_combine_bits_sq(k[(iwd + 8 * r) / 8]); // lifted key witness sq
+
+        w_hat[r] = bf128_byte_combine_bits(w_flat[(32 * j + 8 * r) / 8]); // lifted output
+        w_hat_sq[r] = bf128_byte_combine_bits_sq(w_flat[(32 * j + 8 * r) / 8]);  // lifted output sq
+      }
+      // done by both prover and verifier
+      k_hat_tag[r_prime] = bf128_byte_combine(k_tag + (iwd + 8 * r)); // lifted key tag
+      k_hat_tag_sq[r_prime] = bf128_byte_combine_sq(k_tag + (iwd + 8 * r)); // lifted key tag sq
+
+      w_hat_tag[r] = bf128_byte_combine(w_flat_tag + ((32 * j + 8 * r))); // lifted output tag
+      w_hat_tag_sq[r] = bf128_byte_combine_sq(w_flat_tag + (32 * j + 8 * r)); // lifted output tag sq
+    }
+    // ::16 used only for AES-256
+    // ::17
+    for (unsigned int r = 0; r < 4; r++) {
+      // ::18-19
+      if (isprover) { // only prover has the witness vals
+        z0[8*j + 2*r] = bf128_add(bf128_mul(k_hat_sq[r], w_hat[r]), k_hat[r]);
+        z0[8*j + 2*r + 1] = bf128_add(bf128_mul(k_hat[r], w_hat_sq[r]), w_hat[r]);
+      }
+      // for both prover and verifier
+      z1[8*j + 2*r] = bf128_add(bf128_mul(k_hat_tag_sq[r], w_hat_tag[r]), k_hat_tag[r]);
+      z1[8*j + 2*r + 1] = bf128_add(bf128_mul(k_hat_tag[r], w_hat_tag_sq[r]), k_hat_tag[r]);
+    }
+    iwd = iwd + 128;
+  }
+
+}
+static void aes_128_expkey_constraints_verifier(bf128_t* z0, bf128_t* z1, uint8_t* k, bf128_t* k_tag, const uint8_t* w, const bf128_t* w_tag, 
+                                    const faest_paramset_t* params, bf128_t delta) {
+
+
+  unsigned int Ske = params->faest_param.Ske;
+  unsigned int R = params->faest_param.R;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Nk = lambda/32;
+
+  // ::1
+  aes_128_keyexp_forward(k, k_tag, w, w_tag, params, isprover, delta);
+  // ::2
+  uint8_t w_flat[Ske];
+  bf128_t w_flat_tag[8*Ske];
+  aes_128_keyexp_backward(w_flat, w_flat_tag, w, w_tag, k, k_tag, params, isprover, delta);
+
+  // ::3-5
+  unsigned int iwd = 32*(Nk - 1);  // as 1 unit8 has 8 bits
+  // ::6 Used only on AES-256
+  // ::7
+  for (unsigned int j = 0; j < FAEST_128F_Ske / 4; j++) {
+    // ::8
+    bf128_t k_hat[4];     // expnaded key witness
+    bf128_t w_hat[4];     // inverse output
+    bf128_t k_hat_sq[4];  // expanded key witness sq
+    bf128_t w_hat_sq[4];      // inverse output sq
+
+    bf128_t k_hat_tag[4]; // expanded key witness tag
+    bf128_t w_hat_tag[4]; // inverse output tag
+    bf128_t k_hat_tag_sq[4];  // expanded key tag sq
+    bf128_t w_hat_tag_sq[4];  // inverser output tag sq
+    // ::9
+    for (unsigned int r = 0; r < 4; r++) {
+      // ::10
+      unsigned int r_prime = (r + 3)%4;
+      // ::11 used only for AES-256
+      // ::12-15
+      if(isprover) { // only prover has the witness
+        k_hat[r_prime] = bf128_byte_combine_bits(k[(iwd + 8 * r) / 8]); // lifted key witness        
+        k_hat_sq[r_prime] = bf128_byte_combine_bits_sq(k[(iwd + 8 * r) / 8]); // lifted key witness sq
+
+        w_hat[r] = bf128_byte_combine_bits(w_flat[(32 * j + 8 * r) / 8]); // lifted output
+        w_hat_sq[r] = bf128_byte_combine_bits_sq(w_flat[(32 * j + 8 * r) / 8]);  // lifted output sq
+      }
+      // done by both prover and verifier
+      k_hat_tag[r_prime] = bf128_byte_combine(k_tag + (iwd + 8 * r)); // lifted key tag
+      k_hat_tag_sq[r_prime] = bf128_byte_combine_sq(k_tag + (iwd + 8 * r)); // lifted key tag sq
+
+      w_hat_tag[r] = bf128_byte_combine(w_flat_tag + ((32 * j + 8 * r))); // lifted output tag
+      w_hat_tag_sq[r] = bf128_byte_combine_sq(w_flat_tag + (32 * j + 8 * r)); // lifted output tag sq
+    }
+    // ::16 used only for AES-256
+    // ::17
+    for (unsigned int r = 0; r < 4; r++) {
+      // ::18-19
+      if (isprover) { // only prover has the witness vals
+        z0[8*j + 2*r] = bf128_add(bf128_mul(k_hat_sq[r], w_hat[r]), k_hat[r]);
+        z0[8*j + 2*r + 1] = bf128_add(bf128_mul(k_hat[r], w_hat_sq[r]), w_hat[r]);
+      }
+      // for both prover and verifier
+      z1[8*j + 2*r] = bf128_add(bf128_mul(k_hat_tag_sq[r], w_hat_tag[r]), k_hat_tag[r]);
+      z1[8*j + 2*r + 1] = bf128_add(bf128_mul(k_hat_tag[r], w_hat_tag_sq[r]), k_hat_tag[r]);
+    }
+    iwd = iwd + 128;
+  }
+
+}
+
+// ENC CSTRNTS
+static aes_128_enc_constraints_prover(bf128_t* z0, bf128_t* z1, uint8_t* owf_in, 
+                                uint8_t* owf_out, uint8_t* w, 
+                                bf128_t* w_tag, uint8_t* k, bf128_t* k_tag, 
+                                const faest_paramset_t* params, bf128_t delta) {
+
+    unsigned int Nst = 4;
+    unsigned int Nstbits = 32 * Nst;
+    unsigned int R = params->faest_param.R;
+    unsigned int Nstbytes = Nstbits/8;
+
+    /// ::1 AddRoundKey
+    bf128_t state_bits[Nstbytes];
+    bf128_t state_bits_tag[Nstbytes];
+    // TODO: Unsure of the squaring part come here???, spec not defined
+    for (unsigned int i = 0; i < Nstbytes; i++) {
+      if (isprover) {
+        state_bits[i] = bf128_add(
+                        bf128_byte_combine_bits(owf_in[i]), bf128_byte_combine_bits(k[i]));
+        // TODO: do we square, I guess yes ???
+        // uint8_t tmp;
+        // for (unsigned int bit_j = 0; bit_j < 8; ++bit_j) {
+        //   tmp ^= (  ( (xin >> bit_j) ^ (xk[i] >> bit_j)  ) & 1 ) << bit_j;
+        // }
+        // bf_y_sq[i] = bf128_byte_combine_bits_sq(tmp);
+        bf128_t bf_tmp[8];
+        for (unsigned int j = 0; j < 8; j++) {
+          bf_tmp[j] = bf128_from_bit(get_bit(owf_in[i], j));
+        }
+        state_bits_tag[i] = bf128_add(    // For prover we do not multiply with delta 
+                        bf128_byte_combine(bf_tmp), bf128_byte_combine(k_tag + i*8));
+        // TODO: do we square, I guess yes ???
+        // bf128_t tmp[8];
+        // for (unsigned int bit_j = 0; bit_j < 8; ++bit_j) {
+        //   tmp[bit_j] = bf_xin[i] ^ bf_xk[i * 8 + bit_j];
+        // }
+        // bf_y_sq[i] = bf128_byte_combine_sq(tmp);       
+      } else {
+        bf128_t bf_tmp[8];
+        for (unsigned int j = 0; j < 8; j++) {  // For verifier we multiply in with delta
+          bf_tmp[j] = bf128_mul_bit(delta, get_bit(owf_in[i], j));
+        }
+        state_bits_tag[i] = bf128_add(
+                        bf128_byte_combine(bf_tmp), bf128_byte_combine(k_tag + i*8));
+      }
+    }
+
+    // TODO: here need to be careful with the 0000||4bits invnorm witness values!!
+
+    // ::2
+    for (unsigned int r = 0; r < R/2; r++) {
+
+      // ::3-4
+      bf128_t state_conj[Nstbytes];
+      bf128_t state_conj_tag[Nstbytes];
+      // TODO: not implemented function below
+      aes_128_conjugates(state_conj, state_conj_tag, state_bits, state_bits_tag, 
+                          isprover, delta);
+
+      // ::5-6
+      uint8_t n[Nstbits/2*4]; // 1 uint8 contains 4 bits of the Invnorm 0000||4bits
+      bf128_t n_tag[Nstbits/2]; // tag for each bit
+      for (unsigned int i = 0; i < Nstbits/2; i++) {
+        if (isprover) {
+          // only prover has the witness
+          n[i] = w[(((3*Nstbits)/2)*r)/4];
+        }
+        // verifier has the tags (keys)
+        n_tag[i] = w_tag[(((3*Nstbits)/2)*r)];
+      }
+
+      // ::7
+      bf128_t st[Nstbytes*8];
+      bf128_t st_tag[Nstbytes*8];
+      for (unsigned int i = 0; i < Nstbytes; i++) {
+        // ::8-9
+        uint8_t y[4];
+        bf128_t y_tag[4];
+        // TODO: not implemented function below
+        aes_128_inv_norm_to_conjugates(y, y_tag, n, n_tag, isprover, delta);
+
+        // ::10-11
+        // TODO: not implemented function below
+        aes_128_inv_norm_constraints(z0 + (3*r*Nstbytes), z1 + (3*r*Nstbytes), state_conj, 
+                                      state_conj_tag, y, y_tag, isprover, delta);
+
+        // ::12
+        for (unsigned int j = 0; j < 8; j++) {
+          // ::13-14
+          // TODO: unsure what happens here, help! T.T
+        }
+      }
+
+      // ::15-16
+      // TODO: not implemented function below
+      bf8_t k_0[16];
+      aes_128_state_to_bytes(k_0, k + (Nstbits*(2*r +1)));
+      // ::17
+      // TODO:
+
+      // ::18
+      for (unsigned int b = 0; b < 2; b++) {
+        // TODO:
+        aes_128_sbox_affine();
+        aes_128_shiftrows();
+        aes_128_mix_coloumns();
+        aes_128_add_round_key();
+      }
+
+      if (r == R/2 - 1) {
+        aes_128_add_round_key();
+      } else {
+
+      }
+
+    }
+
+}
+static aes_128_enc_constraints_verifier(bf128_t* z0, bf128_t* z1, uint8_t* owf_in, 
+                                uint8_t* owf_out, uint8_t* w, 
+                                bf128_t* w_tag, uint8_t* k, bf128_t* k_tag, 
+                                const faest_paramset_t* params, bf128_t delta) {
+
+    unsigned int Nst = 4;
+    unsigned int Nstbits = 32 * Nst;
+    unsigned int R = params->faest_param.R;
+    unsigned int Nstbytes = Nstbits/8;
+
+    /// ::1 AddRoundKey
+    bf128_t state_bits[Nstbytes];
+    bf128_t state_bits_tag[Nstbytes];
+    // TODO: Unsure of the squaring part come here???, spec not defined
+    for (unsigned int i = 0; i < Nstbytes; i++) {
+      if (isprover) {
+        state_bits[i] = bf128_add(
+                        bf128_byte_combine_bits(owf_in[i]), bf128_byte_combine_bits(k[i]));
+        // TODO: do we square, I guess yes ???
+        // uint8_t tmp;
+        // for (unsigned int bit_j = 0; bit_j < 8; ++bit_j) {
+        //   tmp ^= (  ( (xin >> bit_j) ^ (xk[i] >> bit_j)  ) & 1 ) << bit_j;
+        // }
+        // bf_y_sq[i] = bf128_byte_combine_bits_sq(tmp);
+        bf128_t bf_tmp[8];
+        for (unsigned int j = 0; j < 8; j++) {
+          bf_tmp[j] = bf128_from_bit(get_bit(owf_in[i], j));
+        }
+        state_bits_tag[i] = bf128_add(    // For prover we do not multiply with delta 
+                        bf128_byte_combine(bf_tmp), bf128_byte_combine(k_tag + i*8));
+        // TODO: do we square, I guess yes ???
+        // bf128_t tmp[8];
+        // for (unsigned int bit_j = 0; bit_j < 8; ++bit_j) {
+        //   tmp[bit_j] = bf_xin[i] ^ bf_xk[i * 8 + bit_j];
+        // }
+        // bf_y_sq[i] = bf128_byte_combine_sq(tmp);       
+      } else {
+        bf128_t bf_tmp[8];
+        for (unsigned int j = 0; j < 8; j++) {  // For verifier we multiply in with delta
+          bf_tmp[j] = bf128_mul_bit(delta, get_bit(owf_in[i], j));
+        }
+        state_bits_tag[i] = bf128_add(
+                        bf128_byte_combine(bf_tmp), bf128_byte_combine(k_tag + i*8));
+      }
+    }
+
+    // TODO: here need to be careful with the 0000||4bits invnorm witness values!!
+
+    // ::2
+    for (unsigned int r = 0; r < R/2; r++) {
+
+      // ::3-4
+      bf128_t state_conj[Nstbytes];
+      bf128_t state_conj_tag[Nstbytes];
+      // TODO: not implemented function below
+      aes_128_conjugates(state_conj, state_conj_tag, state_bits, state_bits_tag, 
+                          isprover, delta);
+
+      // ::5-6
+      uint8_t n[Nstbits/2*4]; // 1 uint8 contains 4 bits of the Invnorm 0000||4bits
+      bf128_t n_tag[Nstbits/2]; // tag for each bit
+      for (unsigned int i = 0; i < Nstbits/2; i++) {
+        if (isprover) {
+          // only prover has the witness
+          n[i] = w[(((3*Nstbits)/2)*r)/4];
+        }
+        // verifier has the tags (keys)
+        n_tag[i] = w_tag[(((3*Nstbits)/2)*r)];
+      }
+
+      // ::7
+      bf128_t st[Nstbytes*8];
+      bf128_t st_tag[Nstbytes*8];
+      for (unsigned int i = 0; i < Nstbytes; i++) {
+        // ::8-9
+        uint8_t y[4];
+        bf128_t y_tag[4];
+        // TODO: not implemented function below
+        aes_128_inv_norm_to_conjugates(y, y_tag, n, n_tag, isprover, delta);
+
+        // ::10-11
+        // TODO: not implemented function below
+        aes_128_inv_norm_constraints(z0 + (3*r*Nstbytes), z1 + (3*r*Nstbytes), state_conj, 
+                                      state_conj_tag, y, y_tag, isprover, delta);
+
+        // ::12
+        for (unsigned int j = 0; j < 8; j++) {
+          // ::13-14
+          // TODO: unsure what happens here, help! T.T
+        }
+      }
+
+      // ::15-16
+      // TODO: not implemented function below
+      bf8_t k_0[16];
+      aes_128_state_to_bytes(k_0, k + (Nstbits*(2*r +1)));
+      // ::17
+      // TODO:
+
+      // ::18
+      for (unsigned int b = 0; b < 2; b++) {
+        // TODO:
+        aes_128_sbox_affine();
+        aes_128_shiftrows();
+        aes_128_mix_coloumns();
+        aes_128_add_round_key();
+      }
+
+      if (r == R/2 - 1) {
+        aes_128_add_round_key();
+      } else {
+
+      }
+
+    }
+
+}
+
+// OWF CONSTRAINTS
+static void aes_128_constraints_prover(bf128_t* z0, bf128_t* z1, const uint8_t* w, const bf128_t* w_tag, const uint8_t* owf_in, const uint8_t* owf_out, 
+                                        const faest_paramset_t* params, bf128_t delta) {
+
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int R = params->faest_param.R;
+  unsigned int Ske = params->faest_param.Ske;
+  unsigned int Lke = lambda + 8*Ske;
+  unsigned int Lenc = params->faest_param.Lenc;
+  unsigned int Senc = params->faest_param.Senc;
+  // ::1-3 owf_in, owf_out, z and z_tag
+
+  // ::4-5
+  aes_deg2to3(&z0[0], &z1[0], (w[0]&1) & ((w[0]>>1)&1), bf128_mul(w_tag[0], w_tag[1]), isprover, delta);   // multiplying the first and second bit of the witness and the tags
+
+  // jump to ::13 for AES
+  bf128_t owf_in_tag[128];  // don't really use it anywhere, just sticking close to the spec! // TODO: can also remove this
+  constant_to_vole_128(owf_in_tag, owf_in, true, bf128_one());
+
+  // ::14
+  bf128_t owf_out_tag[128];  // don't really use it anywhere, just sticking close to the spec! // TODO: can also remove this
+  constant_to_vole_128(owf_out_tag, owf_out, true, bf128_one());
+
+  // ::15 skiped as B = 1
+  // ::16
+  bf128_t z_tilde_0_expkey[FAEST_128F_Ske / 4 + 2*4];
+  bf128_t z_tilde_1_expkey[FAEST_128F_Ske / 4 + 2*4];
+  uint8_t k[(R+1)*lambda/8];
+  bf128_t k_tag[(R+1)*lambda];
+   // if isprover == true, z_tilde_0 will be empty after aes_128_expkey_constraints() returns
+  aes_128_expkey_constraints(z_tilde_0_expkey, z_tilde_1_expkey, k, k_tag, w, w_tag, params, isprover, delta);
+  
+  // ::17
+  for (unsigned int i = 0; i < FAEST_128F_Ske / 4 + 2*4; i++) {
+    aes_128_deg2to3(z0 + 1+i, z1 + 1+i, z_tilde_0_expkey[i], z_tilde_1_expkey[i], isprover, delta);
+  }
+
+  // ::18 b = 0
+  // ::19
+  uint8_t w_tilde[Lenc/8];
+  bf128_t w_tilde_tag[Lenc];
+  for (unsigned int i = 0; i < Lenc/8; i++) {   // can also do a memcpy
+    w_tilde[i] = w[Lke/8 + i];  // copying 8 bits at a time
+  }
+  for (unsigned int i = 0; i < Lenc; i++) {
+    w_tilde_tag[i] = w_tag[Lke + i];  // copying 1 bit's tag at a time
+  }
+  // ::20 not needed for aes128
+  // ::21
+  bf128_t z_tilde_0[Senc];
+  bf128_t z_tilde_1[Senc];
+
+  aes_128_enc_constraints(z_tilde_0, z_tilde_1, owf_in, owf_out, w, w_tag, k, k_tag, params, isprover, delta);
+
+  for (unsigned int i = 0; i < Senc; i++) {
+    z0[1+(FAEST_128F_Ske / 4 + 2*4) + i] = z_tilde_0[i];
+    z1[1+(FAEST_128F_Ske / 4 + 2*4) + i] = z_tilde_1[i];
+  }
+
+}
+static void aes_128_constraints_verifier(bf128_t* z0, bf128_t* z1, const uint8_t* w, const bf128_t* w_tag, const uint8_t* owf_in, const uint8_t* owf_out, 
+                                        const faest_paramset_t* params, bf128_t delta) {
 
   unsigned int lambda = params->faest_param.lambda;
   unsigned int R = params->faest_param.R;
@@ -2459,7 +2798,8 @@ static void aes_constraints_128(bf128_t* z0, bf128_t* z1, const uint8_t* w, cons
 
 }
 
-static void aes_prove_128(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
+// OWF PROVE VERIFY
+static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
                           const uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params) {
 
   unsigned int lambda = params->faest_param.lambda;
@@ -2512,8 +2852,7 @@ static void aes_prove_128(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tild
   zk_hash_128_finalize(a2_tilde, &a2_ctx, bf_v_star_1);
 
 }
-
-static uint8_t* aes_verify_128(const uint8_t* d, const uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
+static uint8_t* aes_128_verifier(const uint8_t* d, const uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params) {
 
   const unsigned int tau = params->faest_param.tau;
@@ -2574,44 +2913,7 @@ static uint8_t* aes_verify_128(const uint8_t* d, const uint8_t** Q, const uint8_
 }
 
 
-
-
-static bf192_t* column_to_row_major_and_shrink_V_192(uint8_t** v, unsigned int ell) {
-  // V is \hat \ell times \lambda matrix over F_2
-  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
-  // rows and \lambda columns storing in row-major order
-  bf192_t* new_v = faest_aligned_alloc(BF192_ALIGN, (ell + FAEST_192F_LAMBDA) * sizeof(bf192_t));
-  for (unsigned int row = 0; row != ell + FAEST_192F_LAMBDA; ++row) {
-    uint8_t new_row[BF192_NUM_BYTES] = {0};
-    for (unsigned int column = 0; column != FAEST_192F_LAMBDA; ++column) {
-      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
-    }
-    new_v[row] = bf192_load(new_row);
-  }
-
-  return new_v;
-}
-
-
-static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int ell) {
-  // V is \hat \ell times \lambda matrix over F_2
-  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
-  // rows and \lambda columns storing in row-major order
-  bf256_t* new_v = faest_aligned_alloc(BF256_ALIGN, (ell + FAEST_256F_LAMBDA) * sizeof(bf256_t));
-  for (unsigned int row = 0; row != ell + FAEST_256F_LAMBDA; ++row) {
-    uint8_t new_row[BF256_NUM_BYTES] = {0};
-    for (unsigned int column = 0; column != FAEST_256F_LAMBDA; ++column) {
-      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
-    }
-    new_v[row] = bf256_load(new_row);
-  }
-
-  return new_v;
-}
-
-
-// dispatchers
-
+// AES dispatchers
 void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, uint8_t** V, const uint8_t* owf_in,
                const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
@@ -2631,7 +2933,7 @@ void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const ui
     break;
   default:
     if (params->faest_param.Lke) {
-      aes_prove_128(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params);
+      aes_128_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params);
     } else {
       // em_prove_128(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
     }
@@ -2656,7 +2958,7 @@ uint8_t* aes_verify(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const
     }
   default:
     if (params->faest_param.Lke) {
-      return aes_verify_128(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params);
+      return aes_128_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params);
     } else {
       // return em_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     }
