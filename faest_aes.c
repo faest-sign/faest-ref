@@ -689,28 +689,86 @@ static void aes_256_inv_norm_to_conjugates_lambda(bf256_t* y, const bf256_t* x) 
 }
 
 
+
 // INV NORM CONSTRAINTS
-// TODO:
 void aes_128_inv_norm_constraints_prover(bf128_t* z0, bf128_t* z1, const bf128_t* state_bits, const bf128_t* state_bits_tag, const uint8_t* y, const bf128_t* y_tag) {
+  
+    z0[0] = bf128_add(
+              bf128_mul(bf128_mul(
+                                bf128_byte_combine_bits(y), 
+                                state_bits[1]), 
+                        state_bits[4]),
+              state_bits[0]);
+
+    z1[0] = bf128_add(
+              bf128_mul(bf128_mul(
+                                bf128_byte_combine_bits(y_tag), 
+                                state_bits_tag[1]), 
+                        state_bits_tag[4]),
+              state_bits_tag[0]);
 
 }
-void aes_128_inv_norm_constraints_verifier(bf128_t* z0, bf128_t* z1, const bf128_t* state_bits_key, const bf128_t* y_key) {
-
+void aes_128_inv_norm_constraints_verifier(bf128_t* z1, const bf128_t* state_bits_key, const bf128_t* y_key) {
+  z1[0] = bf128_add(
+              bf128_mul(bf128_mul(
+                                bf128_byte_combine_bits(y_key), 
+                                state_bits_key[1]), 
+                        state_bits_key[4]),
+              state_bits_key[0]);
 }
 
 void aes_192_inv_norm_constraints_prover(bf192_t* z0, bf192_t* z1, const bf192_t* state_bits, const bf192_t* state_bits_tag, const uint8_t* y, const bf192_t* y_tag) {
+  
+    z0[0] = bf192_add(
+              bf192_mul(bf192_mul(
+                                bf192_byte_combine_bits(y), 
+                                state_bits[1]), 
+                        state_bits[4]),
+              state_bits[0]);
+
+    z1[0] = bf192_add(
+              bf192_mul(bf192_mul(
+                                bf192_byte_combine_bits(y_tag), 
+                                state_bits_tag[1]), 
+                        state_bits_tag[4]),
+              state_bits_tag[0]);
 
 }
-void aes_192_inv_norm_constraints_verifier(bf192_t* z0, bf192_t* z1, const bf192_t* state_bits_key, const bf192_t* y_key) {
-
+void aes_192_inv_norm_constraints_verifier(bf192_t* z1, const bf192_t* state_bits_key, const bf192_t* y_key) {
+  z1[0] = bf192_add(
+              bf192_mul(bf192_mul(
+                                bf192_byte_combine_bits(y_key), 
+                                state_bits_key[1]), 
+                        state_bits_key[4]),
+              state_bits_key[0]);
 }
 
 void aes_256_inv_norm_constraints_prover(bf256_t* z0, bf256_t* z1, const bf256_t* state_bits, const bf256_t* state_bits_tag, const uint8_t* y, const bf256_t* y_tag) {
+  
+    z0[0] = bf256_add(
+              bf256_mul(bf256_mul(
+                                bf256_byte_combine_bits(y), 
+                                state_bits[1]), 
+                        state_bits[4]),
+              state_bits[0]);
+
+    z1[0] = bf256_add(
+              bf256_mul(bf256_mul(
+                                bf256_byte_combine_bits(y_tag), 
+                                state_bits_tag[1]), 
+                        state_bits_tag[4]),
+              state_bits_tag[0]);
 
 }
-void aes_256_inv_norm_constraints_verifier(bf256_t* z0, bf256_t* z1, const bf256_t* state_bits_key, const bf256_t* y_key) {
-
+void aes_256_inv_norm_constraints_verifier(bf256_t* z1, const bf256_t* state_bits_key, const bf256_t* y_key) {
+  z1[0] = bf256_add(
+              bf256_mul(bf256_mul(
+                                bf256_byte_combine_bits(y_key), 
+                                state_bits_key[1]), 
+                        state_bits_key[4]),
+              state_bits_key[0]);
 }
+
 
 
 // STATE TO BYTES
@@ -749,6 +807,8 @@ void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* state_key)
     out_key[i] = bf256_byte_combine(state_key + i*8);
   }
 }
+
+
 
 // SBOX AFFINE
 static void aes_128_sbox_affine_prover(bf128_t* out, bf128_t* out_tag, const bf128_t* in, const bf128_t* in_tag, bool dosq, const faest_paramset_t* params) {
@@ -907,6 +967,8 @@ static void aes_256_sbox_affine_verify(bf256_t* out_tag, const bf256_t* in_tag, 
   }
 }
 
+
+
 // SHIFT ROWS
 static void aes_128_shiftrows_prover(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params) {
   unsigned int Nst = 4;
@@ -1000,6 +1062,8 @@ static void aes_256_shiftrows_verifier(bf256_t* out_tag, const bf256_t* in_tag, 
     }
   }
 }
+
+
 
 // MIX COLOUMNS
 static void aes_128_mix_coloumns_prover(bf128_t* y, bf128_t* y_tag, const uint8_t* in, const uint8_t* in_tag, bool dosq, const faest_paramset_t* params) {
@@ -1389,6 +1453,8 @@ static void aes_256_mix_coloumns_verifier(bf256_t* y_key, const uint8_t* in_key,
 
 }
 
+
+
 // ADD ROUND KEY BYTES
 static void aes_128_add_round_key_bytes_prover(bf128_t* out, bf128_t* out_tag, const bf128_t* in, const bf128_t* in_tag, const bf128_t* k, const bf128_t* k_tag, const faest_paramset_t* params) {
 
@@ -1449,6 +1515,8 @@ static void aes_256_add_round_key_bytes_verifier(bf256_t* out_tag, const bf256_t
     out_tag[i] = bf256_add(in_tag[i], k_tag[i]);
   }
 }
+
+
 
 // INVERSE SHIFT ROWS
 static void aes_128_inverse_shiftrows_prover(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params) {
@@ -1570,6 +1638,8 @@ static void aes_256_inverse_shiftrows_verifier(bf256_t* out_tag, const bf256_t* 
     }
   }
 }
+
+
 
 // INVERSE AFFINE
 static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, const faest_paramset_t* params) {
@@ -2502,6 +2572,8 @@ static uint8_t* aes_verify_128(const uint8_t* d, const uint8_t** Q, const uint8_
   return a0_tilde;
 
 }
+
+
 
 
 static bf192_t* column_to_row_major_and_shrink_V_192(uint8_t** v, unsigned int ell) {
