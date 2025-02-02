@@ -46,7 +46,7 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
 #define CALC_TAU0(name) (name##_TAU - CALC_TAU1(name))
 #define CALC_L(name)                                                                               \
   (CALC_TAU1(name) * (1 << CALC_K(name)) + CALC_TAU0(name) * (1 << (CALC_K(name) - 1)))
-#define CALC_K(name) ((name##_LAMBDA - name##_W_GRIND + name##_TAU - 1) / (name##_TAU))
+#define CALC_K(name) (((name##_LAMBDA - name##_W_GRIND) / (name##_TAU)) + 1)
 
 #define PARAMS(name)                                                                               \
   {                                                                                                \
