@@ -34,7 +34,7 @@ int main() {
   std::cout << "namespace bavc_tvs {\n";
 
   for (const auto param_id : all_parameters) {
-    const auto params       = faest_get_paramset(param_id);
+    const auto params       = *faest_get_paramset(param_id);
     const auto lambda       = params.faest_param.lambda;
     const auto lambda_bytes = lambda / 8;
     const auto com_size     = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;

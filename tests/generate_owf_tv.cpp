@@ -38,7 +38,7 @@ int main() {
       break;
     }
 
-    const auto params = faest_get_paramset(param_id);
+    const auto params = *faest_get_paramset(param_id);
     std::vector<uint8_t> owf_key, owf_input, owf_output;
     owf_key.resize(params.faest_param.lambda / 8);
     owf_input.resize(params.faest_param.owf_input_size);

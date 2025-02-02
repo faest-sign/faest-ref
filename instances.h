@@ -41,15 +41,15 @@ typedef enum faest_paramid_t {
 typedef struct faest_param_t {
   // main parameters (Table 4.1)
   uint16_t lambda;
-  uint16_t tau;
-  uint16_t w_grind;
+  uint8_t tau;
+  uint8_t w_grind;
   uint16_t T_open;
   uint16_t l;
 
   // extra parameters (Table 4.2)
   uint16_t k;
-  uint16_t tau0;
-  uint16_t tau1;
+  uint8_t tau0;
+  uint8_t tau1;
   uint32_t L;
 
   // OWF parameters (Table 1.1 and TODO)
@@ -72,7 +72,7 @@ typedef struct faest_paramset_t {
 } faest_paramset_t;
 
 const char* ATTR_CONST faest_get_param_name(faest_paramid_t paramid);
-faest_paramset_t ATTR_CONST faest_get_paramset(faest_paramid_t paramid);
+const faest_paramset_t* ATTR_CONST faest_get_paramset(faest_paramid_t paramid);
 
 static inline bool ATTR_PURE faest_is_em(const faest_paramset_t* params) {
   switch (params->faest_paramid) {

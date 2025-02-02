@@ -68,36 +68,28 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
 #define FAEST_EM_192F_PARAMS PARAMS(FAEST_EM_192F)
 #define FAEST_EM_256S_PARAMS PARAMS(FAEST_EM_256S)
 #define FAEST_EM_256F_PARAMS PARAMS(FAEST_EM_256F)
-#define FAEST_INVALID_PARAMS                                                                       \
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
-faest_paramset_t faest_get_paramset(faest_paramid_t paramid) {
+#define CASE_PARAM(P)                                                                              \
+  case P: {                                                                                        \
+    static const faest_paramset_t params = {P##_PARAMS, P};                                        \
+    return &params;                                                                                \
+  }
+
+const faest_paramset_t* faest_get_paramset(faest_paramid_t paramid) {
   switch (paramid) {
-  case FAEST_128S:
-    return (faest_paramset_t){FAEST_128S_PARAMS, FAEST_128S};
-  case FAEST_128F:
-    return (faest_paramset_t){FAEST_128F_PARAMS, FAEST_128F};
-  case FAEST_EM_128S:
-    return (faest_paramset_t){FAEST_EM_128S_PARAMS, FAEST_EM_128S};
-  case FAEST_EM_128F:
-    return (faest_paramset_t){FAEST_EM_128F_PARAMS, FAEST_EM_128F};
-  case FAEST_192S:
-    return (faest_paramset_t){FAEST_192S_PARAMS, FAEST_192S};
-  case FAEST_192F:
-    return (faest_paramset_t){FAEST_192F_PARAMS, FAEST_192F};
-  case FAEST_EM_192S:
-    return (faest_paramset_t){FAEST_EM_192S_PARAMS, FAEST_EM_192S};
-  case FAEST_EM_192F:
-    return (faest_paramset_t){FAEST_EM_192F_PARAMS, FAEST_EM_192F};
-  case FAEST_256S:
-    return (faest_paramset_t){FAEST_256S_PARAMS, FAEST_256S};
-  case FAEST_256F:
-    return (faest_paramset_t){FAEST_256F_PARAMS, FAEST_256F};
-  case FAEST_EM_256S:
-    return (faest_paramset_t){FAEST_EM_256S_PARAMS, FAEST_EM_256S};
-  case FAEST_EM_256F:
-    return (faest_paramset_t){FAEST_EM_256F_PARAMS, FAEST_EM_256F};
+    CASE_PARAM(FAEST_128S)
+    CASE_PARAM(FAEST_128F)
+    CASE_PARAM(FAEST_EM_128S)
+    CASE_PARAM(FAEST_EM_128F)
+    CASE_PARAM(FAEST_192S)
+    CASE_PARAM(FAEST_192F)
+    CASE_PARAM(FAEST_EM_192S)
+    CASE_PARAM(FAEST_EM_192F)
+    CASE_PARAM(FAEST_256S)
+    CASE_PARAM(FAEST_256F)
+    CASE_PARAM(FAEST_EM_256S)
+    CASE_PARAM(FAEST_EM_256F)
   default:
-    return (faest_paramset_t){FAEST_INVALID_PARAMS, PARAMETER_SET_INVALID};
+    return NULL;
   }
 }

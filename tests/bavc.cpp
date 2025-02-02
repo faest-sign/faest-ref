@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_SUITE(bavc)
 
 BOOST_DATA_TEST_CASE(test_node_indices, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const auto params = faest_get_paramset(param_id);
+    const auto params = *faest_get_paramset(param_id);
     const auto tau    = params.faest_param.tau;
     const auto tau_1  = params.faest_param.tau1;
     const auto k      = params.faest_param.k;
@@ -128,78 +128,84 @@ namespace {
 } // namespace
 
 BOOST_AUTO_TEST_CASE(tv_faest_128f) {
-  test_vc_tv(faest_get_paramset(FAEST_128F), bavc_tvs::FAEST_128F::i_delta, bavc_tvs::FAEST_128F::h,
-             bavc_tvs::FAEST_128F::hashed_k, bavc_tvs::FAEST_128F::hashed_sd,
-             bavc_tvs::FAEST_128F::hashed_decom_i, bavc_tvs::FAEST_128F::hashed_rec_sd);
+  test_vc_tv(*faest_get_paramset(FAEST_128F), bavc_tvs::FAEST_128F::i_delta,
+             bavc_tvs::FAEST_128F::h, bavc_tvs::FAEST_128F::hashed_k,
+             bavc_tvs::FAEST_128F::hashed_sd, bavc_tvs::FAEST_128F::hashed_decom_i,
+             bavc_tvs::FAEST_128F::hashed_rec_sd);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_128s) {
-  test_vc_tv(faest_get_paramset(FAEST_128S), bavc_tvs::FAEST_128S::i_delta, bavc_tvs::FAEST_128S::h,
-             bavc_tvs::FAEST_128S::hashed_k, bavc_tvs::FAEST_128S::hashed_sd,
-             bavc_tvs::FAEST_128S::hashed_decom_i, bavc_tvs::FAEST_128S::hashed_rec_sd);
+  test_vc_tv(*faest_get_paramset(FAEST_128S), bavc_tvs::FAEST_128S::i_delta,
+             bavc_tvs::FAEST_128S::h, bavc_tvs::FAEST_128S::hashed_k,
+             bavc_tvs::FAEST_128S::hashed_sd, bavc_tvs::FAEST_128S::hashed_decom_i,
+             bavc_tvs::FAEST_128S::hashed_rec_sd);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_192f) {
-  test_vc_tv(faest_get_paramset(FAEST_192F), bavc_tvs::FAEST_192F::i_delta, bavc_tvs::FAEST_192F::h,
-             bavc_tvs::FAEST_192F::hashed_k, bavc_tvs::FAEST_192F::hashed_sd,
-             bavc_tvs::FAEST_192F::hashed_decom_i, bavc_tvs::FAEST_192F::hashed_rec_sd);
+  test_vc_tv(*faest_get_paramset(FAEST_192F), bavc_tvs::FAEST_192F::i_delta,
+             bavc_tvs::FAEST_192F::h, bavc_tvs::FAEST_192F::hashed_k,
+             bavc_tvs::FAEST_192F::hashed_sd, bavc_tvs::FAEST_192F::hashed_decom_i,
+             bavc_tvs::FAEST_192F::hashed_rec_sd);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_192s) {
-  test_vc_tv(faest_get_paramset(FAEST_192S), bavc_tvs::FAEST_192S::i_delta, bavc_tvs::FAEST_192S::h,
-             bavc_tvs::FAEST_192S::hashed_k, bavc_tvs::FAEST_192S::hashed_sd,
-             bavc_tvs::FAEST_192S::hashed_decom_i, bavc_tvs::FAEST_192S::hashed_rec_sd);
+  test_vc_tv(*faest_get_paramset(FAEST_192S), bavc_tvs::FAEST_192S::i_delta,
+             bavc_tvs::FAEST_192S::h, bavc_tvs::FAEST_192S::hashed_k,
+             bavc_tvs::FAEST_192S::hashed_sd, bavc_tvs::FAEST_192S::hashed_decom_i,
+             bavc_tvs::FAEST_192S::hashed_rec_sd);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_256f) {
-  test_vc_tv(faest_get_paramset(FAEST_256F), bavc_tvs::FAEST_256F::i_delta, bavc_tvs::FAEST_256F::h,
-             bavc_tvs::FAEST_256F::hashed_k, bavc_tvs::FAEST_256F::hashed_sd,
-             bavc_tvs::FAEST_256F::hashed_decom_i, bavc_tvs::FAEST_256F::hashed_rec_sd);
+  test_vc_tv(*faest_get_paramset(FAEST_256F), bavc_tvs::FAEST_256F::i_delta,
+             bavc_tvs::FAEST_256F::h, bavc_tvs::FAEST_256F::hashed_k,
+             bavc_tvs::FAEST_256F::hashed_sd, bavc_tvs::FAEST_256F::hashed_decom_i,
+             bavc_tvs::FAEST_256F::hashed_rec_sd);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_256s) {
-  test_vc_tv(faest_get_paramset(FAEST_256S), bavc_tvs::FAEST_256S::i_delta, bavc_tvs::FAEST_256S::h,
-             bavc_tvs::FAEST_256S::hashed_k, bavc_tvs::FAEST_256S::hashed_sd,
-             bavc_tvs::FAEST_256S::hashed_decom_i, bavc_tvs::FAEST_256S::hashed_rec_sd);
+  test_vc_tv(*faest_get_paramset(FAEST_256S), bavc_tvs::FAEST_256S::i_delta,
+             bavc_tvs::FAEST_256S::h, bavc_tvs::FAEST_256S::hashed_k,
+             bavc_tvs::FAEST_256S::hashed_sd, bavc_tvs::FAEST_256S::hashed_decom_i,
+             bavc_tvs::FAEST_256S::hashed_rec_sd);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_em_128f) {
-  test_vc_tv(faest_get_paramset(FAEST_EM_128F), bavc_tvs::FAEST_EM_128F::i_delta,
+  test_vc_tv(*faest_get_paramset(FAEST_EM_128F), bavc_tvs::FAEST_EM_128F::i_delta,
              bavc_tvs::FAEST_EM_128F::h, bavc_tvs::FAEST_EM_128F::hashed_k,
              bavc_tvs::FAEST_EM_128F::hashed_sd, bavc_tvs::FAEST_EM_128F::hashed_decom_i,
              bavc_tvs::FAEST_EM_128F::hashed_rec_sd);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_em_128s) {
-  test_vc_tv(faest_get_paramset(FAEST_EM_128S), bavc_tvs::FAEST_EM_128S::i_delta,
+  test_vc_tv(*faest_get_paramset(FAEST_EM_128S), bavc_tvs::FAEST_EM_128S::i_delta,
              bavc_tvs::FAEST_EM_128S::h, bavc_tvs::FAEST_EM_128S::hashed_k,
              bavc_tvs::FAEST_EM_128S::hashed_sd, bavc_tvs::FAEST_EM_128S::hashed_decom_i,
              bavc_tvs::FAEST_EM_128S::hashed_rec_sd);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_em_192f) {
-  test_vc_tv(faest_get_paramset(FAEST_EM_192F), bavc_tvs::FAEST_EM_192F::i_delta,
+  test_vc_tv(*faest_get_paramset(FAEST_EM_192F), bavc_tvs::FAEST_EM_192F::i_delta,
              bavc_tvs::FAEST_EM_192F::h, bavc_tvs::FAEST_EM_192F::hashed_k,
              bavc_tvs::FAEST_EM_192F::hashed_sd, bavc_tvs::FAEST_EM_192F::hashed_decom_i,
              bavc_tvs::FAEST_EM_192F::hashed_rec_sd);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_em_192s) {
-  test_vc_tv(faest_get_paramset(FAEST_EM_192S), bavc_tvs::FAEST_EM_192S::i_delta,
+  test_vc_tv(*faest_get_paramset(FAEST_EM_192S), bavc_tvs::FAEST_EM_192S::i_delta,
              bavc_tvs::FAEST_EM_192S::h, bavc_tvs::FAEST_EM_192S::hashed_k,
              bavc_tvs::FAEST_EM_192S::hashed_sd, bavc_tvs::FAEST_EM_192S::hashed_decom_i,
              bavc_tvs::FAEST_EM_192S::hashed_rec_sd);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_em_256f) {
-  test_vc_tv(faest_get_paramset(FAEST_EM_256F), bavc_tvs::FAEST_EM_256F::i_delta,
+  test_vc_tv(*faest_get_paramset(FAEST_EM_256F), bavc_tvs::FAEST_EM_256F::i_delta,
              bavc_tvs::FAEST_EM_256F::h, bavc_tvs::FAEST_EM_256F::hashed_k,
              bavc_tvs::FAEST_EM_256F::hashed_sd, bavc_tvs::FAEST_EM_256F::hashed_decom_i,
              bavc_tvs::FAEST_EM_256F::hashed_rec_sd);
 }
 
 BOOST_AUTO_TEST_CASE(tv_faest_em_256s) {
-  test_vc_tv(faest_get_paramset(FAEST_EM_256S), bavc_tvs::FAEST_EM_256S::i_delta,
+  test_vc_tv(*faest_get_paramset(FAEST_EM_256S), bavc_tvs::FAEST_EM_256S::i_delta,
              bavc_tvs::FAEST_EM_256S::h, bavc_tvs::FAEST_EM_256S::hashed_k,
              bavc_tvs::FAEST_EM_256S::hashed_sd, bavc_tvs::FAEST_EM_256S::hashed_decom_i,
              bavc_tvs::FAEST_EM_256S::hashed_rec_sd);
@@ -209,7 +215,7 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
   std::random_device rd;
 
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const auto params       = faest_get_paramset(param_id);
+    const auto params       = *faest_get_paramset(param_id);
     const auto lambda       = params.faest_param.lambda;
     const auto lambda_bytes = lambda / 8;
 

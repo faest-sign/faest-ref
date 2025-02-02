@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(vole)
 
 BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const faest_paramset_t params    = faest_get_paramset(param_id);
+    const faest_paramset_t params    = *faest_get_paramset(param_id);
     const unsigned int lambda        = params.faest_param.lambda;
     const unsigned int lambda_bytes  = lambda / 8;
     const unsigned int ell_hat_bytes = 16;
@@ -90,7 +90,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
   std::mt19937_64 rd;
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const faest_paramset_t params    = faest_get_paramset(param_id);
+    const faest_paramset_t params    = *faest_get_paramset(param_id);
     const unsigned int lambda        = params.faest_param.lambda;
     const unsigned int lambda_bytes  = lambda / 8;
     const unsigned int ell_hat_bytes = 16;

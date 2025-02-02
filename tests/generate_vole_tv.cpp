@@ -36,7 +36,7 @@ int main() {
   std::cout << "#include <cstdint>\n\n";
   std::cout << "namespace vole_tvs {\n";
   for (const auto param_id : all_parameters) {
-    const auto params               = faest_get_paramset(param_id);
+    const auto params               = *faest_get_paramset(param_id);
     const unsigned int lambda       = params.faest_param.lambda;
     const unsigned int lambda_bytes = lambda / 8;
     const unsigned int ell_hat =
