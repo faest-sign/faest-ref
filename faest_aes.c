@@ -2443,8 +2443,8 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z0, bf128_t* z1, uint8_
 }
 
 // ENC CSTRNTS
-static aes_128_enc_constraints_prover(bf128_t* z0, bf128_t* z1, bf128_t* z2, uint8_t* owf_in, uint8_t* owf_out, uint8_t* w, bf128_t* w_tag, 
-                                      const faest_paramset_t* params) {
+static aes_128_enc_constraints_prover(bf128_t* z0, bf128_t* z1, bf128_t* z2, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* w, 
+                                      const bf128_t* w_tag, const faest_paramset_t* params) {
 
     unsigned int Nst = 4;
     unsigned int Nstbits = 32 * Nst;
@@ -2558,10 +2558,8 @@ static aes_128_enc_constraints_prover(bf128_t* z0, bf128_t* z1, bf128_t* z2, uin
     }
 
 }
-static aes_128_enc_constraints_verifier(bf128_t* z0, bf128_t* z1, uint8_t* owf_in, 
-                                uint8_t* owf_out, uint8_t* w, 
-                                bf128_t* w_tag, uint8_t* k, bf128_t* k_tag, 
-                                const faest_paramset_t* params, bf128_t delta) {
+static aes_128_enc_constraints_verifier(bf128_t* z0, bf128_t* z1, bf128_t* z2, const uint8_t* owf_in, const uint8_t* owf_out, 
+                                        bf128_t* w_key, bf128_t delta, const faest_paramset_t* params) {
 
     unsigned int Nst = 4;
     unsigned int Nstbits = 32 * Nst;
@@ -2859,47 +2857,51 @@ static uint8_t* aes_128_verifier(const uint8_t* d, const uint8_t** Q, const uint
   // TODO: CHANGE THIS FOR OTHER SETTING WHEN COPY PASTING!!!!!
   unsigned int beta = 1;
   unsigned int c = 2*ske + (3/2)*senc + 1;
+  unsigned int ell = params->faest_param.L; // TODO: I hope L is ELL, that is l_ke + l_enc from Fig. 1.5
 
-  // ::2
+  // ::1
   bf128_t bf_delta = bf128_load(chall_3);
   bf128_t bf_delta_sq = bf128_mul(bf_delta, bf_delta);
 
-  // ::3-7
-  bf128_t* bf_q = column_to_row_major_and_shrink_V_128(Q, FAEST_128F_ELL); // This is the vole key for masked extended witness d
-  // w is "d" in F2
+  // ::2-6
+  bf128_t* bf_Q = column_to_row_major_and_shrink_V_128(Q, ell);
 
-  // ::8-10
-  bf128_t bf_q_star_0 = bf128_sum_poly(bf_q);
-  bf128_t bf_q_star_1 = bf128_sum_poly(bf_q + lambda);
+  // ::7-9
+  bf128_t bf_q_star_0 = bf128_sum_poly(bf_Q + ell);
+  bf128_t bf_q_star_1 = bf128_sum_poly(bf_Q + ell + lambda);
 
-  // ::11
+  // ::10
   bf128_t bf_q_star = bf128_add(bf_q_star_0, bf128_mul(bf_delta, bf_q_star_1));
 
-  // ::12-13
-  bf128_t bf_z[c*3];
-  bf128_t bf_z_tag[c*3];
-  aes_constraints(bf_z, bf_z_tag, d, bf_q, owf_in, owf_out, params);
+  // ::11-12
+  bf128_t bf_z0_tag[c];
+  bf128_t bf_z1_val[c];
+  bf128_t bf_z2_gamma[c];
+  bf128_t w_key[ell];
+  for (unsigned int i = 0; i < ell; i++) {
+    w_key[i] = bf128_add(
+                          bf_Q[i], 
+                          bf128_mul(bf128_from_bit(get_bit(d[i/8], i%8)),  // TODO: of course, here we have the annoying 4 bit witness problem urghhhh!!!!
+                                    bf_delta));
+  }
+  aes_128_enc_constraints_verifier(bf_z0_tag, bf_z1_val, bf_z2_gamma, owf_in, owf_out, w_key, bf_delta, params);
 
-  // ::14
-  bf128_t b[c];
-  // TODO: the magical parsing, asked Peter already
-
-  // ::15
+  // ::13-14
   zk_hash_128_ctx b_ctx;
   zk_hash_128_init(&b_ctx, chall_2);
-  // TODO: ugly zk update here
   for (unsigned int i = 0; i < c; i++) {
-    zk_hash_128_update(&b_ctx, b[i]);
+    zk_hash_128_update(&b_ctx, bf_z2_gamma[i]);
   }
-  uint8_t q_tilde[lambda/8*3];
+  uint8_t q_tilde[lambda/8*c];
   zk_hash_128_finalize(q_tilde, &b_ctx, bf_q_star);
 
-  // ::16-17
+  // ::16
   bf128_t tmp1 = bf128_mul(bf128_load(a1_tilde), bf_delta);
   bf128_t tmp2 = bf128_mul(bf128_load(a2_tilde), bf_delta_sq);
   bf128_t tmp3 = bf128_add(tmp1, tmp2);
   bf128_t ret = bf128_add(bf128_load(q_tilde), tmp3);
-  uint8_t* a0_tilde = malloc(lambda/8*3);   // freed in faest_verify
+  
+  uint8_t* a0_tilde = malloc(lambda/8*c);
   bf128_store(a0_tilde, ret);
   return a0_tilde;
 
