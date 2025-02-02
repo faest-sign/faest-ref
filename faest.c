@@ -295,6 +295,12 @@ static bool check_challenge_3(const uint8_t* chall_3, unsigned int start, unsign
   return true;
 }
 
+static void free_pointer_array(uint8_t*** ptr) {
+  free((*ptr)[0]);
+  free(*ptr);
+  *ptr = NULL;
+}
+
 // FAEST.Sign()
 void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t* owf_key,
                 const uint8_t* owf_input, const uint8_t* owf_output, const uint8_t* rho,
@@ -364,11 +370,10 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   // ::20
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w, u, V, owf_input, owf_output, chall_2, params);
+  aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w, u, V,
+            owf_input, owf_output, chall_2, params);
 
-  free(V[0]);
-  free(V);
-  V = NULL;
+  free_pointer_array(&V);
   free(w);
   w = NULL;
   free(u);
@@ -449,8 +454,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   if (!vole_reconstruct(hcom, q, iv, dsignature_chall_3(sig, params),
                         dsignature_decom_i(sig, params), dsignature_c(sig, 0, params), ell_hat,
                         params)) {
-    free(q[0]);
-    free(q);
+    free_pointer_array(&q);
     return -3;
   }
 
@@ -486,14 +490,10 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   uint8_t* a0_tilde = NULL;
 
   // ::19
-  aes_verify(dsignature_d(sig, params), q, chall_2, dsignature_chall_3(sig, params), dsignature_a1_tilde(sig, params),
-  dsignature_a2_tilde(sig, params), owf_input, owf_output, params);
-  // aes_verify(dsignature_d(sig, params), q, chall_2, dsignature_chall_3(sig, params),
-  // dsignature_a1_tilde(sig, params), dsignature_a2_tilde(sig, params), owf_input, owf_output,
-  // params);
-  free(q[0]);
-  free(q);
-  q = NULL;
+  aes_verify(dsignature_d(sig, params), q, chall_2, dsignature_chall_3(sig, params),
+             dsignature_a1_tilde(sig, params), dsignature_a2_tilde(sig, params), owf_input,
+             owf_output, params);
+  free_pointer_array(&q);
 
   // Step: 20
   uint8_t chall_3[MAX_LAMBDA_BYTES];
