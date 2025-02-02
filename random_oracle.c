@@ -17,7 +17,6 @@ static const uint8_t domain_sep_H2_2 = 8 + 2;
 static const uint8_t domain_sep_H2_3 = 8 + 3;
 static const uint8_t domain_sep_H3   = 3;
 static const uint8_t domain_sep_H4   = 4;
-static const uint8_t domain_sep_H5   = 5;
 
 // H_0
 void H0_init(H0_context_t* ctx, unsigned int security_param) {
