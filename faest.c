@@ -362,12 +362,10 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
   hash_challenge_2_finalize(chall_2, &chall_2_ctx, signature_d(sig, params), lambda, l);
 
-  // TODO: fix this a0, a1, a2
-  // TODO: skipping for now
-  // ::16-19
+  // ::20
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  // aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w, u,
-  // V, owf_input, owf_output, chall_2, params);
+  aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w, u, V, owf_input, owf_output, chall_2, params);
+
   free(V[0]);
   free(V);
   V = NULL;
@@ -486,6 +484,10 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // Step 18
   uint8_t* a0_tilde = NULL;
+
+  // ::19
+  aes_verify(dsignature_d(sig, params), q, chall_2, dsignature_chall_3(sig, params), dsignature_a1_tilde(sig, params),
+  dsignature_a2_tilde(sig, params), owf_input, owf_output, params);
   // aes_verify(dsignature_d(sig, params), q, chall_2, dsignature_chall_3(sig, params),
   // dsignature_a1_tilde(sig, params), dsignature_a2_tilde(sig, params), owf_input, owf_output,
   // params);
