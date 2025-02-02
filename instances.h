@@ -74,7 +74,7 @@ typedef struct faest_paramset_t {
 const char* ATTR_CONST faest_get_param_name(faest_paramid_t paramid);
 faest_paramset_t ATTR_CONST faest_get_paramset(faest_paramid_t paramid);
 
-static inline bool faest_is_em(const faest_paramset_t* params) {
+static inline bool ATTR_PURE faest_is_em(const faest_paramset_t* params) {
   switch (params->faest_paramid) {
   case FAEST_EM_128S:
   case FAEST_EM_128F:
