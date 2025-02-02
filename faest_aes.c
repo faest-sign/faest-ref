@@ -2443,10 +2443,8 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z0, bf128_t* z1, uint8_
 }
 
 // ENC CSTRNTS
-static aes_128_enc_constraints_prover(bf128_t* z0, bf128_t* z1, uint8_t* owf_in, 
-                                uint8_t* owf_out, uint8_t* w, 
-                                bf128_t* w_tag, uint8_t* k, bf128_t* k_tag, 
-                                const faest_paramset_t* params, bf128_t delta) {
+static aes_128_enc_constraints_prover(bf128_t* z0, bf128_t* z1, bf128_t* z2, uint8_t* owf_in, uint8_t* owf_out, uint8_t* w, bf128_t* w_tag, 
+                                      const faest_paramset_t* params) {
 
     unsigned int Nst = 4;
     unsigned int Nstbits = 32 * Nst;
@@ -2798,6 +2796,7 @@ static void aes_128_constraints_verifier(bf128_t* z0, bf128_t* z1, const uint8_t
 
 }
 
+// DONE
 // OWF PROVE VERIFY
 static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
                           const uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params) {
@@ -2807,32 +2806,26 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   unsigned int senc = params->faest_param.Senc;
   // TODO: CHANGE THIS FOR OTHER SETTING WHEN COPY PASTING!!!!!
   unsigned int beta = 1;
-  unsigned int c = 2*ske + (3/2)*senc + 1;
+  unsigned int c = 2*ske + (3/2)*senc + 1;  // TODO: how is c affected if we have 4 bits in 1 unit8_t
 
   // ::1-5
-  // also includes the lifting of V at ::5
-  bf128_t* bf_v = column_to_row_major_and_shrink_V_128(V, FAEST_128F_ELL); // This is the tag for w
-  // we have w in its f2 form
+  // V becomes the w_tag
+  bf128_t* w_tag = column_to_row_major_and_shrink_V_128(V, FAEST_128F_ELL); // This is the tag for w
 
-  // ::6-9 embed VOLE masks
+  // ::6-7 embed VOLE masks
   bf128_t bf_u_star_0 = bf128_load(u);
-  bf128_t bf_u_star_1 = bf128_load(u + lambda);
-  bf128_t bf_v_star_0 = bf128_sum_poly(bf_v);
-  bf128_t bf_v_star_1 = bf128_sum_poly(bf_v + lambda);
+  bf128_t bf_u_star_1 = bf128_load(u + lambda/8);
+  // ::8-9
+  bf128_t bf_v_star_0 = bf128_sum_poly(w_tag);
+  bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + lambda);
 
-  // ::10-12 <z>^3_\lambda -> z \in F^{<=c}_{2^lambda}
-  // (0 , z'_0 , z'_1), z'_i \in F_{2^lambda}, z'_0 takes the val, z'_1 takes the tag
-  bf128_t bf_z0[c];
-  bf128_t bf_z1[c];
-  aes_constraints_128(bf_z0, bf_z1, w, bf_v, owf_in, owf_out, params, false, bf128_one());  // delta set to 1 for prover
-
-  // ::13
-  bf128_t a0[c*3];
-  bf128_t a1[c*3];
-  bf128_t a2[c*3];
-  // TODO: the magical parsing, asked Peter already
-
-  // Step: 16..18
+  // ::10-12
+  bf128_t z0_tag[c]; // this contains the bf tag
+  bf128_t z1_val[c]; // this contains the bf val
+  bf128_t z2_gamma[c]; // this contains the bf gamma
+  aes_128_enc_constraints_prover(z0_tag, z1_val, z2_gamma, owf_in, owf_out, w, w_tag, params);
+ 
+  // Step: 13-18
   zk_hash_128_ctx a0_ctx;
   zk_hash_128_ctx a1_ctx;
   zk_hash_128_ctx a2_ctx;
@@ -2840,18 +2833,18 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   zk_hash_128_init(&a1_ctx, chall_2);
   zk_hash_128_init(&a2_ctx, chall_2);
 
-  // TODO: ugly zk update here
   for (unsigned int i = 0; i < c*3; i++) {
-    zk_hash_128_update(&a0_ctx, a0[i]);
-    zk_hash_128_update(&a1_ctx, a1[i]);
-    zk_hash_128_update(&a2_ctx, a2[i]);
+    zk_hash_128_update(&a0_ctx, z0_tag[i]);
+    zk_hash_128_update(&a1_ctx, z1_val[i]);
+    zk_hash_128_update(&a2_ctx, z2_gamma[i]);
   }
 
   zk_hash_128_finalize(a0_tilde, &a0_ctx, bf_u_star_0);
-  zk_hash_128_finalize(a1_tilde, &a1_ctx, bf_v_star_0 + bf_u_star_1);
+  zk_hash_128_finalize(a1_tilde, &a1_ctx, bf128_add(bf_v_star_0, bf_u_star_1));
   zk_hash_128_finalize(a2_tilde, &a2_ctx, bf_v_star_1);
 
 }
+
 static uint8_t* aes_128_verifier(const uint8_t* d, const uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params) {
 
