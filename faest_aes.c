@@ -27,6 +27,7 @@ static_assert(FAEST_128F_Nwd == FAEST_128S_Nwd, "Invalid parameters");
 static_assert(FAEST_128F_R == FAEST_128S_R, "Invalid parameters");
 static_assert(FAEST_128F_Senc == FAEST_128S_Senc, "Invalid parameters");
 static_assert(FAEST_128F_Ske == FAEST_128S_Ske, "Invalid parameters");
+static_assert(FAEST_128F_C == FAEST_128S_C, "Invalid parameters");
 
 static_assert(FAEST_192F_ELL == FAEST_192S_ELL, "Invalid parameters");
 static_assert(FAEST_192F_LAMBDA == FAEST_192S_LAMBDA, "Invalid parameters");
@@ -35,6 +36,7 @@ static_assert(FAEST_192F_Nwd == FAEST_192S_Nwd, "Invalid parameters");
 static_assert(FAEST_192F_R == FAEST_192S_R, "Invalid parameters");
 static_assert(FAEST_192F_Senc == FAEST_192S_Senc, "Invalid parameters");
 static_assert(FAEST_192F_Ske == FAEST_192S_Ske, "Invalid parameters");
+static_assert(FAEST_192F_C == FAEST_192S_C, "Invalid parameters");
 
 static_assert(FAEST_256F_ELL == FAEST_256S_ELL, "Invalid parameters");
 static_assert(FAEST_256F_LAMBDA == FAEST_256S_LAMBDA, "Invalid parameters");
@@ -43,12 +45,14 @@ static_assert(FAEST_256F_Nwd == FAEST_256S_Nwd, "Invalid parameters");
 static_assert(FAEST_256F_R == FAEST_256S_R, "Invalid parameters");
 static_assert(FAEST_256F_Senc == FAEST_256S_Senc, "Invalid parameters");
 static_assert(FAEST_256F_Ske == FAEST_256S_Ske, "Invalid parameters");
+static_assert(FAEST_256F_C == FAEST_256S_C, "Invalid parameters");
 
 static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_128F_Lenc == FAEST_EM_128S_Lenc, "Invalid parameters");
 static_assert(FAEST_EM_128F_Nwd == FAEST_EM_128S_Nwd, "Invalid parameters");
 static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R, "Invalid parameters");
 static_assert(FAEST_EM_128F_Senc == FAEST_EM_128S_Senc, "Invalid parameters");
+static_assert(FAEST_EM_128F_C == FAEST_EM_128S_C, "Invalid parameters");
 // for scan-build
 static_assert(FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8 ==
                   sizeof(aes_word_t) * FAEST_EM_128F_Nwd * (FAEST_EM_128F_R + 1),
@@ -59,6 +63,7 @@ static_assert(FAEST_EM_192F_Lenc == FAEST_EM_192S_Lenc, "Invalid parameters");
 static_assert(FAEST_EM_192F_Nwd == FAEST_EM_192S_Nwd, "Invalid parameters");
 static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R, "Invalid parameters");
 static_assert(FAEST_EM_192F_Senc == FAEST_EM_192S_Senc, "Invalid parameters");
+static_assert(FAEST_EM_192F_C == FAEST_EM_192S_C, "Invalid parameters");
 // for scan-build
 static_assert(FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8 ==
                   sizeof(aes_word_t) * FAEST_EM_192F_Nwd * (FAEST_EM_192F_R + 1),
@@ -69,6 +74,7 @@ static_assert(FAEST_EM_256F_Lenc == FAEST_EM_256S_Lenc, "Invalid parameters");
 static_assert(FAEST_EM_256F_Nwd == FAEST_EM_256S_Nwd, "Invalid parameters");
 static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R, "Invalid parameters");
 static_assert(FAEST_EM_256F_Senc == FAEST_EM_256S_Senc, "Invalid parameters");
+static_assert(FAEST_EM_256F_C == FAEST_EM_256S_C, "Invalid parameters");
 // for scan-build
 static_assert(FAEST_EM_256F_LAMBDA * (FAEST_EM_256F_R + 1) / 8 ==
                   sizeof(aes_word_t) * FAEST_EM_256F_Nwd * (FAEST_EM_256F_R + 1),
