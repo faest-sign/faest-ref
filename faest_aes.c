@@ -148,7 +148,7 @@ static void aes_128_f256_f2_conjugates_1(bf128_t* y, const uint8_t* state) {
     uint8_t x0 = state[i];
     for (unsigned int j = 0; j != 7; ++j) {
       y[i * 8 + j] = bf128_byte_combine_bits(x0);
-      x0           = bits_square(x0);
+      x0           = bits_sq(x0);
     }
     y[i * 8 + 7] = bf128_byte_combine_bits(x0);
   }
@@ -161,7 +161,7 @@ static void aes_128_f256_f2_conjugates_128(bf128_t* y, const bf128_t* state) {
       y[i * 8 + j] = bf128_byte_combine(x);
       bf128_t tmp[8];
       memcpy(tmp, x, sizeof(x));
-      bf128_square_bit(x, tmp);
+      bf128_sq_bit(x, tmp);
     }
     y[i * 8 + 7] = bf128_byte_combine(x);
   }
@@ -172,7 +172,7 @@ static void aes_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state) {
     uint8_t x0 = state[i];
     for (unsigned int j = 0; j != 7; ++j) {
       y[i * 8 + j] = bf192_byte_combine_bits(x0);
-      x0           = bits_square(x0);
+      x0           = bits_sq(x0);
     }
     y[i * 8 + 7] = bf192_byte_combine_bits(x0);
   }
@@ -185,7 +185,7 @@ static void aes_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state) {
       y[i * 8 + j] = bf192_byte_combine(x);
       bf192_t tmp[8];
       memcpy(tmp, x, sizeof(x));
-      bf192_square_bit(x, tmp);
+      bf192_sq_bit(x, tmp);
     }
     y[i * 8 + 7] = bf192_byte_combine(x);
   }
@@ -196,7 +196,7 @@ static void aes_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state) {
     uint8_t x0 = state[i];
     for (unsigned int j = 0; j != 7; ++j) {
       y[i * 8 + j] = bf256_byte_combine_bits(x0);
-      x0           = bits_square(x0);
+      x0           = bits_sq(x0);
     }
     y[i * 8 + 7] = bf256_byte_combine_bits(x0);
   }
@@ -209,7 +209,7 @@ static void aes_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state) {
       y[i * 8 + j] = bf256_byte_combine(x);
       bf256_t tmp[8];
       memcpy(tmp, x, sizeof(x));
-      bf256_square_bit(x, tmp);
+      bf256_sq_bit(x, tmp);
     }
     y[i * 8 + 7] = bf256_byte_combine(x);
   }

@@ -30,6 +30,28 @@
   ((UINT64_C(x7) << 56) | (UINT64_C(x6) << 48) | (UINT64_C(x5) << 40) | (UINT64_C(x4) << 32) |     \
    (UINT64_C(x3) << 24) | (UINT64_C(x2) << 16) | (UINT64_C(x1) << 8) | UINT64_C(x0))
 
+
+
+uint8_t bits_sq(uint8_t x) {
+  uint8_t bits[8];
+  for (unsigned int i = 0; i < 8; i++) {
+    bits[i] = (x >> i) & 1;
+  }
+  bits[0]      = bits[0] ^ bits[4] ^ bits[6];
+  bits[1]      = bits[4] ^ bits[6] ^ bits[7];
+  bits[2]      = bits[1] ^ bits[5];
+  bits[3]      = bits[4] ^ bits[5] ^ bits[6] ^ bits[7];
+  bits[4]      = bits[2] ^ bits[4] ^ bits[7];
+  bits[5]      = bits[5] ^ bits[6];
+  bits[6]      = bits[3] ^ bits[5];
+  bits[7]      = bits[6] ^ bits[7];
+  uint8_t sq_x = 0;
+  for (unsigned int i = 0; i < 8; i++) {
+    sq_x ^= (bits[i] << i);
+  }
+  return sq_x;
+}
+
 // GF(2^8) implementation
 
 bf8_t bf8_byte_combine_bits(uint8_t x) {
@@ -132,6 +154,18 @@ bf128_t bf128_byte_combine(const bf128_t* x) {
     bf_out = bf128_add(bf_out, bf128_mul(x[i], bf128_alpha[i - 1]));
   }
   return bf_out;
+}
+
+void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag) {
+
+  out_tag[0] = bf128_add(in_tag[0], bf128_add(in_tag[4], in_tag[6]));
+  out_tag[1] = bf128_add(in_tag[4], bf128_add(in_tag[6], in_tag[7]));
+  out_tag[2] = bf128_add(out_tag[1], in_tag[5]);
+  out_tag[3] = bf128_add(bf128_add(in_tag[4], in_tag[5]), bf128_add(in_tag[6], in_tag[7]));
+  out_tag[4] = bf128_add(out_tag[2], bf128_add(in_tag[4], in_tag[7]));
+  out_tag[5] = bf128_add(in_tag[5], in_tag[6]);
+  out_tag[6] = bf128_add(out_tag[3], out_tag[5]);
+  out_tag[7] = bf128_add(out_tag[6], in_tag[7]);
 }
 
 bf128_t bf128_byte_combine_sq(const bf128_t* x) {
@@ -321,6 +355,18 @@ bf192_t bf192_byte_combine(const bf192_t* x) {
     bf_out = bf192_add(bf_out, bf192_mul(x[i], bf192_alpha[i - 1]));
   }
   return bf_out;
+}
+
+void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag) {
+
+  out_tag[0] = bf192_add(in_tag[0], bf192_add(in_tag[4], in_tag[6]));
+  out_tag[1] = bf192_add(in_tag[4], bf192_add(in_tag[6], in_tag[7]));
+  out_tag[2] = bf192_add(out_tag[1], in_tag[5]);
+  out_tag[3] = bf192_add(bf192_add(in_tag[4], in_tag[5]), bf192_add(in_tag[6], in_tag[7]));
+  out_tag[4] = bf192_add(out_tag[2], bf192_add(in_tag[4], in_tag[7]));
+  out_tag[5] = bf192_add(in_tag[5], in_tag[6]);
+  out_tag[6] = bf192_add(out_tag[3], out_tag[5]);
+  out_tag[7] = bf192_add(out_tag[6], in_tag[7]);
 }
 
 bf192_t bf192_byte_combine_sq(const bf192_t* x) {
@@ -522,6 +568,18 @@ bf256_t bf256_byte_combine(const bf256_t* x) {
     bf_out = bf256_add(bf_out, bf256_mul(x[i], bf256_alpha[i - 1]));
   }
   return bf_out;
+}
+
+void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag) {
+
+  out_tag[0] = bf256_add(in_tag[0], bf256_add(in_tag[4], in_tag[6]));
+  out_tag[1] = bf256_add(in_tag[4], bf256_add(in_tag[6], in_tag[7]));
+  out_tag[2] = bf256_add(out_tag[1], in_tag[5]);
+  out_tag[3] = bf256_add(bf256_add(in_tag[4], in_tag[5]), bf256_add(in_tag[6], in_tag[7]));
+  out_tag[4] = bf256_add(out_tag[2], bf256_add(in_tag[4], in_tag[7]));
+  out_tag[5] = bf256_add(in_tag[5], in_tag[6]);
+  out_tag[6] = bf256_add(out_tag[3], out_tag[5]);
+  out_tag[7] = bf256_add(out_tag[6], in_tag[7]);
 }
 
 bf256_t bf256_byte_combine_sq(const bf256_t* x) {
