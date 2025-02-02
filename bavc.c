@@ -450,8 +450,3 @@ void bavc_clear(bavc_t* com) {
   free(com->k);
   free(com->h);
 }
-
-void bavc_rec_clear(bavc_rec_t* rec) {
-  free(rec->s);
-  free(rec->h);
-}

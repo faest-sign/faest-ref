@@ -43,7 +43,6 @@ bool bavc_reconstruct(const uint8_t* decom_i, const uint16_t* i_delta, const uin
                       const faest_paramset_t* params, bavc_rec_t* vecComRec);
 
 void bavc_clear(bavc_t* com);
-void bavc_rec_clear(bavc_rec_t* rec);
 
 FAEST_END_C_DECL
 
