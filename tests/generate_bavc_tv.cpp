@@ -14,6 +14,8 @@
 #include <array>
 #include <random>
 #include <vector>
+#include <limits>
+#include <algorithm>
 
 namespace {
   constexpr std::array<uint8_t, 16> iv{};
@@ -26,6 +28,8 @@ namespace {
 
 int main() {
   std::mt19937_64 rd;
+  std::uniform_int_distribution<uint8_t> dist(0, 0xff);
+  std::uniform_int_distribution<uint32_t> dist_u32(0, std::numeric_limits<uint32_t>::max());
 
   std::cout << "#ifndef TESTS_BAVC_TVS_HPP\n";
   std::cout << "#define TESTS_BAVC_TVS_HPP\n\n";
@@ -88,6 +92,32 @@ int main() {
 
     auto hashed_rec_sd = hash_array(rec_s);
     print_named_array("hashed_rec_sd", "uint8_t", hashed_rec_sd);
+
+    std::vector<uint8_t> sd, com, key, iv, uhash;
+    sd.resize(lambda_bytes);
+    com.resize(com_size);
+    key.resize(lambda_bytes);
+    iv.resize(IV_SIZE);
+    if (!faest_is_em(&params)) {
+      uhash.resize(3 * lambda_bytes);
+    }
+
+    std::generate(key.begin(), key.end(), [&rd, &dist] { return dist(rd); });
+    std::generate(iv.begin(), iv.end(), [&rd, &dist] { return dist(rd); });
+    std::generate(uhash.begin(), uhash.end(), [&rd, &dist] { return dist(rd); });
+
+    const uint32_t tweak = dist_u32(rd);
+    leaf_commit(sd.data(), com.data(), key.data(), iv.data(), tweak, uhash.data(), &params);
+
+    print_named_array("leaf_commit_key", "uint8_t", key);
+    print_named_array("leaf_commit_iv", "uint8_t", iv);
+    if (!faest_is_em(&params)) {
+      print_named_array("leaf_commit_uhash", "uint8_t", uhash);
+    }
+    std::cout << "constexpr uint32_t tweak = " << tweak << ";\n";
+    print_named_array("leaf_commit_expected_sd", "uint8_t", sd);
+    print_named_array("leaf_commit_expected_com", "uint8_t", com);
+
     std::cout << "}\n" << std::endl;
   }
 

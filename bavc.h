@@ -44,6 +44,9 @@ bool bavc_reconstruct(const uint8_t* decom_i, const uint16_t* i_delta, const uin
 
 void bavc_clear(bavc_t* com);
 
+void leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* iv, uint32_t tweak,
+                 const uint8_t* uhash, const faest_paramset_t* params);
+
 FAEST_END_C_DECL
 
 #endif

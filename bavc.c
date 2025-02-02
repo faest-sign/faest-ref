@@ -84,6 +84,17 @@ static void faest_em_leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, 
   prg(key, iv, tweak, com, lambda, lambda_bytes * 2);
 }
 
+#if defined(FAEST_TESTS)
+void leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* iv, uint32_t tweak,
+                 const uint8_t* uhash, const faest_paramset_t* params) {
+  if (faest_is_em(params)) {
+    faest_em_leaf_commit(sd, com, key, iv, tweak, params->faest_param.lambda);
+  } else {
+    faest_leaf_commit(sd, com, key, iv, tweak, uhash, params->faest_param.lambda);
+  }
+}
+#endif
+
 // BAVC.PosInTree
 static inline unsigned int pos_in_tree(unsigned int i, unsigned int j,
                                        const faest_paramset_t* params) {
