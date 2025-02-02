@@ -336,7 +336,10 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // Step 10
   vole_hash(signature_u_tilde(sig, params), chall_1, u, l, lambda);
 
-  // Step 14
+  // Step 11 and 14
+  // To save memory consumption, the chall_2 is computed in an
+  // Init-Update-Finalize style as V_tilde is only fed into to the hash and not
+  // used elsewhere.
   H2_context_t chall_2_ctx;
   hash_challenge_2_init(&chall_2_ctx, chall_1, signature_u_tilde(sig, params), lambda);
 
