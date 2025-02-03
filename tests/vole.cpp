@@ -198,7 +198,7 @@ namespace {
 
     for (unsigned int i = 0, running_idx = 0; i < params->faest_param.tau; ++i) {
       const uint32_t depth =
-          bavc_max_node_depth(i, params->faest_param.tau0, params->faest_param.k);
+          bavc_max_node_depth(i, params->faest_param.tau1, params->faest_param.k);
 
       for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
         for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
