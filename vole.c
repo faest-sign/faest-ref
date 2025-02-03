@@ -66,6 +66,7 @@ static
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* u,
                  uint8_t** v) {
+  const unsigned int lambda       = params->faest_param.lambda;
   const unsigned int ellhat_bytes = (ellhat + 7) / 8;
   const unsigned int tau          = params->faest_param.tau;
 
@@ -79,6 +80,11 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     v_idx += ConvertToVole(iv, bavc->sd, false, i + TWEAK_OFFSET, ellhat_bytes,
                            ui + i * ellhat_bytes, v[v_idx], params);
   }
+  // ensure 0-padding up to lambda
+  for (; v_idx != lambda; ++v_idx) {
+    memset(v[v_idx], 0, ellhat_bytes);
+  }
+
   // Step 9
   memcpy(u, ui, ellhat_bytes);
   for (unsigned int i = 1; i < tau; i++) {
@@ -143,6 +149,11 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
                             (i_delta[i] >> d) & 1, ellhat_bytes);
       }
     }
+  }
+
+  // ensure 0-padding up to lambda
+  for (; q_idx != lambda; ++q_idx) {
+    memset(q[q_idx], 0, ellhat_bytes);
   }
 
   free(qtmp);
