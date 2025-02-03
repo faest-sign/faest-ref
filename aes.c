@@ -209,12 +209,7 @@ static void load_state(aes_block_t state, const uint8_t* src, unsigned int block
 }
 
 static uint8_t invnorm(uint8_t in) {
-  // getting bits
-  uint8_t tmp[8];
-  for (unsigned int i = 0; i < 8; i++) {
-    tmp[i] = (in >> i) & 1;
-  }
-  bf8_t x = bf8_byte_combine_bits(tmp);
+  bf8_t x = bf8_byte_combine_bits(in);
   // TODO: make constant time
   if (x == 0) {
     return 0;
