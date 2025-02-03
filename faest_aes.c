@@ -2918,7 +2918,7 @@ static void aes_128_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128
 // DONE: Looks good
 // OWF PROVE VERIFY
 static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
-                          uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params) {
+                          const uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
   unsigned int lambda = params->faest_param.lambda;
   unsigned int ske = params->faest_param.Ske;
@@ -2963,10 +2963,9 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   zk_hash_128_finalize(a2_tilde, &a2_ctx, bf_v_star_1);
 
 }
-
 // DONE: Looks good
-static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
-                                 const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params) {
+static uint8_t* aes_128_verifier(const uint8_t* d, const uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
+                                 const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
 
   // const unsigned int tau = params->faest_param.tau;
   // const unsigned int t0  = params->faest_param.tau0;
@@ -3036,24 +3035,24 @@ void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const ui
                const uint8_t* chall_2, const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
-    if (params->faest_param.Lke) {
+    if (params->faest_param.Ske) {
       // aes_prove_256(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
     } else {
       // em_prove_256(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
     }
     break;
   case 192:
-    if (params->faest_param.Lke) {
+    if (params->faest_param.Ske) {
       // aes_prove_192(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
     } else {
       // em_prove_192(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
     }
     break;
   default:
-    if (params->faest_param.Lke) {
-      aes_128_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params);
+    if (params->faest_param.Ske) {
+      aes_128_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params, true);
     } else {
-      // em_prove_128(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
+      aes_128_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params, false);
     }
   }
 }
@@ -3063,22 +3062,22 @@ void aes_verify(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_t*
                 const uint8_t* owf_in, const uint8_t* owf_out, const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
-    if (params->faest_param.Lke) {
+    if (params->faest_param.Ske) {
       // return aes_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     } else {
       // return em_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     }
   case 192:
-    if (params->faest_param.Lke) {
+    if (params->faest_param.Ske) {
       // return aes_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     } else {
       // return em_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     }
   default:
-    if (params->faest_param.Lke) {
-      aes_128_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params);
+    if (params->faest_param.Ske) {
+      return aes_128_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params, true);
     } else {
-      // return em_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return aes_128_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params, false);
     }
   }
 }
