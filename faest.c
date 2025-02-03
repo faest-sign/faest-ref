@@ -487,10 +487,8 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   hash_challenge_2_finalize(chall_2, &chall_2_ctx, dsignature_d(sig, params), lambda, l);
 
   // Step 18
-  uint8_t* a0_tilde = NULL;
-
-  // ::19
-  aes_verify(dsignature_d(sig, params), q, chall_2, dsignature_chall_3(sig, params),
+  uint8_t a0_tilde[MAX_LAMBDA_BYTES];
+  aes_verify(a0_tilde, dsignature_d(sig, params), q, chall_2, dsignature_chall_3(sig, params),
              dsignature_a1_tilde(sig, params), dsignature_a2_tilde(sig, params), owf_input,
              owf_output, params);
   free_pointer_array(&q);
@@ -499,8 +497,6 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   uint8_t chall_3[MAX_LAMBDA_BYTES];
   hash_challenge_3(chall_3, chall_2, a0_tilde, dsignature_a1_tilde(sig, params),
                    dsignature_a2_tilde(sig, params), dsignature_ctr(sig, params), lambda);
-  free(a0_tilde);
-  a0_tilde = NULL;
 
   // Step 21
   return memcmp(chall_3, dsignature_chall_3(sig, params), lambdaBytes) == 0 ? 0 : -1;

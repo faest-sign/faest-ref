@@ -33,8 +33,6 @@ static
   // (depth + 1) x num_instances array of outLenBytes; but we only need two rows at a time
   uint8_t* r = calloc(2 * num_instances, outLenBytes);
 
-  i += 1 << 31;
-
 #define R(row, column) (r + (((row) % 2) * num_instances + (column)) * outLenBytes)
 #define V(idx) (v + (idx) * outLenBytes)
 
