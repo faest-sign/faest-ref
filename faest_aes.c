@@ -711,9 +711,9 @@ static void aes_256_sbox_affine_verify(bf256_t* out_deg1, const bf256_t* in_deg1
   }
 }
 
-// // SHIFT ROWS
-// // DONE: Should be alright
-static void aes_128_shiftrows_prover(bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg1, const bf128_t* in_deg2,
+// SHIFT ROWS
+// DONE: Should be alright
+static void aes_128_shiftrows_prover(bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg1, const bf128_t* in_deg2, 
                                       const faest_paramset_t* params) {
   unsigned int Nst = 4;
 
@@ -2013,12 +2013,12 @@ static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint
       } else {
         c = 0;
       }
-      bf128_t c_tag;
-      constant_to_vole_128_prover(&c_tag);
+      // bf128_t* c_tag = (bf128_t*)malloc(sizeof(bf128_t)*state_size_bytes);
+      // constant_to_vole_128_prover(c_tag);
       y_bits[bit_i] = x_bits[(bit_i - 1 + 8)%8] ^ x_bits[(bit_i - 3 + 8)%8] ^ x_bits[(bit_i - 6 + 8)%8] ^ c;
       y_bits_tag[bit_i] = bf128_add(
                                     bf128_add(x_bits_tag[(bit_i - 1 + 8)%8], x_bits_tag[(bit_i - 3 + 8)%8]),
-                                    bf128_add(x_bits_tag[(bit_i - 6 + 8)%8], c_tag));
+                                    x_bits_tag[(bit_i - 6 + 8)%8]);
     }
 
     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
@@ -2271,9 +2271,9 @@ static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uin
       // adding round constant to the tags
       for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
         // for prover, no multiplication with delta
-        bf128_t rcon_tag;
-        constant_to_vole_128_prover(&rcon_tag); // TODO: in spec there should be call to ConstantToVOLE() call
-        x_tilde_tag[bit_i] = bf128_add(x_tilde_tag[bit_i], rcon_tag);
+        // bf128_t* rcon_tag = (bf128_t*)malloc(sizeof(bf128_t)*128);
+        // constant_to_vole_128_prover(rcon_tag); // TODO: in spec there should be call to ConstantToVOLE() call
+        x_tilde_tag[bit_i] = x_tilde_tag[bit_i];
 
       }
       ++ircon;
