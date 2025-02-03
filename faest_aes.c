@@ -1937,7 +1937,7 @@ static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint
 
     uint8_t y_bits[8];
     bf128_t y_bits_tag[8];
-    unsigned int c = 0;
+    uint8_t c = 0;
     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
       if (bit_i == 0 || bit_i == 2) {
         c = 1;
@@ -1945,7 +1945,7 @@ static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint
         c = 0;
       }
       bf128_t c_tag;
-      constant_to_vole_128_prover(&c_tag, c);
+      constant_to_vole_128_prover(&c_tag, &c);
       y_bits[bit_i] = x_bits[(bit_i - 1 + 8)%8] ^ x_bits[(bit_i - 3 + 8)%8] ^ x_bits[(bit_i - 6 + 8)%8] ^ c;
       y_bits_tag[bit_i] = bf128_add(
                                     bf128_add(x_bits_tag[(bit_i - 1 + 8)%8], x_bits_tag[(bit_i - 3 + 8)%8]),
@@ -1969,7 +1969,7 @@ static void aes_128_inverse_affine_verifier(bf128_t* y_key, const bf128_t* x_key
     }
 
     bf128_t y_bits_key[8];
-    unsigned int c = 0;
+    uint8_t c = 0;
     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
       if (bit_i == 0 || bit_i == 2) {
         c = 1;
@@ -1977,7 +1977,7 @@ static void aes_128_inverse_affine_verifier(bf128_t* y_key, const bf128_t* x_key
         c = 0;
       }
       bf128_t c_tag;
-      constant_to_vole_128_verifier(&c_tag, c, delta);
+      constant_to_vole_128_verifier(&c_tag, &c, delta);
       y_bits_key[bit_i] = bf128_add(
                                     bf128_add(x_bits_key[(bit_i - 1 + 8)%8], x_bits_key[(bit_i - 3 + 8)%8]),
                                     bf128_add(x_bits_key[(bit_i - 6 + 8)%8], c_tag));
@@ -2003,7 +2003,7 @@ static void aes_192_inverse_affine_prover(uint8_t* y, bf192_t* y_tag, const uint
 
     uint8_t y_bits[8];
     bf192_t y_bits_tag[8];
-    unsigned int c = 0;
+    uint8_t c = 0;
     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
       if (bit_i == 0 || bit_i == 2) {
         c = 1;
@@ -2011,7 +2011,7 @@ static void aes_192_inverse_affine_prover(uint8_t* y, bf192_t* y_tag, const uint
         c = 0;
       }
       bf192_t c_tag;
-      constant_to_vole_192_prover(&c_tag, c);
+      constant_to_vole_192_prover(&c_tag, &c);
       y_bits[bit_i] = x_bits[(bit_i - 1 + 8)%8] ^ x_bits[(bit_i - 3 + 8)%8] ^ x_bits[(bit_i - 6 + 8)%8] ^ c;
       y_bits_tag[bit_i] = bf192_add(
                                     bf192_add(x_bits_tag[(bit_i - 1 + 8)%8], x_bits_tag[(bit_i - 3 + 8)%8]),
@@ -2035,7 +2035,7 @@ static void aes_192_inverse_affine_verifier(bf192_t* y_key, const bf192_t* x_key
     }
 
     bf192_t y_bits_key[8];
-    unsigned int c = 0;
+    uint8_t c = 0;
     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
       if (bit_i == 0 || bit_i == 2) {
         c = 1;
@@ -2043,7 +2043,7 @@ static void aes_192_inverse_affine_verifier(bf192_t* y_key, const bf192_t* x_key
         c = 0;
       }
       bf192_t c_tag;
-      constant_to_vole_192_verifier(&c_tag, c, delta);
+      constant_to_vole_192_verifier(&c_tag, &c, delta);
       y_bits_key[bit_i] = bf192_add(
                                     bf192_add(x_bits_key[(bit_i - 1 + 8)%8], x_bits_key[(bit_i - 3 + 8)%8]),
                                     bf192_add(x_bits_key[(bit_i - 6 + 8)%8], c_tag));
@@ -2069,7 +2069,7 @@ static void aes_256_inverse_affine_prover(uint8_t* y, bf256_t* y_tag, const uint
 
     uint8_t y_bits[8];
     bf256_t y_bits_tag[8];
-    unsigned int c = 0;
+    uint8_t c = 0;
     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
       if (bit_i == 0 || bit_i == 2) {
         c = 1;
@@ -2077,7 +2077,7 @@ static void aes_256_inverse_affine_prover(uint8_t* y, bf256_t* y_tag, const uint
         c = 0;
       }
       bf256_t c_tag;
-      constant_to_vole_256_prover(&c_tag, c);
+      constant_to_vole_256_prover(&c_tag, &c);
       y_bits[bit_i] = x_bits[(bit_i - 1 + 8)%8] ^ x_bits[(bit_i - 3 + 8)%8] ^ x_bits[(bit_i - 6 + 8)%8] ^ c;
       y_bits_tag[bit_i] = bf256_add(
                                     bf256_add(x_bits_tag[(bit_i - 1 + 8)%8], x_bits_tag[(bit_i - 3 + 8)%8]),
@@ -2101,7 +2101,7 @@ static void aes_256_inverse_affine_verifier(bf256_t* y_key, const bf256_t* x_key
     }
 
     bf256_t y_bits_key[8];
-    unsigned int c = 0;
+    uint8_t c = 0;
     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
       if (bit_i == 0 || bit_i == 2) {
         c = 1;
@@ -2109,7 +2109,7 @@ static void aes_256_inverse_affine_verifier(bf256_t* y_key, const bf256_t* x_key
         c = 0;
       }
       bf256_t c_tag;
-      constant_to_vole_256_verifier(&c_tag, c, delta);
+      constant_to_vole_256_verifier(&c_tag, &c, delta);
       y_bits_key[bit_i] = bf256_add(
                                     bf256_add(x_bits_key[(bit_i - 1 + 8)%8], x_bits_key[(bit_i - 3 + 8)%8]),
                                     bf256_add(x_bits_key[(bit_i - 6 + 8)%8], c_tag));
@@ -2204,14 +2204,15 @@ static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uin
       for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
         // for prover, no multiplication with delta
         bf128_t rcon_tag;
-        constant_to_vole_128_prover(&rcon_tag, (Rcon[ircon] >> bit_i) & 1); // TODO: in spec there should be call to ConstantToVOLE() call
+        const uint8_t c = (Rcon[ircon] >> bit_i) & 1;
+        constant_to_vole_128_prover(&rcon_tag, &c); // TODO: in spec there should be call to ConstantToVOLE() call
         x_tilde_tag[bit_i] = bf128_add(x_tilde_tag[bit_i], rcon_tag);
 
       }
       ++ircon;
     }
     // ::11
-    aes_128_inverse_affine_prover(y, y_tag, x_tilde, x_tilde_tag, params);
+    aes_128_inverse_affine_prover(y, y_tag, &x_tilde, x_tilde_tag, params);
 
     // ::12-16 lines only relavant for aes-128
     if (j%4 == 4) {
@@ -2246,7 +2247,8 @@ static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_ke
       for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
         // for prover, no multiplication with delta
         bf128_t rcon_key;
-        constant_to_vole_128_verifier(&rcon_key, (Rcon[ircon] >> bit_i) & 1, delta); // TODO: in spec there should be call to ConstantToVOLE() call
+        const uint8_t c = (Rcon[ircon] >> bit_i) & 1;
+        constant_to_vole_128_verifier(&rcon_key, &c, delta); // TODO: in spec there should be call to ConstantToVOLE() call
         x_tilde_tag[bit_i] = bf128_add(x_tilde_tag[bit_i], rcon_key);
 
       }
