@@ -25,11 +25,11 @@ if boost_test.found()
   endif
 
   foreach parameter_set : parameter_sets
-    # test_sources += configure_file(
-    #   input: 'basic.cpp.in',
-    #   output: 'faest_@0@_basic.cpp'.format(parameter_set.get('PARAM_L')),
-    #   configuration: parameter_set,
-    # )
+    test_sources += configure_file(
+      input: 'basic.cpp.in',
+      output: 'faest_@0@_basic.cpp'.format(parameter_set.get('PARAM_L')),
+      configuration: parameter_set,
+    )
   endforeach
 
   extended_tests = executable(
