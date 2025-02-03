@@ -312,42 +312,39 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   const unsigned int ell_hat_bytes = ell_hat / 8;
   const unsigned int w_grind       = params->faest_param.w_grind;
 
-  // Step 3
+  // ::3
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
   hash_mu(mu, owf_input, params->faest_param.owf_input_size, owf_output,
           params->faest_param.owf_output_size, msg, msg_len, lambda);
 
-  // Step 4 and 5
+  // ::4-5
   uint8_t rootkey[MAX_LAMBDA_BYTES], iv[MAX_LAMBDA_BYTES];
   hash_r_iv(rootkey, signature_iv_pre(sig, params), iv, owf_key, mu, rho, rholen, lambda);
 
-  // Step 7
+  // ::6-7
   bavc_t bavc;
   uint8_t* u = malloc(ell_hat_bytes);
-
   // v has \hat \ell rows, \lambda columns, storing in column-major order
   uint8_t** V = malloc(lambda * sizeof(uint8_t*));
   V[0]        = calloc(lambda, ell_hat_bytes);
   for (unsigned int i = 1; i < lambda; ++i) {
     V[i] = V[0] + i * ell_hat_bytes;
   }
-
   vole_commit(rootkey, iv, ell_hat, params, &bavc, signature_c(sig, 0, params), u, V);
 
-  // Step 8
+  // ::8
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
   hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), iv, lambda, ell, tau);
 
-  // Step 10
+  // ::9-10
   vole_hash(signature_u_tilde(sig, params), chall_1, u, ell, lambda);
 
-  // Step 11 and 14
+  // ::11-12
   // To save memory consumption, the chall_2 is computed in an
   // Init-Update-Finalize style as V_tilde is only fed into to the hash and not
   // used elsewhere.
   H2_context_t chall_2_ctx;
   hash_challenge_2_init(&chall_2_ctx, chall_1, signature_u_tilde(sig, params), lambda);
-
   {
     uint8_t V_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
     for (unsigned int i = 0; i != lambda; ++i) {
@@ -358,23 +355,24 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     }
   }
 
-  // Step 12
+  // ::13
   uint8_t* w = aes_extend_witness(owf_key, owf_input, params);
-  // Step 13
+  // ::14
   xor_u8_array(w, u, signature_d(sig, params), ell_bytes);
 
-  // Step 14
+  // :15
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
   hash_challenge_2_finalize(chall_2, &chall_2_ctx, signature_d(sig, params), lambda, ell);
 
-  // ::20
+  // ::16-20
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-
   // Passing bits to aes_prove
-  uint8_t* w_bits = (uint8_t*)malloc(ell);  // 1 bit in 1 uint8_t
-  uint8_t* u_bits = (uint8_t*)malloc(ell);  // 1 bit in 1 uint8_t
+  uint8_t* w_bits = (uint8_t*)malloc(ell);  // 1 bit in per uint8_t
   for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
     w_bits[bit_i] = (w[bit_i/8] >> bit_i%8) & 1;
+  }
+  uint8_t* u_bits = (uint8_t*)malloc(2*lambda);  // 1 bit per uint8_t
+  for (unsigned int bit_i = 0; bit_i < 2*lambda; bit_i++) {
     u_bits[bit_i] = (u[bit_i/8] >> bit_i%8) & 1;
   }
   aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w_bits, u_bits, V,
@@ -386,30 +384,28 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   free(u);
   u = NULL;
 
-  // Step 22: hash everything up to the counter
+  // ::21-22
   H2_context_t chall_3_ctx;
   hash_challenge_3_init(&chall_3_ctx, chall_2, a0_tilde, signature_a1_tilde(sig, params),
                         signature_a2_tilde(sig, params), lambda);
 
-  // ::20-27
   uint32_t ctr = 0;
   for (; true; ++ctr) {
-    // Step 22: hash counter
     uint8_t chall_3[MAX_LAMBDA_BYTES];
     hash_challenge_3_final(chall_3, &chall_3_ctx, ctr, lambda);
 
-    // Step 23
+    // ::23
     if (!check_challenge_3(chall_3, lambda - w_grind, lambda)) {
       continue;
     }
 
-    // Step 26: decode challenge
+    // ::26
     uint16_t decoded_chall_3[MAX_TAU];
     if (!decode_all_chall_3(decoded_chall_3, chall_3, params)) {
       continue;
     }
 
-    // Step 27
+    // :27
     if (bavc_open(&bavc, decoded_chall_3, signature_decom_i(sig, params), params)) {
       break;
     }
@@ -432,29 +428,28 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   const unsigned int ell_hat_bytes = ell_hat / 8;
   const unsigned int utilde_bytes  = lambdaBytes + UNIVERSAL_HASH_B;
 
-  // Step 4
+  // ::4-5
   if (!check_challenge_3(dsignature_chall_3(sig, params), lambda - params->faest_param.w_grind,
                          lambda)) {
     return -2;
   }
 
-  // Step 2
+  // ::2
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
   hash_mu(mu, owf_input, params->faest_param.owf_input_size, owf_output,
           params->faest_param.owf_output_size, msg, msglen, lambda);
 
-  // Step 3
+  // ::3
   uint8_t iv[IV_SIZE];
   hash_iv(iv, dsignature_iv_pre(sig, params), lambda);
 
-  // Step: 5
+  // Step: 6-7
   // q is a \hat \ell \times \lambda matrix
   uint8_t** q = malloc(lambda * sizeof(uint8_t*));
   q[0]        = calloc(lambda, ell_hat_bytes);
   for (unsigned int i = 1; i < lambda; ++i) {
     q[i] = q[0] + i * ell_hat_bytes;
   }
-
   uint8_t hcom[MAX_LAMBDA_BYTES * 2];
   if (!vole_reconstruct(hcom, q, iv, dsignature_chall_3(sig, params),
                         dsignature_decom_i(sig, params), dsignature_c(sig, 0, params), ell_hat,
@@ -463,7 +458,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     return -3;
   }
 
-  // Step 10
+  // ::10
   uint8_t chall_1[5 * MAX_LAMBDA_BYTES + 8];
   hash_challenge_1(chall_1, mu, hcom, dsignature_c(sig, 0, params), iv, lambda, ell, tau);
 
@@ -496,7 +491,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // Passing bits to aes_prove
   const uint8_t* d = dsignature_d(sig, params);
-  uint8_t* d_bits = (uint8_t*)malloc(ell);  // 1 bit in 1 uint8_t
+  uint8_t* d_bits = (uint8_t*)malloc(ell);  // 1 bit per uint8_t
   for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
     d_bits[bit_i] = (d[bit_i/8] >> bit_i%8) & 1;
   }
