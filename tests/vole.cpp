@@ -195,6 +195,27 @@ namespace {
     BOOST_TEST(hcom_rec == expected_h_vec);
     BOOST_TEST(expected_hashed_q == hash_array(q_storage));
     bavc_clear(&bavc_com);
+
+    for (unsigned int i = 0, running_idx = 0; i < params->faest_param.tau; ++i) {
+      const uint32_t depth =
+          bavc_max_node_depth(i, params->faest_param.tau0, params->faest_param.k);
+
+      for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
+        for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
+          if ((i_delta[i] >> j) & 1) {
+            // need to correct the vole correlation
+            if (i > 0) {
+              BOOST_TEST((q[(running_idx)][inner] ^ c[(i - 1) * ell_hat_bytes + inner] ^
+                          u[inner]) == v[(running_idx)][inner]);
+            } else {
+              BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
+            }
+          } else {
+            BOOST_TEST(q[(running_idx)][inner] == v[(running_idx)][inner]);
+          }
+        }
+      }
+    }
   }
 } // namespace
 
