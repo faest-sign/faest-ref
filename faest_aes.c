@@ -145,7 +145,6 @@ static void aes_256_add_round_key_verifier(bf256_t* out_key, const bf256_t* in_k
 }
 
 // F256/F2.CONJUGATES
-// DONE: Looks good
 static void aes_128_f256_f2_conjugates_1(bf128_t* y, const uint8_t* state) {
   unsigned int Nst_bytes = 16;
 
@@ -180,7 +179,7 @@ static void aes_128_f256_f2_conjugates_128(bf128_t* y, const bf128_t* state) {
     y[i * 8 + 7] = bf128_byte_combine(x);
   }
 }
-// DONE: Looks good
+
 static void aes_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state) {
   unsigned int Nst_bytes = 16;
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
@@ -211,7 +210,7 @@ static void aes_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state) {
     y[i * 8 + 7] = bf192_byte_combine(x);
   }
 }
-// DONE: Looks good
+
 static void aes_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state) {
   unsigned int Nst_bytes = 16;
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
@@ -242,7 +241,7 @@ static void aes_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state) {
     y[i * 8 + 7] = bf256_byte_combine(x);
   }
 }
-// DONE: Looks good
+
 static void aes_em_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state) {
   for (unsigned int i = 0; i != 24; ++i) {
     uint8_t* x0 = (uint8_t*)malloc(24*8);
@@ -271,7 +270,7 @@ static void aes_em_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state) 
     y[i * 8 + 7] = bf192_byte_combine(x);
   }
 }
-// DONE: Looks good
+
 static void aes_em_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state) {
   for (unsigned int i = 0; i != 32; ++i) {
     uint8_t* x0 = (uint8_t*)malloc(32*8);
@@ -344,7 +343,6 @@ static void aes_128_inv_norm_to_conjugates_prover(bf128_t* y_val, bf128_t* y_tag
   }
 }
 
-// INV NORM TO CONJUGATES
 static void aes_128_inv_norm_to_conjugates_verifier(bf128_t* y_eval, bf128_t* x_eval) {
   // :1-2
   bf128_t beta_4        = bf128_add(bf128_get_alpha(5), bf128_get_alpha(3));
@@ -405,7 +403,6 @@ void aes_128_inv_norm_constraints_verifier(bf128_t* z_eval, const bf128_t* conju
                   bf128_mul(delta, delta)));
 }
 
-
 // TODO:
 // INV NORM CONSTRAINTS 192/256
 //
@@ -463,7 +460,6 @@ void aes_128_inv_norm_constraints_verifier(bf128_t* z_eval, const bf128_t* conju
 // }
 
 // STATE TO BYTES
-// DONE: Looks good
 void aes_128_state_to_bytes_prover(bf128_t* out, bf128_t* out_tag, const uint8_t* k, const bf128_t* k_tag, const faest_paramset_t* params) {
   uint16_t Nst_bytes = params->faest_param.Nwd * 4;
 
@@ -472,7 +468,7 @@ void aes_128_state_to_bytes_prover(bf128_t* out, bf128_t* out_tag, const uint8_t
     out_tag[i] = bf128_byte_combine(k_tag + i*8);
   }
 }
-// DONE: Looks good
+
 void aes_128_state_to_bytes_verifier(bf128_t* out_key, const bf128_t* k_key, const faest_paramset_t* params) {
   uint16_t Nst_bytes = params->faest_param.Nwd * 4;
 
@@ -480,7 +476,7 @@ void aes_128_state_to_bytes_verifier(bf128_t* out_key, const bf128_t* k_key, con
     out_key[i] = bf128_byte_combine(k_key + i*8);
   }
 }
-// DONE: Looks good
+
 void aes_192_state_to_bytes_prover(bf192_t* out, bf192_t* out_tag, const uint8_t* k, const bf192_t* k_tag, const faest_paramset_t* params) {
   uint16_t Nst_bytes = params->faest_param.Nwd * 4;
 
@@ -488,7 +484,7 @@ void aes_192_state_to_bytes_prover(bf192_t* out, bf192_t* out_tag, const uint8_t
     out_tag[i] = bf192_byte_combine(k_tag + i*8);
   }
 }
-// DONE: Looks good
+
 void aes_192_state_to_bytes_verifier(bf192_t* out_key, const bf192_t* k_key, const faest_paramset_t* params) {
   uint16_t Nst_bytes = params->faest_param.Nwd * 4;
 
@@ -496,7 +492,7 @@ void aes_192_state_to_bytes_verifier(bf192_t* out_key, const bf192_t* k_key, con
     out_key[i] = bf192_byte_combine(k_key + i*8);
   }
 }
-// DONE: Looks good
+
 void aes_256_state_to_bytes_prover(bf256_t* out, bf256_t* out_tag, const uint8_t* k, const bf256_t* k_tag, const faest_paramset_t* params) {
   uint16_t Nst_bytes = params->faest_param.Nwd * 4;
 
@@ -505,7 +501,7 @@ void aes_256_state_to_bytes_prover(bf256_t* out, bf256_t* out_tag, const uint8_t
     out_tag[i] = bf256_byte_combine(k_tag + i*8);
   }
 }
-// DONE: Looks good
+
 void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* s_key, const faest_paramset_t* params) {
   uint16_t Nst_bytes = params->faest_param.Nwd * 4;
 
@@ -555,7 +551,7 @@ static void aes_128_sbox_affine_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf1
     out_deg2[i] = bf128_add(out_deg2[i], C[8]);
   }
 }
-// DONE: Should be alright
+
 static void aes_128_sbox_affine_verify(bf128_t* out_deg1, const bf128_t* in_deg1, bf128_t delta, bool dosq, 
                                         const faest_paramset_t* params) {
 
@@ -594,7 +590,7 @@ static void aes_128_sbox_affine_verify(bf128_t* out_deg1, const bf128_t* in_deg1
     out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[8], delta));
   }
 }
-// DONE: Should be alright
+
 static void aes_192_sbox_affine_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf192_t* out_deg2, const bf192_t* in_deg0, const bf192_t* in_deg1, const bf192_t* in_deg2,
                     bool dosq, const faest_paramset_t* params) {
 
@@ -635,7 +631,7 @@ static void aes_192_sbox_affine_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf1
   out_deg2[i] = bf192_add(out_deg2[i], C[8]);
   }
 }
-// DONE: Should be alright
+
 static void aes_192_sbox_affine_verify(bf192_t* out_deg1, const bf192_t* in_deg1, bf192_t delta, bool dosq, 
                                         const faest_paramset_t* params) {
 
@@ -675,7 +671,7 @@ static void aes_192_sbox_affine_verify(bf192_t* out_deg1, const bf192_t* in_deg1
   }
 }
 
-// DONE: Should be alright
+
 static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256_t* out_deg2, const bf256_t* in_deg0, const bf256_t* in_deg1, const bf256_t* in_deg2,
                     bool dosq, const faest_paramset_t* params) {
 
@@ -716,7 +712,7 @@ static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf2
   out_deg2[i] = bf256_add(out_deg2[i], C[8]);
   }
 }
-// DONE: Should be alright
+
 static void aes_256_sbox_affine_verify(bf256_t* out_deg1, const bf256_t* in_deg1, bf256_t delta, bool dosq, 
                                         const faest_paramset_t* params) {
 
@@ -757,7 +753,6 @@ static void aes_256_sbox_affine_verify(bf256_t* out_deg1, const bf256_t* in_deg1
 }
 
 // SHIFT ROWS
-// DONE: Should be alright
 static void aes_128_shiftrows_prover(bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg1, const bf128_t* in_deg2, 
                                       const faest_paramset_t* params) {
   unsigned int Nst = 4;
@@ -775,7 +770,7 @@ static void aes_128_shiftrows_prover(bf128_t* out_deg1, bf128_t* out_deg2, const
     }
   }
 }
-// DONE: Should be alright
+
 static void aes_128_shiftrows_verifier(bf128_t* out_deg1, const bf128_t* in_deg1, const faest_paramset_t* params) {
   uint16_t Nst = params->faest_param.Nwd;
 
@@ -807,6 +802,7 @@ static void aes_192_shiftrows_prover(uint8_t* out, bf192_t* out_tag, const uint8
     }
   }
 }
+
 static void aes_192_shiftrows_verifier(bf192_t* out_tag, const bf192_t* in_tag, const faest_paramset_t* params) {
   uint16_t Nst = params->faest_param.Nwd;
 
@@ -838,6 +834,7 @@ static void aes_256_shiftrows_prover(uint8_t* out, bf256_t* out_tag, const uint8
     }
   }
 }
+
 static void aes_256_shiftrows_verifier(bf256_t* out_tag, const bf256_t* in_tag, const faest_paramset_t* params) {
   uint16_t Nst = params->faest_param.Nwd;
 
@@ -854,7 +851,6 @@ static void aes_256_shiftrows_verifier(bf256_t* out_tag, const bf256_t* in_tag, 
 }
 
 // MIX COLOUMNS
-// DONE: Should be alright
 static void aes_128_mix_columns_prover(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t* y_deg2, const bf128_t* in_deg0, const bf128_t* in_deg1, const bf128_t* in_deg2, 
                                           bool dosq, const faest_paramset_t* params) {
   
@@ -960,7 +956,6 @@ static void aes_128_mix_columns_prover(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t
   }
 }
 
-// DONE: Should be alright
 static void aes_128_mix_columns_verifier(bf128_t* y_deg1, const bf128_t* in_deg1, bool dosq, const faest_paramset_t* params) {
   
   uint16_t Nst = params->faest_param.Nwd;
@@ -1340,6 +1335,7 @@ static void aes_128_add_round_key_bytes_prover(bf128_t* y_deg0, bf128_t* y_deg1,
     y_deg0[i] = in_deg0[i];
   }
 }
+
 static void aes_128_add_round_key_bytes_verifier(bf128_t* y_deg1, const bf128_t* in_tag, const bf128_t* k_tag, bf128_t delta, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
@@ -1364,6 +1360,7 @@ static void aes_192_add_round_key_bytes_prover(bf192_t* y_deg0, bf192_t* y_deg1,
     y_deg0[i] = in_deg0[i];
   }
 }
+
 static void aes_192_add_round_key_bytes_verifier(bf192_t* y_deg1, const bf192_t* in_tag, const bf192_t* k_tag, bf192_t delta, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
@@ -1388,6 +1385,7 @@ static void aes_256_add_round_key_bytes_prover(bf256_t* y_deg0, bf256_t* y_deg1,
     y_deg0[i] = in_deg0[i];
   }
 }
+
 static void aes_256_add_round_key_bytes_verifier(bf256_t* y_deg1, const bf256_t* in_tag, const bf256_t* k_tag, bf256_t delta, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
@@ -1977,7 +1975,6 @@ static void aes_128_bitwise_mix_coloumn_prover(uint8_t* out, bf128_t* out_tag, u
 // }
 
 // CONSTANT TO VOLE
-// DONE: Looks good
 static void constant_to_vole_128_prover(bf128_t* tag) {
   // the val stay the same as the val is a pub const!
   for (unsigned int i = 0; i < 128; i++) {
@@ -1989,7 +1986,6 @@ static void constant_to_vole_128_verifier(bf128_t* key, const uint8_t* val, bf12
     key[i] = bf128_mul(bf128_from_bit(get_bit(val[i/8], i%8)), delta);  // multiply delta with each bit
   }  
 }
-// DONE: Looks good
 static void constant_to_vole_192_prover(bf192_t* tag) {
   // the val stay the same as the val is a pub const!
   for (unsigned int i = 0; i < 192; i++) {
@@ -2001,7 +1997,7 @@ static void constant_to_vole_192_verifier(bf192_t* key, const uint8_t* val, bf19
     key[i] = bf192_mul(bf192_from_bit(get_bit(val[i/8], i%8)), delta);  // multiply delta with each bit
   }  
 }
-// DONE: Looks good
+
 static void constant_to_vole_256_prover(bf256_t* tag) {
   // the val stay the same as the val is a pub const!
   for (unsigned int i = 0; i < 256; i++) {
@@ -2015,7 +2011,6 @@ static void constant_to_vole_256_verifier(bf256_t* key, const uint8_t* val, bf25
 }
 
 // DEG 2 TO 3
-// DONE: Looks good
 static void aes_128_deg2to3_prover(bf128_t* deg1, bf128_t* deg2, bf128_t tag, bf128_t val) {
   deg1[0] = tag;
   deg2[0] = val;
@@ -2023,7 +2018,7 @@ static void aes_128_deg2to3_prover(bf128_t* deg1, bf128_t* deg2, bf128_t tag, bf
 static void aes_128_deg2to3_verifier(bf128_t* deg1, bf128_t key, bf128_t delta) {
   deg1[0] = bf128_mul(key, delta);
 }
-// DONE: Looks good
+
 static void aes_192_deg2to3_prover(bf192_t* deg1, bf192_t* deg2, bf192_t tag, bf192_t val) {
   deg1[0] = tag;
   deg2[0] = val;
@@ -2031,7 +2026,7 @@ static void aes_192_deg2to3_prover(bf192_t* deg1, bf192_t* deg2, bf192_t tag, bf
 static void aes_192_deg2to3_verifier(bf192_t* deg1, bf192_t key, bf192_t delta) {
   deg1[0] = bf192_mul(key, delta);
 }
-// DONE: Looks good
+
 static void aes_256_deg2to3_prover(bf256_t* deg1, bf256_t* deg2, bf256_t tag, bf256_t val) {
   deg1[0] = tag;
   deg2[0] = val;
@@ -2041,7 +2036,6 @@ static void aes_256_deg2to3_verifier(bf256_t* deg1, bf256_t key, bf256_t delta) 
 }
 
 // // INVERSE AFFINE
-// // DONE: Looks good
 static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag) {
   
   unsigned int state_size_bytes = 16;
@@ -2107,7 +2101,7 @@ static void aes_128_inverse_affine_verifier(bf128_t* y_key, const bf128_t* x_key
     }
   }
 }
-// DONE: Looks good
+
 static void aes_192_inverse_affine_prover(uint8_t* y, bf192_t* y_tag, const uint8_t* x, const bf192_t* x_tag) {
   
   unsigned int state_size_bytes = 16;
@@ -2173,7 +2167,7 @@ static void aes_192_inverse_affine_verifier(bf192_t* y_key, const bf192_t* x_key
     }
   }
 }
-// DONE: Looks good
+
 static void aes_256_inverse_affine_prover(uint8_t* y, bf256_t* y_tag, const uint8_t* x, const bf256_t* x_tag) {
   
   unsigned int state_size_bytes = 16;
@@ -2242,7 +2236,6 @@ static void aes_256_inverse_affine_verifier(bf256_t* y_key, const bf256_t* x_key
 // EncSctrnts internal functions end!!
 
 // COLOUM TO ROW MAJOR
-// DONE: Looks good
 static bf128_t* column_to_row_major_and_shrink_V_128(uint8_t** v, unsigned int ell) {
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
@@ -2257,7 +2250,7 @@ static bf128_t* column_to_row_major_and_shrink_V_128(uint8_t** v, unsigned int e
   }
   return new_v;
 }
-// DONE: Looks good
+
 static bf192_t* column_to_row_major_and_shrink_V_192(uint8_t** v, unsigned int ell) {
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
@@ -2273,7 +2266,7 @@ static bf192_t* column_to_row_major_and_shrink_V_192(uint8_t** v, unsigned int e
 
   return new_v;
 }
-// DONE: Looks good
+
 static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int ell) {
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
@@ -2291,7 +2284,6 @@ static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int e
 }
 
 // // KEY EXP BKWD
-// // DONE: Looks good
 static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, uint8_t* key, bf128_t* key_tag,
                                 const faest_paramset_t* params) {
 
