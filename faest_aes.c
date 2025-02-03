@@ -518,8 +518,7 @@ void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* s_key) {
 }
 
 // SBOX AFFINE
-// DONE: Should be alright
-static void aes_128_sbox_affine_prover(bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg1, const bf128_t* in_deg2, 
+static void aes_128_sbox_affine_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128_t* out_deg2, bf128_t* in_deg0, const bf128_t* in_deg1, const bf128_t* in_deg2, 
                                         bool dosq, const faest_paramset_t* params) {
 
   unsigned int Nst_bytes = params->faest_param.lambda/8;
@@ -544,7 +543,8 @@ static void aes_128_sbox_affine_prover(bf128_t* out_deg1, bf128_t* out_deg2, con
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
       out_deg2[i] = bf128_add(out_deg2[i], bf128_mul(C[Cidx], in_deg2[i*8 + (Cidx+t)%8]));
-      out_deg1[i] = bf128_add(out_deg2[i], bf128_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
+      out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
+      out_deg0[i] = bf128_add(out_deg2[i], bf128_mul(C[Cidx], in_deg0[i*8 + (Cidx+t)%8]));
     }
     // add the constant C[8] to the highest coefficient
     out_deg2[i] = bf128_add(out_deg2[i], C[8]);
@@ -581,10 +581,9 @@ static void aes_128_sbox_affine_verify(bf128_t* out_deg1, const bf128_t* in_deg1
     out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[8], delta));
   }
 }
-
 // DONE: Should be alright
-static void aes_192_sbox_affine_prover(bf192_t* out_deg1, bf192_t* out_deg2, const bf192_t* in_deg1, const bf192_t* in_deg2, 
-                                        bool dosq, const faest_paramset_t* params) {
+static void aes_192_sbox_affine_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf192_t* out_deg2, bf192_t* in_deg0, const bf192_t* in_deg1, const bf192_t* in_deg2, 
+                    bool dosq, const faest_paramset_t* params) {
 
   unsigned int Nst_bytes = params->faest_param.lambda/8;
   bf192_t C[9];
@@ -594,24 +593,25 @@ static void aes_192_sbox_affine_prover(bf192_t* out_deg1, bf192_t* out_deg2, con
 
   // ::5-6
   if (dosq) {
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf192_byte_combine_bits(x_sq[i]);
-    }
-    t = 1;
+  for (unsigned i = 0; i < 9; i++) {
+    C[i] = bf192_byte_combine_bits(x_sq[i]);
+  }
+  t = 1;
   } else {
-    t = 0;
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf192_byte_combine_bits(x[i]);
-    }
+  t = 0;
+  for (unsigned i = 0; i < 9; i++) {
+    C[i] = bf192_byte_combine_bits(x[i]);
+  }
   }
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
-    for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
-      out_deg2[i] = bf192_add(out_deg2[i], bf192_mul(C[Cidx], in_deg2[i*8 + (Cidx+t)%8]));
-      out_deg1[i] = bf192_add(out_deg2[i], bf192_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
-    }
-    // add the constant C[8] to the highest coefficient
-    out_deg2[i] = bf192_add(out_deg2[i], C[8]);
+  for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
+    out_deg2[i] = bf192_add(out_deg2[i], bf192_mul(C[Cidx], in_deg2[i*8 + (Cidx+t)%8]));
+    out_deg1[i] = bf192_add(out_deg1[i], bf192_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
+    out_deg0[i] = bf192_add(out_deg0[i], bf192_mul(C[Cidx], in_deg0[i*8 + (Cidx+t)%8]));
+  }
+  // add the constant C[8] to the highest coefficient
+  out_deg2[i] = bf192_add(out_deg2[i], C[8]);
   }
 }
 // DONE: Should be alright
@@ -647,8 +647,8 @@ static void aes_192_sbox_affine_verify(bf192_t* out_deg1, const bf192_t* in_deg1
 }
 
 // DONE: Should be alright
-static void aes_256_sbox_affine_prover(bf256_t* out_deg1, bf256_t* out_deg2, const bf256_t* in_deg1, const bf256_t* in_deg2, 
-                                        bool dosq, const faest_paramset_t* params) {
+static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256_t* out_deg2, bf256_t* in_deg0, const bf256_t* in_deg1, const bf256_t* in_deg2, 
+                    bool dosq, const faest_paramset_t* params) {
 
   unsigned int Nst_bytes = params->faest_param.lambda/8;
   bf256_t C[9];
@@ -658,24 +658,25 @@ static void aes_256_sbox_affine_prover(bf256_t* out_deg1, bf256_t* out_deg2, con
 
   // ::5-6
   if (dosq) {
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf256_byte_combine_bits(x_sq[i]);
-    }
-    t = 1;
+  for (unsigned i = 0; i < 9; i++) {
+    C[i] = bf256_byte_combine_bits(x_sq[i]);
+  }
+  t = 1;
   } else {
-    t = 0;
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf256_byte_combine_bits(x[i]);
-    }
+  t = 0;
+  for (unsigned i = 0; i < 9; i++) {
+    C[i] = bf256_byte_combine_bits(x[i]);
+  }
   }
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
-    for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
-      out_deg2[i] = bf256_add(out_deg2[i], bf256_mul(C[Cidx], in_deg2[i*8 + (Cidx+t)%8]));
-      out_deg1[i] = bf256_add(out_deg2[i], bf256_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
-    }
-    // add the constant C[8] to the highest coefficient
-    out_deg2[i] = bf256_add(out_deg2[i], C[8]);
+  for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
+    out_deg2[i] = bf256_add(out_deg2[i], bf256_mul(C[Cidx], in_deg2[i*8 + (Cidx+t)%8]));
+    out_deg1[i] = bf256_add(out_deg1[i], bf256_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
+    out_deg0[i] = bf256_add(out_deg0[i], bf256_mul(C[Cidx], in_deg0[i*8 + (Cidx+t)%8]));
+  }
+  // add the constant C[8] to the highest coefficient
+  out_deg2[i] = bf256_add(out_deg2[i], C[8]);
   }
 }
 // DONE: Should be alright
