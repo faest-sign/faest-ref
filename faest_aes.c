@@ -515,7 +515,7 @@ void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* s_key, con
 }
 
 // SBOX AFFINE
-static void aes_128_sbox_affine_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128_t* out_deg2, bf128_t* in_deg0, const bf128_t* in_deg1, const bf128_t* in_deg2, 
+static void aes_128_sbox_affine_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg0, const bf128_t* in_deg1, const bf128_t* in_deg2,
                                         bool dosq, const faest_paramset_t* params) {
 
   unsigned int Nst_bytes = params->faest_param.lambda/8;
@@ -595,7 +595,7 @@ static void aes_128_sbox_affine_verify(bf128_t* out_deg1, const bf128_t* in_deg1
   }
 }
 // DONE: Should be alright
-static void aes_192_sbox_affine_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf192_t* out_deg2, bf192_t* in_deg0, const bf192_t* in_deg1, const bf192_t* in_deg2, 
+static void aes_192_sbox_affine_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf192_t* out_deg2, const bf192_t* in_deg0, const bf192_t* in_deg1, const bf192_t* in_deg2,
                     bool dosq, const faest_paramset_t* params) {
 
   unsigned int Nst_bytes = params->faest_param.lambda/8;
@@ -676,7 +676,7 @@ static void aes_192_sbox_affine_verify(bf192_t* out_deg1, const bf192_t* in_deg1
 }
 
 // DONE: Should be alright
-static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256_t* out_deg2, bf256_t* in_deg0, const bf256_t* in_deg1, const bf256_t* in_deg2,
+static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256_t* out_deg2, const bf256_t* in_deg0, const bf256_t* in_deg1, const bf256_t* in_deg2,
                     bool dosq, const faest_paramset_t* params) {
 
   unsigned int Nst_bytes = params->faest_param.lambda/8;
