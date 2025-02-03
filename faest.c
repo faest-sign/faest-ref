@@ -412,9 +412,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   bavc_clear(&bavc);
 
   // copy counter to signature
-  uint8_t buffer[sizeof(uint32_t)];
   ctr = htole32(ctr);
-  memcpy(signature_ctr(sig, params), buffer, sizeof(uint32_t));
+  memcpy(signature_ctr(sig, params), &ctr, sizeof(ctr));
 }
 
 int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,
