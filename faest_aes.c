@@ -2451,7 +2451,7 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
   aes_128_keyexp_forward_prover(k, k_tag, w, w_tag, params);
   // ::2
   uint8_t* w_flat = (uint8_t*)malloc(8 * Ske * 8);
-  bf128_t* w_flat_tag = (bf128_t*)malloc(8 * Ske * 8);
+  bf128_t* w_flat_tag = (bf128_t*)malloc(sizeof(bf128_t) * 8 * Ske * 8);
   aes_128_keyexp_backward_prover(w_flat, w_flat_tag, w, w_tag, k, k_tag, params);
 
   // ::3-5
