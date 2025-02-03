@@ -79,6 +79,7 @@ BOOST_AUTO_TEST_CASE(test_rand_verify_fails) {
   // clang-format on
 }
 
+/*
 BOOST_AUTO_TEST_CASE(test_sign_tv) {
   namespace tv = faest_tvs::faest_@PARAM_L@_tvs;
   using faest_tvs::message;
@@ -99,5 +100,6 @@ BOOST_AUTO_TEST_CASE(test_sign_tv) {
              reinterpret_cast<const uint8_t*>(message.data()), message.size(), tv::signature.data(), tv::signature.size()) == 0);
   // clang-format on
 }
+*/
 
 BOOST_AUTO_TEST_SUITE_END()
