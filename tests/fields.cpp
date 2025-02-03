@@ -1606,10 +1606,8 @@ BOOST_AUTO_TEST_CASE(test_bf256_tv) {
 }
 
 BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_invariants) {
-  uint8_t zero[8] = {0,0,0,0,0,0,0,0};
-  uint8_t one[8] = {1,0,0,0,0,0,0,0};
-  BOOST_TEST(bf128{bf128_byte_combine_bits(zero)} == bf128::zero());
-  BOOST_TEST(bf128{bf128_byte_combine_bits(one)} == bf128::one());
+  BOOST_TEST(bf128{bf128_byte_combine_bits(0)} == bf128::zero());
+  BOOST_TEST(bf128{bf128_byte_combine_bits(1)} == bf128::one());
 
   std::array<bf128_t, 8> all_zeroes;
   for (auto& x : all_zeroes) {
@@ -1626,20 +1624,14 @@ BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_bits) {
     bf128::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
 
-    uint8_t tmp[8];
-    for (unsigned int i = 0; i < 8; i++) {
-      tmp[i] = (inputs[index] >> i) & 1;
-    }
-    bf128 combined = bf128(bf128_byte_combine_bits(tmp));
+    bf128 combined = bf128(bf128_byte_combine_bits(inputs[index]));
     BOOST_TEST(combined == bf128(out));
   }
 }
 
 BOOST_AUTO_TEST_CASE(test_bf192_byte_combine_invariants) {
-  uint8_t zero[8] = {0,0,0,0,0,0,0,0};
-  uint8_t one[8] = {1,0,0,0,0,0,0,0};
-  BOOST_TEST(bf192{bf192_byte_combine_bits(zero)} == bf192::zero());
-  BOOST_TEST(bf192{bf192_byte_combine_bits(one)} == bf192::one());
+  BOOST_TEST(bf192{bf192_byte_combine_bits(0)} == bf192::zero());
+  BOOST_TEST(bf192{bf192_byte_combine_bits(1)} == bf192::one());
 
   std::array<bf192_t, 8> all_zeroes;
   for (auto& x : all_zeroes) {
@@ -1655,21 +1647,15 @@ BOOST_AUTO_TEST_CASE(test_bf192_byte_combine_bits) {
   for (size_t index = 0; index < TEST_VEC_LEN; ++index) {
     bf192::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
-    
-    uint8_t tmp[8];
-    for (unsigned int i = 0; i < 8; i++) {
-      tmp[i] = (inputs[index] >> i) & 1;
-    }
-    bf192 combined = bf192_byte_combine_bits(tmp);
+
+    bf192 combined = bf192_byte_combine_bits(inputs[index]);
     BOOST_TEST(combined == bf192(out));
   }
 }
 
 BOOST_AUTO_TEST_CASE(test_bf256_byte_combine_invariants) {
-  uint8_t zero[8] = {0,0,0,0,0,0,0,0};
-  uint8_t one[8] = {1,0,0,0,0,0,0,0};
-  BOOST_TEST(bf256{bf256_byte_combine_bits(zero)} == bf256::zero());
-  BOOST_TEST(bf256{bf256_byte_combine_bits(one)} == bf256::one());
+  BOOST_TEST(bf256{bf256_byte_combine_bits(0)} == bf256::zero());
+  BOOST_TEST(bf256{bf256_byte_combine_bits(1)} == bf256::one());
 
   std::array<bf256_t, 8> all_zeroes;
   for (auto& x : all_zeroes) {
@@ -1686,11 +1672,7 @@ BOOST_AUTO_TEST_CASE(test_bf256_byte_combine_bits) {
     bf256::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
 
-    uint8_t tmp[8];
-    for (unsigned int i = 0; i < 8; i++) {
-      tmp[i] = (inputs[index] >> i) & 1;
-    }
-    bf256 combined = bf256_byte_combine_bits(tmp);
+    bf256 combined = bf256_byte_combine_bits(inputs[index]);
     BOOST_TEST(combined == bf256(out));
   }
 }

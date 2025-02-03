@@ -44,12 +44,11 @@ void bits_sq(uint8_t* x) {
 
 // GF(2^8) implementation
 
-bf8_t bf8_byte_combine_bits(uint8_t* x) {
-
-  bf8_t bf_out  = bf8_from_bit(x[0]);
+bf8_t bf8_byte_combine_bits(uint8_t x) {
+  bf8_t bf_out  = bf8_from_bit(x & 1);
   bf8_t bf8_mod = bf8_modulus;
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out  = bf8_add(bf_out, (bf8_mod & (0xff * x[i])));
+    bf_out  = bf8_add(bf_out, (bf8_mod & (0xff * (x >> i) & 1)));
     bf8_mod = bf8_mul(bf8_mod, bf8_modulus);
   }
   return bf_out;
@@ -179,36 +178,45 @@ bf128_t bf128_byte_combine_sq(const bf128_t* x) {
   return bf_out;
 }
 
-bf128_t bf128_byte_combine_bits(uint8_t* x) {
+bf128_t bf128_byte_combine_bits(uint8_t x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  return bf128_from_bit(x[0]) ^ bf128_mul_bit(bf128_alpha[1 - 1], x[1]) ^
-         bf128_mul_bit(bf128_alpha[2 - 1], x[2]) ^
-         bf128_mul_bit(bf128_alpha[3 - 1], x[3]) ^
-         bf128_mul_bit(bf128_alpha[4 - 1], x[4]) ^
-         bf128_mul_bit(bf128_alpha[5 - 1], x[5]) ^
-         bf128_mul_bit(bf128_alpha[6 - 1], x[6]) ^
-         bf128_mul_bit(bf128_alpha[7 - 1], x[7]);
+  return bf128_from_bit(x & 1) ^ bf128_mul_bit(bf128_alpha[1 - 1], (x >> 1) & 1) ^
+         bf128_mul_bit(bf128_alpha[2 - 1], (x >> 2) & 1) ^
+         bf128_mul_bit(bf128_alpha[3 - 1], (x >> 3) & 1) ^
+         bf128_mul_bit(bf128_alpha[4 - 1], (x >> 4) & 1) ^
+         bf128_mul_bit(bf128_alpha[5 - 1], (x >> 5) & 1) ^
+         bf128_mul_bit(bf128_alpha[6 - 1], (x >> 6) & 1) ^
+         bf128_mul_bit(bf128_alpha[7 - 1], (x >> 7) & 1);
 #else
-  bf128_t bf_out = bf128_from_bit(x[0]);
+  bf128_t bf_out = bf128_from_bit(x & 1);
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf128_add(bf_out, bf128_mul_bit(bf128_alpha[i - 1], x[i]));
+    bf_out = bf128_add(bf_out, bf128_mul_bit(bf128_alpha[i - 1], (x >> i) & 1));
   }
   return bf_out;
 #endif
 }
 
-bf128_t bf128_byte_combine_bits_sq(uint8_t* x) {
-  x[0]      = x[0] ^ x[4] ^ x[6];
-  x[1]      = x[4] ^ x[6] ^ x[7];
-  x[2]      = x[1] ^ x[5];
-  x[3]      = x[4] ^ x[5] ^ x[6] ^ x[7];
-  x[4]      = x[2] ^ x[4] ^ x[7];
-  x[5]      = x[5] ^ x[6];
-  x[6]      = x[3] ^ x[5];
-  x[7]      = x[6] ^ x[7];
+bf128_t bf128_byte_combine_bits_sq(uint8_t x) {
+  // first we do the squaring
+  uint8_t bits[8];
+  for (unsigned int i = 0; i < 8; i++) {
+    bits[i] = (x >> i) & 1;
+  }
+  bits[0]      = bits[0] ^ bits[4] ^ bits[6];
+  bits[1]      = bits[4] ^ bits[6] ^ bits[7];
+  bits[2]      = bits[1] ^ bits[5];
+  bits[3]      = bits[4] ^ bits[5] ^ bits[6] ^ bits[7];
+  bits[4]      = bits[2] ^ bits[4] ^ bits[7];
+  bits[5]      = bits[5] ^ bits[6];
+  bits[6]      = bits[3] ^ bits[5];
+  bits[7]      = bits[6] ^ bits[7];
+  uint8_t sq_x = 0;
+  for (unsigned int i = 0; i < 8; i++) {
+    sq_x ^= (bits[i] << i);
+  }
 
   // now we lift the squared value
-  return bf128_byte_combine_bits(x);
+  return bf128_byte_combine_bits(sq_x);
 }
 
 bf128_t bf128_rand(void) {
@@ -375,35 +383,44 @@ bf192_t bf192_byte_combine_sq(const bf192_t* x) {
   return bf_out;
 }
 
-bf192_t bf192_byte_combine_bits(uint8_t* x) {
+bf192_t bf192_byte_combine_bits(uint8_t x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  return bf192_from_bit(x[0]) ^ bf192_mul_bit(bf192_alpha[1 - 1], x[1]) ^
-         bf192_mul_bit(bf192_alpha[2 - 1], x[2]) ^
-         bf192_mul_bit(bf192_alpha[3 - 1], x[3]) ^
-         bf192_mul_bit(bf192_alpha[4 - 1], x[4]) ^
-         bf192_mul_bit(bf192_alpha[5 - 1], x[5]) ^
-         bf192_mul_bit(bf192_alpha[6 - 1], x[6]) ^
-         bf192_mul_bit(bf192_alpha[7 - 1], x[7]);
+  return bf192_from_bit(x & 1) ^ bf192_mul_bit(bf192_alpha[1 - 1], (x >> 1) & 1) ^
+         bf192_mul_bit(bf192_alpha[2 - 1], (x >> 2) & 1) ^
+         bf192_mul_bit(bf192_alpha[3 - 1], (x >> 3) & 1) ^
+         bf192_mul_bit(bf192_alpha[4 - 1], (x >> 4) & 1) ^
+         bf192_mul_bit(bf192_alpha[5 - 1], (x >> 5) & 1) ^
+         bf192_mul_bit(bf192_alpha[6 - 1], (x >> 6) & 1) ^
+         bf192_mul_bit(bf192_alpha[7 - 1], (x >> 7) & 1);
 #else
-  bf192_t bf_out = bf192_from_bit(x[0]);
+  bf192_t bf_out = bf192_from_bit(x & 1);
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf192_add(bf_out, bf192_mul_bit(bf192_alpha[i - 1], x[i]));
+    bf_out = bf192_add(bf_out, bf192_mul_bit(bf192_alpha[i - 1], (x >> i) & 1));
   }
   return bf_out;
 #endif
 }
 
-bf192_t bf192_byte_combine_bits_sq(uint8_t* x) {
-  x[0]      = x[0] ^ x[4] ^ x[6];
-  x[1]      = x[4] ^ x[6] ^ x[7];
-  x[2]      = x[1] ^ x[5];
-  x[3]      = x[4] ^ x[5] ^ x[6] ^ x[7];
-  x[4]      = x[2] ^ x[4] ^ x[7];
-  x[5]      = x[5] ^ x[6];
-  x[6]      = x[3] ^ x[5];
-  x[7]      = x[6] ^ x[7];
+bf192_t bf192_byte_combine_bits_sq(uint8_t x) {
+  // first we do the squaring
+  uint8_t bits[8];
+  for (unsigned int i = 0; i < 8; i++) {
+    bits[i] = (x >> i) & 1;
+  }
+  bits[0]      = bits[0] ^ bits[4] ^ bits[6];
+  bits[1]      = bits[4] ^ bits[6] ^ bits[7];
+  bits[2]      = bits[1] ^ bits[5];
+  bits[3]      = bits[4] ^ bits[5] ^ bits[6] ^ bits[7];
+  bits[4]      = bits[2] ^ bits[4] ^ bits[7];
+  bits[5]      = bits[5] ^ bits[6];
+  bits[6]      = bits[3] ^ bits[5];
+  bits[7]      = bits[6] ^ bits[7];
+  uint8_t sq_x = 0;
+  for (unsigned int i = 0; i < 8; i++) {
+    sq_x ^= (bits[i] << i);
+  }
 
-  return bf192_byte_combine_bits(x);
+  return bf192_byte_combine_bits(sq_x);
 }
 
 bf192_t bf192_rand(void) {
@@ -583,35 +600,44 @@ bf256_t bf256_byte_combine_sq(const bf256_t* x) {
   return bf_out;
 }
 
-bf256_t bf256_byte_combine_bits(uint8_t* x) {
+bf256_t bf256_byte_combine_bits(uint8_t x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  return bf256_from_bit(x[0]) ^ bf256_mul_bit(bf256_alpha[1 - 1], x[1]) ^
-         bf256_mul_bit(bf256_alpha[2 - 1], x[2]) ^
-         bf256_mul_bit(bf256_alpha[3 - 1], x[3]) ^
-         bf256_mul_bit(bf256_alpha[4 - 1], x[4]) ^
-         bf256_mul_bit(bf256_alpha[5 - 1], x[5]) ^
-         bf256_mul_bit(bf256_alpha[6 - 1], x[6]) ^
-         bf256_mul_bit(bf256_alpha[7 - 1], x[7]);
+  return bf256_from_bit(x & 1) ^ bf256_mul_bit(bf256_alpha[1 - 1], (x >> 1) & 1) ^
+         bf256_mul_bit(bf256_alpha[2 - 1], (x >> 2) & 1) ^
+         bf256_mul_bit(bf256_alpha[3 - 1], (x >> 3) & 1) ^
+         bf256_mul_bit(bf256_alpha[4 - 1], (x >> 4) & 1) ^
+         bf256_mul_bit(bf256_alpha[5 - 1], (x >> 5) & 1) ^
+         bf256_mul_bit(bf256_alpha[6 - 1], (x >> 6) & 1) ^
+         bf256_mul_bit(bf256_alpha[7 - 1], (x >> 7) & 1);
 #else
-  bf256_t bf_out = bf256_from_bit(x[0]);
+  bf256_t bf_out = bf256_from_bit(x & 1);
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf256_add(bf_out, bf256_mul_bit(bf256_alpha[i - 1], x[i]));
+    bf_out = bf256_add(bf_out, bf256_mul_bit(bf256_alpha[i - 1], (x >> i) & 1));
   }
   return bf_out;
 #endif
 }
 
-bf256_t bf256_byte_combine_bits_sq(uint8_t* x) {
-  x[0]      = x[0] ^ x[4] ^ x[6];
-  x[1]      = x[4] ^ x[6] ^ x[7];
-  x[2]      = x[1] ^ x[5];
-  x[3]      = x[4] ^ x[5] ^ x[6] ^ x[7];
-  x[4]      = x[2] ^ x[4] ^ x[7];
-  x[5]      = x[5] ^ x[6];
-  x[6]      = x[3] ^ x[5];
-  x[7]      = x[6] ^ x[7];
+bf256_t bf256_byte_combine_bits_sq(uint8_t x) {
+  // first we do the squaring
+  uint8_t bits[8];
+  for (unsigned int i = 0; i < 8; i++) {
+    bits[i] = (x >> i) & 1;
+  }
+  bits[0]      = bits[0] ^ bits[4] ^ bits[6];
+  bits[1]      = bits[4] ^ bits[6] ^ bits[7];
+  bits[2]      = bits[1] ^ bits[5];
+  bits[3]      = bits[4] ^ bits[5] ^ bits[6] ^ bits[7];
+  bits[4]      = bits[2] ^ bits[4] ^ bits[7];
+  bits[5]      = bits[5] ^ bits[6];
+  bits[6]      = bits[3] ^ bits[5];
+  bits[7]      = bits[6] ^ bits[7];
+  uint8_t sq_x = 0;
+  for (unsigned int i = 0; i < 8; i++) {
+    sq_x ^= (bits[i] << i);
+  }
 
-  return bf256_byte_combine_bits(x);
+  return bf256_byte_combine_bits(sq_x);
 }
 
 bf256_t bf256_rand(void) {
