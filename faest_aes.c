@@ -2553,11 +2553,11 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
         r_prime = r + 3 % 4;
       }
       // ::12-15
-      k_hat[r_prime] = bf128_byte_combine_bits(k[(iwd + 8 * r)]); // lifted key witness        
-      k_hat_sq[r_prime] = bf128_byte_combine_bits_sq(k[(iwd + 8 * r)]); // lifted key witness sq
+      k_hat[r_prime] = bf128_byte_combine_bits(&k[(iwd + 8 * r)]); // lifted key witness
+      k_hat_sq[r_prime] = bf128_byte_combine_bits_sq(&k[(iwd + 8 * r)]); // lifted key witness sq
 
-      w_hat[r] = bf128_byte_combine_bits(w_flat[(32 * j + 8 * r)]); // lifted output
-      w_hat_sq[r] = bf128_byte_combine_bits_sq(w_flat[(32 * j + 8 * r)]);  // lifted output sq
+      w_hat[r] = bf128_byte_combine_bits(&w_flat[(32 * j + 8 * r)]); // lifted output
+      w_hat_sq[r] = bf128_byte_combine_bits_sq(&w_flat[(32 * j + 8 * r)]);  // lifted output sq
 
       // done by both prover and verifier
       k_hat_tag[r_prime] = bf128_byte_combine(k_tag + (iwd + 8 * r)); // lifted key tag
