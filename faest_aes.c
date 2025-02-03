@@ -712,102 +712,102 @@ static void aes_256_sbox_affine_verify(bf256_t* out_deg1, const bf256_t* in_deg1
 }
 
 
-// // SHIFT ROWS
-// // DONE: Should be alright
-// static void aes_128_shiftrows_prover(bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg1, const bf128_t* in_deg2, 
-//                                       const faest_paramset_t* params) {
-//   unsigned int Nst = 4;
+// SHIFT ROWS
+// DONE: Should be alright
+static void aes_128_shiftrows_prover(bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg1, const bf128_t* in_deg2, 
+                                      const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
 
-//   for (unsigned int r = 0; r < 4; r++) {
-//     for (unsigned int c = 0; c < Nst; c++) {
-//       if (r <= 1) {
-//         out_deg2[4*c + r] = in_deg2[4*((c + r) % 4) + r];     // the val
-//         out_deg1[4*c + r] = in_deg1[(4*((c + r) % 4) + r)];     // the tag
-//       } 
-//       else {
-//         out_deg2[4*c + r] = in_deg2[4*((c + r) % 4) + r];
-//         out_deg1[4*c + r] = in_deg1[(4*((c + r + 1) % 4) + r)];
-//       }
-//     }
-//   }
-// }
-// // DONE: Should be alright
-// static void aes_128_shiftrows_verifier(bf128_t* out_deg1, const bf128_t* in_deg1, const faest_paramset_t* params) {
-//   unsigned int Nst = 4;
+  for (unsigned int r = 0; r < 4; r++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      if ((Nst != 8) || (r <= 1)) {
+        out_deg2[4*c + r] = in_deg2[4*((c + r) % 4) + r];     // the val
+        out_deg1[4*c + r] = in_deg1[(4*((c + r) % 4) + r)];     // the tag
+      } 
+      else {
+        out_deg2[4*c + r] = in_deg2[4*((c + r + 1) % 4) + r];
+        out_deg1[4*c + r] = in_deg1[(4*((c + r + 1) % 4) + r)];
+      }
+    }
+  }
+}
+// DONE: Should be alright
+static void aes_128_shiftrows_verifier(bf128_t* out_deg1, const bf128_t* in_deg1, const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
 
-//   for (unsigned int r = 0; r < 4; r++) {
-//     for (unsigned int c = 0; c < Nst; c++) {
-//       if (r <= 1) {
-//         out_deg1[4*c + r] = in_deg1[(4*((c + r) % 4) + r)];
-//       } 
-//       else {
-//         out_deg1[4*c + r] = in_deg1[(4*((c + r + 1) % 4) + r)];
-//       }
-//     }
-//   }
-// }
+  for (unsigned int r = 0; r < 4; r++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      if ((Nst != 8) || (r <= 1)) {
+        out_deg1[4*c + r] = in_deg1[(4*((c + r) % 4) + r)];
+      } 
+      else {
+        out_deg1[4*c + r] = in_deg1[(4*((c + r + 1) % 4) + r)];
+      }
+    }
+  }
+}
 
-// static void aes_192_shiftrows_prover(uint8_t* out, bf192_t* out_tag, const uint8_t* in, const bf192_t* in_tag, const faest_paramset_t* params) {
-//   unsigned int Nst = 4;
+static void aes_192_shiftrows_prover(uint8_t* out, bf192_t* out_tag, const uint8_t* in, const bf192_t* in_tag, const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
 
-//   for (unsigned int r = 0; r < 4; r++) {
-//     for (unsigned int c = 0; c < Nst; c++) {
-//       if (r <= 1) {
-//         out[4*c + r] = in[4*((c + r) % 4) + r];
-//         out_tag[4*c + r] = in_tag[(4*((c + r) % 4) + r)];
-//       } 
-//       else {
-//         out[4*c + r] = in[4*((c + r) % 4) + r];
-//         out_tag[4*c + r] = in_tag[(4*((c + r + 1) % 4) + r)];
-//       }
-//     }
-//   }
-// }
-// static void aes_192_shiftrows_verifier(bf192_t* out_tag, const bf192_t* in_tag, const faest_paramset_t* params) {
-//   unsigned int Nst = 4;
+  for (unsigned int r = 0; r < 4; r++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      if ((Nst != 8) || (r <= 1)) {
+        out[4*c + r] = in[4*((c + r) % 4) + r];
+        out_tag[4*c + r] = in_tag[(4*((c + r) % 4) + r)];
+      } 
+      else {
+        out[4*c + r] = in[4*((c + r + 1) % 4) + r];
+        out_tag[4*c + r] = in_tag[(4*((c + r + 1) % 4) + r)];
+      }
+    }
+  }
+}
+static void aes_192_shiftrows_verifier(bf192_t* out_tag, const bf192_t* in_tag, const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
 
-//   for (unsigned int r = 0; r < 4; r++) {
-//     for (unsigned int c = 0; c < Nst; c++) {
-//       if (r <= 1) {
-//         out_tag[4*c + r] = in_tag[(4*((c + r) % 4) + r)];
-//       } 
-//       else {
-//         out_tag[4*c + r] = in_tag[(4*((c + r + 1) % 4) + r)];
-//       }
-//     }
-//   }
-// }
+  for (unsigned int r = 0; r < 4; r++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      if ((Nst != 8) || (r <= 1)) {
+        out_tag[4*c + r] = in_tag[(4*((c + r) % 4) + r)];
+      } 
+      else {
+        out_tag[4*c + r] = in_tag[(4*((c + r + 1) % 4) + r)];
+      }
+    }
+  }
+}
 
-// static void aes_256_shiftrows_prover(uint8_t* out, bf256_t* out_tag, const uint8_t* in, const bf256_t* in_tag, const faest_paramset_t* params) {
-//   unsigned int Nst = 4;
+static void aes_256_shiftrows_prover(uint8_t* out, bf256_t* out_tag, const uint8_t* in, const bf256_t* in_tag, const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
 
-//   for (unsigned int r = 0; r < 4; r++) {
-//     for (unsigned int c = 0; c < Nst; c++) {
-//       if (r <= 1) {
-//         out[4*c + r] = in[4*((c + r) % 4) + r];
-//         out_tag[4*c + r] = in_tag[(4*((c + r) % 4) + r)];
-//       } 
-//       else {
-//         out[4*c + r] = in[4*((c + r) % 4) + r];
-//         out_tag[4*c + r] = in_tag[(4*((c + r + 1) % 4) + r)];
-//       }
-//     }
-//   }
-// }
-// static void aes_256_shiftrows_verifier(bf256_t* out_tag, const bf256_t* in_tag, const faest_paramset_t* params) {
-//   unsigned int Nst = 4;
+  for (unsigned int r = 0; r < 4; r++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      if ((Nst != 8) || (r <= 1)) {
+        out[4*c + r] = in[4*((c + r) % 4) + r];
+        out_tag[4*c + r] = in_tag[(4*((c + r) % 4) + r)];
+      } 
+      else {
+        out[4*c + r] = in[4*((c + r + 1) % 4) + r];
+        out_tag[4*c + r] = in_tag[(4*((c + r + 1) % 4) + r)];
+      }
+    }
+  }
+}
+static void aes_256_shiftrows_verifier(bf256_t* out_tag, const bf256_t* in_tag, const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
 
-//   for (unsigned int r = 0; r < 4; r++) {
-//     for (unsigned int c = 0; c < Nst; c++) {
-//       if (r <= 1) {
-//         out_tag[4*c + r] = in_tag[(4*((c + r) % 4) + r)];
-//       } 
-//       else {
-//         out_tag[4*c + r] = in_tag[(4*((c + r + 1) % 4) + r)];
-//       }
-//     }
-//   }
-// }
+  for (unsigned int r = 0; r < 4; r++) {
+    for (unsigned int c = 0; c < Nst; c++) {
+      if ((Nst != 8) || (r <= 1)) {
+        out_tag[4*c + r] = in_tag[(4*((c + r) % 4) + r)];
+      } 
+      else {
+        out_tag[4*c + r] = in_tag[(4*((c + r + 1) % 4) + r)];
+      }
+    }
+  }
+}
 
 // // MIX COLOUMNS
 // // DONE: Should be alright
