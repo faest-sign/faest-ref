@@ -442,7 +442,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   // ::3
   uint8_t iv[IV_SIZE];
   hash_iv(iv, dsignature_iv_pre(sig, params), lambda);
-
+  printf("verify: step 5\n");
   // Step: 6-7
   // q is a \hat \ell \times \lambda matrix
   uint8_t** q = malloc(lambda * sizeof(uint8_t*));
@@ -465,7 +465,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   // Step 12, 14 and 15
   H2_context_t chall_2_ctx;
   hash_challenge_2_init(&chall_2_ctx, chall_1, dsignature_u_tilde(sig, params), lambda);
-
+  printf("verify: step 15\n");
   {
     const uint8_t* chall_3 = dsignature_chall_3(sig, params);
     uint8_t Q_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
@@ -485,7 +485,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   // Step 15
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
   hash_challenge_2_finalize(chall_2, &chall_2_ctx, dsignature_d(sig, params), lambda, ell);
-
+  printf("verify: step 16\n");
   // Step 18
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
 
@@ -495,6 +495,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
     d_bits[bit_i] = (d[bit_i/8] >> bit_i%8) & 1;
   }
+  printf("verify: starting aes_verify\n");
   aes_verify(d_bits, q, chall_2, dsignature_chall_3(sig, params), dsignature_a1_tilde(sig, params), dsignature_a2_tilde(sig, params), owf_input,
              owf_output, params);
   free_pointer_array(&q);
