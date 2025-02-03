@@ -3160,7 +3160,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   unsigned int lambda = params->faest_param.lambda;
   unsigned int ske = params->faest_param.Ske;
   unsigned int senc = params->faest_param.Senc;
-  unsigned int c = 2*ske + (3/2)*senc + 1;  // TODO: how is c affected if we have 4 bits in 1 unit8_t
+  unsigned int c = 2*ske + (3/2)*senc + 1;
 
   // ::1-5
   // V becomes the w_tag
@@ -3493,12 +3493,12 @@ void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const ui
                const uint8_t* chall_2, const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
-    aes_256_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params,
-                   params->faest_param.Ske == 0);
+    // aes_256_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params,
+                  //  params->faest_param.Ske == 0);
     break;
   case 192:
-    aes_192_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params,
-                   params->faest_param.Ske == 0);
+    // aes_192_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params,
+    //                params->faest_param.Ske == 0);
     break;
   default:
     aes_128_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params,
@@ -3511,11 +3511,11 @@ uint8_t* aes_verify(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const
                     const uint8_t* owf_out, const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
-    return aes_256_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
-                            params->faest_param.Ske == 0);
+    // return aes_256_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
+    //                         params->faest_param.Ske == 0);
   case 192:
-    return aes_192_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
-                            params->faest_param.Ske == 0);
+    // return aes_192_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
+    //                         params->faest_param.Ske == 0);
   default:
     return aes_192_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
                             params->faest_param.Ske == 0);
