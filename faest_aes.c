@@ -2937,7 +2937,7 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   // ::1-3 owf_in, owf_out, z and z_tag
 
   // ::4-5
- aes_128_deg2to3_prover(z_deg1, z_deg2, bf128_from_bit((w[0]&1) & ((w[0]>>1)&1)), bf128_mul(w_tag[0], w_tag[1]));
+  aes_128_deg2to3_prover(z_deg1, z_deg2, bf128_from_bit((w[0]&1) & ((w[0]>>1)&1)), bf128_mul(w_tag[0], w_tag[1]));
 
   // ::7-8
   uint8_t* Rkeys = (uint8_t*)malloc(Nk*R); // storing this as unit8
@@ -2992,8 +2992,8 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
     constant_to_vole_128_prover(out_tag, lambda);
     // ::15 skiped as B = 1
     // ::16
-    bf128_t* z_tilde_deg0_tag = malloc(sizeof(bf128_t)*FAEST_128F_Ske / 4 + 2*4);
-    bf128_t* z_tilde_deg1_val = malloc(sizeof(bf128_t)*FAEST_128F_Ske / 4 + 2*4);
+    bf128_t* z_tilde_deg0_tag = malloc(sizeof(bf128_t)*2*Ske);
+    bf128_t* z_tilde_deg1_val = malloc(sizeof(bf128_t)*2*Ske);
     // uint8_t k[(R+1)*lambda/8];
     // bf128_t k_tag[(R+1)*lambda];
     // QUESTION: k was length (R+1)*lambda/8: should be (R+1)*lambda? (changed below, not sure if it's right)
