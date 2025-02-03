@@ -320,6 +320,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_one(void) {
   return ret;
 }
 
+ATTR_PURE bf192_t bf192_get_alpha(unsigned int idx);
 ATTR_PURE bf192_t bf192_byte_combine(const bf192_t* x);
 ATTR_PURE bf192_t bf192_byte_combine_bits(uint8_t x);
 void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag);
@@ -399,6 +400,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_one(void) {
   return ret;
 }
 
+ATTR_PURE bf256_t bf256_get_alpha(unsigned int idx);
 ATTR_PURE bf256_t bf256_byte_combine(const bf256_t* x);
 ATTR_PURE bf256_t bf256_byte_combine_bits(uint8_t x);
 void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag);
