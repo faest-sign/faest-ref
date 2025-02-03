@@ -1520,7 +1520,7 @@ static void aes_256_inverse_shiftrows_verifier(bf256_t* out_tag, const bf256_t* 
 
 
 // BITWISE MIX COLUMNS
-static void aes_128_bitwise_mix_coloumn_prover(uint8_t* out, bf128_t* out_tag, uint8_t* s, bf128_t* s_tag, const faest_paramset_t* params) {
+static void aes_128_bitwise_mix_column_prover(uint8_t* out, bf128_t* out_tag, uint8_t* s, bf128_t* s_tag, const faest_paramset_t* params) {
   unsigned int Nst = params->faest_param.Nwd;
 
   for (unsigned int c = 0; c < Nst; c++) {
@@ -1586,69 +1586,57 @@ static void aes_128_bitwise_mix_coloumn_prover(uint8_t* out, bf128_t* out_tag, u
 
   }
 }
-// static void aes_128_bitwise_mix_coloumn_verifier(bf128_t* out_key, bf128_t* s_key) {
+static void aes_128_bitwise_mix_column_verifier(bf128_t* out_key, bf128_t* s_keys_tag, const faest_paramset_t* params) {
+  unsigned int Nst = params->faest_param.Nwd;
 
-//   unsigned int Nst = 4;
+  for (unsigned int c = 0; c < Nst; c++) {
 
-//   for (unsigned int c = 0; c < Nst; c++) {
+    bf128_t a_bits_key[4*8];
+    bf128_t b_bits_key[4*8];
 
-//     bf128_t a_bits_key[4*8];
-//     bf128_t b_bits_key[4*8];
+    // ::1
+    for(unsigned int r = 0; r < 4; r++) {
+      // :2
+      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+        // :3
+        a_bits_key[r*8 + bit_i] = s_keys_tag[32*c+8*r+bit_i];
+      }
+      // :5
+      b_bits_key[r*8 + 0] = a_bits_key[r*8 + 7];
+      b_bits_key[r*8 + 1] = bf128_add(a_bits_key[r*8 + 0], a_bits_key[r*8 + 7]);
+      b_bits_key[r*8 + 2] = a_bits_key[r*8 + 1];
+      b_bits_key[r*8 + 3] = bf128_add(a_bits_key[r*8 + 2], a_bits_key[r*8 + 7]);
+      b_bits_key[r*8 + 4] = bf128_add(a_bits_key[r*8 + 3], a_bits_key[r*8 + 7]);
+      b_bits_key[r*8 + 5] = a_bits_key[r*8 + 4];
+      b_bits_key[r*8 + 6] = a_bits_key[r*8 + 5];
+      b_bits_key[r*8 + 7] = a_bits_key[r*8 + 6];
 
-//     // ::1
-//     for(unsigned int r = 0; r < 4; r++) {
-//       // :2
-//       for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-//         // :3
-//         a_bits_key[r*8 + bit_i] = s_key[32*c+8*r+bit_i];
-//       }
-//       // :5
-//       b_bits_key[r*8 + 0] = a_bits_key[r*8 + 7];
-//       b_bits_key[r*8 + 1] = a_bits_key[r*8 + 0] + a_bits_key[r*8 + 7];
-//       b_bits_key[r*8 + 2] = a_bits_key[r*8 + 1];
-//       b_bits_key[r*8 + 3] = a_bits_key[r*8 + 2] + a_bits_key[r*8 + 7];
-//       b_bits_key[r*8 + 4] = a_bits_key[r*8 + 3] + a_bits_key[r*8 + 7];
-//       b_bits_key[r*8 + 5] = a_bits_key[r*8 + 4];
-//       b_bits_key[r*8 + 6] = a_bits_key[r*8 + 5];
-//       b_bits_key[r*8 + 7] = a_bits_key[r*8 + 6];
+    }
 
-//     }
+    // ::6-9
+    out_key[c*4] = bf128_add(
+                        bf128_add(
+                                bf128_add(b_bits_key[0], a_bits_key[3]), bf128_add(a_bits_key[2], b_bits_key[1])
+                                ), a_bits_key[1]);
+    out_key[c*4 + 1] = bf128_add(
+                        bf128_add(
+                                bf128_add(b_bits_key[1], a_bits_key[0]), bf128_add(a_bits_key[3], b_bits_key[2])
+                                ), a_bits_key[2]);
+    out_key[c*4 + 2] = bf128_add(
+                        bf128_add(
+                                bf128_add(b_bits_key[2], a_bits_key[1]), bf128_add(a_bits_key[0], b_bits_key[3])
+                                ), a_bits_key[3]);
+    out_key[c*4 + 3] = bf128_add(
+                        bf128_add(
+                                bf128_add(b_bits_key[3], a_bits_key[2]), bf128_add(a_bits_key[1], b_bits_key[0])
+                                ), a_bits_key[0]);
 
-//     uint8_t a[4];
-//     uint8_t b[4];
+  }
+}
 
-//     bf128_t a_bf[4];
-//     bf128_t a_key_bf[4];
-//     bf128_t b_bf[4];
-//     bf128_t b_key_bf[4];
-//     for (unsigned int round = 0; round < 4; round++) {
-//       a_bf[round] = bf128_byte_combine_bits(a[round]);
-//       b_bf[round] = bf128_byte_combine_bits(b[round]);
-
-//       a_key_bf[round] = bf128_byte_combine(a_bits_key + round*8);
-//       b_key_bf[round] = bf128_byte_combine(b_bits_key + round*8);
-//     }
-
-//     // ::6-9
-//     out_key[c*4] = bf128_add(
-//                         bf128_add(
-//                                 bf128_add(b_key_bf[0], a_key_bf[3]), bf128_add(a_key_bf[2], b_key_bf[1])
-//                                 ), a_key_bf[1]);
-//     out_key[c*4 + 1] = bf128_add(
-//                         bf128_add(
-//                                 bf128_add(b_key_bf[1], a_key_bf[0]), bf128_add(a_key_bf[3], b_key_bf[2])
-//                                 ), a_key_bf[2]);
-//     out_key[c*4 + 2] = bf128_add(
-//                         bf128_add(
-//                                 bf128_add(b_key_bf[2], a_key_bf[1]), bf128_add(a_key_bf[0], b_key_bf[3])
-//                                 ), a_key_bf[3]);
-//     out_key[c*4 + 3] = bf128_add(
-//                         bf128_add(
-//                                 bf128_add(b_key_bf[3], a_key_bf[2]), bf128_add(a_key_bf[1], b_key_bf[0])
-//                                 ), a_key_bf[0]);
-
-//   }
-// }
+//
+// TODO: fix the 192/256 versions of Bitwise MixColumns
+//
 
 // static void aes_192_bitwise_mix_coloumn_prover(bf192_t* out, bf192_t* out_tag, uint8_t* s, bf192_t* s_tag) {
 
