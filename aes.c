@@ -224,9 +224,9 @@ static uint8_t invnorm(uint8_t in) {
     bf8_store(&y_prime, bf_x_17);
     uint8_t y = 0;
     y ^= ((y_prime >> 0) & 1) << 0;
-    y ^= ((y_prime >> 2) & 1) << 1;
-    y ^= ((y_prime >> 6) & 1) << 2;
-    y ^= ((y_prime >> 7) & 1) << 3;
+    y ^= ((y_prime >> 6) & 1) << 1;
+    y ^= ((y_prime >> 7) & 1) << 2;
+    y ^= ((y_prime >> 2) & 1) << 3;
     return y;
   }
 }
