@@ -3187,7 +3187,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   zk_hash_128_init(&a1_ctx, chall_2);
   zk_hash_128_init(&a2_ctx, chall_2);
 
-  for (unsigned int i = 0; i < c*3; i++) {
+  for (unsigned int i = 0; i < c; i++) {
     zk_hash_128_update(&a0_ctx, z0_tag[i]);
     zk_hash_128_update(&a1_ctx, z1_val[i]);
     zk_hash_128_update(&a2_ctx, z2_gamma[i]);
