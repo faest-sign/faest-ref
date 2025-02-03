@@ -60,7 +60,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk,
     return 1;
   }
 
-  uint8_t pk_check[@OWF_OUTPUT_SIZE@];
+  uint8_t pk_check[@PK_SIZE@];
   faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), PK_OUTPUT(pk_check));
   memcpy(PK_INPUT(pk_check), SK_INPUT(sk), @OWF_INPUT_SIZE@);
 
