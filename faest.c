@@ -270,10 +270,9 @@ static void hash_challenge_3_final(uint8_t* chall_3, const H2_context_t* ctx, ui
   H2_context_t ctx_copy;
   H2_copy(&ctx_copy, ctx);
 
-  uint8_t buffer[sizeof(uint32_t)];
   ctr = htole32(ctr);
-  memcpy(buffer, &ctr, sizeof(uint32_t));
 
+  H2_update(&ctx_copy, (const uint8_t*)&ctr, sizeof(ctr));
   H2_3_final(&ctx_copy, chall_3, lambda_bytes);
 }
 
