@@ -3073,7 +3073,7 @@ void aes_verify(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_t*
     }
   default:
     if (params->faest_param.Lke) {
-      return aes_128_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params);
+      aes_128_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params);
     } else {
       // return em_verify_128(d, Q, chall_2, chall_3, a_tilde, in, out, params);
     }
