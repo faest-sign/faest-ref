@@ -44,26 +44,6 @@ static uint8_t* generate_seeds(const uint8_t* root_seed, const uint8_t* iv,
   return nodes;
 }
 
-/* Gets the bit string of a node according to its position in the binary tree */
-/* idx -> 2 -> {0,1},, Little Endian */
-int BitDec(unsigned int leafIndex, unsigned int depth, uint8_t* out) {
-  if (leafIndex >= (1u << depth)) {
-    return -1;
-  }
-  for (unsigned int j = 0; j < depth; j++, leafIndex /= 2) {
-    out[j] = leafIndex % 2;
-  }
-  return 1;
-}
-
-unsigned int NumRec(unsigned int depth, const uint8_t* bi) {
-  unsigned int out = 0;
-  for (unsigned int i = 0; i < depth; i++) {
-    out += ((unsigned int)bi[i]) << i;
-  }
-  return out;
-}
-
 // FAEST.LeafCommit
 static void faest_leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* iv,
                               uint32_t tweak, const uint8_t* uhash, unsigned int lambda) {

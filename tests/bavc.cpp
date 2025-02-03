@@ -46,37 +46,6 @@ BOOST_DATA_TEST_CASE(test_node_indices, all_parameters, param_id) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(test_numrec_bitdec) {
-  uint8_t expect_out_1[2] = {0x00, 0x01};
-  uint8_t b_1[2];
-  BitDec(2, 2, b_1);
-  uint64_t idx_1 = NumRec(2, b_1);
-
-  uint8_t expect_out_2[4] = {0x01, 0x01, 0x01, 0x00};
-  uint8_t b_2[4];
-  BitDec(7, 4, b_2);
-  uint64_t idx_2 = NumRec(4, b_2);
-
-  uint8_t expect_out_3[4] = {0x00, 0x01, 0x00, 0x01};
-  uint8_t b_3[4];
-  BitDec(10, 4, b_3);
-  uint64_t idx_3 = NumRec(4, b_3);
-
-  uint8_t expect_out_4[4] = {0x01, 0x00, 0x01, 0x01};
-  uint8_t b_4[4];
-  BitDec(13, 4, b_4);
-  uint64_t idx_4 = NumRec(4, b_4);
-
-  BOOST_TEST(memcmp(b_1, &expect_out_1, 2) == 0);
-  BOOST_TEST(idx_1 == 2);
-  BOOST_TEST(memcmp(b_2, &expect_out_2, 4) == 0);
-  BOOST_TEST(idx_2 == 7);
-  BOOST_TEST(memcmp(b_3, &expect_out_3, 4) == 0);
-  BOOST_TEST(idx_3 == 10);
-  BOOST_TEST(memcmp(b_4, &expect_out_4, 4) == 0);
-  BOOST_TEST(idx_4 == 13);
-}
-
 namespace {
   template <size_t HSize, size_t IDeltaSize>
   void test_vc_tv(const faest_paramset_t& params, const std::array<uint16_t, IDeltaSize>& i_delta,

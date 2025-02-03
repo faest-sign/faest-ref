@@ -132,8 +132,6 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
         ConvertToVole(iv, sd, true, i + TWEAK_OFFSET, ellhat_bytes, NULL, qtmp, params);
 
     // Step 11
-    uint8_t delta[MAX_DEPTH];
-    BitDec(i_delta[i], ki, delta);
     if (i == 0) {
       // Step 8
       memcpy(q[q_idx], qtmp, ellhat_bytes * ki);
@@ -141,8 +139,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
     } else {
       // Step 14
       for (unsigned int d = 0; d < ki; ++d, ++q_idx) {
-        masked_xor_u8_array(qtmp + d * ellhat_bytes, c + (i - 1) * ellhat_bytes, q[q_idx], delta[d],
-                            ellhat_bytes);
+        masked_xor_u8_array(qtmp + d * ellhat_bytes, c + (i - 1) * ellhat_bytes, q[q_idx],
+                            (i_delta[i] >> d) & 1, ellhat_bytes);
       }
     }
   }

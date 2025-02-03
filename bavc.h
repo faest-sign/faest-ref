@@ -20,9 +20,6 @@ typedef struct bavc_rec_t {
   uint8_t* s;
 } bavc_rec_t;
 
-int BitDec(unsigned int leafIndex, unsigned int depth, uint8_t* out);
-unsigned int NumRec(unsigned int depth, const uint8_t* bi);
-
 static inline ATTR_CONST unsigned int bavc_max_node_depth(unsigned int i, unsigned int tau_1,
                                                           unsigned int k) {
   return (i < tau_1) ? k : (k - 1);
