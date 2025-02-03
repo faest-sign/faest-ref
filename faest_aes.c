@@ -3174,9 +3174,9 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + lambda);
 
   // ::10-12
-  bf128_t* z0_tag = (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf tag
-  bf128_t* z1_val = (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf val
-  bf128_t* z2_gamma = (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf gamma
+  bf128_t z0_tag[FAEST_128F_C]; //= (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf tag
+  bf128_t z1_val[FAEST_128F_C]; //= (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf val
+  bf128_t z2_gamma[FAEST_128F_C]; //= (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf gamma
   aes_128_constraints_prover(z0_tag, z1_val, z2_gamma, w, w_tag, owf_in, owf_out, params, isEM);
  
   // Step: 13-18
@@ -3305,53 +3305,57 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   // // TODO: CHANGE THIS FOR OTHER SETTING WHEN COPY PASTING!!!!!
   // unsigned int beta = 1;
   // unsigned int c = 2*ske + (3/2)*senc + 1;
-  // unsigned int ell = params->faest_param.L; // TODO: I hope L is ELL, that is l_ke + l_enc from Fig. 1.5
+  // unsigned int ell = params->faest_param.L;
 
-  // // ::1
-  // bf128_t bf_delta = bf128_load(chall_3);
-  // bf128_t bf_delta_sq = bf128_mul(bf_delta, bf_delta);
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int ske = params->faest_param.Ske;
+  unsigned int senc = params->faest_param.Senc;
+  unsigned int c = 2*ske + (3/2)*senc + 1;
 
-  // // ::2-6
-  // bf128_t* bf_Q = column_to_row_major_and_shrink_V_128(Q, ell);
+  // ::1
+  bf128_t bf_delta = bf128_load(chall_3);
+  bf128_t bf_delta_sq = bf128_mul(bf_delta, bf_delta);
 
-  // // ::7-9
-  // bf128_t bf_q_star_0 = bf128_sum_poly(bf_Q + ell);
-  // bf128_t bf_q_star_1 = bf128_sum_poly(bf_Q + ell + lambda);
+  // ::2-6
+  bf128_t* q = column_to_row_major_and_shrink_V_128(Q, FAEST_128F_ELL);
 
-  // // ::10
-  // bf128_t bf_q_star = bf128_add(bf_q_star_0, bf128_mul(bf_delta, bf_q_star_1));
+  // ::7-9
+  bf128_t q_star_0 = bf128_sum_poly(q);
+  bf128_t q_star_1 = bf128_sum_poly(q + lambda);
 
-  // // ::11-12
-  // bf128_t bf_z0_tag[c];
-  // bf128_t bf_z1_val[c];
-  // bf128_t bf_z2_gamma[c];
-  // bf128_t w_key[ell];
-  // for (unsigned int i = 0; i < ell; i++) {
-  //   w_key[i] = bf128_add(
-  //                         bf_Q[i], 
-  //                         bf128_mul(bf128_from_bit(get_bit(d[i/8], i%8)),  // TODO: of course, here we have the annoying 4 bit witness problem urghhhh!!!!
-  //                                   bf_delta));
-  // }
+  // ::10
+  bf128_t q_star = bf128_add(q_star_0, bf128_mul(bf_delta, q_star_1));
+
+  // ::11-12
+  bf128_t bf_z0_tag[FAEST_128F_C];
+  bf128_t bf_z1_val[FAEST_128F_C];
+  bf128_t bf_z2_gamma[FAEST_128F_C];
+  bf128_t w_key[FAEST_128F_ELL];
+  for (unsigned int i = 0; i < FAEST_128F_ELL; i++) {
+    w_key[i] = bf128_add(
+                          q[i], 
+                          bf128_mul(bf128_from_bit(d[i]),
+                                    bf_delta));
+  }
   // aes_128_enc_constraints_verifier(bf_z0_tag, bf_z1_val, bf_z2_gamma, owf_in, owf_out, w_key, bf_delta, params);
 
-  // // ::13-14
-  // zk_hash_128_ctx b_ctx;
-  // zk_hash_128_init(&b_ctx, chall_2);
-  // for (unsigned int i = 0; i < c; i++) {
-  //   zk_hash_128_update(&b_ctx, bf_z2_gamma[i]);
-  // }
-  // uint8_t q_tilde[lambda/8*c];
-  // zk_hash_128_finalize(q_tilde, &b_ctx, bf_q_star);
+  // ::13-14
+  zk_hash_128_ctx b_ctx;
+  zk_hash_128_init(&b_ctx, chall_2);
+  for (unsigned int i = 0; i < c; i++) {
+    zk_hash_128_update(&b_ctx, bf_z2_gamma[i]);
+  }
+  uint8_t q_tilde[(FAEST_128F_LAMBDA/8)*FAEST_128F_C];
+  zk_hash_128_finalize(q_tilde, &b_ctx, q_star);
 
-  // // ::16
-  // bf128_t tmp1 = bf128_mul(bf128_load(a1_tilde), bf_delta);
-  // bf128_t tmp2 = bf128_mul(bf128_load(a2_tilde), bf_delta_sq);
-  // bf128_t tmp3 = bf128_add(tmp1, tmp2);
-  // bf128_t ret = bf128_add(bf128_load(q_tilde), tmp3);
+  // ::16
+  bf128_t tmp1 = bf128_mul(bf128_load(a1_tilde), bf_delta);
+  bf128_t tmp2 = bf128_mul(bf128_load(a2_tilde), bf_delta_sq);
+  bf128_t tmp3 = bf128_add(tmp1, tmp2);
+  bf128_t ret = bf128_add(bf128_load(q_tilde), tmp3);
 
-  // uint8_t* a0_tilde = malloc(lambda/8*c);
-  // bf128_store(a0_tilde, ret);
-  uint8_t* a0_tilde = NULL;
+  uint8_t* a0_tilde = malloc((FAEST_128F_LAMBDA/8)*FAEST_128F_C);
+  bf128_store(a0_tilde, ret);
   return a0_tilde;
 
 }
