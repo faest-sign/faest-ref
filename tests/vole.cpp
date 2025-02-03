@@ -142,7 +142,7 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
       ConvertToVole(iv.data(), sd.data(), false, i, ell_hat_bytes, u.data(), v.data(), &params);
 
       std::vector<uint8_t> sdprime;
-      sdprime.resize(max_nodes * lambda_bytes, 0);
+      sdprime.resize(nodes * lambda_bytes, 0);
       for (unsigned int j = 1; j != nodes; ++j) {
         std::copy(sd.begin() + (j ^ idx) * lambda_bytes,
                   sd.begin() + ((j ^ idx) + 1) * lambda_bytes, &sdprime[j * lambda_bytes]);
