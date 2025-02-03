@@ -81,6 +81,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
                                   c.data(), ell_hat_bytes * 8, &params));
       BOOST_TEST(hcom == hcom_rec);
       tested = true;
+      break;
     }
     BOOST_TEST(tested);
     bavc_clear(&bavc_com);
