@@ -1963,37 +1963,37 @@ static void aes_128_bitwise_mix_column_verifier(bf128_t* out_key, bf128_t* s_key
 // }
 
 // CONSTANT TO VOLE
-static void constant_to_vole_128_prover(bf128_t* tag) {
+static void constant_to_vole_128_prover(bf128_t* tag, unsigned int n) {
   // the val stay the same as the val is a pub const!
-  for (unsigned int i = 0; i < 128; i++) {
+  for (unsigned int i = 0; i < n; i++) {
     tag[i] = bf128_zero();  // for constant values the tag is zero
   }   
 }
-static void constant_to_vole_128_verifier(bf128_t* key, const uint8_t* val, bf128_t delta) {
-  for (unsigned int i = 0; i < 128; i++) {
+static void constant_to_vole_128_verifier(bf128_t* key, const uint8_t* val, bf128_t delta, unsigned int n) {
+  for (unsigned int i = 0; i < n; i++) {
     key[i] = bf128_mul(bf128_from_bit(get_bit(val[i/8], i%8)), delta);  // multiply delta with each bit
   }  
 }
-static void constant_to_vole_192_prover(bf192_t* tag) {
+static void constant_to_vole_192_prover(bf192_t* tag, unsigned int n) {
   // the val stay the same as the val is a pub const!
-  for (unsigned int i = 0; i < 192; i++) {
+  for (unsigned int i = 0; i < n; i++) {
     tag[i] = bf192_zero();  // for constant values the tag is zero
   }   
 }
-static void constant_to_vole_192_verifier(bf192_t* key, const uint8_t* val, bf192_t delta) {
-  for (unsigned int i = 0; i < 192; i++) {
+static void constant_to_vole_192_verifier(bf192_t* key, const uint8_t* val, bf192_t delta, unsigned int n) {
+  for (unsigned int i = 0; i < n; i++) {
     key[i] = bf192_mul(bf192_from_bit(get_bit(val[i/8], i%8)), delta);  // multiply delta with each bit
   }  
 }
 
-static void constant_to_vole_256_prover(bf256_t* tag) {
+static void constant_to_vole_256_prover(bf256_t* tag, unsigned int n) {
   // the val stay the same as the val is a pub const!
-  for (unsigned int i = 0; i < 256; i++) {
+  for (unsigned int i = 0; i < n; i++) {
     tag[i] = bf256_zero();  // for constant values the tag is zero
   }   
 }
-static void constant_to_vole_256_verifier(bf256_t* key, const uint8_t* val, bf256_t delta) {
-  for (unsigned int i = 0; i < 256; i++) {
+static void constant_to_vole_256_verifier(bf256_t* key, const uint8_t* val, bf256_t delta, unsigned int n) {
+  for (unsigned int i = 0; i < n; i++) {
     key[i] = bf256_mul(bf256_from_bit(get_bit(val[i/8], i%8)), delta);  // multiply delta with each bit
   }  
 }
@@ -2078,7 +2078,7 @@ static void aes_128_inverse_affine_verifier(bf128_t* y_key, const bf128_t* x_key
         c = 0;
       }
       bf128_t c_tag;
-      constant_to_vole_128_verifier(&c_tag, &c, delta);
+      constant_to_vole_128_verifier(&c_tag, &c, delta, 1);
       y_bits_key[bit_i] = bf128_add(
                                     bf128_add(x_bits_key[(bit_i - 1 + 8)%8], x_bits_key[(bit_i - 3 + 8)%8]),
                                     bf128_add(x_bits_key[(bit_i - 6 + 8)%8], c_tag));
@@ -2111,12 +2111,12 @@ static void aes_192_inverse_affine_prover(uint8_t* y, bf192_t* y_tag, const uint
       } else {
         c = 0;
       }
-      bf192_t c_tag;
-      constant_to_vole_192_prover(&c_tag);
+      // bf192_t c_tag;
+      // constant_to_vole_192_prover(&c_tag, 1);
       y_bits[bit_i] = x_bits[(bit_i - 1 + 8)%8] ^ x_bits[(bit_i - 3 + 8)%8] ^ x_bits[(bit_i - 6 + 8)%8] ^ c;
       y_bits_tag[bit_i] = bf192_add(
                                     bf192_add(x_bits_tag[(bit_i - 1 + 8)%8], x_bits_tag[(bit_i - 3 + 8)%8]),
-                                    bf192_add(x_bits_tag[(bit_i - 6 + 8)%8], c_tag));
+                                    x_bits_tag[(bit_i - 6 + 8)%8]);
     }
 
     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
@@ -2144,7 +2144,7 @@ static void aes_192_inverse_affine_verifier(bf192_t* y_key, const bf192_t* x_key
         c = 0;
       }
       bf192_t c_tag;
-      constant_to_vole_192_verifier(&c_tag, &c, delta);
+      constant_to_vole_192_verifier(&c_tag, &c, delta, 1);
       y_bits_key[bit_i] = bf192_add(
                                     bf192_add(x_bits_key[(bit_i - 1 + 8)%8], x_bits_key[(bit_i - 3 + 8)%8]),
                                     bf192_add(x_bits_key[(bit_i - 6 + 8)%8], c_tag));
@@ -2177,12 +2177,12 @@ static void aes_256_inverse_affine_prover(uint8_t* y, bf256_t* y_tag, const uint
       } else {
         c = 0;
       }
-      bf256_t c_tag;
-      constant_to_vole_256_prover(&c_tag);
+      // bf256_t c_tag;
+      // constant_to_vole_256_prover(&c_tag);
       y_bits[bit_i] = x_bits[(bit_i - 1 + 8)%8] ^ x_bits[(bit_i - 3 + 8)%8] ^ x_bits[(bit_i - 6 + 8)%8] ^ c;
       y_bits_tag[bit_i] = bf256_add(
                                     bf256_add(x_bits_tag[(bit_i - 1 + 8)%8], x_bits_tag[(bit_i - 3 + 8)%8]),
-                                    bf256_add(x_bits_tag[(bit_i - 6 + 8)%8], c_tag));
+                                    (x_bits_tag[(bit_i - 6 + 8)%8]));
     }
 
     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
@@ -2210,7 +2210,7 @@ static void aes_256_inverse_affine_verifier(bf256_t* y_key, const bf256_t* x_key
         c = 0;
       }
       bf256_t c_tag;
-      constant_to_vole_256_verifier(&c_tag, &c, delta);
+      constant_to_vole_256_verifier(&c_tag, &c, delta, 1);
       y_bits_key[bit_i] = bf256_add(
                                     bf256_add(x_bits_key[(bit_i - 1 + 8)%8], x_bits_key[(bit_i - 3 + 8)%8]),
                                     bf256_add(x_bits_key[(bit_i - 6 + 8)%8], c_tag));
@@ -2343,7 +2343,7 @@ static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_ke
         // for prover, no multiplication with delta
         bf128_t rcon_key;
         const uint8_t c = (Rcon[ircon] >> bit_i) & 1;
-        constant_to_vole_128_verifier(&rcon_key, &c, delta); // TODO: in spec there should be call to ConstantToVOLE() call
+        constant_to_vole_128_verifier(&rcon_key, &c, delta, 1); // TODO: in spec there should be call to ConstantToVOLE() call
         x_tilde_tag[bit_i] = bf128_add(x_tilde_tag[bit_i], rcon_key);
 
       }
@@ -2961,7 +2961,7 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
       }
     }
     // ::9
-    constant_to_vole_128_prover(Rkeys_tag);
+    constant_to_vole_128_prover(Rkeys_tag, Nk*R);
 
     // ::10
     for (unsigned int i = 0; i < lambda/8; i++) {
@@ -2983,13 +2983,13 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
     for (unsigned int i = 0; i < lambda/8; i++) {
       in[i] = owf_in[i];
     }
-    constant_to_vole_128_prover(in_tag);
+    constant_to_vole_128_prover(in_tag, lambda);
 
     // ::14
     for (unsigned int i = 0; i < lambda/8; i++) {
       out[i] = owf_out[i];
     }
-    constant_to_vole_128_prover(out_tag);
+    constant_to_vole_128_prover(out_tag, lambda);
     // ::15 skiped as B = 1
     // ::16
     bf128_t* z_tilde_deg0_tag = malloc(sizeof(bf128_t)*FAEST_128F_Ske / 4 + 2*4);
@@ -3085,7 +3085,7 @@ static void aes_128_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128
       }
     }
     // ::9
-    constant_to_vole_128_verifier(Rkeys_key, Rkeys, delta);
+    constant_to_vole_128_verifier(Rkeys_key, Rkeys, delta, Nk*R);
 
     // ::10
     for (unsigned int i = 0; i < lambda/8; i++) {
@@ -3104,10 +3104,10 @@ static void aes_128_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128
     // bf128_t* z_tilde_deg2_val = malloc(sizeof(bf128_t) * FAEST_128F_Ske / 4 + 2*4);
     bf128_t* z_tilde_deg1_key = malloc(sizeof(bf128_t) * FAEST_128F_Ske / 4 + 2*4);
     // jump to ::13 for AES
-    constant_to_vole_128_verifier(in_key, owf_in, delta);
+    constant_to_vole_128_verifier(in_key, owf_in, delta, lambda);
 
     // ::14
-    constant_to_vole_128_verifier(out_key, owf_out, delta);
+    constant_to_vole_128_verifier(out_key, owf_out, delta, lambda);
     // ::15 skiped as B = 1
     // ::16
     aes_128_expkey_constraints_verifier(z_tilde_deg1_key, k_key, w_key, delta, params);
@@ -3510,7 +3510,7 @@ uint8_t* aes_verify(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const
                     const uint8_t* a1_tilde, const uint8_t* a2_tilde, const uint8_t* owf_in,
                     const uint8_t* owf_out, const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
-  case 256: // can also directly pass Ske, but for clarity passing true/false
+  case 256:
     return aes_256_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
                             params->faest_param.Ske == 0);
   case 192:
