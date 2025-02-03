@@ -16,7 +16,7 @@
 #include <vector>
 
 int main() {
-  std::mt19937 rd;
+  std::mt19937_64 rd{0x5eed};
   std::uniform_int_distribution<uint8_t> distrib(0, 255);
 
   std::cout << "#ifndef TESTS_UNIVERSAL_HASHING_TVS_HPP\n";

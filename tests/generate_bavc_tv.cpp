@@ -27,7 +27,7 @@ namespace {
 } // namespace
 
 int main() {
-  std::mt19937_64 rd;
+  std::mt19937_64 rd{0x5eed};
   std::uniform_int_distribution<uint8_t> dist(0, 0xff);
   std::uniform_int_distribution<uint32_t> dist_u32(0, std::numeric_limits<uint32_t>::max());
 

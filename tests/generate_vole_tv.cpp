@@ -27,7 +27,7 @@ namespace {
 } // namespace
 
 int main() {
-  std::mt19937 mt;
+  std::mt19937_64 mt{0x5eed};
   std::uniform_int_distribution<uint8_t> dist(0, 0xff);
 
   std::cout << "#ifndef TEST_VOLE_TVS_HPP\n";
