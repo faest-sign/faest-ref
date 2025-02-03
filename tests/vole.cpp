@@ -69,9 +69,11 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
         ptr_set_bit(chal.data(), 0, i);
       }
 
-      uint16_t i_delta[MAX_TAU];
-      BOOST_TEST(decode_all_chall_3(i_delta, chal.data(), &params));
-      if (!bavc_open(&bavc_com, i_delta, decom_i.data(), &params)) {
+      std::vector<uint16_t> i_delta;
+      i_delta.resize(params.faest_param.tau);
+
+      BOOST_TEST(decode_all_chall_3(i_delta.data(), chal.data(), &params));
+      if (!bavc_open(&bavc_com, i_delta.data(), decom_i.data(), &params)) {
         continue;
       }
 
@@ -82,6 +84,27 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       BOOST_TEST(hcom == hcom_rec);
       tested = true;
       break;
+
+      for (unsigned int i = 0, running_idx = 0; i < params.faest_param.tau; ++i) {
+        const uint32_t depth =
+            bavc_max_node_depth(i, params.faest_param.tau1, params.faest_param.k);
+
+        for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
+          for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
+            if ((i_delta[i] >> j) & 1) {
+              // need to correct the vole correlation
+              if (i > 0) {
+                BOOST_TEST((q[(running_idx)][inner] ^ c[(i - 1) * ell_hat_bytes + inner] ^
+                            u[inner]) == v[(running_idx)][inner]);
+              } else {
+                BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
+              }
+            } else {
+              BOOST_TEST(q[(running_idx)][inner] == v[(running_idx)][inner]);
+            }
+          }
+        }
+      }
     }
     BOOST_TEST(tested);
     bavc_clear(&bavc_com);
@@ -185,9 +208,10 @@ namespace {
     BOOST_TEST(expected_hashed_u == hash_array(u));
     BOOST_TEST(expected_hashed_v == hash_array(v_storage));
 
-    uint16_t i_delta[MAX_TAU];
-    BOOST_TEST(decode_all_chall_3(i_delta, challenge.data(), params));
-    BOOST_TEST(bavc_open(&bavc_com, i_delta, decom_i.data(), params));
+    std::vector<uint16_t> i_delta;
+    i_delta.resize(params->faest_param.tau);
+    BOOST_TEST(decode_all_chall_3(i_delta.data(), challenge.data(), params));
+    BOOST_TEST(bavc_open(&bavc_com, i_delta.data(), decom_i.data(), params));
 
     std::vector<uint8_t> hcom_rec;
     hcom_rec.resize(lambda_bytes * 2);
