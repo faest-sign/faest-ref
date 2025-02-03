@@ -31,25 +31,15 @@
    (UINT64_C(x3) << 24) | (UINT64_C(x2) << 16) | (UINT64_C(x1) << 8) | UINT64_C(x0))
 
 
-
-uint8_t bits_sq(uint8_t x) {
-  uint8_t bits[8];
-  for (unsigned int i = 0; i < 8; i++) {
-    bits[i] = (x >> i) & 1;
-  }
-  bits[0]      = bits[0] ^ bits[4] ^ bits[6];
-  bits[1]      = bits[4] ^ bits[6] ^ bits[7];
-  bits[2]      = bits[1] ^ bits[5];
-  bits[3]      = bits[4] ^ bits[5] ^ bits[6] ^ bits[7];
-  bits[4]      = bits[2] ^ bits[4] ^ bits[7];
-  bits[5]      = bits[5] ^ bits[6];
-  bits[6]      = bits[3] ^ bits[5];
-  bits[7]      = bits[6] ^ bits[7];
-  uint8_t sq_x = 0;
-  for (unsigned int i = 0; i < 8; i++) {
-    sq_x ^= (bits[i] << i);
-  }
-  return sq_x;
+void bits_sq(uint8_t* x) {
+  x[0]      = x[0] ^ x[4] ^ x[6];
+  x[1]      = x[4] ^ x[6] ^ x[7];
+  x[2]      = x[1] ^ x[5];
+  x[3]      = x[4] ^ x[5] ^ x[6] ^ x[7];
+  x[4]      = x[2] ^ x[4] ^ x[7];
+  x[5]      = x[5] ^ x[6];
+  x[6]      = x[3] ^ x[5];
+  x[7]      = x[6] ^ x[7];
 }
 
 // GF(2^8) implementation

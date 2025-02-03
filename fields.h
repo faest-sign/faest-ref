@@ -112,7 +112,7 @@ typedef struct {
 #define BF576_NUM_BYTES (576 / 8)
 #define BF768_NUM_BYTES (768 / 8)
 
-ATTR_PURE uint8_t bits_sq(uint8_t x);
+void bits_sq(uint8_t* x);
 
 // GF(2^8) implementation
 
