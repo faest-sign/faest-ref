@@ -464,41 +464,52 @@ void aes_128_inv_norm_constraints_verifier(bf128_t* z_eval, const bf128_t* conju
 
 // STATE TO BYTES
 // DONE: Looks good
-void aes_128_state_to_bytes_prover(bf128_t* out, bf128_t* out_tag, const uint8_t* k, const bf128_t* k_tag) {
-  for (unsigned int i = 0; i < 16; i++) {
+void aes_128_state_to_bytes_prover(bf128_t* out, bf128_t* out_tag, const uint8_t* k, const bf128_t* k_tag, const faest_paramset_t* params) {
+  uint16_t Nst_bytes = params->faest_param.Nwd * 4;
+
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
     out[i] = bf128_byte_combine_bits(k + i*8);
     out_tag[i] = bf128_byte_combine(k_tag + i*8);
   }
 }
 // DONE: Looks good
-void aes_128_state_to_bytes_verifier(bf128_t* out_key, const bf128_t* k_key) {
-  for (unsigned int i = 0; i < 16; i++) {
+void aes_128_state_to_bytes_verifier(bf128_t* out_key, const bf128_t* k_key, const faest_paramset_t* params) {
+  uint16_t Nst_bytes = params->faest_param.Nwd * 4;
+
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
     out_key[i] = bf128_byte_combine(k_key + i*8);
   }
 }
 // DONE: Looks good
-void aes_192_state_to_bytes_prover(bf192_t* out, bf192_t* out_tag, const uint8_t* k, const bf192_t* k_tag) {
-  for (unsigned int i = 0; i < 16; i++) {
-    out[i] = bf192_byte_combine_bits(k + i*8);
+void aes_192_state_to_bytes_prover(bf192_t* out, bf192_t* out_tag, const uint8_t* k, const bf192_t* k_tag, const faest_paramset_t* params) {
+  uint16_t Nst_bytes = params->faest_param.Nwd * 4;
+
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
     out_tag[i] = bf192_byte_combine(k_tag + i*8);
   }
 }
 // DONE: Looks good
-void aes_192_state_to_bytes_verifier(bf192_t* out_key, const bf192_t* k_key) {
-  for (unsigned int i = 0; i < 16; i++) {
+void aes_192_state_to_bytes_verifier(bf192_t* out_key, const bf192_t* k_key, const faest_paramset_t* params) {
+  uint16_t Nst_bytes = params->faest_param.Nwd * 4;
+
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
     out_key[i] = bf192_byte_combine(k_key + i*8);
   }
 }
 // DONE: Looks good
-void aes_256_state_to_bytes_prover(bf256_t* out, bf256_t* out_tag, const uint8_t* k, const bf256_t* k_tag) {
-  for (unsigned int i = 0; i < 16; i++) {
+void aes_256_state_to_bytes_prover(bf256_t* out, bf256_t* out_tag, const uint8_t* k, const bf256_t* k_tag, const faest_paramset_t* params) {
+  uint16_t Nst_bytes = params->faest_param.Nwd * 4;
+
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
     out[i] = bf256_byte_combine_bits(k + i*8);
     out_tag[i] = bf256_byte_combine(k_tag + i*8);
   }
 }
 // DONE: Looks good
-void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* s_key) {
-  for (unsigned int i = 0; i < 16; i++) {
+void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* s_key, const faest_paramset_t* params) {
+  uint16_t Nst_bytes = params->faest_param.Nwd * 4;
+
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
     out_key[i] = bf256_byte_combine(s_key + i*8);
   }
 }
