@@ -713,9 +713,9 @@ static void aes_256_sbox_affine_verify(bf256_t* out_deg1, const bf256_t* in_deg1
 
 // // SHIFT ROWS
 // // DONE: Should be alright
-// static void aes_128_shiftrows_prover(bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg1, const bf128_t* in_deg2, 
-//                                       const faest_paramset_t* params) {
-//   unsigned int Nst = 4;
+static void aes_128_shiftrows_prover(bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg1, const bf128_t* in_deg2,
+                                      const faest_paramset_t* params) {
+  unsigned int Nst = 4;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
