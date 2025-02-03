@@ -2977,6 +2977,190 @@ static void aes_128_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128
 
 }
 
+
+static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2, const uint8_t* w, const bf192_t* w_tag, const uint8_t* owf_in, 
+                                        const uint8_t* owf_out, const faest_paramset_t* params, bool isEM) {
+
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int R = params->faest_param.R;
+  unsigned int Ske = params->faest_param.Ske;
+  unsigned int Lke = lambda + 8*Ske;
+  unsigned int Lenc = params->faest_param.Lenc;
+  unsigned int Senc = params->faest_param.Senc;
+  unsigned int Nk = params->faest_param.lambda/32;
+  // ::1-3 owf_in, owf_out, z and z_tag
+
+  // ::4-5
+ aes_192_deg2to3_prover(z_deg1, z_deg2, bf192_from_bit((w[0]&1) & ((w[0]>>1)&1)), bf192_mul(w_tag[0], w_tag[1]));
+
+  // ::7-8
+  if (isEM) {
+    aes_round_keys_t* round_keys = malloc(sizeof(aes_round_keys_t));
+    expand_key(round_keys, owf_in, Nk, Nk, R);
+    uint8_t Rkeys[Nk*R]; // storing this as unit8
+    for (unsigned int i = 0; i < Nk*R; i++) {
+      Rkeys[i] = round_keys->round_keys[i/8][i%8];
+    }
+    // ::9
+    bf192_t Rkeys_tag[Nk*R];
+    constant_to_vole_192_prover(Rkeys_tag, Rkeys);
+
+    // ::10
+    uint8_t in[lambda/8];
+    bf192_t in_tag[lambda];
+    for (unsigned int i = 0; i < lambda/8; i++) {
+      in[i] = w[i];
+      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+        in_tag[i*8 + bit_i] = w_tag[i*8 + bit_i];
+      }
+    }
+    // ::11
+    uint8_t out[lambda/8];
+    bf192_t out_tag[lambda];
+    for (unsigned int i = 0; i < lambda/8; i++) {
+      out[i] = w[i] + owf_out[i];
+      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+        out_tag[i*8 + bit_i] = w_tag[i*8 + bit_i];
+      }
+    }
+  } 
+  else {
+    // jump to ::13 for AES
+    bf192_t* owf_in_tag = (bf192_t*) malloc(lambda * sizeof(bf192_t));
+    constant_to_vole_192_prover(owf_in_tag, owf_in);
+    // ::14
+    bf192_t* owf_out_tag = (bf192_t*) malloc(lambda * sizeof(bf192_t));
+    constant_to_vole_192_prover(owf_out_tag, owf_out);
+    // ::15 skiped as B = 1
+    // ::16
+    bf192_t z_tilde_deg0_tag[FAEST_192F_Ske / 4 + 2*4];
+    bf192_t z_tilde_deg1_val[FAEST_192F_Ske / 4 + 2*4];
+    // uint8_t k[(R+1)*lambda/8];
+    // bf192_t k_tag[(R+1)*lambda];
+    // QUESTION: k was length (R+1)*lambda/8: should be (R+1)*lambda? (changed below, not sure if it's right)
+    uint8_t* k = (uint8_t*) malloc((R+1)*lambda * sizeof(uint8_t));
+    bf192_t* k_tag = (bf192_t*) malloc((R+1)*lambda * sizeof(bf192_t));
+    aes_192_expkey_constraints_prover(z_tilde_deg0_tag, z_tilde_deg1_val, k, k_tag, w, w_tag, params);
+
+    // ::17
+    for (unsigned int i = 0; i < FAEST_192F_Ske/4+2*4; i++) {
+      aes_192_deg2to3_prover(z_deg1 + 1, z_deg2 + 1, z_tilde_deg0_tag[i], z_tilde_deg1_val[i]);
+    }
+  }
+  // ::18 b = 0
+  // ::19
+  // QUESTION: why is w_tilde 8x shorter than w_tilde_tag?
+  uint8_t* w_tilde = (uint8_t*)malloc(Lenc/8 * sizeof(uint8_t));
+  bf192_t* w_tilde_tag = (bf192_t*)malloc(Lenc * sizeof(bf192_t));
+  for (unsigned int i = 0; i < Lenc/8; i++) {
+    w_tilde[i] = w[Lke/8 + i];  // copying 8 bits at a time
+  }
+  for (unsigned int i = 0; i < Lenc; i++) {
+    w_tilde_tag[i] = w_tag[Lke + i];  // copying 1 bit's tag at a time
+  }
+  // ::20 not needed for AES-192
+  // ::21
+  bf192_t* z_tilde_deg0 = (bf192_t*)malloc(Senc * sizeof(bf192_t));
+  bf192_t* z_tilde_deg1 = (bf192_t*)malloc(Senc * sizeof(bf192_t));
+  bf192_t* z_tilde_deg2 = (bf192_t*)malloc(Senc * sizeof(bf192_t));
+  // TODO: leave this out for now
+  //aes_192_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, owf_in, owf_out, w, w_tag, params);
+
+  // :22
+  for (unsigned int i = 0; i < Senc; i++) {
+    z_deg0[1+(FAEST_192F_Ske/4+2*4) + i] = z_tilde_deg0[i];
+    z_deg1[1+(FAEST_192F_Ske/4+2*4) + i] = z_tilde_deg1[i];
+    z_deg2[1+(FAEST_192F_Ske/4+2*4) + i] = z_tilde_deg2[i];
+  }
+
+}
+
+static void aes_192_constraints_verifier(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2, const bf192_t* w_key, const uint8_t* owf_in, 
+                                        const uint8_t* owf_out, bf192_t delta, const faest_paramset_t* params, bool isEM) {
+
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int R = params->faest_param.R;
+  unsigned int Ske = params->faest_param.Ske;
+  unsigned int Lke = lambda + 8*Ske;
+  unsigned int Lenc = params->faest_param.Lenc;
+  unsigned int Senc = params->faest_param.Senc;
+  unsigned int Nk = params->faest_param.lambda/32;
+  // ::1-3 owf_in, owf_out, z and z_tag
+
+  // ::4-5
+  aes_192_deg2to3_verifier(z_deg1, bf192_mul(w_key[0], w_key[1]), delta);
+
+
+  bf192_t Rkeys_tag[Nk*R];
+  bf192_t in_key[lambda];
+  bf192_t out_key[lambda];
+  bf192_t z_tilde_deg0_key[FAEST_192F_Ske / 4 + 2*4];
+  bf192_t z_tilde_deg1_val[FAEST_192F_Ske / 4 + 2*4];
+  bf192_t* k_key = (bf192_t*)malloc((R+1)*lambda * sizeof(bf192_t));
+  // ::7-8
+  if (isEM) {
+    aes_round_keys_t round_keys;
+    expand_key(&round_keys, owf_in, Nk, Nk, R);
+    uint8_t Rkeys[Nk*R]; // storing this as unit8
+    for (unsigned int i = 0; i < Nk*R; i++) {
+      Rkeys[i] = round_keys.round_keys[i/8][i%8];
+    }
+    // ::9
+    constant_to_vole_192_verifier(Rkeys_tag, Rkeys, delta);
+
+    // ::10
+    for (unsigned int i = 0; i < lambda/8; i++) {
+      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+        in_key[i*8 + bit_i] = w_key[i*8 + bit_i];
+      }
+    }
+    // ::11
+    for (unsigned int i = 0; i < lambda/8; i++) {
+      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+        out_key[i*8 + bit_i] = w_key[i*8 + bit_i];
+      }
+    }
+  } 
+  else {
+    // jump to ::13 for AES
+    constant_to_vole_192_verifier(in_key, owf_in, delta);
+
+    // ::14
+    constant_to_vole_192_verifier(out_key, owf_out, delta);
+    // ::15 skiped as B = 1
+    // ::16
+    aes_192_expkey_constraints_verifier(z_tilde_deg0_key, z_tilde_deg1_val, k_key, w_key, delta, params);
+    
+    // ::17
+    for (unsigned int i = 0; i < FAEST_192F_Ske / 4 + 2*4; i++) {
+      aes_192_deg2to3_verifier(z_deg1 + 1+i, z_tilde_deg0_key[i], delta);
+    }
+  }
+  
+  // ::18 b = 0
+  // ::19
+  bf192_t* w_tilde_key = (bf192_t*)malloc(Lenc * sizeof(bf192_t));
+  for (unsigned int i = 0; i < Lenc; i++) {
+    w_tilde_key[i] = w_key[Lke + i];  // copying 1 bit's key tag at a time
+  }
+  // ::20 not needed for aes192
+  // ::21
+  bf192_t* z_tilde_deg0 = (bf192_t*)malloc(Senc * sizeof(bf192_t));
+  bf192_t* z_tilde_deg1 = (bf192_t*)malloc(Senc * sizeof(bf192_t));
+  bf192_t* z_tilde_deg2 = (bf192_t*)malloc(Senc * sizeof(bf192_t));
+  //aes_192_enc_constraints_verifier(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, owf_in, owf_out, w_key, delta, params);
+
+  for (unsigned int i = 0; i < Senc; i++) {
+    z_deg0[1+(FAEST_192F_Ske/4+2*4) + i] = z_tilde_deg0[i];
+    z_deg1[1+(FAEST_192F_Ske/4+2*4) + i] = z_tilde_deg1[i];
+    z_deg2[1+(FAEST_192F_Ske/4+2*4) + i] = z_tilde_deg2[i];
+  }
+
+}
+
+
+
+
 // OWF PROVE VERIFY
 static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
                           const uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
@@ -3320,16 +3504,16 @@ void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const ui
   switch (params->faest_param.lambda) {
   case 256:
     if (params->faest_param.Ske) {
-      // aes_prove_256(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
+      aes_prove_256(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params, true);
     } else {
-      // em_prove_256(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
+      em_prove_256(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params, false);
     }
     break;
   case 192:
     if (params->faest_param.Ske) {
-      // aes_prove_192(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde, params);
+      aes_prove_192(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params, true);
     } else {
-      // em_prove_192(w, u, V, owf_in, owf_out, chall_2, a0_tilde, a12_tilde);
+      em_prove_192(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params, false);
     }
     break;
   default:
@@ -3346,15 +3530,15 @@ uint8_t* aes_verify(const uint8_t* d, const uint8_t** Q, const uint8_t* chall_2,
   switch (params->faest_param.lambda) {
   case 256:
     if (params->faest_param.Ske) {
-      // return aes_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return aes_verify_256(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params, true);
     } else {
-      // return em_verify_256(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return em_verify_256(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params, false);
     }
   case 192:
     if (params->faest_param.Ske) {
-      // return aes_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return aes_verify_192(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params, true);
     } else {
-      // return em_verify_192(d, Q, chall_2, chall_3, a_tilde, in, out, params);
+      return em_verify_192(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params, false);
     }
   default:
     if (params->faest_param.Ske) {
