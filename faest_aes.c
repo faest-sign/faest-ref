@@ -476,213 +476,240 @@ static void aes_256_inv_norm_to_conjugates_lambda(bf256_t* y, const bf256_t* x) 
 //               state_bits_key[0]);
 // }
 
-// // STATE TO BYTES
-// // DONE: Looks good
-// void aes_128_state_to_bytes_prover(bf128_t* out, bf128_t* out_tag, const uint8_t* k, const bf128_t* k_tag) {
-//   for (unsigned int i = 0; i < 16; i++) {
-//     out[i] = bf128_byte_combine_bits(k[i]);
-//     out_tag[i] = bf128_byte_combine(k_tag + i*8);
-//   }
-// }
-// // DONE: Looks good
-// void aes_128_state_to_bytes_verifier(bf128_t* out_key, const bf128_t* k_key) {
-//   for (unsigned int i = 0; i < 16; i++) {
-//     out_key[i] = bf128_byte_combine(k_key + i*8);
-//   }
-// }
-// // DONE: Looks good
-// void aes_192_state_to_bytes_prover(bf192_t* out, bf192_t* out_tag, const uint8_t* k, const bf192_t* k_tag) {
-//   for (unsigned int i = 0; i < 16; i++) {
-//     out[i] = bf192_byte_combine_bits(k[i]);
-//     out_tag[i] = bf192_byte_combine(k_tag + i*8);
-//   }
-// }
-// // DONE: Looks good
-// void aes_192_state_to_bytes_verifier(bf192_t* out_key, const bf192_t* k_key) {
-//   for (unsigned int i = 0; i < 16; i++) {
-//     out_key[i] = bf192_byte_combine(k_key + i*8);
-//   }
-// }
-// // DONE: Looks good
-// void aes_256_state_to_bytes_prover(bf256_t* out, bf256_t* out_tag, const uint8_t* k, const bf256_t* k_tag) {
-//   for (unsigned int i = 0; i < 16; i++) {
-//     out[i] = bf256_byte_combine_bits(k[i]);
-//     out_tag[i] = bf256_byte_combine(k_tag + i*8);
-//   }
-// }
-// // DONE: Looks good
-// void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* s_key) {
-//   for (unsigned int i = 0; i < 16; i++) {
-//     out_key[i] = bf256_byte_combine(s_key + i*8);
-//   }
-// }
+// STATE TO BYTES
+// DONE: Looks good
+void aes_128_state_to_bytes_prover(bf128_t* out, bf128_t* out_tag, const uint8_t* k, const bf128_t* k_tag) {
+  for (unsigned int i = 0; i < 16; i++) {
+    out[i] = bf128_byte_combine_bits(k[i]);
+    out_tag[i] = bf128_byte_combine(k_tag + i*8);
+  }
+}
+// DONE: Looks good
+void aes_128_state_to_bytes_verifier(bf128_t* out_key, const bf128_t* k_key) {
+  for (unsigned int i = 0; i < 16; i++) {
+    out_key[i] = bf128_byte_combine(k_key + i*8);
+  }
+}
+// DONE: Looks good
+void aes_192_state_to_bytes_prover(bf192_t* out, bf192_t* out_tag, const uint8_t* k, const bf192_t* k_tag) {
+  for (unsigned int i = 0; i < 16; i++) {
+    out[i] = bf192_byte_combine_bits(k[i]);
+    out_tag[i] = bf192_byte_combine(k_tag + i*8);
+  }
+}
+// DONE: Looks good
+void aes_192_state_to_bytes_verifier(bf192_t* out_key, const bf192_t* k_key) {
+  for (unsigned int i = 0; i < 16; i++) {
+    out_key[i] = bf192_byte_combine(k_key + i*8);
+  }
+}
+// DONE: Looks good
+void aes_256_state_to_bytes_prover(bf256_t* out, bf256_t* out_tag, const uint8_t* k, const bf256_t* k_tag) {
+  for (unsigned int i = 0; i < 16; i++) {
+    out[i] = bf256_byte_combine_bits(k[i]);
+    out_tag[i] = bf256_byte_combine(k_tag + i*8);
+  }
+}
+// DONE: Looks good
+void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* s_key) {
+  for (unsigned int i = 0; i < 16; i++) {
+    out_key[i] = bf256_byte_combine(s_key + i*8);
+  }
+}
 
-// // SBOX AFFINE
-// // DONE: Should be alright
-// static void aes_128_sbox_affine_prover(bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg1, const bf128_t* in_deg2, 
-//                                         bool dosq, const faest_paramset_t* params) {
+// SBOX AFFINE
+// DONE: Should be alright
+static void aes_128_sbox_affine_prover(bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg1, const bf128_t* in_deg2, 
+                                        bool dosq, const faest_paramset_t* params) {
 
-//   unsigned int Nst_bytes = params->faest_param.lambda/8;
-//   bf128_t C[9];
-//   uint8_t t;
-//   uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
-//   uint8_t x_sq[9] = {0x11, 0x41, 0x07, 0x7d, 0x56, 0x01, 0xfc, 0xcf, 0xc2};
+  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  bf128_t C[9];
+  uint8_t t;
+  uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
+  uint8_t x_sq[9] = {0x11, 0x41, 0x07, 0x7d, 0x56, 0x01, 0xfc, 0xcf, 0xc2};
 
-//   // ::5-6
-//   if (dosq) {
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf128_byte_combine_bits(x_sq[i]);
-//     }
-//     t = 1;
-//   } else {
-//     t = 0;
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf128_byte_combine_bits(x[i]);
-//     }
-//   }
+  // ::5-6
+  if (dosq) {
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf128_byte_combine_bits(x_sq[i]);
+    }
+    t = 1;
+  } else {
+    t = 0;
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf128_byte_combine_bits(x[i]);
+    }
+  }
 
-//   // TODO: The degree increases by one I guess???
-//   for (unsigned int i = 0; i < Nst_bytes; i++) {
-//     for (unsigned int Cidx = 0; Cidx < 9; Cidx++) {
-//       out_deg2[i] = bf128_add(out_deg2[i], bf128_mul(C[Cidx], bf128_mul(in_deg2[i*8 + (Cidx+t)%8], in_deg2[i*8 + (Cidx+t)%8])));
-//       out_deg1[i] = bf128_add(out_deg2[i], bf128_mul(C[Cidx], bf128_mul(in_deg1[i*8 + (Cidx+t)%8], in_deg1[i*8 + (Cidx+t)%8])));
-//     }
-//   }
-// }
-// // DONE: Should be alright
-// static void aes_128_sbox_affine_verify(bf128_t* out_deg1, const bf128_t* in_deg1, bool dosq, 
-//                                         const faest_paramset_t* params) {
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
+    for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
+      out_deg2[i] = bf128_add(out_deg2[i], bf128_mul(C[Cidx], in_deg2[i*8 + (Cidx+t)%8]));
+      out_deg1[i] = bf128_add(out_deg2[i], bf128_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
+    }
+    // add the constant C[8] to the highest coefficient
+    out_deg2[i] = bf128_add(out_deg2[i], C[8]);
+  }
+}
+// DONE: Should be alright
+static void aes_128_sbox_affine_verify(bf128_t* out_deg1, const bf128_t* in_deg1, bf128_t delta, bool dosq, 
+                                        const faest_paramset_t* params) {
 
-//   unsigned int Nst_bytes = params->faest_param.lambda/8;
-//   bf128_t C[9];
-//   uint8_t t;
-//   uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
-//   uint8_t x_sq[9] = {0x11, 0x41, 0x07, 0x7d, 0x56, 0x01, 0xfc, 0xcf, 0xc2};
+  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  bf128_t C[9];
+  uint8_t t;
+  uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
+  uint8_t x_sq[9] = {0x11, 0x41, 0x07, 0x7d, 0x56, 0x01, 0xfc, 0xcf, 0xc2};
 
-//   // ::5-6
-//   if (dosq) {
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf128_byte_combine_bits(x_sq[i]);
-//     }
-//     t = 1;
-//   } else {
-//     t = 0;
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf128_byte_combine_bits(x[i]);
-//     }
-//   }
+  // ::5-6
+  if (dosq) {
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf128_byte_combine_bits(x_sq[i]);
+    }
+    t = 1;
+  } else {
+    t = 0;
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf128_byte_combine_bits(x[i]);
+    }
+  }
 
-//   // TODO: The degree increases by one I guess???
-//   for (unsigned int i = 0; i < Nst_bytes; i++) {
-//     for (unsigned int Cidx = 0; Cidx < 9; Cidx++) {
-//       out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[Cidx], bf128_mul(in_deg1[i*8 + (Cidx+t)%8], in_deg1[i*8 + (Cidx+t)%8])));
-//     }
-//   }
-// }
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
+    for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
+      out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
+    }
+    // add the constant C[8] by multiplying with delta
+    out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[8], delta));
+  }
+}
 
-// static void aes_192_sbox_affine_prover(bf192_t* out, bf192_t* out_tag, const bf192_t* in, const bf192_t* in_tag, bool dosq, const faest_paramset_t* params) {
+// DONE: Should be alright
+static void aes_192_sbox_affine_prover(bf192_t* out_deg1, bf192_t* out_deg2, const bf192_t* in_deg1, const bf192_t* in_deg2, 
+                                        bool dosq, const faest_paramset_t* params) {
 
-//   unsigned int Nst_bytes = params->faest_param.lambda/8;
+  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  bf192_t C[9];
+  uint8_t t;
+  uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
+  uint8_t x_sq[9] = {0x11, 0x41, 0x07, 0x7d, 0x56, 0x01, 0xfc, 0xcf, 0xc2};
 
-//   bf192_t C[9];
-//   uint8_t x[9] = {0x05,0x09,0xf9,0x25,0xf4,0x01,0xb5,0x8f,0x63};
+  // ::5-6
+  if (dosq) {
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf192_byte_combine_bits(x_sq[i]);
+    }
+    t = 1;
+  } else {
+    t = 0;
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf192_byte_combine_bits(x[i]);
+    }
+  }
 
-//   // ::5-6
-//   if (dosq) {
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf192_byte_combine_bits(x[i]);
-//       C[i] = bf192_mul(C[i], C[i]);
-//     }
-//   } else {
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf192_byte_combine_bits(x[i]);
-//     }
-//   }
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
+    for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
+      out_deg2[i] = bf192_add(out_deg2[i], bf192_mul(C[Cidx], in_deg2[i*8 + (Cidx+t)%8]));
+      out_deg1[i] = bf192_add(out_deg2[i], bf192_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
+    }
+    // add the constant C[8] to the highest coefficient
+    out_deg2[i] = bf192_add(out_deg2[i], C[8]);
+  }
+}
+// DONE: Should be alright
+static void aes_192_sbox_affine_verify(bf192_t* out_deg1, const bf192_t* in_deg1, bf192_t delta, bool dosq, 
+                                        const faest_paramset_t* params) {
 
-//   for (unsigned int i = 0; i < Nst_bytes; i++) {
-//     for (unsigned int Cidx = 0; Cidx < 9; Cidx++) {
-//       out[i] += bf192_mul(C[Cidx], bf192_mul(in[i], in[i]));
-//       out_tag[i] += bf192_mul(C[Cidx], bf192_mul(in_tag[i], in_tag[i]));
-//     }
-//   }
-// }
-// static void aes_192_sbox_affine_verify(bf192_t* out_tag, const bf192_t* in_tag, bool dosq, const faest_paramset_t* params) {
+  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  bf192_t C[9];
+  uint8_t t;
+  uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
+  uint8_t x_sq[9] = {0x11, 0x41, 0x07, 0x7d, 0x56, 0x01, 0xfc, 0xcf, 0xc2};
 
-//   unsigned int Nst_bytes = params->faest_param.lambda/8;
+  // ::5-6
+  if (dosq) {
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf192_byte_combine_bits(x_sq[i]);
+    }
+    t = 1;
+  } else {
+    t = 0;
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf192_byte_combine_bits(x[i]);
+    }
+  }
 
-//   bf192_t C[9];
-//   uint8_t x[9] = {0x05,0x09,0xf9,0x25,0xf4,0x01,0xb5,0x8f,0x63};
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
+    for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
+      out_deg1[i] = bf192_add(out_deg1[i], bf192_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
+    }
+    // add the constant C[8] by multiplying with delta
+    out_deg1[i] = bf192_add(out_deg1[i], bf192_mul(C[8], delta));
+  }
+}
 
-//   // ::5-6
-//   if (dosq) {
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf192_byte_combine_bits(x[i]);
-//       C[i] = bf192_mul(C[i], C[i]);
-//     }
-//   } else {
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf192_byte_combine_bits(x[i]);
-//     }
-//   }
+// DONE: Should be alright
+static void aes_256_sbox_affine_prover(bf256_t* out_deg1, bf256_t* out_deg2, const bf256_t* in_deg1, const bf256_t* in_deg2, 
+                                        bool dosq, const faest_paramset_t* params) {
 
-//   for (unsigned int i = 0; i < Nst_bytes; i++) {
-//     for (unsigned int Cidx = 0; Cidx < 9; Cidx++) {
-//       out_tag[i] += bf192_mul(C[Cidx], bf192_mul(in_tag[i], in_tag[i]));
-//     }
-//   }
-// }
+  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  bf256_t C[9];
+  uint8_t t;
+  uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
+  uint8_t x_sq[9] = {0x11, 0x41, 0x07, 0x7d, 0x56, 0x01, 0xfc, 0xcf, 0xc2};
 
-// static void aes_256_sbox_affine_prover(bf256_t* out, bf256_t* out_tag, const bf256_t* in, const bf256_t* in_tag, bool dosq, const faest_paramset_t* params) {
+  // ::5-6
+  if (dosq) {
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf256_byte_combine_bits(x_sq[i]);
+    }
+    t = 1;
+  } else {
+    t = 0;
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf256_byte_combine_bits(x[i]);
+    }
+  }
 
-//   unsigned int Nst_bytes = params->faest_param.lambda/8;
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
+    for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
+      out_deg2[i] = bf256_add(out_deg2[i], bf256_mul(C[Cidx], in_deg2[i*8 + (Cidx+t)%8]));
+      out_deg1[i] = bf256_add(out_deg2[i], bf256_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
+    }
+    // add the constant C[8] to the highest coefficient
+    out_deg2[i] = bf256_add(out_deg2[i], C[8]);
+  }
+}
+// DONE: Should be alright
+static void aes_256_sbox_affine_verify(bf256_t* out_deg1, const bf256_t* in_deg1, bf256_t delta, bool dosq, 
+                                        const faest_paramset_t* params) {
 
-//   bf256_t C[9];
-//   uint8_t x[9] = {0x05,0x09,0xf9,0x25,0xf4,0x01,0xb5,0x8f,0x63};
+  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  bf256_t C[9];
+  uint8_t t;
+  uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
+  uint8_t x_sq[9] = {0x11, 0x41, 0x07, 0x7d, 0x56, 0x01, 0xfc, 0xcf, 0xc2};
 
-//   // ::5-6
-//   if (dosq) {
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf256_byte_combine_bits(x[i]);
-//       C[i] = bf256_mul(C[i], C[i]);
-//     }
-//   } else {
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf256_byte_combine_bits(x[i]);
-//     }
-//   }
+  // ::5-6
+  if (dosq) {
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf256_byte_combine_bits(x_sq[i]);
+    }
+    t = 1;
+  } else {
+    t = 0;
+    for (unsigned i = 0; i < 9; i++) {
+      C[i] = bf256_byte_combine_bits(x[i]);
+    }
+  }
 
-//   for (unsigned int i = 0; i < Nst_bytes; i++) {
-//     for (unsigned int Cidx = 0; Cidx < 9; Cidx++) {
-//       out[i] += bf256_mul(C[Cidx], bf256_mul(in[i], in[i]));
-//       out_tag[i] += bf256_mul(C[Cidx], bf256_mul(in_tag[i], in_tag[i]));
-//     }
-//   }
-// }
-// static void aes_256_sbox_affine_verify(bf256_t* out_tag, const bf256_t* in_tag, bool dosq, const faest_paramset_t* params) {
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
+    for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
+      out_deg1[i] = bf256_add(out_deg1[i], bf256_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
+    }
+    // add the constant C[8] by multiplying with delta
+    out_deg1[i] = bf256_add(out_deg1[i], bf256_mul(C[8], delta));
+  }
+}
 
-//   unsigned int Nst_bytes = params->faest_param.lambda/8;
-
-//   bf256_t C[9];
-//   uint8_t x[9] = {0x05,0x09,0xf9,0x25,0xf4,0x01,0xb5,0x8f,0x63};
-
-//   // ::5-6
-//   if (dosq) {
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf256_byte_combine_bits(x[i]);
-//       C[i] = bf256_mul(C[i], C[i]);
-//     }
-//   } else {
-//     for (unsigned i = 0; i < 9; i++) {
-//       C[i] = bf256_byte_combine_bits(x[i]);
-//     }
-//   }
-
-//   for (unsigned int i = 0; i < Nst_bytes; i++) {
-//     for (unsigned int Cidx = 0; Cidx < 9; Cidx++) {
-//       out_tag[i] += bf256_mul(C[Cidx], bf256_mul(in_tag[i], in_tag[i]));
-//     }
-//   }
-// }
 
 // // SHIFT ROWS
 // // DONE: Should be alright
