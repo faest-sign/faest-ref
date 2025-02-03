@@ -187,7 +187,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_from_bit(uint8_t bit) {
 
 // GF(2^128) implementation
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf128_t bf128_load(const uint8_t* src) {
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bf128_t bf128_load_bits(const uint8_t* src) {
   bf128_t ret;
   uint8_t tmp[16];
   for(unsigned int i = 0; i < 16; i++) {
@@ -202,6 +202,19 @@ ATTR_PURE ATTR_ALWAYS_INLINE static inline bf128_t bf128_load(const uint8_t* src
   }
 #else
   memcpy(&ret, tmp, BF128_NUM_BYTES);
+#endif
+  return ret;
+}
+
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bf128_t bf128_load(const uint8_t* src) {
+  bf128_t ret;
+#if defined(FAEST_IS_BIG_ENDIAN)
+  for (unsigned int i = 0; i != BF128_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
+    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
+    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+  }
+#else
+  memcpy(&ret, src, BF128_NUM_BYTES);
 #endif
   return ret;
 }
@@ -273,7 +286,7 @@ ATTR_PURE bf128_t bf128_sum_poly(const bf128_t* xs);
 
 // GF(2^192) implemenation
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load(const uint8_t* src) {
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load_bits(const uint8_t* src) {
   bf192_t ret;
   uint8_t tmp[24];
   for(unsigned int i = 0; i < 24; i++) {
@@ -288,6 +301,22 @@ ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load(const uint8_t* src
   }
 #else
   memcpy(&ret, tmp, BF192_NUM_BYTES);
+#endif
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  BF_VALUE(ret, 3) = 0;
+#endif
+  return ret;
+}
+
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load(const uint8_t* src) {
+  bf192_t ret;
+#if defined(FAEST_IS_BIG_ENDIAN)
+  for (unsigned int i = 0; i != BF192_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
+    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
+    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+  }
+#else
+  memcpy(&ret, src, BF192_NUM_BYTES);
 #endif
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   BF_VALUE(ret, 3) = 0;
@@ -362,7 +391,7 @@ ATTR_PURE bf192_t bf192_sum_poly(const bf192_t* xs);
 
 // GF(2^256) implementation
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf256_t bf256_load(const uint8_t* src) {
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bf256_t bf256_load_bits(const uint8_t* src) {
   bf256_t ret;
   uint8_t tmp[32];
   for(unsigned int i = 0; i < 32; i++) {
@@ -377,6 +406,19 @@ ATTR_PURE ATTR_ALWAYS_INLINE static inline bf256_t bf256_load(const uint8_t* src
   }
 #else
   memcpy(&ret, tmp, BF256_NUM_BYTES);
+#endif
+  return ret;
+}
+
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bf256_t bf256_load(const uint8_t* src) {
+  bf256_t ret;
+#if defined(FAEST_IS_BIG_ENDIAN)
+  for (unsigned int i = 0; i != BF256_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
+    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
+    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+  }
+#else
+  memcpy(&ret, src, BF256_NUM_BYTES);
 #endif
   return ret;
 }

@@ -3167,8 +3167,8 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf128_t* w_tag = column_to_row_major_and_shrink_V_128(V, FAEST_128F_ELL); // This is the tag for w
 
   // ::6-7 embed VOLE masks
-  bf128_t bf_u_star_0 = bf128_load(u);
-  bf128_t bf_u_star_1 = bf128_load(u + lambda/8);
+  bf128_t bf_u_star_0 = bf128_load_bits(u);
+  bf128_t bf_u_star_1 = bf128_load_bits(u + lambda);
   // ::8-9
   bf128_t bf_v_star_0 = bf128_sum_poly(w_tag);
   bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + lambda);
