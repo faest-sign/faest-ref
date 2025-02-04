@@ -302,7 +302,7 @@ static void aes_em_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state) 
 }
  
 // INV NORM TO CONJUGATES
-static void aes_128_inv_norm_to_conjugates_prover(bf128_t* y_val, bf128_t* y_tag, uint8_t* x_val, bf128_t* x_tag) {
+static void aes_128_inv_norm_to_conjugates_prover(bf128_t* y_val, bf128_t* y_tag, const uint8_t* x_val, const bf128_t* x_tag) {
   // :1-2
   bf128_t beta_4        = bf128_add(bf128_get_alpha(5), bf128_get_alpha(3));
   bf128_t beta_square   = beta_4;
@@ -754,19 +754,21 @@ static void aes_256_sbox_affine_verify(bf256_t* out_deg1, const bf256_t* in_deg1
 }
 
 // SHIFT ROWS
-static void aes_128_shiftrows_prover(bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg1, const bf128_t* in_deg2, 
+static void aes_128_shiftrows_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg0, const bf128_t* in_deg1, const bf128_t* in_deg2, 
                                       const faest_paramset_t* params) {
   unsigned int Nst = 4;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
       if ((Nst != 8) || (r <= 1)) {
-        out_deg2[4*c + r] = in_deg2[4*((c + r) % 4) + r];     // the val
-        out_deg1[4*c + r] = in_deg1[(4*((c + r) % 4) + r)];     // the tag
+        out_deg2[4*c + r] = in_deg2[4*((c + r) % 4) + r];
+        out_deg1[4*c + r] = in_deg1[4*((c + r) % 4) + r];
+        out_deg0[4*c + r] = in_deg0[4*((c + r) % 4) + r];
       } 
       else {
         out_deg2[4*c + r] = in_deg2[4*((c + r + 1) % 4) + r];
-        out_deg1[4*c + r] = in_deg1[(4*((c + r + 1) % 4) + r)];
+        out_deg1[4*c + r] = in_deg1[4*((c + r + 1) % 4) + r];
+        out_deg0[4*c + r] = in_deg0[4*((c + r + 1) % 4) + r];
       }
     }
   }
@@ -786,6 +788,9 @@ static void aes_128_shiftrows_verifier(bf128_t* out_deg1, const bf128_t* in_deg1
     }
   }
 }
+
+// TODO: translate 128-bit shiftrows to 192/256
+// (these versions are only for degree-1)
 
 static void aes_192_shiftrows_prover(uint8_t* out, bf192_t* out_tag, const uint8_t* in, const bf192_t* in_tag, const faest_paramset_t* params) {
   uint16_t Nst = params->faest_param.Nwd;
@@ -1324,77 +1329,98 @@ static void aes_256_mix_columns_verifier(bf256_t* y_deg1, const bf256_t* in_deg1
 }
 
 // ADD ROUND KEY BYTES
+// on degree-2 state and degree-2 key
+//
+// To use on degree-1 key: pass zeroes as the degree-0 coeff
 static void aes_128_add_round_key_bytes_prover(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t* y_deg2, const bf128_t* in_deg0, const bf128_t* in_deg1, const bf128_t* in_deg2, 
-                                                const bf128_t* k_deg0, const bf128_t* k_deg1, const faest_paramset_t* params) {
+                                                const bf128_t* k_deg0, const bf128_t* k_deg1, const bf128_t* k_deg2, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
   uint16_t Nstbytes = Nst*4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    y_deg2[i] = bf128_add(in_deg2[i], k_deg1[i]);
-    y_deg1[i] = bf128_add(in_deg1[i], k_deg0[i]);
-    y_deg0[i] = in_deg0[i];
+    y_deg2[i] = bf128_add(in_deg2[i], k_deg2[i]);
+    y_deg1[i] = bf128_add(in_deg1[i], k_deg1[i]);
+    y_deg0[i] = bf128_add(in_deg0[i], k_deg0[i]);
   }
 }
 
-static void aes_128_add_round_key_bytes_verifier(bf128_t* y_deg1, const bf128_t* in_tag, const bf128_t* k_tag, bf128_t delta, const faest_paramset_t* params) {
+// Use shift_tag if key is degree-1 instead of degree-2
+static void aes_128_add_round_key_bytes_verifier(bf128_t* y_deg1, const bf128_t* in_tag, const bf128_t* k_tag, bf128_t delta, bool shift_tag, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
   uint16_t Nstbytes = Nst*4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    // Multiply tag by delta to align degrees
-    y_deg1[i] = bf128_add(in_tag[i], bf128_mul(k_tag[i], delta));
+    if (shift_tag) {
+      // Multiply tag by delta to align degrees
+      y_deg1[i] = bf128_add(in_tag[i], bf128_mul(k_tag[i], delta));
+    }
+    else {
+      y_deg1[i] = bf128_add(in_tag[i], k_tag[i]);
+    }
   }
 }
 
 // ADD ROUND KEY BYTES
 static void aes_192_add_round_key_bytes_prover(bf192_t* y_deg0, bf192_t* y_deg1, bf192_t* y_deg2, const bf192_t* in_deg0, const bf192_t* in_deg1, const bf192_t* in_deg2, 
-                                                const bf192_t* k_deg0, const bf192_t* k_deg1, const faest_paramset_t* params) {
+                                                const bf192_t* k_deg0, const bf192_t* k_deg1, const bf192_t* k_deg2, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
   uint16_t Nstbytes = Nst*4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    y_deg2[i] = bf192_add(in_deg2[i], k_deg1[i]);
-    y_deg1[i] = bf192_add(in_deg1[i], k_deg0[i]);
+    y_deg2[i] = bf192_add(in_deg2[i], k_deg2[i]);
+    y_deg1[i] = bf192_add(in_deg1[i], k_deg1[i]);
+    y_deg1[i] = bf192_add(in_deg0[i], k_deg0[i]);
     y_deg0[i] = in_deg0[i];
   }
 }
 
-static void aes_192_add_round_key_bytes_verifier(bf192_t* y_deg1, const bf192_t* in_tag, const bf192_t* k_tag, bf192_t delta, const faest_paramset_t* params) {
+static void aes_192_add_round_key_bytes_verifier(bf192_t* y_deg1, const bf192_t* in_tag, const bf192_t* k_tag, bf192_t delta, bool shift_tag, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
   uint16_t Nstbytes = Nst*4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    // Multiply tag by delta to align degrees
-    y_deg1[i] = bf192_add(in_tag[i], bf192_mul(k_tag[i], delta));
+    if (shift_tag) {
+      // Multiply tag by delta to align degrees
+      y_deg1[i] = bf192_add(in_tag[i], bf192_mul(k_tag[i], delta));
+    }
+    else {
+      y_deg1[i] = bf192_add(in_tag[i], k_tag[i]);
+    }
   }
 }
 
 // ADD ROUND KEY BYTES
 static void aes_256_add_round_key_bytes_prover(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t* y_deg2, const bf256_t* in_deg0, const bf256_t* in_deg1, const bf256_t* in_deg2, 
-                                                const bf256_t* k_deg0, const bf256_t* k_deg1, const faest_paramset_t* params) {
+                                                const bf256_t* k_deg0, const bf256_t* k_deg1, const bf256_t* k_deg2, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
   uint16_t Nstbytes = Nst*4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    y_deg2[i] = bf256_add(in_deg2[i], k_deg1[i]);
-    y_deg1[i] = bf256_add(in_deg1[i], k_deg0[i]);
+    y_deg2[i] = bf256_add(in_deg2[i], k_deg2[i]);
+    y_deg1[i] = bf256_add(in_deg1[i], k_deg1[i]);
+    y_deg1[i] = bf256_add(in_deg0[i], k_deg0[i]);
     y_deg0[i] = in_deg0[i];
   }
 }
 
-static void aes_256_add_round_key_bytes_verifier(bf256_t* y_deg1, const bf256_t* in_tag, const bf256_t* k_tag, bf256_t delta, const faest_paramset_t* params) {
+static void aes_256_add_round_key_bytes_verifier(bf256_t* y_deg1, const bf256_t* in_tag, const bf256_t* k_tag, bf256_t delta, bool shift_tag, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
   uint16_t Nstbytes = Nst*4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    // Multiply tag by delta to align degrees
-    y_deg1[i] = bf256_add(in_tag[i], bf256_mul(k_tag[i], delta));
+    if (shift_tag) {
+      // Multiply tag by delta to align degrees
+      y_deg1[i] = bf256_add(in_tag[i], bf256_mul(k_tag[i], delta));
+    }
+    else {
+      y_deg1[i] = bf256_add(in_tag[i], k_tag[i]);
+    }
   }
 }
 
@@ -2645,6 +2671,13 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     bf128_t* st_prime_deg1 = faest_aligned_alloc(BF128_ALIGN, 8 *  Nstbytes * sizeof(bf128_t));
     bf128_t* st_prime_deg0 = faest_aligned_alloc(BF128_ALIGN, 8 *  Nstbytes * sizeof(bf128_t));
     
+    bf128_t* state_bytewise_deg2 = faest_aligned_alloc(BF128_ALIGN, Nstbytes * sizeof(bf128_t));
+    bf128_t* state_bytewise_deg1 = faest_aligned_alloc(BF128_ALIGN, Nstbytes * sizeof(bf128_t));
+    bf128_t* state_bytewise_deg0 = faest_aligned_alloc(BF128_ALIGN, Nstbytes * sizeof(bf128_t));
+    bf128_t* state_sq_bytewise_deg2 = faest_aligned_alloc(BF128_ALIGN, Nstbytes * sizeof(bf128_t));
+    bf128_t* state_sq_bytewise_deg1 = faest_aligned_alloc(BF128_ALIGN, Nstbytes * sizeof(bf128_t));
+    bf128_t* state_sq_bytewise_deg0 = faest_aligned_alloc(BF128_ALIGN, Nstbytes * sizeof(bf128_t));
+    
     aes_128_add_round_key_prover(state_bits, state_bits_tag, owf_in, owf_in_tag, k, k_tag, params);
 
     // ::2
@@ -2655,8 +2688,8 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
       aes_128_f256_f2_conjugates_128(state_conj_tag, state_bits_tag);
 
       // ::5-6 : start of norms in witness
-      uint8_t* norms_ptr = w + 3 * Nstbits * r/2;
-      bf128_t* norm_tags_ptr = w_tag + 3 * Nstbits * r/2;
+      const uint8_t* norms_ptr = w + 3 * Nstbits * r/2;
+      const bf128_t* norm_tags_ptr = w_tag + 3 * Nstbits * r/2;
       // uint8_t n[Nstbits/2*4]; // 1 uint8 contains 4 bits of the Invnorm 0000||4bits
       // bf128_t n_tag[Nstbits/2]; // tag for each bit
       // for (unsigned int i = 0; i < Nstbits/2; i++) {
@@ -2688,56 +2721,66 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
         }
       }
 
-    //   // ::15-16
-    //   bf128_t k_0_deg0[16];
-    //   bf128_t k_0_deg1[16];
-    //   aes_128_state_to_bytes_prover(k_0_deg1, k_0_deg0, k, k_tag + (2*r+1)*Nstbytes);
-    //   // ::17
-    //   bf128_t k_1_deg1[16];
-    //   bf128_t k_1_deg2[16];
-    //   for (unsigned int byte_i = 0; byte_i < 16; byte_i++) {
-    //     k_1_deg1[byte_i] = bf128_mul(k_0_deg0[byte_i], k_0_deg0[byte_i]);
-    //     k_1_deg2[byte_i] = bf128_mul(k_0_deg1[byte_i], k_0_deg1[byte_i]);
-    //   }
+      // ::15-16
+      bf128_t k_0_deg0[16];
+      bf128_t k_0_deg1[16];
+      aes_128_state_to_bytes_prover(k_0_deg1, k_0_deg0,
+        k + (2*r+1)*Nstbits,
+        k_tag + (2*r+1)*Nstbits,
+        params);
+      // ::17
+      bf128_t k_1_deg0[16];
+      bf128_t k_1_deg1[16];
+      bf128_t k_1_deg2[16];
+      for (unsigned int byte_i = 0; byte_i < 16; byte_i++) {
+        k_1_deg0[byte_i] = bf128_mul(k_0_deg0[byte_i], k_0_deg0[byte_i]);
+        k_1_deg1[byte_i] = bf128_zero();
+        k_1_deg2[byte_i] = bf128_mul(k_0_deg1[byte_i], k_0_deg1[byte_i]);
+      }
 
-    //   // ::18
-    //   bf128_t st_b_deg0[2][16]; // TODO: this stays empty as the power increases by 1 after the multiplication
-    //   bf128_t st_b_deg1[2][16];
-    //   bf128_t st_b_deg2[2][16];
-    //   bf128_t st_b_deg1_tmp[2][16];
-    //   bf128_t st_b_deg2_tmp[2][16];
-    //   for (unsigned int b = 0; b < 2; b++) {
-    //     // ::19
-    //     aes_128_sbox_affine_prover(st_b_deg1[b], st_b_deg2[b], st_tag_deg1, st_deg2, b, params);
-    //     // ::20
-    //     aes_128_shiftrows_prover(st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg1[b], st_b_deg2[b], params);
-    //     memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf128_t)*16);
-    //     memcpy(st_b_deg2[b], st_b_deg2_tmp[b], sizeof(bf128_t)*16);
-    //     // ::21
-    //     aes_128_mix_coloumns_prover(st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg1[b], st_b_deg2[b], b, params);
-    //     memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf128_t)*16);
-    //     memcpy(st_b_deg2[b], st_b_deg2_tmp[b], sizeof(bf128_t)*16);
-    //     // ::22
-    //     if (b == 0) {
-    //       aes_128_add_round_key_bytes_prover(st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg1[b], st_b_deg2[b], k_0_deg0, k_0_deg1, params);
-    //     } else {
-    //       aes_128_add_round_key_bytes_prover(st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg1[b], st_b_deg2[b], k_1_deg1, k_1_deg2, params);
-    //     }
-    //   }
-    //   // ::23-24
-    //   uint8_t s_tilde[16];
-    //   bf128_t s_tilde_tag[16];
-    //   if (r == R/2 - 1) {
-    //     // ::25
-    //     aes_128_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag, k + r*Nstbytes, k_tag + r*Nstbytes, params);
-    //   } else {
-    //     // ::27-28
-    //     unsigned idx = 0;
-    //     for (unsigned int i = ((Nstbits/2) + (Nstbits/2)*3*r)/8; i < ((Nstbits/2*3*r) + (Nstbits/2*3))/8; i++) {
-    //       s_tilde[idx] = w[i];
-    //       s_tilde_tag[idx] = bf128_byte_combine(w_tag + i*8);
-    //     }
-    //   }
+      // ::18
+      bf128_t st_b_deg0[2][16]; // TODO: this stays empty as the power increases by 1 after the multiplication
+      bf128_t st_b_deg1[2][16];
+      bf128_t st_b_deg2[2][16];
+      bf128_t st_b_deg0_tmp[2][16];
+      bf128_t st_b_deg1_tmp[2][16];
+      bf128_t st_b_deg2_tmp[2][16];
+      bf128_t dummy_key[16];
+      for (unsigned int i = 0; i < 16; i++) {
+        dummy_key[i] = bf128_zero();
+      }
+
+      for (unsigned int b = 0; b < 2; b++) {
+        // ::19
+        aes_128_sbox_affine_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_prime_deg0, st_prime_deg1, st_prime_deg2, b, params);
+        // ::20
+        aes_128_shiftrows_prover(st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], params);
+        memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf128_t)*16);
+        memcpy(st_b_deg2[b], st_b_deg2_tmp[b], sizeof(bf128_t)*16);
+        // ::21
+        aes_128_mix_columns_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], b, params);
+        // ::22
+        if (b == 0) {
+          aes_128_add_round_key_bytes_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], dummy_key, k_0_deg0, k_0_deg1, params);
+        } else {
+          aes_128_add_round_key_bytes_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], k_1_deg0, k_1_deg1, k_1_deg2, params);
+        }
+      }
+      // ::23-24
+      uint8_t s_tilde[128];
+      bf128_t s_tilde_tag[128];
+      if (r == R/2 - 1) {
+        // ::25
+        aes_128_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag, k + r*Nstbits, k_tag + r*Nstbits, params);
+      } else {
+        // ::27-28
+        unsigned int idx = 0;
+        for (unsigned int i = ((Nstbits/2) + (Nstbits/2)*3*r); i < ((Nstbits/2*3*r) + (Nstbits/2*3)); i++) {
+          s_tilde[idx] = w[i];
+          s_tilde_tag[idx] = w_tag[i];
+          idx++;
+        }
+      }
     //   // ::29
     //   uint8_t s_dash_dash[16];
     //   bf128_t s_dash_dash_tag[16];
@@ -2808,6 +2851,12 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     faest_aligned_free(st_prime_deg2);
     faest_aligned_free(st_prime_deg1);
     faest_aligned_free(st_prime_deg0);
+    faest_aligned_free(state_bytewise_deg2);
+    faest_aligned_free(state_bytewise_deg1);
+    faest_aligned_free(state_bytewise_deg0);
+    faest_aligned_free(state_sq_bytewise_deg2);
+    faest_aligned_free(state_sq_bytewise_deg1);
+    faest_aligned_free(state_sq_bytewise_deg0);
 }
 // static aes_128_enc_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2, bf128_t* z_deg3, const bf128_t* owf_in_key, 
 //                                         const bf128_t* owf_out_key, const bf128_t* w_key, const bf128_t* k_key, const bf128_t delta,
@@ -3288,7 +3337,6 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   zk_hash_128_finalize(a0_tilde, &a0_ctx, bf_u_star_0);
   zk_hash_128_finalize(a1_tilde, &a1_ctx, bf128_add(bf_v_star_0, bf_u_star_1));
   zk_hash_128_finalize(a2_tilde, &a2_ctx, bf_v_star_1);
-  printf("finalized\n");
 }
 
 static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
