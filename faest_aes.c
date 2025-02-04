@@ -2999,6 +2999,7 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   unsigned int Nst = params->faest_param.Nwd;                  // In Round 1, Nwd was Nst
   unsigned int num_enc_constraints = 3*Senc/2;
   uint16_t blocksize = 32 * params->faest_param.Nwd;
+  unsigned int beta = (lambda + blocksize - 1) / blocksize;
   // ::1-3 owf_in, owf_out, z and z_tag
   
   // ::4-5
@@ -3013,7 +3014,7 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   uint8_t* in = (uint8_t*)malloc(blocksize);
   bf128_t* in_tag = (bf128_t*)malloc(sizeof(bf128_t) * blocksize);
   uint8_t* out = (uint8_t*)malloc(blocksize);
-  bf128_t* out_tag = (bf128_t*)malloc(sizeof(bf128_t) * blocksize);
+  bf128_t* out_tag = (bf128_t*)malloc(sizeof(bf128_t) * beta*blocksize);
   uint8_t* rkeys = (uint8_t*) malloc((R+1)*blocksize * sizeof(uint8_t));
   bf128_t* rkeys_tag = (bf128_t*) malloc((R+1)*blocksize * sizeof(bf128_t));
 
@@ -3050,13 +3051,13 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
     for (unsigned int i = 0; i < lambda; i++) {
       in[i] = (owf_in[i/8] >> (i%8)) & 1;
     }
-    constant_to_vole_128_prover(in_tag, lambda);
+    constant_to_vole_128_prover(in_tag, blocksize);
 
     // ::14
-    for (unsigned int i = 0; i < lambda; i++) {
+    for (unsigned int i = 0; i < beta * blocksize; i++) {
       out[i] = (owf_out[i/8] >> (i%8)) & 1;
     }
-    constant_to_vole_128_prover(out_tag, lambda);
+    constant_to_vole_128_prover(out_tag, beta * blocksize);
 
     // ::15 skiped as B = 1
     // ::16
@@ -3075,38 +3076,43 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
     free(z_tilde_deg0_tag);
     free(z_tilde_deg1_val);
   }
-  // ::18 b = 0
-  // ::19
   uint8_t* w_tilde = (uint8_t*)malloc(Lenc * sizeof(uint8_t));
   bf128_t* w_tilde_tag = (bf128_t*)malloc(Lenc * sizeof(bf128_t));
 
-  for (unsigned int i = 0; i < Lenc; i++) {
-    w_tilde[i] = w[Lke + i];
-    w_tilde_tag[i] = w_tag[Lke + i];
-  }
-  // ::20 not needed for AES-128
-  // ::21
   bf128_t* z_tilde_deg0 = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
   bf128_t* z_tilde_deg1 = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
   bf128_t* z_tilde_deg2 = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
-  memset(z_tilde_deg0, 0, num_enc_constraints * sizeof(bf128_t));
-  memset(z_tilde_deg1, 0, num_enc_constraints * sizeof(bf128_t));
-  memset(z_tilde_deg2, 0, num_enc_constraints * sizeof(bf128_t));
 
+  // ::18-20
+  for (unsigned int b = 0; b < beta; b++) {
 
-  aes_128_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
-  // uint32_t z_offset = 1 + (2*FAEST_128F_Ske);
-  // printf("z offset = %d\n", z_offset);
-  // aes_128_enc_constraints_prover(z_deg0 + z_offset, z_deg1 + z_offset, z_deg2 + z_offset, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, k, k_tag, params);
+    for (unsigned int i = 0; i < Lenc; i++) {
+      w_tilde[i] = w[Lke + b*Lenc + i];
+      w_tilde_tag[i] = w_tag[Lke + b*Lenc + i];
+    }
+    
+    memset(z_tilde_deg0, 0, num_enc_constraints * sizeof(bf128_t));
+    memset(z_tilde_deg1, 0, num_enc_constraints * sizeof(bf128_t));
+    memset(z_tilde_deg2, 0, num_enc_constraints * sizeof(bf128_t));
 
-  // :22
-  for (unsigned int i = 0; i < num_enc_constraints; i++) {
-    z_deg0[1+(2*Ske) + i] = z_tilde_deg0[i];
-    z_deg1[1+(2*Ske) + i] = z_tilde_deg1[i];
-    z_deg2[1+(2*Ske) + i] = z_tilde_deg2[i];
+    if (b == 1) {
+      in[0] = in[0] ^ 0x01;
+      in_tag[0] = bf128_add(in_tag[0], bf128_one());
+      out_tag += blocksize;
+    }
+
+    aes_128_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
+    // uint32_t z_offset = 1 + (2*FAEST_128F_Ske);
+    // printf("z offset = %d\n", z_offset);
+    // aes_128_enc_constraints_prover(z_deg0 + z_offset, z_deg1 + z_offset, z_deg2 + z_offset, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, k, k_tag, params);
+
+    // :22
+    for (unsigned int i = 0; i < num_enc_constraints; i++) {
+      z_deg0[1+(2*Ske) + b*num_enc_constraints + i] = z_tilde_deg0[i];
+      z_deg1[1+(2*Ske) + b*num_enc_constraints + i] = z_tilde_deg1[i];
+      z_deg2[1+(2*Ske) + b*num_enc_constraints + i] = z_tilde_deg2[i];
+    }
   }
-
-  //free(Rkeys);
   free(in);
   free(in_tag);
   free(out);
@@ -3121,6 +3127,8 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   free(z_tilde_deg1);
   free(z_tilde_deg2);
 }
+
+
 static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2, const uint8_t* w, const bf192_t* w_tag, const uint8_t* owf_in, 
                                         const uint8_t* owf_out, const faest_paramset_t* params, bool isEM) {
 
@@ -3283,6 +3291,7 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
   unsigned int num_enc_constraints = 3*Senc/2;
   unsigned int num_ks_constraints = 2*Ske;
   unsigned int blocksize = 32 * Nst;
+  unsigned int beta = (lambda + blocksize - 1) / blocksize;
   // ::1-3 owf_in, owf_out, z and z_tag
   
   // ::4-5
@@ -3291,7 +3300,7 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
   // ::7-8
   bf128_t* rkeys_key = (bf128_t*)malloc(sizeof(bf128_t) * (R+1) * blocksize);
   bf128_t* in_key = (bf128_t*)malloc(sizeof(bf128_t) * blocksize);
-  bf128_t* out_key = (bf128_t*)malloc(sizeof(bf128_t) * blocksize);
+  bf128_t* out_key = (bf128_t*)malloc(sizeof(bf128_t) * beta*blocksize);
 
   if (isEM) {
     aes_round_keys_t round_keys;
@@ -3320,39 +3329,44 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
     // for (unsigned int i = 0; i < lambda; i++) {
     //   in[i] = (owf_in[i/8] >> (i%8)) & 1;
     // }
-    constant_to_vole_128_verifier(in_key, owf_in, delta, lambda);
+    constant_to_vole_128_verifier(in_key, owf_in, delta, blocksize);
 
-    // ::14
-    constant_to_vole_128_verifier(out_key, owf_out, delta, lambda);
+    // ::14-15
+    // if beta=2, load both public key blocks
+    constant_to_vole_128_verifier(out_key, owf_out, delta, beta*blocksize);
 
-    // ::15 skiped as B = 1
     // ::16
     bf128_t* z_tilde_key = (bf128_t*)malloc(2*Ske * sizeof(bf128_t));
+    
     aes_128_expkey_constraints_verifier(z_tilde_key, rkeys_key, w_key, delta, params);
 
     // ::17 raise degree
     for (unsigned int i = 0; i < num_ks_constraints; i++) {
-      z_key[1 + i] = z_tilde_key[i];
+      z_key[1 + i] = bf128_mul(delta, z_tilde_key[i]);
     }
 
     free(z_tilde_key);
   }
-  // ::18 b = 0
-  // ::19
+  // ::18-20
   bf128_t* w_tilde_tag = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, Lenc * sizeof(bf128_t));
-
-  for (unsigned int i = 0; i < Lenc; i++) {
-    w_tilde_tag[i] = w_key[Lke + i];
-  }
-  // ::20 not needed for AES-128
-  // ::21
   bf128_t* z_tilde_enc_key = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
-  memset(z_tilde_enc_key, 0, num_enc_constraints * sizeof(bf128_t));
-  aes_128_enc_constraints_verifier(z_tilde_enc_key, in_key, out_key, w_key, rkeys_key, delta, params);
 
-  // :22
-  for (unsigned int i = 0; i < num_enc_constraints; i++) {
-    z_key[1+num_ks_constraints + i] = z_tilde_enc_key[i];
+  for (unsigned int b = 0; b < beta; b++) {
+    for (unsigned int i = 0; i < Lenc; i++) {
+      w_tilde_tag[i] = w_key[Lke + b*Lenc + i];
+    }
+    // ::21
+    memset(z_tilde_enc_key, 0, num_enc_constraints * sizeof(bf128_t));
+    if (b == 1) {
+      in_key[0] = bf128_add(in_key[0], delta); // adding one
+      out_key += blocksize;
+    }
+    aes_128_enc_constraints_verifier(z_tilde_enc_key, in_key, out_key, w_key, rkeys_key, delta, params);
+
+    // :22
+    for (unsigned int i = 0; i < num_enc_constraints; i++) {
+      z_key[1+num_ks_constraints + b*num_enc_constraints + i] = z_tilde_enc_key[i];
+    }
   }
   faest_aligned_free(rkeys_key);
   faest_aligned_free(in_key);
