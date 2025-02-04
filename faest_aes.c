@@ -2441,15 +2441,15 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
   // ::1
   aes_128_keyexp_forward_prover(k, k_tag, w, w_tag, params);
   // ::2
-  uint8_t* w_flat = (uint8_t*)malloc(8 * Ske * blocksize * sizeof(uint8_t));
-  bf128_t* w_flat_tag = faest_aligned_alloc(BF128_ALIGN, 8 * Ske * blocksize * sizeof(bf128_t));
+  uint8_t* w_flat = (uint8_t*)malloc(8 * Ske * sizeof(uint8_t));
+  bf128_t* w_flat_tag = faest_aligned_alloc(BF128_ALIGN, 8 * Ske * sizeof(bf128_t));
   aes_128_keyexp_backward_prover(w_flat, w_flat_tag, w, w_tag, k, k_tag, params);
 
   // ::3-5
-  unsigned int iwd = 32*(Nk - 1);  // as 1 unit8 has 8 bits
+  unsigned int iwd = 32*(Nk - 1);
   // ::6 Used only on AES-256
   // ::7
-  for (unsigned int j = 0; j < FAEST_128F_Ske / 4; j++) {
+  for (unsigned int j = 0; j < Ske / 4; j++) {
     // ::8
     bf128_t k_hat[4];     // expnaded key witness
     bf128_t w_hat[4];     // inverse output
@@ -2465,10 +2465,10 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
     for (unsigned int r = 0; r < 4; r++) {
       // ::10
       r_prime = r;
-      // ::11
-      if (do_rot_word) {
-        r_prime = (r + 3) % 4;
-      }
+      // ::11 Used only for AES-256
+      // if (do_rot_word) {
+      //   r_prime = (r + 3) % 4;
+      // }
       // ::12-15
       k_hat[r_prime] = bf128_byte_combine_bits(&k[(iwd + 8 * r)]); // lifted key witness
       k_hat_sq[r_prime] = bf128_byte_combine_bits_sq(&k[(iwd + 8 * r)]); // lifted key witness sq
@@ -2495,17 +2495,19 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
               bf128_mul(k_hat_sq[r], w_hat_tag[r]),
               bf128_mul(k_hat_tag_sq[r], w_hat[r])),
           k_hat_tag[r]);
+
       z_deg1[8*j + 2*r + 1] = bf128_add(
           bf128_add(
               bf128_mul(k_hat[r], w_hat_tag_sq[r]),
               bf128_mul(k_hat_tag[r], w_hat_sq[r])),
           w_hat_tag[r]);
-      //z_deg1[8*j + 2*r + 1] = bf128_add(bf128_mul(k_hat[r], w_hat_sq[r]), w_hat[r]);
 
-      //z_deg0[8*j + 2*r] = bf128_add(bf128_mul(k_hat_tag_sq[r], w_hat_tag[r]), k_hat_tag[r]);
-      //z_deg0[8*j + 2*r + 1] = bf128_add(bf128_mul(k_hat_tag[r], w_hat_tag_sq[r]), k_hat_tag[r]);
       z_deg0[8*j + 2*r] = bf128_mul(k_hat_tag_sq[r], w_hat_tag[r]);
       z_deg0[8*j + 2*r + 1] = bf128_mul(k_hat_tag[r], w_hat_tag_sq[r]);
+
+      //z_deg1[8*j + 2*r + 1] = bf128_add(bf128_mul(k_hat[r], w_hat_sq[r]), w_hat[r]);
+      //z_deg0[8*j + 2*r] = bf128_add(bf128_mul(k_hat_tag_sq[r], w_hat_tag[r]), k_hat_tag[r]);
+      //z_deg0[8*j + 2*r + 1] = bf128_add(bf128_mul(k_hat_tag[r], w_hat_tag_sq[r]), k_hat_tag[r]);
     }
     if (lambda == 192) {
       iwd += 192;
@@ -2522,32 +2524,38 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key,
   unsigned int Ske = params->faest_param.Ske;
   unsigned int lambda = params->faest_param.lambda;
   unsigned int Nk = lambda/32;
-  bool do_rot_word = true;
   unsigned int r_prime;
+
+  bool do_rot_word = false;
+  if (lambda == 256) {
+    do_rot_word = true;
+  }
+
   // ::1
   aes_128_keyexp_forward_verifier(k_key, w_key, params);
   // ::2
-  bf128_t* w_flat_key = (bf128_t*)malloc(8 * Ske * sizeof(bf128_t));
+  bf128_t* w_flat_key = faest_aligned_alloc(BF128_ALIGN, 8 * Ske * sizeof(bf128_t));
   aes_128_keyexp_backward_verifier(w_flat_key, w_key, k_key, delta, params);
 
   // ::3-5
   unsigned int iwd = 32*(Nk - 1);  // as 1 unit8 has 8 bits
   // ::6 Used only on AES-256
   // ::7
-  for (unsigned int j = 0; j < FAEST_128F_Ske / 4; j++) {
+  for (unsigned int j = 0; j < Ske / 4; j++) {
     // ::8
     bf128_t k_hat_key[4]; // expanded key witness tag
     bf128_t w_hat_key[4]; // inverse output tag
     bf128_t k_hat_key_sq[4];  // expanded key tag sq
     bf128_t w_hat_key_sq[4];  // inverser output tag sq
+    
     // ::9
     for (unsigned int r = 0; r < 4; r++) {
       // ::10
       r_prime = r;
       // ::11
-      if (do_rot_word) {
-        r_prime = (r + 3) % 4;
-      }
+      // if (do_rot_word) {
+      //   r_prime = (r + 3) % 4;
+      // }
       // ::12-15
       k_hat_key[r_prime] = bf128_byte_combine(k_key + (iwd + 8 * r)); // lifted key tag
       k_hat_key_sq[r_prime] = bf128_byte_combine_sq(k_key + (iwd + 8 * r)); // lifted key tag sq
@@ -2561,8 +2569,12 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key,
     }
     // ::17-20
     for (unsigned int r = 0; r < 4; r++) {
-      z_deg1[8*j + 2*r] = bf128_add(bf128_mul(k_hat_key_sq[r], w_hat_key[r]), bf128_mul(delta, k_hat_key[r]));
-      z_deg1[8*j + 2*r + 1] = bf128_add(bf128_mul(k_hat_key[r], w_hat_key_sq[r]), bf128_mul(delta, k_hat_key[r]));
+      z_deg1[8*j + 2*r] = bf128_add(
+                              bf128_mul(k_hat_key_sq[r], w_hat_key[r]), 
+                              bf128_mul(delta, k_hat_key[r]));
+      z_deg1[8*j + 2*r + 1] = bf128_add(
+                              bf128_mul(k_hat_key[r], w_hat_key_sq[r]), 
+                              bf128_mul(delta, k_hat_key[r]));
     }
     if (lambda == 192) {
       iwd += 192;
@@ -2571,7 +2583,6 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key,
       iwd += 128;
     }
   }
-
   free(w_flat_key);
 }
 // // TODO: AES 192/256
