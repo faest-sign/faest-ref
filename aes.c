@@ -235,7 +235,7 @@ static
 }
 
 static uint8_t* store_invnorm_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
-  for (unsigned int i = 0; i != block_words * 4 / 2; i += 2, ++dst) {
+  for (unsigned int i = 0; i != block_words * 4; i += 2, ++dst) {
     uint8_t normstate_lo = invnorm(state[i / 4][i % 4]);
     uint8_t normstate_hi = invnorm(state[i / 4][(i + 1) % 4]);
     bf8_store(dst, (normstate_hi << 4) | normstate_lo);
