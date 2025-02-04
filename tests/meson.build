@@ -4,7 +4,7 @@ ntl = cc.find_library('ntl', required: false, has_headers: ['NTL/version.h'])
 if boost_test.found()
   test_sources = files(
     'aes.cpp',
-    # 'aes_prove.cpp',
+    'aes_prove.cpp',
     'bavc.cpp',
     'extended_tests.cpp',
     'fields.cpp',
