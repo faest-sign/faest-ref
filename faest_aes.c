@@ -949,7 +949,6 @@ static void aes_128_mix_columns_prover(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t
   
   }
 }
-
 static void aes_128_mix_columns_verifier(bf128_t* y_deg1, const bf128_t* in_deg1, bool dosq, const faest_paramset_t* params) {
   
   uint16_t Nst = params->faest_param.Nwd;
@@ -1332,7 +1331,6 @@ static void aes_128_add_round_key_bytes_prover(bf128_t* y_deg0, bf128_t* y_deg1,
     y_deg0[i] = bf128_add(in_deg0[i], k_deg0[i]);
   }
 }
-
 // Use shift_tag if key is degree-1 instead of degree-2
 static void aes_128_add_round_key_bytes_verifier(bf128_t* y_deg1, const bf128_t* in_tag, const bf128_t* k_tag, bf128_t delta, bool shift_tag, const faest_paramset_t* params) {
 
@@ -2756,8 +2754,8 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
       }
     }
     // ::23-24
-    uint8_t s_tilde[128];
-    bf128_t s_tilde_tag[128];
+    uint8_t* s_tilde = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+    bf128_t* s_tilde_tag = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));;
     if (r == R/2 - 1) {
       // ::25
       aes_128_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag, k + r*Nstbits, k_tag + r*Nstbits, params);
@@ -2832,6 +2830,9 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     //   aes_128_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
     //   aes_128_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag, k + (2*r+2)*Nstbits, k_tag + (2*r+2)*Nstbits, params);
     // }
+
+    faest_aligned_free(s_tilde_tag);
+    free(s_tilde);
   }
   faest_aligned_free(state_sq_bytewise_deg0);
   faest_aligned_free(state_sq_bytewise_deg1);
