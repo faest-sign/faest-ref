@@ -378,9 +378,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes128) {
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   free(extwit);
 
-  print_array(witness);
-  print_array(expected_witness);
-
   BOOST_TEST(expected_witness == witness);
 }
 
@@ -394,9 +391,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes192) {
   std::vector<uint8_t> witness{extwit, extwit + sizeof(tv::witness)};
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   free(extwit);
-
-  print_array(witness);
-  print_array(expected_witness);
 
   BOOST_TEST(expected_witness == witness);
 }
@@ -412,9 +406,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes256) {
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   free(extwit);
 
-  print_array(witness);
-  print_array(expected_witness);
-
   BOOST_TEST(expected_witness == witness);
 }
 
@@ -428,9 +419,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_em128) {
   std::vector<uint8_t> witness{extwit, extwit + sizeof(tv::witness)};
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   free(extwit);
-
-  print_array(witness);
-  print_array(expected_witness);
 
   BOOST_TEST(expected_witness == witness);
 }
@@ -446,9 +434,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_em192) {
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   free(extwit);
 
-  print_array(witness);
-  print_array(expected_witness);
-
   BOOST_TEST(expected_witness == witness);
 }
 
@@ -462,9 +447,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_em256) {
   std::vector<uint8_t> witness{extwit, extwit + sizeof(tv::witness)};
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   free(extwit);
-
-  print_array(witness);
-  print_array(expected_witness);
 
   BOOST_TEST(expected_witness == witness);
 }
