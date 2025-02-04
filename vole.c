@@ -36,14 +36,16 @@ static
 #define R(row, column) (r + (((row) % 2) * num_instances + (column)) * outLenBytes)
 #define V(idx) (v + (idx) * outLenBytes)
 
+  uint32_t tweak = i ^ TWEAK_OFFSET;
+
   // Step: 2
   if (!sd0_bot) {
-    prg(sd, iv, i, R(0, 0), lambda, outLenBytes);
+    prg(sd, iv, tweak, R(0, 0), lambda, outLenBytes);
   }
 
   // Step: 3..4
   for (unsigned int j = 1; j < num_instances; ++j) {
-    prg(sd + lambda_bytes * j, iv, i, R(0, j), lambda, outLenBytes);
+    prg(sd + lambda_bytes * j, iv, tweak, R(0, j), lambda, outLenBytes);
   }
 
   // Step: 5..9
@@ -77,7 +79,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   unsigned int v_idx = 0;
   for (unsigned int i = 0; i < tau; ++i) {
     // Step 6
-    v_idx += ConvertToVole(iv, bavc->sd, false, i + TWEAK_OFFSET, ellhat_bytes,
+    v_idx += ConvertToVole(iv, bavc->sd, false, i, ellhat_bytes,
                            ui + i * ellhat_bytes, v[v_idx], params);
   }
   // ensure 0-padding up to lambda
@@ -135,7 +137,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
 
     // Step: 7..8
     const unsigned int ki =
-        ConvertToVole(iv, sd, true, i + TWEAK_OFFSET, ellhat_bytes, NULL, qtmp, params);
+        ConvertToVole(iv, sd, true, i, ellhat_bytes, NULL, qtmp, params);
 
     // Step 11
     if (i == 0) {
