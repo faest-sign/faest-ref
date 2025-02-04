@@ -1535,6 +1535,7 @@ static void aes_256_inverse_shiftrows_verifier(bf256_t* out_tag, const bf256_t* 
 
 // BITWISE MIX COLUMNS
 static void aes_128_bitwise_mix_column_prover(uint8_t* out, bf128_t* out_tag, uint8_t* s, bf128_t* s_tag, const faest_paramset_t* params) {
+  
   unsigned int Nst = params->faest_param.Nwd;
 
   for (unsigned int c = 0; c < Nst; c++) {
@@ -1555,10 +1556,10 @@ static void aes_128_bitwise_mix_column_prover(uint8_t* out, bf128_t* out_tag, ui
       }
       // :5
       b_bits[r*8 + 0] = a_bits[r*8 + 7];
-      b_bits[r*8 + 1] = bf128_add(a_bits[r*8 + 0], a_bits[r*8 + 7]);
+      b_bits[r*8 + 1] = a_bits[r*8 + 0] ^ a_bits[r*8 + 7];
       b_bits[r*8 + 2] = a_bits[r*8 + 1];
-      b_bits[r*8 + 3] = bf128_add(a_bits[r*8 + 2], a_bits[r*8 + 7]);
-      b_bits[r*8 + 4] = bf128_add(a_bits[r*8 + 3], a_bits[r*8 + 7]);
+      b_bits[r*8 + 3] = a_bits[r*8 + 2] ^ a_bits[r*8 + 7];
+      b_bits[r*8 + 4] = a_bits[r*8 + 3] ^ a_bits[r*8 + 7];
       b_bits[r*8 + 5] = a_bits[r*8 + 4];
       b_bits[r*8 + 6] = a_bits[r*8 + 5];
       b_bits[r*8 + 7] = a_bits[r*8 + 6];
@@ -2720,59 +2721,61 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     bf128_t* s_tag = faest_aligned_alloc(BF128_ALIGN, Nstbits * sizeof(bf128_t));
     aes_128_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag, params);
 
-    // // ::31
-    // for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
-    //   bf128_t bf_s_deg1;
-    //   bf128_t bf_s_deg0;
-    //   bf128_t bf_s_sq_deg1;
-    //   bf128_t bf_s_sq_deg0;
-    //   // ::32
-    //   bf_s_deg1 = bf128_byte_combine_bits(s + 8*byte_i);
-    //   bf_s_deg0 = bf128_byte_combine(s_tag + 8*byte_i);
-    //   // ::32
-    //   bf_s_sq_deg1 = bf128_byte_combine_bits_sq(s + 8*byte_i);
-    //   bf_s_sq_deg0 = bf128_byte_combine_sq(s_tag + 8*byte_i);
+    // ::31
+    for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
+      bf128_t s_deg1;
+      bf128_t s_deg0;
+      bf128_t s_sq_deg1;
+      bf128_t s_sq_deg0;
+      // ::32
+      s_deg1 = bf128_byte_combine_bits(s + 8*byte_i);      // taking 8 uint8 "bits"
+      s_deg0 = bf128_byte_combine(s_tag + 8*byte_i);
+      // ::33
+      s_sq_deg1 = bf128_byte_combine_bits_sq(s + 8*byte_i);    // taking 8 uint8 "bits"
+      s_sq_deg0 = bf128_byte_combine_sq(s_tag + 8*byte_i);
 
-    //   // ::36
-    //   // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
-    //   //    deg0: s_sq[0] * st[0]
-    //   //    deg1: s_sq[0] * st[1] + s_sq[1] * st[0]
-    //   //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
-    //   //
-    //   z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf128_mul(bf_s_sq_deg0, st_b_deg0[0][byte_i]);
-    //   z_deg1[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(
-    //           bf128_mul(bf_s_sq_deg0, st_b_deg1[0][byte_i]),
-    //           bf128_mul(bf_s_sq_deg1, st_b_deg0[0][byte_i])
-    //         );
-    //   z_deg2[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(
-    //           bf128_add(
-    //               bf128_mul(bf_s_sq_deg0, st_b_deg2[0][byte_i]),
-    //               bf128_mul(bf_s_sq_deg1, st_b_deg1[0][byte_i])),
-    //             bf_s_deg0);
-    //   // ::37
-    //   // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
-    //   //    deg0: s[0] * st_{1,i}[0]
-    //   //    deg1: s[0] * st_{1,i}[1] + s[1] * st_{1,i}[0] + st_{0,i}[0]
-    //   //    deg2: s[0] * st_{1,i}[2] + s[1] * st_{1,i}[1] + st_{0,i}[1]
-    //   //
-    //   z_deg0[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_mul(bf_s_deg0, st_b_deg0[1][byte_i]);
-    //   z_deg1[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_add(
-    //           bf128_add(
-    //               bf128_mul(bf_s_deg0, st_b_deg1[1][byte_i]),
-    //               bf128_mul(bf_s_deg1, st_b_deg0[1][byte_i])),
-    //             st_b_deg0[0][byte_i]);
-    //   z_deg2[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_add(
-    //           bf128_add(
-    //               bf128_mul(bf_s_deg0, st_b_deg2[1][byte_i]),
-    //               bf128_mul(bf_s_deg1, st_b_deg1[1][byte_i])),
-    //             st_b_deg1[0][byte_i]);
-    // }
-    // if (r != R/2-1) {
-    //   uint8_t tmp_state[128];
-    //   bf128_t tmp_state_tag[128];
-    //   aes_128_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
-    //   aes_128_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag, k + (2*r+2)*Nstbits, k_tag + (2*r+2)*Nstbits, params);
-    // }
+      // ::36
+      // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
+      //    deg0: s_sq[0] * st[0]
+      //    deg1: s_sq[0] * st[1] + s_sq[1] * st[0]
+      //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
+      //
+      z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf128_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
+
+      z_deg1[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(
+              bf128_mul(s_sq_deg0, st_b_deg1[0][byte_i]),
+              bf128_mul(s_sq_deg1, st_b_deg0[0][byte_i])
+            );
+      z_deg2[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(
+              bf128_add(
+                  bf128_mul(s_sq_deg0, st_b_deg2[0][byte_i]),
+                  bf128_mul(s_sq_deg1, st_b_deg1[0][byte_i])),
+                s_deg0);
+      // ::37
+      // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
+      //    deg0: s[0] * st_{1,i}[0]
+      //    deg1: s[0] * st_{1,i}[1] + s[1] * st_{1,i}[0] + st_{0,i}[0]
+      //    deg2: s[0] * st_{1,i}[2] + s[1] * st_{1,i}[1] + st_{0,i}[1]
+      //
+      z_deg0[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_mul(s_deg0, st_b_deg0[1][byte_i]);
+      z_deg1[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_add(
+              bf128_add(
+                  bf128_mul(s_deg0, st_b_deg1[1][byte_i]),
+                  bf128_mul(s_deg1, st_b_deg0[1][byte_i])),
+                st_b_deg0[0][byte_i]);
+      z_deg2[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_add(
+              bf128_add(
+                  bf128_mul(s_deg0, st_b_deg2[1][byte_i]),
+                  bf128_mul(s_deg1, st_b_deg1[1][byte_i])),
+                st_b_deg1[0][byte_i]);
+      
+    }
+    if (r != (R/2)-1) {
+      uint8_t* tmp_state = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+      bf128_t* tmp_state_tag = faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t));
+      aes_128_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
+      aes_128_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag, k + (2*r+2)*Nstbits, k_tag + (2*r+2)*Nstbits, params);
+    }
 
     faest_aligned_free(s_tilde_tag);
     faest_aligned_free(s_dash_dash_tag);
@@ -2781,6 +2784,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     free(s_dash_dash);
     free(s);
   }
+
   faest_aligned_free(state_sq_bytewise_deg0);
   faest_aligned_free(state_sq_bytewise_deg1);
   faest_aligned_free(state_sq_bytewise_deg2);
