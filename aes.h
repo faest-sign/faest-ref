@@ -49,6 +49,7 @@ void rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plain
 
 #if defined(FAEST_TESTS)
 void aes_increment_iv(uint8_t* iv);
+uint8_t invnorm(uint8_t in);
 #endif
 
 uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_paramset_t* params);

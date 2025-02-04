@@ -208,7 +208,11 @@ static void load_state(aes_block_t state, const uint8_t* src, unsigned int block
   }
 }
 
-static uint8_t invnorm(uint8_t in) {
+#if !defined(FAEST_TESTS)
+static
+#endif
+    uint8_t
+    invnorm(uint8_t in) {
   // TODO: make constant time
   if (in == 0) {
     return 0;

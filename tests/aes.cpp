@@ -441,4 +441,11 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes128) {
 //   BOOST_TEST(extended_witness == rijndael_em_256_tv::expected_extended_witness);
 // }
 
+BOOST_AUTO_TEST_CASE(test_invnorm) {
+  BOOST_TEST(invnorm(0x01) == 1);
+  BOOST_TEST(invnorm(0x02) == (1 << 3 | 1 << 2 | 1));
+  BOOST_TEST(invnorm(0x80) == (1 << 3 | 1 << 2 | 1));
+  BOOST_TEST(invnorm(0x88) == (1 << 2 | 1));
+}
+
 BOOST_AUTO_TEST_SUITE_END()
