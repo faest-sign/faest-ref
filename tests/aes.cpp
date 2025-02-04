@@ -367,12 +367,10 @@ BOOST_AUTO_TEST_CASE(test_rijndael256) {
   BOOST_TEST(output_256 == expected_256);
 }
 
-// TODO: The following tests need to be update with the new witness size and new test vectors.
-
 BOOST_AUTO_TEST_CASE(test_extend_witness_aes128) {
   namespace tv = aes_witness_tvs::aes_128;
+  auto params  = faest_get_paramset(FAEST_128S);
 
-  auto params = faest_get_paramset(FAEST_128S); // Just using the FAEST-128s
   uint8_t* extwit =
       aes_extend_witness(tv::sk.data() + params->faest_param.owf_input_size, tv::sk.data(), params);
 
@@ -385,61 +383,91 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes128) {
 
   BOOST_TEST(expected_witness == witness);
 }
-//
-// BOOST_AUTO_TEST_CASE(test_extend_witness_rijndael_em128) {
-//   std::array<uint8_t, 160> extended_witness = {};
-//   faest_paramset_t params = *faest_get_paramset(FAEST_EM_128S); // Just using the FAEST-128s
-//   uint8_t* extwit =
-//       aes_extend_witness(rijndael_em_128_tv::key.data(), rijndael_em_128_tv::in.data(), &params);
-//   memcpy(extended_witness.data(), extwit, 160);
-//   free(extwit);
-//
-//   BOOST_TEST(extended_witness == rijndael_em_128_tv::expected_extended_witness);
-// }
-//
-// BOOST_AUTO_TEST_CASE(test_extend_witness_aes192) {
-//   std::array<uint8_t, 408> extended_witness = {};
-//   faest_paramset_t params = *faest_get_paramset(FAEST_192S); // Just using the FAEST-128s
-//   uint8_t* extwit =
-//       aes_extend_witness(aes_ctr_192_tv::key.data(), aes_ctr_192_tv::in.data(), &params);
-//   memcpy(extended_witness.data(), extwit, 408);
-//   free(extwit);
-//
-//   BOOST_TEST(extended_witness == aes_ctr_192_tv::expected_extended_witness);
-// }
-//
-// BOOST_AUTO_TEST_CASE(test_extend_witness_rijndael_em192) {
-//   std::array<uint8_t, 288> extended_witness = {};
-//   faest_paramset_t params = *faest_get_paramset(FAEST_EM_192S); // Just using the FAEST-192s
-//   uint8_t* extwit =
-//       aes_extend_witness(rijndael_em_192_tv::key.data(), rijndael_em_192_tv::in.data(), &params);
-//   memcpy(extended_witness.data(), extwit, 288);
-//   free(extwit);
-//
-//   BOOST_TEST(extended_witness == rijndael_em_192_tv::expected_extended_witness);
-// }
-//
-// BOOST_AUTO_TEST_CASE(test_extend_witness_aes256) {
-//   std::array<uint8_t, 500> extended_witness = {};
-//   faest_paramset_t params = *faest_get_paramset(FAEST_256S); // Just using the FAEST-128s
-//   uint8_t* extwit =
-//       aes_extend_witness(aes_ctr_256_tv::key.data(), aes_ctr_256_tv::in.data(), &params);
-//   memcpy(extended_witness.data(), extwit, 500);
-//   free(extwit);
-//
-//   BOOST_TEST(extended_witness == aes_ctr_256_tv::expected_extended_witness);
-// }
-//
-// BOOST_AUTO_TEST_CASE(test_extend_witness_rijndael_em256) {
-//   std::array<uint8_t, 448> extended_witness = {};
-//   faest_paramset_t params = *faest_get_paramset(FAEST_EM_256S); // Just using the FAEST-256s
-//   uint8_t* extwit =
-//       aes_extend_witness(rijndael_em_256_tv::key.data(), rijndael_em_256_tv::in.data(), &params);
-//   memcpy(extended_witness.data(), extwit, 448);
-//   free(extwit);
-//
-//   BOOST_TEST(extended_witness == rijndael_em_256_tv::expected_extended_witness);
-// }
+
+BOOST_AUTO_TEST_CASE(test_extend_witness_aes192) {
+  namespace tv = aes_witness_tvs::aes_192;
+  auto params  = faest_get_paramset(FAEST_192S);
+
+  uint8_t* extwit =
+      aes_extend_witness(tv::sk.data() + params->faest_param.owf_input_size, tv::sk.data(), params);
+
+  std::vector<uint8_t> witness{extwit, extwit + sizeof(tv::witness)};
+  std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
+  free(extwit);
+
+  print_array(witness);
+  print_array(expected_witness);
+
+  BOOST_TEST(expected_witness == witness);
+}
+
+BOOST_AUTO_TEST_CASE(test_extend_witness_aes256) {
+  namespace tv = aes_witness_tvs::aes_256;
+  auto params  = faest_get_paramset(FAEST_256S);
+
+  uint8_t* extwit =
+      aes_extend_witness(tv::sk.data() + params->faest_param.owf_input_size, tv::sk.data(), params);
+
+  std::vector<uint8_t> witness{extwit, extwit + sizeof(tv::witness)};
+  std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
+  free(extwit);
+
+  print_array(witness);
+  print_array(expected_witness);
+
+  BOOST_TEST(expected_witness == witness);
+}
+
+BOOST_AUTO_TEST_CASE(test_extend_witness_em128) {
+  namespace tv = aes_witness_tvs::em_128;
+  auto params  = faest_get_paramset(FAEST_EM_128S);
+
+  uint8_t* extwit =
+      aes_extend_witness(tv::sk.data() + params->faest_param.owf_input_size, tv::sk.data(), params);
+
+  std::vector<uint8_t> witness{extwit, extwit + sizeof(tv::witness)};
+  std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
+  free(extwit);
+
+  print_array(witness);
+  print_array(expected_witness);
+
+  BOOST_TEST(expected_witness == witness);
+}
+
+BOOST_AUTO_TEST_CASE(test_extend_witness_em192) {
+  namespace tv = aes_witness_tvs::em_192;
+  auto params  = faest_get_paramset(FAEST_EM_192S);
+
+  uint8_t* extwit =
+      aes_extend_witness(tv::sk.data() + params->faest_param.owf_input_size, tv::sk.data(), params);
+
+  std::vector<uint8_t> witness{extwit, extwit + sizeof(tv::witness)};
+  std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
+  free(extwit);
+
+  print_array(witness);
+  print_array(expected_witness);
+
+  BOOST_TEST(expected_witness == witness);
+}
+
+BOOST_AUTO_TEST_CASE(test_extend_witness_em256) {
+  namespace tv = aes_witness_tvs::em_256;
+  auto params  = faest_get_paramset(FAEST_EM_256S);
+
+  uint8_t* extwit =
+      aes_extend_witness(tv::sk.data() + params->faest_param.owf_input_size, tv::sk.data(), params);
+
+  std::vector<uint8_t> witness{extwit, extwit + sizeof(tv::witness)};
+  std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
+  free(extwit);
+
+  print_array(witness);
+  print_array(expected_witness);
+
+  BOOST_TEST(expected_witness == witness);
+}
 
 BOOST_AUTO_TEST_CASE(test_invnorm) {
   BOOST_TEST(invnorm(0x01) == 1);
