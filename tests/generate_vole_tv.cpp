@@ -50,7 +50,7 @@ int main() {
     chal.resize(lambda_bytes);
     c.resize((params.faest_param.tau - 1) * ell_hat_bytes);
     decom_i.resize(com_size * params.faest_param.tau + params.faest_param.T_open * lambda_bytes);
-    u.resize(ell_hat_bytes * params.faest_param.tau);
+    u.resize(ell_hat_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
