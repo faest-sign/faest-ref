@@ -395,6 +395,7 @@ void aes_128_inv_norm_constraints_verifier(bf128_t* z_eval, const bf128_t* conju
                   bf128_mul(delta, delta)));
 }
 
+/*
 // TODO:
 // INV NORM CONSTRAINTS 192/256
 //
@@ -450,6 +451,7 @@ void aes_128_inv_norm_constraints_verifier(bf128_t* z_eval, const bf128_t* conju
 //                         state_bits_key[4]),
 //               state_bits_key[0]);
 // }
+*/
 
 // STATE TO BYTES
 void aes_128_state_to_bytes_prover(bf128_t* out, bf128_t* out_tag, const uint8_t* k, const bf128_t* k_tag, const faest_paramset_t* params) {
@@ -2431,7 +2433,6 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
   unsigned int lambda = params->faest_param.lambda;
   unsigned int Nk = lambda/32;
   unsigned int r_prime;
-  uint16_t blocksize = 32 * params->faest_param.Nwd;
 
   bool do_rot_word = false;
   if (lambda == 256) {
