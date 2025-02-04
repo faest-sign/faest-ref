@@ -497,6 +497,8 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
     w += lambda / 8;
   }
 
+  assert(w - w_out == params->faest_param.Lke / 8);
+
   // Step 10
   // common part for AES-128, EM-128, EM-192, EM-256, first part for AES-192 and AES-256
   {
@@ -561,6 +563,8 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
     }
     // last round is not commited to, so not computed
   }
+
+  assert(w - w_out == l / 8);
 
   return w_out;
 }
