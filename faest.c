@@ -376,7 +376,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     u_bits[bit_i] = (u[bit_i/8] >> bit_i%8) & 1;
   }
   aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w_bits, u_bits, V,
-            owf_input, owf_output, chall_2, params);
+            owf_input, owf_output, chall_2, params);    // Better not make the owf_in and owf_out bit per uint8
 
   free_pointer_array(&V);
   free(w);

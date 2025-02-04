@@ -3014,47 +3014,45 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
     
     unsigned int idx = 0;
     for (unsigned int r = 0; r < R; r++) {
-      for (unsigned int n = 0; n < Nk; n++) {
-        Rkeys[idx] = round_keys.round_keys[r][n/2][n%2];
-        idx++;
+      for (unsigned int n = 0; n < Nst; n++) {
+        for (unsigned int i = 0; i < 4; i++) {
+          Rkeys[idx] = round_keys->round_keys[r][n][i];
+          idx++;
+        }
       }
     }
-    // ::9
-    constant_to_vole_128_prover(Rkeys_tag, Nk*R);
+    free(round_keys);
+    // ::9 gives zero tags
 
     // ::10
-    for (unsigned int i = 0; i < lambda/8; i++) {
+    for (unsigned int i = 0; i < lambda; i++) {
       in[i] = w[i];
-      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-        in_tag[i*8 + bit_i] = w_tag[i*8 + bit_i];
-      }
+      in_tag[i] = w_tag[i];
     }
     // ::11
-    for (unsigned int i = 0; i < lambda/8; i++) {
-      out[i] = w[i] + owf_out[i];
-      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-        out_tag[i*8 + bit_i] = w_tag[i*8 + bit_i];
-      }
+    for (unsigned int i = 0; i < lambda; i++) {
+      out[i] = w[i] ^ ((owf_out[i/8] >> (i%8)) & 1);
+      out_tag[i] = w_tag[i];
     }
   } 
   else {
     // jump to ::13 for AES
-    for (unsigned int i = 0; i < 128; i++) {
-      in[i] = owf_in[i];
+    for (unsigned int i = 0; i < lambda; i++) {
+      in[i] = (owf_in[i/8] >> (i%8)) & 1;
     }
-    constant_to_vole_128_prover(in_tag, 128);
+    constant_to_vole_128_prover(in_tag, lambda);
 
     // ::14
-    for (unsigned int i = 0; i < 128; i++) {
-      out[i] = owf_out[i];
+    for (unsigned int i = 0; i < lambda; i++) {
+      out[i] = (owf_out[i/8] >> (i%8)) & 1;
     }
     constant_to_vole_128_prover(out_tag, lambda);
+
     // ::15 skiped as B = 1
     // ::16
-    bf128_t* z_tilde_deg0_tag = malloc(sizeof(bf128_t)*2*Ske);
-    bf128_t* z_tilde_deg1_val = malloc(sizeof(bf128_t)*2*Ske);
+    bf128_t* z_tilde_deg0_tag = (bf128_t*)malloc(2*Ske * sizeof(bf128_t));
+    bf128_t* z_tilde_deg1_val = (bf128_t*)malloc(2*Ske * sizeof(bf128_t));
     aes_128_expkey_constraints_prover(z_tilde_deg0_tag, z_tilde_deg1_val, k, k_tag, w, w_tag, params);
-    // aes_128_expkey_constraints_prover(z_deg1 + 1, z_deg2 + 1, k, k_tag, w, w_tag, params);
 
     // ::17 raise degree
     for (unsigned int i = 0; i < 2*FAEST_128F_Ske; i++) {
@@ -3068,44 +3066,31 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   }
   // ::18 b = 0
   // ::19
-  // QUESTION: why is w_tilde 8x shorter than w_tilde_tag?
-  // uint8_t* w_tilde = (uint8_t*)malloc(Lenc/8 * sizeof(uint8_t));
-  // bf128_t* w_tilde_tag = (bf128_t*)malloc(Lenc * sizeof(bf128_t));
-  // for (unsigned int i = 0; i < Lenc/8; i++) {
-  //   w_tilde[i] = w[Lke/8 + i];  // copying 8 bits at a time
-  // }
-  // for (unsigned int i = 0; i < Lenc; i++) {
-  //   w_tilde_tag[i] = w_tag[Lke + i];  // copying 1 bit's tag at a time
-  // }
-  uint8_t* w_tilde = w + Lke;
-  bf128_t* w_tilde_tag = w_tag + Lke;
-  bf128_t* z_tilde_deg0_ptr = z_deg0 + 1 + 2*Ske;
-  bf128_t* z_tilde_deg1_ptr = z_deg1 + 1 + 2*Ske;
-  bf128_t* z_tilde_deg2_ptr = z_deg2 + 1 + 2*Ske;
+  uint8_t* w_tilde = (uint8_t*)malloc(Lenc * sizeof(uint8_t));
+  bf128_t* w_tilde_tag = (bf128_t*)malloc(Lenc * sizeof(bf128_t));
+
+  for (unsigned int i = 0; i < Lenc; i++) {
+    w_tilde[i] = w[Lke + i];
+    w_tilde_tag[i] = w_tag[Lke + i];
+  }
   // ::20 not needed for AES-128
   // ::21
-  // bf128_t* z_tilde_deg0 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
-  // bf128_t* z_tilde_deg1 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
-  // bf128_t* z_tilde_deg2 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
-  // TODO: leave this out for now
-  //aes_128_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, owf_in, owf_out, w, w_tag, params);
+  bf128_t* z_tilde_deg0 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
+  bf128_t* z_tilde_deg1 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
+  bf128_t* z_tilde_deg2 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
+  bf128_t* z_tilde_deg3 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
 
-  // for (int i=0; i < 128; i++) {
-  //     in[i] = 0;
-  //     in_tag[i] = bf128_zero();
-  // }
-  
-  aes_128_enc_constraints_prover(z_tilde_deg0_ptr, z_tilde_deg1_ptr, z_tilde_deg2_ptr, in, in_tag, owf_out, out_tag, w, w_tag, k, k_tag, params);
+  aes_128_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, z_tilde_deg3, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, k, k_tag, params);
 
   // :22
-  // for (unsigned int i = 0; i < Senc; i++) {
-  //   z_deg0[1+(FAEST_128F_Ske/4+2*4) + i] = z_tilde_deg0[i];
-  //   z_deg1[1+(FAEST_128F_Ske/4+2*4) + i] = z_tilde_deg1[i];
-  //   z_deg2[1+(FAEST_128F_Ske/4+2*4) + i] = z_tilde_deg2[i];
-  // }
+  for (unsigned int i = 0; i < Senc; i++) {
+    z0_tag[1+(FAEST_128F_Ske/4+2*4) + i] = z_tilde_deg0[i];
+    z1_val[1+(FAEST_128F_Ske/4+2*4) + i] = z_tilde_deg1[i];
+    z2_gamma[1+(FAEST_128F_Ske/4+2*4) + i] = z_tilde_deg2[i];
+    // TODO: what happens to the deg4 in enc_constraints?
+  }
 
   free(Rkeys);
-  free(Rkeys_tag);
   free(in);
   free(in_tag);
   free(out);
@@ -3113,12 +3098,13 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   free(k);
   free(k_tag);
 
-  // free(w_tilde);
-  // free(w_tilde_tag);
+  free(w_tilde);
+  free(w_tilde_tag);
 
-  // free(z_tilde_deg0);
-  // free(z_tilde_deg1);
-  // free(z_tilde_deg2);
+  free(z_tilde_deg0);
+  free(z_tilde_deg1);
+  free(z_tilde_deg2);
+  free(z_tilde_deg3);
 }
 
 static void aes_192_constraints_prover(bf192_t* z0_tag, bf192_t* z1_val, bf192_t* z2_gamma, const uint8_t* w, const bf192_t* w_tag, const uint8_t* owf_in, 
@@ -3131,6 +3117,7 @@ static void aes_256_constraints_prover(bf256_t* z0_tag, bf256_t* z1_val, bf256_t
 
 }
 
+// OWF CONSTRAINTS VERIFIER
 static void aes_128_constraints_verifier(bf128_t* z0_tag, bf128_t* z1_val, bf128_t* z2_gamma, const bf128_t* w_key, const uint8_t* owf_in, 
                                         const uint8_t* owf_out, bf128_t delta, const faest_paramset_t* params, bool isEM) {
 
@@ -3243,7 +3230,7 @@ static void aes_256_constraints_verifier(bf256_t* z0_tag, bf256_t* z1_val, bf256
                                         
 }
 
-// OWF PROVE
+// OWF PROVER
 static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
@@ -3375,7 +3362,7 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 
 }
 
-// OWF VERIFY
+// OWF VERIFIER
 static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
   printf("aes verify\n");
