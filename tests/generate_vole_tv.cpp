@@ -73,6 +73,7 @@ int main() {
     print_named_array("h", "uint8_t", bavc_com.h, 2 * lambda_bytes);
     print_named_array("hashed_c", "uint8_t", hash_array(c));
     print_named_array("hashed_u", "uint8_t", hash_array(u));
+    print_named_array("u", "uint8_t", u.data(), u.size());
     print_named_array("hashed_v", "uint8_t", hash_array(v_storage));
 
     while (true) {
