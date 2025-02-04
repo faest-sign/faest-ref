@@ -3322,6 +3322,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
   unsigned int lambda = params->faest_param.lambda;
+  unsigned int lambda_bytes = lambda / 8;
   unsigned int c = params->faest_param.C;
   unsigned int ell = params->faest_param.l;
 
@@ -3331,7 +3332,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 
   // ::6-7 embed VOLE masks
   bf128_t bf_u_star_0 = bf128_load_bits(u);
-  bf128_t bf_u_star_1 = bf128_load_bits(u + lambda);
+  bf128_t bf_u_star_1 = bf128_load_bits(u + lambda_bytes);
   // ::8-9
   bf128_t bf_v_star_0 = bf128_sum_poly(w_tag);
   bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + lambda);
