@@ -2705,7 +2705,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
         aes_128_inv_norm_to_conjugates_prover(y, y_tag, norms_ptr + 4*i, norm_tags_ptr + 4*i);
 
         // ::10-11
-        aes_128_inv_norm_constraints_prover(z_deg0, z_deg1, z_deg2, state_conj + 8*i, state_conj_tag + 8*i, y, y_tag);
+        aes_128_inv_norm_constraints_prover(z_deg0 + i, z_deg1 + i, z_deg2 + i, state_conj + 8*i, state_conj_tag + 8*i, y, y_tag);
 
         // ::12
         for (unsigned int j = 0; j < 8; j++) {
@@ -3127,6 +3127,10 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   bf128_t* z_tilde_deg0 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
   bf128_t* z_tilde_deg1 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
   bf128_t* z_tilde_deg2 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
+  memset(z_tilde_deg0, 0, Senc * sizeof(bf128_t));
+  memset(z_tilde_deg1, 0, Senc * sizeof(bf128_t));
+  memset(z_tilde_deg2, 0, Senc * sizeof(bf128_t));
+
 
   aes_128_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, k, k_tag, params);
 
