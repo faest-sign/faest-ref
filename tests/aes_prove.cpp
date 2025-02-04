@@ -21,6 +21,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     const bool is_em               = params->faest_param.Lke == 0;
     const unsigned int lambda      = params->faest_param.lambda;
     const unsigned int lambdaBytes = lambda / 8;
+    const unsigned int ell = params->faest_param.l;
     const unsigned int ell_hat =
         params->faest_param.l + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
@@ -40,6 +41,10 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
                 std::back_insert_iterator(out));
     
     uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
+    std::vector<uint8_t> w_bits(ell, 0x00);  // 1 bit in per uint8_t
+    for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
+      w_bits[bit_i] = (w[bit_i/8] >> bit_i%8) & 1;
+    }
 
     // if (lambda == 128 && !is_em) {
     //   std::copy(aes_ctr_128_tv::in.begin(), aes_ctr_128_tv::in.end(),
@@ -88,7 +93,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     // prepare vole correlation
     std::vector<uint8_t> delta(lambda / 8, 0);
     delta[0] = 42;
-    std::vector<uint8_t> u(ell_hat_bytes, 0x13);
+    std::vector<uint8_t> u(ell_hat, 0x13); // 1 bit per byte
     std::vector<uint8_t> vs(ell_hat_bytes * lambda, 0x37);
     std::vector<uint8_t> qs = vs;
     std::vector<uint8_t*> V(lambda, NULL);
@@ -106,7 +111,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     //printf("w size: %d\n", w.size());
     //printf("ellhatbytes: %d\n", ell_hat_bytes);
     // masked witness d = u ^ w
-    std::vector<uint8_t> d(ell_hat_bytes, 0x13);
+    std::vector<uint8_t> d(ell_hat, 0x13);
     for (size_t i = 0; i < ell_bytes; ++i) {
       d[i] = u[i] ^ w[i];
     }
@@ -119,7 +124,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
 
     printf("testing aes_prove\n");
 
-    aes_prove(a0_tilde.data(), a1_tilde.data(), a2_tilde.data(), w, u.data(), V.data(), in.data(), out.data(), chall_2.data(), params);
+    aes_prove(a0_tilde.data(), a1_tilde.data(), a2_tilde.data(), w_bits.data(), u.data(), V.data(), in.data(), out.data(), chall_2.data(), params);
 
     uint8_t* recomputed_a0_tilde = aes_verify(d.data(), Q.data(), chall_2.data(), delta.data(),
                                              a1_tilde.data(), a2_tilde.data(), in.data(), out.data(), params);
