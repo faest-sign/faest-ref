@@ -422,7 +422,6 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
 uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_paramset_t* params) {
   const unsigned int lambda     = params->faest_param.lambda;
   const unsigned int l          = params->faest_param.l;
-  const unsigned int L_ke       = params->faest_param.Lke;
   const unsigned int S_ke       = params->faest_param.Ske;
   const unsigned int num_rounds = params->faest_param.R;
 
@@ -450,7 +449,7 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
     break;
   }
 
-  if (!L_ke) {
+  if (faest_is_em(params)) {
     // switch input and key for EM
     const uint8_t* tmp = key;
     key                = in;
@@ -480,7 +479,7 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   }
 
   // Step 4
-  if (L_ke > 0) {
+  if (!faest_is_em(params)) {
     // Key schedule constraints only needed for normal AES, not EM variant.
     for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
       memcpy(w, round_keys.round_keys[i / 4][i % 4], sizeof(aes_word_t));
