@@ -88,29 +88,6 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
                                   c.data(), ell_hat, params));
       BOOST_TEST(hcom == hcom_rec);
-      break;
-
-      for (unsigned int i = 0, running_idx = 0; i < params->faest_param.tau; ++i) {
-        const uint32_t depth =
-            bavc_max_node_depth(i, params->faest_param.tau1, params->faest_param.k);
-        const auto delta = i_delta[i];
-
-        for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
-          for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
-            if ((delta >> j) & 1) {
-              // need to correct the vole correlation
-              if (i > 0) {
-                BOOST_TEST((q[(running_idx)][inner] ^ c[(i - 1) * ell_hat_bytes + inner] ^
-                            u[inner]) == v[(running_idx)][inner]);
-              } else {
-                BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
-              }
-            } else {
-              BOOST_TEST(q[(running_idx)][inner] == v[(running_idx)][inner]);
-            }
-          }
-        }
-      }
     }
     BOOST_TEST(tested);
     bavc_clear(&bavc_com);
