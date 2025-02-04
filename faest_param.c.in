@@ -37,7 +37,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
   bool done = false;
   while (!done) {
     rand_bytes(SK_KEY(sk), @LAMBDA@  / 8);
-    done = (ptr_get_bit(SK_KEY(sk), 0) ^ ptr_get_bit(SK_KEY(sk), 1)) != 0;
+    done = (ptr_get_bit(SK_KEY(sk), 0) & ptr_get_bit(SK_KEY(sk), 1)) == 0;
     faest_declassify(&done, sizeof(done));
   }
   rand_bytes(SK_INPUT(sk), @OWF_INPUT_SIZE@);
@@ -56,7 +56,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk,
     return -1;
   }
 
-  if ((ptr_get_bit(SK_KEY(sk), 0) ^ ptr_get_bit(SK_KEY(sk), 1)) == 0) {
+  if ((ptr_get_bit(SK_KEY(sk), 0) & ptr_get_bit(SK_KEY(sk), 1)) != 0) {
     return 1;
   }
 
