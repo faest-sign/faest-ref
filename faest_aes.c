@@ -2405,7 +2405,7 @@ static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key
     y_key[i] = w_key[i]; 
   }
   // ::3
-  unsigned int i_wd = Nk;
+  unsigned int i_wd = lambda;
   // ::4-10
   for (unsigned int j = Nk; j < 4*(R + 1); j++) {
     // ::5
@@ -2433,8 +2433,12 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
   unsigned int Ske = params->faest_param.Ske;
   unsigned int lambda = params->faest_param.lambda;
   unsigned int Nk = lambda/32;
-  bool do_rot_word = true;
   unsigned int r_prime;
+
+  bool do_rot_word = false;
+  if (lambda == 256) {
+    do_rot_word = true;
+  }
 
   // ::1
   aes_128_keyexp_forward_prover(k, k_tag, w, w_tag, params);
@@ -2800,7 +2804,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
   faest_aligned_free(state_conj);
   faest_aligned_free(state_bits_tag);
   free(state_bits);
-  
+
 }
 // static aes_128_enc_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2, bf128_t* z_deg3, const bf128_t* owf_in_key, 
 //                                         const bf128_t* owf_out_key, const bf128_t* w_key, const bf128_t* k_key, const bf128_t delta,
@@ -3047,7 +3051,7 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
     // ::16
     bf128_t* z_tilde_deg0_tag = (bf128_t*)malloc(2*Ske * sizeof(bf128_t));
     bf128_t* z_tilde_deg1_val = (bf128_t*)malloc(2*Ske * sizeof(bf128_t));
-    aes_128_expkey_constraints_prover(z_tilde_deg0_tag, z_tilde_deg1_val, k, k_tag, w, w_tag, params);
+    aes_128_expkey_constraints_prover(z_tilde_deg0_tag, z_tilde_deg1_val, k, k_tag, w, w_tag, params);      // w is bit per uint8
 
     // ::17 raise degree
     for (unsigned int i = 0; i < 2*FAEST_128F_Ske; i++) {
