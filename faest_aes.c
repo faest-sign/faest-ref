@@ -1412,6 +1412,7 @@ static void aes_256_add_round_key_bytes_verifier(bf256_t* y_deg1, const bf256_t*
 
 // INVERSE SHIFT ROWS
 static void aes_128_inverse_shiftrows_prover(uint8_t* out, bf128_t* out_tag, const uint8_t* in, const bf128_t* in_tag, const faest_paramset_t* params) {
+  
   unsigned int Nst = params->faest_param.Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
@@ -1423,10 +1424,10 @@ static void aes_128_inverse_shiftrows_prover(uint8_t* out, bf128_t* out_tag, con
       else {
         i = 4*((c-r-1) % 4) + r;
       }
-
-      for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
-        out[8*(4*c + r) + byte_idx] = in[8*i + byte_idx];
-        out_tag[8*(4*c + r) + byte_idx] = in_tag[8*i + byte_idx];
+      // TODO: I am sure there is something fishy here!!!!!!
+      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+        out[8*(4*c + r) + bit_i] = in[8*i + bit_i];             // moving bitwise
+        out_tag[8*(4*c + r) + bit_i] = in_tag[8*i + bit_i];
       }
     }
   }
@@ -2076,73 +2077,15 @@ static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint
   for (unsigned int i = 0; i < Nstbytes; i++) {
     aes_128_inverse_affine_byte_prover(y + i*8, y_tag + i*8, x + i*8, x_tag + i*8);
   }
-  //   uint8_t x_bits[8];
-  //   bf128_t x_bits_tag[8];
-  //   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-  //     x_bits[bit_i] = (x[i] >> bit_i) & 1;
-  //     x_bits_tag[bit_i] = x_tag[i*8 + bit_i];
-  //   }
-
-  //   uint8_t y_bits[8];
-  //   bf128_t y_bits_tag[8];
-  //   uint8_t c = 0;
-  //   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-  //     if (bit_i == 0 || bit_i == 2) {
-  //       c = 1;
-  //     } else {
-  //       c = 0;
-  //     }
-  //     // bf128_t* c_tag = (bf128_t*)malloc(sizeof(bf128_t)*state_size_bytes);
-  //     // constant_to_vole_128_prover(c_tag);
-  //     y_bits[bit_i] = x_bits[(bit_i - 1 + 8)%8] ^ x_bits[(bit_i - 3 + 8)%8] ^ x_bits[(bit_i - 6 + 8)%8] ^ c;
-  //     y_bits_tag[bit_i] = bf128_add(
-  //                                   bf128_add(x_bits_tag[(bit_i - 1 + 8)%8], x_bits_tag[(bit_i - 3 + 8)%8]),
-  //                                   x_bits_tag[(bit_i - 6 + 8)%8]);
-  //   }
-
-  //   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-  //     y[i] &= (y_bits[bit_i] << bit_i);
-  //     y_tag[i * 8 + bit_i] = y_bits_tag[bit_i];
-  //   }
-  // }
 }
 static void aes_128_inverse_affine_verifier(bf128_t* y_key, const bf128_t* x_key, bf128_t delta, const faest_paramset_t* params) {
   uint16_t Nst = params->faest_param.Nwd;
-  uint16_t Nstbits = Nst*32;
+  uint16_t Nstbytes = Nst*4;
 
-  for (unsigned int i = 0; i < Nstbits; i++) {
+  for (unsigned int i = 0; i < Nstbytes; i++) {
     aes_128_inverse_affine_byte_verifier(y_key + i*8, x_key + i*8, delta);
   }
 }
-  
-//   unsigned int state_size_bytes = 16;
-
-//   for (unsigned int i = 0; i < state_size_bytes; i++) {
-//     bf128_t x_bits_key[8];
-//     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-//       x_bits_key[bit_i] = x_key[i*8 + bit_i];
-//     }
-
-//     bf128_t y_bits_key[8];
-//     uint8_t c = 0;
-//     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-//       if (bit_i == 0 || bit_i == 2) {
-//         c = 1;
-//       } else {
-//         c = 0;
-//       }
-//       bf128_t c_tag;
-//       constant_to_vole_128_verifier(&c_tag, &c, delta, 1);
-//       y_bits_key[bit_i] = bf128_add(
-//                                     bf128_add(x_bits_key[(bit_i - 1 + 8)%8], x_bits_key[(bit_i - 3 + 8)%8]),
-//                                     bf128_add(x_bits_key[(bit_i - 6 + 8)%8], c_tag));
-//     }
-
-//     for (unsigned int bit_i = 0; bit_i < state_size_bytes; bit_i++) {
-//       y_key[i * 8 + bit_i] = y_bits_key[bit_i];
-//     }
-//   }
-// }
 
 static void aes_192_inverse_affine_prover(uint8_t* y, bf192_t* y_tag, const uint8_t* x, const bf192_t* x_tag) {
   
@@ -2755,7 +2698,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     }
     // ::23-24
     uint8_t* s_tilde = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
-    bf128_t* s_tilde_tag = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));;
+    bf128_t* s_tilde_tag = faest_aligned_alloc(BF128_ALIGN, Nstbits * sizeof(bf128_t));
     if (r == R/2 - 1) {
       // ::25
       aes_128_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag, k + r*Nstbits, k_tag + r*Nstbits, params);
@@ -2769,12 +2712,12 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
       }
     }
     // ::29
-    uint8_t s_dash_dash[128];
-    bf128_t s_dash_dash_tag[128];
-    aes_128_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
+    uint8_t* s_dash_dash = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+    bf128_t* s_dash_dash_tag = faest_aligned_alloc(BF128_ALIGN, Nstbits * sizeof(bf128_t));
+    aes_128_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);   // TODO: check the bitwise shift operation in the function, looks fishy
     // ::30
-    uint8_t s[128];
-    bf128_t s_tag[128];
+    uint8_t* s = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+    bf128_t* s_tag = faest_aligned_alloc(BF128_ALIGN, Nstbits * sizeof(bf128_t));
     aes_128_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag, params);
 
     // // ::31
@@ -2832,7 +2775,11 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     // }
 
     faest_aligned_free(s_tilde_tag);
+    faest_aligned_free(s_dash_dash_tag);
+    faest_aligned_free(s_tag);
     free(s_tilde);
+    free(s_dash_dash);
+    free(s);
   }
   faest_aligned_free(state_sq_bytewise_deg0);
   faest_aligned_free(state_sq_bytewise_deg1);
