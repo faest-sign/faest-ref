@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(test_sign_tv) {
              random_seed.data(), random_seed.size(), sig.data(), &sig_size) == 0);
   BOOST_TEST(sig == tv::signature);
   BOOST_TEST(faest_@PARAM_L@_verify(tv::pk.data(),
-             message.data(), message.size(), sig.data(), sig.size()) == 0);
+             message.data(), message.size(), tv::signature.data(), tv::signature.size()) == 0);
   // clang-format on
 }
 
