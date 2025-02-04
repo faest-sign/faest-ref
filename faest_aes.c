@@ -2086,9 +2086,9 @@ static void aes_128_inverse_affine_byte_verifier(bf128_t* y_bits_key, const bf12
 
 static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, const faest_paramset_t* params) {
   uint16_t Nst = params->faest_param.Nwd;
-  uint16_t Nstbits = Nst*32;
+  uint16_t Nstbytes = Nst*4;
 
-  for (unsigned int i = 0; i < Nstbits; i++) {
+  for (unsigned int i = 0; i < Nstbytes; i++) {
     aes_128_inverse_affine_byte_prover(y + i*8, y_tag + i*8, x + i*8, x_tag + i*8);
   }
   //   uint8_t x_bits[8];
@@ -2790,14 +2790,15 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     // ::29
     //
     // STOP: memory issue occurs in aes_128_inverse_affine_prover
+    //      - LB: fixed
     //
-    // uint8_t s_dash_dash[128];
-    // bf128_t s_dash_dash_tag[128];
-    // aes_128_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
-    // // // ::30
-    // uint8_t s[128];
-    // bf128_t s_tag[128];
-    // aes_128_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag, params);
+    uint8_t s_dash_dash[128];
+    bf128_t s_dash_dash_tag[128];
+    aes_128_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
+    // ::30
+    uint8_t s[128];
+    bf128_t s_tag[128];
+    aes_128_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag, params);
 
     // // ::31
     // for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
