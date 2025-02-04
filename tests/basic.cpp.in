@@ -101,4 +101,26 @@ BOOST_AUTO_TEST_CASE(test_sign_tv) {
   // clang-format on
 }
 
+BOOST_AUTO_TEST_CASE(test_sign_tv_2) {
+  namespace tv = faest_tvs::faest_@PARAM_L@;
+  using faest_tvs::message;
+  using faest_tvs::random_seed;
+
+  BOOST_TEST(tv::sk.size() == private_key_size);
+  BOOST_TEST(tv::pk.size() == public_key_size);
+  BOOST_TEST(tv::signature.size() == signature_size);
+  std::array<uint8_t, signature_size> sig;
+
+  size_t sig_size = signature_size;
+  // clang-format off
+  BOOST_TEST(faest_@PARAM_L@_validate_keypair(tv::pk.data(), tv::sk.data()) == 0);
+  BOOST_TEST(faest_@PARAM_L@_sign_with_randomness(tv::sk.data(),
+             message.data(), message.size(),
+             random_seed.data(), random_seed.size(), sig.data(), &sig_size) == 0);
+  BOOST_TEST(sig == tv::signature);
+  BOOST_TEST(faest_@PARAM_L@_verify(tv::pk.data(),
+             message.data(), message.size(), sig.data(), sig.size()) == 0);
+  // clang-format on
+}
+
 BOOST_AUTO_TEST_SUITE_END()
