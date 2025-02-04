@@ -39,26 +39,27 @@ typedef enum faest_paramid_t {
 } faest_paramid_t;
 
 typedef struct faest_param_t {
-  // main parameters (Table 4.1)
+  // main parameters
   uint16_t lambda;
   uint8_t tau;
   uint8_t w_grind;
   uint16_t T_open;
   uint16_t l;
 
-  // extra parameters (Table 4.2)
+  // extra parameters
   uint16_t k;
   uint8_t tau0;
   uint8_t tau1;
   uint32_t L;
 
-  // OWF parameters (Table 1.1 and TODO)
+  // OWF parameters
   uint16_t Nwd;
   uint16_t Ske;
   uint16_t R;
   uint16_t Senc;
   uint16_t Lke;
   uint16_t Lenc;
+  uint16_t C;
 
   // additional parameters
   uint16_t sig_size;
