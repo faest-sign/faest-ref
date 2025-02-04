@@ -30,7 +30,7 @@ int main() {
     std::array<uint8_t, 16> iv;
 
     key.resize(lambda / 8);
-    output.resize(15 * 16);
+    output.resize(14 * 16 + 8);
 
     std::generate(key.begin(), key.end(), [&rd, &distrib] { return distrib(rd); });
     std::generate(iv.begin(), iv.end(), [&rd, &distrib] { return distrib(rd); });
