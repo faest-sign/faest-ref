@@ -2983,24 +2983,26 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
 static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2, const uint8_t* w, const bf128_t* w_tag, const uint8_t* owf_in, 
                                         const uint8_t* owf_out, const faest_paramset_t* params, bool isEM) {
 
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int R = params->faest_param.R;
-  unsigned int Ske = params->faest_param.Ske;
-  unsigned int Lke = lambda + 8*Ske;
-  unsigned int Lenc = params->faest_param.Lenc;
-  unsigned int Senc = params->faest_param.Senc;
-  unsigned int Nk = params->faest_param.lambda/32;
+  unsigned int lambda = FAEST_128F_LAMBDA ;
+  unsigned int R = FAEST_128F_R;
+  unsigned int Ske = FAEST_128F_Ske;
+  unsigned int Lke = FAEST_128F_Lke;
+  unsigned int Lenc = FAEST_128F_Lenc;
+  unsigned int Senc = FAEST_128F_Senc;
+  unsigned int Nk = lambda/32;
+  unsigned int Nst = FAEST_128F_Nwd;                  // In Round 1, Nwd was Nst
   uint16_t blocksize = 128;
+  // unsigned int c = FAEST_128F_C;;
   // ::1-3 owf_in, owf_out, z and z_tag
-  int c = 2*Ske + (3/2)*Senc + 1;
+  
   // ::4-5
   z_deg1[0] = bf128_mul(w_tag[0], w_tag[1]);
   z_deg2[0] = bf128_add(
       bf128_mul_bit(w_tag[0], w[1]),
       bf128_mul_bit(w_tag[1], w[0]));
   // ::7-8
-  uint8_t* Rkeys = (uint8_t*)malloc(Nk*R); // storing this as uint8
-  bf128_t* Rkeys_tag = (bf128_t*)malloc(sizeof(bf128_t)* Nk*R);
+  uint8_t* Rkeys = (uint8_t*)malloc(4*Nst*R); // storing this as uint8
+  // bf128_t* Rkeys_tag = (bf128_t*)malloc(sizeof(bf128_t)* 4*Nst*R);
   uint8_t* in = (uint8_t*)malloc(blocksize);
   bf128_t* in_tag = (bf128_t*)malloc(sizeof(bf128_t) * blocksize);
   uint8_t* out = (uint8_t*)malloc(blocksize);
@@ -3016,12 +3018,11 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
     for (unsigned int r = 0; r < R; r++) {
       for (unsigned int n = 0; n < Nst; n++) {
         for (unsigned int i = 0; i < 4; i++) {
-          Rkeys[idx] = round_keys->round_keys[r][n][i];
+          Rkeys[idx] = round_keys.round_keys[r][n][i];
           idx++;
         }
       }
     }
-    free(round_keys);
     // ::9 gives zero tags
 
     // ::10
@@ -3078,16 +3079,14 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   bf128_t* z_tilde_deg0 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
   bf128_t* z_tilde_deg1 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
   bf128_t* z_tilde_deg2 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
-  bf128_t* z_tilde_deg3 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
 
-  aes_128_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, z_tilde_deg3, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, k, k_tag, params);
+  aes_128_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, k, k_tag, params);
 
   // :22
   for (unsigned int i = 0; i < Senc; i++) {
-    z0_tag[1+(FAEST_128F_Ske/4+2*4) + i] = z_tilde_deg0[i];
-    z1_val[1+(FAEST_128F_Ske/4+2*4) + i] = z_tilde_deg1[i];
-    z2_gamma[1+(FAEST_128F_Ske/4+2*4) + i] = z_tilde_deg2[i];
-    // TODO: what happens to the deg4 in enc_constraints?
+    z_deg0[1+(2*FAEST_128F_Ske) + i] = z_tilde_deg0[i];
+    z_deg1[1+(2*FAEST_128F_Ske) + i] = z_tilde_deg1[i];
+    z_deg2[1+(2*FAEST_128F_Ske) + i] = z_tilde_deg2[i];
   }
 
   free(Rkeys);
@@ -3104,7 +3103,6 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   free(z_tilde_deg0);
   free(z_tilde_deg1);
   free(z_tilde_deg2);
-  free(z_tilde_deg3);
 }
 
 static void aes_192_constraints_prover(bf192_t* z0_tag, bf192_t* z1_val, bf192_t* z2_gamma, const uint8_t* w, const bf192_t* w_tag, const uint8_t* owf_in, 
@@ -3366,18 +3364,18 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
   printf("aes verify\n");
-  const unsigned int tau = params->faest_param.tau;
-  const unsigned int t0  = params->faest_param.tau0;
-  const unsigned int k0  = params->faest_param.k;
-  const unsigned int t1  = params->faest_param.tau1;
-  const unsigned int k1  = (t0 != 0) ? k0 - 1 : k0;
+  // const unsigned int tau = params->faest_param.tau;
+  // const unsigned int t0  = params->faest_param.tau0;
+  // const unsigned int k0  = params->faest_param.k;
+  // const unsigned int t1  = params->faest_param.tau1;
+  // const unsigned int k1  = (t0 != 0) ? k0 - 1 : k0;
   unsigned int lambda = params->faest_param.lambda;
   unsigned int ske = params->faest_param.Ske;
   unsigned int senc = params->faest_param.Senc;
   // TODO: CHANGE THIS FOR OTHER SETTING WHEN COPY PASTING!!!!!
-  unsigned int beta = 1;
+  // unsigned int beta = 1;
   unsigned int c = 2*ske + (3/2)*senc + 1;
-  unsigned int ell = params->faest_param.L; // TODO: I hope L is ELL, that is l_ke + l_enc from Fig. 1.5
+  // unsigned int ell = params->faest_param.L; // TODO: I hope L is ELL, that is l_ke + l_enc from Fig. 1.5
 
   // ::1
   bf128_t bf_delta = bf128_load(chall_3);
