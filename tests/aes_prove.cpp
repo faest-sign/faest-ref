@@ -273,10 +273,17 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     if (!(lambda == 128 && !is_em)) {
       return;
     }
-    std::copy(aes_ctr_128_tv::in.begin(), aes_ctr_128_tv::in.end(),
-                std::back_insert_iterator(in));
-    std::copy(aes_ctr_128_tv::out.begin(), aes_ctr_128_tv::out.end(),
-                std::back_insert_iterator(out));
+
+    for (const auto byte : aes_ctr_128_tv::in) {
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+            in.push_back((byte >> bit_i) & 1);
+        }
+    }
+    for (const auto byte : aes_ctr_128_tv::out) {
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+            out.push_back((byte >> bit_i) & 1);
+        }
+    }
     
     uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
     std::vector<uint8_t> w_bits(ell, 0x00);  // 1 bit in per uint8_t
