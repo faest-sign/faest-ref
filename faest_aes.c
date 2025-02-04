@@ -3321,7 +3321,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 
   // ::1-5
   // V becomes the w_tag
-  bf128_t* w_tag = column_to_row_major_and_shrink_V_128(V, FAEST_128F_ELL); // This is the tag for w
+  bf128_t* w_tag = column_to_row_major_and_shrink_V_128(V, params->faest_param.l); // This is the tag for w
 
   // ::6-7 embed VOLE masks
   bf128_t bf_u_star_0 = bf128_load_bits(u);
@@ -3367,7 +3367,7 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 
   // ::1-5
   // V becomes the w_tag
-  bf192_t* w_tag = column_to_row_major_and_shrink_V_192(V, FAEST_192F_ELL); // This is the tag for w
+  bf192_t* w_tag = column_to_row_major_and_shrink_V_192(V, params->faest_param.l); // This is the tag for w
 
   // ::6-7 embed VOLE masks
   bf192_t bf_u_star_0 = bf192_load_bits(u);
@@ -3410,7 +3410,7 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 
   // ::1-5
   // V becomes the w_tag
-  bf256_t* w_tag = column_to_row_major_and_shrink_V_256(V, FAEST_256F_ELL); // This is the tag for w
+  bf256_t* w_tag = column_to_row_major_and_shrink_V_256(V, params->faest_param.l); // This is the tag for w
 
   // ::6-7 embed VOLE masks
   bf256_t bf_u_star_0 = bf256_load_bits(u);
