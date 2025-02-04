@@ -6,6 +6,8 @@
 #include <config.h>
 #endif
 
+#include "debug.h"
+
 #include "faest.h"
 #include "faest_aes.h"
 #include "fields.h"
@@ -3319,6 +3321,8 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
   
   // ::4-5
   z_key[0] = bf128_mul(delta, bf128_mul(w_key[0], w_key[1]));
+
+  debug_print_buf("delta", &delta, sizeof(delta));
   
   // ::7-8
   bf128_t* rkeys_key = (bf128_t*)malloc(sizeof(bf128_t) * (R+1) * blocksize);

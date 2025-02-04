@@ -6,6 +6,8 @@
 #include <config.h>
 #endif
 
+#include "debug.h"  // TODO: remove
+
 #include "faest.h"
 #include "aes.h"
 #include "faest_aes.h"
@@ -335,9 +337,13 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // ::8
   uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
   hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), iv, lambda, ell, tau);
+  debug_print_buf("P_chall_1", chall_1, lambda / 8);
 
   // ::9-10
   vole_hash(signature_u_tilde(sig, params), chall_1, u, ell, lambda);
+  debug_print_buf("P_u", u, 16);
+  debug_print_buf("P_u_tilde", dsignature_u_tilde(sig, params), 16);
+  printf("offset(P_u_tilde) = %zu\n", dsignature_u_tilde(sig, params) - sig);
 
   // ::11-12
   // To save memory consumption, the chall_2 is computed in an
@@ -352,6 +358,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
       vole_hash(V_tilde, chall_1, V[i], ell, lambda);
       // Step 14
       hash_challenge_2_update_v_tilde(&chall_2_ctx, V_tilde, lambda);
+      /* if (i < 4) */
+          /* debug_print_buf("P_V_tilde", V_tilde, 16); */
     }
   }
 
@@ -363,6 +371,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // :15
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
   hash_challenge_2_finalize(chall_2, &chall_2_ctx, signature_d(sig, params), lambda, ell);
+  debug_print_buf("P_chall_2", chall_2, lambda / 8);
 
   // ::16-20
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
@@ -371,6 +380,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
     w_bits[bit_i] = (w[bit_i/8] >> bit_i%8) & 1;
   }
+  debug_print_buf("w", w, 32);
+  debug_print_buf_bits("w_bits", w_bits, ell);
   uint8_t* u_bits = (uint8_t*)malloc(2*lambda);  // 1 bit per uint8_t
   for (unsigned int bit_i = 0; bit_i < 2*lambda; bit_i++) {
     u_bits[bit_i] = (u[(ell + bit_i)/8] >> (ell + bit_i)%8) & 1;
@@ -420,6 +431,18 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // copy counter to signature
   ctr = htole32(ctr);
   memcpy(signature_ctr(sig, params), &ctr, sizeof(ctr));
+
+  debug_print_buf("P_iv", iv, IV_SIZE);
+  debug_print_buf("P_u_tilde", dsignature_u_tilde(sig, params), 16);
+  debug_print_buf("P_c", dsignature_c(sig, 0, params), 16);
+  debug_print_buf("P_d", dsignature_d(sig, params), 16);
+  debug_print_buf("P_a1_tilde", dsignature_a1_tilde(sig, params), 16);
+  debug_print_buf("P_a2_tilde", dsignature_a2_tilde(sig, params), 16);
+  debug_print_buf("P_chall_3", dsignature_chall_3(sig, params), 16);
+  debug_print_buf("P_decom_i", dsignature_decom_i(sig, params), 16);
+  debug_print_buf("P_ctr", dsignature_ctr(sig, params), 4);
+  debug_print_buf("P_a0_tilde", a0_tilde, 16);
+  printf("======================= END PROVER ==========================\n");
 }
 
 int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,
@@ -446,6 +469,17 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   // ::3
   uint8_t iv[IV_SIZE];
   hash_iv(iv, dsignature_iv_pre(sig, params), lambda);
+
+  debug_print_buf("V_iv", iv, IV_SIZE);
+  debug_print_buf("V_u_tilde", dsignature_u_tilde(sig, params), 16);
+  debug_print_buf("V_c", dsignature_c(sig, 0, params), 16);
+  debug_print_buf("V_d", dsignature_d(sig, params), 16);
+  debug_print_buf("V_a1_tilde", dsignature_a1_tilde(sig, params), 16);
+  debug_print_buf("V_a2_tilde", dsignature_a2_tilde(sig, params), 16);
+  debug_print_buf("V_chall_3", dsignature_chall_3(sig, params), 16);
+  debug_print_buf("V_decom_i", dsignature_decom_i(sig, params), 16);
+  debug_print_buf("V_ctr", dsignature_ctr(sig, params), 4);
+
   printf("verify: step 5\n");
   // Step: 6-7
   // q is a \hat \ell \times \lambda matrix
@@ -455,6 +489,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     q[i] = q[0] + i * ell_hat_bytes;
   }
   uint8_t hcom[MAX_LAMBDA_BYTES * 2];
+
   if (!vole_reconstruct(hcom, q, iv, dsignature_chall_3(sig, params),
                         dsignature_decom_i(sig, params), dsignature_c(sig, 0, params), ell_hat,
                         params)) {
@@ -465,6 +500,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   // ::10
   uint8_t chall_1[5 * MAX_LAMBDA_BYTES + 8];
   hash_challenge_1(chall_1, mu, hcom, dsignature_c(sig, 0, params), iv, lambda, ell, tau);
+  debug_print_buf("V_chall_1", chall_1, lambda / 8);
 
   // Step 12, 14 and 15
   H2_context_t chall_2_ctx;
@@ -483,12 +519,15 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
       // Step 15
       hash_challenge_2_update_v_tilde(&chall_2_ctx, Q_tilde, lambda);
+      /* if (i < 4) */
+          /* debug_print_buf("V_Q_tilde (D)", Q_tilde, 16); */
     }
   }
 
   // Step 15
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
   hash_challenge_2_finalize(chall_2, &chall_2_ctx, dsignature_d(sig, params), lambda, ell);
+  debug_print_buf("V_chall_2", chall_2, lambda / 8);
   printf("verify: step 16\n");
   // Step 18
 
@@ -502,6 +541,9 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   const uint8_t* a0_tilde = aes_verify(d_bits, q, chall_2, dsignature_chall_3(sig, params), dsignature_a1_tilde(sig, params), dsignature_a2_tilde(sig, params), owf_input,
              owf_output, params);
 
+  debug_print_buf("V_a0_tilde", a0_tilde, 16);
+
+
   free_pointer_array(&q);
   free(d_bits);
 
@@ -510,6 +552,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   hash_challenge_3(chall_3, chall_2, a0_tilde, dsignature_a1_tilde(sig, params),
                    dsignature_a2_tilde(sig, params), dsignature_ctr(sig, params), lambda);
   free((void*)a0_tilde);
+  debug_print_buf("V_chall_3_check", chall_3, lambda / 8);
 
   // Step 21
   return memcmp(chall_3, dsignature_chall_3(sig, params), lambdaBytes) == 0 ? 0 : -1;
