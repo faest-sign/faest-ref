@@ -1673,6 +1673,7 @@ static void aes_128_bitwise_mix_column_verifier(bf128_t* out_key, bf128_t* s_key
   }
 }
 
+/*
 //
 // TODO: fix the 192/256 versions of Bitwise MixColumns
 //
@@ -2000,6 +2001,7 @@ static void aes_128_bitwise_mix_column_verifier(bf128_t* out_key, bf128_t* s_key
 
 //   }
 // }
+*/
 
 // CONSTANT TO VOLE
 static void constant_to_vole_128_prover(bf128_t* tag, unsigned int n) {
@@ -2837,6 +2839,8 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
   free(state_bits);
 
 }
+
+/*
 // static aes_128_enc_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2, bf128_t* z_deg3, const bf128_t* owf_in_key, 
 //                                         const bf128_t* owf_out_key, const bf128_t* w_key, const bf128_t* k_key, const bf128_t delta,
 //                                           const faest_paramset_t* params) {
@@ -3006,6 +3010,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
 
 // }
 // // TODO: AES 192/256
+*/
 
 // OWF CONSTRAINTS
 static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2, const uint8_t* w, const bf128_t* w_tag, const uint8_t* owf_in, 
@@ -3496,7 +3501,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   free(q_tilde);
   free(q);
 
-  uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8)*c * sizeof(uint8_t));
+  uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   bf128_store(a0_tilde, ret);
   return a0_tilde;
 
@@ -3559,7 +3564,7 @@ static uint8_t* aes_192_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   free(q_tilde);
   free(q);
 
-  uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8)*c * sizeof(uint8_t));
+  uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   bf192_store(a0_tilde, ret);
   return a0_tilde;
 
@@ -3622,7 +3627,7 @@ static uint8_t* aes_256_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   free(q_tilde);
   free(q);
 
-  uint8_t* a0_tilde = malloc((FAEST_256F_LAMBDA/8)*FAEST_256F_C);
+  uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   bf256_store(a0_tilde, ret);
   return a0_tilde;
 
