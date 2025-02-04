@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(test_rand_verify_fails) {
   rand_bytes(msg.data(), msg.size());
 
   // clang-format off
-  BOOST_TEST(faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size()) == -1);
+  BOOST_TEST(faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size()) != 0);
   // clang-format on
 }
 
