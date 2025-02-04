@@ -69,18 +69,24 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* u,
                  uint8_t** v) {
   const unsigned int lambda       = params->faest_param.lambda;
+  const unsigned int lambda_bytes = lambda / 8;
   const unsigned int ellhat_bytes = (ellhat + 7) / 8;
   const unsigned int tau          = params->faest_param.tau;
+  const unsigned int tau_1         = params->faest_param.tau1;
+  const unsigned int k             = params->faest_param.k;
 
   bavc_commit(rootKey, iv, params, bavc);
 
   uint8_t* ui = malloc(tau * ellhat_bytes);
 
   unsigned int v_idx = 0;
+  uint8_t* sd_i = bavc->sd;
   for (unsigned int i = 0; i < tau; ++i) {
     // Step 6
-    v_idx += ConvertToVole(iv, bavc->sd, false, i, ellhat_bytes,
+    v_idx += ConvertToVole(iv, sd_i, false, i, ellhat_bytes,
                            ui + i * ellhat_bytes, v[v_idx], params);
+    const unsigned int num_instances = bavc_max_node_index(i, tau_1, k);
+    sd_i += lambda_bytes * num_instances;
   }
   // ensure 0-padding up to lambda
   for (; v_idx != lambda; ++v_idx) {
@@ -126,13 +132,19 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
 
   // Step: 1
   unsigned int q_idx = 0;
+  uint8_t* sd_i = vec_com_rec.s;
   for (unsigned int i = 0; i < tau; i++) {
     // Step: 2
     const unsigned int Ni = bavc_max_node_index(i, tau1, k);
 
     // Step: 6
-    for (unsigned int j = 1; j < Ni; j++) {
-      memcpy(sd + j * lambda_bytes, vec_com_rec.s + lambda_bytes * (j ^ i_delta[i]), lambda_bytes);
+    for (unsigned int j = 0; j < Ni; j++) {
+      if (j < i_delta[i])
+        memcpy(sd + (j ^ i_delta[i]) * lambda_bytes, sd_i + lambda_bytes * j, lambda_bytes);
+      else if (j == i_delta[i])
+        continue;
+      else
+        memcpy(sd + (j ^ i_delta[i]) * lambda_bytes, sd_i + lambda_bytes * (j - 1), lambda_bytes);
     }
 
     // Step: 7..8
@@ -151,6 +163,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
                             (i_delta[i] >> d) & 1, ellhat_bytes);
       }
     }
+    sd_i += lambda_bytes * (Ni - 1);
   }
 
   // ensure 0-padding up to lambda
