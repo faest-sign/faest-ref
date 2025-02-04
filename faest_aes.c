@@ -2621,7 +2621,7 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key,
       r_prime = r;
       // ::11
       if (do_rot_word) {
-        r_prime = r + 3 % 4;
+        r_prime = (r + 3) % 4;
       }
       // ::12-15
       k_hat_key[r_prime] = bf128_byte_combine(k_key + (iwd + 8 * r)); // lifted key tag
