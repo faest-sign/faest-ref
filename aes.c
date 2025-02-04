@@ -230,18 +230,20 @@ static uint8_t invnorm(uint8_t in) {
   }
 }
 
-static void store_invnorm_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
-  for (unsigned int i = 0; i != block_words * 4 / 2; i += 2) { // going thorugh each block
+static uint8_t* store_invnorm_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
+  for (unsigned int i = 0; i != block_words * 4 / 2; i += 2, ++dst) { // going thorugh each block
     uint8_t normstate_lo = invnorm(state[i / 4][i % 4]);
     uint8_t normstate_hi = invnorm(state[i / 4][(i + 1) % 4]);
-    bf8_store(&dst[i], (normstate_hi << 4) | normstate_lo);
+    bf8_store(dst, (normstate_hi << 4) | normstate_lo);
   }
+  return dst;
 }
 
-static void store_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
-  for (unsigned int i = 0; i != block_words * 4; ++i) {
-    bf8_store(&dst[i], state[i / 4][i % 4]);
+static uint8_t* store_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
+  for (unsigned int i = 0; i != block_words * 4; ++i, ++dst) {
+    bf8_store(dst, state[i / 4][i % 4]);
   }
+  return dst;
 }
 
 static void aes_encrypt(const aes_round_keys_t* keys, aes_block_t state, unsigned int block_words,
@@ -502,11 +504,9 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
     add_round_key(0, state, &round_keys, block_words);
 
     for (unsigned int round = 0; round < num_rounds - 1; ++round) {
-
       if (round % 2 == 0) {
         // save inverse norm of the S-box inputs, in coloumn major order
-        store_invnorm_state(w, state, block_words);
-        w += sizeof(aes_word_t) * block_words / 2;
+        w = store_invnorm_state(w, state, block_words);
       }
       // Step 15
       sub_bytes(state, block_words);
@@ -514,8 +514,7 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
       shift_row(state, block_words);
       if (round % 2 == 1) {
         // Step 17
-        store_state(w, state, block_words);
-        w += sizeof(aes_word_t) * block_words;
+        w = store_state(w, state, block_words);
       }
       // Step 18
       mix_column(state, block_words);
