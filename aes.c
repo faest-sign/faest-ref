@@ -409,11 +409,8 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
     aes_increment_iv(internal_iv);
   }
   if (outlen % IV_SIZE) {
-    int ret = EVP_EncryptUpdate(ctx, out, &len, internal_iv, outlen % IV_SIZE);
-    assert(ret == 1);
-    assert(len == 0);
     uint8_t last_block[IV_SIZE];
-    ret = EVP_EncryptFinal_ex(ctx, last_block, &len);
+    int ret = EVP_EncryptUpdate(ctx, last_block, &len, internal_iv, IV_SIZE);
     assert(ret == 1);
     assert(len == (int)IV_SIZE);
     memcpy(out, last_block, outlen % IV_SIZE);
