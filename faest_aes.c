@@ -3276,9 +3276,9 @@ static void aes_128_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128
   }
   // ::20 not needed for AES-128
   // ::21
-  bf128_t* z_tilde_deg0 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
-  bf128_t* z_tilde_deg1 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
-  bf128_t* z_tilde_deg2 = (bf128_t*)malloc(Senc * sizeof(bf128_t));
+  bf128_t* z_tilde_deg0 = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
+  bf128_t* z_tilde_deg1 = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
+  bf128_t* z_tilde_deg2 = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
   memset(z_tilde_deg0, 0, num_enc_constraints * sizeof(bf128_t));
   memset(z_tilde_deg1, 0, num_enc_constraints * sizeof(bf128_t));
   memset(z_tilde_deg2, 0, num_enc_constraints * sizeof(bf128_t));
