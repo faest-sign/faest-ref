@@ -479,7 +479,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
       // Step 12
       vole_hash(Q_tilde, chall_1, q[i], ell, lambda);
       // Step 14
-      if (ptr_get_bit(chall_3, lambda)) {
+      if (ptr_get_bit(chall_3, i)) {
         xor_u8_array(Q_tilde, dsignature_u_tilde(sig, params), Q_tilde, utilde_bytes);
       }
 
