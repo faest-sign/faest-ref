@@ -2713,6 +2713,12 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     bf128_t st_b_deg1_tmp[2][16];
     bf128_t st_b_deg2_tmp[2][16];
     bf128_t dummy_key[16];
+    memset(st_b_deg0, 0x00, sizeof(st_b_deg0));
+    memset(st_b_deg1, 0x00, sizeof(st_b_deg1));
+    memset(st_b_deg2, 0x00, sizeof(st_b_deg2));
+    memset(st_b_deg0_tmp, 0x00, sizeof(st_b_deg0_tmp));
+    memset(st_b_deg1_tmp, 0x00, sizeof(st_b_deg1_tmp));
+    memset(st_b_deg2_tmp, 0x00, sizeof(st_b_deg2_tmp));
     for (unsigned int i = 0; i < 16; i++) {
       dummy_key[i] = bf128_zero();
     }
