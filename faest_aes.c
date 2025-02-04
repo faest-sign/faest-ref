@@ -2431,7 +2431,6 @@ static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_ke
 // TODO: AES 192/256
 
 // // KEY EXP FWD
-// // DONE: Looks good
 static void aes_128_keyexp_forward_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* w, const bf128_t* w_tag, const faest_paramset_t* params) {
 
   unsigned int lambda = params->faest_param.lambda;
@@ -3449,26 +3448,17 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 // OWF VERIFIER
 static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
-  printf("aes verify\n");
-  // const unsigned int tau = params->faest_param.tau;
-  // const unsigned int t0  = params->faest_param.tau0;
-  // const unsigned int k0  = params->faest_param.k;
-  // const unsigned int t1  = params->faest_param.tau1;
-  // const unsigned int k1  = (t0 != 0) ? k0 - 1 : k0;
+
   unsigned int lambda = params->faest_param.lambda;
-  unsigned int ske = params->faest_param.Ske;
-  unsigned int senc = params->faest_param.Senc;
-  // TODO: CHANGE THIS FOR OTHER SETTING WHEN COPY PASTING!!!!!
-  // unsigned int beta = 1;
-  unsigned int c = 2*ske + (3/2)*senc + 1;
-  // unsigned int ell = params->faest_param.L; // TODO: I hope L is ELL, that is l_ke + l_enc from Fig. 1.5
+  unsigned int c = params->faest_param.C;
+  unsigned int ell = params->faest_param.l;
 
   // ::1
   bf128_t bf_delta = bf128_load(chall_3);
   bf128_t bf_delta_sq = bf128_mul(bf_delta, bf_delta);
 
   // ::2-6
-  bf128_t* q = column_to_row_major_and_shrink_V_128(Q, FAEST_128F_ELL);
+  bf128_t* q = column_to_row_major_and_shrink_V_128(Q, ell);
 
   // ::7-9
   bf128_t q_star_0 = bf128_sum_poly(q);
@@ -3478,11 +3468,11 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf128_t q_star = bf128_add(q_star_0, bf128_mul(bf_delta, q_star_1));
 
   // ::11-12
-  bf128_t z0_tag[FAEST_128F_C];
-  bf128_t z1_val[FAEST_128F_C];
-  bf128_t z2_gamma[FAEST_128F_C];
-  bf128_t w_key[FAEST_128F_ELL];
-  for (unsigned int i = 0; i < FAEST_128F_ELL; i++) {
+  bf128_t* z0_tag = (bf128_t*)malloc(c * sizeof(bf128_t));
+  bf128_t* z1_val = (bf128_t*)malloc(c * sizeof(bf128_t));
+  bf128_t* z2_gamma  = (bf128_t*)malloc(c * sizeof(bf128_t));
+  bf128_t* w_key = (bf128_t*)malloc(ell * sizeof(bf128_t));
+  for (unsigned int i = 0; i < ell; i++) {
     w_key[i] = bf128_add(
                           q[i], 
                           bf128_mul(bf128_from_bit(d[i]),
@@ -3496,8 +3486,13 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   for (unsigned int i = 0; i < c; i++) {
     zk_hash_128_update(&b_ctx, z2_gamma[i]);
   }
-  uint8_t q_tilde[(FAEST_128F_LAMBDA/8)*FAEST_128F_C];
+  uint8_t* q_tilde = (uint8_t*)malloc((lambda/8)*c * sizeof(uint8_t));
   zk_hash_128_finalize(q_tilde, &b_ctx, q_star);
+
+  free(z0_tag);
+  free(z1_val);
+  free(z2_gamma);
+  free(w_key);
 
   // ::16
   bf128_t tmp1 = bf128_mul(bf128_load(a1_tilde), bf_delta);
@@ -3505,7 +3500,9 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf128_t tmp3 = bf128_add(tmp1, tmp2);
   bf128_t ret = bf128_add(bf128_load(q_tilde), tmp3);
 
-  uint8_t* a0_tilde = malloc((FAEST_128F_LAMBDA/8)*FAEST_128F_C);
+  free(q_tilde);
+
+  uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8)*c * sizeof(uint8_t));
   bf128_store(a0_tilde, ret);
   return a0_tilde;
 
@@ -3514,16 +3511,16 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
 static uint8_t* aes_192_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
 
-  // TODO: replace by constants from params s.t. it also works for EM
-  unsigned int lambda = FAEST_192F_LAMBDA;
-  unsigned int c = FAEST_192F_C;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int c = params->faest_param.C;
+  unsigned int ell = params->faest_param.l;
 
   // ::1
   bf192_t bf_delta = bf192_load(chall_3);
   bf192_t bf_delta_sq = bf192_mul(bf_delta, bf_delta);
 
   // ::2-6
-  bf192_t* q = column_to_row_major_and_shrink_V_192(Q, FAEST_192F_ELL);
+  bf192_t* q = column_to_row_major_and_shrink_V_192(Q, ell);
 
   // ::7-9
   bf192_t q_star_0 = bf192_sum_poly(q);
@@ -3533,11 +3530,11 @@ static uint8_t* aes_192_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf192_t q_star = bf192_add(q_star_0, bf192_mul(bf_delta, q_star_1));
 
   // ::11-12
-  bf192_t z0_tag[FAEST_192F_C];
-  bf192_t z1_val[FAEST_192F_C];
-  bf192_t z2_gamma[FAEST_192F_C];
-  bf192_t w_key[FAEST_192F_ELL];
-  for (unsigned int i = 0; i < FAEST_192F_ELL; i++) {
+  bf192_t* z0_tag = (bf192_t*)malloc(c * sizeof(bf192_t));
+  bf192_t* z1_val = (bf192_t*)malloc(c * sizeof(bf192_t));
+  bf192_t* z2_gamma  = (bf192_t*)malloc(c * sizeof(bf192_t));
+  bf192_t* w_key = (bf192_t*)malloc(ell * sizeof(bf192_t));
+  for (unsigned int i = 0; i < ell; i++) {
     w_key[i] = bf192_add(
                           q[i], 
                           bf192_mul(bf192_from_bit(d[i]),
@@ -3551,8 +3548,13 @@ static uint8_t* aes_192_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   for (unsigned int i = 0; i < c; i++) {
     zk_hash_192_update(&b_ctx, z2_gamma[i]);
   }
-  uint8_t q_tilde[(FAEST_192F_LAMBDA/8)*FAEST_192F_C];
+  uint8_t* q_tilde = (uint8_t*)malloc((lambda/8)*c * sizeof(uint8_t));
   zk_hash_192_finalize(q_tilde, &b_ctx, q_star);
+
+  free(z0_tag);
+  free(z1_val);
+  free(z2_gamma);
+  free(w_key);
 
   // ::16
   bf192_t tmp1 = bf192_mul(bf192_load(a1_tilde), bf_delta);
@@ -3560,7 +3562,9 @@ static uint8_t* aes_192_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf192_t tmp3 = bf192_add(tmp1, tmp2);
   bf192_t ret = bf192_add(bf192_load(q_tilde), tmp3);
 
-  uint8_t* a0_tilde = malloc((FAEST_192F_LAMBDA/8)*FAEST_192F_C);
+  free(q_tilde);
+
+  uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8)*c * sizeof(uint8_t));
   bf192_store(a0_tilde, ret);
   return a0_tilde;
 
@@ -3569,16 +3573,16 @@ static uint8_t* aes_192_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
 static uint8_t* aes_256_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
 
-  // TODO: replace by constants from params s.t. it also works for EM
-  unsigned int lambda = FAEST_256F_LAMBDA;
-  unsigned int c = FAEST_256F_C;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int c = params->faest_param.C;
+  unsigned int ell = params->faest_param.l;
 
   // ::1
   bf256_t bf_delta = bf256_load(chall_3);
   bf256_t bf_delta_sq = bf256_mul(bf_delta, bf_delta);
 
   // ::2-6
-  bf256_t* q = column_to_row_major_and_shrink_V_256(Q, FAEST_256F_ELL);
+  bf256_t* q = column_to_row_major_and_shrink_V_256(Q, ell);
 
   // ::7-9
   bf256_t q_star_0 = bf256_sum_poly(q);
@@ -3588,11 +3592,11 @@ static uint8_t* aes_256_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf256_t q_star = bf256_add(q_star_0, bf256_mul(bf_delta, q_star_1));
 
   // ::11-12
-  bf256_t z0_tag[FAEST_256F_C];
-  bf256_t z1_val[FAEST_256F_C];
-  bf256_t z2_gamma[FAEST_256F_C];
-  bf256_t w_key[FAEST_256F_ELL];
-  for (unsigned int i = 0; i < FAEST_256F_ELL; i++) {
+  bf256_t* z0_tag = (bf256_t*)malloc(c * sizeof(bf256_t));
+  bf256_t* z1_val = (bf256_t*)malloc(c * sizeof(bf256_t));
+  bf256_t* z2_gamma  = (bf256_t*)malloc(c * sizeof(bf256_t));
+  bf256_t* w_key = (bf256_t*)malloc(ell * sizeof(bf256_t));
+  for (unsigned int i = 0; i < ell; i++) {
     w_key[i] = bf256_add(
                           q[i], 
                           bf256_mul(bf256_from_bit(d[i]),
@@ -3606,14 +3610,21 @@ static uint8_t* aes_256_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   for (unsigned int i = 0; i < c; i++) {
     zk_hash_256_update(&b_ctx, z2_gamma[i]);
   }
-  uint8_t q_tilde[(FAEST_256F_LAMBDA/8)*FAEST_256F_C];
+  uint8_t* q_tilde = (uint8_t*)malloc((lambda/8)*c * sizeof(uint8_t));
   zk_hash_256_finalize(q_tilde, &b_ctx, q_star);
+
+  free(z0_tag);
+  free(z1_val);
+  free(z2_gamma);
+  free(w_key);
 
   // ::16
   bf256_t tmp1 = bf256_mul(bf256_load(a1_tilde), bf_delta);
   bf256_t tmp2 = bf256_mul(bf256_load(a2_tilde), bf_delta_sq);
   bf256_t tmp3 = bf256_add(tmp1, tmp2);
   bf256_t ret = bf256_add(bf256_load(q_tilde), tmp3);
+
+  free(q_tilde);
 
   uint8_t* a0_tilde = malloc((FAEST_256F_LAMBDA/8)*FAEST_256F_C);
   bf256_store(a0_tilde, ret);

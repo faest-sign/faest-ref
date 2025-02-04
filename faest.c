@@ -369,7 +369,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // Passing bits to aes_prove
   uint8_t* w_bits = (uint8_t*)malloc(ell);  // 1 bit in per uint8_t
   for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
-    w_bits[bit_i] = (w[bit_i/8] >> bit_i%8) & 1;        // TODO: take care of the 4 bit w's
+    w_bits[bit_i] = (w[bit_i/8] >> bit_i%8) & 1;
   }
   uint8_t* u_bits = (uint8_t*)malloc(2*lambda);  // 1 bit per uint8_t
   for (unsigned int bit_i = 0; bit_i < 2*lambda; bit_i++) {
