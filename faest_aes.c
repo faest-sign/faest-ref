@@ -2282,9 +2282,9 @@ static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uin
   bool rmvRcon       = true;
   // ::5-6
   for (unsigned int j = 0; j < Ske; j++) {
-
     // ::7-10
     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+
       x_tilde[bit_i] = x[j*8 + bit_i] ^ key[iwd + (j%4)*8 + bit_i];  // for the witness
       x_tilde_tag[bit_i] = bf128_add(x_tag[j*8 + bit_i], key_tag[iwd + (j%4)*8 + bit_i]); // for the tags of each witness bit
 
@@ -2294,7 +2294,7 @@ static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uin
       }
     }
     // ::11
-    aes_128_inverse_affine_byte_prover(y + 8*j, y_tag + 8*j, x_tilde, x_tilde_tag);
+    aes_128_inverse_affine_byte_prover(y + 8*j, y_tag + 8*j, x_tilde, x_tilde_tag);   // working in bit per uint8
 
     // ::12-16 lines only relavant for aes-128
     if (j%4 == 0) {
@@ -2303,6 +2303,9 @@ static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uin
       }
       else {
         iwd += 128;
+        if (lambda == 256) {
+          rmvRcon = !rmvRcon;
+        }
       }
     }
   }
@@ -2318,27 +2321,18 @@ static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_ke
   unsigned int iwd   = 0;
   // ::4
   bool rmvRcon       = true;
-  unsigned int ircon = 0;
   // ::5-6
   for (unsigned int j = 0; j < Ske; j++) {
-
     // ::7
     for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
       x_tilde_key[bit_i] = bf128_add(x_key[j*8 + bit_i], key_key[iwd + (j%4)*8 + bit_i]); // for the tags of each witness bit
-    }
-
-    // ::8-10
-    if (rmvRcon == true && j % 4 == 0) {
-      // adding round constant to the tags
-      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-        // for prover, no multiplication with delta
-        bf128_t rcon_key;
-        const uint8_t c = (Rcon[ircon] >> bit_i) & 1;
-        constant_to_vole_128_verifier(&rcon_key, &c, delta, 1); // TODO: in spec there should be call to ConstantToVOLE() call
-        x_tilde_key[bit_i] = bf128_add(x_tilde_key[bit_i], rcon_key);
-
+      // ::8-10
+      if (rmvRcon == true && j % 4 == 0) {
+          bf128_t rcon_key;
+          const uint8_t c = (Rcon[j%4] >> bit_i) & 1;
+          constant_to_vole_128_verifier(&rcon_key, &c, delta, 1);
+          x_tilde_key[bit_i] = bf128_add(x_tilde_key[bit_i], rcon_key);
       }
-      ++ircon;
     }
     // ::11
     aes_128_inverse_affine_byte_verifier(y_key + 8*j, x_tilde_key, delta);
@@ -2350,6 +2344,9 @@ static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_ke
       }
       else {
         iwd += 128;
+        if (lambda == 256) {
+          rmvRcon = !rmvRcon;
+        }
       }
     }
   }
@@ -2434,6 +2431,7 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
   unsigned int lambda = params->faest_param.lambda;
   unsigned int Nk = lambda/32;
   unsigned int r_prime;
+  uint16_t blocksize = 32 * params->faest_param.Nwd;
 
   bool do_rot_word = false;
   if (lambda == 256) {
@@ -2443,8 +2441,8 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
   // ::1
   aes_128_keyexp_forward_prover(k, k_tag, w, w_tag, params);
   // ::2
-  uint8_t* w_flat = (uint8_t*) malloc(8 * Ske);
-  bf128_t* w_flat_tag = (bf128_t*) malloc(sizeof(bf128_t) * 8 * Ske);
+  uint8_t* w_flat = (uint8_t*)malloc(8 * Ske * blocksize * sizeof(uint8_t));
+  bf128_t* w_flat_tag = faest_aligned_alloc(BF128_ALIGN, 8 * Ske * blocksize * sizeof(bf128_t));
   aes_128_keyexp_backward_prover(w_flat, w_flat_tag, w, w_tag, k, k_tag, params);
 
   // ::3-5
