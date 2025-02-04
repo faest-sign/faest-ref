@@ -2667,9 +2667,9 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     // for conjugates of state and s-box outputs
     bf128_t* state_conj = faest_aligned_alloc(BF128_ALIGN, 8 * Nstbytes * sizeof(bf128_t));
     bf128_t* state_conj_tag = faest_aligned_alloc(BF128_ALIGN, 8 *  Nstbytes * sizeof(bf128_t));
-    bf128_t* st_prime_deg2 = faest_aligned_alloc(BF128_ALIGN, 8 *  Nstbytes * sizeof(bf128_t));
-    bf128_t* st_prime_deg1 = faest_aligned_alloc(BF128_ALIGN, 8 *  Nstbytes * sizeof(bf128_t));
-    bf128_t* st_prime_deg0 = faest_aligned_alloc(BF128_ALIGN, 8 *  Nstbytes * sizeof(bf128_t));
+    bf128_t* st_dash_deg2 = faest_aligned_alloc(BF128_ALIGN, 8 *  Nstbytes * sizeof(bf128_t));
+    bf128_t* st_dash_deg1 = faest_aligned_alloc(BF128_ALIGN, 8 *  Nstbytes * sizeof(bf128_t));
+    bf128_t* st_dash_deg0 = faest_aligned_alloc(BF128_ALIGN, 8 *  Nstbytes * sizeof(bf128_t));
     
     bf128_t* state_bytewise_deg2 = faest_aligned_alloc(BF128_ALIGN, Nstbytes * sizeof(bf128_t));
     bf128_t* state_bytewise_deg1 = faest_aligned_alloc(BF128_ALIGN, Nstbytes * sizeof(bf128_t));
@@ -2712,12 +2712,12 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
           // ::13-14
           uint32_t conj_index = i*8 + ((j + 4) % 8);
           uint32_t y_index = j % 4;
-          st_prime_deg2[i*8 + j] = bf128_mul(state_conj[conj_index], y[y_index]);
-          st_prime_deg1[i*8 + j] = bf128_add(
+          st_dash_deg2[i*8 + j] = bf128_mul(state_conj[conj_index], y[y_index]);
+          st_dash_deg1[i*8 + j] = bf128_add(
                 bf128_mul(state_conj[conj_index], y_tag[y_index]),
                 bf128_mul(state_conj_tag[conj_index], y[y_index])
           );
-          st_prime_deg0[i*8 + j] = bf128_mul(state_conj_tag[conj_index], y_tag[y_index]);
+          st_dash_deg0[i*8 + j] = bf128_mul(state_conj_tag[conj_index], y_tag[y_index]);
         }
       }
 
@@ -2752,7 +2752,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
 
       for (unsigned int b = 0; b < 2; b++) {
         // ::19
-        aes_128_sbox_affine_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_prime_deg0, st_prime_deg1, st_prime_deg2, b, params);
+        aes_128_sbox_affine_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_dash_deg0, st_dash_deg1, st_dash_deg2, b, params);
         // ::20
         aes_128_shiftrows_prover(st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], params);
         memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf128_t)*16);
@@ -2781,82 +2781,80 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
           idx++;
         }
       }
-    //   // ::29
-    //   uint8_t s_dash_dash[16];
-    //   bf128_t s_dash_dash_tag[16];
-    //   aes_128_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
-    //   // ::30
-    //   uint8_t s[16];
-    //   bf128_t s_tag[16];
-    //   aes_128_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag);
+      // // ::29
+      // uint8_t s_dash_dash[128];
+      // bf128_t s_dash_dash_tag[128];
+      // aes_128_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
+      // // ::30
+      // uint8_t s[128];
+      // bf128_t s_tag[128];
+      // aes_128_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag, params);
 
-    //   // ::31
-    //   for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
-    //     bf128_t bf_s_deg1;
-    //     bf128_t bf_s_deg0;
-    //     bf128_t bf_s_sq_deg1;
-    //     bf128_t bf_s_sq_deg0;
-    //     // ::32
-    //     bf_s_deg1 = bf128_byte_combine_bits(s[byte_i]);
-    //     bf_s_deg0 = bf128_byte_combine(s_tag + byte_i*8);
-    //     // ::32
-    //     bf_s_sq_deg1 = bf128_byte_combine_bits_sq(s[byte_i]);
-    //     bf_s_sq_deg0 = bf128_byte_combine_sq(s_tag + byte_i*8);
+      // // ::31
+      // for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
+      //   bf128_t bf_s_deg1;
+      //   bf128_t bf_s_deg0;
+      //   bf128_t bf_s_sq_deg1;
+      //   bf128_t bf_s_sq_deg0;
+      //   // ::32
+      //   bf_s_deg1 = bf128_byte_combine_bits(s + 8*byte_i);
+      //   bf_s_deg0 = bf128_byte_combine(s_tag + 8*byte_i);
+      //   // ::32
+      //   bf_s_sq_deg1 = bf128_byte_combine_bits_sq(s + 8*byte_i);
+      //   bf_s_sq_deg0 = bf128_byte_combine_sq(s_tag + 8*byte_i);
 
-    //     // ::35-37
-    //     // (w1 + w2x) * (m1 + m2x + m3x^2)
-    //     // deg0 - (w1 * m1)
-    //     z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(bf128_mul(bf_s_sq_deg0, st_b_deg0[0][byte_i]), bf_s_deg0);
-    //     z_deg0[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_add(bf128_mul(bf_s_deg0, st_b_deg0[1][byte_i]), st_b_deg0[0][byte_i]);
+      //   // ::36
+      //   // <s^sq>^1 * <st_{0,i}>^2 - <s>^1
+      //   //    deg0: s_sq[0] * st[0]
+      //   //    deg1: s_sq[0] * st[1] + s_sq[1] * st[0]
+      //   //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
+      //   z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf128_mul(bf_s_sq_deg0, st_b_deg0[0][byte_i]);
+      //   z_deg1[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(
+      //           bf128_mul(bf_s_sq_deg0, st_b_deg1[0][byte_i]),
+      //           bf128_mul(bf_s_sq_deg1, st_b_deg0[0][byte_i])
+      //         );
+      //   z_deg2[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(
+      //           bf128_add(
+      //               bf128_mul(bf_s_sq_deg0, st_b_deg2[0][byte_i]),
+      //               bf128_mul(bf_s_sq_deg1, st_b_deg1[0][byte_i])),
+      //             bf_s_deg0);
+      //   // ::37
+      //   // <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
+      //   //    deg0: s[0] * st_{1,i}[0]
+      //   //    deg1: s[0] * st_{1,i}[1] + s[1] * st_{1,i}[0] + st_{0,i}[0]
+      //   //    deg2: s[0] * st_{1,i}[2] + s[1] * st_{1,i}[1] + st_{0,i}[1]
+      //   z_deg0[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_mul(bf_s_deg0, st_b_deg0[1][byte_i]);
+      //   z_deg1[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_add(
+      //           bf128_add(
+      //               bf128_mul(bf_s_deg0, st_b_deg1[1][byte_i]),
+      //               bf128_mul(bf_s_deg1, st_b_deg0[1][byte_i])),
+      //             st_b_deg0[0][byte_i]);
+      //   z_deg2[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_add(
+      //           bf128_add(
+      //               bf128_mul(bf_s_deg0, st_b_deg2[1][byte_i]),
+      //               bf128_mul(bf_s_deg1, st_b_deg1[1][byte_i])),
+      //             st_b_deg1[0][byte_i]);
 
-    //     // deg1 - (w1*m2x), (w2*m1x)
-    //     z_deg1[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(
-    //                                                       bf128_add(
-    //                                                       bf128_mul(bf_s_sq_deg0, st_b_deg1[0][byte_i]), 
-    //                                                       bf128_mul(bf_s_sq_deg1, st_b_deg0[0][byte_i])), bf_s_deg1);
-    //     z_deg1[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_add(
-    //                                                       bf128_add(
-    //                                                       bf128_mul(bf_s_deg0, st_b_deg1[1][byte_i]), 
-    //                                                       bf128_mul(bf_s_deg1, st_b_deg0[1][byte_i])), st_b_deg1[0][byte_i]);
-
-    //     // deg2 - (w1*m3x^2), (w2*m2x^2)
-    //     z_deg2[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(
-    //                                                       bf128_add(
-    //                                                       bf128_mul(bf_s_sq_deg0, st_b_deg2[0][byte_i]), 
-    //                                                       bf128_mul(bf_s_sq_deg1, st_b_deg1[0][byte_i])), bf128_zero());
-
-    //     z_deg2[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_add(
-    //                                                       bf128_add(
-    //                                                       bf128_mul(bf_s_deg0, st_b_deg2[1][byte_i]), 
-    //                                                       bf128_mul(bf_s_deg1, st_b_deg1[1][byte_i])), st_b_deg2[0][byte_i]);
-
-
-    //     // deg3 - (w2*m3*x^3)
-    //     z_deg3[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(bf128_mul(bf_s_sq_deg1, st_b_deg2[0][byte_i]), bf128_zero());
-    //     z_deg3[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_add(bf128_mul(bf_s_deg1, st_b_deg2[1][byte_i]), bf128_zero());
-    //     // TODO: This was my gut feeling how to do the above...
-    //   }
-
-//       if (r != R/2-1) {
-//         uint8_t tmp_state[Nstbytes];
-//         bf128_t tmp_state_tag[Nstbytes];
-//         aes_128_bitwise_mix_coloumn_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag);
-//         aes_128_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag, k[(2*r+2)*Nstbytes], k[(2*r+2)*Nstbits], params);
-//       }
-    }
-    free(state_bits);
-    free(state_bits_tag);
-    faest_aligned_free(state_conj);
-    faest_aligned_free(state_conj_tag);
-    faest_aligned_free(st_prime_deg2);
-    faest_aligned_free(st_prime_deg1);
-    faest_aligned_free(st_prime_deg0);
-    faest_aligned_free(state_bytewise_deg2);
-    faest_aligned_free(state_bytewise_deg1);
-    faest_aligned_free(state_bytewise_deg0);
-    faest_aligned_free(state_sq_bytewise_deg2);
-    faest_aligned_free(state_sq_bytewise_deg1);
-    faest_aligned_free(state_sq_bytewise_deg0);
+      // if (r != R/2-1) {
+      //   uint8_t tmp_state[16];
+      //   bf128_t tmp_state_tag[16];
+      //   aes_128_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
+      //   aes_128_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag, k + (2*r+2)*Nstbits, k_tag + (2*r+2)*Nstbits, params);
+      // }
+  }
+  free(state_bits);
+  free(state_bits_tag);
+  faest_aligned_free(state_conj);
+  faest_aligned_free(state_conj_tag);
+  faest_aligned_free(st_dash_deg2);
+  faest_aligned_free(st_dash_deg1);
+  faest_aligned_free(st_dash_deg0);
+  faest_aligned_free(state_bytewise_deg2);
+  faest_aligned_free(state_bytewise_deg1);
+  faest_aligned_free(state_bytewise_deg0);
+  faest_aligned_free(state_sq_bytewise_deg2);
+  faest_aligned_free(state_sq_bytewise_deg1);
+  faest_aligned_free(state_sq_bytewise_deg0);
 }
 // static aes_128_enc_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2, bf128_t* z_deg3, const bf128_t* owf_in_key, 
 //                                         const bf128_t* owf_out_key, const bf128_t* w_key, const bf128_t* k_key, const bf128_t delta,
