@@ -40,7 +40,7 @@ int main() {
     const unsigned int lambda       = params.faest_param.lambda;
     const unsigned int lambda_bytes = lambda / 8;
     const unsigned int ell_hat =
-        params.faest_param.l + params.faest_param.lambda * 2 + UNIVERSAL_HASH_B_BITS;
+        params.faest_param.l + params.faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
 
