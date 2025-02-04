@@ -2788,10 +2788,6 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
       }
     }
     // ::29
-    //
-    // STOP: memory issue occurs in aes_128_inverse_affine_prover
-    //      - LB: fixed
-    //
     uint8_t s_dash_dash[128];
     bf128_t s_dash_dash_tag[128];
     aes_128_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
@@ -2814,10 +2810,11 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     //   bf_s_sq_deg0 = bf128_byte_combine_sq(s_tag + 8*byte_i);
 
     //   // ::36
-    //   // <s^sq>^1 * <st_{0,i}>^2 - <s>^1
+    //   // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
     //   //    deg0: s_sq[0] * st[0]
     //   //    deg1: s_sq[0] * st[1] + s_sq[1] * st[0]
     //   //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
+    //   //
     //   z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf128_mul(bf_s_sq_deg0, st_b_deg0[0][byte_i]);
     //   z_deg1[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(
     //           bf128_mul(bf_s_sq_deg0, st_b_deg1[0][byte_i]),
@@ -2829,11 +2826,11 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     //               bf128_mul(bf_s_sq_deg1, st_b_deg1[0][byte_i])),
     //             bf_s_deg0);
     //   // ::37
-    //   // <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
+    //   // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
     //   //    deg0: s[0] * st_{1,i}[0]
     //   //    deg1: s[0] * st_{1,i}[1] + s[1] * st_{1,i}[0] + st_{0,i}[0]
     //   //    deg2: s[0] * st_{1,i}[2] + s[1] * st_{1,i}[1] + st_{0,i}[1]
-    //   printf("writing to %d\n", (3*r+1)*Nstbytes + 2*byte_i+1);
+    //   //
     //   z_deg0[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_mul(bf_s_deg0, st_b_deg0[1][byte_i]);
     //   z_deg1[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf128_add(
     //           bf128_add(
@@ -2847,8 +2844,8 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     //             st_b_deg1[0][byte_i]);
     // }
     // if (r != R/2-1) {
-    //   uint8_t tmp_state[16];
-    //   bf128_t tmp_state_tag[16];
+    //   uint8_t tmp_state[128];
+    //   bf128_t tmp_state_tag[128];
     //   aes_128_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
     //   aes_128_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag, k + (2*r+2)*Nstbits, k_tag + (2*r+2)*Nstbits, params);
     // }
@@ -3338,8 +3335,6 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf128_t z2_gamma[FAEST_128F_C]; //= (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf gamma
   aes_128_constraints_prover(z0_tag, z1_val, z2_gamma, w, w_tag, owf_in, owf_out, params, isEM);
 
-  printf("done OWF constraints\n");
- 
   // Step: 13-18
   zk_hash_128_ctx a0_ctx;
   zk_hash_128_ctx a1_ctx;
