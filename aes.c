@@ -235,7 +235,7 @@ static
 }
 
 static uint8_t* store_invnorm_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
-  for (unsigned int i = 0; i != block_words * 4 / 2; i += 2, ++dst) { // going thorugh each block
+  for (unsigned int i = 0; i != block_words * 4 / 2; i += 2, ++dst) {
     uint8_t normstate_lo = invnorm(state[i / 4][i % 4]);
     uint8_t normstate_hi = invnorm(state[i / 4][(i + 1) % 4]);
     bf8_store(dst, (normstate_hi << 4) | normstate_lo);
@@ -499,7 +499,8 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   }
 
   // Step 10
-  for (unsigned b = 0; b < beta; ++b, in += sizeof(aes_word_t) * block_words) {
+  // common part for AES-128, EM-128, EM-192, EM-256, first part for AES-192 and AES-256
+  {
     // Step 12
     aes_block_t state;
     load_state(state, in, block_words);
@@ -507,8 +508,8 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
     // Step 13
     add_round_key(0, state, &round_keys, block_words);
 
-    for (unsigned int round = 0; round < num_rounds - 1; ++round) {
-      if (round % 2 == 0) {
+    for (unsigned int round = 1; round < num_rounds; ++round) {
+      if (round % 2 == 1) {
         // save inverse norm of the S-box inputs, in coloumn major order
         w = store_invnorm_state(w, state, block_words);
       }
@@ -516,14 +517,48 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
       sub_bytes(state, block_words);
       // Step 16
       shift_row(state, block_words);
-      if (round % 2 == 1) {
+      if (round % 2 == 0) {
         // Step 17
         w = store_state(w, state, block_words);
       }
       // Step 18
       mix_column(state, block_words);
       // Step 19
-      add_round_key(round + 1, state, &round_keys, block_words);
+      add_round_key(round, state, &round_keys, block_words);
+    }
+    // last round is not commited to, so not computed
+  }
+
+  if (beta == 2) {
+    // AES-192 and AES-256
+    uint8_t buf[16];
+    memcpy(buf, in, sizeof(buf));
+    buf[0] ^= 0x1;
+
+    // Step 12
+    aes_block_t state;
+    load_state(state, buf, block_words);
+
+    // Step 13
+    add_round_key(0, state, &round_keys, block_words);
+
+    for (unsigned int round = 1; round < num_rounds; ++round) {
+      if (round % 2 == 1) {
+        // save inverse norm of the S-box inputs, in coloumn major order
+        w = store_invnorm_state(w, state, block_words);
+      }
+      // Step 15
+      sub_bytes(state, block_words);
+      // Step 16
+      shift_row(state, block_words);
+      if (round % 2 == 0) {
+        // Step 17
+        w = store_state(w, state, block_words);
+      }
+      // Step 18
+      mix_column(state, block_words);
+      // Step 19
+      add_round_key(round, state, &round_keys, block_words);
     }
     // last round is not commited to, so not computed
   }
