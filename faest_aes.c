@@ -3313,13 +3313,13 @@ static void aes_256_constraints_verifier(bf256_t* z0_tag, bf256_t* z1_val, bf256
 static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
-  // TODO: replace by constants from params s.t. it also works for EM
-  unsigned int lambda = FAEST_128F_LAMBDA;
-  unsigned int c = FAEST_128F_C;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int c = params->faest_param.C;
+  unsigned int ell = params->faest_param.l;
 
   // ::1-5
   // V becomes the w_tag
-  bf128_t* w_tag = column_to_row_major_and_shrink_V_128(V, params->faest_param.l); // This is the tag for w
+  bf128_t* w_tag = column_to_row_major_and_shrink_V_128(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
   bf128_t bf_u_star_0 = bf128_load_bits(u);
@@ -3329,9 +3329,9 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + lambda);
 
   // ::10-12
-  bf128_t z0_tag[FAEST_128F_C]; //= (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf tag
-  bf128_t z1_val[FAEST_128F_C]; //= (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf val
-  bf128_t z2_gamma[FAEST_128F_C]; //= (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf gamma
+  bf128_t* z0_tag = (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf tag
+  bf128_t* z1_val = (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf val
+  bf128_t* z2_gamma = (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf gamma
   aes_128_constraints_prover(z0_tag, z1_val, z2_gamma, w, w_tag, owf_in, owf_out, params, isEM);
 
   // Step: 13-18
@@ -3348,6 +3348,10 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
     zk_hash_128_update(&a2_ctx, z2_gamma[i]);
   }
 
+  free(z0_tag);
+  free(z1_val);
+  free(z2_gamma);
+
   zk_hash_128_finalize(a0_tilde, &a0_ctx, bf_u_star_0);
   zk_hash_128_finalize(a1_tilde, &a1_ctx, bf128_add(bf_v_star_0, bf_u_star_1));
   zk_hash_128_finalize(a2_tilde, &a2_ctx, bf_v_star_1);
@@ -3358,13 +3362,13 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
-  // TODO: replace by constants from params s.t. it also works for EM
-  unsigned int lambda = FAEST_192F_LAMBDA;
-  unsigned int c = FAEST_192F_C;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int c = params->faest_param.C;
+  unsigned int ell = params->faest_param.l;
 
   // ::1-5
   // V becomes the w_tag
-  bf192_t* w_tag = column_to_row_major_and_shrink_V_192(V, params->faest_param.l); // This is the tag for w
+  bf192_t* w_tag = column_to_row_major_and_shrink_V_192(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
   bf192_t bf_u_star_0 = bf192_load_bits(u);
@@ -3374,9 +3378,9 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf192_t bf_v_star_1 = bf192_sum_poly(w_tag + lambda);
 
   // ::10-12
-  bf192_t z0_tag[FAEST_192F_C]; //= (bf192_t*)malloc(c * sizeof(bf192_t)); // this contains the bf tag
-  bf192_t z1_val[FAEST_192F_C]; //= (bf192_t*)malloc(c * sizeof(bf192_t)); // this contains the bf val
-  bf192_t z2_gamma[FAEST_192F_C]; //= (bf192_t*)malloc(c * sizeof(bf192_t)); // this contains the bf gamma
+  bf192_t* z0_tag = (bf192_t*)malloc(c * sizeof(bf192_t)); // this contains the bf tag
+  bf192_t* z1_val = (bf192_t*)malloc(c * sizeof(bf192_t)); // this contains the bf val
+  bf192_t* z2_gamma = (bf192_t*)malloc(c * sizeof(bf192_t)); // this contains the bf gamma
   aes_192_constraints_prover(z0_tag, z1_val, z2_gamma, w, w_tag, owf_in, owf_out, params, isEM);
  
   // Step: 13-18
@@ -3393,6 +3397,10 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
     zk_hash_192_update(&a2_ctx, z2_gamma[i]);
   }
 
+  free(z0_tag);
+  free(z1_val);
+  free(z2_gamma);
+
   zk_hash_192_finalize(a0_tilde, &a0_ctx, bf_u_star_0);
   zk_hash_192_finalize(a1_tilde, &a1_ctx, bf192_add(bf_v_star_0, bf_u_star_1));
   zk_hash_192_finalize(a2_tilde, &a2_ctx, bf_v_star_1);
@@ -3403,13 +3411,13 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
-  // TODO: replace by constants from params s.t. it also works for EM
-  unsigned int lambda = FAEST_256F_LAMBDA;
-  unsigned int c = FAEST_256F_C;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int c = params->faest_param.C;
+  unsigned int ell = params->faest_param.l;
 
   // ::1-5
   // V becomes the w_tag
-  bf256_t* w_tag = column_to_row_major_and_shrink_V_256(V, params->faest_param.l); // This is the tag for w
+  bf256_t* w_tag = column_to_row_major_and_shrink_V_256(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
   bf256_t bf_u_star_0 = bf256_load_bits(u);
@@ -3419,9 +3427,9 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf256_t bf_v_star_1 = bf256_sum_poly(w_tag + lambda);
 
   // ::10-12
-  bf256_t z0_tag[FAEST_256F_C]; //= (bf256_t*)malloc(c * sizeof(bf256_t)); // this contains the bf tag
-  bf256_t z1_val[FAEST_256F_C]; //= (bf256_t*)malloc(c * sizeof(bf256_t)); // this contains the bf val
-  bf256_t z2_gamma[FAEST_256F_C]; //= (bf256_t*)malloc(c * sizeof(bf256_t)); // this contains the bf gamma
+  bf256_t* z0_tag = (bf256_t*)malloc(c * sizeof(bf256_t)); // this contains the bf tag
+  bf256_t* z1_val = (bf256_t*)malloc(c * sizeof(bf256_t)); // this contains the bf val
+  bf256_t* z2_gamma = (bf256_t*)malloc(c * sizeof(bf256_t)); // this contains the bf gamma
   aes_256_constraints_prover(z0_tag, z1_val, z2_gamma, w, w_tag, owf_in, owf_out, params, isEM);
  
   // Step: 13-18
@@ -3437,6 +3445,10 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
     zk_hash_256_update(&a1_ctx, z1_val[i]);
     zk_hash_256_update(&a2_ctx, z2_gamma[i]);
   }
+
+  free(z0_tag);
+  free(z1_val);
+  free(z2_gamma);
 
   zk_hash_256_finalize(a0_tilde, &a0_ctx, bf_u_star_0);
   zk_hash_256_finalize(a1_tilde, &a1_ctx, bf256_add(bf_v_star_0, bf_u_star_1));
