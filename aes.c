@@ -397,20 +397,27 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
 
   EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
   assert(ctx);
-  EVP_CIPHER_CTX_set_padding(ctx, 0);
+  EVP_CIPHER_CTX_set_padding(ctx, 1);
 
   EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
 
   int len = 0;
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
-    EVP_EncryptUpdate(ctx, out, &len, internal_iv, IV_SIZE);
+    int ret = EVP_EncryptUpdate(ctx, out, &len, internal_iv, IV_SIZE);
+    assert(ret == 1);
+    assert(len == (int)IV_SIZE);
     aes_increment_iv(internal_iv);
   }
   if (outlen % IV_SIZE) {
-    EVP_EncryptUpdate(ctx, out, &len, internal_iv, outlen % IV_SIZE);
+    int ret = EVP_EncryptUpdate(ctx, out, &len, internal_iv, outlen % IV_SIZE);
+    assert(ret == 1);
+    assert(len == 0);
+    uint8_t last_block[IV_SIZE];
+    ret = EVP_EncryptFinal_ex(ctx, last_block, &len);
+    assert(ret == 1);
+    assert(len == (int)IV_SIZE);
+    memcpy(out, last_block, outlen % IV_SIZE);
   }
-  // write to unused buffer
-  EVP_EncryptFinal_ex(ctx, out + len, &len);
   EVP_CIPHER_CTX_free(ctx);
 #endif
 }

@@ -50,7 +50,7 @@ int main() {
     chal.resize(lambda_bytes);
     c.resize((params.faest_param.tau - 1) * ell_hat_bytes);
     decom_i.resize(com_size * params.faest_param.tau + params.faest_param.T_open * lambda_bytes);
-    u.resize(ell_hat_bytes * params.faest_param.tau);
+    u.resize(ell_hat_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
@@ -73,6 +73,7 @@ int main() {
     print_named_array("h", "uint8_t", bavc_com.h, 2 * lambda_bytes);
     print_named_array("hashed_c", "uint8_t", hash_array(c));
     print_named_array("hashed_u", "uint8_t", hash_array(u));
+    print_named_array("u", "uint8_t", u.data(), u.size());
     print_named_array("hashed_v", "uint8_t", hash_array(v_storage));
 
     while (true) {
