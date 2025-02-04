@@ -124,19 +124,31 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     std::vector<uint8_t> in;
     std::vector<uint8_t> out;
 
-    if (!(lambda == 128 && !is_em)) {
+    if (lambda == 128 && !is_em) {
+      for (const auto byte : aes_ctr_128_tv::in) {
+          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+              in.push_back((byte >> bit_i) & 1);
+          }
+      }
+      for (const auto byte : aes_ctr_128_tv::out) {
+          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+              out.push_back((byte >> bit_i) & 1);
+          }
+      }
+    } else if (lambda == 128 && is_em) {
+      for (const auto byte : rijndael_em_128_tv::in) {
+          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+              in.push_back((byte >> bit_i) & 1);
+          }
+      }
+      for (const auto byte : rijndael_em_128_tv::out) {
+          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+              out.push_back((byte >> bit_i) & 1);
+          }
+      }
+    }
+    else {
       return;
-    }
-
-    for (const auto byte : aes_ctr_128_tv::in) {
-        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-            in.push_back((byte >> bit_i) & 1);
-        }
-    }
-    for (const auto byte : aes_ctr_128_tv::out) {
-        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-            out.push_back((byte >> bit_i) & 1);
-        }
     }
     
     uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
@@ -207,8 +219,6 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
         }
       }
     }
-    //printf("w size: %d\n", w.size());
-    //printf("ellhatbytes: %d\n", ell_hat_bytes);
     // masked witness d = u ^ w
     std::vector<uint8_t> d(ell_hat, 0x13);
     for (size_t i = 0; i < ell_bytes; ++i) {
