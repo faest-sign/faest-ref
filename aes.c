@@ -205,25 +205,22 @@ static
 #endif
     uint8_t
     invnorm(uint8_t in) {
-  // TODO: make constant time
-  if (in == 0) {
-    return 0;
-  } else {
-    const bf8_t bf_x_inv = bf8_inv(in);
-    bf8_t bf_x_17        = bf_x_inv;
-    for (unsigned int i = 0; i < 4; i++) {
-      bf_x_17 = bf8_square(bf_x_17);
-    }
-    bf_x_17         = bf8_mul(bf_x_17, bf_x_inv);
-    uint8_t y_prime = 0;
-    bf8_store(&y_prime, bf_x_17);
-    uint8_t y = 0;
-    y ^= ((y_prime >> 0) & 1) << 0;
-    y ^= ((y_prime >> 6) & 1) << 1;
-    y ^= ((y_prime >> 7) & 1) << 2;
-    y ^= ((y_prime >> 2) & 1) << 3;
-    return y;
+  // check for in == 0 is not necessary, since bf8_inv(0) == 0
+
+  const bf8_t bf_x_inv = bf8_inv(in);
+  bf8_t bf_x_17        = bf_x_inv;
+  for (unsigned int i = 0; i < 4; i++) {
+    bf_x_17 = bf8_square(bf_x_17);
   }
+  bf_x_17         = bf8_mul(bf_x_17, bf_x_inv);
+  uint8_t y_prime = 0;
+  bf8_store(&y_prime, bf_x_17);
+  uint8_t y = 0;
+  y ^= ((y_prime >> 0) & 1) << 0;
+  y ^= ((y_prime >> 6) & 1) << 1;
+  y ^= ((y_prime >> 7) & 1) << 2;
+  y ^= ((y_prime >> 2) & 1) << 3;
+  return y;
 }
 
 static uint8_t* store_invnorm_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {

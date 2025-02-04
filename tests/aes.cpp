@@ -212,6 +212,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_em256) {
 }
 
 BOOST_AUTO_TEST_CASE(test_invnorm) {
+  BOOST_TEST(invnorm(0x00) == 0);
   BOOST_TEST(invnorm(0x01) == 1);
   BOOST_TEST(invnorm(0x02) == (1 << 3 | 1 << 2 | 1));
   BOOST_TEST(invnorm(0x80) == (1 << 3 | 1 << 2 | 1));
