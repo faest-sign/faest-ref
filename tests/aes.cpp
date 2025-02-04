@@ -6,13 +6,13 @@
 // Tested against Appendix C.1
 
 #include "../aes.h"
-#include "aes_witness_tvs.hpp"
 
 #include <boost/test/unit_test.hpp>
 #include <array>
 #include <cstring>
 #include <vector>
 
+#include "faest_tvs.hpp"
 #include "utils.hpp"
 
 namespace {
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(test_rijndael256) {
 }
 
 BOOST_AUTO_TEST_CASE(test_extend_witness_aes128) {
-  namespace tv = aes_witness_tvs::faest_128s;
+  namespace tv = faest_tvs::faest_128s;
   auto params  = faest_get_paramset(FAEST_128S);
 
   uint8_t* extwit =
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes128) {
 }
 
 BOOST_AUTO_TEST_CASE(test_extend_witness_aes192) {
-  namespace tv = aes_witness_tvs::faest_192s;
+  namespace tv = faest_tvs::faest_192s;
   auto params  = faest_get_paramset(FAEST_192S);
 
   uint8_t* extwit =
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes192) {
 }
 
 BOOST_AUTO_TEST_CASE(test_extend_witness_aes256) {
-  namespace tv = aes_witness_tvs::faest_256s;
+  namespace tv = faest_tvs::faest_256s;
   auto params  = faest_get_paramset(FAEST_256S);
 
   uint8_t* extwit =
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes256) {
 }
 
 BOOST_AUTO_TEST_CASE(test_extend_witness_em128) {
-  namespace tv = aes_witness_tvs::faest_em_128s;
+  namespace tv = faest_tvs::faest_em_128s;
   auto params  = faest_get_paramset(FAEST_EM_128S);
 
   uint8_t* extwit =
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_em128) {
 }
 
 BOOST_AUTO_TEST_CASE(test_extend_witness_em192) {
-  namespace tv = aes_witness_tvs::faest_em_192s;
+  namespace tv = faest_tvs::faest_em_192s;
   auto params  = faest_get_paramset(FAEST_EM_192S);
 
   uint8_t* extwit =
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_em192) {
 }
 
 BOOST_AUTO_TEST_CASE(test_extend_witness_em256) {
-  namespace tv = aes_witness_tvs::faest_em_256s;
+  namespace tv = faest_tvs::faest_em_256s;
   auto params  = faest_get_paramset(FAEST_EM_256S);
 
   uint8_t* extwit =
