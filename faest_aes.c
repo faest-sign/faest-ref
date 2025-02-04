@@ -4040,15 +4040,15 @@ void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const ui
   switch (params->faest_param.lambda) {
   case 256:
     aes_256_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params,
-                   params->faest_param.Ske == 0);
+                   faest_is_em(params));
     break;
   case 192:
     aes_192_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params,
-                   params->faest_param.Ske == 0);
+                   faest_is_em(params));
     break;
   default:
     aes_128_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params,
-                   params->faest_param.Ske == 0);
+                   faest_is_em(params));
   }
 }
 
@@ -4058,12 +4058,12 @@ uint8_t* aes_verify(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const
   switch (params->faest_param.lambda) {
   case 256:
     return aes_256_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
-                            params->faest_param.Ske == 0);
+                            faest_is_em(params));
   case 192:
     return aes_192_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
-                            params->faest_param.Ske == 0);
+                            faest_is_em(params));
   default:
     return aes_128_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
-                            params->faest_param.Ske == 0);
+                            faest_is_em(params));
   }
 }
