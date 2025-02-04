@@ -3584,6 +3584,7 @@ static uint8_t* aes_192_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf192_t ret = bf192_add(bf192_load(q_tilde), tmp3);
 
   free(q_tilde);
+  free(q);
 
   uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8)*c * sizeof(uint8_t));
   bf192_store(a0_tilde, ret);
@@ -3646,6 +3647,7 @@ static uint8_t* aes_256_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf256_t ret = bf256_add(bf256_load(q_tilde), tmp3);
 
   free(q_tilde);
+  free(q);
 
   uint8_t* a0_tilde = malloc((FAEST_256F_LAMBDA/8)*FAEST_256F_C);
   bf256_store(a0_tilde, ret);
