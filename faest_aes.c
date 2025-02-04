@@ -1605,29 +1605,6 @@ static void aes_128_bitwise_mix_column_prover(uint8_t* out, bf128_t* out_tag, ui
                                   bf128_add(b_bits_tag[3*8 + i_bit], a_bits_tag[2*8 + i_bit]), bf128_add(a_bits_tag[1*8 + i_bit], b_bits_tag[0*8 + i_bit])
                                   ), a_bits_tag[0*8 + i_bit]);
     }
-    // ::6-9
-    // out[c*4] = b_bits[0] ^ a_bits[3] ^ a_bits[2] ^ b_bits[1] ^ a_bits[1];
-    // out[c*4 + 1] = b_bits[1] ^ a_bits[0] ^ a_bits[3] ^ b_bits[2] ^ a_bits[2];
-    // out[c*4 + 2] = b_bits[2] ^ a_bits[1] ^ a_bits[0] ^ b_bits[3] ^ a_bits[3];
-    // out[c*4 + 3] = b_bits[3] ^ a_bits[2] ^ a_bits[1] ^ b_bits[0] ^ a_bits[0];
-
-
-    // out_tag[c*4] = bf128_add(
-    //                     bf128_add(
-    //                             bf128_add(b_bits_tag[0], a_bits_tag[3]), bf128_add(a_bits_tag[2], b_bits_tag[1])
-    //                             ), a_bits_tag[1]);
-    // out_tag[c*4 + 1] = bf128_add(
-    //                     bf128_add(
-    //                             bf128_add(b_bits_tag[1], a_bits_tag[0]), bf128_add(a_bits_tag[3], b_bits_tag[2])
-    //                             ), a_bits_tag[2]);
-    // out_tag[c*4 + 2] = bf128_add(
-    //                     bf128_add(
-    //                             bf128_add(b_bits_tag[2], a_bits_tag[1]), bf128_add(a_bits_tag[0], b_bits_tag[3])
-    //                             ), a_bits_tag[3]);
-    // out_tag[c*4 + 3] = bf128_add(
-    //                     bf128_add(
-    //                             bf128_add(b_bits_tag[3], a_bits_tag[2]), bf128_add(a_bits_tag[1], b_bits_tag[0])
-    //                             ), a_bits_tag[0]);
   }
 }
 static void aes_128_bitwise_mix_column_verifier(bf128_t* out_key, bf128_t* s_keys_tag, const faest_paramset_t* params) {
@@ -1656,24 +1633,42 @@ static void aes_128_bitwise_mix_column_verifier(bf128_t* out_key, bf128_t* s_key
       b_bits_key[r*8 + 7] = a_bits_key[r*8 + 6];
 
     }
-
+    
     // ::6-9
-    out_key[c*4] = bf128_add(
-                        bf128_add(
-                                bf128_add(b_bits_key[0], a_bits_key[3]), bf128_add(a_bits_key[2], b_bits_key[1])
-                                ), a_bits_key[1]);
-    out_key[c*4 + 1] = bf128_add(
-                        bf128_add(
-                                bf128_add(b_bits_key[1], a_bits_key[0]), bf128_add(a_bits_key[3], b_bits_key[2])
-                                ), a_bits_key[2]);
-    out_key[c*4 + 2] = bf128_add(
-                        bf128_add(
-                                bf128_add(b_bits_key[2], a_bits_key[1]), bf128_add(a_bits_key[0], b_bits_key[3])
-                                ), a_bits_key[3]);
-    out_key[c*4 + 3] = bf128_add(
-                        bf128_add(
-                                bf128_add(b_bits_key[3], a_bits_key[2]), bf128_add(a_bits_key[1], b_bits_key[0])
-                                ), a_bits_key[0]);
+    for (uint16_t i_bit = 0; i_bit < 8; ++i_bit) {
+      out_key[8*(c*4) + i_bit] = bf128_add(
+                          bf128_add(
+                                  bf128_add(b_bits_key[0*8 + i_bit], a_bits_key[3*8 + i_bit]), bf128_add(a_bits_key[2*8 + i_bit], b_bits_key[1*8 + i_bit])
+                                  ), a_bits_key[1*8 + i_bit]);
+      out_key[8*(c*4 + 1) + i_bit] = bf128_add(
+                          bf128_add(
+                                  bf128_add(b_bits_key[1*8 + i_bit], a_bits_key[0*8 + i_bit]), bf128_add(a_bits_key[3*8 + i_bit], b_bits_key[2*8 + i_bit])
+                                  ), a_bits_key[2*8 + i_bit]);
+      out_key[8*(c*4 + 2) + i_bit] = bf128_add(
+                          bf128_add(
+                                  bf128_add(b_bits_key[2*8 + i_bit], a_bits_key[1*8 + i_bit]), bf128_add(a_bits_key[0*8 + i_bit], b_bits_key[3*8 + i_bit])
+                                  ), a_bits_key[3*8 + i_bit]);
+      out_key[8*(c*4 + 3) + i_bit] = bf128_add(
+                          bf128_add(
+                                  bf128_add(b_bits_key[3*8 + i_bit], a_bits_key[2*8 + i_bit]), bf128_add(a_bits_key[1*8 + i_bit], b_bits_key[0*8 + i_bit])
+                                  ), a_bits_key[0*8 + i_bit]);
+    }
+    // out_key[c*4] = bf128_add(
+    //                     bf128_add(
+    //                             bf128_add(b_bits_key[0], a_bits_key[3]), bf128_add(a_bits_key[2], b_bits_key[1])
+    //                             ), a_bits_key[1]);
+    // out_key[c*4 + 1] = bf128_add(
+    //                     bf128_add(
+    //                             bf128_add(b_bits_key[1], a_bits_key[0]), bf128_add(a_bits_key[3], b_bits_key[2])
+    //                             ), a_bits_key[2]);
+    // out_key[c*4 + 2] = bf128_add(
+    //                     bf128_add(
+    //                             bf128_add(b_bits_key[2], a_bits_key[1]), bf128_add(a_bits_key[0], b_bits_key[3])
+    //                             ), a_bits_key[3]);
+    // out_key[c*4 + 3] = bf128_add(
+    //                     bf128_add(
+    //                             bf128_add(b_bits_key[3], a_bits_key[2]), bf128_add(a_bits_key[1], b_bits_key[0])
+    //                             ), a_bits_key[0]);
 
   }
 }
