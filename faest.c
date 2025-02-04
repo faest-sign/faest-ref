@@ -382,7 +382,11 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   free(w);
   w = NULL;
   free(u);
+  free(w_bits);
+  w_bits = NULL;
   u = NULL;
+  free(u_bits);
+  u_bits = NULL;
 
   // ::21-22
   H2_context_t chall_3_ctx;

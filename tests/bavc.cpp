@@ -93,6 +93,8 @@ namespace {
     // compare hashed sd_ij to reduce size of the TVs
     const auto hashed_rec_sd = hash_array(rec_s);
     BOOST_TEST(hashed_rec_sd == expected_hashed_rec_sd);
+
+    bavc_clear(&vc);
   }
 } // namespace
 

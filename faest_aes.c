@@ -3402,6 +3402,7 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   zk_hash_192_finalize(a1_tilde, &a1_ctx, bf192_add(bf_v_star_0, bf_u_star_1));
   zk_hash_192_finalize(a2_tilde, &a2_ctx, bf_v_star_1);
 
+  free(w_tag);
 }
 
 static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
@@ -3446,6 +3447,7 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   zk_hash_256_finalize(a1_tilde, &a1_ctx, bf256_add(bf_v_star_0, bf_u_star_1));
   zk_hash_256_finalize(a2_tilde, &a2_ctx, bf_v_star_1);
 
+  free(w_tag);
 }
 
 // OWF VERIFIER
