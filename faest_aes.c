@@ -1551,12 +1551,14 @@ static void aes_128_bitwise_mix_column_prover(uint8_t* out, bf128_t* out_tag, ui
     // ::1
     for(unsigned int r = 0; r < 4; r++) {
       // :2
+      // assign a^(r), vector of 8 bits
       for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
         // :3
         a_bits[r*8 + bit_i] = s[32*c+8*r + bit_i];
         a_bits_tag[r*8 + bit_i] = s_tag[32*c+8*r + bit_i];
       }
       // :5
+      // b^(r), vector of 8 bits
       b_bits[r*8 + 0] = a_bits[r*8 + 7];
       b_bits[r*8 + 1] = a_bits[r*8 + 0] ^ a_bits[r*8 + 7];
       b_bits[r*8 + 2] = a_bits[r*8 + 1];
@@ -1576,31 +1578,56 @@ static void aes_128_bitwise_mix_column_prover(uint8_t* out, bf128_t* out_tag, ui
       b_bits_tag[r*8 + 7] = a_bits_tag[r*8 + 6];
 
     }
+    for (uint16_t i_bit = 0; i_bit < 8; ++i_bit) {
+      // out[c*4] = b_bits[0] ^ a_bits[3] ^ a_bits[2] ^ b_bits[1] ^ a_bits[1];
+      out[8*(c*4) + i_bit] = b_bits[0*8 + i_bit] ^ a_bits[3*8 + i_bit] ^ a_bits[2*8 + i_bit] ^ b_bits[1*8 + i_bit] ^ a_bits[1*8 + i_bit];
+      // out[c*4 + 1] = b_bits[1] ^ a_bits[0] ^ a_bits[3] ^ b_bits[2] ^ a_bits[2];
+      out[8*(c*4 + 1) + i_bit] = b_bits[1*8 + i_bit] ^ a_bits[0*8 + i_bit] ^ a_bits[3*8 + i_bit] ^ b_bits[2*8 + i_bit] ^ a_bits[2*8 + i_bit];
 
+      out[8*(c*4 + 2) + i_bit] = b_bits[2*8 + i_bit] ^ a_bits[1*8 + i_bit] ^ a_bits[0*8 + i_bit] ^ b_bits[3*8 + i_bit] ^ a_bits[3*8 + i_bit];
+
+      out[8*(c*4 + 3) + i_bit] = b_bits[3*8 + i_bit] ^ a_bits[2*8 + i_bit] ^ a_bits[1*8 + i_bit] ^ b_bits[0*8 + i_bit] ^ a_bits[0*8 + i_bit];
+
+      out_tag[8*(c*4) + i_bit] = bf128_add(
+                          bf128_add(
+                                  bf128_add(b_bits_tag[0*8 + i_bit], a_bits_tag[3*8 + i_bit]), bf128_add(a_bits_tag[2*8 + i_bit], b_bits_tag[1*8 + i_bit])
+                                  ), a_bits_tag[1*8 + i_bit]);
+      out_tag[8*(c*4 + 1) + i_bit] = bf128_add(
+                          bf128_add(
+                                  bf128_add(b_bits_tag[1*8 + i_bit], a_bits_tag[0*8 + i_bit]), bf128_add(a_bits_tag[3*8 + i_bit], b_bits_tag[2*8 + i_bit])
+                                  ), a_bits_tag[2*8 + i_bit]);
+      out_tag[8*(c*4 + 2) + i_bit] = bf128_add(
+                          bf128_add(
+                                  bf128_add(b_bits_tag[2*8 + i_bit], a_bits_tag[1*8 + i_bit]), bf128_add(a_bits_tag[0*8 + i_bit], b_bits_tag[3*8 + i_bit])
+                                  ), a_bits_tag[3*8 + i_bit]);
+      out_tag[8*(c*4 + 3) + i_bit] = bf128_add(
+                          bf128_add(
+                                  bf128_add(b_bits_tag[3*8 + i_bit], a_bits_tag[2*8 + i_bit]), bf128_add(a_bits_tag[1*8 + i_bit], b_bits_tag[0*8 + i_bit])
+                                  ), a_bits_tag[0*8 + i_bit]);
+    }
     // ::6-9
-    out[c*4] = b_bits[0] ^ a_bits[3] ^ a_bits[2] ^ b_bits[1] ^ a_bits[1];
-    out[c*4 + 1] = b_bits[1] ^ a_bits[0] ^ a_bits[3] ^ b_bits[2] ^ a_bits[2];
-    out[c*4 + 2] = b_bits[2] ^ a_bits[1] ^ a_bits[0] ^ b_bits[3] ^ a_bits[3];
-    out[c*4 + 3] = b_bits[3] ^ a_bits[2] ^ a_bits[1] ^ b_bits[0] ^ a_bits[0];
+    // out[c*4] = b_bits[0] ^ a_bits[3] ^ a_bits[2] ^ b_bits[1] ^ a_bits[1];
+    // out[c*4 + 1] = b_bits[1] ^ a_bits[0] ^ a_bits[3] ^ b_bits[2] ^ a_bits[2];
+    // out[c*4 + 2] = b_bits[2] ^ a_bits[1] ^ a_bits[0] ^ b_bits[3] ^ a_bits[3];
+    // out[c*4 + 3] = b_bits[3] ^ a_bits[2] ^ a_bits[1] ^ b_bits[0] ^ a_bits[0];
 
 
-    out_tag[c*4] = bf128_add(
-                        bf128_add(
-                                bf128_add(b_bits_tag[0], a_bits_tag[3]), bf128_add(a_bits_tag[2], b_bits_tag[1])
-                                ), a_bits_tag[1]);
-    out_tag[c*4 + 1] = bf128_add(
-                        bf128_add(
-                                bf128_add(b_bits_tag[1], a_bits_tag[0]), bf128_add(a_bits_tag[3], b_bits_tag[2])
-                                ), a_bits_tag[2]);
-    out_tag[c*4 + 2] = bf128_add(
-                        bf128_add(
-                                bf128_add(b_bits_tag[2], a_bits_tag[1]), bf128_add(a_bits_tag[0], b_bits_tag[3])
-                                ), a_bits_tag[3]);
-    out_tag[c*4 + 3] = bf128_add(
-                        bf128_add(
-                                bf128_add(b_bits_tag[3], a_bits_tag[2]), bf128_add(a_bits_tag[1], b_bits_tag[0])
-                                ), a_bits_tag[0]);
-
+    // out_tag[c*4] = bf128_add(
+    //                     bf128_add(
+    //                             bf128_add(b_bits_tag[0], a_bits_tag[3]), bf128_add(a_bits_tag[2], b_bits_tag[1])
+    //                             ), a_bits_tag[1]);
+    // out_tag[c*4 + 1] = bf128_add(
+    //                     bf128_add(
+    //                             bf128_add(b_bits_tag[1], a_bits_tag[0]), bf128_add(a_bits_tag[3], b_bits_tag[2])
+    //                             ), a_bits_tag[2]);
+    // out_tag[c*4 + 2] = bf128_add(
+    //                     bf128_add(
+    //                             bf128_add(b_bits_tag[2], a_bits_tag[1]), bf128_add(a_bits_tag[0], b_bits_tag[3])
+    //                             ), a_bits_tag[3]);
+    // out_tag[c*4 + 3] = bf128_add(
+    //                     bf128_add(
+    //                             bf128_add(b_bits_tag[3], a_bits_tag[2]), bf128_add(a_bits_tag[1], b_bits_tag[0])
+    //                             ), a_bits_tag[0]);
   }
 }
 static void aes_128_bitwise_mix_column_verifier(bf128_t* out_key, bf128_t* s_keys_tag, const faest_paramset_t* params) {
@@ -2596,7 +2623,6 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
   unsigned int Nstbits = 32 * Nst;
   unsigned int R = params->faest_param.R;
   unsigned int Nstbytes = Nstbits/8;
-  printf("starting enc constraints\n");
 
   /// ::1 AddRoundKey
   uint8_t* state_bits = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
