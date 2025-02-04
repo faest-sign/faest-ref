@@ -413,6 +413,9 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     if (bavc_open(&bavc, decoded_chall_3, signature_decom_i(sig, params), params)) {
       break;
     }
+
+    // copy final chall_3 to the signature
+    memcpy(signature_chall_3(sig, params), chall_3, lambda / 8);
   }
   hash_clear(&chall_3_ctx);
   bavc_clear(&bavc);
