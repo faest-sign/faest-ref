@@ -3040,16 +3040,16 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
 static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2, const uint8_t* w, const bf128_t* w_tag, const uint8_t* owf_in, 
                                         const uint8_t* owf_out, const faest_paramset_t* params, bool isEM) {
 
-  unsigned int lambda = FAEST_128F_LAMBDA ;
-  unsigned int R = FAEST_128F_R;
-  unsigned int Ske = FAEST_128F_Ske;
-  unsigned int Lke = FAEST_128F_Lke;
-  unsigned int Lenc = FAEST_128F_Lenc;
-  unsigned int Senc = FAEST_128F_Senc;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int R = params->faest_param.R;
+  unsigned int Ske = params->faest_param.Ske;
+  unsigned int Lke = params->faest_param.Lke;
+  unsigned int Lenc = params->faest_param.Lenc;
+  unsigned int Senc = params->faest_param.Senc;
   unsigned int Nk = lambda/32;
-  unsigned int Nst = FAEST_128F_Nwd;                  // In Round 1, Nwd was Nst
+  unsigned int Nst = params->faest_param.Nwd;                  // In Round 1, Nwd was Nst
   unsigned int num_enc_constraints = 3*Senc/2;
-  uint16_t blocksize = 128;
+  uint16_t blocksize = 32 * params->faest_param.Nwd;
   // ::1-3 owf_in, owf_out, z and z_tag
   
   // ::4-5
@@ -3183,15 +3183,15 @@ static void aes_256_constraints_prover(bf256_t* z0_tag, bf256_t* z1_val, bf256_t
 static void aes_128_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2, const bf128_t* w_key, const uint8_t* owf_in, 
                                         const uint8_t* owf_out, bf128_t delta, const faest_paramset_t* params, bool isEM) {
 
-  unsigned int lambda = FAEST_128F_LAMBDA ;
-  unsigned int R = FAEST_128F_R;
-  unsigned int Ske = FAEST_128F_Ske;
-  unsigned int Lke = FAEST_128F_Lke;
-  unsigned int Lenc = FAEST_128F_Lenc;
-  unsigned int Senc = FAEST_128F_Senc;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int R = params->faest_param.R;
+  unsigned int Ske = params->faest_param.Ske;
+  unsigned int Lke = params->faest_param.Lke;
+  unsigned int Lenc = params->faest_param.Lenc;
+  unsigned int Senc = params->faest_param.Senc;
   unsigned int Nk = lambda/32;
-  unsigned int Nst = FAEST_128F_Nwd;                  // In Round 1, Nwd was Nst
-  uint16_t blocksize = 128;
+  unsigned int Nst = params->faest_param.Nwd;                  // In Round 1, Nwd was Nst
+  uint16_t blocksize = 32 * params->faest_param.Nwd;
   // ::1-3 owf_in, owf_out, z and z_tag
   
   // ::4-5
@@ -3316,6 +3316,7 @@ static void aes_256_constraints_verifier(bf256_t* z0_tag, bf256_t* z1_val, bf256
 static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
+  // TODO: replace by constants from params s.t. it also works for EM
   unsigned int lambda = FAEST_128F_LAMBDA;
   unsigned int c = FAEST_128F_C;
 
@@ -3362,6 +3363,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
+  // TODO: replace by constants from params s.t. it also works for EM
   unsigned int lambda = FAEST_192F_LAMBDA;
   unsigned int c = FAEST_192F_C;
 
@@ -3405,6 +3407,7 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
+  // TODO: replace by constants from params s.t. it also works for EM
   unsigned int lambda = FAEST_256F_LAMBDA;
   unsigned int c = FAEST_256F_C;
 
@@ -3513,6 +3516,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
 static uint8_t* aes_192_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
 
+  // TODO: replace by constants from params s.t. it also works for EM
   unsigned int lambda = FAEST_192F_LAMBDA;
   unsigned int c = FAEST_192F_C;
 
@@ -3567,6 +3571,7 @@ static uint8_t* aes_192_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
 static uint8_t* aes_256_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
 
+  // TODO: replace by constants from params s.t. it also works for EM
   unsigned int lambda = FAEST_256F_LAMBDA;
   unsigned int c = FAEST_256F_C;
 
