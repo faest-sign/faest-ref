@@ -2772,7 +2772,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     }
     if (r != (R/2)-1) {
       uint8_t* tmp_state = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
-      bf128_t* tmp_state_tag = faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t));
+      bf128_t* tmp_state_tag = faest_aligned_alloc(BF128_ALIGN, Nstbits * sizeof(bf128_t));
       aes_128_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
       aes_128_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag, k + (2*r+2)*Nstbits, k_tag + (2*r+2)*Nstbits, params);
     }
@@ -2798,6 +2798,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
   faest_aligned_free(state_conj);
   faest_aligned_free(state_bits_tag);
   free(state_bits);
+  
 }
 // static aes_128_enc_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2, bf128_t* z_deg3, const bf128_t* owf_in_key, 
 //                                         const bf128_t* owf_out_key, const bf128_t* w_key, const bf128_t* k_key, const bf128_t delta,
