@@ -542,7 +542,6 @@ static void aes_128_sbox_affine_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf1
     out_deg2[i] = bf128_add(out_deg2[i], C[8]);
   }
 }
-
 static void aes_128_sbox_affine_verify(bf128_t* out_deg1, const bf128_t* in_deg1, bf128_t delta, bool dosq, 
                                         const faest_paramset_t* params) {
 
@@ -622,7 +621,6 @@ static void aes_192_sbox_affine_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf1
   out_deg2[i] = bf192_add(out_deg2[i], C[8]);
   }
 }
-
 static void aes_192_sbox_affine_verify(bf192_t* out_deg1, const bf192_t* in_deg1, bf192_t delta, bool dosq, 
                                         const faest_paramset_t* params) {
 
@@ -661,7 +659,6 @@ static void aes_192_sbox_affine_verify(bf192_t* out_deg1, const bf192_t* in_deg1
     out_deg1[i] = bf192_add(out_deg1[i], bf192_mul(C[8], delta));
   }
 }
-
 
 static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256_t* out_deg2, const bf256_t* in_deg0, const bf256_t* in_deg1, const bf256_t* in_deg2,
                     bool dosq, const faest_paramset_t* params) {
@@ -703,7 +700,6 @@ static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf2
   out_deg2[i] = bf256_add(out_deg2[i], C[8]);
   }
 }
-
 static void aes_256_sbox_affine_verify(bf256_t* out_deg1, const bf256_t* in_deg1, bf256_t delta, bool dosq, 
                                         const faest_paramset_t* params) {
 
@@ -746,7 +742,8 @@ static void aes_256_sbox_affine_verify(bf256_t* out_deg1, const bf256_t* in_deg1
 // SHIFT ROWS
 static void aes_128_shiftrows_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg0, const bf128_t* in_deg1, const bf128_t* in_deg2, 
                                       const faest_paramset_t* params) {
-  unsigned int Nst = 4;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Nst = lambda/32;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -763,9 +760,10 @@ static void aes_128_shiftrows_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128
     }
   }
 }
-
 static void aes_128_shiftrows_verifier(bf128_t* out_deg1, const bf128_t* in_deg1, const faest_paramset_t* params) {
-  uint16_t Nst = params->faest_param.Nwd;
+  
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Nst = lambda/32;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -2745,6 +2743,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
       aes_128_sbox_affine_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_dash_deg0, st_dash_deg1, st_dash_deg2, b, params);
       // ::20
       aes_128_shiftrows_prover(st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], params);
+      memcpy(st_b_deg0[b], st_b_deg0_tmp[b], sizeof(bf128_t)*16);
       memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf128_t)*16);
       memcpy(st_b_deg2[b], st_b_deg2_tmp[b], sizeof(bf128_t)*16);
       // ::21
