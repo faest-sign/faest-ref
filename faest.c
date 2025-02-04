@@ -505,6 +505,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   aes_verify(d_bits, q, chall_2, dsignature_chall_3(sig, params), dsignature_a1_tilde(sig, params), dsignature_a2_tilde(sig, params), owf_input,
              owf_output, params);
   free_pointer_array(&q);
+  free(d_bits);
 
   // Step: 20
   uint8_t chall_3[MAX_LAMBDA_BYTES];

@@ -2647,6 +2647,7 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key,
     }
   }
 
+  free(w_flat_key);
 }
 // // TODO: AES 192/256
 
@@ -3292,6 +3293,7 @@ static void aes_128_constraints_verifier(bf128_t* z_deg0, bf128_t* z_deg1, bf128
   }
 
   free(Rkeys);
+  free(Rkeys_key);
   // free(in);
   free(in_key);
   // free(out);
@@ -3519,6 +3521,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf128_t ret = bf128_add(bf128_load(q_tilde), tmp3);
 
   free(q_tilde);
+  free(q);
 
   uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8)*c * sizeof(uint8_t));
   bf128_store(a0_tilde, ret);
