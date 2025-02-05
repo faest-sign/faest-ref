@@ -2861,7 +2861,7 @@ static void aes_128_enc_constraints_verifier(bf128_t* z_key, const bf128_t* owf_
                                         const bf128_t* owf_out_key, const bf128_t* w_key, const bf128_t* rkeys_key, const bf128_t delta,
                                           const faest_paramset_t* params) {
 
-    unsigned int Nst = 4;
+    unsigned int Nst = params->faest_param.Nwd;
     unsigned int Nstbits = 32 * Nst;
     unsigned int R = params->faest_param.R;
     unsigned int Nstbytes = Nstbits/8;
