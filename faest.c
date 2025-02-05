@@ -318,7 +318,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
           params->faest_param.owf_output_size, msg, msg_len, lambda);
 
   // ::4-5
-  uint8_t rootkey[MAX_LAMBDA_BYTES], iv[MAX_LAMBDA_BYTES];
+  uint8_t rootkey[MAX_LAMBDA_BYTES], iv[IV_SIZE];
   hash_r_iv(rootkey, signature_iv_pre(sig, params), iv, owf_key, mu, rho, rholen, lambda);
 
   // ::6-7
