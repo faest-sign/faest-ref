@@ -2324,7 +2324,6 @@ static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uin
 
     // ::12-16 lines only relavant for aes-128
     if (j%4 == 3) {
-    if (j%4 == 3) {
       if (lambda == 192) {
         iwd += 192;
       }
