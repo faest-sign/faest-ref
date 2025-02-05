@@ -172,11 +172,7 @@ bf128_t bf128_byte_combine_sq(const bf128_t* x) {
   bf_tmp[7] = bf128_add(x[6], x[7]);
 
   // now we lift the squared mac values
-  bf128_t bf_out = bf_tmp[0];
-  for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf128_add(bf_out, bf128_mul(bf_tmp[i], bf128_alpha[i - 1]));
-  }
-  return bf_out;
+  return bf128_byte_combine(bf_tmp);
 }
 
 bf128_t bf128_byte_combine_bits(const uint8_t* x) {
@@ -369,11 +365,7 @@ bf192_t bf192_byte_combine_sq(const bf192_t* x) {
   bf_tmp[7] = bf192_add(x[6], x[7]);
 
   // now we lift the squared mac values
-  bf192_t bf_out = bf_tmp[0];
-  for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf192_add(bf_out, bf192_mul(bf_tmp[i], bf192_alpha[i - 1]));
-  }
-  return bf_out;
+  return bf192_byte_combine(bf_tmp);
 }
 
 bf192_t bf192_byte_combine_bits(const uint8_t* x) {
@@ -578,11 +570,7 @@ bf256_t bf256_byte_combine_sq(const bf256_t* x) {
   bf_tmp[7] = bf256_add(x[6], x[7]);
 
   // now we lift the squared mac values
-  bf256_t bf_out = bf_tmp[0];
-  for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf256_add(bf_out, bf256_mul(bf_tmp[i], bf256_alpha[i - 1]));
-  }
-  return bf_out;
+  return bf256_byte_combine(bf_tmp);
 }
 
 bf256_t bf256_byte_combine_bits(const uint8_t* x) {
