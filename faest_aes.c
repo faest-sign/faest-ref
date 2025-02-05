@@ -3846,7 +3846,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   for (unsigned int i = 0; i < ell; i++) {
     w_key[i] = bf128_add(
                           q_key[i], 
-                          bf128_mul_bit(bf_delta, d[i/8]));
+                          bf128_mul_bit(bf_delta, d[i]));
   }
   memset(z2_key, 0, c * sizeof(bf128_t));
   //aes_128_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
