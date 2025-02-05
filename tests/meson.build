@@ -74,7 +74,7 @@ if boost_test.found()
   test(
     'PRG',
     extended_tests,
-    args: ['-t', 'prg'],
+    args: ['-t', 'prgs'],
     timeout: 6000,
   )
   test(
