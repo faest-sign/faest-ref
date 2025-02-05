@@ -3027,7 +3027,6 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
     for (unsigned int r = 0; r < R + 1; r++) {
       for (unsigned int n = 0; n < Nst; n++) {
         for (unsigned int i = 0; i < 4; i++) {
-          rkeys[idx] = round_keys.round_keys[r][n][i];
           for (unsigned int j = 0; j < 8; j++) {
             rkeys[8*idx + j] = get_bit(round_keys.round_keys[r][n][i], j);
             rkeys_tag[8*idx + j] = bf128_zero();
