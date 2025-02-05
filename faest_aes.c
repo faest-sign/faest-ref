@@ -853,8 +853,8 @@ static void aes_128_mix_columns_prover(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t
   
   //  ::2-4
   uint8_t one[8] = {1,0,0,0,0,0,0,0};
-  uint8_t two[8] = {2,0,0,0,0,0,0,0};
-  uint8_t three[8] = {3,0,0,0,0,0,0,0};
+  uint8_t two[8] = {0,1,0,0,0,0,0,0};
+  uint8_t three[8] = {1,1,0,0,0,0,0,0};
   bf128_t v1 = bf128_byte_combine_bits(one);
   bf128_t v2 = bf128_byte_combine_bits(two);
   bf128_t v3 = bf128_byte_combine_bits(three);
@@ -956,8 +956,8 @@ static void aes_128_mix_columns_verifier(bf128_t* y_deg1, const bf128_t* in_deg1
   
   //  ::2-4
   uint8_t one[8] = {1,0,0,0,0,0,0,0};
-  uint8_t two[8] = {2,0,0,0,0,0,0,0};
-  uint8_t three[8] = {3,0,0,0,0,0,0,0};
+  uint8_t two[8] = {0,1,0,0,0,0,0,0};
+  uint8_t three[8] = {1,1,0,0,0,0,0,0};
   bf128_t v1 = bf128_byte_combine_bits(one);
   bf128_t v2 = bf128_byte_combine_bits(two);
   bf128_t v3 = bf128_byte_combine_bits(three);
@@ -1425,7 +1425,6 @@ static void aes_128_inverse_shiftrows_prover(uint8_t* out, bf128_t* out_tag, con
       else {
         i = 4*((c-r-1) % 4) + r;
       }
-      // TODO: I am sure there is something fishy here!!!!!!
       for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
         out[8*(4*c + r) + bit_i] = in[8*i + bit_i];             // moving bitwise
         out_tag[8*(4*c + r) + bit_i] = in_tag[8*i + bit_i];
