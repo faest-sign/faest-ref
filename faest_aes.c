@@ -3356,12 +3356,12 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
     free(z_tilde_key);
   }
   // ::18-20
-  bf128_t* w_tilde_tag = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, Lenc * sizeof(bf128_t));
+  bf128_t* w_tilde_key = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, Lenc * sizeof(bf128_t));
   bf128_t* z_tilde_enc_key = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
 
   for (unsigned int b = 0; b < beta; b++) {
     for (unsigned int i = 0; i < Lenc; i++) {
-      w_tilde_tag[i] = w_key[Lke + b*Lenc + i];
+      w_tilde_key[i] = w_key[Lke + b*Lenc + i];
     }
     // ::21
     memset(z_tilde_enc_key, 0, num_enc_constraints * sizeof(bf128_t));
@@ -3369,17 +3369,18 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
       in_key[0] = bf128_add(in_key[0], delta); // adding one
       out_key += blocksize;
     }
-    aes_128_enc_constraints_verifier(z_tilde_enc_key, in_key, out_key, w_key, rkeys_key, delta, params);
+    aes_128_enc_constraints_verifier(z_tilde_enc_key, in_key, out_key, w_tilde_key, rkeys_key, delta, params);
 
     // :22
     for (unsigned int i = 0; i < num_enc_constraints; i++) {
       z_key[1+num_ks_constraints + b*num_enc_constraints + i] = z_tilde_enc_key[i];
+      break; // XXX
     }
   }
   faest_aligned_free(rkeys_key);
   faest_aligned_free(in_key);
   faest_aligned_free(out_key);
-  faest_aligned_free(w_tilde_tag);
+  faest_aligned_free(w_tilde_key);
   faest_aligned_free(z_tilde_enc_key);
 }
 static void aes_192_constraints_verifier(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2, const bf192_t* w_key, const uint8_t* owf_in, 
