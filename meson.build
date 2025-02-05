@@ -613,7 +613,7 @@ pkg.generate(name: 'faest', description: 'FAEST signature scheme', libraries: [l
 all_names = []
 foreach parameter_set : parameter_sets
   all_names += 'faest_@0@'.format(parameter_set.get('PARAM_L'))
-  # subdir('faest_@0@'.format(parameter_set.get('PARAM_L')))
+  subdir('faest_@0@'.format(parameter_set.get('PARAM_L')))
 endforeach
 run_target(
   'prepare_nist',
