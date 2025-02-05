@@ -1,6 +1,6 @@
 CC?=gcc
 CXX?=g++
-CFLAGS+=-g -O3 -std=gnu11 -march=native
+CFLAGS+=-g -O3 -std=gnu11 -march=native -Wno-psabi
 CPPFLAGS+=-I. -Isha3 -DNDEBUG -DHAVE_OPENSSL -DFAEST_EXPORT=
 
 SOURCES=$(filter-out randomness.c,$(wildcard *.c)) $(wildcard sha3/*.c) $(wildcard sha3/*.s)
