@@ -18,7 +18,7 @@ static bf64_t compute_h1(const uint8_t* t, const uint8_t* x, unsigned int lambda
   const bf64_t b_t = bf64_load(t);
 
   unsigned int lambda_bytes        = lambda / 8;
-  const unsigned int length_lambda = (ell + lambda + lambda - 1) / lambda;
+  const unsigned int length_lambda = (ell + 3 * lambda - 1) / lambda;
 
   uint8_t tmp[MAX_LAMBDA_BYTES] = {0};
   memcpy(tmp, x + (length_lambda - 1) * lambda_bytes,
@@ -44,9 +44,9 @@ void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   const uint8_t* r3 = sd + 3 * BF128_NUM_BYTES;
   const uint8_t* s  = sd + 4 * BF128_NUM_BYTES;
   const uint8_t* t  = sd + 5 * BF128_NUM_BYTES;
-  const uint8_t* x1 = x + (ell + BF128_NUM_BYTES * 8) / 8;
+  const uint8_t* x1 = x + (ell + 2 * BF128_NUM_BYTES * 8) / 8;
 
-  const unsigned int length_lambda = (ell + 2 * BF128_NUM_BYTES * 8 - 1) / (BF128_NUM_BYTES * 8);
+  const unsigned int length_lambda = (ell + 3 * BF128_NUM_BYTES * 8 - 1) / (BF128_NUM_BYTES * 8);
 
   uint8_t tmp[BF128_NUM_BYTES] = {0};
   memcpy(tmp, x + (length_lambda - 1) * BF128_NUM_BYTES,
@@ -79,9 +79,9 @@ void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   const uint8_t* r3 = sd + 3 * BF192_NUM_BYTES;
   const uint8_t* s  = sd + 4 * BF192_NUM_BYTES;
   const uint8_t* t  = sd + 5 * BF192_NUM_BYTES;
-  const uint8_t* x1 = x + (ell + BF192_NUM_BYTES * 8) / 8;
+  const uint8_t* x1 = x + (ell + 2 * BF192_NUM_BYTES * 8) / 8;
 
-  const unsigned int length_lambda = (ell + 2 * BF192_NUM_BYTES * 8 - 1) / (BF192_NUM_BYTES * 8);
+  const unsigned int length_lambda = (ell + 3 * BF192_NUM_BYTES * 8 - 1) / (BF192_NUM_BYTES * 8);
 
   uint8_t tmp[BF192_NUM_BYTES] = {0};
   memcpy(tmp, x + (length_lambda - 1) * BF192_NUM_BYTES,
@@ -114,9 +114,9 @@ void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   const uint8_t* r3 = sd + 3 * BF256_NUM_BYTES;
   const uint8_t* s  = sd + 4 * BF256_NUM_BYTES;
   const uint8_t* t  = sd + 5 * BF256_NUM_BYTES;
-  const uint8_t* x1 = x + (ell + BF256_NUM_BYTES * 8) / 8;
+  const uint8_t* x1 = x + (ell + 2 * BF256_NUM_BYTES * 8) / 8;
 
-  const unsigned int length_lambda = (ell + 2 * BF256_NUM_BYTES * 8 - 1) / (BF256_NUM_BYTES * 8);
+  const unsigned int length_lambda = (ell + 3 * BF256_NUM_BYTES * 8 - 1) / (BF256_NUM_BYTES * 8);
 
   uint8_t tmp[BF256_NUM_BYTES] = {0};
   memcpy(tmp, x + (length_lambda - 1) * BF256_NUM_BYTES,
