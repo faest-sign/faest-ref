@@ -2975,10 +2975,10 @@ static void aes_128_enc_constraints_verifier(bf128_t* z_key, const bf128_t* owf_
       aes_128_add_round_key_verifier(state_bits_key, tmp_state_key, rkeys_key + (2*r+2)*Nstbits, params);
       faest_aligned_free(tmp_state_key);
     }
+    faest_aligned_free(s_tilde_key);
     faest_aligned_free(s_dash_dash_key);
     faest_aligned_free(s_state_key);
   }
-  faest_aligned_free(s_tilde_key);
   faest_aligned_free(st_dash_key);
   faest_aligned_free(state_conj_key);
   faest_aligned_free(state_bits_key);
@@ -3690,7 +3690,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   memset(z1_val, 0, c * sizeof(bf128_t));
   memset(z2_gamma, 0, c * sizeof(bf128_t));
   
-  //aes_128_constraints_prover(z0_tag, z1_val, z2_gamma, w, w_tag, owf_in, owf_out, params, isEM);
+  aes_128_constraints_prover(z0_tag, z1_val, z2_gamma, w, w_tag, owf_in, owf_out, params, isEM);
 
   // Step: 13-18
   zk_hash_128_ctx a0_ctx;
@@ -3845,7 +3845,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
                                     bf_delta));
   }
   memset(z2_key, 0, c * sizeof(bf128_t));
-  //aes_128_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
+  aes_128_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
 
   // ::13-14
   zk_hash_128_ctx b_ctx;
