@@ -2293,7 +2293,7 @@ static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int e
 }
 
 // // KEY EXP BKWD
-static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, uint8_t* key, bf128_t* key_tag, const faest_paramset_t* params) {
+static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* x, const bf128_t* x_tag, const uint8_t* key, const bf128_t* key_tag, const faest_paramset_t* params) {
 
   const unsigned int Ske    = params->faest_param.Ske;
   const unsigned int lambda    = params->faest_param.lambda;
@@ -2382,9 +2382,9 @@ static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_ke
 // // KEY EXP FWD
 static void aes_128_keyexp_forward_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* w, const bf128_t* w_tag, const faest_paramset_t* params) {
 
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int Nk = lambda/32;
-  unsigned int R = params->faest_param.R;
+  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Nk = lambda/32;
+  const unsigned int R = params->faest_param.R;
 
   // ::1-2
   for (unsigned int i = 0; i < lambda; i++) {
