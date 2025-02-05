@@ -2468,7 +2468,9 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
   // ::2
   uint8_t* w_flat = (uint8_t*)malloc(8 * Ske * sizeof(uint8_t));
   bf128_t* w_flat_tag = faest_aligned_alloc(BF128_ALIGN, 8 * Ske * sizeof(bf128_t));
-  aes_128_keyexp_backward_prover(w_flat, w_flat_tag, w, w_tag, k, k_tag, params);
+  aes_128_keyexp_backward_prover(w_flat, w_flat_tag, w + lambda, w_tag + lambda, k, k_tag, params);
+
+
 
   // ::3-5
   unsigned int iwd = 32*(Nk - 1);
@@ -2560,7 +2562,7 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key,
   aes_128_keyexp_forward_verifier(k_key, w_key, params);
   // ::2
   bf128_t* w_flat_key = faest_aligned_alloc(BF128_ALIGN, 8 * Ske * sizeof(bf128_t));
-  aes_128_keyexp_backward_verifier(w_flat_key, w_key, k_key, delta, params);
+  aes_128_keyexp_backward_verifier(w_flat_key, w_key + lambda, k_key, delta, params);
 
   // ::3-5
   unsigned int iwd = 32*(Nk - 1);  // as 1 unit8 has 8 bits
@@ -3694,7 +3696,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   memset(z1_val, 0, c * sizeof(bf128_t));
   memset(z2_gamma, 0, c * sizeof(bf128_t));
   
-  //aes_128_constraints_prover(z0_tag, z1_val, z2_gamma, w, w_tag, owf_in, owf_out, params, isEM);
+  aes_128_constraints_prover(z0_tag, z1_val, z2_gamma, w_bits, w_tag, owf_in, owf_out, params, isEM);
 
   // Step: 13-18
   zk_hash_128_ctx a0_ctx;
@@ -3849,7 +3851,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
                           bf128_mul_bit(bf_delta, d_bits[i]));
   }
   memset(z2_key, 0, c * sizeof(bf128_t));
-  //aes_128_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
+  aes_128_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
 
   // ::13-14
   zk_hash_128_ctx b_ctx;

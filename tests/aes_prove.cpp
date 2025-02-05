@@ -303,6 +303,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
                    a2_tilde.data(), in.data(), out.data(), params);
 
     // check that the proof verifies
+    printf("FAEST - %s\n", faest_get_param_name(param_id));
     for (size_t i = 0; i < 16; i++) {
       printf("%d-%d ", recomputed_a0_tilde[i], a0_tilde.data()[i]);
     }
