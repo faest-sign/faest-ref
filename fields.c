@@ -30,17 +30,20 @@
   ((UINT64_C(x7) << 56) | (UINT64_C(x6) << 48) | (UINT64_C(x5) << 40) | (UINT64_C(x4) << 32) |     \
    (UINT64_C(x3) << 24) | (UINT64_C(x2) << 16) | (UINT64_C(x1) << 8) | UINT64_C(x0))
 
+static void bits_sq_oop(uint8_t* res, const uint8_t* x) {
+  res[0] = x[0] ^ x[4] ^ x[6];
+  res[1] = x[4] ^ x[6] ^ x[7];
+  res[2] = x[1] ^ x[5];
+  res[3] = x[4] ^ x[5] ^ x[6] ^ x[7];
+  res[4] = x[2] ^ x[4] ^ x[7];
+  res[5] = x[5] ^ x[6];
+  res[6] = x[3] ^ x[5];
+  res[7] = x[6] ^ x[7];
+}
 
 void bits_sq(uint8_t* x) {
   uint8_t res[8];
-  res[0]      = x[0] ^ x[4] ^ x[6];
-  res[1]      = x[4] ^ x[6] ^ x[7];
-  res[2]      = x[1] ^ x[5];
-  res[3]      = x[4] ^ x[5] ^ x[6] ^ x[7];
-  res[4]      = x[2] ^ x[4] ^ x[7];
-  res[5]      = x[5] ^ x[6];
-  res[6]      = x[3] ^ x[5];
-  res[7]      = x[6] ^ x[7];
+  bits_sq_oop(res, x);
   for (unsigned int i = 0; i < 8; ++i) {
     x[i] = res[i];
   }
@@ -198,16 +201,7 @@ bf128_t bf128_byte_combine_bits(const uint8_t* x) {
 
 bf128_t bf128_byte_combine_bits_sq(const uint8_t* x) {
   uint8_t y[8];
-  y[0] = x[0] ^ x[4] ^ x[6];
-  y[1] = x[4] ^ x[6] ^ x[7];
-  y[2] = x[1] ^ x[5];
-  y[3] = x[4] ^ x[5] ^ x[6] ^ x[7];
-  y[4] = x[2] ^ x[4] ^ x[7];
-  y[5] = x[5] ^ x[6];
-  y[6] = x[3] ^ x[5];
-  y[7] = x[6] ^ x[7];
-
-  // now we lift the squared value
+  bits_sq_oop(y, x);
   return bf128_byte_combine_bits(y);
 }
 
@@ -390,15 +384,7 @@ bf192_t bf192_byte_combine_bits(const uint8_t* x) {
 
 bf192_t bf192_byte_combine_bits_sq(const uint8_t* x) {
   uint8_t y[8];
-  y[0] = x[0] ^ x[4] ^ x[6];
-  y[1] = x[4] ^ x[6] ^ x[7];
-  y[2] = x[1] ^ x[5];
-  y[3] = x[4] ^ x[5] ^ x[6] ^ x[7];
-  y[4] = x[2] ^ x[4] ^ x[7];
-  y[5] = x[5] ^ x[6];
-  y[6] = x[3] ^ x[5];
-  y[7] = x[6] ^ x[7];
-
+  bits_sq_oop(y, x);
   return bf192_byte_combine_bits(y);
 }
 
@@ -594,15 +580,7 @@ bf256_t bf256_byte_combine_bits(const uint8_t* x) {
 
 bf256_t bf256_byte_combine_bits_sq(const uint8_t* x) {
   uint8_t y[8];
-  y[0] = x[0] ^ x[4] ^ x[6];
-  y[1] = x[4] ^ x[6] ^ x[7];
-  y[2] = x[1] ^ x[5];
-  y[3] = x[4] ^ x[5] ^ x[6] ^ x[7];
-  y[4] = x[2] ^ x[4] ^ x[7];
-  y[5] = x[5] ^ x[6];
-  y[6] = x[3] ^ x[5];
-  y[7] = x[6] ^ x[7];
-
+  bits_sq_oop(y, x);
   return bf256_byte_combine_bits(y);
 }
 
