@@ -364,6 +364,13 @@ static void aes_128_inv_norm_to_conjugates_verifier(bf128_t* y_eval, const bf128
 
 // // INV NORM CONSTRAINTS
 void aes_128_inv_norm_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2, const bf128_t* conjugates, const bf128_t* conjugates_tag, const bf128_t* y, const bf128_t* y_tag) {
+    {
+        bf128_t debug = bf128_add(
+                bf128_mul(y[0], bf128_mul(conjugates[1], conjugates[4])),
+                conjugates[0]);
+        bf128_t zero = bf128_zero();
+        assert(memcmp(&debug, &zero, sizeof(debug)) == 0);
+    }
     
     z_deg0[0] = bf128_mul(
         bf128_mul(*y_tag,conjugates_tag[1]),
