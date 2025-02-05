@@ -150,22 +150,21 @@ static void aes_128_f256_f2_conjugates_1(bf128_t* y, const uint8_t* state) {
   unsigned int Nst_bytes = 16;
 
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
-
-    uint8_t* x0 = (uint8_t*)malloc(Nst_bytes*8);
-    memcpy(x0, state, Nst_bytes*8);
-    for (unsigned int j = 0; j != 7; ++j) {
-      y[i * 8 + j] = bf128_byte_combine_bits(x0 + j*8);
-      uint8_t tmp[8];
-      memcpy(tmp, x0 + j*8, 8);
-      bits_sq(tmp);
-      memcpy(x0 + (j+1)*8, tmp, 8);
+    uint8_t* x0 = (uint8_t*)malloc(8 * sizeof(uint8_t));
+    // array of bits containing byte i
+    for (unsigned int j = 0; j != 8; ++j) {
+      x0[j] = state[i*8 + j];
     }
-    y[i * 8 + 7] = bf128_byte_combine_bits(x0 + 7*8);
-    free(x0);
 
+    for (unsigned int j = 0; j != 7; ++j) {
+      y[i * 8 + j] = bf128_byte_combine_bits(x0);
+      bits_sq(x0);
+    }
+    y[i * 8 + 7] = bf128_byte_combine_bits(x0);
+    free(x0);
   }
-  
 }
+
 static void aes_128_f256_f2_conjugates_128(bf128_t* y, const bf128_t* state) {
   unsigned int Nst_bytes = 16;
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
