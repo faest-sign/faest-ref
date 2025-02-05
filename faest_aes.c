@@ -2457,10 +2457,7 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
   unsigned int Nk = lambda/32;
   unsigned int r_prime;
 
-  bool do_rot_word = false;
-  if (lambda == 256) {
-    do_rot_word = true;
-  }
+  bool do_rot_word = true;
 
   // ::1
   aes_128_keyexp_forward_prover(k, k_tag, w, w_tag, params);
@@ -2492,9 +2489,9 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
       // ::10
       r_prime = r;
       // ::11 Used only for AES-256
-      // if (do_rot_word) {
-      //   r_prime = (r + 3) % 4;
-      // }
+      if (do_rot_word) {
+        r_prime = (r + 3) % 4;
+      }
       // ::12-15
       k_hat[r_prime] = bf128_byte_combine_bits(&k[(iwd + 8 * r)]); // lifted key witness
       k_hat_sq[r_prime] = bf128_byte_combine_bits_sq(&k[(iwd + 8 * r)]); // lifted key witness sq
