@@ -3711,9 +3711,9 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   free(z1_val);
   free(z2_gamma);
 
-  zk_hash_128_finalize(a0_tilde, &a0_ctx, bf_u_star_0);
-  zk_hash_128_finalize(a1_tilde, &a1_ctx, bf128_add(bf_v_star_0, bf_u_star_1));
-  zk_hash_128_finalize(a2_tilde, &a2_ctx, bf_v_star_1);
+  zk_hash_128_finalize(a0_tilde, &a0_ctx, bf_v_star_0);
+  zk_hash_128_finalize(a1_tilde, &a1_ctx, bf128_add(bf_u_star_0, bf_v_star_1));
+  zk_hash_128_finalize(a2_tilde, &a2_ctx, bf_u_star_1);
 
   free(w_tag);
 }
@@ -3842,7 +3842,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   for (unsigned int i = 0; i < ell; i++) {
     w_key[i] = bf128_add(
                           q[i], 
-                          bf128_mul(bf128_from_bit(d[i]),
+                          bf128_mul(bf128_from_bit(get_bit(d[i/8], (i%8))),
                                     bf_delta));
   }
   memset(z2_key, 0, c * sizeof(bf128_t));
