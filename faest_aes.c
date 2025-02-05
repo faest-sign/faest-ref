@@ -3668,19 +3668,20 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
   unsigned int lambda = params->faest_param.lambda;
+  unsigned int lambda_bytes = lambda/8;
   unsigned int c = params->faest_param.C;
   unsigned int ell = params->faest_param.l;
 
   // ::1-5
-  // V becomes the w_tag
+  // V becomes the w_tag: ell + 2*lambda field elements
   bf128_t* w_tag = column_to_row_major_and_shrink_V_128(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
   bf128_t bf_u_star_0 = bf128_load_bits(u);
-  bf128_t bf_u_star_1 = bf128_load_bits(u + lambda);
+  bf128_t bf_u_star_1 = bf128_load_bits(u + lambda_bytes);
   // ::8-9
-  bf128_t bf_v_star_0 = bf128_sum_poly(w_tag);
-  bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + lambda);
+  bf128_t bf_v_star_0 = bf128_sum_poly(w_tag + ell);
+  bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + ell + lambda);
 
   // ::10-12
   bf128_t* z0_tag = (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf tag
@@ -3690,7 +3691,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   memset(z1_val, 0, c * sizeof(bf128_t));
   memset(z2_gamma, 0, c * sizeof(bf128_t));
   
-  aes_128_constraints_prover(z0_tag, z1_val, z2_gamma, w, w_tag, owf_in, owf_out, params, isEM);
+  //aes_128_constraints_prover(z0_tag, z1_val, z2_gamma, w, w_tag, owf_in, owf_out, params, isEM);
 
   // Step: 13-18
   zk_hash_128_ctx a0_ctx;
@@ -3829,8 +3830,8 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf128_t* q = column_to_row_major_and_shrink_V_128(Q, ell);
 
   // ::7-9
-  bf128_t q_star_0 = bf128_sum_poly(q);
-  bf128_t q_star_1 = bf128_sum_poly(q + lambda);
+  bf128_t q_star_0 = bf128_sum_poly(q + ell);
+  bf128_t q_star_1 = bf128_sum_poly(q + ell + lambda);
 
   // ::10
   bf128_t q_star = bf128_add(q_star_0, bf128_mul(bf_delta, q_star_1));
@@ -3845,7 +3846,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
                                     bf_delta));
   }
   memset(z2_key, 0, c * sizeof(bf128_t));
-  aes_128_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
+  //aes_128_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
 
   // ::13-14
   zk_hash_128_ctx b_ctx;
@@ -3853,7 +3854,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   for (unsigned int i = 0; i < c; i++) {
     zk_hash_128_update(&b_ctx, z2_key[i]);
   }
-  uint8_t* q_tilde = (uint8_t*)malloc((lambda/8)*c * sizeof(uint8_t));
+  uint8_t* q_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   zk_hash_128_finalize(q_tilde, &b_ctx, q_star);
 
   // free(z0_tag);
