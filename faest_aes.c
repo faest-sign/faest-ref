@@ -2882,7 +2882,7 @@ static void aes_128_enc_constraints_verifier(bf128_t* z_key, const bf128_t* owf_
     aes_128_f256_f2_conjugates_128(state_conj_key, state_bits_key);
 
     // ::5-6 : start of norms in witness
-    const bf128_t* norm_keys_ptr = w_key + 3 * Nstbytes * r/2;
+    const bf128_t* norm_keys_ptr = w_key + 3 * Nstbits * r/2;
 
     // ::7
     for (unsigned int i = 0; i < Nstbytes; i++) {
