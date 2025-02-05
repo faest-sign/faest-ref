@@ -225,7 +225,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     for (size_t i = 0; i < lambda / 8; ++i) {
       delta[i] = (uint8_t) i;
     }
-    std::vector<uint8_t> u(ell_hat_bytes, 0x13); // 1 bit per byte
+    std::vector<uint8_t> u(ell_hat_bytes, 0x13);
     std::vector<uint8_t> vs(ell_hat_bytes * lambda, 0x37);
     std::vector<uint8_t> qs = vs;
     std::vector<uint8_t*> V(lambda, NULL);
