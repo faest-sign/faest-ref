@@ -3127,8 +3127,6 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   free(z_tilde_deg1);
   free(z_tilde_deg2);
 }
-
-
 static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2, const uint8_t* w, const bf192_t* w_tag, const uint8_t* owf_in, 
                                         const uint8_t* owf_out, const faest_paramset_t* params, bool isEM) {
 
@@ -3677,8 +3675,9 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf128_t* w_tag = column_to_row_major_and_shrink_V_128(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
-  bf128_t bf_u_star_0 = bf128_load_bits(u);
-  bf128_t bf_u_star_1 = bf128_load_bits(u + lambda_bytes);
+  
+  bf128_t bf_u_star_0 = bf128_load(u); // U IS 1 Byte per uint8 right??
+  bf128_t bf_u_star_1 = bf128_load(u + lambda_bytes);
   // ::8-9
   bf128_t bf_v_star_0 = bf128_sum_poly(w_tag + ell);
   bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + ell + lambda);
@@ -3827,11 +3826,11 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf128_t bf_delta_sq = bf128_mul(bf_delta, bf_delta);
 
   // ::2-6
-  bf128_t* q = column_to_row_major_and_shrink_V_128(Q, ell);
+  bf128_t* q_key = column_to_row_major_and_shrink_V_128(Q, ell);
 
   // ::7-9
-  bf128_t q_star_0 = bf128_sum_poly(q + ell);
-  bf128_t q_star_1 = bf128_sum_poly(q + ell + lambda);
+  bf128_t q_star_0 = bf128_sum_poly(q_key + ell);
+  bf128_t q_star_1 = bf128_sum_poly(q_key + ell + lambda);
 
   // ::10
   bf128_t q_star = bf128_add(q_star_0, bf128_mul(bf_delta, q_star_1));
@@ -3841,7 +3840,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf128_t* w_key = (bf128_t*) faest_aligned_alloc(BF128_ALIGN, ell * sizeof(bf128_t));
   for (unsigned int i = 0; i < ell; i++) {
     w_key[i] = bf128_add(
-                          q[i], 
+                          q_key[i], 
                           bf128_mul(bf128_from_bit(get_bit(d[i/8], (i%8))),
                                     bf_delta));
   }
@@ -3869,7 +3868,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   bf128_t ret = bf128_add(bf128_load(q_tilde), tmp3);
 
   free(q_tilde);
-  free(q);
+  free(q_key);
 
   uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   bf128_store(a0_tilde, ret);
@@ -4027,9 +4026,11 @@ uint8_t* aes_verify(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const
   case 256:
     return aes_256_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
                             faest_is_em(params));
+    break;
   case 192:
     return aes_192_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
                             faest_is_em(params));
+    break;
   default:
     return aes_128_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
                             faest_is_em(params));
