@@ -204,7 +204,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     // prepare vole correlation
     std::vector<uint8_t> delta(lambda / 8, 0);
     delta[0] = 42;
-    std::vector<uint8_t> u(ell_hat, 0x13); // 1 bit per byte
+    std::vector<uint8_t> u(ell_hat_bytes, 0x13);
     std::vector<uint8_t> vs(ell_hat_bytes * lambda, 0x37);
     std::vector<uint8_t> qs = vs;
     std::vector<uint8_t*> V(lambda, NULL);
@@ -219,10 +219,19 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
         }
       }
     }
+
+    std::vector<uint8_t> u_bits(2 * lambda, 0x00); // 1 bit in per uint8_t
+    for (unsigned int bit_i = 0; bit_i < 2 * lambda; bit_i++) {
+      u_bits[bit_i] = (u[(ell + bit_i) / 8] >> (ell + bit_i) % 8) & 1;
+    }
     // masked witness d = u ^ w
-    std::vector<uint8_t> d(ell_hat, 0x13);
-    for (size_t i = 0; i < ell_hat; ++i) {
+    std::vector<uint8_t> d(ell_bytes, 0x13);
+    for (size_t i = 0; i < ell_bytes; ++i) {
       d[i] = u[i] ^ w[i];
+    }
+    std::vector<uint8_t> d_bits(ell, 0x00); // 1 bit in per uint8_t
+    for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
+      d_bits[bit_i] = (d[bit_i / 8] >> bit_i % 8) & 1;
     }
 
     std::vector<uint8_t> chall_2((3 * lambda + 64) / 8, 47);
@@ -233,10 +242,12 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
 
     printf("testing aes_prove\n");
 
-    aes_prove(a0_tilde.data(), a1_tilde.data(), a2_tilde.data(), w_bits.data(), u.data(), V.data(), in.data(), out.data(), chall_2.data(), params);
+    aes_prove(a0_tilde.data(), a1_tilde.data(), a2_tilde.data(), w_bits.data(), u_bits.data(),
+              V.data(), in.data(), out.data(), chall_2.data(), params);
 
-    uint8_t* recomputed_a0_tilde = aes_verify(d.data(), Q.data(), chall_2.data(), delta.data(),
-                                             a1_tilde.data(), a2_tilde.data(), in.data(), out.data(), params);
+    uint8_t* recomputed_a0_tilde =
+        aes_verify(d_bits.data(), Q.data(), chall_2.data(), delta.data(), a1_tilde.data(),
+                   a2_tilde.data(), in.data(), out.data(), params);
 
     // check that the proof verifies
     BOOST_TEST(memcmp(recomputed_a0_tilde, a0_tilde.data(), lambdaBytes) == 0);
