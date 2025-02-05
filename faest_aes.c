@@ -3676,8 +3676,8 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 
   // ::6-7 embed VOLE masks
   
-  bf128_t bf_u_star_0 = bf128_load(u); // U IS 1 Byte per uint8 right??
-  bf128_t bf_u_star_1 = bf128_load(u + lambda_bytes);
+  bf128_t bf_u_star_0 = bf128_load_bits(u); // U IS 1 Byte per uint8 right??
+  bf128_t bf_u_star_1 = bf128_load_bits(u + lambda_bytes);
   // ::8-9
   bf128_t bf_v_star_0 = bf128_sum_poly(w_tag + ell);
   bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + ell + lambda);
