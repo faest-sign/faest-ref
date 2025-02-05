@@ -3676,7 +3676,6 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
   unsigned int lambda = params->faest_param.lambda;
-  unsigned int lambda_bytes = lambda/8;
   unsigned int c = params->faest_param.C;
   unsigned int ell = params->faest_param.l;
 
