@@ -2355,7 +2355,7 @@ static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_ke
       // ::8-10
       if (rmvRcon == true && j % 4 == 0) {
           bf128_t rcon_key;
-          const uint8_t c = (Rcon[j%4] >> bit_i) & 1;
+          const uint8_t c = (Rcon[j / 4] >> bit_i) & 1;
           constant_to_vole_128_verifier(&rcon_key, &c, delta, 1);
           x_tilde_key[bit_i] = bf128_add(x_tilde_key[bit_i], rcon_key);
       }
