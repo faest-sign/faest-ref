@@ -32,14 +32,18 @@
 
 
 void bits_sq(uint8_t* x) {
-  x[0]      = x[0] ^ x[4] ^ x[6];
-  x[1]      = x[4] ^ x[6] ^ x[7];
-  x[2]      = x[1] ^ x[5];
-  x[3]      = x[4] ^ x[5] ^ x[6] ^ x[7];
-  x[4]      = x[2] ^ x[4] ^ x[7];
-  x[5]      = x[5] ^ x[6];
-  x[6]      = x[3] ^ x[5];
-  x[7]      = x[6] ^ x[7];
+  uint8_t res[8];
+  res[0]      = x[0] ^ x[4] ^ x[6];
+  res[1]      = x[4] ^ x[6] ^ x[7];
+  res[2]      = x[1] ^ x[5];
+  res[3]      = x[4] ^ x[5] ^ x[6] ^ x[7];
+  res[4]      = x[2] ^ x[4] ^ x[7];
+  res[5]      = x[5] ^ x[6];
+  res[6]      = x[3] ^ x[5];
+  res[7]      = x[6] ^ x[7];
+  for (unsigned int i = 0; i < 8; ++i) {
+    x[i] = res[i];
+  }
 }
 
 // GF(2^8) implementation
