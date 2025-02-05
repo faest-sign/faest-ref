@@ -395,7 +395,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   uint32_t ctr = 0;
   for (; true; ++ctr) {
-    uint8_t chall_3[MAX_LAMBDA_BYTES];
+    uint8_t* chall_3 = signature_chall_3(sig, params);
     hash_challenge_3_final(chall_3, &chall_3_ctx, ctr, lambda);
 
     // ::23
@@ -411,8 +411,6 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
     // :27
     if (bavc_open(&bavc, decoded_chall_3, signature_decom_i(sig, params), params)) {
-      // copy final chall_3 to the signature
-      memcpy(signature_chall_3(sig, params), chall_3, lambda / 8);
       break;
     }
   }
