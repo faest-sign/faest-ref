@@ -2678,9 +2678,9 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
 
       // ::10-11
       aes_128_inv_norm_constraints_prover(
-          z_deg0 + r*Nstbytes + i,
-          z_deg1 + r*Nstbytes + i,
-          z_deg2 + r*Nstbytes + i,
+          z_deg0 + 3*r*Nstbytes + i,
+          z_deg1 + 3*r*Nstbytes + i,
+          z_deg2 + 3*r*Nstbytes + i,
           state_conj + 8*i,
           state_conj_tag + 8*i,
           y, y_tag);
@@ -2892,7 +2892,7 @@ static void aes_128_enc_constraints_verifier(bf128_t* z_key, const bf128_t* owf_
 
       // ::10-11
       aes_128_inv_norm_constraints_verifier(
-          z_key + r*Nstbytes + i,
+          z_key + 3*r*Nstbytes + i,
           state_conj_key + 8*i,
           y_key, delta);
 
