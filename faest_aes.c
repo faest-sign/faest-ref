@@ -2643,8 +2643,8 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     aes_128_f256_f2_conjugates_128(state_conj_tag, state_bits_tag);
 
     // ::5-6 : start of norms in witness
-    const uint8_t* norms_ptr = w + 3 * Nstbits * r/2;
-    const bf128_t* norm_tags_ptr = w_tag + 3 * Nstbits * r/2;
+    const uint8_t* norms_ptr = w + 3 * Nstbytes * r/2;
+    const bf128_t* norm_tags_ptr = w_tag + 3 * Nstbytes * r/2;
     // uint8_t n[Nstbits/2*4]; // 1 uint8 contains 4 bits of the Invnorm 0000||4bits
     // bf128_t n_tag[Nstbits/2]; // tag for each bit
     // for (unsigned int i = 0; i < Nstbits/2; i++) {
