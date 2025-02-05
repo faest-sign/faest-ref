@@ -2600,7 +2600,7 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key,
                               bf128_mul(delta, k_hat_key[r]));
       z_deg1[8*j + 2*r + 1] = bf128_add(
                               bf128_mul(k_hat_key[r], w_hat_key_sq[r]), 
-                              bf128_mul(delta, k_hat_key[r]));
+                              bf128_mul(delta, w_hat_key[r]));
     }
     if (lambda == 192) {
       iwd += 192;
