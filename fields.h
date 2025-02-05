@@ -289,9 +289,10 @@ ATTR_PURE bf128_t bf128_sum_poly(const bf128_t* xs);
 ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load_bits(const uint8_t* src) {
   bf192_t ret;
   uint8_t tmp[24];
+  memset(tmp, 0, sizeof(tmp));
   for(unsigned int i = 0; i < 24; i++) {
     for (unsigned int j = 0; j < 8; j++) {
-      tmp[i] |= src[i*8 + j ] << j;
+      tmp[i] |= ((src[i*8 + j] >> j) & 1) << j;
     }
   }
 #if defined(FAEST_IS_BIG_ENDIAN)
@@ -394,9 +395,10 @@ ATTR_PURE bf192_t bf192_sum_poly(const bf192_t* xs);
 ATTR_PURE ATTR_ALWAYS_INLINE static inline bf256_t bf256_load_bits(const uint8_t* src) {
   bf256_t ret;
   uint8_t tmp[32];
+  memset(tmp, 0, sizeof(tmp));
   for(unsigned int i = 0; i < 32; i++) {
     for (unsigned int j = 0; j < 8; j++) {
-      tmp[i] |= src[i*8 + j ] << j;
+      tmp[i] |= ((src[i*8 + j] >> j) & 1) << j;
     }
   }
 #if defined(FAEST_IS_BIG_ENDIAN)
