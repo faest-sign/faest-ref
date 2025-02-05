@@ -2931,9 +2931,9 @@ static void aes_128_enc_constraints_verifier(bf128_t* z_key, const bf128_t* owf_
       memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf128_t)*32);
       // ::22
       if (b == 0) {
-        aes_128_add_round_key_bytes_verifier(st_b_tmp_key[b], st_b_key[b], k_0_key, delta, false, params);
+        aes_128_add_round_key_bytes_verifier(st_b_key[b], st_b_key[b], k_0_key, delta, true, params);
       } else {
-        aes_128_add_round_key_bytes_verifier(st_b_tmp_key[b], st_b_key[b], k_1_key, delta, true, params);
+        aes_128_add_round_key_bytes_verifier(st_b_key[b], st_b_key[b], k_1_key, delta, false, params);
       }
     }
     // ::23-24
