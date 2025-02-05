@@ -3662,7 +3662,7 @@ static void aes_256_constraints_verifier(bf256_t* z_deg0, bf256_t* z_deg1, bf256
 }
 
 // OWF PROVER
-static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w, const uint8_t* u, 
+static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w_bits, const uint8_t* u_bits, 
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
 
   unsigned int lambda = params->faest_param.lambda;
@@ -3677,7 +3677,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   // ::6-7 embed VOLE masks
   bf128_t* bf_u_bits = (bf128_t*) malloc(2*lambda * sizeof(bf128_t));
   for (unsigned int i = 0; i < 2*lambda; i++) {
-    bf_u_bits[i] = bf128_from_bit(u[i]);
+    bf_u_bits[i] = bf128_from_bit(u_bits[i]);
   }
   
   bf128_t bf_u_star_0 = bf128_sum_poly(bf_u_bits); // U IS 1 Byte per uint8 right??
@@ -3819,7 +3819,7 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 }
 
 // OWF VERIFIER
-static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
+static uint8_t* aes_128_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
 
   unsigned int lambda = params->faest_param.lambda;
@@ -3846,7 +3846,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
   for (unsigned int i = 0; i < ell; i++) {
     w_key[i] = bf128_add(
                           q_key[i], 
-                          bf128_mul_bit(bf_delta, d[i]));
+                          bf128_mul_bit(bf_delta, d_bits[i]));
   }
   memset(z2_key, 0, c * sizeof(bf128_t));
   //aes_128_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
@@ -4005,38 +4005,38 @@ static uint8_t* aes_256_verifier(const uint8_t* d, uint8_t** Q, const uint8_t* o
 }
 
 // AES(-EM) OWF dispatchers
-void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w,
-               const uint8_t* u, uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out,
+void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w_bits,
+               const uint8_t* u_bits, uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out,
                const uint8_t* chall_2, const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
-    aes_256_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params,
+    aes_256_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u_bits, V, owf_in, owf_out, chall_2, params,
                    faest_is_em(params));
     break;
   case 192:
-    aes_192_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params,
+    aes_192_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u_bits, V, owf_in, owf_out, chall_2, params,
                    faest_is_em(params));
     break;
   default:
-    aes_128_prover(a0_tilde, a1_tilde, a2_tilde, w, u, V, owf_in, owf_out, chall_2, params,
+    aes_128_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u_bits, V, owf_in, owf_out, chall_2, params,
                    faest_is_em(params));
   }
 }
 
-uint8_t* aes_verify(const uint8_t* d, uint8_t** Q, const uint8_t* chall_2, const uint8_t* chall_3,
+uint8_t* aes_verify(const uint8_t* d_bits, uint8_t** Q, const uint8_t* chall_2, const uint8_t* chall_3,
                     const uint8_t* a1_tilde, const uint8_t* a2_tilde, const uint8_t* owf_in,
                     const uint8_t* owf_out, const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
-    return aes_256_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
+    return aes_256_verifier(d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
                             faest_is_em(params));
     break;
   case 192:
-    return aes_192_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
+    return aes_192_verifier(d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
                             faest_is_em(params));
     break;
   default:
-    return aes_128_verifier(d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
+    return aes_128_verifier(d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params,
                             faest_is_em(params));
   }
 }

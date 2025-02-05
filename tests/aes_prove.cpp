@@ -250,10 +250,10 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     for (size_t i = 0; i < ell_bytes; ++i) {
       d[i] = u[i] ^ w[i];
     }
-    // std::vector<uint8_t> d_bits(ell, 0x00); // 1 bit in per uint8_t
-    // for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
-    //   d_bits[bit_i] = (d[bit_i / 8] >> bit_i % 8) & 1;
-    // }
+    std::vector<uint8_t> d_bits(ell, 0x00); // 1 bit in per uint8_t
+    for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
+      d_bits[bit_i] = (d[bit_i / 8] >> bit_i % 8) & 1;
+    }
 
     std::vector<uint8_t> chall_2((3 * lambda + 64) / 8, 47);
 
@@ -299,7 +299,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
               V.data(), in.data(), out.data(), chall_2.data(), params);
 
     uint8_t* recomputed_a0_tilde =
-        aes_verify(d.data(), Q.data(), chall_2.data(), delta.data(), a1_tilde.data(),
+        aes_verify(d_bits.data(), Q.data(), chall_2.data(), delta.data(), a1_tilde.data(),
                    a2_tilde.data(), in.data(), out.data(), params);
 
     // check that the proof verifies
