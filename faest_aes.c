@@ -2700,37 +2700,37 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     }
 
     // ::15-16
-    bf128_t k_0_deg0[16];
-    bf128_t k_0_deg1[16];
+    bf128_t k_0_deg0[32];
+    bf128_t k_0_deg1[32];
     aes_128_state_to_bytes_prover(k_0_deg1, k_0_deg0,   // k is in bits
       k + (2*r+1)*Nstbits,
       k_tag + (2*r+1)*Nstbits,
       params);
     // ::17
-    bf128_t k_1_deg0[16];
-    bf128_t k_1_deg1[16];
-    bf128_t k_1_deg2[16];
-    for (unsigned int byte_i = 0; byte_i < 16; byte_i++) {
+    bf128_t k_1_deg0[32];
+    bf128_t k_1_deg1[32];
+    bf128_t k_1_deg2[32];
+    for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
       k_1_deg0[byte_i] = bf128_mul(k_0_deg0[byte_i], k_0_deg0[byte_i]);
       k_1_deg1[byte_i] = bf128_zero();
       k_1_deg2[byte_i] = bf128_mul(k_0_deg1[byte_i], k_0_deg1[byte_i]);
     }
 
     // ::18
-    bf128_t st_b_deg0[2][16]; // TODO: this stays empty as the power increases by 1 after the multiplication
-    bf128_t st_b_deg1[2][16];
-    bf128_t st_b_deg2[2][16];
-    bf128_t st_b_deg0_tmp[2][16];
-    bf128_t st_b_deg1_tmp[2][16];
-    bf128_t st_b_deg2_tmp[2][16];
-    bf128_t dummy_key[16];
+    bf128_t st_b_deg0[2][32]; // TODO: this stays empty as the power increases by 1 after the multiplication
+    bf128_t st_b_deg1[2][32];
+    bf128_t st_b_deg2[2][32];
+    bf128_t st_b_deg0_tmp[2][32];
+    bf128_t st_b_deg1_tmp[2][32];
+    bf128_t st_b_deg2_tmp[2][32];
+    bf128_t dummy_key[32];
     memset(st_b_deg0, 0x00, sizeof(st_b_deg0));
     memset(st_b_deg1, 0x00, sizeof(st_b_deg1));
     memset(st_b_deg2, 0x00, sizeof(st_b_deg2));
     memset(st_b_deg0_tmp, 0x00, sizeof(st_b_deg0_tmp));
     memset(st_b_deg1_tmp, 0x00, sizeof(st_b_deg1_tmp));
     memset(st_b_deg2_tmp, 0x00, sizeof(st_b_deg2_tmp));
-    for (unsigned int i = 0; i < 16; i++) {
+    for (unsigned int i = 0; i < Nstbytes; i++) {
       dummy_key[i] = bf128_zero();
     }
 
