@@ -164,12 +164,12 @@ bf128_t bf128_byte_combine_sq(const bf128_t* x) {
   // first we square the macs
   bf_tmp[0] = bf128_add(x[0], bf128_add(x[4], x[6]));
   bf_tmp[1] = bf128_add(x[4], bf128_add(x[6], x[7]));
-  bf_tmp[2] = bf128_add(bf_tmp[1], x[5]);
+  bf_tmp[2] = bf128_add(x[1], x[5]);
   bf_tmp[3] = bf128_add(bf128_add(x[4], x[5]), bf128_add(x[6], x[7]));
-  bf_tmp[4] = bf128_add(bf_tmp[2], bf128_add(x[4], x[7]));
+  bf_tmp[4] = bf128_add(x[2], bf128_add(x[4], x[7]));
   bf_tmp[5] = bf128_add(x[5], x[6]);
-  bf_tmp[6] = bf128_add(bf_tmp[3], bf_tmp[5]);
-  bf_tmp[7] = bf128_add(bf_tmp[6], x[7]);
+  bf_tmp[6] = bf128_add(x[3], x[5]);
+  bf_tmp[7] = bf128_add(x[6], x[7]);
 
   // now we lift the squared mac values
   bf128_t bf_out = bf_tmp[0];
@@ -361,12 +361,12 @@ bf192_t bf192_byte_combine_sq(const bf192_t* x) {
   // first we square the macs
   bf_tmp[0] = bf192_add(x[0], bf192_add(x[4], x[6]));
   bf_tmp[1] = bf192_add(x[4], bf192_add(x[6], x[7]));
-  bf_tmp[2] = bf192_add(bf_tmp[1], x[5]);
+  bf_tmp[2] = bf192_add(x[1], x[5]);
   bf_tmp[3] = bf192_add(bf192_add(x[4], x[5]), bf192_add(x[6], x[7]));
-  bf_tmp[4] = bf192_add(bf_tmp[2], bf192_add(x[4], x[7]));
+  bf_tmp[4] = bf192_add(x[2], bf192_add(x[4], x[7]));
   bf_tmp[5] = bf192_add(x[5], x[6]);
-  bf_tmp[6] = bf192_add(bf_tmp[3], bf_tmp[5]);
-  bf_tmp[7] = bf192_add(bf_tmp[6], x[7]);
+  bf_tmp[6] = bf192_add(x[3], x[5]);
+  bf_tmp[7] = bf192_add(x[6], x[7]);
 
   // now we lift the squared mac values
   bf192_t bf_out = bf_tmp[0];
@@ -570,12 +570,12 @@ bf256_t bf256_byte_combine_sq(const bf256_t* x) {
   // first we square the macs
   bf_tmp[0] = bf256_add(x[0], bf256_add(x[4], x[6]));
   bf_tmp[1] = bf256_add(x[4], bf256_add(x[6], x[7]));
-  bf_tmp[2] = bf256_add(bf_tmp[1], x[5]);
+  bf_tmp[2] = bf256_add(x[1], x[5]);
   bf_tmp[3] = bf256_add(bf256_add(x[4], x[5]), bf256_add(x[6], x[7]));
-  bf_tmp[4] = bf256_add(bf_tmp[2], bf256_add(x[4], x[7]));
+  bf_tmp[4] = bf256_add(x[2], bf256_add(x[4], x[7]));
   bf_tmp[5] = bf256_add(x[5], x[6]);
-  bf_tmp[6] = bf256_add(bf_tmp[3], bf_tmp[5]);
-  bf_tmp[7] = bf256_add(bf_tmp[6], x[7]);
+  bf_tmp[6] = bf256_add(x[3], x[5]);
+  bf_tmp[7] = bf256_add(x[6], x[7]);
 
   // now we lift the squared mac values
   bf256_t bf_out = bf_tmp[0];
