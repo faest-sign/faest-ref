@@ -2322,7 +2322,7 @@ static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uin
     aes_128_inverse_affine_byte_prover(y + 8*j, y_tag + 8*j, x_tilde, x_tilde_tag);   // working in bit per uint8
 
     // ::12-16 lines only relavant for aes-128
-    if (j%4 == 0) {
+    if (j%4 == 3) {
       if (lambda == 192) {
         iwd += 192;
       }
@@ -2363,7 +2363,7 @@ static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_ke
     aes_128_inverse_affine_byte_verifier(y_key + 8*j, x_tilde_key, delta);
 
     // ::12-16 lines only relavant for aes-128
-    if (j%4 == 0) {
+    if (j%4 == 3) {
       if (lambda == 192) {
         iwd += 192;
       }
