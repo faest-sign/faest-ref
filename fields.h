@@ -186,13 +186,13 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_from_bit(uint8_t bit) {
 }
 
 // GF(2^128) implementation
-
 ATTR_PURE ATTR_ALWAYS_INLINE static inline bf128_t bf128_load_bits(const uint8_t* src) {
   bf128_t ret;
   uint8_t tmp[16];
+  memset(tmp, 0, sizeof(tmp));
   for(unsigned int i = 0; i < 16; i++) {
     for (unsigned int j = 0; j < 8; j++) {
-      tmp[i] &= src[i*8 + j ] << j;
+      tmp[i] |= src[i*8 + j] << j;
     }
   }
 #if defined(FAEST_IS_BIG_ENDIAN)
@@ -291,7 +291,7 @@ ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load_bits(const uint8_t
   uint8_t tmp[24];
   for(unsigned int i = 0; i < 24; i++) {
     for (unsigned int j = 0; j < 8; j++) {
-      tmp[i] &= src[i*8 + j ] << j;
+      tmp[i] |= src[i*8 + j ] << j;
     }
   }
 #if defined(FAEST_IS_BIG_ENDIAN)
@@ -396,7 +396,7 @@ ATTR_PURE ATTR_ALWAYS_INLINE static inline bf256_t bf256_load_bits(const uint8_t
   uint8_t tmp[32];
   for(unsigned int i = 0; i < 32; i++) {
     for (unsigned int j = 0; j < 8; j++) {
-      tmp[i] &= src[i*8 + j ] << j;
+      tmp[i] |= src[i*8 + j ] << j;
     }
   }
 #if defined(FAEST_IS_BIG_ENDIAN)

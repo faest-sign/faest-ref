@@ -221,7 +221,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     }
     // masked witness d = u ^ w
     std::vector<uint8_t> d(ell_hat, 0x13);
-    for (size_t i = 0; i < ell_bytes; ++i) {
+    for (size_t i = 0; i < ell_hat; ++i) {
       d[i] = u[i] ^ w[i];
     }
 
