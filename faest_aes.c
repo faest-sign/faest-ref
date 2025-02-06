@@ -3361,7 +3361,7 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
   // ::4-5
   z_key[0] = bf128_mul(delta, bf128_mul(w_key[0], w_key[1]));
 
-  debug_print_bf128("delta", &delta);
+  // debug_print_bf128("delta", &delta);
   
   // ::7-8
   bf128_t* rkeys_key = (bf128_t*)malloc(sizeof(bf128_t) * (R+1) * blocksize);
@@ -3461,7 +3461,7 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key, c
   // ::4-5
   z_key[0] = bf192_mul(delta, bf192_mul(w_key[0], w_key[1]));
 
-  debug_print_bf192("delta", &delta);
+  // debug_print_bf192("delta", &delta);
 
   // ::7-8
   bf192_t* rkeys_key = (bf192_t*)malloc(sizeof(bf192_t) * (R+1) * blocksize);
@@ -3785,7 +3785,7 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   memset(z1_val, 0, c * sizeof(bf192_t));
   memset(z2_gamma, 0, c * sizeof(bf192_t));
   
-  /* aes_192_constraints_prover(z0_tag, z1_val, z2_gamma, w_bits, w_tag, owf_in, owf_out, params, isEM); */
+  aes_192_constraints_prover(z0_tag, z1_val, z2_gamma, w_bits, w_tag, owf_in, owf_out, params, isEM);
  
   // Step: 13-18
   zk_hash_192_ctx a0_ctx;
@@ -3825,7 +3825,7 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 
   // ::6-7 embed VOLE masks
   bf256_t* bf_u_bits = (bf256_t*) malloc(2*lambda * sizeof(bf256_t));
-  debug_print_buf_bits("u_bits", u_bits, 2*lambda);
+  // debug_print_buf_bits("u_bits", u_bits, 2*lambda);
   for (unsigned int i = 0; i < 2*lambda; i++) {
     bf_u_bits[i] = bf256_from_bit(u_bits[i]);
   }
@@ -3960,7 +3960,7 @@ static uint8_t* aes_192_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
                           bf192_mul_bit(bf_delta, d_bits[i]));
   }
   memset(z2_key, 0, c * sizeof(bf192_t));
-  /* aes_192_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM); */
+  aes_192_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
 
   // ::13-14
   zk_hash_192_ctx b_ctx;
