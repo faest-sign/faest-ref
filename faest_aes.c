@@ -4627,7 +4627,6 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
 
     if (b == 1) {
       in[0] = in[0] ^ 0x01;
-      in_tag[0] = bf192_add(in_tag[0], bf192_one());
     }
 
     aes_192_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out + b * blocksize , out_tag + b * blocksize, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
@@ -4764,7 +4763,6 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
 
     if (b == 1) {
       in[0] = in[0] ^ 0x01;
-      in_tag[0] = bf256_add(in_tag[0], bf256_one());
     }
 
     aes_256_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out + b * blocksize, out_tag + b * blocksize, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
