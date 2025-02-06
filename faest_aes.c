@@ -2112,6 +2112,7 @@ static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint
     aes_128_inverse_affine_byte_prover(y + i*8, y_tag + i*8, x + i*8, x_tag + i*8);
   }
 }
+
 static void aes_128_inverse_affine_verifier(bf128_t* y_key, const bf128_t* x_key, bf128_t delta, const faest_paramset_t* params) {
   uint16_t Nst = params->faest_param.Nwd;
   uint16_t Nstbytes = Nst*4;
@@ -2121,135 +2122,102 @@ static void aes_128_inverse_affine_verifier(bf128_t* y_key, const bf128_t* x_key
   }
 }
 
-static void aes_192_inverse_affine_prover(uint8_t* y, bf192_t* y_tag, const uint8_t* x, const bf192_t* x_tag) {
-  
-  unsigned int state_size_bytes = 16;
+static void aes_192_inverse_affine_byte_prover(uint8_t* y_bits, bf192_t* y_bits_tag, const uint8_t* x_bits, const bf192_t* x_bits_tag) {
+  uint8_t c = 0;
 
-  for (unsigned int i = 0; i < state_size_bytes; i++) {
-    uint8_t x_bits[8];
-    bf192_t x_bits_tag[8];
-    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-      x_bits[bit_i] = (x[i] >> bit_i) & 1;
-      x_bits_tag[bit_i] = x_tag[i*8 + bit_i];
-    }
-
-    uint8_t y_bits[8];
-    bf192_t y_bits_tag[8];
-    uint8_t c = 0;
-    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+  for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
       if (bit_i == 0 || bit_i == 2) {
         c = 1;
-      } else {
+      }
+      else {
         c = 0;
       }
-      // bf192_t c_tag;
-      // constant_to_vole_192_prover(&c_tag, 1);
       y_bits[bit_i] = x_bits[(bit_i - 1 + 8)%8] ^ x_bits[(bit_i - 3 + 8)%8] ^ x_bits[(bit_i - 6 + 8)%8] ^ c;
       y_bits_tag[bit_i] = bf192_add(
                                     bf192_add(x_bits_tag[(bit_i - 1 + 8)%8], x_bits_tag[(bit_i - 3 + 8)%8]),
                                     x_bits_tag[(bit_i - 6 + 8)%8]);
     }
-
-    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-      y[i] &= (y_bits[bit_i] << bit_i);
-      y_tag[i * 8 + bit_i] = y_bits_tag[bit_i];
-    }
-  }
 }
-static void aes_192_inverse_affine_verifier(bf192_t* y_key, const bf192_t* x_key, bf192_t delta) {
-  
-  unsigned int state_size_bytes = 16;
-
-  for (unsigned int i = 0; i < state_size_bytes; i++) {
-    bf192_t x_bits_key[8];
-    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-      x_bits_key[bit_i] = x_key[i*8 + bit_i];
-    }
-
-    bf192_t y_bits_key[8];
-    uint8_t c = 0;
-    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+static void aes_192_inverse_affine_byte_verifier(bf192_t* y_bits_key, const bf192_t* x_bits_key, bf192_t delta) {
+  uint8_t c = 0;
+  for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
       if (bit_i == 0 || bit_i == 2) {
         c = 1;
-      } else {
+      }
+      else {
         c = 0;
       }
-      bf192_t c_tag;
-      constant_to_vole_192_verifier(&c_tag, &c, delta, 1);
       y_bits_key[bit_i] = bf192_add(
                                     bf192_add(x_bits_key[(bit_i - 1 + 8)%8], x_bits_key[(bit_i - 3 + 8)%8]),
-                                    bf192_add(x_bits_key[(bit_i - 6 + 8)%8], c_tag));
+                                    bf192_add(x_bits_key[(bit_i - 6 + 8)%8], 
+                                        bf192_mul_bit(delta, c)));
     }
+}
 
-    for (unsigned int bit_i = 0; bit_i < state_size_bytes; bit_i++) {
-      y_key[i * 8 + bit_i] = y_bits_key[bit_i];
-    }
+static void aes_192_inverse_affine_prover(uint8_t* y, bf192_t* y_tag, const uint8_t* x, const bf192_t* x_tag, const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nstbytes = Nst*4;
+
+  for (unsigned int i = 0; i < Nstbytes; i++) {
+    aes_192_inverse_affine_byte_prover(y + i*8, y_tag + i*8, x + i*8, x_tag + i*8);
+  }
+}
+static void aes_192_inverse_affine_verifier(bf192_t* y_key, const bf192_t* x_key, bf192_t delta, const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nstbytes = Nst*4;
+
+  for (unsigned int i = 0; i < Nstbytes; i++) {
+    aes_192_inverse_affine_byte_verifier(y_key + i*8, x_key + i*8, delta);
   }
 }
 
-static void aes_256_inverse_affine_prover(uint8_t* y, bf256_t* y_tag, const uint8_t* x, const bf256_t* x_tag) {
-  
-  unsigned int state_size_bytes = 16;
+static void aes_256_inverse_affine_byte_prover(uint8_t* y_bits, bf256_t* y_bits_tag, const uint8_t* x_bits, const bf256_t* x_bits_tag) {
+  uint8_t c = 0;
 
-  for (unsigned int i = 0; i < state_size_bytes; i++) {
-    uint8_t x_bits[8];
-    bf256_t x_bits_tag[8];
-    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-      x_bits[bit_i] = (x[i] >> bit_i) & 1;
-      x_bits_tag[bit_i] = x_tag[i*8 + bit_i];
-    }
-
-    uint8_t y_bits[8];
-    bf256_t y_bits_tag[8];
-    uint8_t c = 0;
-    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+  for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
       if (bit_i == 0 || bit_i == 2) {
         c = 1;
-      } else {
+      }
+      else {
         c = 0;
       }
-      // bf256_t c_tag;
-      // constant_to_vole_256_prover(&c_tag);
       y_bits[bit_i] = x_bits[(bit_i - 1 + 8)%8] ^ x_bits[(bit_i - 3 + 8)%8] ^ x_bits[(bit_i - 6 + 8)%8] ^ c;
       y_bits_tag[bit_i] = bf256_add(
                                     bf256_add(x_bits_tag[(bit_i - 1 + 8)%8], x_bits_tag[(bit_i - 3 + 8)%8]),
-                                    (x_bits_tag[(bit_i - 6 + 8)%8]));
+                                    x_bits_tag[(bit_i - 6 + 8)%8]);
     }
-
-    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-      y[i] &= (y_bits[bit_i] << bit_i);
-      y_tag[i * 8 + bit_i] = y_bits_tag[bit_i];
-    }
-  }
 }
-static void aes_256_inverse_affine_verifier(bf256_t* y_key, const bf256_t* x_key, bf256_t delta) {
-  
-  unsigned int state_size_bytes = 16;
-
-  for (unsigned int i = 0; i < state_size_bytes; i++) {
-    bf256_t x_bits_key[8];
-    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-      x_bits_key[bit_i] = x_key[i*8 + bit_i];
-    }
-
-    bf256_t y_bits_key[8];
-    uint8_t c = 0;
-    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+static void aes_256_inverse_affine_byte_verifier(bf256_t* y_bits_key, const bf256_t* x_bits_key, bf256_t delta) {
+  uint8_t c = 0;
+  for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
       if (bit_i == 0 || bit_i == 2) {
         c = 1;
-      } else {
+      }
+      else {
         c = 0;
       }
-      bf256_t c_tag;
-      constant_to_vole_256_verifier(&c_tag, &c, delta, 1);
       y_bits_key[bit_i] = bf256_add(
                                     bf256_add(x_bits_key[(bit_i - 1 + 8)%8], x_bits_key[(bit_i - 3 + 8)%8]),
-                                    bf256_add(x_bits_key[(bit_i - 6 + 8)%8], c_tag));
+                                    bf256_add(x_bits_key[(bit_i - 6 + 8)%8], 
+                                        bf256_mul_bit(delta, c)));
     }
+}
 
-    for (unsigned int bit_i = 0; bit_i < state_size_bytes; bit_i++) {
-      y_key[i * 8 + bit_i] = y_bits_key[bit_i];
-    }
+static void aes_256_inverse_affine_prover(uint8_t* y, bf256_t* y_tag, const uint8_t* x, const bf256_t* x_tag, const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nstbytes = Nst*4;
+
+  for (unsigned int i = 0; i < Nstbytes; i++) {
+    aes_256_inverse_affine_byte_prover(y + i*8, y_tag + i*8, x + i*8, x_tag + i*8);
+  }
+}
+
+static void aes_256_inverse_affine_verifier(bf256_t* y_key, const bf256_t* x_key, bf256_t delta, const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nstbytes = Nst*4;
+
+  for (unsigned int i = 0; i < Nstbytes; i++) {
+    aes_256_inverse_affine_byte_verifier(y_key + i*8, x_key + i*8, delta);
   }
 }
 // EncSctrnts internal functions end!!
@@ -3030,17 +2998,281 @@ static void aes_128_enc_constraints_verifier(bf128_t* z_key, const bf128_t* owf_
   faest_aligned_free(state_conj_key);
   faest_aligned_free(state_bits_key);
 }
-static void aes_192_enc_constraints_verifier(bf192_t* z_key, const bf192_t* owf_in_key,
-                                             const bf192_t* owf_out_key, const bf192_t* w_key,
-                                             const bf192_t* rkeys_key, const bf192_t delta,
-                                             const faest_paramset_t* params) {
-    // TODO
+
+static void aes_192_enc_constraints_verifier(bf192_t* z_key, const bf192_t* owf_in_key, 
+                                        const bf192_t* owf_out_key, const bf192_t* w_key, const bf192_t* rkeys_key, const bf192_t delta,
+                                          const faest_paramset_t* params) {
+
+    unsigned int Nst = params->faest_param.Nwd;
+    unsigned int Nstbits = 32 * Nst;
+    unsigned int R = params->faest_param.R;
+    unsigned int Nstbytes = Nstbits/8;
+
+    bf192_t* state_bits_key = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));;
+
+    /// ::1 AddRoundKey
+    aes_192_add_round_key_verifier(state_bits_key, owf_in_key, rkeys_key, params);
+    
+    // for conjugates of state and s-box outputs
+    bf192_t* state_conj_key = faest_aligned_alloc(BF192_ALIGN, 8 * Nstbytes * sizeof(bf192_t));;
+    bf192_t* st_dash_key = faest_aligned_alloc(BF192_ALIGN, 8 *  Nstbytes * sizeof(bf192_t));
+  
+  // ::2
+  for (unsigned int r = 0; r < R/2; r++) {
+
+    // ::3-4
+    aes_192_f256_f2_conjugates_192(state_conj_key, state_bits_key);
+
+    // ::5-6 : start of norms in witness
+    const bf192_t* norm_keys_ptr = w_key + 3 * Nstbits * r/2;
+
+    // ::7
+    for (unsigned int i = 0; i < Nstbytes; i++) {
+      // ::8-9
+      bf192_t y_key[4];
+      aes_192_inv_norm_to_conjugates_verifier(y_key, norm_keys_ptr + 4*i);
+
+      // ::10-11
+      aes_192_inv_norm_constraints_verifier(
+          z_key + 3*r*Nstbytes + i,
+          state_conj_key + 8*i,
+          y_key, delta);
+
+      // ::12
+      for (unsigned int j = 0; j < 8; j++) {
+        // ::13-14
+        uint32_t conj_index = i*8 + ((j + 4) % 8);
+        uint32_t y_index = j % 4;
+        st_dash_key[i*8 + j] = bf192_mul(state_conj_key[conj_index], y_key[y_index]);
+      }
+    }
+
+    // ::15-16
+    bf192_t k_0_key[32];
+    bf192_t k_1_key[32];
+    aes_192_state_to_bytes_verifier(k_0_key, rkeys_key + (2*r+1)*Nstbits, params);
+    // ::17
+    for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
+      k_1_key[byte_i] = bf192_mul(k_0_key[byte_i], k_0_key[byte_i]);
+    }
+
+    // ::18
+    bf192_t st_b_key[2][32];
+    bf192_t st_b_tmp_key[2][32];
+    memset(st_b_key, 0x00, sizeof(st_b_key));
+    memset(st_b_tmp_key, 0x00, sizeof(st_b_tmp_key));
+
+    for (unsigned int b = 0; b < 2; b++) {
+      // ::19
+      aes_192_sbox_affine_verifier(st_b_key[b], st_dash_key, delta, b, params);
+      // ::20
+      aes_192_shiftrows_verifier(st_b_tmp_key[b], st_b_key[b], params);
+      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf192_t)*Nstbytes);
+      // ::21
+      aes_192_mix_columns_verifier(st_b_tmp_key[b], st_b_key[b], b, params);
+      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf192_t)*Nstbytes);
+      // ::22
+      if (b == 0) {
+        aes_192_add_round_key_bytes_verifier(st_b_key[b], st_b_key[b], k_0_key, delta, true, params);
+      } else {
+        aes_192_add_round_key_bytes_verifier(st_b_key[b], st_b_key[b], k_1_key, delta, false, params);
+      }
+    }
+    // ::23-24
+    bf192_t* s_tilde_key = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
+    if (r == R/2 - 1) {
+      // ::25
+      aes_192_add_round_key_verifier(s_tilde_key, owf_out_key, rkeys_key + R*Nstbits, params);
+    } else {
+      // ::27-28
+      unsigned int idx = 0;
+      for (unsigned int i = ((Nstbits/2) + (Nstbits/2)*3*r); i < ((Nstbits/2*3*r) + (Nstbits/2*3)); i++) {
+        s_tilde_key[idx] = w_key[i];
+        idx++;
+      }
+    }
+    // ::29
+    bf192_t* s_dash_dash_key = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
+    aes_192_inverse_shiftrows_verifier(s_dash_dash_key, s_tilde_key, params);
+    // ::30
+    bf192_t* s_state_key = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
+    aes_192_inverse_affine_verifier(s_state_key, s_dash_dash_key, delta, params);
+
+    // ::31
+    for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
+      bf192_t s_key;
+      bf192_t s_sq_key;
+      // ::32
+      s_key = bf192_byte_combine(s_state_key + 8*byte_i);
+      // ::33
+      s_sq_key = bf192_byte_combine_sq(s_state_key + 8*byte_i);
+
+      // ::36
+      // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
+      //    s_sq * st_{0,i} + delta^2 * s
+      //
+      z_key[(3*r+1)*Nstbytes + 2*byte_i] = bf192_add(
+              bf192_mul(s_sq_key, st_b_key[0][byte_i]),
+              bf192_mul(delta, bf192_mul(delta, s_key)));
+      // ::37
+      // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
+      //    s * st_{1,i} + delta * st_{0,i}
+      //
+      z_key[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf192_add(
+              bf192_mul(s_key, st_b_key[1][byte_i]),
+              bf192_mul(delta, st_b_key[0][byte_i]));
+    }
+    if (r != (R/2)-1) {
+      bf192_t* tmp_state_key = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
+      aes_192_bitwise_mix_column_verifier(tmp_state_key, s_tilde_key, params);
+      aes_192_add_round_key_verifier(state_bits_key, tmp_state_key, rkeys_key + (2*r+2)*Nstbits, params);
+      faest_aligned_free(tmp_state_key);
+    }
+    faest_aligned_free(s_tilde_key);
+    faest_aligned_free(s_dash_dash_key);
+    faest_aligned_free(s_state_key);
+  }
+  faest_aligned_free(st_dash_key);
+  faest_aligned_free(state_conj_key);
+  faest_aligned_free(state_bits_key);
 }
-static void aes_256_enc_constraints_verifier(bf256_t* z_key, const bf256_t* owf_in_key,
-                                             const bf256_t* owf_out_key, const bf256_t* w_key,
-                                             const bf256_t* rkeys_key, const bf256_t delta,
-                                             const faest_paramset_t* params) {
-    // TODO
+
+static void aes_256_enc_constraints_verifier(bf256_t* z_key, const bf256_t* owf_in_key, 
+                                        const bf256_t* owf_out_key, const bf256_t* w_key, const bf256_t* rkeys_key, const bf256_t delta,
+                                          const faest_paramset_t* params) {
+
+    unsigned int Nst = params->faest_param.Nwd;
+    unsigned int Nstbits = 32 * Nst;
+    unsigned int R = params->faest_param.R;
+    unsigned int Nstbytes = Nstbits/8;
+
+    bf256_t* state_bits_key = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));;
+
+    /// ::1 AddRoundKey
+    aes_256_add_round_key_verifier(state_bits_key, owf_in_key, rkeys_key, params);
+    
+    // for conjugates of state and s-box outputs
+    bf256_t* state_conj_key = faest_aligned_alloc(BF256_ALIGN, 8 * Nstbytes * sizeof(bf256_t));;
+    bf256_t* st_dash_key = faest_aligned_alloc(BF256_ALIGN, 8 *  Nstbytes * sizeof(bf256_t));
+  
+  // ::2
+  for (unsigned int r = 0; r < R/2; r++) {
+
+    // ::3-4
+    aes_256_f256_f2_conjugates_256(state_conj_key, state_bits_key);
+
+    // ::5-6 : start of norms in witness
+    const bf256_t* norm_keys_ptr = w_key + 3 * Nstbits * r/2;
+
+    // ::7
+    for (unsigned int i = 0; i < Nstbytes; i++) {
+      // ::8-9
+      bf256_t y_key[4];
+      aes_256_inv_norm_to_conjugates_verifier(y_key, norm_keys_ptr + 4*i);
+
+      // ::10-11
+      aes_256_inv_norm_constraints_verifier(
+          z_key + 3*r*Nstbytes + i,
+          state_conj_key + 8*i,
+          y_key, delta);
+
+      // ::12
+      for (unsigned int j = 0; j < 8; j++) {
+        // ::13-14
+        uint32_t conj_index = i*8 + ((j + 4) % 8);
+        uint32_t y_index = j % 4;
+        st_dash_key[i*8 + j] = bf256_mul(state_conj_key[conj_index], y_key[y_index]);
+      }
+    }
+
+    // ::15-16
+    bf256_t k_0_key[32];
+    bf256_t k_1_key[32];
+    aes_256_state_to_bytes_verifier(k_0_key, rkeys_key + (2*r+1)*Nstbits, params);
+    // ::17
+    for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
+      k_1_key[byte_i] = bf256_mul(k_0_key[byte_i], k_0_key[byte_i]);
+    }
+
+    // ::18
+    bf256_t st_b_key[2][32];
+    bf256_t st_b_tmp_key[2][32];
+    memset(st_b_key, 0x00, sizeof(st_b_key));
+    memset(st_b_tmp_key, 0x00, sizeof(st_b_tmp_key));
+
+    for (unsigned int b = 0; b < 2; b++) {
+      // ::19
+      aes_256_sbox_affine_verifier(st_b_key[b], st_dash_key, delta, b, params);
+      // ::20
+      aes_256_shiftrows_verifier(st_b_tmp_key[b], st_b_key[b], params);
+      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf256_t)*Nstbytes);
+      // ::21
+      aes_256_mix_columns_verifier(st_b_tmp_key[b], st_b_key[b], b, params);
+      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf256_t)*Nstbytes);
+      // ::22
+      if (b == 0) {
+        aes_256_add_round_key_bytes_verifier(st_b_key[b], st_b_key[b], k_0_key, delta, true, params);
+      } else {
+        aes_256_add_round_key_bytes_verifier(st_b_key[b], st_b_key[b], k_1_key, delta, false, params);
+      }
+    }
+    // ::23-24
+    bf256_t* s_tilde_key = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
+    if (r == R/2 - 1) {
+      // ::25
+      aes_256_add_round_key_verifier(s_tilde_key, owf_out_key, rkeys_key + R*Nstbits, params);
+    } else {
+      // ::27-28
+      unsigned int idx = 0;
+      for (unsigned int i = ((Nstbits/2) + (Nstbits/2)*3*r); i < ((Nstbits/2*3*r) + (Nstbits/2*3)); i++) {
+        s_tilde_key[idx] = w_key[i];
+        idx++;
+      }
+    }
+    // ::29
+    bf256_t* s_dash_dash_key = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
+    aes_256_inverse_shiftrows_verifier(s_dash_dash_key, s_tilde_key, params);
+    // ::30
+    bf256_t* s_state_key = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
+    aes_256_inverse_affine_verifier(s_state_key, s_dash_dash_key, delta, params);
+
+    // ::31
+    for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
+      bf256_t s_key;
+      bf256_t s_sq_key;
+      // ::32
+      s_key = bf256_byte_combine(s_state_key + 8*byte_i);
+      // ::33
+      s_sq_key = bf256_byte_combine_sq(s_state_key + 8*byte_i);
+
+      // ::36
+      // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
+      //    s_sq * st_{0,i} + delta^2 * s
+      //
+      z_key[(3*r+1)*Nstbytes + 2*byte_i] = bf256_add(
+              bf256_mul(s_sq_key, st_b_key[0][byte_i]),
+              bf256_mul(delta, bf256_mul(delta, s_key)));
+      // ::37
+      // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
+      //    s * st_{1,i} + delta * st_{0,i}
+      //
+      z_key[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf256_add(
+              bf256_mul(s_key, st_b_key[1][byte_i]),
+              bf256_mul(delta, st_b_key[0][byte_i]));
+    }
+    if (r != (R/2)-1) {
+      bf256_t* tmp_state_key = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
+      aes_256_bitwise_mix_column_verifier(tmp_state_key, s_tilde_key, params);
+      aes_256_add_round_key_verifier(state_bits_key, tmp_state_key, rkeys_key + (2*r+2)*Nstbits, params);
+      faest_aligned_free(tmp_state_key);
+    }
+    faest_aligned_free(s_tilde_key);
+    faest_aligned_free(s_dash_dash_key);
+    faest_aligned_free(s_state_key);
+  }
+  faest_aligned_free(st_dash_key);
+  faest_aligned_free(state_conj_key);
+  faest_aligned_free(state_bits_key);
 }
 // // TODO: AES 192/256
 
@@ -3256,7 +3488,7 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
     for (unsigned int i = 0; i < beta * blocksize; i++) {
       out[i] = (owf_out[i/8] >> (i%8)) & 1;
     }
-    constant_to_vole_192_prover(out_tag, blocksize);
+    constant_to_vole_192_prover(out_tag, beta * blocksize);
 
     // ::15 skiped as B = 1
     // ::16
@@ -3397,7 +3629,7 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
     for (unsigned int i = 0; i < beta * blocksize; i++) {
       out[i] = (owf_out[i/8] >> (i%8)) & 1;
     }
-    constant_to_vole_256_prover(out_tag, blocksize);
+    constant_to_vole_256_prover(out_tag, beta * blocksize);
 
     // ::15 skiped as B = 1
     // ::16
