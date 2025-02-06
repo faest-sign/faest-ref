@@ -2271,8 +2271,8 @@ static bf192_t* column_to_row_major_and_shrink_V_192(uint8_t** v, unsigned int e
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
   // rows and \lambda columns storing in row-major order
-  bf192_t* new_v = faest_aligned_alloc(BF192_ALIGN, (ell + FAEST_192F_LAMBDA) * sizeof(bf192_t));
-  for (unsigned int row = 0; row != ell + FAEST_192F_LAMBDA; ++row) {
+  bf192_t* new_v = faest_aligned_alloc(BF192_ALIGN, (ell + FAEST_192F_LAMBDA*2) * sizeof(bf192_t));
+  for (unsigned int row = 0; row != ell + FAEST_192F_LAMBDA*2; ++row) {
     uint8_t new_row[BF192_NUM_BYTES] = {0};
     for (unsigned int column = 0; column != FAEST_192F_LAMBDA; ++column) {
       ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
@@ -2286,8 +2286,8 @@ static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int e
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
   // rows and \lambda columns storing in row-major order
-  bf256_t* new_v = faest_aligned_alloc(BF256_ALIGN, (ell + FAEST_256F_LAMBDA) * sizeof(bf256_t));
-  for (unsigned int row = 0; row != ell + FAEST_256F_LAMBDA; ++row) {
+  bf256_t* new_v = faest_aligned_alloc(BF256_ALIGN, (ell + FAEST_256F_LAMBDA*2) * sizeof(bf256_t));
+  for (unsigned int row = 0; row != ell + FAEST_256F_LAMBDA*2; ++row) {
     uint8_t new_row[BF256_NUM_BYTES] = {0};
     for (unsigned int column = 0; column != FAEST_256F_LAMBDA; ++column) {
       ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
