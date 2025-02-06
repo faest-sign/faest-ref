@@ -2383,7 +2383,7 @@ static void aes_256_keyexp_backward_prover(uint8_t* y, bf256_t* y_tag, const uin
 
       if (rmvRcon == true && j % 4 == 0) {
         // adding round constant to the witness
-        x_tilde[bit_i] = x_tilde[bit_i] ^ get_bit(Rcon[j / 4], bit_i);
+        x_tilde[bit_i] = x_tilde[bit_i] ^ get_bit(Rcon[j / 8], bit_i);
       }
     }
     
@@ -2506,7 +2506,7 @@ static void aes_256_keyexp_backward_verifier(bf256_t* y_key, const bf256_t* x_ke
       // ::8-10
       if (rmvRcon == true && j % 4 == 0) {
           bf256_t rcon_key;
-          const uint8_t c = (Rcon[j / 4] >> bit_i) & 1;
+          const uint8_t c = (Rcon[j / 8] >> bit_i) & 1;
           constant_to_vole_256_verifier(&rcon_key, &c, delta, 1);
           x_tilde_key[bit_i] = bf256_add(x_tilde_key[bit_i], rcon_key);
       }
@@ -4531,7 +4531,7 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
       out_tag += blocksize;
     }
 
-    // aes_192_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
+    aes_192_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
     // uint32_t z_offset = 1 + (2*FAEST_192F_Ske);
     // printf("z offset = %d\n", z_offset);
     // aes_192_enc_constraints_prover(z_deg0 + z_offset, z_deg1 + z_offset, z_deg2 + z_offset, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, k, k_tag, params);
@@ -4886,7 +4886,7 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key, c
       in_key[0] = bf192_add(in_key[0], delta); // adding one
       out_key += blocksize;
     }
-    // aes_192_enc_constraints_verifier(z_tilde_enc_key, in_key, out_key, w_tilde_key, rkeys_key, delta, params);
+    aes_192_enc_constraints_verifier(z_tilde_enc_key, in_key, out_key, w_tilde_key, rkeys_key, delta, params);
 
     // :22
     for (unsigned int i = 0; i < num_enc_constraints; i++) {
