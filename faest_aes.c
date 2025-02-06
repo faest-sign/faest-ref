@@ -4312,7 +4312,7 @@ static void aes_256_enc_constraints_verifier(bf256_t* z_key, const bf256_t* owf_
 static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2,
                                        const uint8_t* w, const bf128_t* w_tag,
                                        const uint8_t* owf_in, const uint8_t* owf_out,
-                                       const faest_paramset_t* params, bool isEM) {
+                                       const faest_paramset_t* params) {
 
   unsigned int lambda              = params->faest_param.lambda;
   unsigned int R                   = params->faest_param.R;
@@ -4339,7 +4339,7 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   uint8_t* rkeys     = malloc((R + 1) * blocksize * sizeof(uint8_t));
   bf128_t* rkeys_tag = faest_aligned_alloc(BF128_ALIGN, (R + 1) * blocksize * sizeof(bf128_t));
 
-  if (isEM) {
+  if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
     expand_key(&round_keys, owf_in, Nk, Nk, R);
 
@@ -4453,7 +4453,7 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
 static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2,
                                        const uint8_t* w, const bf192_t* w_tag,
                                        const uint8_t* owf_in, const uint8_t* owf_out,
-                                       const faest_paramset_t* params, bool isEM) {
+                                       const faest_paramset_t* params) {
 
   unsigned int lambda              = params->faest_param.lambda;
   unsigned int R                   = params->faest_param.R;
@@ -4480,7 +4480,7 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
   uint8_t* rkeys     = malloc((R + 1) * blocksize * sizeof(uint8_t));
   bf192_t* rkeys_tag = faest_aligned_alloc(BF192_ALIGN, (R + 1) * blocksize * sizeof(bf192_t));
 
-  if (isEM) {
+  if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
     expand_key(&round_keys, owf_in, Nk, Nk, R);
 
@@ -4589,7 +4589,7 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
 static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t* z_deg2,
                                        const uint8_t* w, const bf256_t* w_tag,
                                        const uint8_t* owf_in, const uint8_t* owf_out,
-                                       const faest_paramset_t* params, bool isEM) {
+                                       const faest_paramset_t* params) {
 
   unsigned int lambda              = params->faest_param.lambda;
   unsigned int R                   = params->faest_param.R;
@@ -4616,7 +4616,7 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
   uint8_t* rkeys     = malloc((R + 1) * blocksize * sizeof(uint8_t));
   bf256_t* rkeys_tag = faest_aligned_alloc(BF256_ALIGN, (R + 1) * blocksize * sizeof(bf256_t));
 
-  if (isEM) {
+  if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
     expand_key(&round_keys, owf_in, Nk, Nk, R);
 
@@ -4725,7 +4725,7 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
 // OWF CONSTRAINTS VERIFIER
 static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
-                                         bf128_t delta, const faest_paramset_t* params, bool isEM) {
+                                         bf128_t delta, const faest_paramset_t* params) {
 
   unsigned int lambda              = params->faest_param.lambda;
   unsigned int R                   = params->faest_param.R;
@@ -4749,7 +4749,7 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key,
   bf128_t* in_key    = faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t) * blocksize);
   bf128_t* out_key   = faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t) * beta * blocksize);
 
-  if (isEM) {
+  if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
     expand_key(&round_keys, owf_in, Nk, Nk, R);
 
@@ -4823,7 +4823,7 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key,
 
 static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
-                                         bf192_t delta, const faest_paramset_t* params, bool isEM) {
+                                         bf192_t delta, const faest_paramset_t* params) {
 
   unsigned int lambda              = params->faest_param.lambda;
   unsigned int R                   = params->faest_param.R;
@@ -4847,7 +4847,7 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
   bf192_t* in_key    = faest_aligned_alloc(BF192_ALIGN, sizeof(bf192_t) * blocksize);
   bf192_t* out_key   = faest_aligned_alloc(BF192_ALIGN, sizeof(bf192_t) * beta * blocksize);
 
-  if (isEM) {
+  if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
     expand_key(&round_keys, owf_in, Nk, Nk, R);
 
@@ -4919,7 +4919,7 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
 
 static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
-                                         bf256_t delta, const faest_paramset_t* params, bool isEM) {
+                                         bf256_t delta, const faest_paramset_t* params) {
 
   unsigned int lambda              = params->faest_param.lambda;
   unsigned int R                   = params->faest_param.R;
@@ -4943,7 +4943,7 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key,
   bf256_t* in_key    = faest_aligned_alloc(BF256_ALIGN, sizeof(bf256_t) * blocksize);
   bf256_t* out_key   = faest_aligned_alloc(BF256_ALIGN, sizeof(bf256_t) * beta * blocksize);
 
-  if (isEM) {
+  if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
     expand_key(&round_keys, owf_in, Nk, Nk, R);
 
@@ -5017,7 +5017,7 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key,
 static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde,
                            const uint8_t* w_bits, const uint8_t* u_bits, uint8_t** V,
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
-                           const faest_paramset_t* params, bool isEM) {
+                           const faest_paramset_t* params) {
 
   unsigned int lambda = params->faest_param.lambda;
   unsigned int c      = params->faest_param.C;
@@ -5050,8 +5050,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   memset(z1_val, 0, c * sizeof(bf128_t));
   memset(z2_gamma, 0, c * sizeof(bf128_t));
 
-  aes_128_constraints_prover(z0_tag, z1_val, z2_gamma, w_bits, w_tag, owf_in, owf_out, params,
-                             isEM);
+  aes_128_constraints_prover(z0_tag, z1_val, z2_gamma, w_bits, w_tag, owf_in, owf_out, params);
 
   // Step: 13-18
   zk_hash_128_ctx a0_ctx;
@@ -5081,7 +5080,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde,
                            const uint8_t* w_bits, const uint8_t* u_bits, uint8_t** V,
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
-                           const faest_paramset_t* params, bool isEM) {
+                           const faest_paramset_t* params) {
 
   unsigned int lambda = params->faest_param.lambda;
   unsigned int c      = params->faest_param.C;
@@ -5113,8 +5112,7 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   memset(z1_val, 0, c * sizeof(bf192_t));
   memset(z2_gamma, 0, c * sizeof(bf192_t));
 
-  aes_192_constraints_prover(z0_tag, z1_val, z2_gamma, w_bits, w_tag, owf_in, owf_out, params,
-                             isEM);
+  aes_192_constraints_prover(z0_tag, z1_val, z2_gamma, w_bits, w_tag, owf_in, owf_out, params);
 
   // Step: 13-18
   zk_hash_192_ctx a0_ctx;
@@ -5144,7 +5142,7 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde,
                            const uint8_t* w_bits, const uint8_t* u_bits, uint8_t** V,
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
-                           const faest_paramset_t* params, bool isEM) {
+                           const faest_paramset_t* params) {
 
   unsigned int lambda = params->faest_param.lambda;
   unsigned int c      = params->faest_param.C;
@@ -5176,8 +5174,7 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   memset(z1_val, 0, c * sizeof(bf256_t));
   memset(z2_gamma, 0, c * sizeof(bf256_t));
 
-  aes_256_constraints_prover(z0_tag, z1_val, z2_gamma, w_bits, w_tag, owf_in, owf_out, params,
-                             isEM);
+  aes_256_constraints_prover(z0_tag, z1_val, z2_gamma, w_bits, w_tag, owf_in, owf_out, params);
 
   // Step: 13-18
   zk_hash_256_ctx a0_ctx;
@@ -5209,7 +5206,7 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q,
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
-                             const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
+                             const uint8_t* a2_tilde, const faest_paramset_t* params) {
   unsigned int lambda = params->faest_param.lambda;
   unsigned int c      = params->faest_param.C;
   unsigned int ell    = params->faest_param.l;
@@ -5235,7 +5232,7 @@ static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
     w_key[i] = bf128_add(q_key[i], bf128_mul_bit(bf_delta, d_bits[i]));
   }
   memset(z2_key, 0, c * sizeof(bf128_t));
-  aes_128_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
+  aes_128_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params);
 
   // ::13-14
   zk_hash_128_ctx b_ctx;
@@ -5264,7 +5261,7 @@ static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
 static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q,
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
-                             const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
+                             const uint8_t* a2_tilde, const faest_paramset_t* params) {
   unsigned int lambda = params->faest_param.lambda;
   unsigned int c      = params->faest_param.C;
   unsigned int ell    = params->faest_param.l;
@@ -5290,7 +5287,7 @@ static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
     w_key[i] = bf192_add(q_key[i], bf192_mul_bit(bf_delta, d_bits[i]));
   }
   memset(z2_key, 0, c * sizeof(bf192_t));
-  aes_192_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
+  aes_192_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params);
 
   // ::13-14
   zk_hash_192_ctx b_ctx;
@@ -5319,7 +5316,7 @@ static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
 static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q,
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
-                             const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
+                             const uint8_t* a2_tilde, const faest_paramset_t* params) {
   unsigned int lambda = params->faest_param.lambda;
   unsigned int c      = params->faest_param.C;
   unsigned int ell    = params->faest_param.l;
@@ -5345,7 +5342,7 @@ static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
     w_key[i] = bf256_add(q_key[i], bf256_mul_bit(bf_delta, d_bits[i]));
   }
   memset(z2_key, 0, c * sizeof(bf256_t));
-  aes_256_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM);
+  aes_256_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params);
 
   // ::13-14
   zk_hash_256_ctx b_ctx;
@@ -5378,15 +5375,15 @@ void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const ui
   switch (params->faest_param.lambda) {
   case 256:
     aes_256_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u_bits, V, owf_in, owf_out, chall_2,
-                   params, faest_is_em(params));
+                   params);
     break;
   case 192:
     aes_192_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u_bits, V, owf_in, owf_out, chall_2,
-                   params, faest_is_em(params));
+                   params);
     break;
   default:
     aes_128_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u_bits, V, owf_in, owf_out, chall_2,
-                   params, faest_is_em(params));
+                   params);
   }
 }
 
@@ -5396,14 +5393,14 @@ void aes_verify(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q, const uin
   switch (params->faest_param.lambda) {
   case 256:
     aes_256_verifier(a0_tilde, d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
-                     params, faest_is_em(params));
+                     params);
     break;
   case 192:
     aes_192_verifier(a0_tilde, d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
-                     params, faest_is_em(params));
+                     params);
     break;
   default:
     aes_128_verifier(a0_tilde, d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
-                     params, faest_is_em(params));
+                     params);
   }
 }
