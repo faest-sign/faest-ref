@@ -3928,8 +3928,8 @@ static uint8_t* aes_128_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   bf128_store(a0_tilde, ret);
   return a0_tilde;
-
 }
+
 static uint8_t* aes_192_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
 
@@ -3986,8 +3986,8 @@ static uint8_t* aes_192_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   bf192_store(a0_tilde, ret);
   return a0_tilde;
-
 }
+
 static uint8_t* aes_256_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8_t* owf_in, const uint8_t* owf_out,
                                  const uint8_t* chall_2, const uint8_t* chall_3,  const uint8_t* a1_tilde, const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
 
@@ -4018,7 +4018,7 @@ static uint8_t* aes_256_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
                           bf256_mul_bit(bf_delta, d_bits[i]));
   }
   memset(z2_key, 0, c * sizeof(bf256_t));
-  /* aes_256_constraints_verifier(z0_tag, z1_val, z2_gamma, w_key, owf_in, owf_out, bf_delta, params, isEM); */
+  /* aes_256_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params, isEM); */
 
   // ::13-14
   zk_hash_256_ctx b_ctx;
@@ -4026,7 +4026,7 @@ static uint8_t* aes_256_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   for (unsigned int i = 0; i < c; i++) {
     zk_hash_256_update(&b_ctx, z2_key[i]);
   }
-  uint8_t* q_tilde = (uint8_t*)malloc((lambda/8)*c * sizeof(uint8_t));
+  uint8_t* q_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   zk_hash_256_finalize(q_tilde, &b_ctx, q_star);
 
   free(z2_key);
@@ -4044,7 +4044,6 @@ static uint8_t* aes_256_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   bf256_store(a0_tilde, ret);
   return a0_tilde;
-
 }
 
 // AES(-EM) OWF dispatchers
