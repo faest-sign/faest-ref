@@ -3389,7 +3389,6 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
     // :22
     for (unsigned int i = 0; i < num_enc_constraints; i++) {
       z_key[1+num_ks_constraints + b*num_enc_constraints + i] = z_tilde_enc_key[i];
-      break; // XXX
     }
   }
   faest_aligned_free(rkeys_key);
