@@ -4400,13 +4400,13 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
       bf128_mul_bit(w_tag[1], w[0]));
   // ::7-8
   // uint8_t* Rkeys = (uint8_t*)malloc(4*Nst*(R+1)); // storing this as uint8
-  // bf128_t* Rkeys_tag = (bf128_t*)malloc(sizeof(bf128_t)* 4*Nst*R);
+  // bf128_t* Rkeys_tag = faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t)* 4*Nst*R);
   uint8_t* in = (uint8_t*)malloc(blocksize);
-  bf128_t* in_tag = (bf128_t*)malloc(sizeof(bf128_t) * blocksize);
+  bf128_t* in_tag = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t) * blocksize);
   uint8_t* out = (uint8_t*)malloc(blocksize);
-  bf128_t* out_tag = (bf128_t*)malloc(sizeof(bf128_t) * beta*blocksize);
+  bf128_t* out_tag = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t) * beta*blocksize);
   uint8_t* rkeys = (uint8_t*) malloc((R+1)*blocksize * sizeof(uint8_t));
-  bf128_t* rkeys_tag = (bf128_t*) malloc((R+1)*blocksize * sizeof(bf128_t));
+  bf128_t* rkeys_tag = (bf128_t*) faest_aligned_alloc(BF128_ALIGN, (R+1)*blocksize * sizeof(bf128_t));
 
   if (isEM) {
     aes_round_keys_t round_keys;
@@ -4450,8 +4450,8 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
 
     // ::15 skiped as B = 1
     // ::16
-    bf128_t* z_tilde_deg0_tag = (bf128_t*)malloc(2*Ske * sizeof(bf128_t));
-    bf128_t* z_tilde_deg1_val = (bf128_t*)malloc(2*Ske * sizeof(bf128_t));
+    bf128_t* z_tilde_deg0_tag = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, 2*Ske * sizeof(bf128_t));
+    bf128_t* z_tilde_deg1_val = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, 2*Ske * sizeof(bf128_t));
     aes_128_expkey_constraints_prover(z_tilde_deg0_tag, z_tilde_deg1_val, rkeys, rkeys_tag, w, w_tag, params);      // w is bit per uint8
 
     // ::17 raise degree
@@ -4466,11 +4466,11 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
     free(z_tilde_deg1_val);
   }
   uint8_t* w_tilde = (uint8_t*)malloc(Lenc * sizeof(uint8_t));
-  bf128_t* w_tilde_tag = (bf128_t*)malloc(Lenc * sizeof(bf128_t));
+  bf128_t* w_tilde_tag = faest_aligned_alloc(BF128_ALIGN, Lenc * sizeof(bf128_t));
 
-  bf128_t* z_tilde_deg0 = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
-  bf128_t* z_tilde_deg1 = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
-  bf128_t* z_tilde_deg2 = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
+  bf128_t* z_tilde_deg0 = faest_aligned_alloc(BF128_ALIGN, num_enc_constraints * sizeof(bf128_t));
+  bf128_t* z_tilde_deg1 = faest_aligned_alloc(BF128_ALIGN, num_enc_constraints * sizeof(bf128_t));
+  bf128_t* z_tilde_deg2 = faest_aligned_alloc(BF128_ALIGN, num_enc_constraints * sizeof(bf128_t));
 
   // ::18-20
   for (unsigned int b = 0; b < beta; b++) {
@@ -4541,13 +4541,13 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
       bf192_mul_bit(w_tag[1], w[0]));
   // ::7-8
   // uint8_t* Rkeys = (uint8_t*)malloc(4*Nst*(R+1)); // storing this as uint8
-  // bf192_t* Rkeys_tag = (bf192_t*)malloc(sizeof(bf192_t)* 4*Nst*R);
+  // bf192_t* Rkeys_tag = faest_aligned_alloc(BF192_ALIGN, sizeof(bf192_t)* 4*Nst*R);
   uint8_t* in = (uint8_t*)malloc(blocksize);
-  bf192_t* in_tag = (bf192_t*)malloc(sizeof(bf192_t) * blocksize);
+  bf192_t* in_tag = faest_aligned_alloc(BF192_ALIGN, sizeof(bf192_t) * blocksize);
   uint8_t* out = (uint8_t*)malloc(beta * blocksize);
-  bf192_t* out_tag = (bf192_t*)malloc(sizeof(bf192_t) * beta*blocksize);
+  bf192_t* out_tag = faest_aligned_alloc(BF192_ALIGN, sizeof(bf192_t) * beta*blocksize);
   uint8_t* rkeys = (uint8_t*) malloc((R+1)*blocksize * sizeof(uint8_t));
-  bf192_t* rkeys_tag = (bf192_t*) malloc((R+1)*blocksize * sizeof(bf192_t));
+  bf192_t* rkeys_tag = faest_aligned_alloc(BF192_ALIGN, (R+1)*blocksize * sizeof(bf192_t));
 
   if (isEM) {
     aes_round_keys_t round_keys;
@@ -4591,8 +4591,8 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
 
     // ::15 skiped as B = 1
     // ::16
-    bf192_t* z_tilde_deg0_tag = (bf192_t*)malloc(2*Ske * sizeof(bf192_t));
-    bf192_t* z_tilde_deg1_val = (bf192_t*)malloc(2*Ske * sizeof(bf192_t));
+    bf192_t* z_tilde_deg0_tag = faest_aligned_alloc(BF192_ALIGN, 2*Ske * sizeof(bf192_t));
+    bf192_t* z_tilde_deg1_val = faest_aligned_alloc(BF192_ALIGN, 2*Ske * sizeof(bf192_t));
     aes_192_expkey_constraints_prover(z_tilde_deg0_tag, z_tilde_deg1_val, rkeys, rkeys_tag, w, w_tag, params);      // w is bit per uint8
 
     // ::17 raise degree
@@ -4607,11 +4607,11 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
     free(z_tilde_deg1_val);
   }
   uint8_t* w_tilde = (uint8_t*)malloc(Lenc * sizeof(uint8_t));
-  bf192_t* w_tilde_tag = (bf192_t*)malloc(Lenc * sizeof(bf192_t));
+  bf192_t* w_tilde_tag = faest_aligned_alloc(BF192_ALIGN, Lenc * sizeof(bf192_t));
 
-  bf192_t* z_tilde_deg0 = (bf192_t*)malloc(num_enc_constraints * sizeof(bf192_t));
-  bf192_t* z_tilde_deg1 = (bf192_t*)malloc(num_enc_constraints * sizeof(bf192_t));
-  bf192_t* z_tilde_deg2 = (bf192_t*)malloc(num_enc_constraints * sizeof(bf192_t));
+  bf192_t* z_tilde_deg0 = faest_aligned_alloc(BF192_ALIGN, num_enc_constraints * sizeof(bf192_t));
+  bf192_t* z_tilde_deg1 = faest_aligned_alloc(BF192_ALIGN, num_enc_constraints * sizeof(bf192_t));
+  bf192_t* z_tilde_deg2 = faest_aligned_alloc(BF192_ALIGN, num_enc_constraints * sizeof(bf192_t));
 
   // ::18-20
   for (unsigned int b = 0; b < beta; b++) {
@@ -4677,13 +4677,13 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
       bf256_mul_bit(w_tag[1], w[0]));
   // ::7-8
   // uint8_t* Rkeys = (uint8_t*)malloc(4*Nst*(R+1)); // storing this as uint8
-  // bf256_t* Rkeys_tag = (bf256_t*)malloc(sizeof(bf256_t)* 4*Nst*R);
+  // bf256_t* Rkeys_tag = faest_aligned_alloc(BF256_ALIGN, sizeof(bf256_t)* 4*Nst*R);
   uint8_t* in = (uint8_t*)malloc(blocksize);
-  bf256_t* in_tag = (bf256_t*)malloc(sizeof(bf256_t) * blocksize);
+  bf256_t* in_tag = faest_aligned_alloc(BF256_ALIGN, sizeof(bf256_t) * blocksize);
   uint8_t* out = (uint8_t*)malloc(beta * blocksize);
-  bf256_t* out_tag = (bf256_t*)malloc(sizeof(bf256_t) * beta*blocksize);
+  bf256_t* out_tag = faest_aligned_alloc(BF256_ALIGN, sizeof(bf256_t) * beta*blocksize);
   uint8_t* rkeys = (uint8_t*) malloc((R+1)*blocksize * sizeof(uint8_t));
-  bf256_t* rkeys_tag = (bf256_t*) malloc((R+1)*blocksize * sizeof(bf256_t));
+  bf256_t* rkeys_tag = faest_aligned_alloc(BF256_ALIGN, (R+1)*blocksize * sizeof(bf256_t));
 
   if (isEM) {
     aes_round_keys_t round_keys;
@@ -4727,8 +4727,8 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
 
     // ::15 skiped as B = 1
     // ::16
-    bf256_t* z_tilde_deg0_tag = (bf256_t*)malloc(2*Ske * sizeof(bf256_t));
-    bf256_t* z_tilde_deg1_val = (bf256_t*)malloc(2*Ske * sizeof(bf256_t));
+    bf256_t* z_tilde_deg0_tag = faest_aligned_alloc(BF256_ALIGN, 2*Ske * sizeof(bf256_t));
+    bf256_t* z_tilde_deg1_val = faest_aligned_alloc(BF256_ALIGN, 2*Ske * sizeof(bf256_t));
     aes_256_expkey_constraints_prover(z_tilde_deg0_tag, z_tilde_deg1_val, rkeys, rkeys_tag, w, w_tag, params);      // w is bit per uint8
 
     // ::17 raise degree
@@ -4743,11 +4743,11 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
     free(z_tilde_deg1_val);
   }
   uint8_t* w_tilde = (uint8_t*)malloc(Lenc * sizeof(uint8_t));
-  bf256_t* w_tilde_tag = (bf256_t*)malloc(Lenc * sizeof(bf256_t));
+  bf256_t* w_tilde_tag = faest_aligned_alloc(BF256_ALIGN, Lenc * sizeof(bf256_t));
 
-  bf256_t* z_tilde_deg0 = (bf256_t*)malloc(num_enc_constraints * sizeof(bf256_t));
-  bf256_t* z_tilde_deg1 = (bf256_t*)malloc(num_enc_constraints * sizeof(bf256_t));
-  bf256_t* z_tilde_deg2 = (bf256_t*)malloc(num_enc_constraints * sizeof(bf256_t));
+  bf256_t* z_tilde_deg0 = faest_aligned_alloc(BF256_ALIGN, num_enc_constraints * sizeof(bf256_t));
+  bf256_t* z_tilde_deg1 = faest_aligned_alloc(BF256_ALIGN, num_enc_constraints * sizeof(bf256_t));
+  bf256_t* z_tilde_deg2 = faest_aligned_alloc(BF256_ALIGN, num_enc_constraints * sizeof(bf256_t));
 
   // ::18-20
   for (unsigned int b = 0; b < beta; b++) {
@@ -4813,9 +4813,9 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
   // debug_print_bf128("delta", &delta);
   
   // ::7-8
-  bf128_t* rkeys_key = (bf128_t*)malloc(sizeof(bf128_t) * (R+1) * blocksize);
-  bf128_t* in_key = (bf128_t*)malloc(sizeof(bf128_t) * blocksize);
-  bf128_t* out_key = (bf128_t*)malloc(sizeof(bf128_t) * beta*blocksize);
+  bf128_t* rkeys_key = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t) * (R+1) * blocksize);
+  bf128_t* in_key = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t) * blocksize);
+  bf128_t* out_key = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, sizeof(bf128_t) * beta*blocksize);
 
   if (isEM) {
     aes_round_keys_t round_keys;
@@ -4851,7 +4851,7 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
     constant_to_vole_128_verifier(out_key, owf_out, delta, beta*blocksize);
 
     // ::16
-    bf128_t* z_tilde_key = (bf128_t*)malloc(2*Ske * sizeof(bf128_t));
+    bf128_t* z_tilde_key = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, 2*Ske * sizeof(bf128_t));
     
     aes_128_expkey_constraints_verifier(z_tilde_key, rkeys_key, w_key, delta, params);
 
@@ -4860,7 +4860,7 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
       z_key[1 + i] = bf128_mul(delta, z_tilde_key[i]);
     }
 
-    free(z_tilde_key);
+    faest_aligned_free(z_tilde_key);
   }
   // ::18-20
   bf128_t* w_tilde_key = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, Lenc * sizeof(bf128_t));
@@ -4913,9 +4913,9 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key, c
   // debug_print_bf192("delta", &delta);
   
   // ::7-8
-  bf192_t* rkeys_key = (bf192_t*)malloc(sizeof(bf192_t) * (R+1) * blocksize);
-  bf192_t* in_key = (bf192_t*)malloc(sizeof(bf192_t) * blocksize);
-  bf192_t* out_key = (bf192_t*)malloc(sizeof(bf192_t) * beta*blocksize);
+  bf192_t* rkeys_key = (bf192_t*)faest_aligned_alloc(BF192_ALIGN, sizeof(bf192_t) * (R+1) * blocksize);
+  bf192_t* in_key = (bf192_t*)faest_aligned_alloc(BF192_ALIGN, sizeof(bf192_t) * blocksize);
+  bf192_t* out_key = (bf192_t*)faest_aligned_alloc(BF192_ALIGN, sizeof(bf192_t) * beta*blocksize);
 
   if (isEM) {
     aes_round_keys_t round_keys;
@@ -4951,7 +4951,7 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key, c
     constant_to_vole_192_verifier(out_key, owf_out, delta, beta*blocksize);
 
     // ::16
-    bf192_t* z_tilde_key = (bf192_t*)malloc(2*Ske * sizeof(bf192_t));
+    bf192_t* z_tilde_key = (bf192_t*)faest_aligned_alloc(BF192_ALIGN, 2*Ske * sizeof(bf192_t));
     
     aes_192_expkey_constraints_verifier(z_tilde_key, rkeys_key, w_key, delta, params);
 
@@ -5012,9 +5012,9 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key, c
   // debug_print_bf256("delta", &delta);
   
   // ::7-8
-  bf256_t* rkeys_key = (bf256_t*)malloc(sizeof(bf256_t) * (R+1) * blocksize);
-  bf256_t* in_key = (bf256_t*)malloc(sizeof(bf256_t) * blocksize);
-  bf256_t* out_key = (bf256_t*)malloc(sizeof(bf256_t) * beta*blocksize);
+  bf256_t* rkeys_key = (bf256_t*)faest_aligned_alloc(BF256_ALIGN, sizeof(bf256_t) * (R+1) * blocksize);
+  bf256_t* in_key = (bf256_t*)faest_aligned_alloc(BF256_ALIGN, sizeof(bf256_t) * blocksize);
+  bf256_t* out_key = (bf256_t*)faest_aligned_alloc(BF256_ALIGN, sizeof(bf256_t) * beta*blocksize);
 
   if (isEM) {
     aes_round_keys_t round_keys;
@@ -5050,7 +5050,7 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key, c
     constant_to_vole_256_verifier(out_key, owf_out, delta, beta*blocksize);
 
     // ::16
-    bf256_t* z_tilde_key = (bf256_t*)malloc(2*Ske * sizeof(bf256_t));
+    bf256_t* z_tilde_key = (bf256_t*)faest_aligned_alloc(BF256_ALIGN, 2*Ske * sizeof(bf256_t));
     
     aes_256_expkey_constraints_verifier(z_tilde_key, rkeys_key, w_key, delta, params);
 
@@ -5102,7 +5102,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf128_t* w_tag = column_to_row_major_and_shrink_V_128(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
-  bf128_t* bf_u_bits = (bf128_t*) malloc(2*lambda * sizeof(bf128_t));
+  bf128_t* bf_u_bits = (bf128_t*) faest_aligned_alloc(BF128_ALIGN, 2*lambda * sizeof(bf128_t));
   for (unsigned int i = 0; i < 2*lambda; i++) {
     bf_u_bits[i] = bf128_from_bit(u_bits[i]);
   }
@@ -5114,9 +5114,9 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + ell + lambda);
 
   // ::10-12
-  bf128_t* z0_tag = (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf tag
-  bf128_t* z1_val = (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf val
-  bf128_t* z2_gamma = (bf128_t*)malloc(c * sizeof(bf128_t)); // this contains the bf gamma
+  bf128_t* z0_tag = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, c * sizeof(bf128_t)); // this contains the bf tag
+  bf128_t* z1_val = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, c * sizeof(bf128_t)); // this contains the bf val
+  bf128_t* z2_gamma = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, c * sizeof(bf128_t)); // this contains the bf gamma
   memset(z0_tag, 0, c * sizeof(bf128_t));
   memset(z1_val, 0, c * sizeof(bf128_t));
   memset(z2_gamma, 0, c * sizeof(bf128_t));
@@ -5160,7 +5160,7 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf192_t* w_tag = column_to_row_major_and_shrink_V_192(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
-  bf192_t* bf_u_bits = (bf192_t*) malloc(2*lambda * sizeof(bf192_t));
+  bf192_t* bf_u_bits = (bf192_t*) faest_aligned_alloc(BF192_ALIGN, 2*lambda * sizeof(bf192_t));
   for (unsigned int i = 0; i < 2*lambda; i++) {
     bf_u_bits[i] = bf192_from_bit(u_bits[i]);
   }
@@ -5171,9 +5171,9 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf192_t bf_v_star_1 = bf192_sum_poly(w_tag + ell + lambda);
 
   // ::10-12
-  bf192_t* z0_tag = (bf192_t*)malloc(c * sizeof(bf192_t)); // this contains the bf tag
-  bf192_t* z1_val = (bf192_t*)malloc(c * sizeof(bf192_t)); // this contains the bf val
-  bf192_t* z2_gamma = (bf192_t*)malloc(c * sizeof(bf192_t)); // this contains the bf gamma
+  bf192_t* z0_tag = (bf192_t*)faest_aligned_alloc(BF192_ALIGN, c * sizeof(bf192_t)); // this contains the bf tag
+  bf192_t* z1_val = (bf192_t*)faest_aligned_alloc(BF192_ALIGN, c * sizeof(bf192_t)); // this contains the bf val
+  bf192_t* z2_gamma = (bf192_t*)faest_aligned_alloc(BF192_ALIGN, c * sizeof(bf192_t)); // this contains the bf gamma
   memset(z0_tag, 0, c * sizeof(bf192_t));
   memset(z1_val, 0, c * sizeof(bf192_t));
   memset(z2_gamma, 0, c * sizeof(bf192_t));
@@ -5217,7 +5217,7 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf256_t* w_tag = column_to_row_major_and_shrink_V_256(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
-  bf256_t* bf_u_bits = (bf256_t*) malloc(2*lambda * sizeof(bf256_t));
+  bf256_t* bf_u_bits = (bf256_t*) faest_aligned_alloc(BF256_ALIGN, 2*lambda * sizeof(bf256_t));
   // debug_print_buf_bits("u_bits", u_bits, 2*lambda);
   for (unsigned int i = 0; i < 2*lambda; i++) {
     bf_u_bits[i] = bf256_from_bit(u_bits[i]);
@@ -5229,9 +5229,9 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf256_t bf_v_star_1 = bf256_sum_poly(w_tag + ell + lambda);
 
   // ::10-12
-  bf256_t* z0_tag = (bf256_t*)malloc(c * sizeof(bf256_t)); // this contains the bf tag
-  bf256_t* z1_val = (bf256_t*)malloc(c * sizeof(bf256_t)); // this contains the bf val
-  bf256_t* z2_gamma = (bf256_t*)malloc(c * sizeof(bf256_t)); // this contains the bf gamma
+  bf256_t* z0_tag = (bf256_t*)faest_aligned_alloc(BF256_ALIGN, c * sizeof(bf256_t)); // this contains the bf tag
+  bf256_t* z1_val = (bf256_t*)faest_aligned_alloc(BF256_ALIGN, c * sizeof(bf256_t)); // this contains the bf val
+  bf256_t* z2_gamma = (bf256_t*)faest_aligned_alloc(BF256_ALIGN, c * sizeof(bf256_t)); // this contains the bf gamma
   memset(z0_tag, 0, c * sizeof(bf256_t));
   memset(z1_val, 0, c * sizeof(bf256_t));
   memset(z2_gamma, 0, c * sizeof(bf256_t));
