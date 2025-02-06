@@ -99,27 +99,6 @@ static void aes_128_add_round_key_prover(uint8_t* out, bf128_t* out_tag, const u
     out_tag[i] = bf128_add(in_tag[i], k_tag[i]);
   }
 }
-static void aes_192_add_round_key_prover(bf192_t* out, bf192_t* out_tag, const bf192_t* in, const bf192_t* in_tag, const bf192_t* k, const bf192_t* k_tag, const faest_paramset_t* params) {
-
-  uint16_t Nst = params->faest_param.Nwd;
-  uint16_t Nstbits = Nst*32;
-
-  for (unsigned int i = 0; i < Nstbits; i++) {
-    out[i] = in[i] ^ k[i];
-    out_tag[i] = bf192_add(in_tag[i], k_tag[i]);
-  }
-}
-static void aes_256_add_round_key_prover(bf256_t* out, bf256_t* out_tag, const bf256_t* in, const bf256_t* in_tag, const bf256_t* k, const bf256_t* k_tag, const faest_paramset_t* params) {
-
-  uint16_t Nst = params->faest_param.Nwd;
-  uint16_t Nstbits = Nst*32;
-
-  for (unsigned int i = 0; i < Nstbits; i++) {
-    out[i] = in[i] ^ k[i];
-    out_tag[i] = bf256_add(in_tag[i], k_tag[i]);
-  }
-}
-
 static void aes_128_add_round_key_verifier(bf128_t* out_key, const bf128_t* in_key, const bf128_t* k_key, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
@@ -129,6 +108,14 @@ static void aes_128_add_round_key_verifier(bf128_t* out_key, const bf128_t* in_k
     out_key[i] = bf128_add(in_key[i], k_key[i]);
   }
 }
+static void aes_192_add_round_key_prover(uint8_t* out, bf192_t* out_tag, const uint8_t* in, const bf192_t* in_tag, const uint8_t* k, const bf192_t* k_tag, const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nstbits = Nst*32;
+  for (unsigned int i = 0; i < Nstbits; i++) {
+    out[i] = in[i] ^ k[i];
+    out_tag[i] = bf192_add(in_tag[i], k_tag[i]);
+  }
+}
 static void aes_192_add_round_key_verifier(bf192_t* out_key, const bf192_t* in_key, const bf192_t* k_key, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
@@ -136,6 +123,14 @@ static void aes_192_add_round_key_verifier(bf192_t* out_key, const bf192_t* in_k
 
   for (unsigned int i = 0; i < Nstbits; i++) {
     out_key[i] = bf192_add(in_key[i], k_key[i]);
+  }
+}
+static void aes_256_add_round_key_prover(uint8_t* out, bf256_t* out_tag, const uint8_t* in, const bf256_t* in_tag, const uint8_t* k, const bf256_t* k_tag, const faest_paramset_t* params) {
+  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nstbits = Nst*32;
+  for (unsigned int i = 0; i < Nstbits; i++) {
+    out[i] = in[i] ^ k[i];
+    out_tag[i] = bf256_add(in_tag[i], k_tag[i]);
   }
 }
 static void aes_256_add_round_key_verifier(bf256_t* out_key, const bf256_t* in_key, const bf256_t* k_key, const faest_paramset_t* params) {
