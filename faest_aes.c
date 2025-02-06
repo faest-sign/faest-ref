@@ -1009,8 +1009,8 @@ static void aes_192_mix_columns_prover(bf192_t* y_deg0, bf192_t* y_deg1, bf192_t
   
   //  ::2-4
   uint8_t one[8] = {1,0,0,0,0,0,0,0};
-  uint8_t two[8] = {2,0,0,0,0,0,0,0};
-  uint8_t three[8] = {3,0,0,0,0,0,0,0};
+  uint8_t two[8] = {0,1,0,0,0,0,0,0};
+  uint8_t three[8] = {1,1,0,0,0,0,0,0};
   bf192_t v1 = bf192_byte_combine_bits(one);
   bf192_t v2 = bf192_byte_combine_bits(two);
   bf192_t v3 = bf192_byte_combine_bits(three);
@@ -1113,8 +1113,8 @@ static void aes_192_mix_columns_verifier(bf192_t* y_deg1, const bf192_t* in_deg1
   
   //  ::2-4
   uint8_t one[8] = {1,0,0,0,0,0,0,0};
-  uint8_t two[8] = {2,0,0,0,0,0,0,0};
-  uint8_t three[8] = {3,0,0,0,0,0,0,0};
+  uint8_t two[8] = {0,1,0,0,0,0,0,0};
+  uint8_t three[8] = {1,1,0,0,0,0,0,0};
   bf192_t v1 = bf192_byte_combine_bits(one);
   bf192_t v2 = bf192_byte_combine_bits(two);
   bf192_t v3 = bf192_byte_combine_bits(three);
@@ -1166,8 +1166,8 @@ static void aes_256_mix_columns_prover(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t
   
   //  ::2-4
   uint8_t one[8] = {1,0,0,0,0,0,0,0};
-  uint8_t two[8] = {2,0,0,0,0,0,0,0};
-  uint8_t three[8] = {3,0,0,0,0,0,0,0};
+  uint8_t two[8] = {0,1,0,0,0,0,0,0};
+  uint8_t three[8] = {1,1,0,0,0,0,0,0};
   bf256_t v1 = bf256_byte_combine_bits(one);
   bf256_t v2 = bf256_byte_combine_bits(two);
   bf256_t v3 = bf256_byte_combine_bits(three);
@@ -1270,8 +1270,8 @@ static void aes_256_mix_columns_verifier(bf256_t* y_deg1, const bf256_t* in_deg1
   
   //  ::2-4
   uint8_t one[8] = {1,0,0,0,0,0,0,0};
-  uint8_t two[8] = {2,0,0,0,0,0,0,0};
-  uint8_t three[8] = {3,0,0,0,0,0,0,0};
+  uint8_t two[8] = {0,1,0,0,0,0,0,0};
+  uint8_t three[8] = {1,1,0,0,0,0,0,0};
   bf256_t v1 = bf256_byte_combine_bits(one);
   bf256_t v2 = bf256_byte_combine_bits(two);
   bf256_t v3 = bf256_byte_combine_bits(three);
