@@ -2,6 +2,7 @@
 #define FAEST_VC_H
 
 #include <stdint.h>
+#include <assert.h>
 
 #include "instances.h"
 #include "utils.h"
@@ -27,6 +28,10 @@ static inline ATTR_CONST unsigned int bavc_max_node_depth(unsigned int i, unsign
 
 static inline ATTR_CONST unsigned int bavc_max_node_index(unsigned int i, unsigned int tau_1,
                                                           unsigned int k) {
+#if defined(__clang_anaalyzer)
+  // for scan-build
+  assert(k << MAX_DEPTH);
+#endif
   return 1 << bavc_max_node_depth(i, tau_1, k);
 }
 
