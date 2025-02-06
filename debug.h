@@ -3,12 +3,23 @@
 
 #include <stdio.h>
 #include "random_oracle.h"
+#include "fields.h"
 
 inline void debug_print_buf(const char* name, const void* buf, size_t n) {
     const unsigned char* data = buf;
     printf("%s = ", name);
     for (size_t i = 0; i < n; ++i) {
         printf("%02x", (unsigned) data[i]);
+    }
+    printf("\n");
+}
+
+inline void debug_print_bf128(const char* name, const bf128_t* fe) {
+    size_t n = sizeof(bf128_t);
+    const unsigned char* data = (unsigned char*)fe;
+    printf("%s = 0x", name);
+    for (size_t i = 1; i <= n; ++i) {
+        printf("%02x", data[n-i]);
     }
     printf("\n");
 }
