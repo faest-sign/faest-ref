@@ -174,12 +174,9 @@ bf128_t bf128_byte_combine_sq(const bf128_t* x) {
 bf128_t bf128_byte_combine_bits(const uint8_t* x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   return bf128_from_bit(x[0]) ^ bf128_mul_bit(bf128_alpha[1 - 1], x[1]) ^
-         bf128_mul_bit(bf128_alpha[2 - 1], x[2]) ^
-         bf128_mul_bit(bf128_alpha[3 - 1], x[3]) ^
-         bf128_mul_bit(bf128_alpha[4 - 1], x[4]) ^
-         bf128_mul_bit(bf128_alpha[5 - 1], x[5]) ^
-         bf128_mul_bit(bf128_alpha[6 - 1], x[6]) ^
-         bf128_mul_bit(bf128_alpha[7 - 1], x[7]);
+         bf128_mul_bit(bf128_alpha[2 - 1], x[2]) ^ bf128_mul_bit(bf128_alpha[3 - 1], x[3]) ^
+         bf128_mul_bit(bf128_alpha[4 - 1], x[4]) ^ bf128_mul_bit(bf128_alpha[5 - 1], x[5]) ^
+         bf128_mul_bit(bf128_alpha[6 - 1], x[6]) ^ bf128_mul_bit(bf128_alpha[7 - 1], x[7]);
 #else
   bf128_t bf_out = bf128_from_bit(x[0]);
   for (unsigned int i = 1; i < 8; ++i) {
@@ -347,12 +344,9 @@ bf192_t bf192_byte_combine_sq(const bf192_t* x) {
 bf192_t bf192_byte_combine_bits(const uint8_t* x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   return bf192_from_bit(x[0]) ^ bf192_mul_bit(bf192_alpha[1 - 1], x[1]) ^
-         bf192_mul_bit(bf192_alpha[2 - 1], x[2]) ^
-         bf192_mul_bit(bf192_alpha[3 - 1], x[3]) ^
-         bf192_mul_bit(bf192_alpha[4 - 1], x[4]) ^
-         bf192_mul_bit(bf192_alpha[5 - 1], x[5]) ^
-         bf192_mul_bit(bf192_alpha[6 - 1], x[6]) ^
-         bf192_mul_bit(bf192_alpha[7 - 1], x[7]);
+         bf192_mul_bit(bf192_alpha[2 - 1], x[2]) ^ bf192_mul_bit(bf192_alpha[3 - 1], x[3]) ^
+         bf192_mul_bit(bf192_alpha[4 - 1], x[4]) ^ bf192_mul_bit(bf192_alpha[5 - 1], x[5]) ^
+         bf192_mul_bit(bf192_alpha[6 - 1], x[6]) ^ bf192_mul_bit(bf192_alpha[7 - 1], x[7]);
 #else
   bf192_t bf_out = bf192_from_bit(x[0]);
   for (unsigned int i = 1; i < 8; ++i) {
@@ -533,12 +527,9 @@ bf256_t bf256_byte_combine_sq(const bf256_t* x) {
 bf256_t bf256_byte_combine_bits(const uint8_t* x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   return bf256_from_bit(x[0]) ^ bf256_mul_bit(bf256_alpha[1 - 1], x[1]) ^
-         bf256_mul_bit(bf256_alpha[2 - 1], x[2]) ^
-         bf256_mul_bit(bf256_alpha[3 - 1], x[3]) ^
-         bf256_mul_bit(bf256_alpha[4 - 1], x[4]) ^
-         bf256_mul_bit(bf256_alpha[5 - 1], x[5]) ^
-         bf256_mul_bit(bf256_alpha[6 - 1], x[6]) ^
-         bf256_mul_bit(bf256_alpha[7 - 1], x[7]);
+         bf256_mul_bit(bf256_alpha[2 - 1], x[2]) ^ bf256_mul_bit(bf256_alpha[3 - 1], x[3]) ^
+         bf256_mul_bit(bf256_alpha[4 - 1], x[4]) ^ bf256_mul_bit(bf256_alpha[5 - 1], x[5]) ^
+         bf256_mul_bit(bf256_alpha[6 - 1], x[6]) ^ bf256_mul_bit(bf256_alpha[7 - 1], x[7]);
 #else
   bf256_t bf_out = bf256_from_bit(x[0]);
   for (unsigned int i = 1; i < 8; ++i) {
