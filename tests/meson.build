@@ -125,7 +125,7 @@ if get_option('tv-generators').enabled()
     files('generate_bavc_tv.cpp'),
     dependencies: [libfaest_static_dependency],
     include_directories: include_directories,
-    cpp_args: defines + cpp_flags,
+    cpp_args: defines + test_defines + cpp_flags,
     link_args: linker_flags,
     override_options: ['b_lto=false'],
   )
@@ -134,7 +134,7 @@ if get_option('tv-generators').enabled()
     files('generate_prg_tv.cpp'),
     dependencies: [libfaest_static_dependency],
     include_directories: include_directories,
-    cpp_args: defines + cpp_flags,
+    cpp_args: defines + test_defines + cpp_flags,
     link_args: linker_flags,
     override_options: ['b_lto=false'],
   )
@@ -143,7 +143,7 @@ if get_option('tv-generators').enabled()
     files('generate_owf_tv.cpp'),
     dependencies: [libfaest_static_dependency],
     include_directories: include_directories,
-    cpp_args: defines + cpp_flags,
+    cpp_args: defines + test_defines + cpp_flags,
     link_args: linker_flags,
     override_options: ['b_lto=false'],
   )
@@ -152,7 +152,7 @@ if get_option('tv-generators').enabled()
     files('generate_vole_tv.cpp'),
     dependencies: [libfaest_static_dependency],
     include_directories: include_directories,
-    cpp_args: defines + cpp_flags,
+    cpp_args: defines + test_defines + cpp_flags,
     link_args: linker_flags,
     override_options: ['b_lto=false'],
   )
@@ -161,7 +161,7 @@ if get_option('tv-generators').enabled()
     files('generate_universal_hashing_tv.cpp'),
     dependencies: [libfaest_static_dependency],
     include_directories: include_directories,
-    cpp_args: defines + cpp_flags,
+    cpp_args: defines + test_defines + cpp_flags,
     link_args: linker_flags,
     override_options: ['b_lto=false'],
   )
