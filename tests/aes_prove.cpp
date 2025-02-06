@@ -157,7 +157,7 @@ static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int e
 }
 
 BOOST_AUTO_TEST_SUITE(test_aes_prove)
-
+/* 
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const faest_paramset_t* params = faest_get_paramset(param_id);
@@ -291,6 +291,8 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     free(q);
   }
 }
+ */
+
 
 /* 
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
@@ -427,7 +429,9 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   }
 }
  */
-/* 
+
+
+
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const faest_paramset_t* params = faest_get_paramset(param_id);
@@ -619,5 +623,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     free(q);
   }
 }
- */
+
+
+
 BOOST_AUTO_TEST_SUITE_END()

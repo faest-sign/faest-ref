@@ -547,6 +547,7 @@ void aes_192_state_to_bytes_prover(bf192_t* out, bf192_t* out_tag, const uint8_t
   uint16_t Nst_bytes = params->faest_param.Nwd * 4;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
+    out[i] = bf192_byte_combine_bits(k + i*8);
     out_tag[i] = bf192_byte_combine(k_tag + i*8);
   }
 }
