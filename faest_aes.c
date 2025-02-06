@@ -146,7 +146,7 @@ static void aes_256_add_round_key_verifier(bf256_t* out_key, const bf256_t* in_k
 
 // F256/F2.CONJUGATES
 static void aes_128_f256_f2_conjugates_1(bf128_t* y, const uint8_t* state, const faest_paramset_t* params) {
-  unsigned int Nst_bytes = 16;
+  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
 
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     uint8_t* x0 = (uint8_t*)malloc(8 * sizeof(uint8_t));
@@ -163,8 +163,10 @@ static void aes_128_f256_f2_conjugates_1(bf128_t* y, const uint8_t* state, const
     free(x0);
   }
 }
+
 static void aes_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state, const faest_paramset_t* params) {
-  unsigned int Nst_bytes = 16;
+  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     uint8_t* x0 = (uint8_t*)malloc(Nst_bytes*8);
     memcpy(x0, state, Nst_bytes*8);
@@ -179,8 +181,10 @@ static void aes_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state, const
     free(x0);
   }
 }
+
 static void aes_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state, const faest_paramset_t* params) {
-  unsigned int Nst_bytes = 16;
+  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     uint8_t* x0 = (uint8_t*)malloc(Nst_bytes*8);
     memcpy(x0, state, Nst_bytes*8);
@@ -197,7 +201,8 @@ static void aes_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state, const
 }
 
 static void aes_128_f256_f2_conjugates_128(bf128_t* y, const bf128_t* state, const faest_paramset_t* params) {
-  unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     bf128_t x[8];
     memcpy(x, state + i * 8, sizeof(x));
@@ -210,8 +215,10 @@ static void aes_128_f256_f2_conjugates_128(bf128_t* y, const bf128_t* state, con
     y[i * 8 + 7] = bf128_byte_combine(x);
   }
 }
+
 static void aes_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state, const faest_paramset_t* params) {
-  unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     bf192_t x[8];
     memcpy(x, state + (i * 8), sizeof(x));
@@ -224,8 +231,10 @@ static void aes_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state, con
     y[i * 8 + 7] = bf192_byte_combine(x);
   }
 }
+
 static void aes_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state, const faest_paramset_t* params) {
-  unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     bf256_t x[8];
     memcpy(x, state + (i * 8), sizeof(x));
