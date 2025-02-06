@@ -78,7 +78,7 @@ def generate(
         cwd=target,
     )
     print(f"Generating KATs for {param_name}")
-    # subprocess.check_call(target_nist_kat / "PQCgenKAT_sign", cwd=target_kat)
+    subprocess.check_call(target_nist_kat / "PQCgenKAT_sign", cwd=target_kat)
     subprocess.check_call(["make", "clean"], cwd=target)
 
 
