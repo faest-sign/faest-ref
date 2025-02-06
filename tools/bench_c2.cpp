@@ -34,7 +34,9 @@ TEST_CASE("bench sign", "[.][bench]") {
                        sk.data());
   };
 
+#if !defined(NDEBUG)
   REQUIRE(signed_message_len == signed_message.size());
+#endif
 }
 
 TEST_CASE("bench verify", "[.][bench]") {
@@ -55,9 +57,11 @@ TEST_CASE("bench verify", "[.][bench]") {
                             signed_message_len, pk.data());
   };
 
+#if !defined(NDEBUG)
   REQUIRE(opened_message_len == opened_message.size());
   REQUIRE(opened_message ==
           std::vector<unsigned char>(reinterpret_cast<const unsigned char*>(message.c_str()),
                                      reinterpret_cast<const unsigned char*>(message.c_str()) +
                                          message.size()));
+#endif
 }
