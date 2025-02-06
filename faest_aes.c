@@ -2492,6 +2492,92 @@ static void aes_192_keyexp_backward_verifier(bf192_t* y_key, const bf192_t* x_ke
   }
 }
 
+static void aes_256_keyexp_backward_prover(uint8_t* y, bf256_t* y_tag, const uint8_t* x, const bf256_t* x_tag, const uint8_t* key, const bf256_t* key_tag, const faest_paramset_t* params) {
+
+  const unsigned int Ske    = params->faest_param.Ske;
+  const unsigned int lambda    = params->faest_param.lambda;
+
+  // ::2
+  uint8_t x_tilde[8];
+  bf256_t x_tilde_tag[8];
+  // ::3
+  unsigned int iwd   = 0;
+  // ::4
+  bool rmvRcon       = true;
+  // ::5-6
+  for (unsigned int j = 0; j < Ske; j++) {
+    // ::7-10
+    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+
+      x_tilde[bit_i] = x[j*8 + bit_i] ^ key[iwd + (j%4)*8 + bit_i];  // for the witness
+      x_tilde_tag[bit_i] = bf256_add(x_tag[j*8 + bit_i], key_tag[iwd + (j%4)*8 + bit_i]); // for the tags of each witness bit
+
+      if (rmvRcon == true && j % 4 == 0) {
+        // adding round constant to the witness
+        x_tilde[bit_i] = x_tilde[bit_i] ^ get_bit(Rcon[j / 4], bit_i);
+      }
+    }
+    
+    // ::11
+    aes_256_inverse_affine_byte_prover(y + 8*j, y_tag + 8*j, x_tilde, x_tilde_tag);   // working in bit per uint8
+
+    // ::12-16
+    if (j%4 == 3) {
+      if (lambda == 192) {
+        iwd += 192;
+      }
+      else {
+        iwd += 128;
+        if (lambda == 256) {
+          rmvRcon = !rmvRcon;
+        }
+      }
+    }
+  }
+}
+static void aes_256_keyexp_backward_verifier(bf256_t* y_key, const bf256_t* x_key, bf256_t* key_key, bf256_t delta, const faest_paramset_t* params) {
+  
+  const unsigned int Ske    = params->faest_param.Ske;
+  const unsigned int lambda    = params->faest_param.lambda;
+
+  // ::2
+  bf256_t x_tilde_key[8];
+  // ::3
+  unsigned int iwd   = 0;
+  // ::4
+  bool rmvRcon       = true;
+  // ::5-6
+  for (unsigned int j = 0; j < Ske; j++) {
+    // ::7
+    for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
+      x_tilde_key[bit_i] = bf256_add(x_key[j*8 + bit_i], key_key[iwd + (j%4)*8 + bit_i]); // for the tags of each witness bit
+      // ::8-10
+      if (rmvRcon == true && j % 4 == 0) {
+          bf256_t rcon_key;
+          const uint8_t c = (Rcon[j / 4] >> bit_i) & 1;
+          constant_to_vole_256_verifier(&rcon_key, &c, delta, 1);
+          x_tilde_key[bit_i] = bf256_add(x_tilde_key[bit_i], rcon_key);
+      }
+    }
+    // ::11
+    aes_256_inverse_affine_byte_verifier(y_key + 8*j, x_tilde_key, delta);
+
+    // ::12-16
+    if (j%4 == 3) {
+      if (lambda == 192) {
+        iwd += 192;
+      }
+      else {
+        iwd += 128;
+        if (lambda == 256) {
+          rmvRcon = !rmvRcon;
+        }
+      }
+    }
+  }
+}
+
+
 static void aes_128_keyexp_forward_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* w, const bf128_t* w_tag, const faest_paramset_t* params) {
 
   const unsigned int lambda = params->faest_param.lambda;
@@ -3042,7 +3128,66 @@ static void aes_192_expkey_constraints_verifier(bf192_t* z_deg1, bf192_t* k_key,
   free(w_flat_key);
 }
 static void aes_256_expkey_constraints_verifier(bf256_t* z_deg1, bf256_t* k_key, const bf256_t* w_key, bf256_t delta, const faest_paramset_t* params) {
-    // TODO
+    unsigned int Ske = params->faest_param.Ske;
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Nk = lambda/32;
+  unsigned int r_prime;
+
+  bool do_rot_word = true;
+
+  // ::1
+  aes_256_keyexp_forward_verifier(k_key, w_key, params);
+  // ::2
+  bf256_t* w_flat_key = faest_aligned_alloc(BF256_ALIGN, 8 * Ske * sizeof(bf256_t));
+  aes_256_keyexp_backward_verifier(w_flat_key, w_key + lambda, k_key, delta, params);
+
+  // ::3-5
+  unsigned int iwd = 32*(Nk - 1);  // as 1 unit8 has 8 bits
+  // ::6 Used only on AES-256
+  // ::7
+  for (unsigned int j = 0; j < Ske / 4; j++) {
+    // ::8
+    bf256_t k_hat_key[4]; // expanded key witness tag
+    bf256_t w_hat_key[4]; // inverse output tag
+    bf256_t k_hat_key_sq[4];  // expanded key tag sq
+    bf256_t w_hat_key_sq[4];  // inverser output tag sq
+    
+    // ::9
+    for (unsigned int r = 0; r < 4; r++) {
+      // ::10
+      r_prime = r;
+      // ::11
+      if (do_rot_word) {
+        r_prime = (r + 3) % 4;
+      }
+      // ::12-15
+      k_hat_key[r_prime] = bf256_byte_combine(k_key + (iwd + 8 * r)); // lifted key tag
+      k_hat_key_sq[r_prime] = bf256_byte_combine_sq(k_key + (iwd + 8 * r)); // lifted key tag sq
+
+      w_hat_key[r] = bf256_byte_combine(w_flat_key + ((32 * j + 8 * r))); // lifted output tag
+      w_hat_key_sq[r] = bf256_byte_combine_sq(w_flat_key + (32 * j + 8 * r)); // lifted output tag sq
+    }
+    // ::16 used only for AES-256
+    if (lambda == 256) {
+      do_rot_word = !do_rot_word;
+    }
+    // ::17-20
+    for (unsigned int r = 0; r < 4; r++) {
+      z_deg1[8*j + 2*r] = bf256_add(
+                              bf256_mul(k_hat_key_sq[r], w_hat_key[r]), 
+                              bf256_mul(delta, k_hat_key[r]));
+      z_deg1[8*j + 2*r + 1] = bf256_add(
+                              bf256_mul(k_hat_key[r], w_hat_key_sq[r]), 
+                              bf256_mul(delta, w_hat_key[r]));
+    }
+    if (lambda == 192) {
+      iwd += 192;
+    }
+    else {
+      iwd += 128;
+    }
+  }
+  free(w_flat_key);
 }
 
 // // ENC CSTRNTS
