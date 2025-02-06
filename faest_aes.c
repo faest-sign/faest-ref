@@ -4774,7 +4774,7 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
       in_tag[0] = bf256_add(in_tag[0], bf256_one());
     }
 
-    // aes_256_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag + b * blocksize, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
+    aes_256_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag + b * blocksize, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
 
     // :22
     for (unsigned int i = 0; i < num_enc_constraints; i++) {
@@ -5084,7 +5084,7 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key, c
     if (b == 1) {
       in_key[0] = bf256_add(in_key[0], delta); // adding one
     }
-    // aes_256_enc_constraints_verifier(z_tilde_enc_key, in_key, out_key + b * blocksize, w_tilde_key, rkeys_key, delta, params);
+    aes_256_enc_constraints_verifier(z_tilde_enc_key, in_key, out_key + b * blocksize, w_tilde_key, rkeys_key, delta, params);
 
     // :22
     for (unsigned int i = 0; i < num_enc_constraints; i++) {
