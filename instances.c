@@ -51,9 +51,9 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
 #define PARAMS(name)                                                                               \
   {                                                                                                \
     name##_LAMBDA, name##_TAU, name##_W_GRIND, name##_T_OPEN, name##_ELL, CALC_K(name),            \
-        CALC_TAU0(name), CALC_TAU1(name), CALC_L(name), name##_Nwd, name##_Ske, name##_R,          \
-        name##_Senc, name##_Lke, name##_Lenc, name##_C, name##_SIG_SIZE, name##_OWF_INPUT_SIZE,    \
-        name##_OWF_OUTPUT_SIZE                                                                     \
+        CALC_TAU0(name), CALC_TAU1(name), CALC_L(name), name##_Nwd, name##_Nst, name##_Ske,        \
+        name##_R, name##_Senc, name##_Lke, name##_Lenc, name##_C, name##_SIG_SIZE,                 \
+        name##_OWF_INPUT_SIZE, name##_OWF_OUTPUT_SIZE                                              \
   }
 
 #define FAEST_128S_PARAMS PARAMS(FAEST_128S)
