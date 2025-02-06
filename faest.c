@@ -343,7 +343,6 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   vole_hash(signature_u_tilde(sig, params), chall_1, u, ell, lambda);
   debug_print_buf("P_u", u, 16);
   debug_print_buf("P_u_tilde", dsignature_u_tilde(sig, params), 16);
-  printf("offset(P_u_tilde) = %zu\n", dsignature_u_tilde(sig, params) - sig);
 
   // ::11-12
   // To save memory consumption, the chall_2 is computed in an
@@ -381,7 +380,6 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     w_bits[bit_i] = (w[bit_i/8] >> bit_i%8) & 1;
   }
   debug_print_buf("w", w, 32);
-  debug_print_buf_bits("w_bits", w_bits, ell);
   uint8_t* u_bits = (uint8_t*)malloc(2*lambda);  // 1 bit per uint8_t
   for (unsigned int bit_i = 0; bit_i < 2*lambda; bit_i++) {
     u_bits[bit_i] = (u[(ell + bit_i)/8] >> (ell + bit_i)%8) & 1;
