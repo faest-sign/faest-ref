@@ -2798,8 +2798,8 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
       do_rot_word = !do_rot_word;
     }
     // ::17
-#if !defined(NDEBUG)
     for (unsigned int r = 0; r < 4; r++) {
+#if !defined(NDEBUG)
       {
         bf128_t one = bf128_one();
         bf128_t zero = bf128_zero();
@@ -2905,8 +2905,8 @@ static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, 
       do_rot_word = !do_rot_word;
     }
     // ::17
-#if !defined(NDEBUG)
     for (unsigned int r = 0; r < 4; r++) {
+#if !defined(NDEBUG)
       {
         bf192_t one = bf192_one();
         bf192_t zero = bf192_zero();
@@ -3011,8 +3011,8 @@ static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, 
       do_rot_word = !do_rot_word;
     }
     // ::17
-#if !defined(NDEBUG)
     for (unsigned int r = 0; r < 4; r++) {
+#if !defined(NDEBUG)
       {
         bf256_t one = bf256_one();
         bf256_t zero = bf256_zero();
