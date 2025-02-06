@@ -2738,9 +2738,9 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
       aes_128_sbox_affine_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_dash_deg0, st_dash_deg1, st_dash_deg2, b, params);
       // ::20
       aes_128_shiftrows_prover(st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], params);
-      memcpy(st_b_deg0[b], st_b_deg0_tmp[b], sizeof(bf128_t)*16);
-      memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf128_t)*16);
-      memcpy(st_b_deg2[b], st_b_deg2_tmp[b], sizeof(bf128_t)*16);
+      memcpy(st_b_deg0[b], st_b_deg0_tmp[b], sizeof(bf128_t)*Nstbytes);
+      memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf128_t)*Nstbytes);
+      memcpy(st_b_deg2[b], st_b_deg2_tmp[b], sizeof(bf128_t)*Nstbytes);
       // ::21
       aes_128_mix_columns_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], b, params);
       // ::22
@@ -2924,10 +2924,10 @@ static void aes_128_enc_constraints_verifier(bf128_t* z_key, const bf128_t* owf_
       aes_128_sbox_affine_verifier(st_b_key[b], st_dash_key, delta, b, params);
       // ::20
       aes_128_shiftrows_verifier(st_b_tmp_key[b], st_b_key[b], params);
-      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf128_t)*32);
+      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf128_t)*Nstbytes);
       // ::21
       aes_128_mix_columns_verifier(st_b_tmp_key[b], st_b_key[b], b, params);
-      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf128_t)*32);
+      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf128_t)*Nstbytes);
       // ::22
       if (b == 0) {
         aes_128_add_round_key_bytes_verifier(st_b_key[b], st_b_key[b], k_0_key, delta, true, params);
