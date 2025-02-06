@@ -821,7 +821,7 @@ static void aes_256_sbox_affine_verifier(bf256_t* out_deg1, const bf256_t* in_de
 // SHIFT ROWS
 static void aes_128_shiftrows_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg0, const bf128_t* in_deg1, const bf128_t* in_deg2, 
                                       const faest_paramset_t* params) {
-  unsigned int lambda = params->faest_param.lambda;
+
   unsigned int Nst = params->faest_param.Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
@@ -841,7 +841,7 @@ static void aes_128_shiftrows_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128
 }
 static void aes_192_shiftrows_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf192_t* out_deg2, const bf192_t* in_deg0, const bf192_t* in_deg1, const bf192_t* in_deg2, 
                                       const faest_paramset_t* params) {
-  unsigned int lambda = params->faest_param.lambda;
+
   unsigned int Nst = params->faest_param.Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
@@ -861,7 +861,7 @@ static void aes_192_shiftrows_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf192
 }
 static void aes_256_shiftrows_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256_t* out_deg2, const bf256_t* in_deg0, const bf256_t* in_deg1, const bf256_t* in_deg2, 
                                       const faest_paramset_t* params) {
-  unsigned int lambda = params->faest_param.lambda;
+
   unsigned int Nst = params->faest_param.Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
@@ -885,8 +885,7 @@ static void aes_256_shiftrows_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256
 
 static void aes_128_shiftrows_verifier(bf128_t* out_deg1, const bf128_t* in_deg1, const faest_paramset_t* params) {
   
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int Nst = lambda/32;
+  unsigned int Nst = params->faest_param.Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -901,8 +900,7 @@ static void aes_128_shiftrows_verifier(bf128_t* out_deg1, const bf128_t* in_deg1
 }
 static void aes_192_shiftrows_verifier(bf192_t* out_deg1, const bf192_t* in_deg1, const faest_paramset_t* params) {
   
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int Nst = lambda/32;
+  unsigned int Nst =  params->faest_param.Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -917,8 +915,7 @@ static void aes_192_shiftrows_verifier(bf192_t* out_deg1, const bf192_t* in_deg1
 }
 static void aes_256_shiftrows_verifier(bf256_t* out_deg1, const bf256_t* in_deg1, const faest_paramset_t* params) {
   
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int Nst = lambda/32;
+  unsigned int Nst =  params->faest_param.Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
