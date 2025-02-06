@@ -8,6 +8,7 @@
 #include "macros.h"
 #include "endian_compat.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -183,6 +184,18 @@ ATTR_CONST bf64_t bf64_mul(bf64_t lhs, bf64_t rhs);
 
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_from_bit(uint8_t bit) {
   return bit & 1;
+}
+
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bool bf128_eq(bf128_t a, bf128_t b) {
+    return memcmp(&a, &b, 16) == 0;
+}
+
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bool bf192_eq(bf192_t a, bf192_t b) {
+    return memcmp(&a, &b, 24) == 0;
+}
+
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bool bf256_eq(bf256_t a, bf256_t b) {
+    return memcmp(&a, &b, 32) == 0;
 }
 
 // GF(2^128) implementation
