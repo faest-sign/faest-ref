@@ -2762,7 +2762,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     bf128_t* s_tilde_tag = faest_aligned_alloc(BF128_ALIGN, Nstbits * sizeof(bf128_t));
     if (r == R/2 - 1) {
       // ::25
-      aes_128_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag, k + r*Nstbits, k_tag + r*Nstbits, params);
+      aes_128_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag, k + R*Nstbits, k_tag + R*Nstbits, params);
     } else {
       // ::27-28
       unsigned int idx = 0;
@@ -2955,7 +2955,7 @@ static void aes_128_enc_constraints_verifier(bf128_t* z_key, const bf128_t* owf_
     bf128_t* s_tilde_key = faest_aligned_alloc(BF128_ALIGN, Nstbits * sizeof(bf128_t));
     if (r == R/2 - 1) {
       // ::25
-      aes_128_add_round_key_verifier(s_tilde_key, owf_out_key, rkeys_key + r*Nstbytes, params);
+      aes_128_add_round_key_verifier(s_tilde_key, owf_out_key, rkeys_key + R*Nstbits, params);
     } else {
       // ::27-28
       unsigned int idx = 0;
