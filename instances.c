@@ -71,7 +71,7 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
 
 #define CASE_PARAM(P)                                                                              \
   case P: {                                                                                        \
-    static const faest_paramset_t params = {P##_PARAMS, P};                                        \
+    static const faest_paramset_t params = P##_PARAMS;                                             \
     return &params;                                                                                \
   }
 

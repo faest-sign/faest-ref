@@ -409,35 +409,17 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
 }
 
 uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_paramset_t* params) {
-  const unsigned int lambda     = params->faest_param.lambda;
-  const unsigned int l          = params->faest_param.l;
-  const unsigned int S_ke       = params->faest_param.Ske;
-  const unsigned int num_rounds = params->faest_param.R;
-  const unsigned int nk         = lambda / 32;
+  const unsigned int lambda      = params->lambda;
+  const unsigned int l           = params->l;
+  const unsigned int S_ke        = params->Ske;
+  const unsigned int num_rounds  = params->R;
+  const unsigned int nk          = lambda / 32;
+  const unsigned int blocksize   = 32 * params->Nwd;
+  const unsigned int beta        = (lambda + blocksize - 1) / blocksize;
+  const unsigned int block_words = blocksize / 32;
 
   uint8_t* w           = malloc((l + 7) / 8);
   uint8_t* const w_out = w;
-
-  unsigned int block_words = AES_BLOCK_WORDS;
-  unsigned int beta        = 1;
-  switch (params->faest_paramid) {
-  case FAEST_192F:
-  case FAEST_192S:
-  case FAEST_256F:
-  case FAEST_256S:
-    beta = 2;
-    break;
-  case FAEST_EM_192F:
-  case FAEST_EM_192S:
-    block_words = RIJNDAEL_BLOCK_WORDS_192;
-    break;
-  case FAEST_EM_256F:
-  case FAEST_EM_256S:
-    block_words = RIJNDAEL_BLOCK_WORDS_256;
-    break;
-  default:
-    break;
-  }
 
   if (faest_is_em(params)) {
     // switch input and key for EM
@@ -487,7 +469,7 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
     w += lambda / 8;
   }
 
-  assert(w - w_out == params->faest_param.Lke / 8);
+  assert(w - w_out == params->Lke / 8);
 
   // Step 10
   // common part for AES-128, EM-128, EM-192, EM-256, first part for AES-192 and AES-256
@@ -555,6 +537,5 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   }
 
   assert(w - w_out == l / 8);
-
   return w_out;
 }

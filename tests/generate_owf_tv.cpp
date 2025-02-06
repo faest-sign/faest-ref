@@ -40,9 +40,9 @@ int main() {
 
     const auto params = *faest_get_paramset(param_id);
     std::vector<uint8_t> owf_key, owf_input, owf_output;
-    owf_key.resize(params.faest_param.lambda / 8);
-    owf_input.resize(params.faest_param.owf_input_size);
-    owf_output.resize(params.faest_param.owf_output_size);
+    owf_key.resize(params.lambda / 8);
+    owf_input.resize(params.owf_input_size);
+    owf_output.resize(params.owf_output_size);
 
     std::generate(owf_key.begin(), owf_key.end(), [&rd, &distrib] { return distrib(rd); });
     std::generate(owf_input.begin(), owf_input.end(), [&rd, &distrib] { return distrib(rd); });

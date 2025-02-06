@@ -19,12 +19,12 @@ static inline uint16_t num_rec_2(const uint8_t* v) {
 // DecodeChall_3
 static bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigned int i,
                            const faest_paramset_t* params) {
-  if (i >= params->faest_param.tau) {
+  if (i >= params->tau) {
     return false;
   }
 
-  const unsigned int t1 = params->faest_param.tau1;
-  const unsigned int k  = params->faest_param.k;
+  const unsigned int t1 = params->tau1;
+  const unsigned int k  = params->k;
 
   unsigned int lo;
   unsigned int hi;
@@ -48,7 +48,7 @@ static bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigne
 
 bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
                         const faest_paramset_t* params) {
-  for (unsigned int i = 0; i != params->faest_param.tau; ++i) {
+  for (unsigned int i = 0; i != params->tau; ++i) {
     uint8_t tmp[2] = {0};
     if (!decode_chall_3(tmp, chall, i, params)) {
       return false;

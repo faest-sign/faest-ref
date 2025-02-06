@@ -18,19 +18,19 @@
 #define NODE(nodes, node, lambda_bytes) (&nodes[(node) * (lambda_bytes)])
 
 static void expand_seeds(uint8_t* nodes, const uint8_t* iv, const faest_paramset_t* params) {
-  const unsigned int lambda_bytes = params->faest_param.lambda / 8;
+  const unsigned int lambda_bytes = params->lambda / 8;
 
-  for (unsigned int alpha = 0; alpha < params->faest_param.L - 1; ++alpha) {
+  for (unsigned int alpha = 0; alpha < params->L - 1; ++alpha) {
     // the nodes are located other in memory consecutively
     prg(NODE(nodes, alpha, lambda_bytes), iv, alpha, NODE(nodes, 2 * alpha + 1, lambda_bytes),
-        params->faest_param.lambda, lambda_bytes * 2);
+        params->lambda, lambda_bytes * 2);
   }
 }
 
 static uint8_t* generate_seeds(const uint8_t* root_seed, const uint8_t* iv,
                                const faest_paramset_t* params) {
-  unsigned int lambda_bytes = params->faest_param.lambda / 8;
-  uint8_t* nodes            = calloc(2 * params->faest_param.L - 1, lambda_bytes);
+  unsigned int lambda_bytes = params->lambda / 8;
+  uint8_t* nodes            = calloc(2 * params->L - 1, lambda_bytes);
 
   memcpy(NODE(nodes, 0, lambda_bytes), root_seed, lambda_bytes);
   expand_seeds(nodes, iv, params);
@@ -62,9 +62,9 @@ static void faest_em_leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, 
 void leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* iv, uint32_t tweak,
                  const uint8_t* uhash, const faest_paramset_t* params) {
   if (faest_is_em(params)) {
-    faest_em_leaf_commit(sd, com, key, iv, tweak, params->faest_param.lambda);
+    faest_em_leaf_commit(sd, com, key, iv, tweak, params->lambda);
   } else {
-    faest_leaf_commit(sd, com, key, iv, tweak, uhash, params->faest_param.lambda);
+    faest_leaf_commit(sd, com, key, iv, tweak, uhash, params->lambda);
   }
 }
 #endif
@@ -72,21 +72,20 @@ void leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* i
 // BAVC.PosInTree
 static inline unsigned int pos_in_tree(unsigned int i, unsigned int j,
                                        const faest_paramset_t* params) {
-  const unsigned int tmp = 1 << (params->faest_param.k - 1);
+  const unsigned int tmp = 1 << (params->k - 1);
   if (j < tmp) {
-    return params->faest_param.L - 1 + params->faest_param.tau * j + i;
+    return params->L - 1 + params->tau * j + i;
   }
   // mod 2^(k-1) is the same as & 2^(k-1)-1
   const unsigned int mask = tmp - 1;
-  return params->faest_param.L - 1 + params->faest_param.tau * tmp +
-         params->faest_param.tau1 * (j & mask) + i;
+  return params->L - 1 + params->tau * tmp + params->tau1 * (j & mask) + i;
 }
 
 // BAVC.Commit for FAEST
 static void bavc_commit_faest(const uint8_t* rootKey, const uint8_t* iv,
                               const faest_paramset_t* params, bavc_t* vecCom) {
-  const unsigned int lambda       = params->faest_param.lambda;
-  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda       = params->lambda;
+  const unsigned int L            = params->L;
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
 
@@ -111,15 +110,14 @@ static void bavc_commit_faest(const uint8_t* rootKey, const uint8_t* iv,
 
   // Step: 4..5
   // compute commitments for remaining instances
-  for (unsigned int i = 0, offset = 0; i < params->faest_param.tau; ++i) {
+  for (unsigned int i = 0, offset = 0; i < params->tau; ++i) {
     uint8_t uhash[MAX_LAMBDA_BYTES * 3];
     H0_squeeze(&uhash_ctx, uhash, 3 * lambda_bytes);
 
     H1_context_t h1_ctx;
     H1_init(&h1_ctx, lambda);
 
-    const unsigned int N_i =
-        bavc_max_node_index(i, params->faest_param.tau1, params->faest_param.k);
+    const unsigned int N_i = bavc_max_node_index(i, params->tau1, params->k);
     for (unsigned int j = 0; j < N_i; ++j, ++offset) {
       const unsigned int alpha = pos_in_tree(i, j, params);
       faest_leaf_commit(vecCom->sd + offset * lambda_bytes, vecCom->com + offset * com_size,
@@ -142,8 +140,8 @@ static void bavc_commit_faest(const uint8_t* rootKey, const uint8_t* iv,
 // BAVC.Commit for FAEST-EM
 static void bavc_commit_faest_em(const uint8_t* rootKey, const uint8_t* iv,
                                  const faest_paramset_t* params, bavc_t* vecCom) {
-  const unsigned int lambda       = params->faest_param.lambda;
-  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda       = params->lambda;
+  const unsigned int L            = params->L;
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int com_size     = lambda_bytes * 2; // size of com_ij
 
@@ -163,12 +161,11 @@ static void bavc_commit_faest_em(const uint8_t* rootKey, const uint8_t* iv,
 
   // Step: 4..5
   // compute commitments for remaining instances
-  for (unsigned int i = 0, offset = 0; i < params->faest_param.tau; ++i) {
+  for (unsigned int i = 0, offset = 0; i < params->tau; ++i) {
     H1_context_t h1_ctx;
     H1_init(&h1_ctx, lambda);
 
-    const unsigned int N_i =
-        bavc_max_node_index(i, params->faest_param.tau1, params->faest_param.k);
+    const unsigned int N_i = bavc_max_node_index(i, params->tau1, params->k);
     for (unsigned int j = 0; j < N_i; ++j, ++offset) {
       const unsigned int alpha = pos_in_tree(i, j, params);
       faest_em_leaf_commit(vecCom->sd + offset * lambda_bytes, vecCom->com + offset * com_size,
@@ -198,15 +195,15 @@ void bavc_commit(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset
 
 bool bavc_open(const bavc_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
                const faest_paramset_t* params) {
-  const unsigned int lambda       = params->faest_param.lambda;
-  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda       = params->lambda;
+  const unsigned int L            = params->L;
   const unsigned int lambda_bytes = lambda / 8;
-  const unsigned int k            = params->faest_param.k;
-  const unsigned int tau          = params->faest_param.tau;
-  const unsigned int tau_1        = params->faest_param.tau1;
+  const unsigned int k            = params->k;
+  const unsigned int tau          = params->tau;
+  const unsigned int tau_1        = params->tau1;
   const unsigned int com_size     = faest_is_em(params) ? (2 * lambda_bytes) : (3 * lambda_bytes);
 
-  uint8_t* decom_i_end = decom_i + com_size * tau + params->faest_param.T_open * lambda_bytes;
+  uint8_t* decom_i_end = decom_i + com_size * tau + params->T_open * lambda_bytes;
 
   // Step 5
   uint8_t* s = calloc((2 * L - 1 + 7) / 8, 1);
@@ -227,7 +224,7 @@ bool bavc_open(const bavc_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
   }
 
   // Step 16..17
-  if (nh - 2 * tau + 1 > params->faest_param.T_open) {
+  if (nh - 2 * tau + 1 > params->T_open) {
     free(s);
     return false;
   }
@@ -259,13 +256,13 @@ bool bavc_open(const bavc_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
 static bool reconstruct_keys(uint8_t* s, uint8_t* keys, const uint8_t* decom_i,
                              const uint16_t* i_delta, const uint8_t* iv,
                              const faest_paramset_t* params) {
-  const unsigned int lambda       = params->faest_param.lambda;
-  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda       = params->lambda;
+  const unsigned int L            = params->L;
   const unsigned int lambda_bytes = lambda / 8;
-  const unsigned int tau          = params->faest_param.tau;
+  const unsigned int tau          = params->tau;
 
   const uint8_t* nodes = decom_i + (faest_is_em(params) ? 2 : 3) * tau * lambda_bytes;
-  const uint8_t* end   = nodes + params->faest_param.T_open * lambda_bytes;
+  const uint8_t* end   = nodes + params->T_open * lambda_bytes;
 
   // Step 7..10
   for (unsigned int i = 0; i < tau; ++i) {
@@ -307,17 +304,17 @@ static bool bavc_reconstruct_faest(const uint8_t* decom_i, const uint16_t* i_del
                                    const uint8_t* iv, const faest_paramset_t* params,
                                    bavc_rec_t* vecComRec) {
   // Initializing
-  const unsigned int lambda       = params->faest_param.lambda;
-  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda       = params->lambda;
+  const unsigned int L            = params->L;
   const unsigned int lambda_bytes = lambda / 8;
-  const unsigned int k            = params->faest_param.k;
-  const unsigned int tau          = params->faest_param.tau;
-  const unsigned int tau_1        = params->faest_param.tau1;
+  const unsigned int k            = params->k;
+  const unsigned int tau          = params->tau;
+  const unsigned int tau_1        = params->tau1;
   const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
 
   // Step 6
   uint8_t* s    = calloc((2 * L - 1 + 7) >> 3, 1);
-  uint8_t* keys = calloc(2 * params->faest_param.L - 1, lambda_bytes);
+  uint8_t* keys = calloc(2 * params->L - 1, lambda_bytes);
 
   if (!reconstruct_keys(s, keys, decom_i, i_delta, iv, params)) {
     free(keys);
@@ -371,17 +368,17 @@ static bool bavc_reconstruct_faest_em(const uint8_t* decom_i, const uint16_t* i_
                                       const uint8_t* iv, const faest_paramset_t* params,
                                       bavc_rec_t* vecComRec) {
   // Initializing
-  const unsigned int lambda       = params->faest_param.lambda;
-  const unsigned int L            = params->faest_param.L;
+  const unsigned int lambda       = params->lambda;
+  const unsigned int L            = params->L;
   const unsigned int lambda_bytes = lambda / 8;
-  const unsigned int k            = params->faest_param.k;
-  const unsigned int tau          = params->faest_param.tau;
-  const unsigned int tau_1        = params->faest_param.tau1;
+  const unsigned int k            = params->k;
+  const unsigned int tau          = params->tau;
+  const unsigned int tau_1        = params->tau1;
   const unsigned int com_size     = lambda_bytes * 2; // size of com_ij
 
   // Step 6
   uint8_t* s    = calloc((2 * L - 1 + 7) / 8, 1);
-  uint8_t* keys = calloc(2 * params->faest_param.L - 1, lambda_bytes);
+  uint8_t* keys = calloc(2 * params->L - 1, lambda_bytes);
 
   // Step 7..10
   if (!reconstruct_keys(s, keys, decom_i, i_delta, iv, params)) {

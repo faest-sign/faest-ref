@@ -36,11 +36,10 @@ int main() {
   std::cout << "#include <cstdint>\n\n";
   std::cout << "namespace vole_tvs {\n";
   for (const auto param_id : all_parameters) {
-    const auto params               = *faest_get_paramset(param_id);
-    const unsigned int lambda       = params.faest_param.lambda;
-    const unsigned int lambda_bytes = lambda / 8;
-    const unsigned int ell_hat =
-        params.faest_param.l + params.faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
+    const auto params                = *faest_get_paramset(param_id);
+    const unsigned int lambda        = params.lambda;
+    const unsigned int lambda_bytes  = lambda / 8;
+    const unsigned int ell_hat       = params.l + params.lambda * 3 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
 
@@ -48,8 +47,8 @@ int main() {
 
     std::vector<uint8_t> chal, c, decom_i, u, q_storage, v_storage;
     chal.resize(lambda_bytes);
-    c.resize((params.faest_param.tau - 1) * ell_hat_bytes);
-    decom_i.resize(com_size * params.faest_param.tau + params.faest_param.T_open * lambda_bytes);
+    c.resize((params.tau - 1) * ell_hat_bytes);
+    decom_i.resize(com_size * params.tau + params.T_open * lambda_bytes);
     u.resize(ell_hat_bytes);
 
     std::vector<uint8_t*> q, v;
@@ -77,7 +76,7 @@ int main() {
 
     while (true) {
       std::generate(chal.begin(), chal.end(), [&mt, &dist] { return dist(mt); });
-      for (unsigned int i = lambda - params.faest_param.w_grind; i != lambda; ++i) {
+      for (unsigned int i = lambda - params.w_grind; i != lambda; ++i) {
         ptr_set_bit(chal.data(), i, 0);
       }
 

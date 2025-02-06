@@ -29,11 +29,10 @@ BOOST_AUTO_TEST_SUITE(vole)
 
 BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const auto params               = faest_get_paramset(param_id);
-    const unsigned int lambda       = params->faest_param.lambda;
-    const unsigned int lambda_bytes = lambda / 8;
-    const unsigned int ell_hat =
-        params->faest_param.l + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
+    const auto params                = faest_get_paramset(param_id);
+    const unsigned int lambda        = params->lambda;
+    const unsigned int lambda_bytes  = lambda / 8;
+    const unsigned int ell_hat       = params->l + params->lambda * 3 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
 
@@ -41,8 +40,8 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
     std::vector<uint8_t> chal, c, u, q_storage, v_storage;
     chal.resize(lambda_bytes);
-    c.resize((params->faest_param.tau - 1) * ell_hat_bytes);
-    u.resize(ell_hat_bytes * params->faest_param.tau);
+    c.resize((params->tau - 1) * ell_hat_bytes);
+    u.resize(ell_hat_bytes * params->tau);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
@@ -66,16 +65,15 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     bool tested = false;
     for (unsigned int tries = 0; !tested && tries != max_tries; ++tries) {
       rand_bytes(chal.data(), chal.size());
-      for (unsigned int i = lambda - params->faest_param.w_grind; i != lambda; ++i) {
+      for (unsigned int i = lambda - params->w_grind; i != lambda; ++i) {
         ptr_set_bit(chal.data(), i, 0);
       }
 
       std::vector<uint16_t> i_delta;
-      i_delta.resize(params->faest_param.tau);
+      i_delta.resize(params->tau);
 
       std::vector<uint8_t> decom_i;
-      decom_i.resize(com_size * params->faest_param.tau +
-                     params->faest_param.T_open * lambda_bytes);
+      decom_i.resize(com_size * params->tau + params->T_open * lambda_bytes);
 
       BOOST_TEST(decode_all_chall_3(i_delta.data(), chal.data(), params));
       if (!bavc_open(&bavc_com, i_delta.data(), decom_i.data(), params)) {
@@ -98,12 +96,12 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
   std::mt19937_64 rd;
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const faest_paramset_t params    = *faest_get_paramset(param_id);
-    const unsigned int lambda        = params.faest_param.lambda;
+    const unsigned int lambda        = params.lambda;
     const unsigned int lambda_bytes  = lambda / 8;
     const unsigned int ell_hat_bytes = 16;
-    const unsigned int max_depth     = params.faest_param.k;
+    const unsigned int max_depth     = params.k;
     const unsigned int max_nodes     = 1 << max_depth;
-    const unsigned int tau           = params.faest_param.tau;
+    const unsigned int tau           = params.tau;
 
     std::vector<uint8_t> sd, u, v, q;
     sd.resize(max_nodes * lambda_bytes);
@@ -114,12 +112,10 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
 
     for (unsigned int i = 0; i != tau; ++i) {
       std::uniform_int_distribution<> distribution{
-          0,
-          static_cast<int>(bavc_max_node_index(i, params.faest_param.tau1, params.faest_param.k)) -
-              1};
+          0, static_cast<int>(bavc_max_node_index(i, params.tau1, params.k)) - 1};
       const unsigned int idx = distribution(rd);
 
-      unsigned int depth = bavc_max_node_depth(i, params.faest_param.tau1, max_depth);
+      unsigned int depth = bavc_max_node_depth(i, params.tau1, max_depth);
       unsigned int nodes = 1 << depth;
 
       ConvertToVole(iv.data(), sd.data(), false, i, ell_hat_bytes, u.data(), v.data(), &params);
@@ -153,10 +149,9 @@ namespace {
                const std::array<uint8_t, 64>& expected_hashed_u,
                const std::array<uint8_t, 64>& expected_hashed_v,
                const std::array<uint8_t, 64>& expected_hashed_q) {
-    const unsigned int lambda       = params->faest_param.lambda;
-    const unsigned int lambda_bytes = lambda / 8;
-    const unsigned int ell_hat =
-        params->faest_param.l + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
+    const unsigned int lambda        = params->lambda;
+    const unsigned int lambda_bytes  = lambda / 8;
+    const unsigned int ell_hat       = params->l + params->lambda * 3 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
 
@@ -164,9 +159,9 @@ namespace {
 
     std::vector<uint8_t> chal, c, decom_i, u, q_storage, v_storage;
     chal.resize(lambda_bytes);
-    c.resize((params->faest_param.tau - 1) * ell_hat_bytes);
-    decom_i.resize(com_size * params->faest_param.tau + params->faest_param.T_open * lambda_bytes);
-    u.resize(ell_hat_bytes * params->faest_param.tau);
+    c.resize((params->tau - 1) * ell_hat_bytes);
+    decom_i.resize(com_size * params->tau + params->T_open * lambda_bytes);
+    u.resize(ell_hat_bytes * params->tau);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
@@ -192,7 +187,7 @@ namespace {
     BOOST_TEST(expected_hashed_v == hash_array(v_storage));
 
     std::vector<uint16_t> i_delta;
-    i_delta.resize(params->faest_param.tau);
+    i_delta.resize(params->tau);
     BOOST_TEST(decode_all_chall_3(i_delta.data(), challenge.data(), params));
     BOOST_TEST(bavc_open(&bavc_com, i_delta.data(), decom_i.data(), params));
 
@@ -204,10 +199,9 @@ namespace {
     BOOST_TEST(expected_hashed_q == hash_array(q_storage));
     bavc_clear(&bavc_com);
 
-    for (unsigned int i = 0, running_idx = 0; i < params->faest_param.tau; ++i) {
-      const uint32_t depth =
-          bavc_max_node_depth(i, params->faest_param.tau1, params->faest_param.k);
-      const auto delta = i_delta[i];
+    for (unsigned int i = 0, running_idx = 0; i < params->tau; ++i) {
+      const uint32_t depth = bavc_max_node_depth(i, params->tau1, params->k);
+      const auto delta     = i_delta[i];
 
       for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
         for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {

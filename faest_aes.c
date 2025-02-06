@@ -92,7 +92,7 @@ verifier)
 static void aes_128_add_round_key_prover(uint8_t* out, bf128_t* out_tag, const uint8_t* in,
                                          const bf128_t* in_tag, const uint8_t* k,
                                          const bf128_t* k_tag, const faest_paramset_t* params) {
-  uint16_t Nst     = params->faest_param.Nwd;
+  uint16_t Nst     = params->Nwd;
   uint16_t Nstbits = Nst * 32;
   for (unsigned int i = 0; i < Nstbits; i++) {
     out[i]     = in[i] ^ k[i];
@@ -102,7 +102,7 @@ static void aes_128_add_round_key_prover(uint8_t* out, bf128_t* out_tag, const u
 static void aes_192_add_round_key_prover(uint8_t* out, bf192_t* out_tag, const uint8_t* in,
                                          const bf192_t* in_tag, const uint8_t* k,
                                          const bf192_t* k_tag, const faest_paramset_t* params) {
-  uint16_t Nst     = params->faest_param.Nwd;
+  uint16_t Nst     = params->Nwd;
   uint16_t Nstbits = Nst * 32;
   for (unsigned int i = 0; i < Nstbits; i++) {
     out[i]     = in[i] ^ k[i];
@@ -112,7 +112,7 @@ static void aes_192_add_round_key_prover(uint8_t* out, bf192_t* out_tag, const u
 static void aes_256_add_round_key_prover(uint8_t* out, bf256_t* out_tag, const uint8_t* in,
                                          const bf256_t* in_tag, const uint8_t* k,
                                          const bf256_t* k_tag, const faest_paramset_t* params) {
-  uint16_t Nst     = params->faest_param.Nwd;
+  uint16_t Nst     = params->Nwd;
   uint16_t Nstbits = Nst * 32;
   for (unsigned int i = 0; i < Nstbits; i++) {
     out[i]     = in[i] ^ k[i];
@@ -123,7 +123,7 @@ static void aes_256_add_round_key_prover(uint8_t* out, bf256_t* out_tag, const u
 static void aes_128_add_round_key_verifier(bf128_t* out_key, const bf128_t* in_key,
                                            const bf128_t* k_key, const faest_paramset_t* params) {
 
-  uint16_t Nst     = params->faest_param.Nwd;
+  uint16_t Nst     = params->Nwd;
   uint16_t Nstbits = Nst * 32;
 
   for (unsigned int i = 0; i < Nstbits; i++) {
@@ -133,7 +133,7 @@ static void aes_128_add_round_key_verifier(bf128_t* out_key, const bf128_t* in_k
 static void aes_192_add_round_key_verifier(bf192_t* out_key, const bf192_t* in_key,
                                            const bf192_t* k_key, const faest_paramset_t* params) {
 
-  uint16_t Nst     = params->faest_param.Nwd;
+  uint16_t Nst     = params->Nwd;
   uint16_t Nstbits = Nst * 32;
 
   for (unsigned int i = 0; i < Nstbits; i++) {
@@ -143,7 +143,7 @@ static void aes_192_add_round_key_verifier(bf192_t* out_key, const bf192_t* in_k
 static void aes_256_add_round_key_verifier(bf256_t* out_key, const bf256_t* in_key,
                                            const bf256_t* k_key, const faest_paramset_t* params) {
 
-  uint16_t Nst     = params->faest_param.Nwd;
+  uint16_t Nst     = params->Nwd;
   uint16_t Nstbits = Nst * 32;
 
   for (unsigned int i = 0; i < Nstbits; i++) {
@@ -154,7 +154,7 @@ static void aes_256_add_round_key_verifier(bf256_t* out_key, const bf256_t* in_k
 // F256/F2.CONJUGATES
 static void aes_128_f256_f2_conjugates_1(bf128_t* y, const uint8_t* state,
                                          const faest_paramset_t* params) {
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     uint8_t x0[8];
@@ -173,7 +173,7 @@ static void aes_128_f256_f2_conjugates_1(bf128_t* y, const uint8_t* state,
 
 static void aes_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state,
                                          const faest_paramset_t* params) {
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     uint8_t x0[8];
@@ -192,7 +192,7 @@ static void aes_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state,
 
 static void aes_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state,
                                          const faest_paramset_t* params) {
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     uint8_t x0[8];
@@ -211,7 +211,7 @@ static void aes_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state,
 
 static void aes_128_f256_f2_conjugates_128(bf128_t* y, const bf128_t* state,
                                            const faest_paramset_t* params) {
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     bf128_t x[8];
@@ -228,7 +228,7 @@ static void aes_128_f256_f2_conjugates_128(bf128_t* y, const bf128_t* state,
 
 static void aes_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state,
                                            const faest_paramset_t* params) {
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     bf192_t x[8];
@@ -245,7 +245,7 @@ static void aes_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state,
 
 static void aes_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state,
                                            const faest_paramset_t* params) {
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     bf256_t x[8];
@@ -440,7 +440,7 @@ void aes_256_inv_norm_constraints_verifier(bf256_t* z_eval, const bf256_t* conju
 // STATE TO BYTES
 void aes_128_state_to_bytes_prover(bf128_t* out, bf128_t* out_tag, const uint8_t* k,
                                    const bf128_t* k_tag, const faest_paramset_t* params) {
-  unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  unsigned int Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     out[i]     = bf128_byte_combine_bits(k + i * 8);
@@ -449,7 +449,7 @@ void aes_128_state_to_bytes_prover(bf128_t* out, bf128_t* out_tag, const uint8_t
 }
 void aes_192_state_to_bytes_prover(bf192_t* out, bf192_t* out_tag, const uint8_t* k,
                                    const bf192_t* k_tag, const faest_paramset_t* params) {
-  uint16_t Nst_bytes = params->faest_param.Nwd * 4;
+  uint16_t Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     out[i]     = bf192_byte_combine_bits(k + i * 8);
@@ -458,7 +458,7 @@ void aes_192_state_to_bytes_prover(bf192_t* out, bf192_t* out_tag, const uint8_t
 }
 void aes_256_state_to_bytes_prover(bf256_t* out, bf256_t* out_tag, const uint8_t* k,
                                    const bf256_t* k_tag, const faest_paramset_t* params) {
-  uint16_t Nst_bytes = params->faest_param.Nwd * 4;
+  uint16_t Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     out[i]     = bf256_byte_combine_bits(k + i * 8);
@@ -468,7 +468,7 @@ void aes_256_state_to_bytes_prover(bf256_t* out, bf256_t* out_tag, const uint8_t
 
 void aes_128_state_to_bytes_verifier(bf128_t* out_key, const bf128_t* k_key,
                                      const faest_paramset_t* params) {
-  uint16_t Nst_bytes = params->faest_param.Nwd * 4;
+  uint16_t Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     out_key[i] = bf128_byte_combine(k_key + i * 8);
@@ -476,7 +476,7 @@ void aes_128_state_to_bytes_verifier(bf128_t* out_key, const bf128_t* k_key,
 }
 void aes_192_state_to_bytes_verifier(bf192_t* out_key, const bf192_t* k_key,
                                      const faest_paramset_t* params) {
-  uint16_t Nst_bytes = params->faest_param.Nwd * 4;
+  uint16_t Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     out_key[i] = bf192_byte_combine(k_key + i * 8);
@@ -484,7 +484,7 @@ void aes_192_state_to_bytes_verifier(bf192_t* out_key, const bf192_t* k_key,
 }
 void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* k_key,
                                      const faest_paramset_t* params) {
-  uint16_t Nst_bytes = params->faest_param.Nwd * 4;
+  uint16_t Nst_bytes = params->Nwd * 4;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     out_key[i] = bf256_byte_combine(k_key + i * 8);
@@ -497,7 +497,7 @@ static void aes_128_sbox_affine_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf1
                                        const bf128_t* in_deg2, bool dosq,
                                        const faest_paramset_t* params) {
 
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
   bf128_t C[9];
   uint8_t t;
   uint8_t x[9]    = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
@@ -539,7 +539,7 @@ static void aes_192_sbox_affine_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf1
                                        const bf192_t* in_deg2, bool dosq,
                                        const faest_paramset_t* params) {
 
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
   bf192_t C[9];
   uint8_t t;
   uint8_t x[9]    = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
@@ -581,7 +581,7 @@ static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf2
                                        const bf256_t* in_deg2, bool dosq,
                                        const faest_paramset_t* params) {
 
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
   bf256_t C[9];
   uint8_t t;
   uint8_t x[9]    = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
@@ -622,7 +622,7 @@ static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf2
 static void aes_128_sbox_affine_verifier(bf128_t* out_deg1, const bf128_t* in_deg1, bf128_t delta,
                                          bool dosq, const faest_paramset_t* params) {
 
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
   bf128_t C[9];
   uint8_t t;
   uint8_t x[9]    = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
@@ -660,7 +660,7 @@ static void aes_128_sbox_affine_verifier(bf128_t* out_deg1, const bf128_t* in_de
 static void aes_192_sbox_affine_verifier(bf192_t* out_deg1, const bf192_t* in_deg1, bf192_t delta,
                                          bool dosq, const faest_paramset_t* params) {
 
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
   bf192_t C[9];
   uint8_t t;
   uint8_t x[9]    = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
@@ -698,7 +698,7 @@ static void aes_192_sbox_affine_verifier(bf192_t* out_deg1, const bf192_t* in_de
 static void aes_256_sbox_affine_verifier(bf256_t* out_deg1, const bf256_t* in_deg1, bf256_t delta,
                                          bool dosq, const faest_paramset_t* params) {
 
-  const unsigned int Nst_bytes = params->faest_param.Nwd * 4;
+  const unsigned int Nst_bytes = params->Nwd * 4;
   bf256_t C[9];
   uint8_t t;
   uint8_t x[9]    = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
@@ -739,7 +739,7 @@ static void aes_128_shiftrows_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128
                                      const bf128_t* in_deg0, const bf128_t* in_deg1,
                                      const bf128_t* in_deg2, const faest_paramset_t* params) {
 
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -759,7 +759,7 @@ static void aes_192_shiftrows_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf192
                                      const bf192_t* in_deg0, const bf192_t* in_deg1,
                                      const bf192_t* in_deg2, const faest_paramset_t* params) {
 
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -779,7 +779,7 @@ static void aes_256_shiftrows_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256
                                      const bf256_t* in_deg0, const bf256_t* in_deg1,
                                      const bf256_t* in_deg2, const faest_paramset_t* params) {
 
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -799,7 +799,7 @@ static void aes_256_shiftrows_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256
 static void aes_128_shiftrows_verifier(bf128_t* out_deg1, const bf128_t* in_deg1,
                                        const faest_paramset_t* params) {
 
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -814,7 +814,7 @@ static void aes_128_shiftrows_verifier(bf128_t* out_deg1, const bf128_t* in_deg1
 static void aes_192_shiftrows_verifier(bf192_t* out_deg1, const bf192_t* in_deg1,
                                        const faest_paramset_t* params) {
 
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -829,7 +829,7 @@ static void aes_192_shiftrows_verifier(bf192_t* out_deg1, const bf192_t* in_deg1
 static void aes_256_shiftrows_verifier(bf256_t* out_deg1, const bf256_t* in_deg1,
                                        const faest_paramset_t* params) {
 
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -848,7 +848,7 @@ static void aes_128_mix_columns_prover(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t
                                        const bf128_t* in_deg2, bool dosq,
                                        const faest_paramset_t* params) {
 
-  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nst = params->Nwd;
 
   //  ::2-4
   uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
@@ -953,7 +953,7 @@ static void aes_192_mix_columns_prover(bf192_t* y_deg0, bf192_t* y_deg1, bf192_t
                                        const bf192_t* in_deg2, bool dosq,
                                        const faest_paramset_t* params) {
 
-  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nst = params->Nwd;
 
   //  ::2-4
   uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
@@ -1058,7 +1058,7 @@ static void aes_256_mix_columns_prover(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t
                                        const bf256_t* in_deg2, bool dosq,
                                        const faest_paramset_t* params) {
 
-  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nst = params->Nwd;
 
   //  ::2-4
   uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
@@ -1162,7 +1162,7 @@ static void aes_256_mix_columns_prover(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t
 static void aes_128_mix_columns_verifier(bf128_t* y_deg1, const bf128_t* in_deg1, bool dosq,
                                          const faest_paramset_t* params) {
 
-  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nst = params->Nwd;
 
   //  ::2-4
   uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
@@ -1212,7 +1212,7 @@ static void aes_128_mix_columns_verifier(bf128_t* y_deg1, const bf128_t* in_deg1
 static void aes_192_mix_columns_verifier(bf192_t* y_deg1, const bf192_t* in_deg1, bool dosq,
                                          const faest_paramset_t* params) {
 
-  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nst = params->Nwd;
 
   //  ::2-4
   uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
@@ -1262,7 +1262,7 @@ static void aes_192_mix_columns_verifier(bf192_t* y_deg1, const bf192_t* in_deg1
 static void aes_256_mix_columns_verifier(bf256_t* y_deg1, const bf256_t* in_deg1, bool dosq,
                                          const faest_paramset_t* params) {
 
-  uint16_t Nst = params->faest_param.Nwd;
+  uint16_t Nst = params->Nwd;
 
   //  ::2-4
   uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
@@ -1320,7 +1320,7 @@ static void aes_128_add_round_key_bytes_prover(bf128_t* y_deg0, bf128_t* y_deg1,
                                                const bf128_t* k_deg1, const bf128_t* k_deg2,
                                                const faest_paramset_t* params) {
 
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -1335,7 +1335,7 @@ static void aes_192_add_round_key_bytes_prover(bf192_t* y_deg0, bf192_t* y_deg1,
                                                const bf192_t* k_deg1, const bf192_t* k_deg2,
                                                const faest_paramset_t* params) {
 
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -1350,7 +1350,7 @@ static void aes_256_add_round_key_bytes_prover(bf256_t* y_deg0, bf256_t* y_deg1,
                                                const bf256_t* k_deg1, const bf256_t* k_deg2,
                                                const faest_paramset_t* params) {
 
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -1365,7 +1365,7 @@ static void aes_128_add_round_key_bytes_verifier(bf128_t* y_deg1, const bf128_t*
                                                  const bf128_t* k_tag, bf128_t delta,
                                                  bool shift_tag, const faest_paramset_t* params) {
 
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -1381,7 +1381,7 @@ static void aes_192_add_round_key_bytes_verifier(bf192_t* y_deg1, const bf192_t*
                                                  const bf192_t* k_tag, bf192_t delta,
                                                  bool shift_tag, const faest_paramset_t* params) {
 
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -1397,7 +1397,7 @@ static void aes_256_add_round_key_bytes_verifier(bf256_t* y_deg1, const bf256_t*
                                                  const bf256_t* k_tag, bf256_t delta,
                                                  bool shift_tag, const faest_paramset_t* params) {
 
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -1415,7 +1415,7 @@ static void aes_128_inverse_shiftrows_prover(uint8_t* out, bf128_t* out_tag, con
                                              const bf128_t* in_tag,
                                              const faest_paramset_t* params) {
 
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -1435,7 +1435,7 @@ static void aes_128_inverse_shiftrows_prover(uint8_t* out, bf128_t* out_tag, con
 static void aes_192_inverse_shiftrows_prover(uint8_t* out, bf192_t* out_tag, const uint8_t* in,
                                              const bf192_t* in_tag,
                                              const faest_paramset_t* params) {
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -1456,7 +1456,7 @@ static void aes_192_inverse_shiftrows_prover(uint8_t* out, bf192_t* out_tag, con
 static void aes_256_inverse_shiftrows_prover(uint8_t* out, bf256_t* out_tag, const uint8_t* in,
                                              const bf256_t* in_tag,
                                              const faest_paramset_t* params) {
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -1477,7 +1477,7 @@ static void aes_256_inverse_shiftrows_prover(uint8_t* out, bf256_t* out_tag, con
 
 static void aes_128_inverse_shiftrows_verifier(bf128_t* out_tag, const bf128_t* in_tag,
                                                const faest_paramset_t* params) {
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -1496,7 +1496,7 @@ static void aes_128_inverse_shiftrows_verifier(bf128_t* out_tag, const bf128_t* 
 }
 static void aes_192_inverse_shiftrows_verifier(bf192_t* out_tag, const bf192_t* in_tag,
                                                const faest_paramset_t* params) {
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -1515,7 +1515,7 @@ static void aes_192_inverse_shiftrows_verifier(bf192_t* out_tag, const bf192_t* 
 }
 static void aes_256_inverse_shiftrows_verifier(bf256_t* out_tag, const bf256_t* in_tag,
                                                const faest_paramset_t* params) {
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
@@ -1537,7 +1537,7 @@ static void aes_256_inverse_shiftrows_verifier(bf256_t* out_tag, const bf256_t* 
 static void aes_128_bitwise_mix_column_prover(uint8_t* out, bf128_t* out_tag, uint8_t* s,
                                               bf128_t* s_tag, const faest_paramset_t* params) {
 
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int c = 0; c < Nst; c++) {
 
@@ -1616,7 +1616,7 @@ static void aes_128_bitwise_mix_column_prover(uint8_t* out, bf128_t* out_tag, ui
 static void aes_192_bitwise_mix_column_prover(uint8_t* out, bf192_t* out_tag, uint8_t* s,
                                               bf192_t* s_tag, const faest_paramset_t* params) {
 
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int c = 0; c < Nst; c++) {
 
@@ -1695,7 +1695,7 @@ static void aes_192_bitwise_mix_column_prover(uint8_t* out, bf192_t* out_tag, ui
 static void aes_256_bitwise_mix_column_prover(uint8_t* out, bf256_t* out_tag, uint8_t* s,
                                               bf256_t* s_tag, const faest_paramset_t* params) {
 
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int c = 0; c < Nst; c++) {
 
@@ -1774,7 +1774,7 @@ static void aes_256_bitwise_mix_column_prover(uint8_t* out, bf256_t* out_tag, ui
 
 static void aes_128_bitwise_mix_column_verifier(bf128_t* out_key, bf128_t* s_keys_tag,
                                                 const faest_paramset_t* params) {
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int c = 0; c < Nst; c++) {
 
@@ -1842,7 +1842,7 @@ static void aes_128_bitwise_mix_column_verifier(bf128_t* out_key, bf128_t* s_key
 }
 static void aes_192_bitwise_mix_column_verifier(bf192_t* out_key, bf192_t* s_keys_tag,
                                                 const faest_paramset_t* params) {
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int c = 0; c < Nst; c++) {
 
@@ -1910,7 +1910,7 @@ static void aes_192_bitwise_mix_column_verifier(bf192_t* out_key, bf192_t* s_key
 }
 static void aes_256_bitwise_mix_column_verifier(bf256_t* out_key, bf256_t* s_keys_tag,
                                                 const faest_paramset_t* params) {
-  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nst = params->Nwd;
 
   for (unsigned int c = 0; c < Nst; c++) {
 
@@ -2098,7 +2098,7 @@ static void aes_256_inverse_affine_byte_prover(uint8_t* y_bits, bf256_t* y_bits_
 
 static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* x,
                                           const bf128_t* x_tag, const faest_paramset_t* params) {
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -2107,7 +2107,7 @@ static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint
 }
 static void aes_192_inverse_affine_prover(uint8_t* y, bf192_t* y_tag, const uint8_t* x,
                                           const bf192_t* x_tag, const faest_paramset_t* params) {
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -2116,7 +2116,7 @@ static void aes_192_inverse_affine_prover(uint8_t* y, bf192_t* y_tag, const uint
 }
 static void aes_256_inverse_affine_prover(uint8_t* y, bf256_t* y_tag, const uint8_t* x,
                                           const bf256_t* x_tag, const faest_paramset_t* params) {
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -2169,7 +2169,7 @@ static void aes_256_inverse_affine_byte_verifier(bf256_t* y_bits_key, const bf25
 
 static void aes_128_inverse_affine_verifier(bf128_t* y_key, const bf128_t* x_key, bf128_t delta,
                                             const faest_paramset_t* params) {
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -2178,7 +2178,7 @@ static void aes_128_inverse_affine_verifier(bf128_t* y_key, const bf128_t* x_key
 }
 static void aes_192_inverse_affine_verifier(bf192_t* y_key, const bf192_t* x_key, bf192_t delta,
                                             const faest_paramset_t* params) {
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -2187,7 +2187,7 @@ static void aes_192_inverse_affine_verifier(bf192_t* y_key, const bf192_t* x_key
 }
 static void aes_256_inverse_affine_verifier(bf256_t* y_key, const bf256_t* x_key, bf256_t delta,
                                             const faest_paramset_t* params) {
-  uint16_t Nst      = params->faest_param.Nwd;
+  uint16_t Nst      = params->Nwd;
   uint16_t Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
@@ -2250,8 +2250,8 @@ static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uin
                                            const bf128_t* x_tag, const uint8_t* key,
                                            const bf128_t* key_tag, const faest_paramset_t* params) {
 
-  const unsigned int Ske    = params->faest_param.Ske;
-  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Ske    = params->Ske;
+  const unsigned int lambda = params->lambda;
 
   // ::2
   uint8_t x_tilde[8];
@@ -2297,8 +2297,8 @@ static void aes_192_keyexp_backward_prover(uint8_t* y, bf192_t* y_tag, const uin
                                            const bf192_t* x_tag, const uint8_t* key,
                                            const bf192_t* key_tag, const faest_paramset_t* params) {
 
-  const unsigned int Ske    = params->faest_param.Ske;
-  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Ske    = params->Ske;
+  const unsigned int lambda = params->lambda;
 
   // ::2
   uint8_t x_tilde[8];
@@ -2344,8 +2344,8 @@ static void aes_256_keyexp_backward_prover(uint8_t* y, bf256_t* y_tag, const uin
                                            const bf256_t* x_tag, const uint8_t* key,
                                            const bf256_t* key_tag, const faest_paramset_t* params) {
 
-  const unsigned int Ske    = params->faest_param.Ske;
-  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Ske    = params->Ske;
+  const unsigned int lambda = params->lambda;
 
   // ::2
   uint8_t x_tilde[8];
@@ -2391,8 +2391,8 @@ static void aes_256_keyexp_backward_prover(uint8_t* y, bf256_t* y_tag, const uin
 static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_key, bf128_t* key_key,
                                              bf128_t delta, const faest_paramset_t* params) {
 
-  const unsigned int Ske    = params->faest_param.Ske;
-  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Ske    = params->Ske;
+  const unsigned int lambda = params->lambda;
 
   // ::2
   bf128_t x_tilde_key[8];
@@ -2434,8 +2434,8 @@ static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_ke
 static void aes_192_keyexp_backward_verifier(bf192_t* y_key, const bf192_t* x_key, bf192_t* key_key,
                                              bf192_t delta, const faest_paramset_t* params) {
 
-  const unsigned int Ske    = params->faest_param.Ske;
-  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Ske    = params->Ske;
+  const unsigned int lambda = params->lambda;
 
   // ::2
   bf192_t x_tilde_key[8];
@@ -2477,8 +2477,8 @@ static void aes_192_keyexp_backward_verifier(bf192_t* y_key, const bf192_t* x_ke
 static void aes_256_keyexp_backward_verifier(bf256_t* y_key, const bf256_t* x_key, bf256_t* key_key,
                                              bf256_t delta, const faest_paramset_t* params) {
 
-  const unsigned int Ske    = params->faest_param.Ske;
-  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int Ske    = params->Ske;
+  const unsigned int lambda = params->lambda;
 
   // ::2
   bf256_t x_tilde_key[8];
@@ -2521,9 +2521,9 @@ static void aes_256_keyexp_backward_verifier(bf256_t* y_key, const bf256_t* x_ke
 static void aes_128_keyexp_forward_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* w,
                                           const bf128_t* w_tag, const faest_paramset_t* params) {
 
-  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int lambda = params->lambda;
   const unsigned int Nk     = lambda / 32;
-  const unsigned int R      = params->faest_param.R;
+  const unsigned int R      = params->R;
 
   // ::1-2
   for (unsigned int i = 0; i < lambda; i++) {
@@ -2557,9 +2557,9 @@ static void aes_128_keyexp_forward_prover(uint8_t* y, bf128_t* y_tag, const uint
 static void aes_192_keyexp_forward_prover(uint8_t* y, bf192_t* y_tag, const uint8_t* w,
                                           const bf192_t* w_tag, const faest_paramset_t* params) {
 
-  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int lambda = params->lambda;
   const unsigned int Nk     = lambda / 32;
-  const unsigned int R      = params->faest_param.R;
+  const unsigned int R      = params->R;
 
   // ::1-2
   for (unsigned int i = 0; i < lambda; i++) {
@@ -2593,9 +2593,9 @@ static void aes_192_keyexp_forward_prover(uint8_t* y, bf192_t* y_tag, const uint
 static void aes_256_keyexp_forward_prover(uint8_t* y, bf256_t* y_tag, const uint8_t* w,
                                           const bf256_t* w_tag, const faest_paramset_t* params) {
 
-  const unsigned int lambda = params->faest_param.lambda;
+  const unsigned int lambda = params->lambda;
   const unsigned int Nk     = lambda / 32;
-  const unsigned int R      = params->faest_param.R;
+  const unsigned int R      = params->R;
 
   // ::1-2
   for (unsigned int i = 0; i < lambda; i++) {
@@ -2630,9 +2630,9 @@ static void aes_256_keyexp_forward_prover(uint8_t* y, bf256_t* y_tag, const uint
 static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key,
                                             const faest_paramset_t* params) {
 
-  unsigned int lambda = params->faest_param.lambda;
+  unsigned int lambda = params->lambda;
   unsigned int Nk     = lambda / 32;
-  unsigned int R      = params->faest_param.R;
+  unsigned int R      = params->R;
 
   // ::1-2
   for (unsigned int i = 0; i < lambda; i++) {
@@ -2663,9 +2663,9 @@ static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key
 static void aes_192_keyexp_forward_verifier(bf192_t* y_key, const bf192_t* w_key,
                                             const faest_paramset_t* params) {
 
-  unsigned int lambda = params->faest_param.lambda;
+  unsigned int lambda = params->lambda;
   unsigned int Nk     = lambda / 32;
-  unsigned int R      = params->faest_param.R;
+  unsigned int R      = params->R;
 
   // ::1-2
   for (unsigned int i = 0; i < lambda; i++) {
@@ -2696,9 +2696,9 @@ static void aes_192_keyexp_forward_verifier(bf192_t* y_key, const bf192_t* w_key
 static void aes_256_keyexp_forward_verifier(bf256_t* y_key, const bf256_t* w_key,
                                             const faest_paramset_t* params) {
 
-  unsigned int lambda = params->faest_param.lambda;
+  unsigned int lambda = params->lambda;
   unsigned int Nk     = lambda / 32;
-  unsigned int R      = params->faest_param.R;
+  unsigned int R      = params->R;
 
   // ::1-2
   for (unsigned int i = 0; i < lambda; i++) {
@@ -2733,8 +2733,8 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
                                               const bf128_t* w_tag,
                                               const faest_paramset_t* params) {
 
-  unsigned int Ske    = params->faest_param.Ske;
-  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Ske    = params->Ske;
+  unsigned int lambda = params->lambda;
   unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -2822,8 +2822,8 @@ static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, 
                                               const bf192_t* w_tag,
                                               const faest_paramset_t* params) {
 
-  unsigned int Ske    = params->faest_param.Ske;
-  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Ske    = params->Ske;
+  unsigned int lambda = params->lambda;
   unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -2910,8 +2910,8 @@ static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, 
                                               bf256_t* k_tag, const uint8_t* w,
                                               const bf256_t* w_tag,
                                               const faest_paramset_t* params) {
-  unsigned int Ske    = params->faest_param.Ske;
-  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Ske    = params->Ske;
+  unsigned int lambda = params->lambda;
   unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -2999,8 +2999,8 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key,
                                                 const bf128_t* w_key, bf128_t delta,
                                                 const faest_paramset_t* params) {
 
-  unsigned int Ske    = params->faest_param.Ske;
-  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Ske    = params->Ske;
+  unsigned int lambda = params->lambda;
   unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -3061,8 +3061,8 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key,
 static void aes_192_expkey_constraints_verifier(bf192_t* z_deg1, bf192_t* k_key,
                                                 const bf192_t* w_key, bf192_t delta,
                                                 const faest_paramset_t* params) {
-  unsigned int Ske    = params->faest_param.Ske;
-  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Ske    = params->Ske;
+  unsigned int lambda = params->lambda;
   unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -3123,8 +3123,8 @@ static void aes_192_expkey_constraints_verifier(bf192_t* z_deg1, bf192_t* k_key,
 static void aes_256_expkey_constraints_verifier(bf256_t* z_deg1, bf256_t* k_key,
                                                 const bf256_t* w_key, bf256_t delta,
                                                 const faest_paramset_t* params) {
-  unsigned int Ske    = params->faest_param.Ske;
-  unsigned int lambda = params->faest_param.lambda;
+  unsigned int Ske    = params->Ske;
+  unsigned int lambda = params->lambda;
   unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -3190,9 +3190,9 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
                                            const uint8_t* w, const bf128_t* w_tag, const uint8_t* k,
                                            const bf128_t* k_tag, const faest_paramset_t* params) {
 
-  unsigned int Nst      = params->faest_param.Nwd;
+  unsigned int Nst      = params->Nwd;
   unsigned int Nstbits  = 32 * Nst;
-  unsigned int R        = params->faest_param.R;
+  unsigned int R        = params->R;
   unsigned int Nstbytes = Nstbits / 8;
 
   /// ::1 AddRoundKey
@@ -3424,9 +3424,9 @@ static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf1
                                            const uint8_t* w, const bf192_t* w_tag, const uint8_t* k,
                                            const bf192_t* k_tag, const faest_paramset_t* params) {
 
-  unsigned int Nst      = params->faest_param.Nwd;
+  unsigned int Nst      = params->Nwd;
   unsigned int Nstbits  = 32 * Nst;
-  unsigned int R        = params->faest_param.R;
+  unsigned int R        = params->R;
   unsigned int Nstbytes = Nstbits / 8;
 
   /// ::1 AddRoundKey
@@ -3658,9 +3658,9 @@ static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf2
                                            const uint8_t* w, const bf256_t* w_tag, const uint8_t* k,
                                            const bf256_t* k_tag, const faest_paramset_t* params) {
 
-  unsigned int Nst      = params->faest_param.Nwd;
+  unsigned int Nst      = params->Nwd;
   unsigned int Nstbits  = 32 * Nst;
-  unsigned int R        = params->faest_param.R;
+  unsigned int R        = params->R;
   unsigned int Nstbytes = Nstbits / 8;
 
   /// ::1 AddRoundKey
@@ -3892,9 +3892,9 @@ static void aes_128_enc_constraints_verifier(bf128_t* z_key, const bf128_t* owf_
                                              const bf128_t* rkeys_key, const bf128_t delta,
                                              const faest_paramset_t* params) {
 
-  unsigned int Nst      = params->faest_param.Nwd;
+  unsigned int Nst      = params->Nwd;
   unsigned int Nstbits  = 32 * Nst;
-  unsigned int R        = params->faest_param.R;
+  unsigned int R        = params->R;
   unsigned int Nstbytes = Nstbits / 8;
 
   bf128_t* state_bits_key = faest_aligned_alloc(BF128_ALIGN, Nstbits * sizeof(bf128_t));
@@ -4032,9 +4032,9 @@ static void aes_192_enc_constraints_verifier(bf192_t* z_key, const bf192_t* owf_
                                              const bf192_t* rkeys_key, const bf192_t delta,
                                              const faest_paramset_t* params) {
 
-  unsigned int Nst      = params->faest_param.Nwd;
+  unsigned int Nst      = params->Nwd;
   unsigned int Nstbits  = 32 * Nst;
-  unsigned int R        = params->faest_param.R;
+  unsigned int R        = params->R;
   unsigned int Nstbytes = Nstbits / 8;
 
   bf192_t* state_bits_key = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
@@ -4172,9 +4172,9 @@ static void aes_256_enc_constraints_verifier(bf256_t* z_key, const bf256_t* owf_
                                              const bf256_t* rkeys_key, const bf256_t delta,
                                              const faest_paramset_t* params) {
 
-  unsigned int Nst      = params->faest_param.Nwd;
+  unsigned int Nst      = params->Nwd;
   unsigned int Nstbits  = 32 * Nst;
-  unsigned int R        = params->faest_param.R;
+  unsigned int R        = params->R;
   unsigned int Nstbytes = Nstbits / 8;
 
   bf256_t* state_bits_key = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
@@ -4314,16 +4314,16 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
                                        const uint8_t* owf_in, const uint8_t* owf_out,
                                        const faest_paramset_t* params) {
 
-  unsigned int lambda              = params->faest_param.lambda;
-  unsigned int R                   = params->faest_param.R;
-  unsigned int Ske                 = params->faest_param.Ske;
-  unsigned int Lke                 = params->faest_param.Lke;
-  unsigned int Lenc                = params->faest_param.Lenc;
-  unsigned int Senc                = params->faest_param.Senc;
+  unsigned int lambda              = params->lambda;
+  unsigned int R                   = params->R;
+  unsigned int Ske                 = params->Ske;
+  unsigned int Lke                 = params->Lke;
+  unsigned int Lenc                = params->Lenc;
+  unsigned int Senc                = params->Senc;
   unsigned int Nk                  = lambda / 32;
-  unsigned int Nst                 = params->faest_param.Nwd; // In Round 1, Nwd was Nst
+  unsigned int Nst                 = params->Nwd; // In Round 1, Nwd was Nst
   unsigned int num_enc_constraints = 3 * Senc / 2;
-  uint16_t blocksize               = 32 * params->faest_param.Nwd;
+  uint16_t blocksize               = 32 * params->Nwd;
   unsigned int beta                = (lambda + blocksize - 1) / blocksize;
   // ::1-3 owf_in, owf_out, z and z_tag
 
@@ -4455,16 +4455,16 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
                                        const uint8_t* owf_in, const uint8_t* owf_out,
                                        const faest_paramset_t* params) {
 
-  unsigned int lambda              = params->faest_param.lambda;
-  unsigned int R                   = params->faest_param.R;
-  unsigned int Ske                 = params->faest_param.Ske;
-  unsigned int Lke                 = params->faest_param.Lke;
-  unsigned int Lenc                = params->faest_param.Lenc;
-  unsigned int Senc                = params->faest_param.Senc;
+  unsigned int lambda              = params->lambda;
+  unsigned int R                   = params->R;
+  unsigned int Ske                 = params->Ske;
+  unsigned int Lke                 = params->Lke;
+  unsigned int Lenc                = params->Lenc;
+  unsigned int Senc                = params->Senc;
   unsigned int Nk                  = lambda / 32;
-  unsigned int Nst                 = params->faest_param.Nwd; // In Round 1, Nwd was Nst
+  unsigned int Nst                 = params->Nwd; // In Round 1, Nwd was Nst
   unsigned int num_enc_constraints = 3 * Senc / 2;
-  uint16_t blocksize               = 32 * params->faest_param.Nwd;
+  uint16_t blocksize               = 32 * params->Nwd;
   unsigned int beta                = (lambda + blocksize - 1) / blocksize;
   // ::1-3 owf_in, owf_out, z and z_tag
 
@@ -4591,16 +4591,16 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
                                        const uint8_t* owf_in, const uint8_t* owf_out,
                                        const faest_paramset_t* params) {
 
-  unsigned int lambda              = params->faest_param.lambda;
-  unsigned int R                   = params->faest_param.R;
-  unsigned int Ske                 = params->faest_param.Ske;
-  unsigned int Lke                 = params->faest_param.Lke;
-  unsigned int Lenc                = params->faest_param.Lenc;
-  unsigned int Senc                = params->faest_param.Senc;
+  unsigned int lambda              = params->lambda;
+  unsigned int R                   = params->R;
+  unsigned int Ske                 = params->Ske;
+  unsigned int Lke                 = params->Lke;
+  unsigned int Lenc                = params->Lenc;
+  unsigned int Senc                = params->Senc;
   unsigned int Nk                  = lambda / 32;
-  unsigned int Nst                 = params->faest_param.Nwd; // In Round 1, Nwd was Nst
+  unsigned int Nst                 = params->Nwd; // In Round 1, Nwd was Nst
   unsigned int num_enc_constraints = 3 * Senc / 2;
-  uint16_t blocksize               = 32 * params->faest_param.Nwd;
+  uint16_t blocksize               = 32 * params->Nwd;
   unsigned int beta                = (lambda + blocksize - 1) / blocksize;
   // ::1-3 owf_in, owf_out, z and z_tag
 
@@ -4727,14 +4727,14 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
                                          bf128_t delta, const faest_paramset_t* params) {
 
-  unsigned int lambda              = params->faest_param.lambda;
-  unsigned int R                   = params->faest_param.R;
-  unsigned int Lke                 = params->faest_param.Lke;
-  unsigned int Lenc                = params->faest_param.Lenc;
-  unsigned int Senc                = params->faest_param.Senc;
-  unsigned int Ske                 = params->faest_param.Ske;
+  unsigned int lambda              = params->lambda;
+  unsigned int R                   = params->R;
+  unsigned int Lke                 = params->Lke;
+  unsigned int Lenc                = params->Lenc;
+  unsigned int Senc                = params->Senc;
+  unsigned int Ske                 = params->Ske;
   unsigned int Nk                  = lambda / 32;
-  unsigned int Nst                 = params->faest_param.Nwd; // In Round 1, Nwd was Nst
+  unsigned int Nst                 = params->Nwd; // In Round 1, Nwd was Nst
   unsigned int num_enc_constraints = 3 * Senc / 2;
   unsigned int num_ks_constraints  = 2 * Ske;
   unsigned int blocksize           = 32 * Nst;
@@ -4825,14 +4825,14 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
                                          bf192_t delta, const faest_paramset_t* params) {
 
-  unsigned int lambda              = params->faest_param.lambda;
-  unsigned int R                   = params->faest_param.R;
-  unsigned int Lke                 = params->faest_param.Lke;
-  unsigned int Lenc                = params->faest_param.Lenc;
-  unsigned int Senc                = params->faest_param.Senc;
-  unsigned int Ske                 = params->faest_param.Ske;
+  unsigned int lambda              = params->lambda;
+  unsigned int R                   = params->R;
+  unsigned int Lke                 = params->Lke;
+  unsigned int Lenc                = params->Lenc;
+  unsigned int Senc                = params->Senc;
+  unsigned int Ske                 = params->Ske;
   unsigned int Nk                  = lambda / 32;
-  unsigned int Nst                 = params->faest_param.Nwd; // In Round 1, Nwd was Nst
+  unsigned int Nst                 = params->Nwd; // In Round 1, Nwd was Nst
   unsigned int num_enc_constraints = 3 * Senc / 2;
   unsigned int num_ks_constraints  = 2 * Ske;
   unsigned int blocksize           = 32 * Nst;
@@ -4921,14 +4921,14 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
                                          bf256_t delta, const faest_paramset_t* params) {
 
-  unsigned int lambda              = params->faest_param.lambda;
-  unsigned int R                   = params->faest_param.R;
-  unsigned int Lke                 = params->faest_param.Lke;
-  unsigned int Lenc                = params->faest_param.Lenc;
-  unsigned int Senc                = params->faest_param.Senc;
-  unsigned int Ske                 = params->faest_param.Ske;
+  unsigned int lambda              = params->lambda;
+  unsigned int R                   = params->R;
+  unsigned int Lke                 = params->Lke;
+  unsigned int Lenc                = params->Lenc;
+  unsigned int Senc                = params->Senc;
+  unsigned int Ske                 = params->Ske;
   unsigned int Nk                  = lambda / 32;
-  unsigned int Nst                 = params->faest_param.Nwd; // In Round 1, Nwd was Nst
+  unsigned int Nst                 = params->Nwd; // In Round 1, Nwd was Nst
   unsigned int num_enc_constraints = 3 * Senc / 2;
   unsigned int num_ks_constraints  = 2 * Ske;
   unsigned int blocksize           = 32 * Nst;
@@ -5019,9 +5019,9 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
 
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int c      = params->faest_param.C;
-  unsigned int ell    = params->faest_param.l;
+  unsigned int lambda = params->lambda;
+  unsigned int c      = params->C;
+  unsigned int ell    = params->l;
 
   // ::1-5
   // V becomes the w_tag: ell + 2*lambda field elements
@@ -5082,9 +5082,9 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
 
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int c      = params->faest_param.C;
-  unsigned int ell    = params->faest_param.l;
+  unsigned int lambda = params->lambda;
+  unsigned int c      = params->C;
+  unsigned int ell    = params->l;
 
   // ::1-5
   // V becomes the w_tag
@@ -5144,9 +5144,9 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
 
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int c      = params->faest_param.C;
-  unsigned int ell    = params->faest_param.l;
+  unsigned int lambda = params->lambda;
+  unsigned int c      = params->C;
+  unsigned int ell    = params->l;
 
   // ::1-5
   // V becomes the w_tag
@@ -5207,9 +5207,9 @@ static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
                              const uint8_t* a2_tilde, const faest_paramset_t* params) {
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int c      = params->faest_param.C;
-  unsigned int ell    = params->faest_param.l;
+  unsigned int lambda = params->lambda;
+  unsigned int c      = params->C;
+  unsigned int ell    = params->l;
 
   // ::1
   bf128_t bf_delta    = bf128_load(chall_3);
@@ -5262,9 +5262,9 @@ static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
                              const uint8_t* a2_tilde, const faest_paramset_t* params) {
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int c      = params->faest_param.C;
-  unsigned int ell    = params->faest_param.l;
+  unsigned int lambda = params->lambda;
+  unsigned int c      = params->C;
+  unsigned int ell    = params->l;
 
   // ::1
   bf192_t bf_delta    = bf192_load(chall_3);
@@ -5317,9 +5317,9 @@ static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
                              const uint8_t* a2_tilde, const faest_paramset_t* params) {
-  unsigned int lambda = params->faest_param.lambda;
-  unsigned int c      = params->faest_param.C;
-  unsigned int ell    = params->faest_param.l;
+  unsigned int lambda = params->lambda;
+  unsigned int c      = params->C;
+  unsigned int ell    = params->l;
 
   // ::1
   bf256_t bf_delta    = bf256_load(chall_3);
@@ -5372,7 +5372,7 @@ static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
 void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w_bits,
                const uint8_t* u_bits, uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out,
                const uint8_t* chall_2, const faest_paramset_t* params) {
-  switch (params->faest_param.lambda) {
+  switch (params->lambda) {
   case 256:
     aes_256_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u_bits, V, owf_in, owf_out, chall_2,
                    params);
@@ -5390,7 +5390,7 @@ void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const ui
 void aes_verify(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q, const uint8_t* chall_2,
                 const uint8_t* chall_3, const uint8_t* a1_tilde, const uint8_t* a2_tilde,
                 const uint8_t* owf_in, const uint8_t* owf_out, const faest_paramset_t* params) {
-  switch (params->faest_param.lambda) {
+  switch (params->lambda) {
   case 256:
     aes_256_verifier(a0_tilde, d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
                      params);

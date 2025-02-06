@@ -23,9 +23,9 @@ static
     ConvertToVole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,
                   unsigned int outLenBytes, uint8_t* u, uint8_t* v,
                   const faest_paramset_t* params) {
-  const unsigned int lambda        = params->faest_param.lambda;
-  const unsigned int tau_1         = params->faest_param.tau1;
-  const unsigned int k             = params->faest_param.k;
+  const unsigned int lambda        = params->lambda;
+  const unsigned int tau_1         = params->tau1;
+  const unsigned int k             = params->k;
   const unsigned int num_instances = bavc_max_node_index(i, tau_1, k);
   const unsigned int lambda_bytes  = lambda / 8;
   const unsigned int depth         = bavc_max_node_depth(i, tau_1, k);
@@ -68,14 +68,14 @@ static
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* u,
                  uint8_t** v) {
-  const unsigned int lambda       = params->faest_param.lambda;
+  const unsigned int lambda       = params->lambda;
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int ellhat_bytes = (ellhat + 7) / 8;
-  const unsigned int tau          = params->faest_param.tau;
-  const unsigned int tau_1        = params->faest_param.tau1;
-  const unsigned int k            = params->faest_param.k;
+  const unsigned int tau          = params->tau;
+  const unsigned int tau_1        = params->tau1;
+  const unsigned int k            = params->k;
 
-  bavc_commit(rootKey, iv, params, bavc);
+  bavc_commit(bavc, rootKey, iv, params);
 
   uint8_t* ui = malloc(tau * ellhat_bytes);
 
@@ -104,25 +104,25 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_t* chall_3,
                       const uint8_t* decom_i, const uint8_t* c, unsigned int ellhat,
                       const faest_paramset_t* params) {
-  const unsigned int lambda       = params->faest_param.lambda;
+  const unsigned int lambda       = params->lambda;
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int ellhat_bytes = (ellhat + 7) / 8;
-  const unsigned int tau          = params->faest_param.tau;
-  const unsigned int tau1         = params->faest_param.tau1;
-  const unsigned int L            = params->faest_param.L;
-  const unsigned int k            = params->faest_param.k;
+  const unsigned int tau          = params->tau;
+  const unsigned int tau1         = params->tau1;
+  const unsigned int L            = params->L;
+  const unsigned int k            = params->k;
 
   uint16_t i_delta[MAX_TAU];
   if (!decode_all_chall_3(i_delta, chall_3, params)) {
     return false;
   }
 
-  bavc_rec_t vec_com_rec;
-  vec_com_rec.h = com;
-  vec_com_rec.s = malloc((L - tau) * lambda_bytes);
+  bavc_rec_t bavc_rec;
+  bavc_rec.h = com;
+  bavc_rec.s = malloc((L - tau) * lambda_bytes);
 
-  if (!bavc_reconstruct(decom_i, i_delta, iv, params, &vec_com_rec)) {
-    free(vec_com_rec.s);
+  if (!bavc_reconstruct(&bavc_rec, decom_i, i_delta, iv, params)) {
+    free(bavc_rec.s);
     return false;
   }
 
@@ -131,7 +131,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
 
   // Step: 1
   unsigned int q_idx = 0;
-  uint8_t* sd_i      = vec_com_rec.s;
+  uint8_t* sd_i      = bavc_rec.s;
   for (unsigned int i = 0; i < tau; i++) {
     // Step: 2
     const unsigned int Ni = bavc_max_node_index(i, tau1, k);
@@ -171,6 +171,6 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
 
   free(qtmp);
   free(sd);
-  free(vec_com_rec.s);
+  free(bavc_rec.s);
   return true;
 }

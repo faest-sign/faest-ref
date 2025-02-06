@@ -12,8 +12,7 @@ BOOST_AUTO_TEST_SUITE(instances)
 
 BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const auto param        = *faest_get_paramset(param_id);
-    const auto& faest_param = param.faest_param;
+    const auto faest_param = *faest_get_paramset(param_id);
 
     BOOST_TEST(faest_param.lambda <= MAX_LAMBDA);
     BOOST_TEST(
@@ -37,7 +36,7 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
 
     const auto ell_bytes    = (faest_param.l + 7) / 8;
     const auto lambda_bytes = faest_param.lambda / 8;
-    const auto n_leafcom    = faest_is_em(&param) ? 2 : 3;
+    const auto n_leafcom    = faest_is_em(&faest_param) ? 2 : 3;
 
     const auto sig_size = faest_param.tau * (ell_bytes + 3 * lambda_bytes + UNIVERSAL_HASH_B) +
                           faest_param.T_open * lambda_bytes +
@@ -45,7 +44,7 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
                           sizeof(uint32_t);
     BOOST_TEST(sig_size == faest_param.sig_size);
 
-    const auto beta = faest_is_em(&param) ? 1 : (faest_param.lambda + 127) / 128;
+    const auto beta = faest_is_em(&faest_param) ? 1 : (faest_param.lambda + 127) / 128;
     BOOST_TEST(faest_param.l == faest_param.Lke + beta * faest_param.Lenc);
   }
 }

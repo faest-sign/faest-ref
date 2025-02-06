@@ -33,10 +33,10 @@ BOOST_AUTO_TEST_SUITE(bavc)
 BOOST_DATA_TEST_CASE(test_node_indices, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const auto params = *faest_get_paramset(param_id);
-    const auto tau    = params.faest_param.tau;
-    const auto tau_1  = params.faest_param.tau1;
-    const auto k      = params.faest_param.k;
-    const auto L      = params.faest_param.L;
+    const auto tau    = params.tau;
+    const auto tau_1  = params.tau1;
+    const auto k      = params.k;
+    const auto L      = params.L;
 
     unsigned int recomputed_L = 0;
     for (unsigned int i = 0; i != tau; ++i) {
@@ -54,7 +54,7 @@ namespace {
                   const std::array<uint8_t, 64>& expected_hashed_sd,
                   const std::array<uint8_t, 64>& expected_hashed_decom_i,
                   const std::array<uint8_t, 64>& expected_hashed_rec_sd) {
-    const auto lambda       = params.faest_param.lambda;
+    const auto lambda       = params.lambda;
     const auto lambda_bytes = lambda / 8;
     const auto com_size     = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
 
@@ -65,14 +65,14 @@ namespace {
         expected_h_vec{expected_h.begin(), expected_h.end()};
     BOOST_TEST(h == expected_h_vec);
     // compare hashed k_alpha to reduce size of the TVs
-    const auto hashed_k = hash_array(vc.k, (2 * params.faest_param.L - 1) * lambda_bytes);
+    const auto hashed_k = hash_array(vc.k, (2 * params.L - 1) * lambda_bytes);
     BOOST_TEST(hashed_k == expected_hashed_k);
     // compare hashed sd_ij to reduce size of the TVs
-    const auto hashed_sd = hash_array(vc.sd, params.faest_param.L * lambda_bytes);
+    const auto hashed_sd = hash_array(vc.sd, params.L * lambda_bytes);
     BOOST_TEST(hashed_sd == expected_hashed_sd);
 
     std::vector<uint8_t> decom_i;
-    decom_i.resize(com_size * params.faest_param.tau + params.faest_param.T_open * lambda_bytes);
+    decom_i.resize(com_size * params.tau + params.T_open * lambda_bytes);
     BOOST_TEST(bavc_open(&vc, i_delta.data(), decom_i.data(), &params));
 
     // compare hashed decom_i to reduce size of the TVs
@@ -81,7 +81,7 @@ namespace {
 
     std::vector<uint8_t> rec_h, rec_s;
     rec_h.resize(2 * lambda_bytes);
-    rec_s.resize((params.faest_param.L - params.faest_param.tau) * lambda_bytes);
+    rec_s.resize((params.L - params.tau) * lambda_bytes);
 
     bavc_rec_t vc_rec;
     vc_rec.h = rec_h.data();
@@ -187,7 +187,7 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
 
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const auto params       = *faest_get_paramset(param_id);
-    const auto lambda       = params.faest_param.lambda;
+    const auto lambda       = params.lambda;
     const auto lambda_bytes = lambda / 8;
 
     bavc_t vc;
@@ -195,22 +195,18 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
 
     std::vector<uint8_t> decom_i;
     std::vector<uint16_t> i_delta;
-    i_delta.resize(params.faest_param.tau);
+    i_delta.resize(params.tau);
 
     bool ret = false;
     while (!ret) {
-      for (unsigned int i = 0; i != params.faest_param.tau; ++i) {
+      for (unsigned int i = 0; i != params.tau; ++i) {
         std::uniform_int_distribution<> distribution{
-            0, static_cast<int>(
-                   bavc_max_node_index(i, params.faest_param.tau1, params.faest_param.k)) -
-                   1};
+            0, static_cast<int>(bavc_max_node_index(i, params.tau1, params.k)) - 1};
         i_delta[i] = distribution(rd);
       }
 
       decom_i.clear();
-      decom_i.resize(
-          ((faest_is_em(&params) ? 2 : 3) * params.faest_param.tau + params.faest_param.T_open) *
-          lambda_bytes);
+      decom_i.resize(((faest_is_em(&params) ? 2 : 3) * params.tau + params.T_open) * lambda_bytes);
 
       ret = bavc_open(&vc, i_delta.data(), decom_i.data(), &params);
     }
@@ -218,7 +214,7 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
 
     std::vector<uint8_t> rec_h, rec_s;
     rec_h.resize(2 * lambda_bytes);
-    rec_s.resize((params.faest_param.L - params.faest_param.tau) * lambda_bytes);
+    rec_s.resize((params.L - params.tau) * lambda_bytes);
 
     bavc_rec_t vc_rec;
     vc_rec.h = rec_h.data();

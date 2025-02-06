@@ -38,7 +38,7 @@ typedef enum faest_paramid_t {
   PARAMETER_SET_MAX_INDEX = 13
 } faest_paramid_t;
 
-typedef struct faest_param_t {
+typedef struct faest_paramset_t {
   // main parameters
   uint16_t lambda;
   uint8_t tau;
@@ -65,28 +65,14 @@ typedef struct faest_param_t {
   uint16_t sig_size;
   uint8_t owf_input_size;
   uint8_t owf_output_size;
-} faest_param_t;
-
-typedef struct faest_paramset_t {
-  faest_param_t faest_param;
-  faest_paramid_t faest_paramid;
 } faest_paramset_t;
 
 const char* ATTR_CONST faest_get_param_name(faest_paramid_t paramid);
 const faest_paramset_t* ATTR_CONST faest_get_paramset(faest_paramid_t paramid);
 
 static inline bool ATTR_PURE faest_is_em(const faest_paramset_t* params) {
-  switch (params->faest_paramid) {
-  case FAEST_EM_128S:
-  case FAEST_EM_128F:
-  case FAEST_EM_192S:
-  case FAEST_EM_192F:
-  case FAEST_EM_256S:
-  case FAEST_EM_256F:
-    return true;
-  default:
-    return false;
-  }
+  // EM instances do not have key expansion constraints
+  return params->Ske == 0;
 }
 
 FAEST_END_C_DECL
