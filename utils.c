@@ -16,8 +16,9 @@ static inline uint16_t num_rec_2(const uint8_t* v) {
   return le16toh(r);
 }
 
-bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigned int i,
-                    const faest_paramset_t* params) {
+// DecodeChall_3
+static bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigned int i,
+                           const faest_paramset_t* params) {
   if (i >= params->faest_param.tau) {
     return false;
   }
