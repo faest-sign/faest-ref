@@ -145,7 +145,7 @@ static void aes_256_add_round_key_verifier(bf256_t* out_key, const bf256_t* in_k
 }
 
 // F256/F2.CONJUGATES
-static void aes_128_f256_f2_conjugates_1(bf128_t* y, const uint8_t* state) {
+static void aes_128_f256_f2_conjugates_1(bf128_t* y, const uint8_t* state, const faest_paramset_t* params) {
   unsigned int Nst_bytes = 16;
 
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
@@ -163,7 +163,7 @@ static void aes_128_f256_f2_conjugates_1(bf128_t* y, const uint8_t* state) {
     free(x0);
   }
 }
-static void aes_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state) {
+static void aes_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state, const faest_paramset_t* params) {
   unsigned int Nst_bytes = 16;
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     uint8_t* x0 = (uint8_t*)malloc(Nst_bytes*8);
@@ -179,7 +179,7 @@ static void aes_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state) {
     free(x0);
   }
 }
-static void aes_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state) {
+static void aes_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state, const faest_paramset_t* params) {
   unsigned int Nst_bytes = 16;
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     uint8_t* x0 = (uint8_t*)malloc(Nst_bytes*8);
@@ -196,8 +196,8 @@ static void aes_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state) {
   }
 }
 
-static void aes_128_f256_f2_conjugates_128(bf128_t* y, const bf128_t* state) {
-  unsigned int Nst_bytes = 16;
+static void aes_128_f256_f2_conjugates_128(bf128_t* y, const bf128_t* state, const faest_paramset_t* params) {
+  unsigned int Nst_bytes = params->faest_param.Nwd * 4;
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     bf128_t x[8];
     memcpy(x, state + i * 8, sizeof(x));
@@ -210,8 +210,8 @@ static void aes_128_f256_f2_conjugates_128(bf128_t* y, const bf128_t* state) {
     y[i * 8 + 7] = bf128_byte_combine(x);
   }
 }
-static void aes_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state) {
-  unsigned int Nst_bytes = 16;
+static void aes_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state, const faest_paramset_t* params) {
+  unsigned int Nst_bytes = params->faest_param.Nwd * 4;
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     bf192_t x[8];
     memcpy(x, state + (i * 8), sizeof(x));
@@ -224,8 +224,8 @@ static void aes_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state) {
     y[i * 8 + 7] = bf192_byte_combine(x);
   }
 }
-static void aes_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state) {
-  unsigned int Nst_bytes = 16;
+static void aes_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state, const faest_paramset_t* params) {
+  unsigned int Nst_bytes = params->faest_param.Nwd * 4;
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     bf256_t x[8];
     memcpy(x, state + (i * 8), sizeof(x));
@@ -236,63 +236,6 @@ static void aes_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state) {
       bf256_sq_bit(x, tmp);
     }
     y[i * 8 + 7] = bf256_byte_combine(x);
-  }
-}
-
-static void aes_em_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state) {
-  for (unsigned int i = 0; i != 24; ++i) {
-    uint8_t* x0 = (uint8_t*)malloc(24*8);
-    memcpy(x0, state, 24*8);
-    for (unsigned int j = 0; j != 7; ++j) {
-      y[i * 8 + j] = bf256_byte_combine_bits(x0 + j*8);
-      uint8_t tmp[8];
-      memcpy(tmp, x0 + j*8, 8);
-      bits_sq(tmp);
-      memcpy(x0 + (j+1)*8, tmp, 8);
-    }
-    y[i * 8 + 7] = bf256_byte_combine_bits(x0 + 7*8);
-    free(x0);
-  }
-}
-static void aes_em_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state) {
-  for (unsigned int i = 0; i != 32; ++i) {
-    uint8_t* x0 = (uint8_t*)malloc(32*8);
-    memcpy(x0, state, 32*8);
-    for (unsigned int j = 0; j != 7; ++j) {
-      y[i * 8 + j] = bf256_byte_combine_bits(x0 + j*8);
-      uint8_t tmp[8];
-      memcpy(tmp, x0 + j*8, 8);
-      bits_sq(tmp);
-      memcpy(x0 + (j+1)*8, tmp, 8);
-    }
-    y[i * 8 + 7] = bf256_byte_combine_bits(x0 + 7*8);
-    free(x0);
-  }
-}
-static void aes_em_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state) {
-  for (unsigned int i = 0; i != 24; ++i) {
-    bf192_t x[8];
-    memcpy(x, state + (i * 8), sizeof(x));
-    for (unsigned int j = 0; j != 7; ++j) {
-      y[i * 8 + j] = bf192_byte_combine(x);
-      bf192_t tmp[8];
-      memcpy(tmp, x, sizeof(x));
-      bf192_sq_bit(x, tmp);
-    }
-    y[i * 8 + 7] = bf192_byte_combine(x);
-  }
-}
-static void aes_em_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state) {
-  for (unsigned int i = 0; i != 32; ++i) {
-    bf256_t x[8];
-    memcpy(x, state + (i * 8), sizeof(x));
-    for (unsigned int j = 0; j != 7; ++j) {
-      y[i * 8 + j] = bf256_byte_combine(x);
-      bf256_t tmp[8];
-      memcpy(tmp, x, sizeof(x));
-      bf256_sq_bit(x, tmp);
-    }
-    y[i * 8 + 7] = bf256_byte_combine_sq(x);
   }
 }
  
@@ -3221,8 +3164,8 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
   for (unsigned int r = 0; r < R/2; r++) {
 
     // ::3-4
-    aes_128_f256_f2_conjugates_1(state_conj, state_bits);
-    aes_128_f256_f2_conjugates_128(state_conj_tag, state_bits_tag);
+    aes_128_f256_f2_conjugates_1(state_conj, state_bits, params);
+    aes_128_f256_f2_conjugates_128(state_conj_tag, state_bits_tag, params);
 
     // ::5-6 : start of norms in witness
     const uint8_t* norms_ptr = w + 3 * Nstbits * r/2;
@@ -3461,8 +3404,8 @@ static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf1
   for (unsigned int r = 0; r < R/2; r++) {
 
     // ::3-4
-    aes_192_f256_f2_conjugates_1(state_conj, state_bits);
-    aes_192_f256_f2_conjugates_192(state_conj_tag, state_bits_tag);
+    aes_192_f256_f2_conjugates_1(state_conj, state_bits, params);
+    aes_192_f256_f2_conjugates_192(state_conj_tag, state_bits_tag, params);
 
     // ::5-6 : start of norms in witness
     const uint8_t* norms_ptr = w + 3 * Nstbits * r/2;
@@ -3701,8 +3644,8 @@ static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf2
   for (unsigned int r = 0; r < R/2; r++) {
 
     // ::3-4
-    aes_256_f256_f2_conjugates_1(state_conj, state_bits);
-    aes_256_f256_f2_conjugates_256(state_conj_tag, state_bits_tag);
+    aes_256_f256_f2_conjugates_1(state_conj, state_bits, params);
+    aes_256_f256_f2_conjugates_256(state_conj_tag, state_bits_tag, params);
 
     // ::5-6 : start of norms in witness
     const uint8_t* norms_ptr = w + 3 * Nstbits * r/2;
@@ -3932,7 +3875,7 @@ static void aes_128_enc_constraints_verifier(bf128_t* z_key, const bf128_t* owf_
   for (unsigned int r = 0; r < R/2; r++) {
 
     // ::3-4
-    aes_128_f256_f2_conjugates_128(state_conj_key, state_bits_key);
+    aes_128_f256_f2_conjugates_128(state_conj_key, state_bits_key, params);
 
     // ::5-6 : start of norms in witness
     const bf128_t* norm_keys_ptr = w_key + 3 * Nstbits * r/2;
@@ -4069,7 +4012,7 @@ static void aes_192_enc_constraints_verifier(bf192_t* z_key, const bf192_t* owf_
   for (unsigned int r = 0; r < R/2; r++) {
 
     // ::3-4
-    aes_192_f256_f2_conjugates_192(state_conj_key, state_bits_key);
+    aes_192_f256_f2_conjugates_192(state_conj_key, state_bits_key, params);
 
     // ::5-6 : start of norms in witness
     const bf192_t* norm_keys_ptr = w_key + 3 * Nstbits * r/2;
@@ -4206,7 +4149,7 @@ static void aes_256_enc_constraints_verifier(bf256_t* z_key, const bf256_t* owf_
   for (unsigned int r = 0; r < R/2; r++) {
 
     // ::3-4
-    aes_256_f256_f2_conjugates_256(state_conj_key, state_bits_key);
+    aes_256_f256_f2_conjugates_256(state_conj_key, state_bits_key, params);
 
     // ::5-6 : start of norms in witness
     const bf256_t* norm_keys_ptr = w_key + 3 * Nstbits * r/2;
