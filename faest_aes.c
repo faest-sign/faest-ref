@@ -5248,12 +5248,10 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 }
 
 // OWF VERIFIER
-static uint8_t* aes_128_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8_t* owf_in,
-                                 const uint8_t* owf_out, const uint8_t* chall_2,
-                                 const uint8_t* chall_3, const uint8_t* a1_tilde,
-                                 const uint8_t* a2_tilde, const faest_paramset_t* params,
-                                 bool isEM) {
-
+static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q,
+                             const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
+                             const uint8_t* chall_3, const uint8_t* a1_tilde,
+                             const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
   unsigned int lambda = params->faest_param.lambda;
   unsigned int c      = params->faest_param.C;
   unsigned int ell    = params->faest_param.l;
@@ -5287,7 +5285,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   for (unsigned int i = 0; i < c; i++) {
     zk_hash_128_update(&b_ctx, z2_key[i]);
   }
-  uint8_t* q_tilde = (uint8_t*)malloc((lambda / 8) * sizeof(uint8_t));
+  uint8_t* q_tilde = malloc((lambda / 8) * sizeof(uint8_t));
   zk_hash_128_finalize(q_tilde, &b_ctx, q_star);
 
   faest_aligned_free(z2_key);
@@ -5302,17 +5300,13 @@ static uint8_t* aes_128_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   free(q_tilde);
   faest_aligned_free(q_key);
 
-  uint8_t* a0_tilde = (uint8_t*)malloc((lambda / 8) * sizeof(uint8_t));
   bf128_store(a0_tilde, ret);
-  return a0_tilde;
 }
 
-static uint8_t* aes_192_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8_t* owf_in,
-                                 const uint8_t* owf_out, const uint8_t* chall_2,
-                                 const uint8_t* chall_3, const uint8_t* a1_tilde,
-                                 const uint8_t* a2_tilde, const faest_paramset_t* params,
-                                 bool isEM) {
-
+static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q,
+                             const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
+                             const uint8_t* chall_3, const uint8_t* a1_tilde,
+                             const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
   unsigned int lambda = params->faest_param.lambda;
   unsigned int c      = params->faest_param.C;
   unsigned int ell    = params->faest_param.l;
@@ -5361,17 +5355,13 @@ static uint8_t* aes_192_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   free(q_tilde);
   faest_aligned_free(q_key);
 
-  uint8_t* a0_tilde = (uint8_t*)malloc((lambda / 8) * sizeof(uint8_t));
   bf192_store(a0_tilde, ret);
-  return a0_tilde;
 }
 
-static uint8_t* aes_256_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8_t* owf_in,
-                                 const uint8_t* owf_out, const uint8_t* chall_2,
-                                 const uint8_t* chall_3, const uint8_t* a1_tilde,
-                                 const uint8_t* a2_tilde, const faest_paramset_t* params,
-                                 bool isEM) {
-
+static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q,
+                             const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
+                             const uint8_t* chall_3, const uint8_t* a1_tilde,
+                             const uint8_t* a2_tilde, const faest_paramset_t* params, bool isEM) {
   unsigned int lambda = params->faest_param.lambda;
   unsigned int c      = params->faest_param.C;
   unsigned int ell    = params->faest_param.l;
@@ -5420,9 +5410,7 @@ static uint8_t* aes_256_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   free(q_tilde);
   faest_aligned_free(q_key);
 
-  uint8_t* a0_tilde = (uint8_t*)malloc((lambda / 8) * sizeof(uint8_t));
   bf256_store(a0_tilde, ret);
-  return a0_tilde;
 }
 
 // AES(-EM) OWF dispatchers
@@ -5444,20 +5432,20 @@ void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const ui
   }
 }
 
-uint8_t* aes_verify(const uint8_t* d_bits, uint8_t** Q, const uint8_t* chall_2,
-                    const uint8_t* chall_3, const uint8_t* a1_tilde, const uint8_t* a2_tilde,
-                    const uint8_t* owf_in, const uint8_t* owf_out, const faest_paramset_t* params) {
+void aes_verify(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q, const uint8_t* chall_2,
+                const uint8_t* chall_3, const uint8_t* a1_tilde, const uint8_t* a2_tilde,
+                const uint8_t* owf_in, const uint8_t* owf_out, const faest_paramset_t* params) {
   switch (params->faest_param.lambda) {
   case 256:
-    return aes_256_verifier(d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
-                            params, faest_is_em(params));
+    aes_256_verifier(a0_tilde, d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
+                     params, faest_is_em(params));
     break;
   case 192:
-    return aes_192_verifier(d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
-                            params, faest_is_em(params));
+    aes_192_verifier(a0_tilde, d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
+                     params, faest_is_em(params));
     break;
   default:
-    return aes_128_verifier(d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
-                            params, faest_is_em(params));
+    aes_128_verifier(a0_tilde, d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
+                     params, faest_is_em(params));
   }
 }
