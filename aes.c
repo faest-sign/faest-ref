@@ -413,6 +413,7 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   const unsigned int l          = params->faest_param.l;
   const unsigned int S_ke       = params->faest_param.Ske;
   const unsigned int num_rounds = params->faest_param.R;
+  const unsigned int nk         = lambda / 32;
 
   uint8_t* w           = malloc((l + 7) / 8);
   uint8_t* const w_out = w;
@@ -470,12 +471,12 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   // Step 4
   if (!faest_is_em(params)) {
     // Key schedule constraints only needed for normal AES, not EM variant.
-    for (unsigned int i = 0; i != params->faest_param.Nwd; ++i) {
+    for (unsigned int i = 0; i != nk; ++i) {
       memcpy(w, round_keys.round_keys[i / 4][i % 4], sizeof(aes_word_t));
       w += sizeof(aes_word_t);
     }
 
-    for (unsigned int j = 0, ik = params->faest_param.Nwd; j < S_ke / 4; ++j) {
+    for (unsigned int j = 0, ik = nk; j < S_ke / 4; ++j) {
       memcpy(w, round_keys.round_keys[ik / 4][ik % 4], sizeof(aes_word_t));
       w += sizeof(aes_word_t);
       ik += lambda == 192 ? 6 : 4;
