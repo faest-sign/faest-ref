@@ -421,6 +421,7 @@ static void aes_256_inv_norm_to_conjugates_verifier(bf256_t* y_eval, const bf256
 
 // // INV NORM CONSTRAINTS
 void aes_128_inv_norm_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t* z_deg2, const bf128_t* conjugates, const bf128_t* conjugates_tag, const bf128_t* y, const bf128_t* y_tag) {
+#if !defined(NDEBUG)
     {
         bf128_t debug = bf128_add(
                 bf128_mul(y[0], bf128_mul(conjugates[1], conjugates[4])),
@@ -428,6 +429,7 @@ void aes_128_inv_norm_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128
         bf128_t zero = bf128_zero();
         assert(bf128_eq(debug, zero));
     }
+#endif
     
     z_deg0[0] = bf128_mul(
         bf128_mul(*y_tag,conjugates_tag[1]),
@@ -449,6 +451,7 @@ void aes_128_inv_norm_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128
                   conjugates_tag[0]);
 }
 void aes_192_inv_norm_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2, const bf192_t* conjugates, const bf192_t* conjugates_tag, const bf192_t* y, const bf192_t* y_tag) {
+#if !defined(NDEBUG)
     {
         bf192_t debug = bf192_add(
                 bf192_mul(y[0], bf192_mul(conjugates[1], conjugates[4])),
@@ -456,6 +459,7 @@ void aes_192_inv_norm_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192
         bf192_t zero = bf192_zero();
         assert(bf192_eq(debug, zero));
     }
+#endif
     
     z_deg0[0] = bf192_mul(
         bf192_mul(*y_tag,conjugates_tag[1]),
@@ -477,6 +481,7 @@ void aes_192_inv_norm_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192
                   conjugates_tag[0]);
 }
 void aes_256_inv_norm_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t* z_deg2, const bf256_t* conjugates, const bf256_t* conjugates_tag, const bf256_t* y, const bf256_t* y_tag) {
+#if !defined(NDEBUG)
     {
         bf256_t debug = bf256_add(
                 bf256_mul(y[0], bf256_mul(conjugates[1], conjugates[4])),
@@ -484,6 +489,7 @@ void aes_256_inv_norm_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256
         bf256_t zero = bf256_zero();
         assert(bf256_eq(debug, zero));
     }
+#endif
     
     z_deg0[0] = bf256_mul(
         bf256_mul(*y_tag,conjugates_tag[1]),
@@ -2770,11 +2776,15 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
       // ::12-15
       k_hat[r_prime] = bf128_byte_combine_bits(&k[(iwd + 8 * r)]); // lifted key witness
       k_hat_sq[r_prime] = bf128_byte_combine_bits_sq(&k[(iwd + 8 * r)]); // lifted key witness sq
+#if !defined(NDEBUG)
       assert(bf128_eq(bf128_mul(k_hat[r_prime], k_hat[r_prime]), k_hat_sq[r_prime]));
+#endif
 
       w_hat[r] = bf128_byte_combine_bits(&w_flat[(32 * j + 8 * r)]); // lifted output
       w_hat_sq[r] = bf128_byte_combine_bits_sq(&w_flat[(32 * j + 8 * r)]);  // lifted output sq
+#if !defined(NDEBUG) 
       assert(bf128_eq(bf128_mul(w_hat[r], w_hat[r]), w_hat_sq[r]));
+#endif
 
       // done by both prover and verifier
       k_hat_tag[r_prime] = bf128_byte_combine(k_tag + (iwd + 8 * r)); // lifted key tag
@@ -2788,6 +2798,7 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
       do_rot_word = !do_rot_word;
     }
     // ::17
+#if !defined(NDEBUG)
     for (unsigned int r = 0; r < 4; r++) {
       {
         bf128_t one = bf128_one();
@@ -2795,6 +2806,7 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
         assert(bf128_eq(bf128_mul(k_hat[r], w_hat[r]), one)
                 || (bf128_eq(k_hat[r], zero) && bf128_eq(w_hat[r], zero)));
       }
+#endif
 
       // ::18-19
       z_deg1[8*j + 2*r] = bf128_add(
@@ -2871,11 +2883,15 @@ static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, 
       // ::12-15
       k_hat[r_prime] = bf192_byte_combine_bits(&k[(iwd + 8 * r)]); // lifted key witness
       k_hat_sq[r_prime] = bf192_byte_combine_bits_sq(&k[(iwd + 8 * r)]); // lifted key witness sq
+#if !defined(NDEBUG)
       assert(bf192_eq(bf192_mul(k_hat[r_prime], k_hat[r_prime]), k_hat_sq[r_prime]));
+#endif
 
       w_hat[r] = bf192_byte_combine_bits(&w_flat[(32 * j + 8 * r)]); // lifted output
       w_hat_sq[r] = bf192_byte_combine_bits_sq(&w_flat[(32 * j + 8 * r)]);  // lifted output sq
+#if !defined(NDEBUG)
       assert(bf192_eq(bf192_mul(w_hat[r], w_hat[r]), w_hat_sq[r]));
+#endif
 
       // done by both prover and verifier
       k_hat_tag[r_prime] = bf192_byte_combine(k_tag + (iwd + 8 * r)); // lifted key tag
@@ -2889,6 +2905,7 @@ static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, 
       do_rot_word = !do_rot_word;
     }
     // ::17
+#if !defined(NDEBUG)
     for (unsigned int r = 0; r < 4; r++) {
       {
         bf192_t one = bf192_one();
@@ -2896,6 +2913,7 @@ static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, 
         assert(bf192_eq(bf192_mul(k_hat[r], w_hat[r]), one)
                 || (bf192_eq(k_hat[r], zero) && bf192_eq(w_hat[r], zero)));
       }
+#endif
 
       // ::18-19
       z_deg1[8*j + 2*r] = bf192_add(
@@ -2971,11 +2989,15 @@ static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, 
       // ::12-15
       k_hat[r_prime] = bf256_byte_combine_bits(&k[(iwd + 8 * r)]); // lifted key witness
       k_hat_sq[r_prime] = bf256_byte_combine_bits_sq(&k[(iwd + 8 * r)]); // lifted key witness sq
+#if !defined(NDEBUG)
       assert(bf256_eq(bf256_mul(k_hat[r_prime], k_hat[r_prime]), k_hat_sq[r_prime]));
+#endif
 
       w_hat[r] = bf256_byte_combine_bits(&w_flat[(32 * j + 8 * r)]); // lifted output
       w_hat_sq[r] = bf256_byte_combine_bits_sq(&w_flat[(32 * j + 8 * r)]);  // lifted output sq
+#if !defined(NDEBUG)
       assert(bf256_eq(bf256_mul(w_hat[r], w_hat[r]), w_hat_sq[r]));
+#endif
 
       // done by both prover and verifier
       k_hat_tag[r_prime] = bf256_byte_combine(k_tag + (iwd + 8 * r)); // lifted key tag
@@ -2989,6 +3011,7 @@ static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, 
       do_rot_word = !do_rot_word;
     }
     // ::17
+#if !defined(NDEBUG)
     for (unsigned int r = 0; r < 4; r++) {
       {
         bf256_t one = bf256_one();
@@ -2996,6 +3019,7 @@ static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, 
         assert(bf256_eq(bf256_mul(k_hat[r], w_hat[r]), one)
                 || (bf256_eq(k_hat[r], zero) && bf256_eq(w_hat[r], zero)));
       }
+#endif
 
       // ::18-19
       z_deg1[8*j + 2*r] = bf256_add(
@@ -3388,12 +3412,14 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
       //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
       //
 
+#if !defined(NDEBUG)
       {
         bf128_t one = bf128_one();
         bf128_t zero = bf128_zero();
         assert(bf128_eq(bf128_mul(s_deg1, st_b_deg2[0][byte_i]), one)
                 || (bf128_eq(s_deg1, zero) && bf128_eq(st_b_deg2[0][byte_i], zero)));
       }
+#endif
       z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf128_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
 
       z_deg1[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(
@@ -3626,12 +3652,14 @@ static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf1
       //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
       //
 
+#if !defined(NDEBUG)
       {
         bf192_t one = bf192_one();
         bf192_t zero = bf192_zero();
         assert(bf192_eq(bf192_mul(s_deg1, st_b_deg2[0][byte_i]), one)
                 || (bf192_eq(s_deg1, zero) && bf192_eq(st_b_deg2[0][byte_i], zero)));
       }
+#endif
       z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf192_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
 
       z_deg1[(3*r+1)*Nstbytes + 2*byte_i] = bf192_add(
@@ -3864,12 +3892,14 @@ static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf2
       //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
       //
 
+#if !defined(NDEBUG)
       {
         bf256_t one = bf256_one();
         bf256_t zero = bf256_zero();
         assert(bf256_eq(bf256_mul(s_deg1, st_b_deg2[0][byte_i]), one)
                 || (bf256_eq(s_deg1, zero) && bf256_eq(st_b_deg2[0][byte_i], zero)));
       }
+#endif
       z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf256_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
 
       z_deg1[(3*r+1)*Nstbytes + 2*byte_i] = bf256_add(
