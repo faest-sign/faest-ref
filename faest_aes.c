@@ -3185,9 +3185,9 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
   free(z_tilde_deg1);
   free(z_tilde_deg2);
 }
+
 static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2, const uint8_t* w, const bf192_t* w_tag, const uint8_t* owf_in, 
                                         const uint8_t* owf_out, const faest_paramset_t* params, bool isEM) {
-
 
   unsigned int lambda = params->faest_param.lambda;
   unsigned int R = params->faest_param.R;
@@ -3209,6 +3209,8 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
       bf192_mul_bit(w_tag[0], w[1]),
       bf192_mul_bit(w_tag[1], w[0]));
   // ::7-8
+  // uint8_t* Rkeys = (uint8_t*)malloc(4*Nst*(R+1)); // storing this as uint8
+  // bf192_t* Rkeys_tag = (bf192_t*)malloc(sizeof(bf192_t)* 4*Nst*R);
   uint8_t* in = (uint8_t*)malloc(blocksize);
   bf192_t* in_tag = (bf192_t*)malloc(sizeof(bf192_t) * blocksize);
   uint8_t* out = (uint8_t*)malloc(beta * blocksize);
@@ -3251,18 +3253,12 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
     constant_to_vole_192_prover(in_tag, blocksize);
 
     // ::14
-    for (unsigned int i = 0; i < blocksize; i++) {
+    for (unsigned int i = 0; i < beta * blocksize; i++) {
       out[i] = (owf_out[i/8] >> (i%8)) & 1;
     }
     constant_to_vole_192_prover(out_tag, blocksize);
 
-    // ::15
-    if (beta == 2) {
-      for (unsigned int i = blocksize; i < blocksize*2; i++) {
-        out[i] = (owf_out[i/8] >> (i%8)) & 1;
-      }
-      constant_to_vole_192_prover(out_tag + blocksize, blocksize);
-    }
+    // ::15 skiped as B = 1
     // ::16
     bf192_t* z_tilde_deg0_tag = (bf192_t*)malloc(2*Ske * sizeof(bf192_t));
     bf192_t* z_tilde_deg1_val = (bf192_t*)malloc(2*Ske * sizeof(bf192_t));
@@ -3289,38 +3285,33 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
   // ::18-20
   for (unsigned int b = 0; b < beta; b++) {
 
-      // ::19
-      for (unsigned int i = 0; i < Lenc; i++) {
-        w_tilde[i] = w[Lke + i];
-        w_tilde_tag[i] = w_tag[Lke + i];
-      }
-      // ::20
-      if (b == 1) {
-          in[0] = in[0] ^ 0x01;
-          in_tag[0] = bf192_add(in_tag[0], bf192_one());
-          /* out_tag += blocksize; */
-        }
+    for (unsigned int i = 0; i < Lenc; i++) {
+      w_tilde[i] = w[Lke + b*Lenc + i];
+      w_tilde_tag[i] = w_tag[Lke + b*Lenc + i];
+    }
+    
+    memset(z_tilde_deg0, 0, num_enc_constraints * sizeof(bf192_t));
+    memset(z_tilde_deg1, 0, num_enc_constraints * sizeof(bf192_t));
+    memset(z_tilde_deg2, 0, num_enc_constraints * sizeof(bf192_t));
 
-      // ::21
-      memset(z_tilde_deg0, 0, num_enc_constraints * sizeof(bf192_t));
-      memset(z_tilde_deg1, 0, num_enc_constraints * sizeof(bf192_t));
-      memset(z_tilde_deg2, 0, num_enc_constraints * sizeof(bf192_t));
+    if (b == 1) {
+      in[0] = in[0] ^ 0x01;
+      in_tag[0] = bf192_add(in_tag[0], bf192_one());
+      out_tag += blocksize;
+    }
 
+    aes_192_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
+    // uint32_t z_offset = 1 + (2*FAEST_192F_Ske);
+    // printf("z offset = %d\n", z_offset);
+    // aes_192_enc_constraints_prover(z_deg0 + z_offset, z_deg1 + z_offset, z_deg2 + z_offset, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, k, k_tag, params);
 
-
-      aes_192_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out + b * blocksize, out_tag + b * blocksize, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
-  // uint32_t z_offset = 1 + (2*FAEST_192F_Ske);
-  // printf("z offset = %d\n", z_offset);
-  // aes_192_enc_constraints_prover(z_deg0 + z_offset, z_deg1 + z_offset, z_deg2 + z_offset, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, k, k_tag, params);
-
-      // :22
+    // :22
     for (unsigned int i = 0; i < num_enc_constraints; i++) {
       z_deg0[1+(2*Ske) + b*num_enc_constraints + i] = z_tilde_deg0[i];
       z_deg1[1+(2*Ske) + b*num_enc_constraints + i] = z_tilde_deg1[i];
       z_deg2[1+(2*Ske) + b*num_enc_constraints + i] = z_tilde_deg2[i];
     }
   }
-
   free(in);
   free(in_tag);
   free(out);
@@ -3334,10 +3325,147 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
   free(z_tilde_deg0);
   free(z_tilde_deg1);
   free(z_tilde_deg2);
-
 }
-static void aes_256_constraints_prover(bf256_t* z0_tag, bf256_t* z1_val, bf256_t* z2_gamma, const uint8_t* w, const bf256_t* w_tag, const uint8_t* owf_in, 
+
+static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t* z_deg2, const uint8_t* w, const bf256_t* w_tag, const uint8_t* owf_in, 
                                         const uint8_t* owf_out, const faest_paramset_t* params, bool isEM) {
+
+  unsigned int lambda = params->faest_param.lambda;
+  unsigned int R = params->faest_param.R;
+  unsigned int Ske = params->faest_param.Ske;
+  unsigned int Lke = params->faest_param.Lke;
+  unsigned int Lenc = params->faest_param.Lenc;
+  unsigned int Senc = params->faest_param.Senc;
+  unsigned int Nk = lambda/32;
+  unsigned int Nst = params->faest_param.Nwd;                  // In Round 1, Nwd was Nst
+  unsigned int num_enc_constraints = 3*Senc/2;
+  uint16_t blocksize = 32 * params->faest_param.Nwd;
+  unsigned int beta = (lambda + blocksize - 1) / blocksize;
+  // ::1-3 owf_in, owf_out, z and z_tag
+  
+  // ::4-5
+  z_deg0[0] = bf256_zero();
+  z_deg1[0] = bf256_mul(w_tag[0], w_tag[1]);
+  z_deg2[0] = bf256_add(
+      bf256_mul_bit(w_tag[0], w[1]),
+      bf256_mul_bit(w_tag[1], w[0]));
+  // ::7-8
+  // uint8_t* Rkeys = (uint8_t*)malloc(4*Nst*(R+1)); // storing this as uint8
+  // bf256_t* Rkeys_tag = (bf256_t*)malloc(sizeof(bf256_t)* 4*Nst*R);
+  uint8_t* in = (uint8_t*)malloc(blocksize);
+  bf256_t* in_tag = (bf256_t*)malloc(sizeof(bf256_t) * blocksize);
+  uint8_t* out = (uint8_t*)malloc(beta * blocksize);
+  bf256_t* out_tag = (bf256_t*)malloc(sizeof(bf256_t) * beta*blocksize);
+  uint8_t* rkeys = (uint8_t*) malloc((R+1)*blocksize * sizeof(uint8_t));
+  bf256_t* rkeys_tag = (bf256_t*) malloc((R+1)*blocksize * sizeof(bf256_t));
+
+  if (isEM) {
+    aes_round_keys_t round_keys;
+    expand_key(&round_keys, owf_in, Nk, Nk, R);
+    
+    unsigned int idx = 0;
+    for (unsigned int r = 0; r < R + 1; r++) {
+      for (unsigned int n = 0; n < Nst; n++) {
+        for (unsigned int i = 0; i < 4; i++) {
+          for (unsigned int j = 0; j < 8; j++) {
+            rkeys[8*idx + j] = get_bit(round_keys.round_keys[r][n][i], j);
+            rkeys_tag[8*idx + j] = bf256_zero();
+          }
+          idx++;
+        }
+      }
+    }
+    // ::10
+    for (unsigned int i = 0; i < blocksize; i++) {
+      in[i] = w[i];
+      in_tag[i] = w_tag[i];
+    }
+    // ::11
+    for (unsigned int i = 0; i < blocksize; i++) {
+      out[i] = w[i] ^ ((owf_out[i/8] >> (i%8)) & 1);
+      out_tag[i] = w_tag[i];
+    }
+  } 
+  else {
+    // jump to ::13 for AES
+    for (unsigned int i = 0; i < blocksize; i++) {
+      in[i] = (owf_in[i/8] >> (i%8)) & 1;
+    }
+    constant_to_vole_256_prover(in_tag, blocksize);
+
+    // ::14
+    for (unsigned int i = 0; i < beta * blocksize; i++) {
+      out[i] = (owf_out[i/8] >> (i%8)) & 1;
+    }
+    constant_to_vole_256_prover(out_tag, blocksize);
+
+    // ::15 skiped as B = 1
+    // ::16
+    bf256_t* z_tilde_deg0_tag = (bf256_t*)malloc(2*Ske * sizeof(bf256_t));
+    bf256_t* z_tilde_deg1_val = (bf256_t*)malloc(2*Ske * sizeof(bf256_t));
+    aes_256_expkey_constraints_prover(z_tilde_deg0_tag, z_tilde_deg1_val, rkeys, rkeys_tag, w, w_tag, params);      // w is bit per uint8
+
+    // ::17 raise degree
+    for (unsigned int i = 0; i < 2*Ske; i++) {
+      z_deg0[1 + i] = bf256_zero();
+      z_deg1[1 + i] = z_tilde_deg0_tag[i];
+      z_deg2[1 + i] = z_tilde_deg1_val[i];
+      //aes_256_deg2to3_prover(z_deg1 + 1, z_deg2 + 1, z_tilde_deg0_tag[i], z_tilde_deg1_val[i]);
+    }
+
+    free(z_tilde_deg0_tag);
+    free(z_tilde_deg1_val);
+  }
+  uint8_t* w_tilde = (uint8_t*)malloc(Lenc * sizeof(uint8_t));
+  bf256_t* w_tilde_tag = (bf256_t*)malloc(Lenc * sizeof(bf256_t));
+
+  bf256_t* z_tilde_deg0 = (bf256_t*)malloc(num_enc_constraints * sizeof(bf256_t));
+  bf256_t* z_tilde_deg1 = (bf256_t*)malloc(num_enc_constraints * sizeof(bf256_t));
+  bf256_t* z_tilde_deg2 = (bf256_t*)malloc(num_enc_constraints * sizeof(bf256_t));
+
+  // ::18-20
+  for (unsigned int b = 0; b < beta; b++) {
+
+    for (unsigned int i = 0; i < Lenc; i++) {
+      w_tilde[i] = w[Lke + b*Lenc + i];
+      w_tilde_tag[i] = w_tag[Lke + b*Lenc + i];
+    }
+    
+    memset(z_tilde_deg0, 0, num_enc_constraints * sizeof(bf256_t));
+    memset(z_tilde_deg1, 0, num_enc_constraints * sizeof(bf256_t));
+    memset(z_tilde_deg2, 0, num_enc_constraints * sizeof(bf256_t));
+
+    if (b == 1) {
+      in[0] = in[0] ^ 0x01;
+      in_tag[0] = bf256_add(in_tag[0], bf256_one());
+      out_tag += blocksize;
+    }
+
+    aes_256_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
+    // uint32_t z_offset = 1 + (2*FAEST_256F_Ske);
+    // printf("z offset = %d\n", z_offset);
+    // aes_256_enc_constraints_prover(z_deg0 + z_offset, z_deg1 + z_offset, z_deg2 + z_offset, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, k, k_tag, params);
+
+    // :22
+    for (unsigned int i = 0; i < num_enc_constraints; i++) {
+      z_deg0[1+(2*Ske) + b*num_enc_constraints + i] = z_tilde_deg0[i];
+      z_deg1[1+(2*Ske) + b*num_enc_constraints + i] = z_tilde_deg1[i];
+      z_deg2[1+(2*Ske) + b*num_enc_constraints + i] = z_tilde_deg2[i];
+    }
+  }
+  free(in);
+  free(in_tag);
+  free(out);
+  free(out_tag);
+  free(rkeys);
+  free(rkeys_tag);
+
+  free(w_tilde);
+  free(w_tilde_tag);
+
+  free(z_tilde_deg0);
+  free(z_tilde_deg1);
+  free(z_tilde_deg2);
 }
 
 // OWF CONSTRAINTS VERIFIER
