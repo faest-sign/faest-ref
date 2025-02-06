@@ -2800,6 +2800,15 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
       //    deg1: s_sq[0] * st[1] + s_sq[1] * st[0]
       //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
       //
+
+      {
+          bf128_t debug = bf128_mul(s_deg1, st_b_deg2[0][byte_i]);
+          bf128_t one = bf128_one();
+          bf128_t zero = bf128_zero();
+          assert((memcmp(&debug, &one, sizeof(debug)) == 0)
+                  || ((memcmp(&s_deg1, &zero, sizeof(debug)) == 0)
+                      && (memcmp(&st_b_deg2[0][byte_i], &zero, sizeof(debug)) == 0)));
+      }
       z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf128_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
 
       z_deg1[(3*r+1)*Nstbytes + 2*byte_i] = bf128_add(
