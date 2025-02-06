@@ -4963,9 +4963,9 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   free(z1_val);
   free(z2_gamma);
 
-  zk_hash_256_finalize(a0_tilde, &a0_ctx, bf_u_star_0);
-  zk_hash_256_finalize(a1_tilde, &a1_ctx, bf256_add(bf_v_star_0, bf_u_star_1));
-  zk_hash_256_finalize(a2_tilde, &a2_ctx, bf_v_star_1);
+  zk_hash_256_finalize(a0_tilde, &a0_ctx, bf_v_star_0);
+  zk_hash_256_finalize(a1_tilde, &a1_ctx, bf256_add(bf_u_star_0, bf_v_star_1));
+  zk_hash_256_finalize(a2_tilde, &a2_ctx, bf_u_star_1);
 
   free(bf_u_bits);
   free(w_tag);
