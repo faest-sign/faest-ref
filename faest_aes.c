@@ -4770,7 +4770,7 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
       in_tag[0] = bf256_add(in_tag[0], bf256_one());
     }
 
-    aes_256_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag + b * blocksize, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
+    aes_256_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out + b * blocksize, out_tag + b * blocksize, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
 
     // :22
     for (unsigned int i = 0; i < num_enc_constraints; i++) {
