@@ -32,7 +32,7 @@ static inline void masked_xor_u8_array(const uint8_t* a, const uint8_t* b, uint8
 #define get_bit(value, index) (((value) >> (index)) & 1)
 #define set_bit(value, index) ((value) << (index))
 #define ptr_get_bit(value, index) (((value)[(index) / 8] >> ((index) % 8)) & 1)
-#define ptr_set_bit(dst, value, index)                                                             \
+#define ptr_set_bit(dst, index, value)                                                             \
   do {                                                                                             \
     const unsigned int ptr_set_bit_index_mod_8 = (index) % 8;                                      \
     (dst)[(index) / 8] = ((dst)[(index) / 8] & ~(1 << ptr_set_bit_index_mod_8)) |                  \

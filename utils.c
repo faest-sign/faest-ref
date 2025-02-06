@@ -40,7 +40,7 @@ bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigned int i
   assert(hi - lo == k || hi - lo == k - 1);
   // TODO: this could be implemented more efficiently using bit shifts
   for (unsigned int j = lo; j < hi; ++j) {
-    ptr_set_bit(decoded_chall, ptr_get_bit(chall, j), j - lo);
+    ptr_set_bit(decoded_chall, j - lo, ptr_get_bit(chall, j));
   }
   return true;
 }

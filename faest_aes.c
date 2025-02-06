@@ -2206,7 +2206,7 @@ static bf128_t* column_to_row_major_and_shrink_V_128(uint8_t** v, unsigned int e
   for (unsigned int row = 0; row != ell + FAEST_128F_LAMBDA * 2; ++row) {
     uint8_t new_row[BF128_NUM_BYTES] = {0};
     for (unsigned int column = 0; column != FAEST_128F_LAMBDA; ++column) {
-      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
+      ptr_set_bit(new_row, column, ptr_get_bit(v[column], row));
     }
     new_v[row] = bf128_load(new_row);
   }
@@ -2221,7 +2221,7 @@ static bf192_t* column_to_row_major_and_shrink_V_192(uint8_t** v, unsigned int e
   for (unsigned int row = 0; row != ell + FAEST_192F_LAMBDA * 2; ++row) {
     uint8_t new_row[BF192_NUM_BYTES] = {0};
     for (unsigned int column = 0; column != FAEST_192F_LAMBDA; ++column) {
-      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
+      ptr_set_bit(new_row, column, ptr_get_bit(v[column], row));
     }
     new_v[row] = bf192_load(new_row);
   }
@@ -2237,7 +2237,7 @@ static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int e
   for (unsigned int row = 0; row != ell + FAEST_256F_LAMBDA * 2; ++row) {
     uint8_t new_row[BF256_NUM_BYTES] = {0};
     for (unsigned int column = 0; column != FAEST_256F_LAMBDA; ++column) {
-      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
+      ptr_set_bit(new_row, column, ptr_get_bit(v[column], row));
     }
     new_v[row] = bf256_load(new_row);
   }

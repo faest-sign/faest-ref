@@ -67,7 +67,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     for (unsigned int tries = 0; !tested && tries != max_tries; ++tries) {
       rand_bytes(chal.data(), chal.size());
       for (unsigned int i = lambda - params->faest_param.w_grind; i != lambda; ++i) {
-        ptr_set_bit(chal.data(), 0, i);
+        ptr_set_bit(chal.data(), i, 0);
       }
 
       std::vector<uint16_t> i_delta;

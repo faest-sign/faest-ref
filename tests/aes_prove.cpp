@@ -110,14 +110,14 @@ namespace rijndael_em_256_tv {
 
 static bf128_t* column_to_row_major_and_shrink_V_128(uint8_t** v, unsigned int ell) {
   // V is \hat \ell times \lambda matrix over F_2
-  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + 2 \lambda
-  // rows and \lambda columns storing in row-major order
-  bf128_t* new_v = (bf128_t*) malloc((ell + FAEST_128F_LAMBDA*2) * sizeof(bf128_t));
+  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + 2
+  // \lambda rows and \lambda columns storing in row-major order
+  bf128_t* new_v = (bf128_t*)malloc((ell + FAEST_128F_LAMBDA * 2) * sizeof(bf128_t));
   // faest_aligned_alloc(BF128_ALIGN, (ell + FAEST_128F_LAMBDA*2) * sizeof(bf128_t));
-  for (unsigned int row = 0; row != ell + FAEST_128F_LAMBDA*2; ++row) {
+  for (unsigned int row = 0; row != ell + FAEST_128F_LAMBDA * 2; ++row) {
     uint8_t new_row[BF128_NUM_BYTES] = {0};
     for (unsigned int column = 0; column != FAEST_128F_LAMBDA; ++column) {
-      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
+      ptr_set_bit(new_row, column, ptr_get_bit(v[column], row));
     }
     new_v[row] = bf128_load(new_row);
   }
@@ -128,11 +128,11 @@ static bf192_t* column_to_row_major_and_shrink_V_192(uint8_t** v, unsigned int e
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
   // rows and \lambda columns storing in row-major order
-  bf192_t* new_v = (bf192_t*) malloc((ell + FAEST_192F_LAMBDA*2) * sizeof(bf192_t));
-  for (unsigned int row = 0; row != ell + FAEST_192F_LAMBDA*2; ++row) {
+  bf192_t* new_v = (bf192_t*)malloc((ell + FAEST_192F_LAMBDA * 2) * sizeof(bf192_t));
+  for (unsigned int row = 0; row != ell + FAEST_192F_LAMBDA * 2; ++row) {
     uint8_t new_row[BF192_NUM_BYTES] = {0};
     for (unsigned int column = 0; column != FAEST_192F_LAMBDA; ++column) {
-      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
+      ptr_set_bit(new_row, column, ptr_get_bit(v[column], row));
     }
     new_v[row] = bf192_load(new_row);
   }
@@ -144,11 +144,11 @@ static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int e
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + \lambda
   // rows and \lambda columns storing in row-major order
-  bf256_t* new_v = (bf256_t*) malloc((ell + FAEST_256F_LAMBDA*2) * sizeof(bf256_t));
-  for (unsigned int row = 0; row != ell + FAEST_256F_LAMBDA*2; ++row) {
+  bf256_t* new_v = (bf256_t*)malloc((ell + FAEST_256F_LAMBDA * 2) * sizeof(bf256_t));
+  for (unsigned int row = 0; row != ell + FAEST_256F_LAMBDA * 2; ++row) {
     uint8_t new_row[BF256_NUM_BYTES] = {0};
     for (unsigned int column = 0; column != FAEST_256F_LAMBDA; ++column) {
-      ptr_set_bit(new_row, ptr_get_bit(v[column], row), column);
+      ptr_set_bit(new_row, column, ptr_get_bit(v[column], row));
     }
     new_v[row] = bf256_load(new_row);
   }
@@ -157,7 +157,7 @@ static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int e
 }
 
 BOOST_AUTO_TEST_SUITE(test_aes_prove)
-/* 
+/*
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const faest_paramset_t* params = faest_get_paramset(param_id);
@@ -201,7 +201,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     else {
       return;
     }
-    
+
     uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
     std::vector<uint8_t> w_bits(ell, 0x00);  // 1 bit in per uint8_t
     for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
@@ -293,8 +293,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
 }
  */
 
-
-/* 
+/*
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const faest_paramset_t* params = faest_get_paramset(param_id);
@@ -338,7 +337,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     else {
       return;
     }
-    
+
     uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
     std::vector<uint8_t> w_bits(ell, 0x00);  // 1 bit in per uint8_t
     for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
@@ -430,56 +429,53 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
 }
  */
 
-
-
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const faest_paramset_t* params = faest_get_paramset(param_id);
     const bool is_em               = faest_is_em(params);
     const unsigned int lambda      = params->faest_param.lambda;
     const unsigned int lambdaBytes = lambda / 8;
-    const unsigned int ell = params->faest_param.l;
+    const unsigned int ell         = params->faest_param.l;
     const unsigned int ell_hat =
         params->faest_param.l + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-    const unsigned int ell_bytes = (params->faest_param.l + 7) / 8;
+    const unsigned int ell_bytes     = (params->faest_param.l + 7) / 8;
 
     // extended witness
-    //std::vector<uint8_t> w;
+    // std::vector<uint8_t> w;
     std::vector<uint8_t> in;
     std::vector<uint8_t> out;
 
     if (lambda == 128 && !is_em) {
       for (const auto byte : aes_ctr_128_tv::in) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              in.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          in.push_back((byte >> bit_i) & 1);
+        }
       }
       for (const auto byte : aes_ctr_128_tv::out) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              out.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          out.push_back((byte >> bit_i) & 1);
+        }
       }
     } else if (lambda == 128 && is_em) {
       for (const auto byte : rijndael_em_128_tv::in) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              in.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          in.push_back((byte >> bit_i) & 1);
+        }
       }
       for (const auto byte : rijndael_em_128_tv::out) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              out.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          out.push_back((byte >> bit_i) & 1);
+        }
       }
-    }
-    else {
+    } else {
       return;
     }
-    
+
     uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
-    std::vector<uint8_t> w_bits(ell, 0x00);  // 1 bit in per uint8_t
+    std::vector<uint8_t> w_bits(ell, 0x00); // 1 bit in per uint8_t
     for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
-      w_bits[bit_i] = (w[bit_i/8] >> bit_i%8) & 1;
+      w_bits[bit_i] = (w[bit_i / 8] >> bit_i % 8) & 1;
     }
 
     // if (lambda == 128 && !is_em) {
@@ -495,7 +491,8 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     //   std::copy(rijndael_em_128_tv::out.begin(), rijndael_em_128_tv::out.end(),
     //             std::back_insert_iterator(out));
     //   std::copy(rijndael_em_128_tv::expected_extended_witness.begin(),
-    //             rijndael_em_128_tv::expected_extended_witness.end(), std::back_insert_iterator(w));
+    //             rijndael_em_128_tv::expected_extended_witness.end(),
+    //             std::back_insert_iterator(w));
     // } else if (lambda == 192 && !is_em) {
     //   std::copy(aes_ctr_192_tv::in.begin(), aes_ctr_192_tv::in.end(),
     //             std::back_insert_iterator(in));
@@ -509,7 +506,8 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     //   std::copy(rijndael_em_192_tv::out.begin(), rijndael_em_192_tv::out.end(),
     //             std::back_insert_iterator(out));
     //   std::copy(rijndael_em_192_tv::expected_extended_witness.begin(),
-    //             rijndael_em_192_tv::expected_extended_witness.end(), std::back_insert_iterator(w));
+    //             rijndael_em_192_tv::expected_extended_witness.end(),
+    //             std::back_insert_iterator(w));
     // } else if (lambda == 256 && !is_em) {
     //   std::copy(aes_ctr_256_tv::in.begin(), aes_ctr_256_tv::in.end(),
     //             std::back_insert_iterator(in));
@@ -523,13 +521,14 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     //   std::copy(rijndael_em_256_tv::out.begin(), rijndael_em_256_tv::out.end(),
     //             std::back_insert_iterator(out));
     //   std::copy(rijndael_em_256_tv::expected_extended_witness.begin(),
-    //             rijndael_em_256_tv::expected_extended_witness.end(), std::back_insert_iterator(w));
+    //             rijndael_em_256_tv::expected_extended_witness.end(),
+    //             std::back_insert_iterator(w));
     // }
 
     // prepare vole correlation
     std::vector<uint8_t> delta(lambda / 8, 0);
     for (size_t i = 0; i < lambda / 8; ++i) {
-      delta[i] = (uint8_t) i;
+      delta[i] = (uint8_t)i;
     }
     std::vector<uint8_t> u(ell_hat_bytes, 0x13);
     std::vector<uint8_t> vs(ell_hat_bytes * lambda, 0x37);
@@ -568,13 +567,13 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     std::vector<uint8_t> a2_tilde(lambda / 8, 0);
 
     bf128_t bf_delta = bf128_load(delta.data());
-    bf128_t* q = column_to_row_major_and_shrink_V_128(Q.data(), ell);
+    bf128_t* q       = column_to_row_major_and_shrink_V_128(Q.data(), ell);
 
-    bf128_t* w_tag = column_to_row_major_and_shrink_V_128(V.data(), ell);
-    bf128_t* bf_u_bits = (bf128_t*) malloc(2*lambda * sizeof(bf128_t));
+    bf128_t* w_tag     = column_to_row_major_and_shrink_V_128(V.data(), ell);
+    bf128_t* bf_u_bits = (bf128_t*)malloc(2 * lambda * sizeof(bf128_t));
 
-    for (unsigned int bit_i = 0; bit_i < 2*lambda; bit_i++) {
-      u_bits[bit_i] = (u[(ell + bit_i)/8] >> (ell + bit_i)%8) & 1;
+    for (unsigned int bit_i = 0; bit_i < 2 * lambda; bit_i++) {
+      u_bits[bit_i]    = (u[(ell + bit_i) / 8] >> (ell + bit_i) % 8) & 1;
       bf_u_bits[bit_i] = bf128_from_bit(u_bits[bit_i]);
     }
     // verifier Delta, q_star
@@ -588,14 +587,14 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     bf128_t bf_u_star_0 = bf128_sum_poly(bf_u_bits);
     bf128_t bf_v_star_0 = bf128_sum_poly(w_tag + ell);
 
-    //printf("u_star_0\n");
-    // print_array<uint8_t>((uint8_t*) &bf_u_star_0, lambdaBytes);
-    //printf("v_star_0\n");
-    // print_array<uint8_t>((uint8_t*) &bf_v_star_0, lambdaBytes);
+    // printf("u_star_0\n");
+    //  print_array<uint8_t>((uint8_t*) &bf_u_star_0, lambdaBytes);
+    // printf("v_star_0\n");
+    //  print_array<uint8_t>((uint8_t*) &bf_v_star_0, lambdaBytes);
 
     bf128_t test_v0 = bf128_add(q_star_0, bf128_mul(bf_delta, bf_u_star_0));
-    //printf("q_star_0 + delta * u_star_0\n");
-    // print_array<uint8_t>((uint8_t*) &test_v0, lambdaBytes);
+    // printf("q_star_0 + delta * u_star_0\n");
+    //  print_array<uint8_t>((uint8_t*) &test_v0, lambdaBytes);
 
     BOOST_TEST(memcmp(&test_v0, &bf_v_star_0, lambdaBytes) == 0);
 
@@ -623,7 +622,5 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     free(q);
   }
 }
-
-
 
 BOOST_AUTO_TEST_SUITE_END()

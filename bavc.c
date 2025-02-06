@@ -216,12 +216,12 @@ bool bavc_open(const bavc_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
   // Step 7..15
   for (unsigned int i = 0; i < tau; ++i) {
     unsigned int alpha = pos_in_tree(i, i_delta[i], params);
-    ptr_set_bit(s, 1, alpha);
+    ptr_set_bit(s, alpha, 1);
     ++nh;
 
     while (alpha > 0 && ptr_get_bit(s, (alpha - 1) / 2) == 0) {
       alpha = (alpha - 1) / 2;
-      ptr_set_bit(s, 1, alpha);
+      ptr_set_bit(s, alpha, 1);
       ++nh;
     }
   }
@@ -242,7 +242,7 @@ bool bavc_open(const bavc_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
 
   // Step 19..25
   for (int i = L - 2; i >= 0; --i) {
-    ptr_set_bit(s, ptr_get_bit(s, 2 * i + 1) | ptr_get_bit(s, 2 * i + 2), i);
+    ptr_set_bit(s, i, ptr_get_bit(s, 2 * i + 1) | ptr_get_bit(s, 2 * i + 2));
     if ((ptr_get_bit(s, 2 * i + 1) ^ ptr_get_bit(s, 2 * i + 2)) == 1) {
       const unsigned int alpha = 2 * i + 1 + ptr_get_bit(s, 2 * i + 1);
       memcpy(decom_i, NODE(vc->k, alpha, lambda_bytes), lambda_bytes);
@@ -270,12 +270,12 @@ static bool reconstruct_keys(uint8_t* s, uint8_t* keys, const uint8_t* decom_i,
   // Step 7..10
   for (unsigned int i = 0; i < tau; ++i) {
     unsigned int alpha = pos_in_tree(i, i_delta[i], params);
-    ptr_set_bit(s, 1, alpha);
+    ptr_set_bit(s, alpha, 1);
   }
 
   // Step 12.12
   for (int i = L - 2; i >= 0; --i) {
-    ptr_set_bit(s, ptr_get_bit(s, 2 * i + 1) | ptr_get_bit(s, 2 * i + 2), i);
+    ptr_set_bit(s, i, ptr_get_bit(s, 2 * i + 1) | ptr_get_bit(s, 2 * i + 2));
     if ((ptr_get_bit(s, 2 * i + 1) ^ ptr_get_bit(s, 2 * i + 2)) == 1) {
       if (nodes == end) {
         return false;

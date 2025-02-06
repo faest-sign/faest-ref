@@ -78,7 +78,7 @@ int main() {
     while (true) {
       std::generate(chal.begin(), chal.end(), [&mt, &dist] { return dist(mt); });
       for (unsigned int i = lambda - params.faest_param.w_grind; i != lambda; ++i) {
-        ptr_set_bit(chal.data(), 0, i);
+        ptr_set_bit(chal.data(), i, 0);
       }
 
       uint16_t i_delta[MAX_TAU];
