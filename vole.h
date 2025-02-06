@@ -5,8 +5,9 @@
 #ifndef FAEST_VOLE_H
 #define FAEST_VOLE_H
 
-#include "bavc.h"
 #include <stdbool.h>
+
+#include "bavc.h"
 
 FAEST_BEGIN_C_DECL
 
@@ -19,8 +20,9 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
                       const faest_paramset_t* params);
 
 #if defined(FAEST_TESTS)
-int ConvertToVole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,
-                  unsigned int outLenBytes, uint8_t* u, uint8_t* v, const faest_paramset_t* params);
+unsigned int convert_to_vole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,
+                             unsigned int outLenBytes, uint8_t* u, uint8_t* v,
+                             const faest_paramset_t* params);
 #endif
 
 FAEST_END_C_DECL

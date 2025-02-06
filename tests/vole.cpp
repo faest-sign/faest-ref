@@ -92,7 +92,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
   }
 }
 
-BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
+BOOST_DATA_TEST_CASE(test_convert_to_vole, all_parameters, param_id) {
   std::mt19937_64 rd;
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const faest_paramset_t params    = *faest_get_paramset(param_id);
@@ -118,7 +118,7 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
       unsigned int depth = bavc_max_node_depth(i, params.tau1, max_depth);
       unsigned int nodes = 1 << depth;
 
-      ConvertToVole(iv.data(), sd.data(), false, i, ell_hat_bytes, u.data(), v.data(), &params);
+      convert_to_vole(iv.data(), sd.data(), false, i, ell_hat_bytes, u.data(), v.data(), &params);
 
       std::vector<uint8_t> sdprime;
       sdprime.resize(nodes * lambda_bytes, 0);
@@ -127,7 +127,8 @@ BOOST_DATA_TEST_CASE(convert_to_vole, all_parameters, param_id) {
                   sd.begin() + ((j ^ idx) + 1) * lambda_bytes, &sdprime[j * lambda_bytes]);
       }
 
-      ConvertToVole(iv.data(), sdprime.data(), true, i, ell_hat_bytes, nullptr, q.data(), &params);
+      convert_to_vole(iv.data(), sdprime.data(), true, i, ell_hat_bytes, nullptr, q.data(),
+                      &params);
 
       for (unsigned int j = 0; j != depth; ++j) {
         if (idx & (1 << j)) {

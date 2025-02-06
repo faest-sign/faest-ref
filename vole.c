@@ -19,10 +19,10 @@ static const uint32_t TWEAK_OFFSET = UINT32_C(0x80000000); // 2^31
 #if !defined(FAEST_TESTS)
 static
 #endif
-    int
-    ConvertToVole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,
-                  unsigned int outLenBytes, uint8_t* u, uint8_t* v,
-                  const faest_paramset_t* params) {
+    unsigned int
+    convert_to_vole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,
+                    unsigned int outLenBytes, uint8_t* u, uint8_t* v,
+                    const faest_paramset_t* params) {
   const unsigned int lambda        = params->lambda;
   const unsigned int tau_1         = params->tau1;
   const unsigned int k             = params->k;
@@ -84,7 +84,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   for (unsigned int i = 0; i < tau; ++i) {
     // Step 6
     v_idx +=
-        ConvertToVole(iv, sd_i, false, i, ellhat_bytes, ui + i * ellhat_bytes, v[v_idx], params);
+        convert_to_vole(iv, sd_i, false, i, ellhat_bytes, ui + i * ellhat_bytes, v[v_idx], params);
     sd_i += lambda_bytes * bavc_max_node_index(i, tau_1, k);
   }
   // ensure 0-padding up to lambda
@@ -138,16 +138,15 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
 
     // Step: 6
     for (unsigned int j = 0; j < Ni; j++) {
-      if (j < i_delta[i])
+      if (j < i_delta[i]) {
         memcpy(sd + (j ^ i_delta[i]) * lambda_bytes, sd_i + lambda_bytes * j, lambda_bytes);
-      else if (j == i_delta[i])
-        continue;
-      else
+      } else if (j > i_delta[i]) {
         memcpy(sd + (j ^ i_delta[i]) * lambda_bytes, sd_i + lambda_bytes * (j - 1), lambda_bytes);
+      }
     }
 
     // Step: 7..8
-    const unsigned int ki = ConvertToVole(iv, sd, true, i, ellhat_bytes, NULL, qtmp, params);
+    const unsigned int ki = convert_to_vole(iv, sd, true, i, ellhat_bytes, NULL, qtmp, params);
 
     // Step 11
     if (i == 0) {
