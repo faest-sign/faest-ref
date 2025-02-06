@@ -4869,7 +4869,7 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key, c
   }
   // ::18-20
   bf128_t* w_tilde_key = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, Lenc * sizeof(bf128_t));
-  bf128_t* z_tilde_enc_key = (bf128_t*)malloc(num_enc_constraints * sizeof(bf128_t));
+  bf128_t* z_tilde_enc_key = (bf128_t*)faest_aligned_alloc(BF128_ALIGN, num_enc_constraints * sizeof(bf128_t));
 
   for (unsigned int b = 0; b < beta; b++) {
     for (unsigned int i = 0; i < Lenc; i++) {
@@ -4969,7 +4969,7 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key, c
   }
   // ::18-20
   bf192_t* w_tilde_key = (bf192_t*)faest_aligned_alloc(BF192_ALIGN, Lenc * sizeof(bf192_t));
-  bf192_t* z_tilde_enc_key = (bf192_t*)malloc(num_enc_constraints * sizeof(bf192_t));
+  bf192_t* z_tilde_enc_key = (bf192_t*)faest_aligned_alloc(BF192_ALIGN, num_enc_constraints * sizeof(bf192_t));
 
   for (unsigned int b = 0; b < beta; b++) {
     for (unsigned int i = 0; i < Lenc; i++) {
@@ -5068,7 +5068,7 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key, c
   }
   // ::18-20
   bf256_t* w_tilde_key = (bf256_t*)faest_aligned_alloc(BF256_ALIGN, Lenc * sizeof(bf256_t));
-  bf256_t* z_tilde_enc_key = (bf256_t*)malloc(num_enc_constraints * sizeof(bf256_t));
+  bf256_t* z_tilde_enc_key = (bf256_t*)faest_aligned_alloc(BF256_ALIGN, num_enc_constraints * sizeof(bf256_t));
 
   for (unsigned int b = 0; b < beta; b++) {
     for (unsigned int i = 0; i < Lenc; i++) {
