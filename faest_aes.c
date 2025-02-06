@@ -1425,8 +1425,7 @@ static void aes_192_add_round_key_bytes_prover(bf192_t* y_deg0, bf192_t* y_deg1,
   for (unsigned int i = 0; i < Nstbytes; i++) {
     y_deg2[i] = bf192_add(in_deg2[i], k_deg2[i]);
     y_deg1[i] = bf192_add(in_deg1[i], k_deg1[i]);
-    y_deg1[i] = bf192_add(in_deg0[i], k_deg0[i]);
-    y_deg0[i] = in_deg0[i];
+    y_deg0[i] = bf192_add(in_deg0[i], k_deg0[i]);
   }
 }
 static void aes_256_add_round_key_bytes_prover(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t* y_deg2, const bf256_t* in_deg0, const bf256_t* in_deg1, const bf256_t* in_deg2, 
@@ -1438,8 +1437,7 @@ static void aes_256_add_round_key_bytes_prover(bf256_t* y_deg0, bf256_t* y_deg1,
   for (unsigned int i = 0; i < Nstbytes; i++) {
     y_deg2[i] = bf256_add(in_deg2[i], k_deg2[i]);
     y_deg1[i] = bf256_add(in_deg1[i], k_deg1[i]);
-    y_deg1[i] = bf256_add(in_deg0[i], k_deg0[i]);
-    y_deg0[i] = in_deg0[i];
+    y_deg0[i] = bf256_add(in_deg0[i], k_deg0[i]);
   }
 }
 
