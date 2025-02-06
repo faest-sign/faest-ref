@@ -574,11 +574,11 @@ void aes_192_state_to_bytes_verifier(bf192_t* out_key, const bf192_t* k_key, con
     out_key[i] = bf192_byte_combine(k_key + i*8);
   }
 }
-void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* s_key, const faest_paramset_t* params) {
+void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* k_key, const faest_paramset_t* params) {
   uint16_t Nst_bytes = params->faest_param.Nwd * 4;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
-    out_key[i] = bf256_byte_combine(s_key + i*8);
+    out_key[i] = bf256_byte_combine(k_key + i*8);
   }
 }
 
