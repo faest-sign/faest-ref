@@ -59,7 +59,7 @@ namespace {
     const auto com_size     = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
 
     bavc_t vc;
-    bavc_commit(root_key.data(), iv.data(), &params, &vc);
+    bavc_commit(&vc, root_key.data(), iv.data(), &params);
 
     const std::vector<uint8_t> h{vc.h, vc.h + HSize},
         expected_h_vec{expected_h.begin(), expected_h.end()};
@@ -73,7 +73,7 @@ namespace {
 
     std::vector<uint8_t> decom_i;
     decom_i.resize(com_size * params.tau + params.T_open * lambda_bytes);
-    BOOST_TEST(bavc_open(&vc, i_delta.data(), decom_i.data(), &params));
+    BOOST_TEST(bavc_open(decom_i.data(), &vc, i_delta.data(), &params));
 
     // compare hashed decom_i to reduce size of the TVs
     const auto hashed_decom_i = hash_array(decom_i);
@@ -87,7 +87,7 @@ namespace {
     vc_rec.h = rec_h.data();
     vc_rec.s = rec_s.data();
 
-    BOOST_TEST(bavc_reconstruct(decom_i.data(), i_delta.data(), iv.data(), &params, &vc_rec));
+    BOOST_TEST(bavc_reconstruct(&vc_rec, decom_i.data(), i_delta.data(), iv.data(), &params));
     BOOST_TEST(rec_h == expected_h_vec);
 
     // compare hashed sd_ij to reduce size of the TVs
@@ -191,7 +191,7 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
     const auto lambda_bytes = lambda / 8;
 
     bavc_t vc;
-    bavc_commit(root_key.data(), iv.data(), &params, &vc);
+    bavc_commit(&vc, root_key.data(), iv.data(), &params);
 
     std::vector<uint8_t> decom_i;
     std::vector<uint16_t> i_delta;
@@ -208,7 +208,7 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
       decom_i.clear();
       decom_i.resize(((faest_is_em(&params) ? 2 : 3) * params.tau + params.T_open) * lambda_bytes);
 
-      ret = bavc_open(&vc, i_delta.data(), decom_i.data(), &params);
+      ret = bavc_open(decom_i.data(), &vc, i_delta.data(), &params);
     }
     BOOST_TEST(ret);
 
@@ -220,7 +220,7 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
     vc_rec.h = rec_h.data();
     vc_rec.s = rec_s.data();
 
-    BOOST_TEST(bavc_reconstruct(decom_i.data(), i_delta.data(), iv.data(), &params, &vc_rec));
+    BOOST_TEST(bavc_reconstruct(&vc_rec, decom_i.data(), i_delta.data(), iv.data(), &params));
     BOOST_TEST(memcmp(vc.h, vc_rec.h, 2 * lambda_bytes) == 0);
 
     bavc_clear(&vc);

@@ -82,8 +82,8 @@ static inline unsigned int pos_in_tree(unsigned int i, unsigned int j,
 }
 
 // BAVC.Commit for FAEST
-static void bavc_commit_faest(const uint8_t* rootKey, const uint8_t* iv,
-                              const faest_paramset_t* params, bavc_t* vecCom) {
+static void bavc_commit_faest(bavc_t* bavc, const uint8_t* root_key, const uint8_t* iv,
+                              const faest_paramset_t* params) {
   const unsigned int lambda       = params->lambda;
   const unsigned int L            = params->L;
   const unsigned int lambda_bytes = lambda / 8;
@@ -98,15 +98,15 @@ static void bavc_commit_faest(const uint8_t* rootKey, const uint8_t* iv,
   H1_init(&h1_com_ctx, lambda);
 
   // Generating the tree (k)
-  uint8_t* nodes = generate_seeds(rootKey, iv, params);
+  uint8_t* nodes = generate_seeds(root_key, iv, params);
 
   // Initialzing stuff
-  vecCom->h   = malloc(lambda_bytes * 2);
-  vecCom->com = malloc(L * com_size);
-  vecCom->sd  = malloc(L * lambda_bytes);
+  bavc->h   = malloc(lambda_bytes * 2);
+  bavc->com = malloc(L * com_size);
+  bavc->sd  = malloc(L * lambda_bytes);
 
   // Step: 1..3
-  vecCom->k = NODE(nodes, 0, lambda_bytes);
+  bavc->k = NODE(nodes, 0, lambda_bytes);
 
   // Step: 4..5
   // compute commitments for remaining instances
@@ -120,9 +120,9 @@ static void bavc_commit_faest(const uint8_t* rootKey, const uint8_t* iv,
     const unsigned int N_i = bavc_max_node_index(i, params->tau1, params->k);
     for (unsigned int j = 0; j < N_i; ++j, ++offset) {
       const unsigned int alpha = pos_in_tree(i, j, params);
-      faest_leaf_commit(vecCom->sd + offset * lambda_bytes, vecCom->com + offset * com_size,
+      faest_leaf_commit(bavc->sd + offset * lambda_bytes, bavc->com + offset * com_size,
                         NODE(nodes, alpha, lambda_bytes), iv, i + L - 1, uhash, lambda);
-      H1_update(&h1_ctx, vecCom->com + offset * com_size, com_size);
+      H1_update(&h1_ctx, bavc->com + offset * com_size, com_size);
     }
 
     uint8_t hi[MAX_LAMBDA_BYTES * 2];
@@ -134,12 +134,12 @@ static void bavc_commit_faest(const uint8_t* rootKey, const uint8_t* iv,
   H0_clear(&uhash_ctx);
 
   // Step 12
-  H1_final(&h1_com_ctx, vecCom->h, lambda_bytes * 2);
+  H1_final(&h1_com_ctx, bavc->h, lambda_bytes * 2);
 }
 
 // BAVC.Commit for FAEST-EM
-static void bavc_commit_faest_em(const uint8_t* rootKey, const uint8_t* iv,
-                                 const faest_paramset_t* params, bavc_t* vecCom) {
+static void bavc_commit_faest_em(bavc_t* bavc, const uint8_t* rootKey, const uint8_t* iv,
+                                 const faest_paramset_t* params) {
   const unsigned int lambda       = params->lambda;
   const unsigned int L            = params->L;
   const unsigned int lambda_bytes = lambda / 8;
@@ -152,12 +152,12 @@ static void bavc_commit_faest_em(const uint8_t* rootKey, const uint8_t* iv,
   uint8_t* nodes = generate_seeds(rootKey, iv, params);
 
   // Initialzing stuff
-  vecCom->h   = malloc(lambda_bytes * 2);
-  vecCom->com = malloc(L * com_size);
-  vecCom->sd  = malloc(L * lambda_bytes);
+  bavc->h   = malloc(lambda_bytes * 2);
+  bavc->com = malloc(L * com_size);
+  bavc->sd  = malloc(L * lambda_bytes);
 
   // Step: 1..3
-  vecCom->k = NODE(nodes, 0, lambda_bytes);
+  bavc->k = NODE(nodes, 0, lambda_bytes);
 
   // Step: 4..5
   // compute commitments for remaining instances
@@ -168,9 +168,9 @@ static void bavc_commit_faest_em(const uint8_t* rootKey, const uint8_t* iv,
     const unsigned int N_i = bavc_max_node_index(i, params->tau1, params->k);
     for (unsigned int j = 0; j < N_i; ++j, ++offset) {
       const unsigned int alpha = pos_in_tree(i, j, params);
-      faest_em_leaf_commit(vecCom->sd + offset * lambda_bytes, vecCom->com + offset * com_size,
+      faest_em_leaf_commit(bavc->sd + offset * lambda_bytes, bavc->com + offset * com_size,
                            NODE(nodes, alpha, lambda_bytes), iv, i + L - 1, lambda);
-      H1_update(&h1_ctx, vecCom->com + offset * com_size, com_size);
+      H1_update(&h1_ctx, bavc->com + offset * com_size, com_size);
     }
 
     uint8_t hi[MAX_LAMBDA_BYTES * 2];
@@ -181,19 +181,19 @@ static void bavc_commit_faest_em(const uint8_t* rootKey, const uint8_t* iv,
   }
 
   // Step 12
-  H1_final(&h1_com_ctx, vecCom->h, lambda_bytes * 2);
+  H1_final(&h1_com_ctx, bavc->h, lambda_bytes * 2);
 }
 
-void bavc_commit(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
-                 bavc_t* vecCom) {
+void bavc_commit(bavc_t* bavc, const uint8_t* root_key, const uint8_t* iv,
+                 const faest_paramset_t* params) {
   if (faest_is_em(params)) {
-    bavc_commit_faest_em(rootKey, iv, params, vecCom);
+    bavc_commit_faest_em(bavc, root_key, iv, params);
   } else {
-    bavc_commit_faest(rootKey, iv, params, vecCom);
+    bavc_commit_faest(bavc, root_key, iv, params);
   }
 }
 
-bool bavc_open(const bavc_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
+bool bavc_open(uint8_t* decom_i, const bavc_t* vc, const uint16_t* i_delta,
                const faest_paramset_t* params) {
   const unsigned int lambda       = params->lambda;
   const unsigned int L            = params->L;
@@ -300,9 +300,9 @@ static bool reconstruct_keys(uint8_t* s, uint8_t* keys, const uint8_t* decom_i,
   return true;
 }
 
-static bool bavc_reconstruct_faest(const uint8_t* decom_i, const uint16_t* i_delta,
-                                   const uint8_t* iv, const faest_paramset_t* params,
-                                   bavc_rec_t* vecComRec) {
+static bool bavc_reconstruct_faest(bavc_rec_t* bavc_rec, const uint8_t* decom_i,
+                                   const uint16_t* i_delta, const uint8_t* iv,
+                                   const faest_paramset_t* params) {
   // Initializing
   const unsigned int lambda       = params->lambda;
   const unsigned int L            = params->L;
@@ -344,8 +344,8 @@ static bool bavc_reconstruct_faest(const uint8_t* decom_i, const uint16_t* i_del
         H1_update(&h1_ctx, decom_i + i * com_size, com_size);
       } else {
         uint8_t com[3 * MAX_LAMBDA_BYTES];
-        faest_leaf_commit(vecComRec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
-                          iv, i + L - 1, uhash, lambda);
+        faest_leaf_commit(bavc_rec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes, iv,
+                          i + L - 1, uhash, lambda);
         ++offset;
         H1_update(&h1_ctx, com, com_size);
       }
@@ -357,16 +357,16 @@ static bool bavc_reconstruct_faest(const uint8_t* decom_i, const uint16_t* i_del
   }
   H0_clear(&uhash_ctx);
 
-  H1_final(&h1_com_ctx, vecComRec->h, lambda_bytes * 2);
+  H1_final(&h1_com_ctx, bavc_rec->h, lambda_bytes * 2);
 
   free(keys);
   free(s);
   return true;
 }
 
-static bool bavc_reconstruct_faest_em(const uint8_t* decom_i, const uint16_t* i_delta,
-                                      const uint8_t* iv, const faest_paramset_t* params,
-                                      bavc_rec_t* vecComRec) {
+static bool bavc_reconstruct_faest_em(bavc_rec_t* bavc_rec, const uint8_t* decom_i,
+                                      const uint16_t* i_delta, const uint8_t* iv,
+                                      const faest_paramset_t* params) {
   // Initializing
   const unsigned int lambda       = params->lambda;
   const unsigned int L            = params->L;
@@ -401,7 +401,7 @@ static bool bavc_reconstruct_faest_em(const uint8_t* decom_i, const uint16_t* i_
         H1_update(&h1_ctx, decom_i + i * com_size, com_size);
       } else {
         uint8_t com[2 * MAX_LAMBDA_BYTES];
-        faest_em_leaf_commit(vecComRec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
+        faest_em_leaf_commit(bavc_rec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
                              iv, i + L - 1, lambda);
         ++offset;
         H1_update(&h1_ctx, com, com_size);
@@ -413,17 +413,17 @@ static bool bavc_reconstruct_faest_em(const uint8_t* decom_i, const uint16_t* i_
     H1_update(&h1_com_ctx, hi, lambda_bytes * 2);
   }
 
-  H1_final(&h1_com_ctx, vecComRec->h, lambda_bytes * 2);
+  H1_final(&h1_com_ctx, bavc_rec->h, lambda_bytes * 2);
 
   free(keys);
   free(s);
   return true;
 }
 
-bool bavc_reconstruct(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
-                      const faest_paramset_t* params, bavc_rec_t* vecComRec) {
-  return faest_is_em(params) ? bavc_reconstruct_faest_em(decom_i, i_delta, iv, params, vecComRec)
-                             : bavc_reconstruct_faest(decom_i, i_delta, iv, params, vecComRec);
+bool bavc_reconstruct(bavc_rec_t* bavc_rec, const uint8_t* decom_i, const uint16_t* i_delta,
+                      const uint8_t* iv, const faest_paramset_t* params) {
+  return faest_is_em(params) ? bavc_reconstruct_faest_em(bavc_rec, decom_i, i_delta, iv, params)
+                             : bavc_reconstruct_faest(bavc_rec, decom_i, i_delta, iv, params);
 }
 
 void bavc_clear(bavc_t* com) {

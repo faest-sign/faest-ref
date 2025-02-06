@@ -76,7 +76,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       decom_i.resize(com_size * params->tau + params->T_open * lambda_bytes);
 
       BOOST_TEST(decode_all_chall_3(i_delta.data(), chal.data(), params));
-      if (!bavc_open(&bavc_com, i_delta.data(), decom_i.data(), params)) {
+      if (!bavc_open(decom_i.data(), &bavc_com, i_delta.data(), params)) {
         continue;
       }
       tested = true;
@@ -190,7 +190,7 @@ namespace {
     std::vector<uint16_t> i_delta;
     i_delta.resize(params->tau);
     BOOST_TEST(decode_all_chall_3(i_delta.data(), challenge.data(), params));
-    BOOST_TEST(bavc_open(&bavc_com, i_delta.data(), decom_i.data(), params));
+    BOOST_TEST(bavc_open(decom_i.data(), &bavc_com, i_delta.data(), params));
 
     std::vector<uint8_t> hcom_rec;
     hcom_rec.resize(lambda_bytes * 2);

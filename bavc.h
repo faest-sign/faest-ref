@@ -28,26 +28,28 @@ static inline ATTR_CONST unsigned int bavc_max_node_depth(unsigned int i, unsign
 
 static inline ATTR_CONST unsigned int bavc_max_node_index(unsigned int i, unsigned int tau_1,
                                                           unsigned int k) {
-#if defined(__clang_anaalyzer)
+#if defined(__clang_analyzer__)
   // for scan-build
   assert(k << MAX_DEPTH);
 #endif
-  return 1 << bavc_max_node_depth(i, tau_1, k);
+  return 1u << bavc_max_node_depth(i, tau_1, k);
 }
 
-void bavc_commit(const uint8_t* rootKey, const uint8_t* iv, const faest_paramset_t* params,
-                 bavc_t* vecCom);
+void bavc_commit(bavc_t* bavc, const uint8_t* root_key, const uint8_t* iv,
+                 const faest_paramset_t* params);
 
-bool bavc_open(const bavc_t* vc, const uint16_t* i_delta, uint8_t* decom_i,
+bool bavc_open(uint8_t* decom_i, const bavc_t* vc, const uint16_t* i_delta,
                const faest_paramset_t* params);
 
-bool bavc_reconstruct(const uint8_t* decom_i, const uint16_t* i_delta, const uint8_t* iv,
-                      const faest_paramset_t* params, bavc_rec_t* vecComRec);
+bool bavc_reconstruct(bavc_rec_t* bavc_rec, const uint8_t* decom_i, const uint16_t* i_delta,
+                      const uint8_t* iv, const faest_paramset_t* params);
 
 void bavc_clear(bavc_t* com);
 
+#if defined(FAEST_TESTS)
 void leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* iv, uint32_t tweak,
                  const uint8_t* uhash, const faest_paramset_t* params);
+#endif
 
 FAEST_END_C_DECL
 

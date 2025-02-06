@@ -407,7 +407,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     }
 
     // :27
-    if (bavc_open(&bavc, decoded_chall_3, signature_decom_i(sig, params), params)) {
+    if (bavc_open(signature_decom_i(sig, params), &bavc, decoded_chall_3, params)) {
       break;
     }
   }

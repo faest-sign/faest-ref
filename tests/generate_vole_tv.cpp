@@ -82,7 +82,7 @@ int main() {
 
       uint16_t i_delta[MAX_TAU];
       decode_all_chall_3(i_delta, chal.data(), &params);
-      if (!bavc_open(&bavc_com, i_delta, decom_i.data(), &params)) {
+      if (!bavc_open(decom_i.data(), &bavc_com, i_delta, &params)) {
         continue;
       }
       print_named_array("chall", "uint8_t", chal);

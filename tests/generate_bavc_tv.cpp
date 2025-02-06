@@ -44,7 +44,7 @@ int main() {
     const auto com_size     = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
 
     bavc_t vc;
-    bavc_commit(root_key.data(), iv.data(), &params, &vc);
+    bavc_commit(&vc, root_key.data(), iv.data(), &params);
 
     auto hashed_k  = hash_array(vc.k, (2 * params.L - 1) * lambda_bytes);
     auto hashed_sd = hash_array(vc.sd, params.L * lambda_bytes);
@@ -69,7 +69,7 @@ int main() {
       decom_i.clear();
       decom_i.resize(com_size * params.tau + params.T_open * lambda_bytes);
 
-      ret = bavc_open(&vc, i_delta.data(), decom_i.data(), &params);
+      ret = bavc_open(decom_i.data(), &vc, i_delta.data(), &params);
     }
 
     auto hashed_decom_i = hash_array(decom_i);
@@ -86,7 +86,7 @@ int main() {
     vc_rec.h = rec_h.data();
     vc_rec.s = rec_s.data();
 
-    bavc_reconstruct(decom_i.data(), i_delta.data(), iv.data(), &params, &vc_rec);
+    bavc_reconstruct(&vc_rec, decom_i.data(), i_delta.data(), iv.data(), &params);
 
     auto hashed_rec_sd = hash_array(rec_s);
     print_named_array("hashed_rec_sd", "uint8_t", hashed_rec_sd);
