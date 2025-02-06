@@ -54,7 +54,6 @@ typedef struct faest_param_t {
 
   // OWF parameters
   uint16_t Nwd;
-  uint16_t Nst;
   uint16_t Ske;
   uint16_t R;
   uint16_t Senc;
