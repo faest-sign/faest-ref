@@ -577,8 +577,8 @@ static void aes_128_sbox_affine_verifier(bf128_t* out_deg1, const bf128_t* in_de
     for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
       out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[Cidx], in_deg1[i*8 + (Cidx+t)%8]));
     }
-    // add the constant C[8] by multiplying with delta
-    out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[8], delta));
+    // add the constant C[8] by multiplying with delta^2
+    out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[8], bf128_mul(delta, delta)));
   }
 }
 
