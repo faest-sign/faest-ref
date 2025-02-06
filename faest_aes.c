@@ -3389,12 +3389,10 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
       //
 
       {
-          bf128_t debug = bf128_mul(s_deg1, st_b_deg2[0][byte_i]);
-          bf128_t one = bf128_one();
-          bf128_t zero = bf128_zero();
-          assert((memcmp(&debug, &one, sizeof(debug)) == 0)
-                  || ((memcmp(&s_deg1, &zero, sizeof(debug)) == 0)
-                      && (memcmp(&st_b_deg2[0][byte_i], &zero, sizeof(debug)) == 0)));
+        bf128_t one = bf128_one();
+        bf128_t zero = bf128_zero();
+        assert(bf128_eq(bf128_mul(s_deg1, st_b_deg2[0][byte_i]), one)
+                || (bf128_eq(s_deg1, zero) && bf128_eq(st_b_deg2[0][byte_i], zero)));
       }
       z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf128_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
 
@@ -3629,12 +3627,10 @@ static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf1
       //
 
       {
-          bf192_t debug = bf192_mul(s_deg1, st_b_deg2[0][byte_i]);
-          bf192_t one = bf192_one();
-          bf192_t zero = bf192_zero();
-          assert((memcmp(&debug, &one, sizeof(debug)) == 0)
-                  || ((memcmp(&s_deg1, &zero, sizeof(debug)) == 0)
-                      && (memcmp(&st_b_deg2[0][byte_i], &zero, sizeof(debug)) == 0)));
+        bf192_t one = bf192_one();
+        bf192_t zero = bf192_zero();
+        assert(bf192_eq(bf192_mul(s_deg1, st_b_deg2[0][byte_i]), one)
+                || (bf192_eq(s_deg1, zero) && bf192_eq(st_b_deg2[0][byte_i], zero)));
       }
       z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf192_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
 
@@ -3869,12 +3865,10 @@ static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf2
       //
 
       {
-          bf256_t debug = bf256_mul(s_deg1, st_b_deg2[0][byte_i]);
-          bf256_t one = bf256_one();
-          bf256_t zero = bf256_zero();
-          assert((memcmp(&debug, &one, sizeof(debug)) == 0)
-                  || ((memcmp(&s_deg1, &zero, sizeof(debug)) == 0)
-                      && (memcmp(&st_b_deg2[0][byte_i], &zero, sizeof(debug)) == 0)));
+        bf256_t one = bf256_one();
+        bf256_t zero = bf256_zero();
+        assert(bf256_eq(bf256_mul(s_deg1, st_b_deg2[0][byte_i]), one)
+                || (bf256_eq(s_deg1, zero) && bf256_eq(st_b_deg2[0][byte_i], zero)));
       }
       z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf256_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
 
