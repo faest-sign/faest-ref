@@ -801,14 +801,14 @@ static void aes_128_shiftrows_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
       if ((Nst != 8) || (r <= 1)) {
-        out_deg2[4*c + r] = in_deg2[4*((c + r) % 4) + r];
-        out_deg1[4*c + r] = in_deg1[4*((c + r) % 4) + r];
-        out_deg0[4*c + r] = in_deg0[4*((c + r) % 4) + r];
+        out_deg2[4*c + r] = in_deg2[4*((c + r) % Nst) + r];
+        out_deg1[4*c + r] = in_deg1[4*((c + r) % Nst) + r];
+        out_deg0[4*c + r] = in_deg0[4*((c + r) % Nst) + r];
       } 
       else {
-        out_deg2[4*c + r] = in_deg2[4*((c + r + 1) % 4) + r];
-        out_deg1[4*c + r] = in_deg1[4*((c + r + 1) % 4) + r];
-        out_deg0[4*c + r] = in_deg0[4*((c + r + 1) % 4) + r];
+        out_deg2[4*c + r] = in_deg2[4*((c + r + 1) % Nst) + r];
+        out_deg1[4*c + r] = in_deg1[4*((c + r + 1) % Nst) + r];
+        out_deg0[4*c + r] = in_deg0[4*((c + r + 1) % Nst) + r];
       }
     }
   }
@@ -821,14 +821,14 @@ static void aes_192_shiftrows_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf192
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
       if ((Nst != 8) || (r <= 1)) {
-        out_deg2[4*c + r] = in_deg2[4*((c + r) % 4) + r];
-        out_deg1[4*c + r] = in_deg1[4*((c + r) % 4) + r];
-        out_deg0[4*c + r] = in_deg0[4*((c + r) % 4) + r];
+        out_deg2[4*c + r] = in_deg2[4*((c + r) % Nst) + r];
+        out_deg1[4*c + r] = in_deg1[4*((c + r) % Nst) + r];
+        out_deg0[4*c + r] = in_deg0[4*((c + r) % Nst) + r];
       } 
       else {
-        out_deg2[4*c + r] = in_deg2[4*((c + r + 1) % 4) + r];
-        out_deg1[4*c + r] = in_deg1[4*((c + r + 1) % 4) + r];
-        out_deg0[4*c + r] = in_deg0[4*((c + r + 1) % 4) + r];
+        out_deg2[4*c + r] = in_deg2[4*((c + r + 1) % Nst) + r];
+        out_deg1[4*c + r] = in_deg1[4*((c + r + 1) % Nst) + r];
+        out_deg0[4*c + r] = in_deg0[4*((c + r + 1) % Nst) + r];
       }
     }
   }
@@ -841,14 +841,14 @@ static void aes_256_shiftrows_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
       if ((Nst != 8) || (r <= 1)) {
-        out_deg2[4*c + r] = in_deg2[4*((c + r) % 4) + r];
-        out_deg1[4*c + r] = in_deg1[4*((c + r) % 4) + r];
-        out_deg0[4*c + r] = in_deg0[4*((c + r) % 4) + r];
+        out_deg2[4*c + r] = in_deg2[4*((c + r) % Nst) + r];
+        out_deg1[4*c + r] = in_deg1[4*((c + r) % Nst) + r];
+        out_deg0[4*c + r] = in_deg0[4*((c + r) % Nst) + r];
       } 
       else {
-        out_deg2[4*c + r] = in_deg2[4*((c + r + 1) % 4) + r];
-        out_deg1[4*c + r] = in_deg1[4*((c + r + 1) % 4) + r];
-        out_deg0[4*c + r] = in_deg0[4*((c + r + 1) % 4) + r];
+        out_deg2[4*c + r] = in_deg2[4*((c + r + 1) % Nst) + r];
+        out_deg1[4*c + r] = in_deg1[4*((c + r + 1) % Nst) + r];
+        out_deg0[4*c + r] = in_deg0[4*((c + r + 1) % Nst) + r];
       }
     }
   }
@@ -864,10 +864,10 @@ static void aes_128_shiftrows_verifier(bf128_t* out_deg1, const bf128_t* in_deg1
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
       if ((Nst != 8) || (r <= 1)) {
-        out_deg1[4*c + r] = in_deg1[(4*((c + r) % 4) + r)];
+        out_deg1[4*c + r] = in_deg1[(4*((c + r) % Nst) + r)];
       } 
       else {
-        out_deg1[4*c + r] = in_deg1[(4*((c + r + 1) % 4) + r)];
+        out_deg1[4*c + r] = in_deg1[(4*((c + r + 1) % Nst) + r)];
       }
     }
   }
@@ -879,10 +879,10 @@ static void aes_192_shiftrows_verifier(bf192_t* out_deg1, const bf192_t* in_deg1
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
       if ((Nst != 8) || (r <= 1)) {
-        out_deg1[4*c + r] = in_deg1[(4*((c + r) % 4) + r)];
+        out_deg1[4*c + r] = in_deg1[(4*((c + r) % Nst) + r)];
       } 
       else {
-        out_deg1[4*c + r] = in_deg1[(4*((c + r + 1) % 4) + r)];
+        out_deg1[4*c + r] = in_deg1[(4*((c + r + 1) % Nst) + r)];
       }
     }
   }
@@ -894,10 +894,10 @@ static void aes_256_shiftrows_verifier(bf256_t* out_deg1, const bf256_t* in_deg1
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
       if ((Nst != 8) || (r <= 1)) {
-        out_deg1[4*c + r] = in_deg1[(4*((c + r) % 4) + r)];
+        out_deg1[4*c + r] = in_deg1[(4*((c + r) % Nst) + r)];
       } 
       else {
-        out_deg1[4*c + r] = in_deg1[(4*((c + r + 1) % 4) + r)];
+        out_deg1[4*c + r] = in_deg1[(4*((c + r + 1) % Nst) + r)];
       }
     }
   }
@@ -1468,10 +1468,10 @@ static void aes_128_inverse_shiftrows_prover(uint8_t* out, bf128_t* out_tag, con
     for (unsigned int c = 0; c < Nst; c++) {
       unsigned int i;
       if ((Nst != 8) || (r <= 1)) {
-        i = 4*((c-r) % 4) + r;
+        i = 4*((c+Nst-r) % Nst) + r;
       } 
       else {
-        i = 4*((c-r-1) % 4) + r;
+        i = 4*((c+Nst-r-1) % Nst) + r;
       }
       for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
         out[8*(4*c + r) + bit_i] = in[8*i + bit_i];             // moving bitwise
@@ -1487,10 +1487,10 @@ static void aes_192_inverse_shiftrows_prover(uint8_t* out, bf192_t* out_tag, con
     for (unsigned int c = 0; c < Nst; c++) {
       unsigned int i;
       if ((Nst != 8) || (r <= 1)) {
-        i = 4*((c-r)%4) + r;
+        i = 4*((c+Nst-r)%Nst) + r;
       } 
       else {
-        i = 4*((c-r-1) % 4) + r;
+        i = 4*((c+Nst-r-1) % Nst) + r;
       }
 
       for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
@@ -1507,10 +1507,10 @@ static void aes_256_inverse_shiftrows_prover(uint8_t* out, bf256_t* out_tag, con
     for (unsigned int c = 0; c < Nst; c++) {
       unsigned int i;
       if ((Nst != 8) || (r <= 1)) {
-        i = 4*((c-r)%4) + r;
+        i = 4*((c+Nst-r)%Nst) + r;
       } 
       else {
-        i = 4*((c-r-1) % 4) + r;
+        i = 4*((c+Nst-r-1) % Nst) + r;
       }
 
       for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
@@ -1528,10 +1528,10 @@ static void aes_128_inverse_shiftrows_verifier(bf128_t* out_tag, const bf128_t* 
     for (unsigned int c = 0; c < Nst; c++) {
       unsigned int i;
       if ((Nst != 8) || (r <= 1)) {
-        i = 4*((c-r)%4) + r;
+        i = 4*((c+Nst-r)%Nst) + r;
       } 
       else {
-        i = 4*((c-r-1) % 4) + r;
+        i = 4*((c+Nst-r-1) % Nst) + r;
       }
       
       for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
@@ -1547,10 +1547,10 @@ static void aes_192_inverse_shiftrows_verifier(bf192_t* out_tag, const bf192_t* 
     for (unsigned int c = 0; c < Nst; c++) {
       unsigned int i;
       if ((Nst != 8) || (r <= 1)) {
-        i = 4*((c-r)%4) + r;
+        i = 4*((c+Nst-r)%Nst) + r;
       } 
       else {
-        i = 4*((c-r-1) % 4) + r;
+        i = 4*((c+Nst-r-1) % Nst) + r;
       }
       
       for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
@@ -1566,10 +1566,10 @@ static void aes_256_inverse_shiftrows_verifier(bf256_t* out_tag, const bf256_t* 
     for (unsigned int c = 0; c < Nst; c++) {
       unsigned int i;
       if ((Nst != 8) || (r <= 1)) {
-        i = 4*((c-r)%4) + r;
+        i = 4*((c+Nst-r)%Nst) + r;
       } 
       else {
-        i = 4*((c-r-1) % 4) + r;
+        i = 4*((c+Nst-r-1) % Nst) + r;
       }
       
       for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
