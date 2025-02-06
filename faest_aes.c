@@ -119,6 +119,7 @@ static void aes_256_add_round_key_prover(bf256_t* out, bf256_t* out_tag, const b
     out_tag[i] = bf256_add(in_tag[i], k_tag[i]);
   }
 }
+
 static void aes_128_add_round_key_verifier(bf128_t* out_key, const bf128_t* in_key, const bf128_t* k_key, const faest_paramset_t* params) {
 
   uint16_t Nst = params->faest_param.Nwd;
@@ -257,19 +258,6 @@ static void aes_em_192_f256_f2_conjugates_1(bf192_t* y, const uint8_t* state) {
     free(x0);
   }
 }
-static void aes_em_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state) {
-  for (unsigned int i = 0; i != 24; ++i) {
-    bf192_t x[8];
-    memcpy(x, state + (i * 8), sizeof(x));
-    for (unsigned int j = 0; j != 7; ++j) {
-      y[i * 8 + j] = bf192_byte_combine(x);
-      bf192_t tmp[8];
-      memcpy(tmp, x, sizeof(x));
-      bf192_sq_bit(x, tmp);
-    }
-    y[i * 8 + 7] = bf192_byte_combine(x);
-  }
-}
 static void aes_em_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state) {
   for (unsigned int i = 0; i != 32; ++i) {
     uint8_t* x0 = (uint8_t*)malloc(32*8);
@@ -283,6 +271,19 @@ static void aes_em_256_f256_f2_conjugates_1(bf256_t* y, const uint8_t* state) {
     }
     y[i * 8 + 7] = bf256_byte_combine_bits(x0 + 7*8);
     free(x0);
+  }
+}
+static void aes_em_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state) {
+  for (unsigned int i = 0; i != 24; ++i) {
+    bf192_t x[8];
+    memcpy(x, state + (i * 8), sizeof(x));
+    for (unsigned int j = 0; j != 7; ++j) {
+      y[i * 8 + j] = bf192_byte_combine(x);
+      bf192_t tmp[8];
+      memcpy(tmp, x, sizeof(x));
+      bf192_sq_bit(x, tmp);
+    }
+    y[i * 8 + 7] = bf192_byte_combine(x);
   }
 }
 static void aes_em_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state) {
@@ -333,30 +334,6 @@ static void aes_128_inv_norm_to_conjugates_prover(bf128_t* y_val, bf128_t* y_tag
     beta_cube     = bf128_mul(beta_cube, beta_cube);
   }
 }
-static void aes_128_inv_norm_to_conjugates_verifier(bf128_t* y_eval, const bf128_t* x_eval) {
-  // :1-2
-  bf128_t beta_4        = bf128_add(bf128_get_alpha(5), bf128_get_alpha(3));
-  bf128_t beta_square   = beta_4;
-  bf128_t beta_square_1 = bf128_mul(beta_4, beta_4);
-  bf128_t beta_cube     = bf128_mul(beta_square_1, beta_4);
-
-  for (unsigned int i = 0; i != 4; ++i) {
-    y_eval[i]          = bf128_add(
-                    bf128_add(
-                              bf128_mul(bf128_one(), x_eval[0]), 
-                              bf128_mul(beta_square, x_eval[1])
-                              ),
-                    bf128_add(
-                              bf128_mul(beta_square_1, x_eval[2]), 
-                              bf128_mul(beta_cube, x_eval[3])
-                            )
-                    );
-    beta_square   = bf128_mul(beta_square, beta_square);
-    beta_square_1 = bf128_mul(beta_square_1, beta_square_1);
-    beta_cube     = bf128_mul(beta_cube, beta_cube);
-  }
-}
-
 static void aes_192_inv_norm_to_conjugates_prover(bf192_t* y_val, bf192_t* y_tag, const uint8_t* x_val, const bf192_t* x_tag) {
   // :1-2
   bf192_t beta_4        = bf192_add(bf192_get_alpha(5), bf192_get_alpha(3));
@@ -390,30 +367,6 @@ static void aes_192_inv_norm_to_conjugates_prover(bf192_t* y_val, bf192_t* y_tag
     beta_cube     = bf192_mul(beta_cube, beta_cube);
   }
 }
-static void aes_192_inv_norm_to_conjugates_verifier(bf192_t* y_eval, const bf192_t* x_eval) {
-  // :1-2
-  bf192_t beta_4        = bf192_add(bf192_get_alpha(5), bf192_get_alpha(3));
-  bf192_t beta_square   = beta_4;
-  bf192_t beta_square_1 = bf192_mul(beta_4, beta_4);
-  bf192_t beta_cube     = bf192_mul(beta_square_1, beta_4);
-
-  for (unsigned int i = 0; i != 4; ++i) {
-    y_eval[i]          = bf192_add(
-                    bf192_add(
-                              bf192_mul(bf192_one(), x_eval[0]), 
-                              bf192_mul(beta_square, x_eval[1])
-                              ),
-                    bf192_add(
-                              bf192_mul(beta_square_1, x_eval[2]), 
-                              bf192_mul(beta_cube, x_eval[3])
-                            )
-                    );
-    beta_square   = bf192_mul(beta_square, beta_square);
-    beta_square_1 = bf192_mul(beta_square_1, beta_square_1);
-    beta_cube     = bf192_mul(beta_cube, beta_cube);
-  }
-}
-
 static void aes_256_inv_norm_to_conjugates_prover(bf256_t* y_val, bf256_t* y_tag, const uint8_t* x_val, const bf256_t* x_tag) {
   // :1-2
   bf256_t beta_4        = bf256_add(bf256_get_alpha(5), bf256_get_alpha(3));
@@ -445,6 +398,53 @@ static void aes_256_inv_norm_to_conjugates_prover(bf256_t* y_val, bf256_t* y_tag
     beta_square   = bf256_mul(beta_square, beta_square);
     beta_square_1 = bf256_mul(beta_square_1, beta_square_1);
     beta_cube     = bf256_mul(beta_cube, beta_cube);
+  }
+}
+
+static void aes_128_inv_norm_to_conjugates_verifier(bf128_t* y_eval, const bf128_t* x_eval) {
+  // :1-2
+  bf128_t beta_4        = bf128_add(bf128_get_alpha(5), bf128_get_alpha(3));
+  bf128_t beta_square   = beta_4;
+  bf128_t beta_square_1 = bf128_mul(beta_4, beta_4);
+  bf128_t beta_cube     = bf128_mul(beta_square_1, beta_4);
+
+  for (unsigned int i = 0; i != 4; ++i) {
+    y_eval[i]          = bf128_add(
+                    bf128_add(
+                              bf128_mul(bf128_one(), x_eval[0]), 
+                              bf128_mul(beta_square, x_eval[1])
+                              ),
+                    bf128_add(
+                              bf128_mul(beta_square_1, x_eval[2]), 
+                              bf128_mul(beta_cube, x_eval[3])
+                            )
+                    );
+    beta_square   = bf128_mul(beta_square, beta_square);
+    beta_square_1 = bf128_mul(beta_square_1, beta_square_1);
+    beta_cube     = bf128_mul(beta_cube, beta_cube);
+  }
+}
+static void aes_192_inv_norm_to_conjugates_verifier(bf192_t* y_eval, const bf192_t* x_eval) {
+  // :1-2
+  bf192_t beta_4        = bf192_add(bf192_get_alpha(5), bf192_get_alpha(3));
+  bf192_t beta_square   = beta_4;
+  bf192_t beta_square_1 = bf192_mul(beta_4, beta_4);
+  bf192_t beta_cube     = bf192_mul(beta_square_1, beta_4);
+
+  for (unsigned int i = 0; i != 4; ++i) {
+    y_eval[i]          = bf192_add(
+                    bf192_add(
+                              bf192_mul(bf192_one(), x_eval[0]), 
+                              bf192_mul(beta_square, x_eval[1])
+                              ),
+                    bf192_add(
+                              bf192_mul(beta_square_1, x_eval[2]), 
+                              bf192_mul(beta_cube, x_eval[3])
+                            )
+                    );
+    beta_square   = bf192_mul(beta_square, beta_square);
+    beta_square_1 = bf192_mul(beta_square_1, beta_square_1);
+    beta_cube     = bf192_mul(beta_cube, beta_cube);
   }
 }
 static void aes_256_inv_norm_to_conjugates_verifier(bf256_t* y_eval, const bf256_t* x_eval) {
@@ -501,6 +501,63 @@ void aes_128_inv_norm_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128
                     bf128_mul(bf128_mul(*y_tag, conjugates[1]), conjugates[4])),
                   conjugates_tag[0]);
 }
+void aes_192_inv_norm_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2, const bf192_t* conjugates, const bf192_t* conjugates_tag, const bf192_t* y, const bf192_t* y_tag) {
+    {
+        bf192_t debug = bf192_add(
+                bf192_mul(y[0], bf192_mul(conjugates[1], conjugates[4])),
+                conjugates[0]);
+        bf192_t zero = bf192_zero();
+        assert(memcmp(&debug, &zero, sizeof(debug)) == 0);
+    }
+    
+    z_deg0[0] = bf192_mul(
+        bf192_mul(*y_tag,conjugates_tag[1]),
+        conjugates_tag[4]);
+                        //conjugates_tag[0]),
+
+    z_deg1[0] = bf192_add(
+                    bf192_add(
+                        bf192_mul(bf192_mul(*y, conjugates_tag[1]), conjugates_tag[4]),
+                        bf192_mul(bf192_mul(*y_tag, conjugates_tag[1]), conjugates[4])),
+                    bf192_mul(bf192_mul(*y_tag, conjugates[1]), conjugates_tag[4]));
+    
+    z_deg2[0] = bf192_add(
+                  bf192_add(
+                    bf192_add(
+                        bf192_mul(bf192_mul(*y, conjugates[1]), conjugates_tag[4]),
+                        bf192_mul(bf192_mul(*y, conjugates_tag[1]), conjugates[4])),
+                    bf192_mul(bf192_mul(*y_tag, conjugates[1]), conjugates[4])),
+                  conjugates_tag[0]);
+}
+void aes_256_inv_norm_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t* z_deg2, const bf256_t* conjugates, const bf256_t* conjugates_tag, const bf256_t* y, const bf256_t* y_tag) {
+    {
+        bf256_t debug = bf256_add(
+                bf256_mul(y[0], bf256_mul(conjugates[1], conjugates[4])),
+                conjugates[0]);
+        bf256_t zero = bf256_zero();
+        assert(memcmp(&debug, &zero, sizeof(debug)) == 0);
+    }
+    
+    z_deg0[0] = bf256_mul(
+        bf256_mul(*y_tag,conjugates_tag[1]),
+        conjugates_tag[4]);
+                        //conjugates_tag[0]),
+
+    z_deg1[0] = bf256_add(
+                    bf256_add(
+                        bf256_mul(bf256_mul(*y, conjugates_tag[1]), conjugates_tag[4]),
+                        bf256_mul(bf256_mul(*y_tag, conjugates_tag[1]), conjugates[4])),
+                    bf256_mul(bf256_mul(*y_tag, conjugates[1]), conjugates_tag[4]));
+    
+    z_deg2[0] = bf256_add(
+                  bf256_add(
+                    bf256_add(
+                        bf256_mul(bf256_mul(*y, conjugates[1]), conjugates_tag[4]),
+                        bf256_mul(bf256_mul(*y, conjugates_tag[1]), conjugates[4])),
+                    bf256_mul(bf256_mul(*y_tag, conjugates[1]), conjugates[4])),
+                  conjugates_tag[0]);
+}
+
 void aes_128_inv_norm_constraints_verifier(bf128_t* z_eval, const bf128_t* conjugates_eval, const bf128_t* y_eval, const bf128_t delta) {
   z_eval[0] = bf128_add(
               bf128_mul(
@@ -510,64 +567,24 @@ void aes_128_inv_norm_constraints_verifier(bf128_t* z_eval, const bf128_t* conju
                   conjugates_eval[0],
                   bf128_mul(delta, delta)));
 }
-
-/*
-// TODO:
-// INV NORM CONSTRAINTS 192/256
-//
-
-// void aes_192_inv_norm_constraints_prover(bf192_t* z0, bf192_t* z1, const bf192_t* state_bits, const bf192_t* state_bits_tag, const uint8_t* y, const bf192_t* y_tag) {
-  
-//     z0[0] = bf192_add(
-//               bf192_mul(bf192_mul(
-//                                 bf192_byte_combine_bits(y), 
-//                                 state_bits[1]), 
-//                         state_bits[4]),
-//               state_bits[0]);
-
-//     z1[0] = bf192_add(
-//               bf192_mul(bf192_mul(
-//                                 bf192_byte_combine_bits(y_tag), 
-//                                 state_bits_tag[1]), 
-//                         state_bits_tag[4]),
-//               state_bits_tag[0]);
-
-// }
-// void aes_192_inv_norm_constraints_verifier(bf192_t* z1, const bf192_t* state_bits_key, const bf192_t* y_key) {
-//   z1[0] = bf192_add(
-//               bf192_mul(bf192_mul(
-//                                 bf192_byte_combine_bits(y_key), 
-//                                 state_bits_key[1]), 
-//                         state_bits_key[4]),
-//               state_bits_key[0]);
-// }
-
-// void aes_256_inv_norm_constraints_prover(bf256_t* z0, bf256_t* z1, const bf256_t* state_bits, const bf256_t* state_bits_tag, const uint8_t* y, const bf256_t* y_tag) {
-  
-//     z0[0] = bf256_add(
-//               bf256_mul(bf256_mul(
-//                                 bf256_byte_combine_bits(y), 
-//                                 state_bits[1]), 
-//                         state_bits[4]),
-//               state_bits[0]);
-
-//     z1[0] = bf256_add(
-//               bf256_mul(bf256_mul(
-//                                 bf256_byte_combine_bits(y_tag), 
-//                                 state_bits_tag[1]), 
-//                         state_bits_tag[4]),
-//               state_bits_tag[0]);
-
-// }
-// void aes_256_inv_norm_constraints_verifier(bf256_t* z1, const bf256_t* state_bits_key, const bf256_t* y_key) {
-//   z1[0] = bf256_add(
-//               bf256_mul(bf256_mul(
-//                                 bf256_byte_combine_bits(y_key), 
-//                                 state_bits_key[1]), 
-//                         state_bits_key[4]),
-//               state_bits_key[0]);
-// }
-*/
+void aes_192_inv_norm_constraints_verifier(bf192_t* z_eval, const bf192_t* conjugates_eval, const bf192_t* y_eval, const bf192_t delta) {
+  z_eval[0] = bf192_add(
+              bf192_mul(
+                  bf192_mul(*y_eval, conjugates_eval[1]),
+                conjugates_eval[4]),
+              bf192_mul(
+                  conjugates_eval[0],
+                  bf192_mul(delta, delta)));
+}
+void aes_256_inv_norm_constraints_verifier(bf256_t* z_eval, const bf256_t* conjugates_eval, const bf256_t* y_eval, const bf256_t delta) {
+  z_eval[0] = bf256_add(
+              bf256_mul(
+                  bf256_mul(*y_eval, conjugates_eval[1]),
+                conjugates_eval[4]),
+              bf256_mul(
+                  conjugates_eval[0],
+                  bf256_mul(delta, delta)));
+}
 
 // STATE TO BYTES
 void aes_128_state_to_bytes_prover(bf128_t* out, bf128_t* out_tag, const uint8_t* k, const bf128_t* k_tag, const faest_paramset_t* params) {
