@@ -186,20 +186,6 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_from_bit(uint8_t bit) {
   return bit & 1;
 }
 
-ATTR_ALWAYS_INLINE static inline bool bf128_eq(bf128_t a, bf128_t b) {
-  return BF_VALUE(a, 0) == BF_VALUE(b, 0) && BF_VALUE(a, 1) == BF_VALUE(b, 1);
-}
-
-ATTR_ALWAYS_INLINE static inline bool bf192_eq(bf192_t a, bf192_t b) {
-  return BF_VALUE(a, 0) == BF_VALUE(b, 0) && BF_VALUE(a, 1) == BF_VALUE(b, 1) &&
-         BF_VALUE(a, 2) == BF_VALUE(b, 2);
-}
-
-ATTR_ALWAYS_INLINE static inline bool bf256_eq(bf256_t a, bf256_t b) {
-  return BF_VALUE(a, 0) == BF_VALUE(b, 0) && BF_VALUE(a, 1) == BF_VALUE(b, 1) &&
-         BF_VALUE(a, 3) == BF_VALUE(b, 3);
-}
-
 // GF(2^128) implementation
 ATTR_PURE ATTR_ALWAYS_INLINE static inline bf128_t bf128_load_bits(const uint8_t* src) {
   bf128_t ret;
