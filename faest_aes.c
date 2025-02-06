@@ -3175,9 +3175,485 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
 
 static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2, const uint8_t* owf_in, const bf192_t* owf_in_tag, const uint8_t* owf_out, 
                                             const bf192_t* owf_out_tag, const uint8_t* w, const bf192_t* w_tag, const uint8_t* k, const bf192_t* k_tag, const faest_paramset_t* params) {
-    // TODO
+
+  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nstbits = 32 * Nst;
+  unsigned int R = params->faest_param.R;
+  unsigned int Nstbytes = Nstbits/8;
+
+  /// ::1 AddRoundKey
+  uint8_t* state_bits = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+  bf192_t* state_bits_tag = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
+
+  aes_192_add_round_key_prover(state_bits, state_bits_tag, owf_in, owf_in_tag, k, k_tag, params);   // owf_in should be bit per uint8
+
+  // for conjugates of state and s-box outputs
+  bf192_t* state_conj = faest_aligned_alloc(BF192_ALIGN, 8 * Nstbytes * sizeof(bf192_t));
+  bf192_t* state_conj_tag = faest_aligned_alloc(BF192_ALIGN, 8 *  Nstbytes * sizeof(bf192_t));
+  bf192_t* st_dash_deg2 = faest_aligned_alloc(BF192_ALIGN, 8 *  Nstbytes * sizeof(bf192_t));
+  bf192_t* st_dash_deg1 = faest_aligned_alloc(BF192_ALIGN, 8 *  Nstbytes * sizeof(bf192_t));
+  bf192_t* st_dash_deg0 = faest_aligned_alloc(BF192_ALIGN, 8 *  Nstbytes * sizeof(bf192_t));
+  
+  bf192_t* state_bytewise_deg2 = faest_aligned_alloc(BF192_ALIGN, Nstbytes * sizeof(bf192_t));
+  bf192_t* state_bytewise_deg1 = faest_aligned_alloc(BF192_ALIGN, Nstbytes * sizeof(bf192_t));
+  bf192_t* state_bytewise_deg0 = faest_aligned_alloc(BF192_ALIGN, Nstbytes * sizeof(bf192_t));
+  bf192_t* state_sq_bytewise_deg2 = faest_aligned_alloc(BF192_ALIGN, Nstbytes * sizeof(bf192_t));
+  bf192_t* state_sq_bytewise_deg1 = faest_aligned_alloc(BF192_ALIGN, Nstbytes * sizeof(bf192_t));
+  bf192_t* state_sq_bytewise_deg0 = faest_aligned_alloc(BF192_ALIGN, Nstbytes * sizeof(bf192_t));
+  
+  // ::2
+  for (unsigned int r = 0; r < R/2; r++) {
+
+    // ::3-4
+    aes_192_f256_f2_conjugates_1(state_conj, state_bits);
+    aes_192_f256_f2_conjugates_192(state_conj_tag, state_bits_tag);
+
+    // ::5-6 : start of norms in witness
+    const uint8_t* norms_ptr = w + 3 * Nstbits * r/2;
+    const bf192_t* norm_tags_ptr = w_tag + 3 * Nstbits * r/2;
+    // uint8_t n[Nstbits/2*4]; // 1 uint8 contains 4 bits of the Invnorm 0000||4bits
+    // bf192_t n_tag[Nstbits/2]; // tag for each bit
+    // for (unsigned int i = 0; i < Nstbits/2; i++) {
+    //   n[i] = w[(((3*Nstbits)/2)*r)/4];
+    //   n_tag[i] = w_tag[(((3*Nstbits)/2)*r)];
+    // }
+
+    // ::7
+    for (unsigned int i = 0; i < Nstbytes; i++) {
+      // ::8-9
+      bf192_t y[4];
+      bf192_t y_tag[4];
+      aes_192_inv_norm_to_conjugates_prover(y, y_tag, norms_ptr + 4*i, norm_tags_ptr + 4*i);    // Ah this is the 4 bit witness part
+
+      // ::10-11
+      aes_192_inv_norm_constraints_prover(
+          z_deg0 + 3*r*Nstbytes + i,
+          z_deg1 + 3*r*Nstbytes + i,
+          z_deg2 + 3*r*Nstbytes + i,
+          state_conj + 8*i,
+          state_conj_tag + 8*i,
+          y, y_tag);
+
+      // ::12
+      for (unsigned int j = 0; j < 8; j++) {
+        // ::13-14
+        uint32_t conj_index = i*8 + ((j + 4) % 8);
+        uint32_t y_index = j % 4;
+        st_dash_deg2[i*8 + j] = bf192_mul(state_conj[conj_index], y[y_index]);
+        st_dash_deg1[i*8 + j] = bf192_add(
+              bf192_mul(state_conj[conj_index], y_tag[y_index]),
+              bf192_mul(state_conj_tag[conj_index], y[y_index])
+        );
+        st_dash_deg0[i*8 + j] = bf192_mul(state_conj_tag[conj_index], y_tag[y_index]);
+      }
+    }
+
+    // ::15-16
+    bf192_t k_0_deg0[32];
+    bf192_t k_0_deg1[32];
+    aes_192_state_to_bytes_prover(k_0_deg1, k_0_deg0,   // k is in bits
+      k + (2*r+1)*Nstbits,
+      k_tag + (2*r+1)*Nstbits,
+      params);
+    // ::17
+    bf192_t k_1_deg0[32];
+    bf192_t k_1_deg1[32];
+    bf192_t k_1_deg2[32];
+    for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
+      k_1_deg0[byte_i] = bf192_mul(k_0_deg0[byte_i], k_0_deg0[byte_i]);
+      k_1_deg1[byte_i] = bf192_zero();
+      k_1_deg2[byte_i] = bf192_mul(k_0_deg1[byte_i], k_0_deg1[byte_i]);
+    }
+
+    // ::18
+    bf192_t st_b_deg0[2][32]; // TODO: this stays empty as the power increases by 1 after the multiplication
+    bf192_t st_b_deg1[2][32];
+    bf192_t st_b_deg2[2][32];
+    bf192_t st_b_deg0_tmp[2][32];
+    bf192_t st_b_deg1_tmp[2][32];
+    bf192_t st_b_deg2_tmp[2][32];
+    bf192_t dummy_key[32];
+    memset(st_b_deg0, 0x00, sizeof(st_b_deg0));
+    memset(st_b_deg1, 0x00, sizeof(st_b_deg1));
+    memset(st_b_deg2, 0x00, sizeof(st_b_deg2));
+    memset(st_b_deg0_tmp, 0x00, sizeof(st_b_deg0_tmp));
+    memset(st_b_deg1_tmp, 0x00, sizeof(st_b_deg1_tmp));
+    memset(st_b_deg2_tmp, 0x00, sizeof(st_b_deg2_tmp));
+    for (unsigned int i = 0; i < Nstbytes; i++) {
+      dummy_key[i] = bf192_zero();
+    }
+
+    for (unsigned int b = 0; b < 2; b++) {
+      // ::19
+      aes_192_sbox_affine_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_dash_deg0, st_dash_deg1, st_dash_deg2, b, params);
+      // ::20
+      aes_192_shiftrows_prover(st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], params);
+      memcpy(st_b_deg0[b], st_b_deg0_tmp[b], sizeof(bf192_t)*Nstbytes);
+      memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf192_t)*Nstbytes);
+      memcpy(st_b_deg2[b], st_b_deg2_tmp[b], sizeof(bf192_t)*Nstbytes);
+      // ::21
+      aes_192_mix_columns_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], b, params);
+      // ::22
+      if (b == 0) {
+        aes_192_add_round_key_bytes_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], dummy_key, k_0_deg0, k_0_deg1, params);
+      } else {
+        aes_192_add_round_key_bytes_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], k_1_deg0, k_1_deg1, k_1_deg2, params);
+      }
+    }
+    // ::23-24
+    uint8_t* s_tilde = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+    bf192_t* s_tilde_tag = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
+    if (r == R/2 - 1) {
+      // ::25
+      aes_192_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag, k + R*Nstbits, k_tag + R*Nstbits, params);
+    } else {
+      // ::27-28
+      unsigned int idx = 0;
+      for (unsigned int i = ((Nstbits/2) + (Nstbits/2)*3*r); i < ((Nstbits/2*3*r) + (Nstbits/2*3)); i++) {
+        s_tilde[idx] = w[i];
+        s_tilde_tag[idx] = w_tag[i];
+        idx++;
+      }
+    }
+    // ::29
+    uint8_t* s_dash_dash = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+    bf192_t* s_dash_dash_tag = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
+    aes_192_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);   // TODO: check the bitwise shift operation in the function, looks fishy
+    // ::30
+    uint8_t* s = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+    bf192_t* s_tag = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
+    aes_192_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag, params);
+
+    // ::31
+    for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
+      bf192_t s_deg1;
+      bf192_t s_deg0;
+      bf192_t s_sq_deg1;
+      bf192_t s_sq_deg0;
+      // ::32
+      s_deg1 = bf192_byte_combine_bits(s + 8*byte_i);      // taking 8 uint8 "bits"
+      s_deg0 = bf192_byte_combine(s_tag + 8*byte_i);
+      // ::33
+      s_sq_deg1 = bf192_byte_combine_bits_sq(s + 8*byte_i);    // taking 8 uint8 "bits"
+      s_sq_deg0 = bf192_byte_combine_sq(s_tag + 8*byte_i);
+
+      // ::36
+      // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
+      //    deg0: s_sq[0] * st[0]
+      //    deg1: s_sq[0] * st[1] + s_sq[1] * st[0]
+      //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
+      //
+
+      {
+          bf192_t debug = bf192_mul(s_deg1, st_b_deg2[0][byte_i]);
+          bf192_t one = bf192_one();
+          bf192_t zero = bf192_zero();
+          assert((memcmp(&debug, &one, sizeof(debug)) == 0)
+                  || ((memcmp(&s_deg1, &zero, sizeof(debug)) == 0)
+                      && (memcmp(&st_b_deg2[0][byte_i], &zero, sizeof(debug)) == 0)));
+      }
+      z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf192_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
+
+      z_deg1[(3*r+1)*Nstbytes + 2*byte_i] = bf192_add(
+              bf192_mul(s_sq_deg0, st_b_deg1[0][byte_i]),
+              bf192_mul(s_sq_deg1, st_b_deg0[0][byte_i])
+            );
+      z_deg2[(3*r+1)*Nstbytes + 2*byte_i] = bf192_add(
+              bf192_add(
+                  bf192_mul(s_sq_deg0, st_b_deg2[0][byte_i]),
+                  bf192_mul(s_sq_deg1, st_b_deg1[0][byte_i])),
+                s_deg0);
+      // ::37
+      // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
+      //    deg0: s[0] * st_{1,i}[0]
+      //    deg1: s[0] * st_{1,i}[1] + s[1] * st_{1,i}[0] + st_{0,i}[0]
+      //    deg2: s[0] * st_{1,i}[2] + s[1] * st_{1,i}[1] + st_{0,i}[1]
+      //
+      z_deg0[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf192_mul(s_deg0, st_b_deg0[1][byte_i]);
+      z_deg1[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf192_add(
+              bf192_add(
+                  bf192_mul(s_deg0, st_b_deg1[1][byte_i]),
+                  bf192_mul(s_deg1, st_b_deg0[1][byte_i])),
+                st_b_deg0[0][byte_i]);
+      z_deg2[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf192_add(
+              bf192_add(
+                  bf192_mul(s_deg0, st_b_deg2[1][byte_i]),
+                  bf192_mul(s_deg1, st_b_deg1[1][byte_i])),
+                st_b_deg1[0][byte_i]);
+    }
+    if (r != (R/2)-1) {
+      uint8_t* tmp_state = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+      bf192_t* tmp_state_tag = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
+      aes_192_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
+      aes_192_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag, k + (2*r+2)*Nstbits, k_tag + (2*r+2)*Nstbits, params);
+      faest_aligned_free(tmp_state_tag);
+      free(tmp_state);
+    }
+
+    faest_aligned_free(s_tilde_tag);
+    faest_aligned_free(s_dash_dash_tag);
+    faest_aligned_free(s_tag);
+    free(s_tilde);
+    free(s_dash_dash);
+    free(s);
+  }
+
+  faest_aligned_free(state_sq_bytewise_deg0);
+  faest_aligned_free(state_sq_bytewise_deg1);
+  faest_aligned_free(state_sq_bytewise_deg2);
+  faest_aligned_free(state_bytewise_deg0);
+  faest_aligned_free(state_bytewise_deg1);
+  faest_aligned_free(state_bytewise_deg2);
+  faest_aligned_free(st_dash_deg0);
+  faest_aligned_free(st_dash_deg1);
+  faest_aligned_free(st_dash_deg2);
+  faest_aligned_free(state_conj_tag);
+  faest_aligned_free(state_conj);
+  faest_aligned_free(state_bits_tag);
+  free(state_bits);
+
 }
 
+static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t* z_deg2, const uint8_t* owf_in, const bf256_t* owf_in_tag, const uint8_t* owf_out, 
+                                            const bf256_t* owf_out_tag, const uint8_t* w, const bf256_t* w_tag, const uint8_t* k, const bf256_t* k_tag, const faest_paramset_t* params) {
+
+  unsigned int Nst = params->faest_param.Nwd;
+  unsigned int Nstbits = 32 * Nst;
+  unsigned int R = params->faest_param.R;
+  unsigned int Nstbytes = Nstbits/8;
+
+  /// ::1 AddRoundKey
+  uint8_t* state_bits = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+  bf256_t* state_bits_tag = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
+
+  aes_256_add_round_key_prover(state_bits, state_bits_tag, owf_in, owf_in_tag, k, k_tag, params);   // owf_in should be bit per uint8
+
+  // for conjugates of state and s-box outputs
+  bf256_t* state_conj = faest_aligned_alloc(BF256_ALIGN, 8 * Nstbytes * sizeof(bf256_t));
+  bf256_t* state_conj_tag = faest_aligned_alloc(BF256_ALIGN, 8 *  Nstbytes * sizeof(bf256_t));
+  bf256_t* st_dash_deg2 = faest_aligned_alloc(BF256_ALIGN, 8 *  Nstbytes * sizeof(bf256_t));
+  bf256_t* st_dash_deg1 = faest_aligned_alloc(BF256_ALIGN, 8 *  Nstbytes * sizeof(bf256_t));
+  bf256_t* st_dash_deg0 = faest_aligned_alloc(BF256_ALIGN, 8 *  Nstbytes * sizeof(bf256_t));
+  
+  bf256_t* state_bytewise_deg2 = faest_aligned_alloc(BF256_ALIGN, Nstbytes * sizeof(bf256_t));
+  bf256_t* state_bytewise_deg1 = faest_aligned_alloc(BF256_ALIGN, Nstbytes * sizeof(bf256_t));
+  bf256_t* state_bytewise_deg0 = faest_aligned_alloc(BF256_ALIGN, Nstbytes * sizeof(bf256_t));
+  bf256_t* state_sq_bytewise_deg2 = faest_aligned_alloc(BF256_ALIGN, Nstbytes * sizeof(bf256_t));
+  bf256_t* state_sq_bytewise_deg1 = faest_aligned_alloc(BF256_ALIGN, Nstbytes * sizeof(bf256_t));
+  bf256_t* state_sq_bytewise_deg0 = faest_aligned_alloc(BF256_ALIGN, Nstbytes * sizeof(bf256_t));
+  
+  // ::2
+  for (unsigned int r = 0; r < R/2; r++) {
+
+    // ::3-4
+    aes_256_f256_f2_conjugates_1(state_conj, state_bits);
+    aes_256_f256_f2_conjugates_256(state_conj_tag, state_bits_tag);
+
+    // ::5-6 : start of norms in witness
+    const uint8_t* norms_ptr = w + 3 * Nstbits * r/2;
+    const bf256_t* norm_tags_ptr = w_tag + 3 * Nstbits * r/2;
+    // uint8_t n[Nstbits/2*4]; // 1 uint8 contains 4 bits of the Invnorm 0000||4bits
+    // bf256_t n_tag[Nstbits/2]; // tag for each bit
+    // for (unsigned int i = 0; i < Nstbits/2; i++) {
+    //   n[i] = w[(((3*Nstbits)/2)*r)/4];
+    //   n_tag[i] = w_tag[(((3*Nstbits)/2)*r)];
+    // }
+
+    // ::7
+    for (unsigned int i = 0; i < Nstbytes; i++) {
+      // ::8-9
+      bf256_t y[4];
+      bf256_t y_tag[4];
+      aes_256_inv_norm_to_conjugates_prover(y, y_tag, norms_ptr + 4*i, norm_tags_ptr + 4*i);    // Ah this is the 4 bit witness part
+
+      // ::10-11
+      aes_256_inv_norm_constraints_prover(
+          z_deg0 + 3*r*Nstbytes + i,
+          z_deg1 + 3*r*Nstbytes + i,
+          z_deg2 + 3*r*Nstbytes + i,
+          state_conj + 8*i,
+          state_conj_tag + 8*i,
+          y, y_tag);
+
+      // ::12
+      for (unsigned int j = 0; j < 8; j++) {
+        // ::13-14
+        uint32_t conj_index = i*8 + ((j + 4) % 8);
+        uint32_t y_index = j % 4;
+        st_dash_deg2[i*8 + j] = bf256_mul(state_conj[conj_index], y[y_index]);
+        st_dash_deg1[i*8 + j] = bf256_add(
+              bf256_mul(state_conj[conj_index], y_tag[y_index]),
+              bf256_mul(state_conj_tag[conj_index], y[y_index])
+        );
+        st_dash_deg0[i*8 + j] = bf256_mul(state_conj_tag[conj_index], y_tag[y_index]);
+      }
+    }
+
+    // ::15-16
+    bf256_t k_0_deg0[32];
+    bf256_t k_0_deg1[32];
+    aes_256_state_to_bytes_prover(k_0_deg1, k_0_deg0,   // k is in bits
+      k + (2*r+1)*Nstbits,
+      k_tag + (2*r+1)*Nstbits,
+      params);
+    // ::17
+    bf256_t k_1_deg0[32];
+    bf256_t k_1_deg1[32];
+    bf256_t k_1_deg2[32];
+    for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
+      k_1_deg0[byte_i] = bf256_mul(k_0_deg0[byte_i], k_0_deg0[byte_i]);
+      k_1_deg1[byte_i] = bf256_zero();
+      k_1_deg2[byte_i] = bf256_mul(k_0_deg1[byte_i], k_0_deg1[byte_i]);
+    }
+
+    // ::18
+    bf256_t st_b_deg0[2][32]; // TODO: this stays empty as the power increases by 1 after the multiplication
+    bf256_t st_b_deg1[2][32];
+    bf256_t st_b_deg2[2][32];
+    bf256_t st_b_deg0_tmp[2][32];
+    bf256_t st_b_deg1_tmp[2][32];
+    bf256_t st_b_deg2_tmp[2][32];
+    bf256_t dummy_key[32];
+    memset(st_b_deg0, 0x00, sizeof(st_b_deg0));
+    memset(st_b_deg1, 0x00, sizeof(st_b_deg1));
+    memset(st_b_deg2, 0x00, sizeof(st_b_deg2));
+    memset(st_b_deg0_tmp, 0x00, sizeof(st_b_deg0_tmp));
+    memset(st_b_deg1_tmp, 0x00, sizeof(st_b_deg1_tmp));
+    memset(st_b_deg2_tmp, 0x00, sizeof(st_b_deg2_tmp));
+    for (unsigned int i = 0; i < Nstbytes; i++) {
+      dummy_key[i] = bf256_zero();
+    }
+
+    for (unsigned int b = 0; b < 2; b++) {
+      // ::19
+      aes_256_sbox_affine_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_dash_deg0, st_dash_deg1, st_dash_deg2, b, params);
+      // ::20
+      aes_256_shiftrows_prover(st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], params);
+      memcpy(st_b_deg0[b], st_b_deg0_tmp[b], sizeof(bf256_t)*Nstbytes);
+      memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf256_t)*Nstbytes);
+      memcpy(st_b_deg2[b], st_b_deg2_tmp[b], sizeof(bf256_t)*Nstbytes);
+      // ::21
+      aes_256_mix_columns_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], b, params);
+      // ::22
+      if (b == 0) {
+        aes_256_add_round_key_bytes_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], dummy_key, k_0_deg0, k_0_deg1, params);
+      } else {
+        aes_256_add_round_key_bytes_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], k_1_deg0, k_1_deg1, k_1_deg2, params);
+      }
+    }
+    // ::23-24
+    uint8_t* s_tilde = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+    bf256_t* s_tilde_tag = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
+    if (r == R/2 - 1) {
+      // ::25
+      aes_256_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag, k + R*Nstbits, k_tag + R*Nstbits, params);
+    } else {
+      // ::27-28
+      unsigned int idx = 0;
+      for (unsigned int i = ((Nstbits/2) + (Nstbits/2)*3*r); i < ((Nstbits/2*3*r) + (Nstbits/2*3)); i++) {
+        s_tilde[idx] = w[i];
+        s_tilde_tag[idx] = w_tag[i];
+        idx++;
+      }
+    }
+    // ::29
+    uint8_t* s_dash_dash = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+    bf256_t* s_dash_dash_tag = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
+    aes_256_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);   // TODO: check the bitwise shift operation in the function, looks fishy
+    // ::30
+    uint8_t* s = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+    bf256_t* s_tag = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
+    aes_256_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag, params);
+
+    // ::31
+    for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
+      bf256_t s_deg1;
+      bf256_t s_deg0;
+      bf256_t s_sq_deg1;
+      bf256_t s_sq_deg0;
+      // ::32
+      s_deg1 = bf256_byte_combine_bits(s + 8*byte_i);      // taking 8 uint8 "bits"
+      s_deg0 = bf256_byte_combine(s_tag + 8*byte_i);
+      // ::33
+      s_sq_deg1 = bf256_byte_combine_bits_sq(s + 8*byte_i);    // taking 8 uint8 "bits"
+      s_sq_deg0 = bf256_byte_combine_sq(s_tag + 8*byte_i);
+
+      // ::36
+      // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
+      //    deg0: s_sq[0] * st[0]
+      //    deg1: s_sq[0] * st[1] + s_sq[1] * st[0]
+      //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
+      //
+
+      {
+          bf256_t debug = bf256_mul(s_deg1, st_b_deg2[0][byte_i]);
+          bf256_t one = bf256_one();
+          bf256_t zero = bf256_zero();
+          assert((memcmp(&debug, &one, sizeof(debug)) == 0)
+                  || ((memcmp(&s_deg1, &zero, sizeof(debug)) == 0)
+                      && (memcmp(&st_b_deg2[0][byte_i], &zero, sizeof(debug)) == 0)));
+      }
+      z_deg0[(3*r+1)*Nstbytes + 2*byte_i] = bf256_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
+
+      z_deg1[(3*r+1)*Nstbytes + 2*byte_i] = bf256_add(
+              bf256_mul(s_sq_deg0, st_b_deg1[0][byte_i]),
+              bf256_mul(s_sq_deg1, st_b_deg0[0][byte_i])
+            );
+      z_deg2[(3*r+1)*Nstbytes + 2*byte_i] = bf256_add(
+              bf256_add(
+                  bf256_mul(s_sq_deg0, st_b_deg2[0][byte_i]),
+                  bf256_mul(s_sq_deg1, st_b_deg1[0][byte_i])),
+                s_deg0);
+      // ::37
+      // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
+      //    deg0: s[0] * st_{1,i}[0]
+      //    deg1: s[0] * st_{1,i}[1] + s[1] * st_{1,i}[0] + st_{0,i}[0]
+      //    deg2: s[0] * st_{1,i}[2] + s[1] * st_{1,i}[1] + st_{0,i}[1]
+      //
+      z_deg0[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf256_mul(s_deg0, st_b_deg0[1][byte_i]);
+      z_deg1[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf256_add(
+              bf256_add(
+                  bf256_mul(s_deg0, st_b_deg1[1][byte_i]),
+                  bf256_mul(s_deg1, st_b_deg0[1][byte_i])),
+                st_b_deg0[0][byte_i]);
+      z_deg2[(3*r+1)*Nstbytes + 2*byte_i + 1] = bf256_add(
+              bf256_add(
+                  bf256_mul(s_deg0, st_b_deg2[1][byte_i]),
+                  bf256_mul(s_deg1, st_b_deg1[1][byte_i])),
+                st_b_deg1[0][byte_i]);
+    }
+    if (r != (R/2)-1) {
+      uint8_t* tmp_state = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
+      bf256_t* tmp_state_tag = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
+      aes_256_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
+      aes_256_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag, k + (2*r+2)*Nstbits, k_tag + (2*r+2)*Nstbits, params);
+      faest_aligned_free(tmp_state_tag);
+      free(tmp_state);
+    }
+
+    faest_aligned_free(s_tilde_tag);
+    faest_aligned_free(s_dash_dash_tag);
+    faest_aligned_free(s_tag);
+    free(s_tilde);
+    free(s_dash_dash);
+    free(s);
+  }
+
+  faest_aligned_free(state_sq_bytewise_deg0);
+  faest_aligned_free(state_sq_bytewise_deg1);
+  faest_aligned_free(state_sq_bytewise_deg2);
+  faest_aligned_free(state_bytewise_deg0);
+  faest_aligned_free(state_bytewise_deg1);
+  faest_aligned_free(state_bytewise_deg2);
+  faest_aligned_free(st_dash_deg0);
+  faest_aligned_free(st_dash_deg1);
+  faest_aligned_free(st_dash_deg2);
+  faest_aligned_free(state_conj_tag);
+  faest_aligned_free(state_conj);
+  faest_aligned_free(state_bits_tag);
+  free(state_bits);
+
+}
 
 static void aes_128_enc_constraints_verifier(bf128_t* z_key, const bf128_t* owf_in_key, 
                                         const bf128_t* owf_out_key, const bf128_t* w_key, const bf128_t* rkeys_key, const bf128_t delta,
