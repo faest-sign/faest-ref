@@ -796,9 +796,6 @@ static void aes_256_shiftrows_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256
   }
 }
 
-// TODO: translate 128-bit shiftrows to 192/256
-// (these versions are only for degree-1) // TODO: what is this??
-
 static void aes_128_shiftrows_verifier(bf128_t* out_deg1, const bf128_t* in_deg1,
                                        const faest_paramset_t* params) {
 
@@ -3277,8 +3274,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     }
 
     // ::18
-    bf128_t st_b_deg0[2][32]; // TODO: this stays empty as the power increases by 1 after the
-                              // multiplication
+    bf128_t st_b_deg0[2][32];
     bf128_t st_b_deg1[2][32];
     bf128_t st_b_deg2[2][32];
     bf128_t st_b_deg0_tmp[2][32];
@@ -3339,9 +3335,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
     // ::29
     uint8_t* s_dash_dash     = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
     bf128_t* s_dash_dash_tag = faest_aligned_alloc(BF128_ALIGN, Nstbits * sizeof(bf128_t));
-    aes_128_inverse_shiftrows_prover(
-        s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag,
-        params); // TODO: check the bitwise shift operation in the function, looks fishy
+    aes_128_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
     // ::30
     uint8_t* s     = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
     bf128_t* s_tag = faest_aligned_alloc(BF128_ALIGN, Nstbits * sizeof(bf128_t));
@@ -3514,8 +3508,7 @@ static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf1
     }
 
     // ::18
-    bf192_t st_b_deg0[2][32]; // TODO: this stays empty as the power increases by 1 after the
-                              // multiplication
+    bf192_t st_b_deg0[2][32];
     bf192_t st_b_deg1[2][32];
     bf192_t st_b_deg2[2][32];
     bf192_t st_b_deg0_tmp[2][32];
@@ -3576,9 +3569,7 @@ static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf1
     // ::29
     uint8_t* s_dash_dash     = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
     bf192_t* s_dash_dash_tag = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
-    aes_192_inverse_shiftrows_prover(
-        s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag,
-        params); // TODO: check the bitwise shift operation in the function, looks fishy
+    aes_192_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
     // ::30
     uint8_t* s     = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
     bf192_t* s_tag = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
@@ -3751,8 +3742,7 @@ static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf2
     }
 
     // ::18
-    bf256_t st_b_deg0[2][32]; // TODO: this stays empty as the power increases by 1 after the
-                              // multiplication
+    bf256_t st_b_deg0[2][32];
     bf256_t st_b_deg1[2][32];
     bf256_t st_b_deg2[2][32];
     bf256_t st_b_deg0_tmp[2][32];
@@ -3813,9 +3803,7 @@ static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf2
     // ::29
     uint8_t* s_dash_dash     = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
     bf256_t* s_dash_dash_tag = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
-    aes_256_inverse_shiftrows_prover(
-        s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag,
-        params); // TODO: check the bitwise shift operation in the function, looks fishy
+    aes_256_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
     // ::30
     uint8_t* s     = (uint8_t*)malloc(Nstbits * sizeof(uint8_t));
     bf256_t* s_tag = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
