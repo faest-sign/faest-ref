@@ -585,7 +585,7 @@ void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* k_key, con
 static void aes_128_sbox_affine_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128_t* out_deg2, const bf128_t* in_deg0, const bf128_t* in_deg1, const bf128_t* in_deg2,
                                         bool dosq, const faest_paramset_t* params) {
 
-  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  unsigned int Nst_bytes = params->faest_param.Nwd*4;
   bf128_t C[9];
   uint8_t t;
   uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
@@ -625,7 +625,7 @@ static void aes_128_sbox_affine_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf1
 static void aes_192_sbox_affine_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf192_t* out_deg2, const bf192_t* in_deg0, const bf192_t* in_deg1, const bf192_t* in_deg2,
                                         bool dosq, const faest_paramset_t* params) {
 
-  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  unsigned int Nst_bytes = params->faest_param.Nwd*4;
   bf192_t C[9];
   uint8_t t;
   uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
@@ -665,7 +665,7 @@ static void aes_192_sbox_affine_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf1
 static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf256_t* out_deg2, const bf256_t* in_deg0, const bf256_t* in_deg1, const bf256_t* in_deg2,
                                         bool dosq, const faest_paramset_t* params) {
 
-  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  unsigned int Nst_bytes = params->faest_param.Nwd*4;
   bf256_t C[9];
   uint8_t t;
   uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
@@ -706,7 +706,7 @@ static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf2
 static void aes_128_sbox_affine_verifier(bf128_t* out_deg1, const bf128_t* in_deg1, bf128_t delta, bool dosq, 
                                         const faest_paramset_t* params) {
 
-  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  unsigned int Nst_bytes = params->faest_param.Nwd*4;
   bf128_t C[9];
   uint8_t t;
   uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
@@ -744,7 +744,7 @@ static void aes_128_sbox_affine_verifier(bf128_t* out_deg1, const bf128_t* in_de
 static void aes_192_sbox_affine_verifier(bf192_t* out_deg1, const bf192_t* in_deg1, bf192_t delta, bool dosq, 
                                         const faest_paramset_t* params) {
 
-  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  unsigned int Nst_bytes = params->faest_param.Nwd*4;
   bf192_t C[9];
   uint8_t t;
   uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
@@ -782,7 +782,7 @@ static void aes_192_sbox_affine_verifier(bf192_t* out_deg1, const bf192_t* in_de
 static void aes_256_sbox_affine_verifier(bf256_t* out_deg1, const bf256_t* in_deg1, bf256_t delta, bool dosq, 
                                         const faest_paramset_t* params) {
 
-  unsigned int Nst_bytes = params->faest_param.lambda/8;
+  unsigned int Nst_bytes = params->faest_param.Nwd*4;
   bf256_t C[9];
   uint8_t t;
   uint8_t x[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
