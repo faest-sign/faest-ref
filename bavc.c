@@ -15,12 +15,6 @@
 
 #include <string.h>
 
-typedef struct tree_t {
-  uint8_t* nodes;   /* The data for each node */
-  size_t numNodes;  /* The total number of nodes in the tree */
-  size_t numLeaves; /* The total number of leaves in the tree */
-} tree_t;
-
 #define NODE(nodes, node, lambda_bytes) (&nodes[(node) * (lambda_bytes)])
 
 static void expand_seeds(uint8_t* nodes, const uint8_t* iv, const faest_paramset_t* params) {
