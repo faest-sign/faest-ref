@@ -427,7 +427,7 @@ void aes_128_inv_norm_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128
                 bf128_mul(y[0], bf128_mul(conjugates[1], conjugates[4])),
                 conjugates[0]);
         bf128_t zero = bf128_zero();
-        assert(memcmp(&debug, &zero, sizeof(debug)) == 0);
+        assert(bf128_eq(debug, zero));
     }
     
     z_deg0[0] = bf128_mul(
@@ -455,7 +455,7 @@ void aes_192_inv_norm_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192
                 bf192_mul(y[0], bf192_mul(conjugates[1], conjugates[4])),
                 conjugates[0]);
         bf192_t zero = bf192_zero();
-        assert(memcmp(&debug, &zero, sizeof(debug)) == 0);
+        assert(bf192_eq(debug, zero));
     }
     
     z_deg0[0] = bf192_mul(
@@ -483,7 +483,7 @@ void aes_256_inv_norm_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256
                 bf256_mul(y[0], bf256_mul(conjugates[1], conjugates[4])),
                 conjugates[0]);
         bf256_t zero = bf256_zero();
-        assert(memcmp(&debug, &zero, sizeof(debug)) == 0);
+        assert(bf256_eq(debug, zero));
     }
     
     z_deg0[0] = bf256_mul(
@@ -2773,17 +2773,11 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
       // ::12-15
       k_hat[r_prime] = bf128_byte_combine_bits(&k[(iwd + 8 * r)]); // lifted key witness
       k_hat_sq[r_prime] = bf128_byte_combine_bits_sq(&k[(iwd + 8 * r)]); // lifted key witness sq
-      {
-          bf128_t debug = bf128_mul(k_hat[r_prime], k_hat[r_prime]);
-          assert(memcmp(&debug, &k_hat_sq[r_prime], sizeof(debug)) == 0);
-      }
+      assert(bf128_eq(bf128_mul(k_hat[r_prime], k_hat[r_prime]), k_hat_sq[r_prime]));
 
       w_hat[r] = bf128_byte_combine_bits(&w_flat[(32 * j + 8 * r)]); // lifted output
       w_hat_sq[r] = bf128_byte_combine_bits_sq(&w_flat[(32 * j + 8 * r)]);  // lifted output sq
-      {
-          bf128_t debug = bf128_mul(w_hat[r], w_hat[r]);
-          assert(memcmp(&debug, &w_hat_sq[r], sizeof(debug)) == 0);
-      }
+      assert(bf128_eq(bf128_mul(w_hat[r], w_hat[r]), w_hat_sq[r]));
 
       // done by both prover and verifier
       k_hat_tag[r_prime] = bf128_byte_combine(k_tag + (iwd + 8 * r)); // lifted key tag
@@ -2799,12 +2793,10 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
     // ::17
     for (unsigned int r = 0; r < 4; r++) {
       {
-        bf128_t debug = bf128_mul(k_hat[r], w_hat[r]);
         bf128_t one = bf128_one();
         bf128_t zero = bf128_zero();
-        assert((memcmp(&debug, &one, sizeof(debug)) == 0)
-                || ((memcmp(&k_hat[r], &zero, sizeof(debug)) == 0)
-                    && (memcmp(&w_hat[r], &zero, sizeof(debug)) == 0)));
+        assert(bf128_eq(bf128_mul(k_hat[r], w_hat[r]), one)
+                || (bf128_eq(k_hat[r], zero) && bf128_eq(w_hat[r], zero)));
       }
 
       // ::18-19
@@ -2882,17 +2874,11 @@ static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, 
       // ::12-15
       k_hat[r_prime] = bf192_byte_combine_bits(&k[(iwd + 8 * r)]); // lifted key witness
       k_hat_sq[r_prime] = bf192_byte_combine_bits_sq(&k[(iwd + 8 * r)]); // lifted key witness sq
-      {
-          bf192_t debug = bf192_mul(k_hat[r_prime], k_hat[r_prime]);
-          assert(memcmp(&debug, &k_hat_sq[r_prime], sizeof(debug)) == 0);
-      }
+      assert(bf192_eq(bf192_mul(k_hat[r_prime], k_hat[r_prime]), k_hat_sq[r_prime]));
 
       w_hat[r] = bf192_byte_combine_bits(&w_flat[(32 * j + 8 * r)]); // lifted output
       w_hat_sq[r] = bf192_byte_combine_bits_sq(&w_flat[(32 * j + 8 * r)]);  // lifted output sq
-      {
-          bf192_t debug = bf192_mul(w_hat[r], w_hat[r]);
-          assert(memcmp(&debug, &w_hat_sq[r], sizeof(debug)) == 0);
-      }
+      assert(bf192_eq(bf192_mul(w_hat[r], w_hat[r]), w_hat_sq[r]));
 
       // done by both prover and verifier
       k_hat_tag[r_prime] = bf192_byte_combine(k_tag + (iwd + 8 * r)); // lifted key tag
@@ -2908,12 +2894,10 @@ static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, 
     // ::17
     for (unsigned int r = 0; r < 4; r++) {
       {
-        bf192_t debug = bf192_mul(k_hat[r], w_hat[r]);
         bf192_t one = bf192_one();
         bf192_t zero = bf192_zero();
-        assert((memcmp(&debug, &one, sizeof(debug)) == 0)
-                || ((memcmp(&k_hat[r], &zero, sizeof(debug)) == 0)
-                    && (memcmp(&w_hat[r], &zero, sizeof(debug)) == 0)));
+        assert(bf192_eq(bf192_mul(k_hat[r], w_hat[r]), one)
+                || (bf192_eq(k_hat[r], zero) && bf192_eq(w_hat[r], zero)));
       }
 
       // ::18-19
@@ -2990,17 +2974,11 @@ static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, 
       // ::12-15
       k_hat[r_prime] = bf256_byte_combine_bits(&k[(iwd + 8 * r)]); // lifted key witness
       k_hat_sq[r_prime] = bf256_byte_combine_bits_sq(&k[(iwd + 8 * r)]); // lifted key witness sq
-      {
-          bf256_t debug = bf256_mul(k_hat[r_prime], k_hat[r_prime]);
-          assert(memcmp(&debug, &k_hat_sq[r_prime], sizeof(debug)) == 0);
-      }
+      assert(bf256_eq(bf256_mul(k_hat[r_prime], k_hat[r_prime]), k_hat_sq[r_prime]));
 
       w_hat[r] = bf256_byte_combine_bits(&w_flat[(32 * j + 8 * r)]); // lifted output
       w_hat_sq[r] = bf256_byte_combine_bits_sq(&w_flat[(32 * j + 8 * r)]);  // lifted output sq
-      {
-          bf256_t debug = bf256_mul(w_hat[r], w_hat[r]);
-          assert(memcmp(&debug, &w_hat_sq[r], sizeof(debug)) == 0);
-      }
+      assert(bf256_eq(bf256_mul(w_hat[r], w_hat[r]), w_hat_sq[r]));
 
       // done by both prover and verifier
       k_hat_tag[r_prime] = bf256_byte_combine(k_tag + (iwd + 8 * r)); // lifted key tag
@@ -3016,12 +2994,10 @@ static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, 
     // ::17
     for (unsigned int r = 0; r < 4; r++) {
       {
-        bf256_t debug = bf256_mul(k_hat[r], w_hat[r]);
         bf256_t one = bf256_one();
         bf256_t zero = bf256_zero();
-        assert((memcmp(&debug, &one, sizeof(debug)) == 0)
-                || ((memcmp(&k_hat[r], &zero, sizeof(debug)) == 0)
-                    && (memcmp(&w_hat[r], &zero, sizeof(debug)) == 0)));
+        assert(bf256_eq(bf256_mul(k_hat[r], w_hat[r]), one)
+                || (bf256_eq(k_hat[r], zero) && bf256_eq(w_hat[r], zero)));
       }
 
       // ::18-19
