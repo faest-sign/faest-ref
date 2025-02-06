@@ -4772,13 +4772,9 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
     if (b == 1) {
       in[0] = in[0] ^ 0x01;
       in_tag[0] = bf256_add(in_tag[0], bf256_one());
-      out_tag += blocksize;
     }
 
-    // aes_256_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
-    // uint32_t z_offset = 1 + (2*FAEST_256F_Ske);
-    // printf("z offset = %d\n", z_offset);
-    // aes_256_enc_constraints_prover(z_deg0 + z_offset, z_deg1 + z_offset, z_deg2 + z_offset, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, k, k_tag, params);
+    // aes_256_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag, out, out_tag + b * blocksize, w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
 
     // :22
     for (unsigned int i = 0; i < num_enc_constraints; i++) {
@@ -5087,9 +5083,8 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key, c
     memset(z_tilde_enc_key, 0, num_enc_constraints * sizeof(bf256_t));
     if (b == 1) {
       in_key[0] = bf256_add(in_key[0], delta); // adding one
-      out_key += blocksize;
     }
-    // aes_256_enc_constraints_verifier(z_tilde_enc_key, in_key, out_key, w_tilde_key, rkeys_key, delta, params);
+    // aes_256_enc_constraints_verifier(z_tilde_enc_key, in_key, out_key + b * blocksize, w_tilde_key, rkeys_key, delta, params);
 
     // :22
     for (unsigned int i = 0; i < num_enc_constraints; i++) {
