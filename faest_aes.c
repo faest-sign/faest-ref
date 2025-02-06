@@ -2789,7 +2789,7 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
     }
   }
   free(w_flat);
-  free(w_flat_tag);
+  faest_aligned_free(w_flat_tag);
 }
 static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, uint8_t* k, bf192_t* k_tag, const uint8_t* w, const bf192_t* w_tag, const faest_paramset_t* params) {
   
@@ -2881,7 +2881,7 @@ static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, 
     }
   }
   free(w_flat);
-  free(w_flat_tag);
+  faest_aligned_free(w_flat_tag);
 }
 static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, uint8_t* k, bf256_t* k_tag, const uint8_t* w, const bf256_t* w_tag, const faest_paramset_t* params) {
   unsigned int Ske = params->faest_param.Ske;
@@ -2972,7 +2972,7 @@ static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, 
     }
   }
   free(w_flat);
-  free(w_flat_tag);
+  faest_aligned_free(w_flat_tag);
 }
 
 static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key, const bf128_t* w_key, bf128_t delta, const faest_paramset_t* params) {
@@ -3036,7 +3036,7 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key,
       iwd += 128;
     }
   }
-  free(w_flat_key);
+  faest_aligned_free(w_flat_key);
 }
 static void aes_192_expkey_constraints_verifier(bf192_t* z_deg1, bf192_t* k_key, const bf192_t* w_key, bf192_t delta, const faest_paramset_t* params) {
   unsigned int Ske = params->faest_param.Ske;
@@ -3098,7 +3098,7 @@ static void aes_192_expkey_constraints_verifier(bf192_t* z_deg1, bf192_t* k_key,
       iwd += 128;
     }
   }
-  free(w_flat_key);
+ faest_aligned_free(w_flat_key);
 }
 static void aes_256_expkey_constraints_verifier(bf256_t* z_deg1, bf256_t* k_key, const bf256_t* w_key, bf256_t delta, const faest_paramset_t* params) {
     unsigned int Ske = params->faest_param.Ske;
@@ -3160,7 +3160,7 @@ static void aes_256_expkey_constraints_verifier(bf256_t* z_deg1, bf256_t* k_key,
       iwd += 128;
     }
   }
-  free(w_flat_key);
+  faest_aligned_free(w_flat_key);
 }
 
 // // ENC CSTRNTS
@@ -4361,8 +4361,8 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
       //aes_128_deg2to3_prover(z_deg1 + 1, z_deg2 + 1, z_tilde_deg0_tag[i], z_tilde_deg1_val[i]);
     }
 
-    free(z_tilde_deg0_tag);
-    free(z_tilde_deg1_val);
+    faest_aligned_free(z_tilde_deg0_tag);
+    faest_aligned_free(z_tilde_deg1_val);
   }
   uint8_t* w_tilde = (uint8_t*)malloc(Lenc * sizeof(uint8_t));
   bf128_t* w_tilde_tag = faest_aligned_alloc(BF128_ALIGN, Lenc * sizeof(bf128_t));
@@ -4402,18 +4402,18 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
     }
   }
   free(in);
-  free(in_tag);
+  faest_aligned_free(in_tag);
   free(out);
-  free(out_tag);
+  faest_aligned_free(out_tag);
   free(rkeys);
-  free(rkeys_tag);
+  faest_aligned_free(rkeys_tag);
 
   free(w_tilde);
-  free(w_tilde_tag);
+  faest_aligned_free(w_tilde_tag);
 
-  free(z_tilde_deg0);
-  free(z_tilde_deg1);
-  free(z_tilde_deg2);
+  faest_aligned_free(z_tilde_deg0);
+  faest_aligned_free(z_tilde_deg1);
+  faest_aligned_free(z_tilde_deg2);
 }
 
 static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2, const uint8_t* w, const bf192_t* w_tag, const uint8_t* owf_in, 
@@ -4502,8 +4502,8 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
       //aes_192_deg2to3_prover(z_deg1 + 1, z_deg2 + 1, z_tilde_deg0_tag[i], z_tilde_deg1_val[i]);
     }
 
-    free(z_tilde_deg0_tag);
-    free(z_tilde_deg1_val);
+    faest_aligned_free(z_tilde_deg0_tag);
+    faest_aligned_free(z_tilde_deg1_val);
   }
   uint8_t* w_tilde = (uint8_t*)malloc(Lenc * sizeof(uint8_t));
   bf192_t* w_tilde_tag = faest_aligned_alloc(BF192_ALIGN, Lenc * sizeof(bf192_t));
@@ -4538,18 +4538,18 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
     }
   }
   free(in);
-  free(in_tag);
+  faest_aligned_free(in_tag);
   free(out);
-  free(out_tag);
+  faest_aligned_free(out_tag);
   free(rkeys);
-  free(rkeys_tag);
+  faest_aligned_free(rkeys_tag);
 
   free(w_tilde);
-  free(w_tilde_tag);
+  faest_aligned_free(w_tilde_tag);
 
-  free(z_tilde_deg0);
-  free(z_tilde_deg1);
-  free(z_tilde_deg2);
+  faest_aligned_free(z_tilde_deg0);
+  faest_aligned_free(z_tilde_deg1);
+  faest_aligned_free(z_tilde_deg2);
 }
 
 static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t* z_deg2, const uint8_t* w, const bf256_t* w_tag, const uint8_t* owf_in, 
@@ -4638,8 +4638,8 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
       //aes_256_deg2to3_prover(z_deg1 + 1, z_deg2 + 1, z_tilde_deg0_tag[i], z_tilde_deg1_val[i]);
     }
 
-    free(z_tilde_deg0_tag);
-    free(z_tilde_deg1_val);
+    faest_aligned_free(z_tilde_deg0_tag);
+    faest_aligned_free(z_tilde_deg1_val);
   }
   uint8_t* w_tilde = (uint8_t*)malloc(Lenc * sizeof(uint8_t));
   bf256_t* w_tilde_tag = faest_aligned_alloc(BF256_ALIGN, Lenc * sizeof(bf256_t));
@@ -4674,18 +4674,18 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
     }
   }
   free(in);
-  free(in_tag);
+  faest_aligned_free(in_tag);
   free(out);
-  free(out_tag);
+  faest_aligned_free(out_tag);
   free(rkeys);
-  free(rkeys_tag);
+  faest_aligned_free(rkeys_tag);
 
   free(w_tilde);
-  free(w_tilde_tag);
+  faest_aligned_free(w_tilde_tag);
 
-  free(z_tilde_deg0);
-  free(z_tilde_deg1);
-  free(z_tilde_deg2);
+  faest_aligned_free(z_tilde_deg0);
+  faest_aligned_free(z_tilde_deg1);
+  faest_aligned_free(z_tilde_deg2);
 }
 
 // OWF CONSTRAINTS VERIFIER
@@ -5036,16 +5036,16 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
     zk_hash_128_update(&a2_ctx, z2_gamma[i]);
   }
 
-  free(z0_tag);
-  free(z1_val);
-  free(z2_gamma);
+  faest_aligned_free(z0_tag);
+  faest_aligned_free(z1_val);
+  faest_aligned_free(z2_gamma);
 
   zk_hash_128_finalize(a0_tilde, &a0_ctx, bf_v_star_0);
   zk_hash_128_finalize(a1_tilde, &a1_ctx, bf128_add(bf_u_star_0, bf_v_star_1));
   zk_hash_128_finalize(a2_tilde, &a2_ctx, bf_u_star_1);
 
-  free(bf_u_bits);
-  free(w_tag);
+  faest_aligned_free(bf_u_bits);
+  faest_aligned_free(w_tag);
 }
 static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w_bits, const uint8_t* u_bits, 
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
@@ -5093,16 +5093,16 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
     zk_hash_192_update(&a2_ctx, z2_gamma[i]);
   }
 
-  free(z0_tag);
-  free(z1_val);
-  free(z2_gamma);
+  faest_aligned_free(z0_tag);
+  faest_aligned_free(z1_val);
+  faest_aligned_free(z2_gamma);
 
   zk_hash_192_finalize(a0_tilde, &a0_ctx, bf_v_star_0);
   zk_hash_192_finalize(a1_tilde, &a1_ctx, bf192_add(bf_u_star_0, bf_v_star_1));
   zk_hash_192_finalize(a2_tilde, &a2_ctx, bf_u_star_1);
 
-  free(bf_u_bits);
-  free(w_tag);
+  faest_aligned_free(bf_u_bits);
+  faest_aligned_free(w_tag);
 }
 static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w_bits, const uint8_t* u_bits, 
                           uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params, bool isEM) {
@@ -5151,16 +5151,16 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
     zk_hash_256_update(&a2_ctx, z2_gamma[i]);
   }
 
-  free(z0_tag);
-  free(z1_val);
-  free(z2_gamma);
+  faest_aligned_free(z0_tag);
+  faest_aligned_free(z1_val);
+  faest_aligned_free(z2_gamma);
 
   zk_hash_256_finalize(a0_tilde, &a0_ctx, bf_v_star_0);
   zk_hash_256_finalize(a1_tilde, &a1_ctx, bf256_add(bf_u_star_0, bf_v_star_1));
   zk_hash_256_finalize(a2_tilde, &a2_ctx, bf_u_star_1);
 
-  free(bf_u_bits);
-  free(w_tag);
+  faest_aligned_free(bf_u_bits);
+  faest_aligned_free(w_tag);
 }
 
 // OWF VERIFIER
@@ -5205,8 +5205,8 @@ static uint8_t* aes_128_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   uint8_t* q_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   zk_hash_128_finalize(q_tilde, &b_ctx, q_star);
 
-  free(z2_key);
-  free(w_key);
+  faest_aligned_free(z2_key);
+  faest_aligned_free(w_key);
 
   // ::16
   bf128_t tmp1 = bf128_mul(bf128_load(a1_tilde), bf_delta);
@@ -5215,7 +5215,7 @@ static uint8_t* aes_128_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   bf128_t ret = bf128_add(bf128_load(q_tilde), tmp3);
 
   free(q_tilde);
-  free(q_key);
+  faest_aligned_free(q_key);
 
   uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   bf128_store(a0_tilde, ret);
@@ -5263,8 +5263,8 @@ static uint8_t* aes_192_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   uint8_t* q_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   zk_hash_192_finalize(q_tilde, &b_ctx, q_star);
 
-  free(z2_key);
-  free(w_key);
+  faest_aligned_free(z2_key);
+  faest_aligned_free(w_key);
 
   // ::16
   bf192_t tmp1 = bf192_mul(bf192_load(a1_tilde), bf_delta);
@@ -5273,7 +5273,7 @@ static uint8_t* aes_192_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   bf192_t ret = bf192_add(bf192_load(q_tilde), tmp3);
 
   free(q_tilde);
-  free(q_key);
+  faest_aligned_free(q_key);
 
   uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   bf192_store(a0_tilde, ret);
@@ -5321,8 +5321,8 @@ static uint8_t* aes_256_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   uint8_t* q_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   zk_hash_256_finalize(q_tilde, &b_ctx, q_star);
 
-  free(z2_key);
-  free(w_key);
+  faest_aligned_free(z2_key);
+  faest_aligned_free(w_key);
 
   // ::16
   bf256_t tmp1 = bf256_mul(bf256_load(a1_tilde), bf_delta);
@@ -5331,7 +5331,7 @@ static uint8_t* aes_256_verifier(const uint8_t* d_bits, uint8_t** Q, const uint8
   bf256_t ret = bf256_add(bf256_load(q_tilde), tmp3);
 
   free(q_tilde);
-  free(q_key);
+  faest_aligned_free(q_key);
 
   uint8_t* a0_tilde = (uint8_t*)malloc((lambda/8) * sizeof(uint8_t));
   bf256_store(a0_tilde, ret);
