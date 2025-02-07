@@ -372,8 +372,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     u_bits[bit_i] = (u[(ell + bit_i) / 8] >> (ell + bit_i) % 8) & 1;
   }
   aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w_bits,
-            u_bits, V, owf_input, owf_output, chall_2,
-            params); // Better not make the owf_in and owf_out bit per uint8
+            u_bits, V, owf_input, owf_output, chall_2, params);
 
   free_pointer_array(&V);
   free(w);
@@ -423,11 +422,11 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
                  const uint8_t* owf_output, const faest_paramset_t* params) {
   const unsigned int ell           = params->l;
   const unsigned int lambda        = params->lambda;
-  const unsigned int lambdaBytes   = lambda / 8;
+  const unsigned int lambda_bytes  = lambda / 8;
   const unsigned int tau           = params->tau;
   const unsigned int ell_hat       = ell + lambda * 3 + UNIVERSAL_HASH_B_BITS;
   const unsigned int ell_hat_bytes = ell_hat / 8;
-  const unsigned int utilde_bytes  = lambdaBytes + UNIVERSAL_HASH_B;
+  const unsigned int utilde_bytes  = lambda_bytes + UNIVERSAL_HASH_B;
 
   // ::4-5
   if (!check_challenge_3(dsignature_chall_3(sig, params), lambda - params->w_grind, lambda)) {
@@ -509,5 +508,5 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
                    dsignature_a2_tilde(sig, params), dsignature_ctr(sig, params), lambda);
 
   // Step 21
-  return memcmp(chall_3, dsignature_chall_3(sig, params), lambdaBytes) == 0 ? 0 : -1;
+  return memcmp(chall_3, dsignature_chall_3(sig, params), lambda_bytes) == 0 ? 0 : -1;
 }
