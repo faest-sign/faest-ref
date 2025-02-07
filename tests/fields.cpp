@@ -7,6 +7,8 @@
 #endif
 
 #include "fields.hpp"
+#include "randomness.h"
+#include "utils.h"
 
 #include <boost/test/unit_test.hpp>
 
@@ -1833,6 +1835,20 @@ BOOST_AUTO_TEST_CASE(test_bf128_sum_poly) {
   BOOST_TEST(sum == bf128(output));
 }
 
+BOOST_AUTO_TEST_CASE(test_bf128_sum_poly_bits) {
+  std::array<uint8_t, sizeof(bf128::bytes)> bits;
+  rand_bytes(bits.data(), bits.size());
+
+  std::array<bf128_t, sizeof(bf128::bytes) * 8> bf_bits;
+  for (unsigned int i = 0; i != sizeof(bf128::bytes) * 8; ++i) {
+    bf_bits[i] = bf128_from_bit(ptr_get_bit(bits.data(), i));
+  }
+
+  bf128 sum   = bf128_sum_poly_bits(bits.data());
+  bf128 check = bf128_sum_poly(bf_bits.data());
+  BOOST_TEST(sum == check);
+}
+
 BOOST_AUTO_TEST_CASE(test_bf192_sum_poly) {
   const auto& inputs = poly192_from_8_poly192_input;
   const auto& output = poly192_sum_poly_output;
@@ -1851,6 +1867,20 @@ BOOST_AUTO_TEST_CASE(test_bf192_sum_poly) {
   BOOST_TEST(sum == bf192(output));
 }
 
+BOOST_AUTO_TEST_CASE(test_bf192_sum_poly_bits) {
+  std::array<uint8_t, sizeof(bf192::bytes)> bits;
+  rand_bytes(bits.data(), bits.size());
+
+  std::array<bf192_t, sizeof(bf192::bytes) * 8> bf_bits;
+  for (unsigned int i = 0; i != sizeof(bf192::bytes) * 8; ++i) {
+    bf_bits[i] = bf192_from_bit(ptr_get_bit(bits.data(), i));
+  }
+
+  bf192 sum   = bf192_sum_poly_bits(bits.data());
+  bf192 check = bf192_sum_poly(bf_bits.data());
+  BOOST_TEST(sum == check);
+}
+
 BOOST_AUTO_TEST_CASE(test_bf256_sum_poly) {
   const auto& inputs = poly256_from_8_poly256_input;
   const auto& output = poly256_sum_poly_output;
@@ -1867,6 +1897,20 @@ BOOST_AUTO_TEST_CASE(test_bf256_sum_poly) {
 
   bf256 sum = bf256_sum_poly(polys);
   BOOST_TEST(sum == bf256(output));
+}
+
+BOOST_AUTO_TEST_CASE(test_bf256_sum_poly_bits) {
+  std::array<uint8_t, sizeof(bf256::bytes)> bits;
+  rand_bytes(bits.data(), bits.size());
+
+  std::array<bf256_t, sizeof(bf256::bytes) * 8> bf_bits;
+  for (unsigned int i = 0; i != sizeof(bf256::bytes) * 8; ++i) {
+    bf_bits[i] = bf256_from_bit(ptr_get_bit(bits.data(), i));
+  }
+
+  bf256 sum   = bf256_sum_poly_bits(bits.data());
+  bf256 check = bf256_sum_poly(bf_bits.data());
+  BOOST_TEST(sum == check);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

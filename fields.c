@@ -8,6 +8,7 @@
 
 #include "fields.h"
 #include "randomness.h"
+#include "utils.h"
 
 // GF(2^8) with X^8 + X^4 + X^3 + X^1 + 1
 #define bf8_modulus (UINT8_C((1 << 4) | (1 << 3) | (1 << 1) | 1))
@@ -286,6 +287,14 @@ bf128_t bf128_sum_poly(const bf128_t* xs) {
   return ret;
 }
 
+bf128_t bf128_sum_poly_bits(const uint8_t* xs) {
+  bf128_t ret = bf128_from_bit(ptr_get_bit(xs, 128 - 1));
+  for (size_t i = 1; i < 128; ++i) {
+    ret = bf128_add(bf128_dbl(ret), bf128_from_bit(ptr_get_bit(xs, 128 - 1 - i)));
+  }
+  return ret;
+}
+
 // GF(2^192) implementation
 
 static const bf192_t bf192_alpha[7] = {
@@ -458,6 +467,14 @@ bf192_t bf192_sum_poly(const bf192_t* xs) {
   bf192_t ret = xs[192 - 1];
   for (size_t i = 1; i < 192; ++i) {
     ret = bf192_add(bf192_dbl(ret), xs[192 - 1 - i]);
+  }
+  return ret;
+}
+
+bf192_t bf192_sum_poly_bits(const uint8_t* xs) {
+  bf192_t ret = bf192_from_bit(ptr_get_bit(xs, 192 - 1));
+  for (size_t i = 1; i < 192; ++i) {
+    ret = bf192_add(bf192_dbl(ret), bf192_from_bit(ptr_get_bit(xs, 192 - 1 - i)));
   }
   return ret;
 }
@@ -657,6 +674,14 @@ bf256_t bf256_sum_poly(const bf256_t* xs) {
   bf256_t ret = xs[256 - 1];
   for (size_t i = 1; i < 256; ++i) {
     ret = bf256_add(bf256_dbl(ret), xs[256 - 1 - i]);
+  }
+  return ret;
+}
+
+bf256_t bf256_sum_poly_bits(const uint8_t* xs) {
+  bf256_t ret = bf256_from_bit(ptr_get_bit(xs, 256 - 1));
+  for (size_t i = 1; i < 256; ++i) {
+    ret = bf256_add(bf256_dbl(ret), bf256_from_bit(ptr_get_bit(xs, 256 - 1 - i)));
   }
   return ret;
 }
