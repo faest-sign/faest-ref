@@ -486,21 +486,12 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   hash_challenge_2_finalize(chall_2, &chall_2_ctx, dsignature_d(sig, params), lambda, ell);
 
   // Step 18
-
-  // Passing bits to aes_prove
   const uint8_t* d = dsignature_d(sig, params);
-  uint8_t* d_bits  = (uint8_t*)malloc(ell); // 1 bit per uint8_t
-  for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
-    d_bits[bit_i] = (d[bit_i / 8] >> bit_i % 8) & 1;
-  }
-
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  aes_verify(a0_tilde, d_bits, q, chall_2, dsignature_chall_3(sig, params),
+  aes_verify(a0_tilde, d, q, chall_2, dsignature_chall_3(sig, params),
              dsignature_a1_tilde(sig, params), dsignature_a2_tilde(sig, params), owf_input,
              owf_output, params);
-
   free_pointer_array(&q);
-  free(d_bits);
 
   // Step: 20
   uint8_t chall_3[MAX_LAMBDA_BYTES];

@@ -5203,7 +5203,7 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
 }
 
 // OWF VERIFIER
-static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q,
+static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
                              const uint8_t* a2_tilde, const faest_paramset_t* params) {
@@ -5229,7 +5229,7 @@ static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
   bf128_t* z2_key = faest_aligned_alloc(BF128_ALIGN, c * sizeof(bf128_t));
   bf128_t* w_key  = faest_aligned_alloc(BF128_ALIGN, ell * sizeof(bf128_t));
   for (unsigned int i = 0; i < ell; i++) {
-    w_key[i] = bf128_add(q_key[i], bf128_mul_bit(bf_delta, d_bits[i]));
+    w_key[i] = bf128_add(q_key[i], bf128_mul_bit(bf_delta, ptr_get_bit(d, i)));
   }
   memset(z2_key, 0, c * sizeof(bf128_t));
   aes_128_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params);
@@ -5258,7 +5258,7 @@ static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
   bf128_store(a0_tilde, ret);
 }
 
-static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q,
+static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
                              const uint8_t* a2_tilde, const faest_paramset_t* params) {
@@ -5284,7 +5284,7 @@ static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
   bf192_t* z2_key = faest_aligned_alloc(BF192_ALIGN, c * sizeof(bf192_t));
   bf192_t* w_key  = faest_aligned_alloc(BF192_ALIGN, ell * sizeof(bf192_t));
   for (unsigned int i = 0; i < ell; i++) {
-    w_key[i] = bf192_add(q_key[i], bf192_mul_bit(bf_delta, d_bits[i]));
+    w_key[i] = bf192_add(q_key[i], bf192_mul_bit(bf_delta, ptr_get_bit(d, i)));
   }
   memset(z2_key, 0, c * sizeof(bf192_t));
   aes_192_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params);
@@ -5313,7 +5313,7 @@ static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
   bf192_store(a0_tilde, ret);
 }
 
-static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q,
+static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
                              const uint8_t* a2_tilde, const faest_paramset_t* params) {
@@ -5339,7 +5339,7 @@ static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t**
   bf256_t* z2_key = faest_aligned_alloc(BF256_ALIGN, c * sizeof(bf256_t));
   bf256_t* w_key  = faest_aligned_alloc(BF256_ALIGN, ell * sizeof(bf256_t));
   for (unsigned int i = 0; i < ell; i++) {
-    w_key[i] = bf256_add(q_key[i], bf256_mul_bit(bf_delta, d_bits[i]));
+    w_key[i] = bf256_add(q_key[i], bf256_mul_bit(bf_delta, ptr_get_bit(d, i)));
   }
   memset(z2_key, 0, c * sizeof(bf256_t));
   aes_256_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params);
@@ -5387,20 +5387,17 @@ void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const ui
   }
 }
 
-void aes_verify(uint8_t* a0_tilde, const uint8_t* d_bits, uint8_t** Q, const uint8_t* chall_2,
+void aes_verify(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_t* chall_2,
                 const uint8_t* chall_3, const uint8_t* a1_tilde, const uint8_t* a2_tilde,
                 const uint8_t* owf_in, const uint8_t* owf_out, const faest_paramset_t* params) {
   switch (params->lambda) {
   case 256:
-    aes_256_verifier(a0_tilde, d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
-                     params);
+    aes_256_verifier(a0_tilde, d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params);
     break;
   case 192:
-    aes_192_verifier(a0_tilde, d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
-                     params);
+    aes_192_verifier(a0_tilde, d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params);
     break;
   default:
-    aes_128_verifier(a0_tilde, d_bits, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde,
-                     params);
+    aes_128_verifier(a0_tilde, d, Q, owf_in, owf_out, chall_2, chall_3, a1_tilde, a2_tilde, params);
   }
 }
