@@ -30,9 +30,10 @@ static inline ATTR_CONST unsigned int bavc_max_node_index(unsigned int i, unsign
                                                           unsigned int k) {
 #if defined(__clang_analyzer__)
   // for scan-build
-  assert(k << MAX_DEPTH);
+  assert(k <= MAX_DEPTH);
+  assert(k >= 1);
 #endif
-  return 1u << bavc_max_node_depth(i, tau_1, k);
+  return 1u << ((i < tau_1) ? k : (k - 1));
 }
 
 void bavc_commit(bavc_t* bavc, const uint8_t* root_key, const uint8_t* iv,
