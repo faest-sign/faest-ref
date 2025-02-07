@@ -5015,7 +5015,7 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key,
 
 // OWF PROVER
 static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde,
-                           const uint8_t* w_bits, const uint8_t* u_bits, uint8_t** V,
+                           const uint8_t* w_bits, const uint8_t* u, uint8_t** V,
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
 
@@ -5030,11 +5030,13 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   // ::6-7 embed VOLE masks
   bf128_t* bf_u_bits = faest_aligned_alloc(BF128_ALIGN, 2 * lambda * sizeof(bf128_t));
   for (unsigned int i = 0; i < 2 * lambda; i++) {
-    bf_u_bits[i] = bf128_from_bit(u_bits[i]);
+    bf_u_bits[i] = bf128_from_bit(ptr_get_bit(u, i));
   }
 
-  bf128_t bf_u_star_0 = bf128_sum_poly(bf_u_bits); // U IS 1 Byte per uint8 right??
+  bf128_t bf_u_star_0 = bf128_sum_poly(bf_u_bits);
   bf128_t bf_u_star_1 = bf128_sum_poly(bf_u_bits + lambda);
+  faest_aligned_free(bf_u_bits);
+
   // ::8-9
   bf128_t bf_v_star_0 = bf128_sum_poly(w_tag + ell);
   bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + ell + lambda);
@@ -5074,11 +5076,11 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   zk_hash_128_finalize(a1_tilde, &a1_ctx, bf128_add(bf_u_star_0, bf_v_star_1));
   zk_hash_128_finalize(a2_tilde, &a2_ctx, bf_u_star_1);
 
-  faest_aligned_free(bf_u_bits);
   faest_aligned_free(w_tag);
 }
+
 static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde,
-                           const uint8_t* w_bits, const uint8_t* u_bits, uint8_t** V,
+                           const uint8_t* w_bits, const uint8_t* u, uint8_t** V,
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
 
@@ -5093,10 +5095,12 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   // ::6-7 embed VOLE masks
   bf192_t* bf_u_bits = faest_aligned_alloc(BF192_ALIGN, 2 * lambda * sizeof(bf192_t));
   for (unsigned int i = 0; i < 2 * lambda; i++) {
-    bf_u_bits[i] = bf192_from_bit(u_bits[i]);
+    bf_u_bits[i] = bf192_from_bit(ptr_get_bit(u, i));
   }
-  bf192_t bf_u_star_0 = bf192_sum_poly(bf_u_bits); // U IS 1 Byte per uint8 right??
+  bf192_t bf_u_star_0 = bf192_sum_poly(bf_u_bits);
   bf192_t bf_u_star_1 = bf192_sum_poly(bf_u_bits + lambda);
+  faest_aligned_free(bf_u_bits);
+
   // ::8-9
   bf192_t bf_v_star_0 = bf192_sum_poly(w_tag + ell);
   bf192_t bf_v_star_1 = bf192_sum_poly(w_tag + ell + lambda);
@@ -5136,11 +5140,11 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   zk_hash_192_finalize(a1_tilde, &a1_ctx, bf192_add(bf_u_star_0, bf_v_star_1));
   zk_hash_192_finalize(a2_tilde, &a2_ctx, bf_u_star_1);
 
-  faest_aligned_free(bf_u_bits);
   faest_aligned_free(w_tag);
 }
+
 static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde,
-                           const uint8_t* w_bits, const uint8_t* u_bits, uint8_t** V,
+                           const uint8_t* w_bits, const uint8_t* u, uint8_t** V,
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
 
@@ -5155,10 +5159,12 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   // ::6-7 embed VOLE masks
   bf256_t* bf_u_bits = faest_aligned_alloc(BF256_ALIGN, 2 * lambda * sizeof(bf256_t));
   for (unsigned int i = 0; i < 2 * lambda; i++) {
-    bf_u_bits[i] = bf256_from_bit(u_bits[i]);
+    bf_u_bits[i] = bf256_from_bit(ptr_get_bit(u, i));
   }
   bf256_t bf_u_star_0 = bf256_sum_poly(bf_u_bits);
   bf256_t bf_u_star_1 = bf256_sum_poly(bf_u_bits + lambda);
+  faest_aligned_free(bf_u_bits);
+
   // ::8-9
   bf256_t bf_v_star_0 = bf256_sum_poly(w_tag + ell);
   bf256_t bf_v_star_1 = bf256_sum_poly(w_tag + ell + lambda);
@@ -5198,7 +5204,6 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   zk_hash_256_finalize(a1_tilde, &a1_ctx, bf256_add(bf_u_star_0, bf_v_star_1));
   zk_hash_256_finalize(a2_tilde, &a2_ctx, bf_u_star_1);
 
-  faest_aligned_free(bf_u_bits);
   faest_aligned_free(w_tag);
 }
 
@@ -5370,20 +5375,17 @@ static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
 
 // AES(-EM) OWF dispatchers
 void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w_bits,
-               const uint8_t* u_bits, uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out,
+               const uint8_t* u, uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out,
                const uint8_t* chall_2, const faest_paramset_t* params) {
   switch (params->lambda) {
   case 256:
-    aes_256_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u_bits, V, owf_in, owf_out, chall_2,
-                   params);
+    aes_256_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u, V, owf_in, owf_out, chall_2, params);
     break;
   case 192:
-    aes_192_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u_bits, V, owf_in, owf_out, chall_2,
-                   params);
+    aes_192_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u, V, owf_in, owf_out, chall_2, params);
     break;
   default:
-    aes_128_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u_bits, V, owf_in, owf_out, chall_2,
-                   params);
+    aes_128_prover(a0_tilde, a1_tilde, a2_tilde, w_bits, u, V, owf_in, owf_out, chall_2, params);
   }
 }
 
