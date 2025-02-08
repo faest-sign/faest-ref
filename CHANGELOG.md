@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 2.0.0 -- 2025-02-08
+
+* Update to version 2.0 of FAEST specification.
+
 ## Version 1.0.2 -- 2024-12-19
 
 * Extend test coverage.
