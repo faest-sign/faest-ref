@@ -264,36 +264,21 @@ void leaf_hash_128(uint8_t* h, const uint8_t* uhash, const uint8_t* x) {
   const uint8_t* x0 = x;
   const uint8_t* x1 = x + BF128_NUM_BYTES;
 
-  bf384_t u     = bf384_load(uhash);
-  bf128_t bf_x0 = bf128_load(x0);
-  bf384_t bf_x1 = bf384_load(x1);
-  bf384_t bf_h  = bf384_add(bf384_mul_128(u, bf_x0), bf_x1);
-
-  bf384_store(h, bf_h);
+  bf384_store(h, bf384_add(bf384_mul_128(bf384_load(uhash), bf128_load(x0)), bf384_load(x1)));
 }
 
 void leaf_hash_192(uint8_t* h, const uint8_t* uhash, const uint8_t* x) {
   const uint8_t* x0 = x;
   const uint8_t* x1 = x + BF192_NUM_BYTES;
 
-  bf576_t u     = bf576_load(uhash);
-  bf192_t bf_x0 = bf192_load(x0);
-  bf576_t bf_x1 = bf576_load(x1);
-  bf576_t bf_h  = bf576_add(bf576_mul_192(u, bf_x0), bf_x1);
-
-  bf576_store(h, bf_h);
+  bf576_store(h, bf576_add(bf576_mul_192(bf576_load(uhash), bf192_load(x0)), bf576_load(x1)));
 }
 
 void leaf_hash_256(uint8_t* h, const uint8_t* uhash, const uint8_t* x) {
   const uint8_t* x0 = x;
   const uint8_t* x1 = x + BF256_NUM_BYTES;
 
-  bf768_t u     = bf768_load(uhash);
-  bf256_t bf_x0 = bf256_load(x0);
-  bf768_t bf_x1 = bf768_load(x1);
-  bf768_t bf_h  = bf768_add(bf768_mul_256(u, bf_x0), bf_x1);
-
-  bf768_store(h, bf_h);
+  bf768_store(h, bf768_add(bf768_mul_256(bf768_load(uhash), bf256_load(x0)), bf768_load(x1)));
 }
 
 void leaf_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int lambda) {
