@@ -414,7 +414,7 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   const unsigned int S_ke        = params->Ske;
   const unsigned int num_rounds  = params->R;
   const unsigned int nk          = lambda / 32;
-  const unsigned int blocksize   = 32 * params->Nwd;
+  const unsigned int blocksize   = 32 * params->Nst;
   const unsigned int beta        = (lambda + blocksize - 1) / blocksize;
   const unsigned int block_words = blocksize / 32;
 
