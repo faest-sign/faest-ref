@@ -707,9 +707,17 @@ static inline bf384_t bf384_and_64(bf384_t lhs, bf64_t rhs) {
 #endif
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-// #if __has_builtin(__builtin_shufflevector)
-// #define bf384_shift_right_64(v1) __builtin_shufflevector((v1), bf384_zero(), 4, 0, 1, 2)
-// #else
+#if __has_builtin(__builtin_shufflevector)
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_shift_right_64(bf384_t v1) {
+  bf384_t ret;
+  ret.inner[0] = __builtin_shufflevector(v1.inner[0], bf128_zero(), 2, 0);
+  ret.inner[1] = __builtin_shufflevector(v1.inner[1], bf128_zero(), 2, 0) |
+                 __builtin_shufflevector(v1.inner[0], bf128_zero(), 1, 3);
+  ret.inner[2] = __builtin_shufflevector(v1.inner[2], bf128_zero(), 2, 0) |
+                 __builtin_shufflevector(v1.inner[1], bf128_zero(), 1, 3);
+  return ret;
+}
+#else
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_shift_right_64(bf384_t v1) {
   bf384_t ret;
   BF_VALUE(ret.inner[0], 0) = 0;
@@ -720,7 +728,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_shift_right_64(bf384_t
   BF_VALUE(ret.inner[2], 1) = BF_VALUE(v1.inner[2], 0);
   return ret;
 }
-// #endif
+#endif
 
 ATTR_CONST
 static inline bf384_t bf384_shift_left_1(bf384_t value) {
@@ -799,9 +807,17 @@ static inline bf576_t bf576_and_64(bf576_t lhs, bf64_t rhs) {
 #endif
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-// #if __has_builtin(__builtin_shufflevector)
-// #define bf576_shift_right_64(v1) __builtin_shufflevector((v1), bf576_zero(), 4, 0, 1, 2)
-// #else
+#if __has_builtin(__builtin_shufflevector)
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_shift_right_64(bf576_t v1) {
+  bf576_t ret;
+  ret.inner[0] = __builtin_shufflevector(v1.inner[0], bf256_zero(), 4, 0, 1, 7);
+  ret.inner[1] = __builtin_shufflevector(v1.inner[1], bf256_zero(), 4, 0, 1, 7) |
+                 __builtin_shufflevector(v1.inner[0], bf256_zero(), 2, 5, 6, 7);
+  ret.inner[2] = __builtin_shufflevector(v1.inner[2], bf256_zero(), 4, 0, 1, 7) |
+                 __builtin_shufflevector(v1.inner[1], bf256_zero(), 2, 5, 6, 7);
+  return ret;
+}
+#else
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_shift_right_64(bf576_t v1) {
   bf576_t ret;
   BF_VALUE(ret.inner[0], 0) = 0;
@@ -815,7 +831,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_shift_right_64(bf576_t
   BF_VALUE(ret.inner[2], 2) = BF_VALUE(v1.inner[2], 1);
   return ret;
 }
-// #endif
+#endif
 
 ATTR_CONST
 static inline bf576_t bf576_shift_left_1(bf576_t value) {
@@ -894,9 +910,17 @@ static inline bf768_t bf768_and_64(bf768_t lhs, bf64_t rhs) {
 #endif
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-// #if __has_builtin(__builtin_shufflevector)
-// #define bf768_shift_right_64(v1) __builtin_shufflevector((v1), bf768_zero(), 4, 0, 1, 2)
-// #else
+#if __has_builtin(__builtin_shufflevector)
+ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_shift_right_64(bf768_t v1) {
+  bf768_t ret;
+  ret.inner[0] = __builtin_shufflevector(v1.inner[0], bf256_zero(), 4, 0, 1, 2);
+  ret.inner[1] = __builtin_shufflevector(v1.inner[1], bf256_zero(), 4, 0, 1, 2) |
+                 __builtin_shufflevector(v1.inner[0], bf256_zero(), 3, 5, 6, 7);
+  ret.inner[2] = __builtin_shufflevector(v1.inner[2], bf256_zero(), 4, 0, 1, 2) |
+                 __builtin_shufflevector(v1.inner[1], bf256_zero(), 3, 5, 6, 7);
+  return ret;
+}
+#else
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_shift_right_64(bf768_t v1) {
   bf768_t ret;
   BF_VALUE(ret.inner[0], 0) = 0;
@@ -913,7 +937,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_shift_right_64(bf768_t
   BF_VALUE(ret.inner[2], 3) = BF_VALUE(v1.inner[2], 2);
   return ret;
 }
-// #endif
+#endif
 
 ATTR_CONST
 static inline bf768_t bf768_shift_left_1(bf768_t value) {
