@@ -688,8 +688,6 @@ bf256_t bf256_sum_poly_bits(const uint8_t* xs) {
 
 // GF(2^384)
 
-#define bf128_bit_to_mask(value, bit) -((((uint64_t)BF_VALUE(value, bit / 64)) >> (bit % 64)) & 1)
-
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #define bf384_and_64(lhs, rhs) ((lhs) & (rhs))
 #else
@@ -744,7 +742,7 @@ bf384_t bf384_mul_128(bf384_t lhs, bf128_t rhs) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   const bf384_t mod = BF384C(bf384_modulus, 0, 0, 0, 0, 0);
 #endif
-  bf384_t result = bf384_and_64(lhs, bf128_bit_to_mask(rhs, 0));
+  bf384_t result = bf384_and_64(lhs, bf128_bit_to_uint64_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 128; ++idx) {
     const uint64_t mask = bf384_bit_to_uint64_mask(lhs, 384 - 1);
     lhs                 = bf384_shift_left_1(lhs);
@@ -754,7 +752,7 @@ bf384_t bf384_mul_128(bf384_t lhs, bf128_t rhs) {
     BF_VALUE(lhs, 0) ^= mask & bf384_modulus;
 #endif
 
-    result = bf384_add(result, bf384_and_64(lhs, bf128_bit_to_mask(rhs, idx)));
+    result = bf384_add(result, bf384_and_64(lhs, bf128_bit_to_uint64_mask(rhs, idx)));
   }
   return result;
 }
@@ -823,7 +821,7 @@ bf576_t bf576_mul_192(bf576_t lhs, bf192_t rhs) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   const bf576_t mod = BF576C(bf576_modulus, 0, 0, 0, 0, 0, 0, 0, 0);
 #endif
-  bf576_t result = bf576_and_64(lhs, bf192_bit_to_mask(rhs, 0));
+  bf576_t result = bf576_and_64(lhs, bf192_bit_to_uint64_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 192; ++idx) {
     const uint64_t mask = bf576_bit_to_uint64_mask(lhs, 576 - 1);
     lhs                 = bf576_shift_left_1(lhs);
@@ -833,14 +831,12 @@ bf576_t bf576_mul_192(bf576_t lhs, bf192_t rhs) {
     BF_VALUE(lhs, 0) ^= mask & bf576_modulus;
 #endif
 
-    result = bf576_add(result, bf576_and_64(lhs, bf128_bit_to_mask(rhs, idx)));
+    result = bf576_add(result, bf576_and_64(lhs, bf192_bit_to_uint64_mask(rhs, idx)));
   }
   return result;
 }
 
 // GF(2^768)
-
-#define bf256_bit_to_mask(value, bit) -((((uint64_t)BF_VALUE(value, bit / 64)) >> (bit % 64)) & 1)
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #define bf768_and_64(lhs, rhs) ((lhs) & (rhs))
@@ -908,7 +904,7 @@ bf768_t bf768_mul_256(bf768_t lhs, bf256_t rhs) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   const bf768_t mod = BF768C(bf768_modulus, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 #endif
-  bf768_t result = bf768_and_64(lhs, bf256_bit_to_mask(rhs, 0));
+  bf768_t result = bf768_and_64(lhs, bf256_bit_to_uint64_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 256; ++idx) {
     const uint64_t mask = bf768_bit_to_uint64_mask(lhs, 768 - 1);
     lhs                 = bf768_shift_left_1(lhs);
@@ -918,7 +914,7 @@ bf768_t bf768_mul_256(bf768_t lhs, bf256_t rhs) {
     BF_VALUE(lhs, 0) ^= mask & bf768_modulus;
 #endif
 
-    result = bf768_add(result, bf768_and_64(lhs, bf128_bit_to_mask(rhs, idx)));
+    result = bf768_add(result, bf768_and_64(lhs, bf256_bit_to_uint64_mask(rhs, idx)));
   }
   return result;
 }
