@@ -488,29 +488,8 @@ ATTR_ALWAYS_INLINE static inline void bf384_store(uint8_t* dst, bf384_t src) {
 #endif
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_from_bf64(bf64_t src) {
-  bf384_t ret      = BF384C(0, 0, 0, 0, 0, 0);
-  BF_VALUE(ret, 0) = src;
-  return ret;
-}
-
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_from_bf8(bf8_t src) {
-  bf384_t ret      = BF384C(0, 0, 0, 0, 0, 0);
-  BF_VALUE(ret, 0) = src;
-  return ret;
-}
-
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_from_bit(uint8_t bit) {
-  return bf384_from_bf8(bit & 1);
-}
-
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_zero(void) {
   const bf384_t ret = BF384C(0, 0, 0, 0, 0, 0);
-  return ret;
-}
-
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_one(void) {
-  const bf384_t ret = BF384C(1, 0, 0, 0, 0, 0);
   return ret;
 }
 
@@ -553,29 +532,8 @@ ATTR_ALWAYS_INLINE static inline void bf576_store(uint8_t* dst, bf576_t src) {
 #endif
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_from_bf64(bf64_t src) {
-  bf576_t ret      = BF576C(0, 0, 0, 0, 0, 0, 0, 0, 0);
-  BF_VALUE(ret, 0) = src;
-  return ret;
-}
-
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_from_bf8(bf8_t src) {
-  bf576_t ret      = BF576C(0, 0, 0, 0, 0, 0, 0, 0, 0);
-  BF_VALUE(ret, 0) = src;
-  return ret;
-}
-
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_from_bit(uint8_t bit) {
-  return bf576_from_bf8(bit & 1);
-}
-
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_zero(void) {
   const bf576_t ret = BF576C(0, 0, 0, 0, 0, 0, 0, 0, 0);
-  return ret;
-}
-
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_one(void) {
-  const bf576_t ret = BF576C(1, 0, 0, 0, 0, 0, 0, 0, 0);
   return ret;
 }
 
@@ -618,29 +576,8 @@ ATTR_ALWAYS_INLINE static inline void bf768_store(uint8_t* dst, bf768_t src) {
 #endif
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_from_bf64(bf64_t src) {
-  bf768_t ret      = BF768C(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-  BF_VALUE(ret, 0) = src;
-  return ret;
-}
-
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_from_bf8(bf8_t src) {
-  bf768_t ret      = BF768C(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-  BF_VALUE(ret, 0) = src;
-  return ret;
-}
-
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_from_bit(uint8_t bit) {
-  return bf768_from_bf8(bit & 1);
-}
-
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_zero(void) {
   const bf768_t ret = BF768C(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-  return ret;
-}
-
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_one(void) {
-  const bf768_t ret = BF768C(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   return ret;
 }
 
