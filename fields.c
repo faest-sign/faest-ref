@@ -42,7 +42,7 @@ static void bits_sq_oop(uint8_t* res, const uint8_t* x) {
   res[7] = x[6] ^ x[7];
 }
 
-void bits_sq(uint8_t* x) {
+void bits_sq_array(uint8_t* x) {
   uint8_t res[8];
   bits_sq_oop(res, x);
   for (unsigned int i = 0; i < 8; ++i) {
@@ -163,7 +163,7 @@ bf128_t bf128_byte_combine_sq(const bf128_t* x) {
   return bf128_byte_combine(bf_tmp);
 }
 
-bf128_t bf128_byte_combine_bits(const uint8_t* x) {
+bf128_t bf128_byte_combine_bits_array(const uint8_t* x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   return bf128_from_bit(x[0]) ^ bf128_mul_bit(bf128_alpha[1 - 1], x[1]) ^
          bf128_mul_bit(bf128_alpha[2 - 1], x[2]) ^ bf128_mul_bit(bf128_alpha[3 - 1], x[3]) ^
@@ -178,10 +178,10 @@ bf128_t bf128_byte_combine_bits(const uint8_t* x) {
 #endif
 }
 
-bf128_t bf128_byte_combine_bits_sq(const uint8_t* x) {
+bf128_t bf128_byte_combine_bits_array_sq(const uint8_t* x) {
   uint8_t y[8];
   bits_sq_oop(y, x);
-  return bf128_byte_combine_bits(y);
+  return bf128_byte_combine_bits_array(y);
 }
 
 bf128_t bf128_rand(void) {
@@ -343,7 +343,7 @@ bf192_t bf192_byte_combine_sq(const bf192_t* x) {
   return bf192_byte_combine(bf_tmp);
 }
 
-bf192_t bf192_byte_combine_bits(const uint8_t* x) {
+bf192_t bf192_byte_combine_bits_array(const uint8_t* x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   return bf192_from_bit(x[0]) ^ bf192_mul_bit(bf192_alpha[1 - 1], x[1]) ^
          bf192_mul_bit(bf192_alpha[2 - 1], x[2]) ^ bf192_mul_bit(bf192_alpha[3 - 1], x[3]) ^
@@ -358,10 +358,10 @@ bf192_t bf192_byte_combine_bits(const uint8_t* x) {
 #endif
 }
 
-bf192_t bf192_byte_combine_bits_sq(const uint8_t* x) {
+bf192_t bf192_byte_combine_bits_array_sq(const uint8_t* x) {
   uint8_t y[8];
   bits_sq_oop(y, x);
-  return bf192_byte_combine_bits(y);
+  return bf192_byte_combine_bits_array(y);
 }
 
 bf192_t bf192_rand(void) {
@@ -536,7 +536,7 @@ bf256_t bf256_byte_combine_sq(const bf256_t* x) {
   return bf256_byte_combine(bf_tmp);
 }
 
-bf256_t bf256_byte_combine_bits(const uint8_t* x) {
+bf256_t bf256_byte_combine_bits_array(const uint8_t* x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   return bf256_from_bit(x[0]) ^ bf256_mul_bit(bf256_alpha[1 - 1], x[1]) ^
          bf256_mul_bit(bf256_alpha[2 - 1], x[2]) ^ bf256_mul_bit(bf256_alpha[3 - 1], x[3]) ^
@@ -551,10 +551,10 @@ bf256_t bf256_byte_combine_bits(const uint8_t* x) {
 #endif
 }
 
-bf256_t bf256_byte_combine_bits_sq(const uint8_t* x) {
+bf256_t bf256_byte_combine_bits_array_sq(const uint8_t* x) {
   uint8_t y[8];
   bits_sq_oop(y, x);
-  return bf256_byte_combine_bits(y);
+  return bf256_byte_combine_bits_array(y);
 }
 
 bf256_t bf256_rand(void) {
