@@ -254,7 +254,9 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_one(void) {
   return ret;
 }
 
+#if defined(FAEST_TESTS)
 ATTR_PURE bf128_t bf128_get_alpha(unsigned int idx);
+#endif
 ATTR_PURE bf128_t bf128_byte_combine(const bf128_t* x);
 ATTR_PURE bf128_t bf128_byte_combine_bits(const uint8_t* x);
 void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag);
@@ -348,7 +350,9 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_one(void) {
   return ret;
 }
 
+#if defined(FAEST_TESTS)
 ATTR_PURE bf192_t bf192_get_alpha(unsigned int idx);
+#endif
 ATTR_PURE bf192_t bf192_byte_combine(const bf192_t* x);
 ATTR_PURE bf192_t bf192_byte_combine_bits(const uint8_t* x);
 void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag);
@@ -439,7 +443,9 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_one(void) {
   return ret;
 }
 
+#if defined(FAEST_TESTS)
 ATTR_PURE bf256_t bf256_get_alpha(unsigned int idx);
+#endif
 ATTR_PURE bf256_t bf256_byte_combine(const bf256_t* x);
 ATTR_PURE bf256_t bf256_byte_combine_bits(const uint8_t* x);
 void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag);

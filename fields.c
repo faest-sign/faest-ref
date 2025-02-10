@@ -143,9 +143,11 @@ static const bf128_t bf128_alpha[7] = {
            U64C(0xe0, 0x8f, 0xb7, 0x4f, 0x1a, 0x31, 0x50, 0x09)),
 };
 
+#if defined(FAEST_TESTS)
 bf128_t bf128_get_alpha(unsigned int idx) {
   return bf128_alpha[idx];
 }
+#endif
 
 bf128_t bf128_byte_combine(const bf128_t* x) {
   bf128_t bf_out = x[0];
@@ -321,9 +323,11 @@ static const bf192_t bf192_alpha[7] = {
            U64C(0xb0, 0xc4, 0x87, 0x0f, 0x54, 0x56, 0x7c, 0xc7)),
 };
 
+#if defined(FAEST_TESTS)
 bf192_t bf192_get_alpha(unsigned int idx) {
   return bf192_alpha[idx];
 }
+#endif
 
 bf192_t bf192_byte_combine(const bf192_t* x) {
   bf192_t bf_out = x[0];
@@ -512,9 +516,11 @@ static const bf256_t bf256_alpha[7] = {
            U64C(0xb8, 0x7b, 0x6b, 0xd2, 0x09, 0xea, 0x3e, 0x13)),
 };
 
+#if defined(FAEST_TESTS)
 bf256_t bf256_get_alpha(unsigned int idx) {
   return bf256_alpha[idx];
 }
+#endif
 
 bf256_t bf256_byte_combine(const bf256_t* x) {
   bf256_t bf_out = x[0];

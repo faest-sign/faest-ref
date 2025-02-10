@@ -630,3 +630,4 @@ run_target(
 )
 
 subdir('tests')
+subdir('tools')
