@@ -52,17 +52,6 @@ void bits_sq(uint8_t* x) {
 
 // GF(2^8) implementation
 
-bf8_t bf8_byte_combine_bits(const uint8_t* x) {
-
-  bf8_t bf_out  = bf8_from_bit(x[0]);
-  bf8_t bf8_mod = bf8_modulus;
-  for (unsigned int i = 1; i < 8; ++i) {
-    bf_out  = bf8_add(bf_out, (bf8_mod & (0xff * x[i])));
-    bf8_mod = bf8_mul(bf8_mod, bf8_modulus);
-  }
-  return bf_out;
-}
-
 bf8_t bf8_rand(void) {
   bf8_t ret;
   rand_bytes(&ret, sizeof(ret));

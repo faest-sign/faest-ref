@@ -145,7 +145,6 @@ ATTR_CONST ATTR_ALWAYS_INLINE inline bf8_t bf8_add(bf8_t lhs, bf8_t rhs) {
   return lhs ^ rhs;
 }
 
-ATTR_PURE bf8_t bf8_byte_combine_bits(const uint8_t* x);
 ATTR_CONST bf8_t bf8_mul(bf8_t lhs, bf8_t rhs);
 ATTR_CONST bf8_t bf8_square(bf8_t lhs);
 ATTR_CONST bf8_t bf8_inv(bf8_t lhs);
