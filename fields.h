@@ -207,16 +207,6 @@ ATTR_PURE ATTR_ALWAYS_INLINE static inline bf128_t bf128_load(const uint8_t* src
   return ret;
 }
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf128_t bf128_load_bits(const uint8_t* src) {
-  uint8_t tmp[BF128_NUM_BYTES] = {0};
-  for (unsigned int i = 0; i < BF128_NUM_BYTES; i++) {
-    for (unsigned int j = 0; j < 8; j++) {
-      tmp[i] |= src[i * 8 + j] << j;
-    }
-  }
-  return bf128_load(tmp);
-}
-
 ATTR_ALWAYS_INLINE static inline void bf128_store(uint8_t* dst, bf128_t src) {
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF128_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
@@ -305,16 +295,6 @@ ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load(const uint8_t* src
   return ret;
 }
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load_bits(const uint8_t* src) {
-  uint8_t tmp[BF192_NUM_BYTES] = {0};
-  for (unsigned int i = 0; i < BF192_NUM_BYTES; i++) {
-    for (unsigned int j = 0; j < 8; j++) {
-      tmp[i] |= src[i * 8 + j] << j;
-    }
-  }
-  return bf192_load(tmp);
-}
-
 ATTR_ALWAYS_INLINE static inline void bf192_store(uint8_t* dst, bf192_t src) {
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF192_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
@@ -398,16 +378,6 @@ ATTR_PURE ATTR_ALWAYS_INLINE static inline bf256_t bf256_load(const uint8_t* src
   memcpy(&ret, src, BF256_NUM_BYTES);
 #endif
   return ret;
-}
-
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf256_t bf256_load_bits(const uint8_t* src) {
-  uint8_t tmp[BF256_NUM_BYTES] = {0};
-  for (unsigned int i = 0; i < BF256_NUM_BYTES; i++) {
-    for (unsigned int j = 0; j < 8; j++) {
-      tmp[i] |= src[i * 8 + j] << j;
-    }
-  }
-  return bf256_load(tmp);
 }
 
 ATTR_ALWAYS_INLINE static inline void bf256_store(uint8_t* dst, bf256_t src) {
