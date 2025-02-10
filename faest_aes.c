@@ -824,11 +824,9 @@ static void aes_128_mix_columns_prover(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf128_t v1 = bf128_byte_combine_bits(1);
   bf128_t v2 = bf128_byte_combine_bits(2);
   bf128_t v3 = bf128_byte_combine_bits(3);
   if (dosq) {
-    v1 = bf128_mul(v1, v1);
     v2 = bf128_mul(v2, v2);
     v3 = bf128_mul(v3, v3);
   }
@@ -843,76 +841,76 @@ static void aes_128_mix_columns_prover(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t
     // ::7
     tmp1       = bf128_mul(in_deg2[i0], v2);
     tmp2       = bf128_mul(in_deg2[i1], v3);
-    tmp3       = bf128_mul(in_deg2[i2], v1);
-    tmp4       = bf128_mul(in_deg2[i3], v1);
+    tmp3       = in_deg2[i2];
+    tmp4       = in_deg2[i3];
     y_deg2[i0] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
 
     tmp1       = bf128_mul(in_deg1[i0], v2);
     tmp2       = bf128_mul(in_deg1[i1], v3);
-    tmp3       = bf128_mul(in_deg1[i2], v1);
-    tmp4       = bf128_mul(in_deg1[i3], v1);
+    tmp3       = in_deg1[i2];
+    tmp4       = in_deg1[i3];
     y_deg1[i0] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
 
     tmp1       = bf128_mul(in_deg0[i0], v2);
     tmp2       = bf128_mul(in_deg0[i1], v3);
-    tmp3       = bf128_mul(in_deg0[i2], v1);
-    tmp4       = bf128_mul(in_deg0[i3], v1);
+    tmp3       = in_deg0[i2];
+    tmp4       = in_deg0[i3];
     y_deg0[i0] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
 
     // ::8
-    tmp1       = bf128_mul(in_deg2[i0], v1);
+    tmp1       = in_deg2[i0];
     tmp2       = bf128_mul(in_deg2[i1], v2);
     tmp3       = bf128_mul(in_deg2[i2], v3);
-    tmp4       = bf128_mul(in_deg2[i3], v1);
+    tmp4       = in_deg2[i3];
     y_deg2[i1] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
 
-    tmp1       = bf128_mul(in_deg1[i0], v1);
+    tmp1       = in_deg1[i0];
     tmp2       = bf128_mul(in_deg1[i1], v2);
     tmp3       = bf128_mul(in_deg1[i2], v3);
-    tmp4       = bf128_mul(in_deg1[i3], v1);
+    tmp4       = in_deg1[i3];
     y_deg1[i1] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
 
-    tmp1       = bf128_mul(in_deg0[i0], v1);
+    tmp1       = in_deg0[i0];
     tmp2       = bf128_mul(in_deg0[i1], v2);
     tmp3       = bf128_mul(in_deg0[i2], v3);
-    tmp4       = bf128_mul(in_deg0[i3], v1);
+    tmp4       = in_deg0[i3];
     y_deg0[i1] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
 
     // ::9
-    tmp1       = bf128_mul(in_deg2[i0], v1);
-    tmp2       = bf128_mul(in_deg2[i1], v1);
+    tmp1       = in_deg2[i0];
+    tmp2       = in_deg2[i1];
     tmp3       = bf128_mul(in_deg2[i2], v2);
     tmp4       = bf128_mul(in_deg2[i3], v3);
     y_deg2[i2] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
 
-    tmp1       = bf128_mul(in_deg1[i0], v1);
-    tmp2       = bf128_mul(in_deg1[i1], v1);
+    tmp1       = in_deg1[i0];
+    tmp2       = in_deg1[i1];
     tmp3       = bf128_mul(in_deg1[i2], v2);
     tmp4       = bf128_mul(in_deg1[i3], v3);
     y_deg1[i2] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
 
-    tmp1       = bf128_mul(in_deg0[i0], v1);
-    tmp2       = bf128_mul(in_deg0[i1], v1);
+    tmp1       = in_deg0[i0];
+    tmp2       = in_deg0[i1];
     tmp3       = bf128_mul(in_deg0[i2], v2);
     tmp4       = bf128_mul(in_deg0[i3], v3);
     y_deg0[i2] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
 
     // ::10
     tmp1       = bf128_mul(in_deg2[i0], v3);
-    tmp2       = bf128_mul(in_deg2[i1], v1);
-    tmp3       = bf128_mul(in_deg2[i2], v1);
+    tmp2       = in_deg2[i1];
+    tmp3       = in_deg2[i2];
     tmp4       = bf128_mul(in_deg2[i3], v2);
     y_deg2[i3] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
 
     tmp1       = bf128_mul(in_deg1[i0], v3);
-    tmp2       = bf128_mul(in_deg1[i1], v1);
-    tmp3       = bf128_mul(in_deg1[i2], v1);
+    tmp2       = in_deg1[i1];
+    tmp3       = in_deg1[i2];
     tmp4       = bf128_mul(in_deg1[i3], v2);
     y_deg1[i3] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
 
     tmp1       = bf128_mul(in_deg0[i0], v3);
-    tmp2       = bf128_mul(in_deg0[i1], v1);
-    tmp3       = bf128_mul(in_deg0[i2], v1);
+    tmp2       = in_deg0[i1];
+    tmp3       = in_deg0[i2];
     tmp4       = bf128_mul(in_deg0[i3], v2);
     y_deg0[i3] = bf128_add(bf128_add(tmp1, tmp2), bf128_add(tmp3, tmp4));
   }
@@ -925,11 +923,9 @@ static void aes_192_mix_columns_prover(bf192_t* y_deg0, bf192_t* y_deg1, bf192_t
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf192_t v1 = bf192_byte_combine_bits(1);
   bf192_t v2 = bf192_byte_combine_bits(2);
   bf192_t v3 = bf192_byte_combine_bits(3);
   if (dosq) {
-    v1 = bf192_mul(v1, v1);
     v2 = bf192_mul(v2, v2);
     v3 = bf192_mul(v3, v3);
   }
@@ -944,80 +940,81 @@ static void aes_192_mix_columns_prover(bf192_t* y_deg0, bf192_t* y_deg1, bf192_t
     // ::7
     tmp1       = bf192_mul(in_deg2[i0], v2);
     tmp2       = bf192_mul(in_deg2[i1], v3);
-    tmp3       = bf192_mul(in_deg2[i2], v1);
-    tmp4       = bf192_mul(in_deg2[i3], v1);
+    tmp3       = in_deg2[i2];
+    tmp4       = in_deg2[i3];
     y_deg2[i0] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
 
     tmp1       = bf192_mul(in_deg1[i0], v2);
     tmp2       = bf192_mul(in_deg1[i1], v3);
-    tmp3       = bf192_mul(in_deg1[i2], v1);
-    tmp4       = bf192_mul(in_deg1[i3], v1);
+    tmp3       = in_deg1[i2];
+    tmp4       = in_deg1[i3];
     y_deg1[i0] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
 
     tmp1       = bf192_mul(in_deg0[i0], v2);
     tmp2       = bf192_mul(in_deg0[i1], v3);
-    tmp3       = bf192_mul(in_deg0[i2], v1);
-    tmp4       = bf192_mul(in_deg0[i3], v1);
+    tmp3       = in_deg0[i2];
+    tmp4       = in_deg0[i3];
     y_deg0[i0] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
 
     // ::8
-    tmp1       = bf192_mul(in_deg2[i0], v1);
+    tmp1       = in_deg2[i0];
     tmp2       = bf192_mul(in_deg2[i1], v2);
     tmp3       = bf192_mul(in_deg2[i2], v3);
-    tmp4       = bf192_mul(in_deg2[i3], v1);
+    tmp4       = in_deg2[i3];
     y_deg2[i1] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
 
-    tmp1       = bf192_mul(in_deg1[i0], v1);
+    tmp1       = in_deg1[i0];
     tmp2       = bf192_mul(in_deg1[i1], v2);
     tmp3       = bf192_mul(in_deg1[i2], v3);
-    tmp4       = bf192_mul(in_deg1[i3], v1);
+    tmp4       = in_deg1[i3];
     y_deg1[i1] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
 
-    tmp1       = bf192_mul(in_deg0[i0], v1);
+    tmp1       = in_deg0[i0];
     tmp2       = bf192_mul(in_deg0[i1], v2);
     tmp3       = bf192_mul(in_deg0[i2], v3);
-    tmp4       = bf192_mul(in_deg0[i3], v1);
+    tmp4       = in_deg0[i3];
     y_deg0[i1] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
 
     // ::9
-    tmp1       = bf192_mul(in_deg2[i0], v1);
-    tmp2       = bf192_mul(in_deg2[i1], v1);
+    tmp1       = in_deg2[i0];
+    tmp2       = in_deg2[i1];
     tmp3       = bf192_mul(in_deg2[i2], v2);
     tmp4       = bf192_mul(in_deg2[i3], v3);
     y_deg2[i2] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
 
-    tmp1       = bf192_mul(in_deg1[i0], v1);
-    tmp2       = bf192_mul(in_deg1[i1], v1);
+    tmp1       = in_deg1[i0];
+    tmp2       = in_deg1[i1];
     tmp3       = bf192_mul(in_deg1[i2], v2);
     tmp4       = bf192_mul(in_deg1[i3], v3);
     y_deg1[i2] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
 
-    tmp1       = bf192_mul(in_deg0[i0], v1);
-    tmp2       = bf192_mul(in_deg0[i1], v1);
+    tmp1       = in_deg0[i0];
+    tmp2       = in_deg0[i1];
     tmp3       = bf192_mul(in_deg0[i2], v2);
     tmp4       = bf192_mul(in_deg0[i3], v3);
     y_deg0[i2] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
 
     // ::10
     tmp1       = bf192_mul(in_deg2[i0], v3);
-    tmp2       = bf192_mul(in_deg2[i1], v1);
-    tmp3       = bf192_mul(in_deg2[i2], v1);
+    tmp2       = in_deg2[i1];
+    tmp3       = in_deg2[i2];
     tmp4       = bf192_mul(in_deg2[i3], v2);
     y_deg2[i3] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
 
     tmp1       = bf192_mul(in_deg1[i0], v3);
-    tmp2       = bf192_mul(in_deg1[i1], v1);
-    tmp3       = bf192_mul(in_deg1[i2], v1);
+    tmp2       = in_deg1[i1];
+    tmp3       = in_deg1[i2];
     tmp4       = bf192_mul(in_deg1[i3], v2);
     y_deg1[i3] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
 
     tmp1       = bf192_mul(in_deg0[i0], v3);
-    tmp2       = bf192_mul(in_deg0[i1], v1);
-    tmp3       = bf192_mul(in_deg0[i2], v1);
+    tmp2       = in_deg0[i1];
+    tmp3       = in_deg0[i2];
     tmp4       = bf192_mul(in_deg0[i3], v2);
     y_deg0[i3] = bf192_add(bf192_add(tmp1, tmp2), bf192_add(tmp3, tmp4));
   }
 }
+
 static void aes_256_mix_columns_prover(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t* y_deg2,
                                        const bf256_t* in_deg0, const bf256_t* in_deg1,
                                        const bf256_t* in_deg2, bool dosq,
@@ -1025,11 +1022,9 @@ static void aes_256_mix_columns_prover(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf256_t v1 = bf256_byte_combine_bits(1);
   bf256_t v2 = bf256_byte_combine_bits(2);
   bf256_t v3 = bf256_byte_combine_bits(3);
   if (dosq) {
-    v1 = bf256_mul(v1, v1);
     v2 = bf256_mul(v2, v2);
     v3 = bf256_mul(v3, v3);
   }
@@ -1044,76 +1039,76 @@ static void aes_256_mix_columns_prover(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t
     // ::7
     tmp1       = bf256_mul(in_deg2[i0], v2);
     tmp2       = bf256_mul(in_deg2[i1], v3);
-    tmp3       = bf256_mul(in_deg2[i2], v1);
-    tmp4       = bf256_mul(in_deg2[i3], v1);
+    tmp3       = in_deg2[i2];
+    tmp4       = in_deg2[i3];
     y_deg2[i0] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
 
     tmp1       = bf256_mul(in_deg1[i0], v2);
     tmp2       = bf256_mul(in_deg1[i1], v3);
-    tmp3       = bf256_mul(in_deg1[i2], v1);
-    tmp4       = bf256_mul(in_deg1[i3], v1);
+    tmp3       = in_deg1[i2];
+    tmp4       = in_deg1[i3];
     y_deg1[i0] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
 
     tmp1       = bf256_mul(in_deg0[i0], v2);
     tmp2       = bf256_mul(in_deg0[i1], v3);
-    tmp3       = bf256_mul(in_deg0[i2], v1);
-    tmp4       = bf256_mul(in_deg0[i3], v1);
+    tmp3       = in_deg0[i2];
+    tmp4       = in_deg0[i3];
     y_deg0[i0] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
 
     // ::8
-    tmp1       = bf256_mul(in_deg2[i0], v1);
+    tmp1       = in_deg2[i0];
     tmp2       = bf256_mul(in_deg2[i1], v2);
     tmp3       = bf256_mul(in_deg2[i2], v3);
-    tmp4       = bf256_mul(in_deg2[i3], v1);
+    tmp4       = in_deg2[i3];
     y_deg2[i1] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
 
-    tmp1       = bf256_mul(in_deg1[i0], v1);
+    tmp1       = in_deg1[i0];
     tmp2       = bf256_mul(in_deg1[i1], v2);
     tmp3       = bf256_mul(in_deg1[i2], v3);
-    tmp4       = bf256_mul(in_deg1[i3], v1);
+    tmp4       = in_deg1[i3];
     y_deg1[i1] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
 
-    tmp1       = bf256_mul(in_deg0[i0], v1);
+    tmp1       = in_deg0[i0];
     tmp2       = bf256_mul(in_deg0[i1], v2);
     tmp3       = bf256_mul(in_deg0[i2], v3);
-    tmp4       = bf256_mul(in_deg0[i3], v1);
+    tmp4       = in_deg0[i3];
     y_deg0[i1] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
 
     // ::9
-    tmp1       = bf256_mul(in_deg2[i0], v1);
-    tmp2       = bf256_mul(in_deg2[i1], v1);
+    tmp1       = in_deg2[i0];
+    tmp2       = in_deg2[i1];
     tmp3       = bf256_mul(in_deg2[i2], v2);
     tmp4       = bf256_mul(in_deg2[i3], v3);
     y_deg2[i2] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
 
-    tmp1       = bf256_mul(in_deg1[i0], v1);
-    tmp2       = bf256_mul(in_deg1[i1], v1);
+    tmp1       = in_deg1[i0];
+    tmp2       = in_deg1[i1];
     tmp3       = bf256_mul(in_deg1[i2], v2);
     tmp4       = bf256_mul(in_deg1[i3], v3);
     y_deg1[i2] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
 
-    tmp1       = bf256_mul(in_deg0[i0], v1);
-    tmp2       = bf256_mul(in_deg0[i1], v1);
+    tmp1       = in_deg0[i0];
+    tmp2       = in_deg0[i1];
     tmp3       = bf256_mul(in_deg0[i2], v2);
     tmp4       = bf256_mul(in_deg0[i3], v3);
     y_deg0[i2] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
 
     // ::10
     tmp1       = bf256_mul(in_deg2[i0], v3);
-    tmp2       = bf256_mul(in_deg2[i1], v1);
-    tmp3       = bf256_mul(in_deg2[i2], v1);
+    tmp2       = in_deg2[i1];
+    tmp3       = in_deg2[i2];
     tmp4       = bf256_mul(in_deg2[i3], v2);
     y_deg2[i3] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
 
     tmp1       = bf256_mul(in_deg1[i0], v3);
-    tmp2       = bf256_mul(in_deg1[i1], v1);
-    tmp3       = bf256_mul(in_deg1[i2], v1);
+    tmp2       = in_deg1[i1];
+    tmp3       = in_deg1[i2];
     tmp4       = bf256_mul(in_deg1[i3], v2);
     y_deg1[i3] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
 
     tmp1       = bf256_mul(in_deg0[i0], v3);
-    tmp2       = bf256_mul(in_deg0[i1], v1);
-    tmp3       = bf256_mul(in_deg0[i2], v1);
+    tmp2       = in_deg0[i1];
+    tmp3       = in_deg0[i2];
     tmp4       = bf256_mul(in_deg0[i3], v2);
     y_deg0[i3] = bf256_add(bf256_add(tmp1, tmp2), bf256_add(tmp3, tmp4));
   }
@@ -1121,15 +1116,12 @@ static void aes_256_mix_columns_prover(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t
 
 static void aes_128_mix_columns_verifier(bf128_t* y_deg1, const bf128_t* in_deg1, bool dosq,
                                          const faest_paramset_t* params) {
-
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf128_t v1 = bf128_byte_combine_bits(1);
   bf128_t v2 = bf128_byte_combine_bits(2);
   bf128_t v3 = bf128_byte_combine_bits(3);
   if (dosq) {
-    v1 = bf128_mul(v1, v1);
     v2 = bf128_mul(v2, v2);
     v3 = bf128_mul(v3, v3);
   }
@@ -1142,39 +1134,38 @@ static void aes_128_mix_columns_verifier(bf128_t* y_deg1, const bf128_t* in_deg1
 
     bf128_t tmp1_tag = bf128_mul(in_deg1[i0], v2);
     bf128_t tmp2_tag = bf128_mul(in_deg1[i1], v3);
-    bf128_t tmp3_tag = bf128_mul(in_deg1[i2], v1);
-    bf128_t tmp4_tag = bf128_mul(in_deg1[i3], v1);
+    bf128_t tmp3_tag = in_deg1[i2];
+    bf128_t tmp4_tag = in_deg1[i3];
     y_deg1[i0]       = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
 
-    tmp1_tag   = bf128_mul(in_deg1[i0], v1);
+    tmp1_tag   = in_deg1[i0];
     tmp2_tag   = bf128_mul(in_deg1[i1], v2);
     tmp3_tag   = bf128_mul(in_deg1[i2], v3);
-    tmp4_tag   = bf128_mul(in_deg1[i3], v1);
+    tmp4_tag   = in_deg1[i3];
     y_deg1[i1] = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
 
-    tmp1_tag   = bf128_mul(in_deg1[i0], v1);
-    tmp2_tag   = bf128_mul(in_deg1[i1], v1);
+    tmp1_tag   = in_deg1[i0];
+    tmp2_tag   = in_deg1[i1];
     tmp3_tag   = bf128_mul(in_deg1[i2], v2);
     tmp4_tag   = bf128_mul(in_deg1[i3], v3);
     y_deg1[i2] = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
 
     tmp1_tag   = bf128_mul(in_deg1[i0], v3);
-    tmp2_tag   = bf128_mul(in_deg1[i1], v1);
-    tmp3_tag   = bf128_mul(in_deg1[i2], v1);
+    tmp2_tag   = in_deg1[i1];
+    tmp3_tag   = in_deg1[i2];
     tmp4_tag   = bf128_mul(in_deg1[i3], v2);
     y_deg1[i3] = bf128_add(bf128_add(tmp1_tag, tmp2_tag), bf128_add(tmp3_tag, tmp4_tag));
   }
 }
+
 static void aes_192_mix_columns_verifier(bf192_t* y_deg1, const bf192_t* in_deg1, bool dosq,
                                          const faest_paramset_t* params) {
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf192_t v1 = bf192_byte_combine_bits(1);
   bf192_t v2 = bf192_byte_combine_bits(2);
   bf192_t v3 = bf192_byte_combine_bits(3);
   if (dosq) {
-    v1 = bf192_mul(v1, v1);
     v2 = bf192_mul(v2, v2);
     v3 = bf192_mul(v3, v3);
   }
@@ -1187,39 +1178,38 @@ static void aes_192_mix_columns_verifier(bf192_t* y_deg1, const bf192_t* in_deg1
 
     bf192_t tmp1_tag = bf192_mul(in_deg1[i0], v2);
     bf192_t tmp2_tag = bf192_mul(in_deg1[i1], v3);
-    bf192_t tmp3_tag = bf192_mul(in_deg1[i2], v1);
-    bf192_t tmp4_tag = bf192_mul(in_deg1[i3], v1);
+    bf192_t tmp3_tag = in_deg1[i2];
+    bf192_t tmp4_tag = in_deg1[i3];
     y_deg1[i0]       = bf192_add(bf192_add(tmp1_tag, tmp2_tag), bf192_add(tmp3_tag, tmp4_tag));
 
-    tmp1_tag   = bf192_mul(in_deg1[i0], v1);
+    tmp1_tag   = in_deg1[i0];
     tmp2_tag   = bf192_mul(in_deg1[i1], v2);
     tmp3_tag   = bf192_mul(in_deg1[i2], v3);
-    tmp4_tag   = bf192_mul(in_deg1[i3], v1);
+    tmp4_tag   = in_deg1[i3];
     y_deg1[i1] = bf192_add(bf192_add(tmp1_tag, tmp2_tag), bf192_add(tmp3_tag, tmp4_tag));
 
-    tmp1_tag   = bf192_mul(in_deg1[i0], v1);
-    tmp2_tag   = bf192_mul(in_deg1[i1], v1);
+    tmp1_tag   = in_deg1[i0];
+    tmp2_tag   = in_deg1[i1];
     tmp3_tag   = bf192_mul(in_deg1[i2], v2);
     tmp4_tag   = bf192_mul(in_deg1[i3], v3);
     y_deg1[i2] = bf192_add(bf192_add(tmp1_tag, tmp2_tag), bf192_add(tmp3_tag, tmp4_tag));
 
     tmp1_tag   = bf192_mul(in_deg1[i0], v3);
-    tmp2_tag   = bf192_mul(in_deg1[i1], v1);
-    tmp3_tag   = bf192_mul(in_deg1[i2], v1);
+    tmp2_tag   = in_deg1[i1];
+    tmp3_tag   = in_deg1[i2];
     tmp4_tag   = bf192_mul(in_deg1[i3], v2);
     y_deg1[i3] = bf192_add(bf192_add(tmp1_tag, tmp2_tag), bf192_add(tmp3_tag, tmp4_tag));
   }
 }
+
 static void aes_256_mix_columns_verifier(bf256_t* y_deg1, const bf256_t* in_deg1, bool dosq,
                                          const faest_paramset_t* params) {
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf256_t v1 = bf256_byte_combine_bits(1);
   bf256_t v2 = bf256_byte_combine_bits(2);
   bf256_t v3 = bf256_byte_combine_bits(3);
   if (dosq) {
-    v1 = bf256_mul(v1, v1);
     v2 = bf256_mul(v2, v2);
     v3 = bf256_mul(v3, v3);
   }
@@ -1232,25 +1222,25 @@ static void aes_256_mix_columns_verifier(bf256_t* y_deg1, const bf256_t* in_deg1
 
     bf256_t tmp1_tag = bf256_mul(in_deg1[i0], v2);
     bf256_t tmp2_tag = bf256_mul(in_deg1[i1], v3);
-    bf256_t tmp3_tag = bf256_mul(in_deg1[i2], v1);
-    bf256_t tmp4_tag = bf256_mul(in_deg1[i3], v1);
+    bf256_t tmp3_tag = in_deg1[i2];
+    bf256_t tmp4_tag = in_deg1[i3];
     y_deg1[i0]       = bf256_add(bf256_add(tmp1_tag, tmp2_tag), bf256_add(tmp3_tag, tmp4_tag));
 
-    tmp1_tag   = bf256_mul(in_deg1[i0], v1);
+    tmp1_tag   = in_deg1[i0];
     tmp2_tag   = bf256_mul(in_deg1[i1], v2);
     tmp3_tag   = bf256_mul(in_deg1[i2], v3);
-    tmp4_tag   = bf256_mul(in_deg1[i3], v1);
+    tmp4_tag   = in_deg1[i3];
     y_deg1[i1] = bf256_add(bf256_add(tmp1_tag, tmp2_tag), bf256_add(tmp3_tag, tmp4_tag));
 
-    tmp1_tag   = bf256_mul(in_deg1[i0], v1);
-    tmp2_tag   = bf256_mul(in_deg1[i1], v1);
+    tmp1_tag   = in_deg1[i0];
+    tmp2_tag   = in_deg1[i1];
     tmp3_tag   = bf256_mul(in_deg1[i2], v2);
     tmp4_tag   = bf256_mul(in_deg1[i3], v3);
     y_deg1[i2] = bf256_add(bf256_add(tmp1_tag, tmp2_tag), bf256_add(tmp3_tag, tmp4_tag));
 
     tmp1_tag   = bf256_mul(in_deg1[i0], v3);
-    tmp2_tag   = bf256_mul(in_deg1[i1], v1);
-    tmp3_tag   = bf256_mul(in_deg1[i2], v1);
+    tmp2_tag   = in_deg1[i1];
+    tmp3_tag   = in_deg1[i2];
     tmp4_tag   = bf256_mul(in_deg1[i3], v2);
     y_deg1[i3] = bf256_add(bf256_add(tmp1_tag, tmp2_tag), bf256_add(tmp3_tag, tmp4_tag));
   }
