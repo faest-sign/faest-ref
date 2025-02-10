@@ -541,21 +541,13 @@ static void aes_128_sbox_affine_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf1
   // ::5-6
   if (dosq) {
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x_sq[i] >> bit_j) & 1;
-      }
-      C[i] = bf128_byte_bits_combine_array(tmp);
+      C[i] = bf128_byte_combine_bits(sbox_x_sq[i]);
     }
     t = 1;
   } else {
     t = 0;
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x[i] >> bit_j) & 1;
-      }
-      C[i] = bf128_byte_bits_combine_array(tmp);
+      C[i] = bf128_byte_combine_bits(sbox_x[i]);
     }
   }
 
@@ -581,21 +573,13 @@ static void aes_192_sbox_affine_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf1
   // ::5-6
   if (dosq) {
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x_sq[i] >> bit_j) & 1;
-      }
-      C[i] = bf192_byte_combine_bits_array(tmp);
+      C[i] = bf192_byte_combine_bits(sbox_x_sq[i]);
     }
     t = 1;
   } else {
     t = 0;
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x[i] >> bit_j) & 1;
-      }
-      C[i] = bf192_byte_combine_bits_array(tmp);
+      C[i] = bf192_byte_combine_bits(sbox_x[i]);
     }
   }
 
@@ -621,21 +605,13 @@ static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf2
   // ::5-6
   if (dosq) {
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x_sq[i] >> bit_j) & 1;
-      }
-      C[i] = bf256_byte_combine_bits_array(tmp);
+      C[i] = bf256_byte_combine_bits(sbox_x_sq[i]);
     }
     t = 1;
   } else {
     t = 0;
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x[i] >> bit_j) & 1;
-      }
-      C[i] = bf256_byte_combine_bits_array(tmp);
+      C[i] = bf256_byte_combine_bits(sbox_x[i]);
     }
   }
 
@@ -659,21 +635,13 @@ static void aes_128_sbox_affine_verifier(bf128_t* out_deg1, const bf128_t* in_de
   // ::5-6
   if (dosq) {
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x_sq[i] >> bit_j) & 1;
-      }
-      C[i] = bf128_byte_combine_bits_array(tmp);
+      C[i] = bf128_byte_combine_bits(sbox_x_sq[i]);
     }
     t = 1;
   } else {
     t = 0;
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x[i] >> bit_j) & 1;
-      }
-      C[i] = bf128_byte_combine_bits_array(tmp);
+      C[i] = bf128_byte_combine_bits(sbox_x[i]);
     }
   }
 
@@ -695,21 +663,13 @@ static void aes_192_sbox_affine_verifier(bf192_t* out_deg1, const bf192_t* in_de
   // ::5-6
   if (dosq) {
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x_sq[i] >> bit_j) & 1;
-      }
-      C[i] = bf192_byte_combine_bits_array(tmp);
+      C[i] = bf192_byte_combine_bits(sbox_x_sq[i]);
     }
     t = 1;
   } else {
     t = 0;
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x[i] >> bit_j) & 1;
-      }
-      C[i] = bf192_byte_combine_bits_array(tmp);
+      C[i] = bf192_byte_combine_bits(sbox_x[i]);
     }
   }
 
@@ -731,21 +691,13 @@ static void aes_256_sbox_affine_verifier(bf256_t* out_deg1, const bf256_t* in_de
   // ::5-6
   if (dosq) {
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x_sq[i] >> bit_j) & 1;
-      }
-      C[i] = bf256_byte_combine_bits_array(tmp);
+      C[i] = bf256_byte_combine_bits(sbox_x_sq[i]);
     }
     t = 1;
   } else {
     t = 0;
     for (unsigned i = 0; i < 9; i++) {
-      uint8_t tmp[8];
-      for (unsigned int bit_j = 0; bit_j < 8; bit_j++) {
-        tmp[bit_j] = (sbox_x[i] >> bit_j) & 1;
-      }
-      C[i] = bf256_byte_combine_bits_array(tmp);
+      C[i] = bf256_byte_combine_bits(sbox_x[i]);
     }
   }
 
@@ -872,12 +824,9 @@ static void aes_128_mix_columns_prover(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
-  uint8_t two[8]   = {0, 1, 0, 0, 0, 0, 0, 0};
-  uint8_t three[8] = {1, 1, 0, 0, 0, 0, 0, 0};
-  bf128_t v1       = bf128_byte_combine_bits_array(one);
-  bf128_t v2       = bf128_byte_combine_bits_array(two);
-  bf128_t v3       = bf128_byte_combine_bits_array(three);
+  bf128_t v1 = bf128_byte_combine_bits(1);
+  bf128_t v2 = bf128_byte_combine_bits(2);
+  bf128_t v3 = bf128_byte_combine_bits(3);
   if (dosq) {
     v1 = bf128_mul(v1, v1);
     v2 = bf128_mul(v2, v2);
@@ -976,12 +925,9 @@ static void aes_192_mix_columns_prover(bf192_t* y_deg0, bf192_t* y_deg1, bf192_t
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
-  uint8_t two[8]   = {0, 1, 0, 0, 0, 0, 0, 0};
-  uint8_t three[8] = {1, 1, 0, 0, 0, 0, 0, 0};
-  bf192_t v1       = bf192_byte_combine_bits_array(one);
-  bf192_t v2       = bf192_byte_combine_bits_array(two);
-  bf192_t v3       = bf192_byte_combine_bits_array(three);
+  bf192_t v1 = bf192_byte_combine_bits(1);
+  bf192_t v2 = bf192_byte_combine_bits(2);
+  bf192_t v3 = bf192_byte_combine_bits(3);
   if (dosq) {
     v1 = bf192_mul(v1, v1);
     v2 = bf192_mul(v2, v2);
@@ -1079,12 +1025,9 @@ static void aes_256_mix_columns_prover(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
-  uint8_t two[8]   = {0, 1, 0, 0, 0, 0, 0, 0};
-  uint8_t three[8] = {1, 1, 0, 0, 0, 0, 0, 0};
-  bf256_t v1       = bf256_byte_combine_bits_array(one);
-  bf256_t v2       = bf256_byte_combine_bits_array(two);
-  bf256_t v3       = bf256_byte_combine_bits_array(three);
+  bf256_t v1 = bf256_byte_combine_bits(1);
+  bf256_t v2 = bf256_byte_combine_bits(2);
+  bf256_t v3 = bf256_byte_combine_bits(3);
   if (dosq) {
     v1 = bf256_mul(v1, v1);
     v2 = bf256_mul(v2, v2);
@@ -1182,12 +1125,9 @@ static void aes_128_mix_columns_verifier(bf128_t* y_deg1, const bf128_t* in_deg1
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
-  uint8_t two[8]   = {0, 1, 0, 0, 0, 0, 0, 0};
-  uint8_t three[8] = {1, 1, 0, 0, 0, 0, 0, 0};
-  bf128_t v1       = bf128_byte_combine_bits_array(one);
-  bf128_t v2       = bf128_byte_combine_bits_array(two);
-  bf128_t v3       = bf128_byte_combine_bits_array(three);
+  bf128_t v1 = bf128_byte_combine_bits(1);
+  bf128_t v2 = bf128_byte_combine_bits(2);
+  bf128_t v3 = bf128_byte_combine_bits(3);
   if (dosq) {
     v1 = bf128_mul(v1, v1);
     v2 = bf128_mul(v2, v2);
@@ -1230,12 +1170,9 @@ static void aes_192_mix_columns_verifier(bf192_t* y_deg1, const bf192_t* in_deg1
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
-  uint8_t two[8]   = {0, 1, 0, 0, 0, 0, 0, 0};
-  uint8_t three[8] = {1, 1, 0, 0, 0, 0, 0, 0};
-  bf192_t v1       = bf192_byte_combine_bits_array(one);
-  bf192_t v2       = bf192_byte_combine_bits_array(two);
-  bf192_t v3       = bf192_byte_combine_bits_array(three);
+  bf192_t v1 = bf192_byte_combine_bits(1);
+  bf192_t v2 = bf192_byte_combine_bits(2);
+  bf192_t v3 = bf192_byte_combine_bits(3);
   if (dosq) {
     v1 = bf192_mul(v1, v1);
     v2 = bf192_mul(v2, v2);
@@ -1278,12 +1215,9 @@ static void aes_256_mix_columns_verifier(bf256_t* y_deg1, const bf256_t* in_deg1
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  uint8_t one[8]   = {1, 0, 0, 0, 0, 0, 0, 0};
-  uint8_t two[8]   = {0, 1, 0, 0, 0, 0, 0, 0};
-  uint8_t three[8] = {1, 1, 0, 0, 0, 0, 0, 0};
-  bf256_t v1       = bf256_byte_combine_bits_array(one);
-  bf256_t v2       = bf256_byte_combine_bits_array(two);
-  bf256_t v3       = bf256_byte_combine_bits_array(three);
+  bf256_t v1 = bf256_byte_combine_bits(1);
+  bf256_t v2 = bf256_byte_combine_bits(2);
+  bf256_t v3 = bf256_byte_combine_bits(3);
   if (dosq) {
     v1 = bf256_mul(v1, v1);
     v2 = bf256_mul(v2, v2);
