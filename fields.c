@@ -185,7 +185,7 @@ bf128_t bf128_byte_combine_bits(uint8_t x) {
          bf128_mul_bit(bf128_alpha[6 - 1], get_bit(x, 6)) ^
          bf128_mul_bit(bf128_alpha[7 - 1], get_bit(x, 7));
 #else
-  bf128_t bf_out = bf128_from_bit(get_bit(x, i));
+  bf128_t bf_out = bf128_from_bit(get_bit(x, 0));
   for (unsigned int i = 1; i < 8; ++i) {
     bf_out = bf128_add(bf_out, bf128_mul_bit(bf128_alpha[i - 1], get_bit(x, i)));
   }
@@ -378,7 +378,7 @@ bf192_t bf192_byte_combine_bits(uint8_t x) {
          bf192_mul_bit(bf192_alpha[6 - 1], get_bit(x, 6)) ^
          bf192_mul_bit(bf192_alpha[7 - 1], get_bit(x, 7));
 #else
-  bf192_t bf_out = bf192_from_bit(get_bit(x, i));
+  bf192_t bf_out = bf192_from_bit(get_bit(x, 0));
   for (unsigned int i = 1; i < 8; ++i) {
     bf_out = bf192_add(bf_out, bf192_mul_bit(bf192_alpha[i - 1], get_bit(x, i)));
   }
@@ -584,7 +584,7 @@ bf256_t bf256_byte_combine_bits(uint8_t x) {
          bf256_mul_bit(bf256_alpha[6 - 1], get_bit(x, 6)) ^
          bf256_mul_bit(bf256_alpha[7 - 1], get_bit(x, 7));
 #else
-  bf256_t bf_out = bf256_from_bit(get_bit(x, i));
+  bf256_t bf_out = bf256_from_bit(get_bit(x, 0));
   for (unsigned int i = 1; i < 8; ++i) {
     bf_out = bf256_add(bf_out, bf256_mul_bit(bf256_alpha[i - 1], get_bit(x, i)));
   }

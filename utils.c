@@ -9,6 +9,7 @@
 #include "utils.h"
 
 #include <assert.h>
+#include <string.h>
 
 static inline uint16_t num_rec_2(const uint8_t* v) {
   uint16_t r;
