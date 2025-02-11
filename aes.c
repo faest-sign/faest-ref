@@ -338,6 +338,8 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
     int ret = EVP_EncryptUpdate(ctx, out, &len, internal_iv, IV_SIZE);
     assert(ret == 1);
     assert(len == (int)IV_SIZE);
+    (void)ret;
+    (void)len;
     aes_increment_iv(internal_iv);
   }
   if (outlen % IV_SIZE) {
@@ -345,40 +347,47 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
     int ret = EVP_EncryptUpdate(ctx, last_block, &len, internal_iv, IV_SIZE);
     assert(ret == 1);
     assert(len == (int)IV_SIZE);
+    (void)ret;
+    (void)len;
     memcpy(out, last_block, outlen % IV_SIZE);
   }
   EVP_CIPHER_CTX_free(ctx);
 #elif defined(_WIN32)
-  BCRYPT_ALG_HANDLE hAes = NULL;
-  BCRYPT_KEY_HANDLE hKey = NULL;
+  BCRYPT_ALG_HANDLE aes_handle = NULL;
+  BCRYPT_KEY_HANDLE key_handle = NULL;
 
-  NTSTATUS ret = BCryptOpenAlgorithmProvider(&hAes, BCRYPT_AES_ALGORITHM, NULL, 0);
+  NTSTATUS ret = BCryptOpenAlgorithmProvider(&aes_handle, BCRYPT_AES_ALGORITHM, NULL, 0);
   assert(BCRYPT_SUCCESS(ret));
-  ret = BCryptGenerateSymmetricKey(hAes, &hKey, NULL, 0, (PUCHAR)key, seclvl / 8, 0);
+  ret = BCryptGenerateSymmetricKey(aes_handle, &key_handle, NULL, 0, (PUCHAR)key, seclvl / 8, 0);
   assert(BCRYPT_SUCCESS(ret));
 
-  ret = BCryptSetProperty(hAes, BCRYPT_CHAINING_MODE, (PUCHAR)BCRYPT_CHAIN_MODE_ECB,
+  ret = BCryptSetProperty(aes_handle, BCRYPT_CHAINING_MODE, (PUCHAR)BCRYPT_CHAIN_MODE_ECB,
                           (ULONG)((wcslen(BCRYPT_CHAIN_MODE_ECB) + 1) * sizeof(wchar_t)), 0);
   assert(BCRYPT_SUCCESS(ret));
 
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     ULONG len = 0;
-    ret       = BCryptEncrypt(hKey, internal_iv, IV_SIZE, NULL, NULL, 0, out, IV_SIZE, &len, 0);
+    ret = BCryptEncrypt(key_handle, internal_iv, IV_SIZE, NULL, NULL, 0, out, IV_SIZE, &len, 0);
     assert(BCRYPT_SUCCESS(ret));
     assert(len == (ULONG)IV_SIZE);
+    (void)ret;
+    (void)len;
     aes_increment_iv(internal_iv);
   }
   if (outlen % IV_SIZE) {
     uint8_t last_block[IV_SIZE];
     ULONG len = 0;
-    ret = BCryptEncrypt(hKey, internal_iv, IV_SIZE, NULL, NULL, 0, last_block, IV_SIZE, &len, 0);
+    ret = BCryptEncrypt(key_handle, internal_iv, IV_SIZE, NULL, NULL, 0, last_block, IV_SIZE, &len,
+                        0);
     assert(BCRYPT_SUCCESS(ret));
     assert(len == (ULONG)IV_SIZE);
+    (void)ret;
+    (void)len;
     memcpy(out, last_block, outlen % IV_SIZE);
   }
 
-  BCryptDestroyKey(hKey);
-  BCryptCloseAlgorithmProvider(hAes, 0);
+  BCryptDestroyKey(key_handle);
+  BCryptCloseAlgorithmProvider(aes_handle, 0);
 #else
   aes_round_keys_t round_key;
 
