@@ -54,11 +54,13 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
+        - { os: ubuntu-24.04, compiler: gcc, cxxcompiler: g++, ld: bfd } # = gcc-13
+        - { os: ubuntu-24.04, compiler: clang, cxxcompiler: clang++, ld: lld } # = clang-18
+        - { os: ubuntu-24.04, compiler: gcc-14, cxxcompiler: g++-14, ld: bfd }
+        - { os: ubuntu-24.04, compiler: clang-19, cxxcompiler: clang++-19, ld: lld-19 }
         - { os: ubuntu-22.04, compiler: gcc, cxxcompiler: g++, ld: bfd } # = gcc-11
         - { os: ubuntu-22.04, compiler: clang, cxxcompiler: clang++, ld: lld } # = clang-14
-        - { os: ubuntu-22.04, compiler: gcc-12, cxxcompiler: g++-12, ld: bfd }
-        - { os: ubuntu-22.04, compiler: clang-13, cxxcompiler: clang++-13, ld: lld-13 }
-        - { os: ubuntu-22.04, compiler: clang-15, cxxcompiler: clang++-15, ld: lld-15 }
+
     steps:
     - uses: actions/checkout@v4
       with:
