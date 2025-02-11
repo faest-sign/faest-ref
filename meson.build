@@ -22,11 +22,6 @@ c_flags = []
 cpp_flags = []
 defines = []
 
-c_flags += [
-  '-Wno-unused-parameter',
-  '-Wno-unused-function',
-]
-
 if cc.get_id() != 'msvc'
   c_flags += [
     '-Werror=implicit-function-declaration',
