@@ -148,7 +148,7 @@ jobs:
         scan-build --exclude "sha3/" --status-bugs ninja -C build
 
   build-archs:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: [build-base]
     name: Test with ${{ matrix.cfg.compiler }} on ${{ matrix.cfg.arch }}
     strategy:
