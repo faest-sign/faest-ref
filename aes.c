@@ -310,7 +310,43 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
   memcpy(internal_iv, iv, IV_SIZE);
   add_to_upper_word(internal_iv, tweak);
 
-#if !defined(HAVE_OPENSSL)
+#if defined(HAVE_OPENSSL)
+  const EVP_CIPHER* cipher;
+  switch (seclvl) {
+  case 256:
+    cipher = EVP_aes_256_ecb();
+    break;
+  case 192:
+    cipher = EVP_aes_192_ecb();
+    break;
+  default:
+    cipher = EVP_aes_128_ecb();
+    break;
+  }
+  assert(cipher);
+
+  EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+  assert(ctx);
+  EVP_CIPHER_CTX_set_padding(ctx, 1);
+
+  EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
+
+  int len = 0;
+  for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
+    int ret = EVP_EncryptUpdate(ctx, out, &len, internal_iv, IV_SIZE);
+    assert(ret == 1);
+    assert(len == (int)IV_SIZE);
+    aes_increment_iv(internal_iv);
+  }
+  if (outlen % IV_SIZE) {
+    uint8_t last_block[IV_SIZE];
+    int ret = EVP_EncryptUpdate(ctx, last_block, &len, internal_iv, IV_SIZE);
+    assert(ret == 1);
+    assert(len == (int)IV_SIZE);
+    memcpy(out, last_block, outlen % IV_SIZE);
+  }
+  EVP_CIPHER_CTX_free(ctx);
+#else
   aes_round_keys_t round_key;
 
   switch (seclvl) {
@@ -369,42 +405,6 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
     }
     return;
   }
-#else
-  const EVP_CIPHER* cipher;
-  switch (seclvl) {
-  case 256:
-    cipher = EVP_aes_256_ecb();
-    break;
-  case 192:
-    cipher = EVP_aes_192_ecb();
-    break;
-  default:
-    cipher = EVP_aes_128_ecb();
-    break;
-  }
-  assert(cipher);
-
-  EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-  assert(ctx);
-  EVP_CIPHER_CTX_set_padding(ctx, 1);
-
-  EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
-
-  int len = 0;
-  for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
-    int ret = EVP_EncryptUpdate(ctx, out, &len, internal_iv, IV_SIZE);
-    assert(ret == 1);
-    assert(len == (int)IV_SIZE);
-    aes_increment_iv(internal_iv);
-  }
-  if (outlen % IV_SIZE) {
-    uint8_t last_block[IV_SIZE];
-    int ret = EVP_EncryptUpdate(ctx, last_block, &len, internal_iv, IV_SIZE);
-    assert(ret == 1);
-    assert(len == (int)IV_SIZE);
-    memcpy(out, last_block, outlen % IV_SIZE);
-  }
-  EVP_CIPHER_CTX_free(ctx);
 #endif
 }
 
