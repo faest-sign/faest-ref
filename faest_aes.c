@@ -4759,7 +4759,7 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
       z_key[1 + i] = bf192_mul(delta, z_tilde_key[i]);
     }
 
-    free(z_tilde_key);
+    faest_aligned_free(z_tilde_key);
   }
   // ::18-20
   bf192_t* w_tilde_key = faest_aligned_alloc(BF192_ALIGN, Lenc * sizeof(bf192_t));
@@ -4854,7 +4854,7 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key,
       z_key[1 + i] = bf256_mul(delta, z_tilde_key[i]);
     }
 
-    free(z_tilde_key);
+    faest_aligned_free(z_tilde_key);
   }
   // ::18-20
   bf256_t* w_tilde_key = faest_aligned_alloc(BF256_ALIGN, Lenc * sizeof(bf256_t));
