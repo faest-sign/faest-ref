@@ -3129,8 +3129,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
   uint8_t* state_bits     = malloc(Nstbits * sizeof(uint8_t));
   bf128_t* state_bits_tag = faest_aligned_alloc(BF128_ALIGN, Nstbits * sizeof(bf128_t));
 
-  aes_128_add_round_key_prover(state_bits, state_bits_tag, owf_in, owf_in_tag, k, k_tag,
-                               params); // owf_in should be bit per uint8
+  aes_128_add_round_key_prover(state_bits, state_bits_tag, owf_in, owf_in_tag, k, k_tag, params);
 
   // for conjugates of state and s-box outputs
   bf128_t* state_conj     = faest_aligned_alloc(BF128_ALIGN, 8 * Nstbytes * sizeof(bf128_t));
@@ -3161,8 +3160,7 @@ static void aes_128_enc_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf1
       // ::8-9
       bf128_t y[4];
       bf128_t y_tag[4];
-      aes_128_inv_norm_to_conjugates_prover(
-          y, y_tag, norms_ptr + 4 * i, norm_tags_ptr + 4 * i); // Ah this is the 4 bit witness part
+      aes_128_inv_norm_to_conjugates_prover(y, y_tag, norms_ptr + 4 * i, norm_tags_ptr + 4 * i);
 
       // ::10-11
       aes_128_inv_norm_constraints_prover(
@@ -3352,8 +3350,7 @@ static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf1
   uint8_t* state_bits     = malloc(Nstbits * sizeof(uint8_t));
   bf192_t* state_bits_tag = faest_aligned_alloc(BF192_ALIGN, Nstbits * sizeof(bf192_t));
 
-  aes_192_add_round_key_prover(state_bits, state_bits_tag, owf_in, owf_in_tag, k, k_tag,
-                               params); // owf_in should be bit per uint8
+  aes_192_add_round_key_prover(state_bits, state_bits_tag, owf_in, owf_in_tag, k, k_tag, params);
 
   // for conjugates of state and s-box outputs
   bf192_t* state_conj     = faest_aligned_alloc(BF192_ALIGN, 8 * Nstbytes * sizeof(bf192_t));
@@ -3383,8 +3380,7 @@ static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf1
       // ::8-9
       bf192_t y[4];
       bf192_t y_tag[4];
-      aes_192_inv_norm_to_conjugates_prover(
-          y, y_tag, norms_ptr + 4 * i, norm_tags_ptr + 4 * i); // Ah this is the 4 bit witness part
+      aes_192_inv_norm_to_conjugates_prover(y, y_tag, norms_ptr + 4 * i, norm_tags_ptr + 4 * i);
 
       // ::10-11
       aes_192_inv_norm_constraints_prover(
@@ -3574,8 +3570,7 @@ static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf2
   uint8_t* state_bits     = malloc(Nstbits * sizeof(uint8_t));
   bf256_t* state_bits_tag = faest_aligned_alloc(BF256_ALIGN, Nstbits * sizeof(bf256_t));
 
-  aes_256_add_round_key_prover(state_bits, state_bits_tag, owf_in, owf_in_tag, k, k_tag,
-                               params); // owf_in should be bit per uint8
+  aes_256_add_round_key_prover(state_bits, state_bits_tag, owf_in, owf_in_tag, k, k_tag, params);
 
   // for conjugates of state and s-box outputs
   bf256_t* state_conj     = faest_aligned_alloc(BF256_ALIGN, 8 * Nstbytes * sizeof(bf256_t));
@@ -3606,8 +3601,7 @@ static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf2
       // ::8-9
       bf256_t y[4];
       bf256_t y_tag[4];
-      aes_256_inv_norm_to_conjugates_prover(
-          y, y_tag, norms_ptr + 4 * i, norm_tags_ptr + 4 * i); // Ah this is the 4 bit witness part
+      aes_256_inv_norm_to_conjugates_prover(y, y_tag, norms_ptr + 4 * i, norm_tags_ptr + 4 * i);
 
       // ::10-11
       aes_256_inv_norm_constraints_prover(
@@ -3629,8 +3623,8 @@ static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf2
     // ::15-16
     bf256_t k_0_deg0[32];
     bf256_t k_0_deg1[32];
-    aes_256_state_to_bytes_prover(k_0_deg1, k_0_deg0, // k is in bits
-                                  k + (2 * r + 1) * Nstbits, k_tag + (2 * r + 1) * Nstbits, params);
+    aes_256_state_to_bytes_prover(k_0_deg1, k_0_deg0, k + (2 * r + 1) * Nstbits,
+                                  k_tag + (2 * r + 1) * Nstbits, params);
     // ::17
     bf256_t k_1_deg0[32];
     bf256_t k_1_deg1[32];
