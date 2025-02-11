@@ -10,7 +10,7 @@
 
 BOOST_AUTO_TEST_SUITE(instances)
 
-BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
+BOOST_DATA_TEST_CASE(instance_parameters, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const auto faest_param = *faest_get_paramset(param_id);
 

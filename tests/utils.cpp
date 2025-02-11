@@ -24,7 +24,7 @@ namespace {
   constexpr size_t alignments[3] = {16, 32, 64};
 } // namespace
 
-BOOST_DATA_TEST_CASE(test_faest_aligned_alloc, alignments, alignment) {
+BOOST_DATA_TEST_CASE(faest_aligned_alloc, alignments, alignment) {
   BOOST_TEST_CONTEXT("alignment: " << alignment) {
     test_aligned_alloc(alignment);
   }
