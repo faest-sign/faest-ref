@@ -226,6 +226,13 @@
 #define ATTR_ALLOC_SIZE(arg)
 #endif
 
+/* deprecated attribute */
+#if defined(_GCC__) || __has_attribute(deprecated)
+#define ATTR_DEPRECATED __attribute__((deprecated))
+#else
+#define ATTR_DEPRECATED
+#endif
+
 /* concatenation */
 #define CONCAT2(a, b) a##_##b
 #define CONCAT(a, b) CONCAT2(a, b)
