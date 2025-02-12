@@ -4794,14 +4794,6 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf128_t bf_v_star_0 = bf128_sum_poly(w_tag + ell);
   bf128_t bf_v_star_1 = bf128_sum_poly(w_tag + ell + lambda);
 
-  // ::10-12
-  bf128_t* z0_tag   = BF128_ALLOC(c); // this contains the bf tag
-  bf128_t* z1_val   = BF128_ALLOC(c); // this contains the bf val
-  bf128_t* z2_gamma = BF128_ALLOC(c); // this contains the bf gamma
-  memset(z0_tag, 0, c * sizeof(bf128_t));
-  memset(z1_val, 0, c * sizeof(bf128_t));
-  memset(z2_gamma, 0, c * sizeof(bf128_t));
-
   // Step: 13-18
   zk_hash_128_3_ctx hasher;
   zk_hash_128_3_init(&hasher, chall_2);
