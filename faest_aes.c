@@ -1927,24 +1927,21 @@ static void constant_to_vole_256_prover(bf256_t* tag, unsigned int n) {
 static void constant_to_vole_128_verifier(bf128_t* key, const uint8_t* val, bf128_t delta,
                                           unsigned int n) {
   for (unsigned int i = 0; i < n; i++) {
-    key[i] = bf128_mul(bf128_from_bit(get_bit(val[i / 8], i % 8)),
-                       delta); // multiply delta with each bit
+    key[i] = bf128_mul_bit(delta, get_bit(val[i / 8], i % 8));
   }
 }
 
 static void constant_to_vole_192_verifier(bf192_t* key, const uint8_t* val, bf192_t delta,
                                           unsigned int n) {
   for (unsigned int i = 0; i < n; i++) {
-    key[i] = bf192_mul(bf192_from_bit(get_bit(val[i / 8], i % 8)),
-                       delta); // multiply delta with each bit
+    key[i] = bf192_mul_bit(delta, get_bit(val[i / 8], i % 8));
   }
 }
 
 static void constant_to_vole_256_verifier(bf256_t* key, const uint8_t* val, bf256_t delta,
                                           unsigned int n) {
   for (unsigned int i = 0; i < n; i++) {
-    key[i] = bf256_mul(bf256_from_bit(get_bit(val[i / 8], i % 8)),
-                       delta); // multiply delta with each bit
+    key[i] = bf256_mul_bit(delta, get_bit(val[i / 8], i % 8));
   }
 }
 
@@ -4623,9 +4620,8 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key,
     }
     // ::10-11
     for (unsigned int i = 0; i < blocksize; i++) {
-      in_key[i] = w_key[i];
-      out_key[i] =
-          bf128_add(w_key[i], bf128_mul(delta, bf128_from_bit((owf_out[i / 8] >> (i % 8)) & 1)));
+      in_key[i]  = w_key[i];
+      out_key[i] = bf128_add(w_key[i], bf128_mul_bit(delta, ptr_get_bit(owf_out, i)));
     }
   } else {
     // jump to ::13 for AES
@@ -4719,9 +4715,8 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
     }
     // ::10-11
     for (unsigned int i = 0; i < blocksize; i++) {
-      in_key[i] = w_key[i];
-      out_key[i] =
-          bf192_add(w_key[i], bf192_mul(delta, bf192_from_bit((owf_out[i / 8] >> (i % 8)) & 1)));
+      in_key[i]  = w_key[i];
+      out_key[i] = bf192_add(w_key[i], bf192_mul_bit(delta, ptr_get_bit(owf_out, i)));
     }
   } else {
     // jump to ::13 for AES
@@ -4813,9 +4808,8 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key,
     }
     // ::10-11
     for (unsigned int i = 0; i < blocksize; i++) {
-      in_key[i] = w_key[i];
-      out_key[i] =
-          bf256_add(w_key[i], bf256_mul(delta, bf256_from_bit((owf_out[i / 8] >> (i % 8)) & 1)));
+      in_key[i]  = w_key[i];
+      out_key[i] = bf256_add(w_key[i], bf256_mul_bit(delta, ptr_get_bit(owf_out, i)));
     }
   } else {
     // jump to ::13 for AES
