@@ -4782,27 +4782,23 @@ static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   zk_hash_128_ctx b_ctx;
   zk_hash_128_init(&b_ctx, chall_2);
 
-  bf128_t* w_key = BF128_ALLOC(ell);
   for (unsigned int i = 0; i < ell; i++) {
-    w_key[i] = bf128_add(q_key[i], bf128_mul_bit(bf_delta, ptr_get_bit(d, i)));
+    q_key[i] = bf128_add(q_key[i], bf128_mul_bit(bf_delta, ptr_get_bit(d, i)));
   }
 
   // ::11-12
-  aes_128_constraints_verifier(&b_ctx, w_key, owf_in, owf_out, bf_delta, params);
+  aes_128_constraints_verifier(&b_ctx, q_key, owf_in, owf_out, bf_delta, params);
+  faest_aligned_free(q_key);
 
   // ::13-14
   uint8_t q_tilde[FAEST_128_LAMBDA / 8];
   zk_hash_128_finalize(q_tilde, &b_ctx, q_star);
-
-  faest_aligned_free(w_key);
 
   // ::16
   bf128_t tmp1 = bf128_mul(bf128_load(a1_tilde), bf_delta);
   bf128_t tmp2 = bf128_mul(bf128_load(a2_tilde), bf_delta_sq);
   bf128_t tmp3 = bf128_add(tmp1, tmp2);
   bf128_t ret  = bf128_add(bf128_load(q_tilde), tmp3);
-
-  faest_aligned_free(q_key);
 
   bf128_store(a0_tilde, ret);
 }
@@ -4832,27 +4828,23 @@ static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   zk_hash_192_ctx b_ctx;
   zk_hash_192_init(&b_ctx, chall_2);
 
-  bf192_t* w_key = BF192_ALLOC(ell);
   for (unsigned int i = 0; i < ell; i++) {
-    w_key[i] = bf192_add(q_key[i], bf192_mul_bit(bf_delta, ptr_get_bit(d, i)));
+    q_key[i] = bf192_add(q_key[i], bf192_mul_bit(bf_delta, ptr_get_bit(d, i)));
   }
 
   // ::11-12
-  aes_192_constraints_verifier(&b_ctx, w_key, owf_in, owf_out, bf_delta, params);
+  aes_192_constraints_verifier(&b_ctx, q_key, owf_in, owf_out, bf_delta, params);
+  faest_aligned_free(q_key);
 
   // ::13-14
   uint8_t q_tilde[FAEST_192_LAMBDA / 8];
   zk_hash_192_finalize(q_tilde, &b_ctx, q_star);
-
-  faest_aligned_free(w_key);
 
   // ::16
   bf192_t tmp1 = bf192_mul(bf192_load(a1_tilde), bf_delta);
   bf192_t tmp2 = bf192_mul(bf192_load(a2_tilde), bf_delta_sq);
   bf192_t tmp3 = bf192_add(tmp1, tmp2);
   bf192_t ret  = bf192_add(bf192_load(q_tilde), tmp3);
-
-  faest_aligned_free(q_key);
 
   bf192_store(a0_tilde, ret);
 }
@@ -4882,27 +4874,23 @@ static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   zk_hash_256_ctx b_ctx;
   zk_hash_256_init(&b_ctx, chall_2);
 
-  bf256_t* w_key = BF256_ALLOC(ell);
   for (unsigned int i = 0; i < ell; i++) {
-    w_key[i] = bf256_add(q_key[i], bf256_mul_bit(bf_delta, ptr_get_bit(d, i)));
+    q_key[i] = bf256_add(q_key[i], bf256_mul_bit(bf_delta, ptr_get_bit(d, i)));
   }
 
   // ::11-12
-  aes_256_constraints_verifier(&b_ctx, w_key, owf_in, owf_out, bf_delta, params);
+  aes_256_constraints_verifier(&b_ctx, q_key, owf_in, owf_out, bf_delta, params);
+  faest_aligned_free(q_key);
 
   // ::13-14
   uint8_t q_tilde[FAEST_256_LAMBDA / 8];
   zk_hash_256_finalize(q_tilde, &b_ctx, q_star);
-
-  faest_aligned_free(w_key);
 
   // ::16
   bf256_t tmp1 = bf256_mul(bf256_load(a1_tilde), bf_delta);
   bf256_t tmp2 = bf256_mul(bf256_load(a2_tilde), bf_delta_sq);
   bf256_t tmp3 = bf256_add(tmp1, tmp2);
   bf256_t ret  = bf256_add(bf256_load(q_tilde), tmp3);
-
-  faest_aligned_free(q_key);
 
   bf256_store(a0_tilde, ret);
 }
