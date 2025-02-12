@@ -1942,34 +1942,6 @@ static void constant_to_vole_256_verifier(bf256_t* key, const uint8_t* val, bf25
   }
 }
 
-// DEG 2 TO 3
-static void aes_128_deg2to3_prover(bf128_t* deg1, bf128_t* deg2, bf128_t tag, bf128_t val) {
-  deg1[0] = tag;
-  deg2[0] = val;
-}
-
-static void aes_192_deg2to3_prover(bf192_t* deg1, bf192_t* deg2, bf192_t tag, bf192_t val) {
-  deg1[0] = tag;
-  deg2[0] = val;
-}
-
-static void aes_256_deg2to3_prover(bf256_t* deg1, bf256_t* deg2, bf256_t tag, bf256_t val) {
-  deg1[0] = tag;
-  deg2[0] = val;
-}
-
-static void aes_128_deg2to3_verifier(bf128_t* deg1, bf128_t key, bf128_t delta) {
-  deg1[0] = bf128_mul(key, delta);
-}
-
-static void aes_192_deg2to3_verifier(bf192_t* deg1, bf192_t key, bf192_t delta) {
-  deg1[0] = bf192_mul(key, delta);
-}
-
-static void aes_256_deg2to3_verifier(bf256_t* deg1, bf256_t key, bf256_t delta) {
-  deg1[0] = bf256_mul(key, delta);
-}
-
 // // INVERSE AFFINE
 static void aes_128_inverse_affine_byte_prover(uint8_t* y_bits, bf128_t* y_bits_tag,
                                                const uint8_t* x_bits, const bf128_t* x_bits_tag) {
