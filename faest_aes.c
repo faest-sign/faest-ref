@@ -427,38 +427,34 @@ static void aes_128_inv_norm_constraints_prover(zk_hash_128_3_ctx* hasher,
                 conjugates_tag[0]));
 }
 
-static void aes_192_inv_norm_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2,
+static void aes_192_inv_norm_constraints_prover(zk_hash_192_3_ctx* hasher,
                                                 const bf192_t* conjugates,
                                                 const bf192_t* conjugates_tag, const bf192_t* y,
                                                 const bf192_t* y_tag) {
-  z_deg0[0] = bf192_mul(bf192_mul(*y_tag, conjugates_tag[1]), conjugates_tag[4]);
-
-  z_deg1[0] = bf192_add(bf192_add(bf192_mul(bf192_mul(*y, conjugates_tag[1]), conjugates_tag[4]),
-                                  bf192_mul(bf192_mul(*y_tag, conjugates_tag[1]), conjugates[4])),
-                        bf192_mul(bf192_mul(*y_tag, conjugates[1]), conjugates_tag[4]));
-
-  z_deg2[0] =
+  zk_hash_192_3_update(
+      hasher, bf192_mul(bf192_mul(*y_tag, conjugates_tag[1]), conjugates_tag[4]),
+      bf192_add(bf192_add(bf192_mul(bf192_mul(*y, conjugates_tag[1]), conjugates_tag[4]),
+                          bf192_mul(bf192_mul(*y_tag, conjugates_tag[1]), conjugates[4])),
+                bf192_mul(bf192_mul(*y_tag, conjugates[1]), conjugates_tag[4])),
       bf192_add(bf192_add(bf192_add(bf192_mul(bf192_mul(*y, conjugates[1]), conjugates_tag[4]),
                                     bf192_mul(bf192_mul(*y, conjugates_tag[1]), conjugates[4])),
                           bf192_mul(bf192_mul(*y_tag, conjugates[1]), conjugates[4])),
-                conjugates_tag[0]);
+                conjugates_tag[0]));
 }
 
-static void aes_256_inv_norm_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t* z_deg2,
+static void aes_256_inv_norm_constraints_prover(zk_hash_256_3_ctx* hasher,
                                                 const bf256_t* conjugates,
                                                 const bf256_t* conjugates_tag, const bf256_t* y,
                                                 const bf256_t* y_tag) {
-  z_deg0[0] = bf256_mul(bf256_mul(*y_tag, conjugates_tag[1]), conjugates_tag[4]);
-
-  z_deg1[0] = bf256_add(bf256_add(bf256_mul(bf256_mul(*y, conjugates_tag[1]), conjugates_tag[4]),
-                                  bf256_mul(bf256_mul(*y_tag, conjugates_tag[1]), conjugates[4])),
-                        bf256_mul(bf256_mul(*y_tag, conjugates[1]), conjugates_tag[4]));
-
-  z_deg2[0] =
+  zk_hash_256_3_update(
+      hasher, bf256_mul(bf256_mul(*y_tag, conjugates_tag[1]), conjugates_tag[4]),
+      bf256_add(bf256_add(bf256_mul(bf256_mul(*y, conjugates_tag[1]), conjugates_tag[4]),
+                          bf256_mul(bf256_mul(*y_tag, conjugates_tag[1]), conjugates[4])),
+                bf256_mul(bf256_mul(*y_tag, conjugates[1]), conjugates_tag[4])),
       bf256_add(bf256_add(bf256_add(bf256_mul(bf256_mul(*y, conjugates[1]), conjugates_tag[4]),
                                     bf256_mul(bf256_mul(*y, conjugates_tag[1]), conjugates[4])),
                           bf256_mul(bf256_mul(*y_tag, conjugates[1]), conjugates[4])),
-                conjugates_tag[0]);
+                conjugates_tag[0]));
 }
 
 static void aes_128_inv_norm_constraints_verifier(zk_hash_128_ctx* hasher,
@@ -469,16 +465,20 @@ static void aes_128_inv_norm_constraints_verifier(zk_hash_128_ctx* hasher,
                         bf128_mul(conjugates_eval[0], bf128_mul(delta, delta))));
 }
 
-static void aes_192_inv_norm_constraints_verifier(bf192_t* z_eval, const bf192_t* conjugates_eval,
+static void aes_192_inv_norm_constraints_verifier(zk_hash_192_ctx* hasher,
+                                                  const bf192_t* conjugates_eval,
                                                   const bf192_t* y_eval, const bf192_t delta) {
-  z_eval[0] = bf192_add(bf192_mul(bf192_mul(*y_eval, conjugates_eval[1]), conjugates_eval[4]),
-                        bf192_mul(conjugates_eval[0], bf192_mul(delta, delta)));
+  zk_hash_192_update(
+      hasher, bf192_add(bf192_mul(bf192_mul(*y_eval, conjugates_eval[1]), conjugates_eval[4]),
+                        bf192_mul(conjugates_eval[0], bf192_mul(delta, delta))));
 }
 
-static void aes_256_inv_norm_constraints_verifier(bf256_t* z_eval, const bf256_t* conjugates_eval,
+static void aes_256_inv_norm_constraints_verifier(zk_hash_256_ctx* hasher,
+                                                  const bf256_t* conjugates_eval,
                                                   const bf256_t* y_eval, const bf256_t delta) {
-  z_eval[0] = bf256_add(bf256_mul(bf256_mul(*y_eval, conjugates_eval[1]), conjugates_eval[4]),
-                        bf256_mul(conjugates_eval[0], bf256_mul(delta, delta)));
+  zk_hash_256_update(
+      hasher, bf256_add(bf256_mul(bf256_mul(*y_eval, conjugates_eval[1]), conjugates_eval[4]),
+                        bf256_mul(conjugates_eval[0], bf256_mul(delta, delta))));
 }
 
 // STATE TO BYTES
@@ -2718,9 +2718,8 @@ static void aes_128_expkey_constraints_prover(zk_hash_128_3_ctx* hasher, uint8_t
   faest_aligned_free(w_flat_tag);
 }
 
-static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, uint8_t* k,
-                                              bf192_t* k_tag, const uint8_t* w,
-                                              const bf192_t* w_tag,
+static void aes_192_expkey_constraints_prover(zk_hash_192_3_ctx* hasher, uint8_t* k, bf192_t* k_tag,
+                                              const uint8_t* w, const bf192_t* w_tag,
                                               const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
   const unsigned int lambda = FAEST_192_LAMBDA;
@@ -2783,20 +2782,14 @@ static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, 
     // ::17
     for (unsigned int r = 0; r < 4; r++) {
       // ::18-19
-      z_deg1[8 * j + 2 * r] = bf192_add(
-          bf192_add(bf192_mul(k_hat_sq[r], w_hat_tag[r]), bf192_mul(k_hat_tag_sq[r], w_hat[r])),
-          k_hat_tag[r]);
-
-      z_deg1[8 * j + 2 * r + 1] = bf192_add(
-          bf192_add(bf192_mul(k_hat[r], w_hat_tag_sq[r]), bf192_mul(k_hat_tag[r], w_hat_sq[r])),
-          w_hat_tag[r]);
-
-      z_deg0[8 * j + 2 * r]     = bf192_mul(k_hat_tag_sq[r], w_hat_tag[r]);
-      z_deg0[8 * j + 2 * r + 1] = bf192_mul(k_hat_tag[r], w_hat_tag_sq[r]);
-
-      // z_deg1[8*j + 2*r + 1] = bf192_add(bf192_mul(k_hat[r], w_hat_sq[r]), w_hat[r]);
-      // z_deg0[8*j + 2*r] = bf192_add(bf192_mul(k_hat_tag_sq[r], w_hat_tag[r]), k_hat_tag[r]);
-      // z_deg0[8*j + 2*r + 1] = bf192_add(bf192_mul(k_hat_tag[r], w_hat_tag_sq[r]), k_hat_tag[r]);
+      zk_hash_192_3_raise_and_update(hasher, bf192_mul(k_hat_tag_sq[r], w_hat_tag[r]),
+                                     bf192_add(bf192_add(bf192_mul(k_hat_sq[r], w_hat_tag[r]),
+                                                         bf192_mul(k_hat_tag_sq[r], w_hat[r])),
+                                               k_hat_tag[r]));
+      zk_hash_192_3_raise_and_update(hasher, bf192_mul(k_hat_tag[r], w_hat_tag_sq[r]),
+                                     bf192_add(bf192_add(bf192_mul(k_hat[r], w_hat_tag_sq[r]),
+                                                         bf192_mul(k_hat_tag[r], w_hat_sq[r])),
+                                               w_hat_tag[r]));
     }
     if (lambda == 192) {
       iwd += 192;
@@ -2808,9 +2801,8 @@ static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, 
   faest_aligned_free(w_flat_tag);
 }
 
-static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, uint8_t* k,
-                                              bf256_t* k_tag, const uint8_t* w,
-                                              const bf256_t* w_tag,
+static void aes_256_expkey_constraints_prover(zk_hash_256_3_ctx* hasher, uint8_t* k, bf256_t* k_tag,
+                                              const uint8_t* w, const bf256_t* w_tag,
                                               const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
   const unsigned int lambda = FAEST_256_LAMBDA;
@@ -2873,20 +2865,14 @@ static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, 
     // ::17
     for (unsigned int r = 0; r < 4; r++) {
       // ::18-19
-      z_deg1[8 * j + 2 * r] = bf256_add(
-          bf256_add(bf256_mul(k_hat_sq[r], w_hat_tag[r]), bf256_mul(k_hat_tag_sq[r], w_hat[r])),
-          k_hat_tag[r]);
-
-      z_deg1[8 * j + 2 * r + 1] = bf256_add(
-          bf256_add(bf256_mul(k_hat[r], w_hat_tag_sq[r]), bf256_mul(k_hat_tag[r], w_hat_sq[r])),
-          w_hat_tag[r]);
-
-      z_deg0[8 * j + 2 * r]     = bf256_mul(k_hat_tag_sq[r], w_hat_tag[r]);
-      z_deg0[8 * j + 2 * r + 1] = bf256_mul(k_hat_tag[r], w_hat_tag_sq[r]);
-
-      // z_deg1[8*j + 2*r + 1] = bf256_add(bf256_mul(k_hat[r], w_hat_sq[r]), w_hat[r]);
-      // z_deg0[8*j + 2*r] = bf256_add(bf256_mul(k_hat_tag_sq[r], w_hat_tag[r]), k_hat_tag[r]);
-      // z_deg0[8*j + 2*r + 1] = bf256_add(bf256_mul(k_hat_tag[r], w_hat_tag_sq[r]), k_hat_tag[r]);
+      zk_hash_256_3_raise_and_update(hasher, bf256_mul(k_hat_tag_sq[r], w_hat_tag[r]),
+                                     bf256_add(bf256_add(bf256_mul(k_hat_sq[r], w_hat_tag[r]),
+                                                         bf256_mul(k_hat_tag_sq[r], w_hat[r])),
+                                               k_hat_tag[r]));
+      zk_hash_256_3_raise_and_update(hasher, bf256_mul(k_hat_tag[r], w_hat_tag_sq[r]),
+                                     bf256_add(bf256_add(bf256_mul(k_hat[r], w_hat_tag_sq[r]),
+                                                         bf256_mul(k_hat_tag[r], w_hat_sq[r])),
+                                               w_hat_tag[r]));
     }
     if (lambda == 192) {
       iwd += 192;
@@ -2964,7 +2950,7 @@ static void aes_128_expkey_constraints_verifier(zk_hash_128_ctx* hasher, bf128_t
   faest_aligned_free(w_flat_key);
 }
 
-static void aes_192_expkey_constraints_verifier(bf192_t* z_deg1, bf192_t* k_key,
+static void aes_192_expkey_constraints_verifier(zk_hash_192_ctx* hasher, bf192_t* k_key,
                                                 const bf192_t* w_key, bf192_t delta,
                                                 const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
@@ -3013,10 +2999,12 @@ static void aes_192_expkey_constraints_verifier(bf192_t* z_deg1, bf192_t* k_key,
     }
     // ::17-20
     for (unsigned int r = 0; r < 4; r++) {
-      z_deg1[8 * j + 2 * r] =
-          bf192_add(bf192_mul(k_hat_key_sq[r], w_hat_key[r]), bf192_mul(delta, k_hat_key[r]));
-      z_deg1[8 * j + 2 * r + 1] =
-          bf192_add(bf192_mul(k_hat_key[r], w_hat_key_sq[r]), bf192_mul(delta, w_hat_key[r]));
+      zk_hash_192_update(hasher,
+                         bf192_mul(delta, bf192_add(bf192_mul(k_hat_key_sq[r], w_hat_key[r]),
+                                                    bf192_mul(delta, k_hat_key[r]))));
+      zk_hash_192_update(hasher,
+                         bf192_mul(delta, bf192_add(bf192_mul(k_hat_key[r], w_hat_key_sq[r]),
+                                                    bf192_mul(delta, w_hat_key[r]))));
     }
     if (lambda == 192) {
       iwd += 192;
@@ -3027,7 +3015,7 @@ static void aes_192_expkey_constraints_verifier(bf192_t* z_deg1, bf192_t* k_key,
   faest_aligned_free(w_flat_key);
 }
 
-static void aes_256_expkey_constraints_verifier(bf256_t* z_deg1, bf256_t* k_key,
+static void aes_256_expkey_constraints_verifier(zk_hash_256_ctx* hasher, bf256_t* k_key,
                                                 const bf256_t* w_key, bf256_t delta,
                                                 const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
@@ -3076,10 +3064,13 @@ static void aes_256_expkey_constraints_verifier(bf256_t* z_deg1, bf256_t* k_key,
     }
     // ::17-20
     for (unsigned int r = 0; r < 4; r++) {
-      z_deg1[8 * j + 2 * r] =
-          bf256_add(bf256_mul(k_hat_key_sq[r], w_hat_key[r]), bf256_mul(delta, k_hat_key[r]));
-      z_deg1[8 * j + 2 * r + 1] =
-          bf256_add(bf256_mul(k_hat_key[r], w_hat_key_sq[r]), bf256_mul(delta, w_hat_key[r]));
+      // also raise degree
+      zk_hash_256_update(hasher,
+                         bf256_mul(delta, bf256_add(bf256_mul(k_hat_key_sq[r], w_hat_key[r]),
+                                                    bf256_mul(delta, k_hat_key[r]))));
+      zk_hash_256_update(hasher,
+                         bf256_mul(delta, bf256_add(bf256_mul(k_hat_key[r], w_hat_key_sq[r]),
+                                                    bf256_mul(delta, w_hat_key[r]))));
     }
     if (lambda == 192) {
       iwd += 192;
@@ -3307,10 +3298,10 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
   free(state_bits);
 }
 
-static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2,
-                                           const uint8_t* owf_in, const bf192_t* owf_in_tag,
-                                           const uint8_t* owf_out, const bf192_t* owf_out_tag,
-                                           const uint8_t* w, const bf192_t* w_tag, const uint8_t* k,
+static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint8_t* owf_in,
+                                           const bf192_t* owf_in_tag, const uint8_t* owf_out,
+                                           const bf192_t* owf_out_tag, const uint8_t* w,
+                                           const bf192_t* w_tag, const uint8_t* k,
                                            const bf192_t* k_tag, const faest_paramset_t* params) {
   const unsigned int Nst      = params->Nst;
   const unsigned int Nstbits  = 32 * Nst;
@@ -3354,9 +3345,8 @@ static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf1
       aes_192_inv_norm_to_conjugates_prover(y, y_tag, norms_ptr + 4 * i, norm_tags_ptr + 4 * i);
 
       // ::10-11
-      aes_192_inv_norm_constraints_prover(
-          z_deg0 + 3 * r * Nstbytes + i, z_deg1 + 3 * r * Nstbytes + i,
-          z_deg2 + 3 * r * Nstbytes + i, state_conj + 8 * i, state_conj_tag + 8 * i, y, y_tag);
+      aes_192_inv_norm_constraints_prover(hasher, state_conj + 8 * i, state_conj_tag + 8 * i, y,
+                                          y_tag);
 
       // ::12
       for (unsigned int j = 0; j < 8; j++) {
@@ -3468,30 +3458,26 @@ static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf1
       //    deg1: s_sq[0] * st[1] + s_sq[1] * st[0]
       //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
       //
+      zk_hash_192_3_update(hasher, bf192_mul(s_sq_deg0, st_b_deg0[0][byte_i]),
+                           bf192_add(bf192_mul(s_sq_deg0, st_b_deg1[0][byte_i]),
+                                     bf192_mul(s_sq_deg1, st_b_deg0[0][byte_i])),
+                           bf192_add(bf192_add(bf192_mul(s_sq_deg0, st_b_deg2[0][byte_i]),
+                                               bf192_mul(s_sq_deg1, st_b_deg1[0][byte_i])),
+                                     s_deg0));
 
-      z_deg0[(3 * r + 1) * Nstbytes + 2 * byte_i] = bf192_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
-
-      z_deg1[(3 * r + 1) * Nstbytes + 2 * byte_i] = bf192_add(
-          bf192_mul(s_sq_deg0, st_b_deg1[0][byte_i]), bf192_mul(s_sq_deg1, st_b_deg0[0][byte_i]));
-      z_deg2[(3 * r + 1) * Nstbytes + 2 * byte_i] =
-          bf192_add(bf192_add(bf192_mul(s_sq_deg0, st_b_deg2[0][byte_i]),
-                              bf192_mul(s_sq_deg1, st_b_deg1[0][byte_i])),
-                    s_deg0);
       // ::37
       // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
       //    deg0: s[0] * st_{1,i}[0]
       //    deg1: s[0] * st_{1,i}[1] + s[1] * st_{1,i}[0] + st_{0,i}[0]
       //    deg2: s[0] * st_{1,i}[2] + s[1] * st_{1,i}[1] + st_{0,i}[1]
       //
-      z_deg0[(3 * r + 1) * Nstbytes + 2 * byte_i + 1] = bf192_mul(s_deg0, st_b_deg0[1][byte_i]);
-      z_deg1[(3 * r + 1) * Nstbytes + 2 * byte_i + 1] =
-          bf192_add(bf192_add(bf192_mul(s_deg0, st_b_deg1[1][byte_i]),
-                              bf192_mul(s_deg1, st_b_deg0[1][byte_i])),
-                    st_b_deg0[0][byte_i]);
-      z_deg2[(3 * r + 1) * Nstbytes + 2 * byte_i + 1] =
-          bf192_add(bf192_add(bf192_mul(s_deg0, st_b_deg2[1][byte_i]),
-                              bf192_mul(s_deg1, st_b_deg1[1][byte_i])),
-                    st_b_deg1[0][byte_i]);
+      zk_hash_192_3_update(hasher, bf192_mul(s_deg0, st_b_deg0[1][byte_i]),
+                           bf192_add(bf192_add(bf192_mul(s_deg0, st_b_deg1[1][byte_i]),
+                                               bf192_mul(s_deg1, st_b_deg0[1][byte_i])),
+                                     st_b_deg0[0][byte_i]),
+                           bf192_add(bf192_add(bf192_mul(s_deg0, st_b_deg2[1][byte_i]),
+                                               bf192_mul(s_deg1, st_b_deg1[1][byte_i])),
+                                     st_b_deg1[0][byte_i]));
     }
     if (r != (R / 2) - 1) {
       uint8_t* tmp_state     = malloc(Nstbits * sizeof(uint8_t));
@@ -3527,10 +3513,10 @@ static void aes_192_enc_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf1
   free(state_bits);
 }
 
-static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t* z_deg2,
-                                           const uint8_t* owf_in, const bf256_t* owf_in_tag,
-                                           const uint8_t* owf_out, const bf256_t* owf_out_tag,
-                                           const uint8_t* w, const bf256_t* w_tag, const uint8_t* k,
+static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint8_t* owf_in,
+                                           const bf256_t* owf_in_tag, const uint8_t* owf_out,
+                                           const bf256_t* owf_out_tag, const uint8_t* w,
+                                           const bf256_t* w_tag, const uint8_t* k,
                                            const bf256_t* k_tag, const faest_paramset_t* params) {
   const unsigned int Nst      = params->Nst;
   const unsigned int Nstbits  = 32 * Nst;
@@ -3575,9 +3561,8 @@ static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf2
       aes_256_inv_norm_to_conjugates_prover(y, y_tag, norms_ptr + 4 * i, norm_tags_ptr + 4 * i);
 
       // ::10-11
-      aes_256_inv_norm_constraints_prover(
-          z_deg0 + 3 * r * Nstbytes + i, z_deg1 + 3 * r * Nstbytes + i,
-          z_deg2 + 3 * r * Nstbytes + i, state_conj + 8 * i, state_conj_tag + 8 * i, y, y_tag);
+      aes_256_inv_norm_constraints_prover(hasher, state_conj + 8 * i, state_conj_tag + 8 * i, y,
+                                          y_tag);
 
       // ::12
       for (unsigned int j = 0; j < 8; j++) {
@@ -3689,30 +3674,26 @@ static void aes_256_enc_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf2
       //    deg1: s_sq[0] * st[1] + s_sq[1] * st[0]
       //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
       //
+      zk_hash_256_3_update(hasher, bf256_mul(s_sq_deg0, st_b_deg0[0][byte_i]),
+                           bf256_add(bf256_mul(s_sq_deg0, st_b_deg1[0][byte_i]),
+                                     bf256_mul(s_sq_deg1, st_b_deg0[0][byte_i])),
+                           bf256_add(bf256_add(bf256_mul(s_sq_deg0, st_b_deg2[0][byte_i]),
+                                               bf256_mul(s_sq_deg1, st_b_deg1[0][byte_i])),
+                                     s_deg0));
 
-      z_deg0[(3 * r + 1) * Nstbytes + 2 * byte_i] = bf256_mul(s_sq_deg0, st_b_deg0[0][byte_i]);
-
-      z_deg1[(3 * r + 1) * Nstbytes + 2 * byte_i] = bf256_add(
-          bf256_mul(s_sq_deg0, st_b_deg1[0][byte_i]), bf256_mul(s_sq_deg1, st_b_deg0[0][byte_i]));
-      z_deg2[(3 * r + 1) * Nstbytes + 2 * byte_i] =
-          bf256_add(bf256_add(bf256_mul(s_sq_deg0, st_b_deg2[0][byte_i]),
-                              bf256_mul(s_sq_deg1, st_b_deg1[0][byte_i])),
-                    s_deg0);
       // ::37
       // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
       //    deg0: s[0] * st_{1,i}[0]
       //    deg1: s[0] * st_{1,i}[1] + s[1] * st_{1,i}[0] + st_{0,i}[0]
       //    deg2: s[0] * st_{1,i}[2] + s[1] * st_{1,i}[1] + st_{0,i}[1]
       //
-      z_deg0[(3 * r + 1) * Nstbytes + 2 * byte_i + 1] = bf256_mul(s_deg0, st_b_deg0[1][byte_i]);
-      z_deg1[(3 * r + 1) * Nstbytes + 2 * byte_i + 1] =
-          bf256_add(bf256_add(bf256_mul(s_deg0, st_b_deg1[1][byte_i]),
-                              bf256_mul(s_deg1, st_b_deg0[1][byte_i])),
-                    st_b_deg0[0][byte_i]);
-      z_deg2[(3 * r + 1) * Nstbytes + 2 * byte_i + 1] =
-          bf256_add(bf256_add(bf256_mul(s_deg0, st_b_deg2[1][byte_i]),
-                              bf256_mul(s_deg1, st_b_deg1[1][byte_i])),
-                    st_b_deg1[0][byte_i]);
+      zk_hash_256_3_update(hasher, bf256_mul(s_deg0, st_b_deg0[1][byte_i]),
+                           bf256_add(bf256_add(bf256_mul(s_deg0, st_b_deg1[1][byte_i]),
+                                               bf256_mul(s_deg1, st_b_deg0[1][byte_i])),
+                                     st_b_deg0[0][byte_i]),
+                           bf256_add(bf256_add(bf256_mul(s_deg0, st_b_deg2[1][byte_i]),
+                                               bf256_mul(s_deg1, st_b_deg1[1][byte_i])),
+                                     st_b_deg1[0][byte_i]));
     }
     if (r != (R / 2) - 1) {
       uint8_t* tmp_state     = malloc(Nstbits * sizeof(uint8_t));
@@ -3884,7 +3865,7 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
   faest_aligned_free(state_bits_key);
 }
 
-static void aes_192_enc_constraints_verifier(bf192_t* z_key, const bf192_t* owf_in_key,
+static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf192_t* owf_in_key,
                                              const bf192_t* owf_out_key, const bf192_t* w_key,
                                              const bf192_t* rkeys_key, const bf192_t delta,
                                              const faest_paramset_t* params) {
@@ -3917,8 +3898,7 @@ static void aes_192_enc_constraints_verifier(bf192_t* z_key, const bf192_t* owf_
       aes_192_inv_norm_to_conjugates_verifier(y_key, norm_keys_ptr + 4 * i);
 
       // ::10-11
-      aes_192_inv_norm_constraints_verifier(z_key + 3 * r * Nstbytes + i, state_conj_key + 8 * i,
-                                            y_key, delta);
+      aes_192_inv_norm_constraints_verifier(hasher, state_conj_key + 8 * i, y_key, delta);
 
       // ::12
       for (unsigned int j = 0; j < 8; j++) {
@@ -3996,14 +3976,14 @@ static void aes_192_enc_constraints_verifier(bf192_t* z_key, const bf192_t* owf_
       // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
       //    s_sq * st_{0,i} + delta^2 * s
       //
-      z_key[(3 * r + 1) * Nstbytes + 2 * byte_i] = bf192_add(
-          bf192_mul(s_sq_key, st_b_key[0][byte_i]), bf192_mul(delta, bf192_mul(delta, s_key)));
+      zk_hash_192_update(hasher, bf192_add(bf192_mul(s_sq_key, st_b_key[0][byte_i]),
+                                           bf192_mul(delta, bf192_mul(delta, s_key))));
       // ::37
       // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
       //    s * st_{1,i} + delta * st_{0,i}
       //
-      z_key[(3 * r + 1) * Nstbytes + 2 * byte_i + 1] =
-          bf192_add(bf192_mul(s_key, st_b_key[1][byte_i]), bf192_mul(delta, st_b_key[0][byte_i]));
+      zk_hash_192_update(hasher, bf192_add(bf192_mul(s_key, st_b_key[1][byte_i]),
+                                           bf192_mul(delta, st_b_key[0][byte_i])));
     }
     if (r != (R / 2) - 1) {
       bf192_t* tmp_state_key = BF192_ALLOC(Nstbits);
@@ -4021,7 +4001,7 @@ static void aes_192_enc_constraints_verifier(bf192_t* z_key, const bf192_t* owf_
   faest_aligned_free(state_bits_key);
 }
 
-static void aes_256_enc_constraints_verifier(bf256_t* z_key, const bf256_t* owf_in_key,
+static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf256_t* owf_in_key,
                                              const bf256_t* owf_out_key, const bf256_t* w_key,
                                              const bf256_t* rkeys_key, const bf256_t delta,
                                              const faest_paramset_t* params) {
@@ -4055,8 +4035,7 @@ static void aes_256_enc_constraints_verifier(bf256_t* z_key, const bf256_t* owf_
       aes_256_inv_norm_to_conjugates_verifier(y_key, norm_keys_ptr + 4 * i);
 
       // ::10-11
-      aes_256_inv_norm_constraints_verifier(z_key + 3 * r * Nstbytes + i, state_conj_key + 8 * i,
-                                            y_key, delta);
+      aes_256_inv_norm_constraints_verifier(hasher, state_conj_key + 8 * i, y_key, delta);
 
       // ::12
       for (unsigned int j = 0; j < 8; j++) {
@@ -4134,14 +4113,14 @@ static void aes_256_enc_constraints_verifier(bf256_t* z_key, const bf256_t* owf_
       // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
       //    s_sq * st_{0,i} + delta^2 * s
       //
-      z_key[(3 * r + 1) * Nstbytes + 2 * byte_i] = bf256_add(
-          bf256_mul(s_sq_key, st_b_key[0][byte_i]), bf256_mul(delta, bf256_mul(delta, s_key)));
+      zk_hash_256_update(hasher, bf256_add(bf256_mul(s_sq_key, st_b_key[0][byte_i]),
+                                           bf256_mul(delta, bf256_mul(delta, s_key))));
       // ::37
       // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
       //    s * st_{1,i} + delta * st_{0,i}
       //
-      z_key[(3 * r + 1) * Nstbytes + 2 * byte_i + 1] =
-          bf256_add(bf256_mul(s_key, st_b_key[1][byte_i]), bf256_mul(delta, st_b_key[0][byte_i]));
+      zk_hash_256_update(hasher, bf256_add(bf256_mul(s_key, st_b_key[1][byte_i]),
+                                           bf256_mul(delta, st_b_key[0][byte_i])));
     }
     if (r != (R / 2) - 1) {
       bf256_t* tmp_state_key = BF256_ALLOC(Nstbits);
@@ -4261,27 +4240,24 @@ static void aes_128_constraints_prover(zk_hash_128_3_ctx* hasher, const uint8_t*
   faest_aligned_free(w_tilde_tag);
 }
 
-static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t* z_deg2,
-                                       const uint8_t* w, const bf192_t* w_tag,
-                                       const uint8_t* owf_in, const uint8_t* owf_out,
-                                       const faest_paramset_t* params) {
-  const unsigned int lambda              = FAEST_192_LAMBDA;
-  const unsigned int R                   = params->R;
-  const unsigned int Ske                 = params->Ske;
-  const unsigned int Lke                 = params->Lke;
-  const unsigned int Lenc                = params->Lenc;
-  const unsigned int Senc                = params->Senc;
-  const unsigned int Nk                  = lambda / 32;
-  const unsigned int Nst                 = params->Nst;
-  const unsigned int num_enc_constraints = 3 * Senc / 2;
-  const unsigned int blocksize           = 32 * params->Nst;
-  const unsigned int beta                = (lambda + blocksize - 1) / blocksize;
+static void aes_192_constraints_prover(zk_hash_192_3_ctx* hasher, const uint8_t* w,
+                                       const bf192_t* w_tag, const uint8_t* owf_in,
+                                       const uint8_t* owf_out, const faest_paramset_t* params) {
+  const unsigned int lambda    = FAEST_192_LAMBDA;
+  const unsigned int R         = params->R;
+  const unsigned int Lke       = params->Lke;
+  const unsigned int Lenc      = params->Lenc;
+  const unsigned int Nk        = lambda / 32;
+  const unsigned int Nst       = params->Nst;
+  const unsigned int blocksize = 32 * params->Nst;
+  const unsigned int beta      = (lambda + blocksize - 1) / blocksize;
   // ::1-3 owf_in, owf_out, z and z_tag
 
   // ::4-5
-  z_deg0[0] = bf192_zero();
-  z_deg1[0] = bf192_mul(w_tag[0], w_tag[1]);
-  z_deg2[0] = bf192_add(bf192_mul_bit(w_tag[0], w[1]), bf192_mul_bit(w_tag[1], w[0]));
+  zk_hash_192_3_raise_and_update(
+      hasher, bf192_mul(w_tag[0], w_tag[1]),
+      bf192_add(bf192_mul_bit(w_tag[0], w[1]), bf192_mul_bit(w_tag[1], w[0])));
+
   // ::7-8
   uint8_t* in        = malloc(blocksize);
   bf192_t* in_tag    = BF192_ALLOC(blocksize);
@@ -4331,28 +4307,11 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
 
     // ::15 skiped as B = 1
     // ::16
-    bf192_t* z_tilde_deg0_tag = BF192_ALLOC(2 * Ske);
-    bf192_t* z_tilde_deg1_val = BF192_ALLOC(2 * Ske);
-    aes_192_expkey_constraints_prover(z_tilde_deg0_tag, z_tilde_deg1_val, rkeys, rkeys_tag, w,
-                                      w_tag, params); // w is bit per uint8
-
-    // ::17 raise degree
-    for (unsigned int i = 0; i < 2 * Ske; i++) {
-      z_deg0[1 + i] = bf192_zero();
-      z_deg1[1 + i] = z_tilde_deg0_tag[i];
-      z_deg2[1 + i] = z_tilde_deg1_val[i];
-      // aes_192_deg2to3_prover(z_deg1 + 1, z_deg2 + 1, z_tilde_deg0_tag[i], z_tilde_deg1_val[i]);
-    }
-
-    faest_aligned_free(z_tilde_deg0_tag);
-    faest_aligned_free(z_tilde_deg1_val);
+    aes_192_expkey_constraints_prover(hasher, rkeys, rkeys_tag, w, w_tag, params);
   }
+
   uint8_t* w_tilde     = malloc(Lenc * sizeof(uint8_t));
   bf192_t* w_tilde_tag = BF192_ALLOC(Lenc);
-
-  bf192_t* z_tilde_deg0 = BF192_ALLOC(num_enc_constraints);
-  bf192_t* z_tilde_deg1 = BF192_ALLOC(num_enc_constraints);
-  bf192_t* z_tilde_deg2 = BF192_ALLOC(num_enc_constraints);
 
   // ::18-20
   for (unsigned int b = 0; b < beta; b++) {
@@ -4361,25 +4320,14 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
       w_tilde_tag[i] = w_tag[Lke + b * Lenc + i];
     }
 
-    memset(z_tilde_deg0, 0, num_enc_constraints * sizeof(bf192_t));
-    memset(z_tilde_deg1, 0, num_enc_constraints * sizeof(bf192_t));
-    memset(z_tilde_deg2, 0, num_enc_constraints * sizeof(bf192_t));
-
     if (b == 1) {
       in[0] = in[0] ^ 0x01;
     }
 
-    aes_192_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag,
-                                   out + b * blocksize, out_tag + b * blocksize, w_tilde,
-                                   w_tilde_tag, rkeys, rkeys_tag, params);
-
-    // :22
-    for (unsigned int i = 0; i < num_enc_constraints; i++) {
-      z_deg0[1 + (2 * Ske) + b * num_enc_constraints + i] = z_tilde_deg0[i];
-      z_deg1[1 + (2 * Ske) + b * num_enc_constraints + i] = z_tilde_deg1[i];
-      z_deg2[1 + (2 * Ske) + b * num_enc_constraints + i] = z_tilde_deg2[i];
-    }
+    aes_192_enc_constraints_prover(hasher, in, in_tag, out + b * blocksize, out_tag + b * blocksize,
+                                   w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
   }
+
   free(in);
   faest_aligned_free(in_tag);
   free(out);
@@ -4389,33 +4337,26 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
 
   free(w_tilde);
   faest_aligned_free(w_tilde_tag);
-
-  faest_aligned_free(z_tilde_deg0);
-  faest_aligned_free(z_tilde_deg1);
-  faest_aligned_free(z_tilde_deg2);
 }
 
-static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t* z_deg2,
-                                       const uint8_t* w, const bf256_t* w_tag,
-                                       const uint8_t* owf_in, const uint8_t* owf_out,
-                                       const faest_paramset_t* params) {
-  const unsigned int lambda              = FAEST_256_LAMBDA;
-  const unsigned int R                   = params->R;
-  const unsigned int Ske                 = params->Ske;
-  const unsigned int Lke                 = params->Lke;
-  const unsigned int Lenc                = params->Lenc;
-  const unsigned int Senc                = params->Senc;
-  const unsigned int Nk                  = lambda / 32;
-  const unsigned int Nst                 = params->Nst;
-  const unsigned int num_enc_constraints = 3 * Senc / 2;
-  const unsigned int blocksize           = 32 * params->Nst;
-  const unsigned int beta                = (lambda + blocksize - 1) / blocksize;
+static void aes_256_constraints_prover(zk_hash_256_3_ctx* hasher, const uint8_t* w,
+                                       const bf256_t* w_tag, const uint8_t* owf_in,
+                                       const uint8_t* owf_out, const faest_paramset_t* params) {
+  const unsigned int lambda    = FAEST_256_LAMBDA;
+  const unsigned int R         = params->R;
+  const unsigned int Lke       = params->Lke;
+  const unsigned int Lenc      = params->Lenc;
+  const unsigned int Nk        = lambda / 32;
+  const unsigned int Nst       = params->Nst;
+  const unsigned int blocksize = 32 * params->Nst;
+  const unsigned int beta      = (lambda + blocksize - 1) / blocksize;
   // ::1-3 owf_in, owf_out, z and z_tag
 
   // ::4-5
-  z_deg0[0] = bf256_zero();
-  z_deg1[0] = bf256_mul(w_tag[0], w_tag[1]);
-  z_deg2[0] = bf256_add(bf256_mul_bit(w_tag[0], w[1]), bf256_mul_bit(w_tag[1], w[0]));
+  zk_hash_256_3_raise_and_update(
+      hasher, bf256_mul(w_tag[0], w_tag[1]),
+      bf256_add(bf256_mul_bit(w_tag[0], w[1]), bf256_mul_bit(w_tag[1], w[0])));
+
   // ::7-8
   uint8_t* in        = malloc(blocksize);
   bf256_t* in_tag    = BF256_ALLOC(blocksize);
@@ -4465,28 +4406,11 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
 
     // ::15 skiped as B = 1
     // ::16
-    bf256_t* z_tilde_deg0_tag = BF256_ALLOC(2 * Ske);
-    bf256_t* z_tilde_deg1_val = BF256_ALLOC(2 * Ske);
-    aes_256_expkey_constraints_prover(z_tilde_deg0_tag, z_tilde_deg1_val, rkeys, rkeys_tag, w,
-                                      w_tag, params); // w is bit per uint8
-
-    // ::17 raise degree
-    for (unsigned int i = 0; i < 2 * Ske; i++) {
-      z_deg0[1 + i] = bf256_zero();
-      z_deg1[1 + i] = z_tilde_deg0_tag[i];
-      z_deg2[1 + i] = z_tilde_deg1_val[i];
-      // aes_256_deg2to3_prover(z_deg1 + 1, z_deg2 + 1, z_tilde_deg0_tag[i], z_tilde_deg1_val[i]);
-    }
-
-    faest_aligned_free(z_tilde_deg0_tag);
-    faest_aligned_free(z_tilde_deg1_val);
+    aes_256_expkey_constraints_prover(hasher, rkeys, rkeys_tag, w, w_tag, params);
   }
+
   uint8_t* w_tilde     = malloc(Lenc * sizeof(uint8_t));
   bf256_t* w_tilde_tag = BF256_ALLOC(Lenc);
-
-  bf256_t* z_tilde_deg0 = BF256_ALLOC(num_enc_constraints);
-  bf256_t* z_tilde_deg1 = BF256_ALLOC(num_enc_constraints);
-  bf256_t* z_tilde_deg2 = BF256_ALLOC(num_enc_constraints);
 
   // ::18-20
   for (unsigned int b = 0; b < beta; b++) {
@@ -4495,25 +4419,14 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
       w_tilde_tag[i] = w_tag[Lke + b * Lenc + i];
     }
 
-    memset(z_tilde_deg0, 0, num_enc_constraints * sizeof(bf256_t));
-    memset(z_tilde_deg1, 0, num_enc_constraints * sizeof(bf256_t));
-    memset(z_tilde_deg2, 0, num_enc_constraints * sizeof(bf256_t));
-
     if (b == 1) {
       in[0] = in[0] ^ 0x01;
     }
 
-    aes_256_enc_constraints_prover(z_tilde_deg0, z_tilde_deg1, z_tilde_deg2, in, in_tag,
-                                   out + b * blocksize, out_tag + b * blocksize, w_tilde,
-                                   w_tilde_tag, rkeys, rkeys_tag, params);
-
-    // :22
-    for (unsigned int i = 0; i < num_enc_constraints; i++) {
-      z_deg0[1 + (2 * Ske) + b * num_enc_constraints + i] = z_tilde_deg0[i];
-      z_deg1[1 + (2 * Ske) + b * num_enc_constraints + i] = z_tilde_deg1[i];
-      z_deg2[1 + (2 * Ske) + b * num_enc_constraints + i] = z_tilde_deg2[i];
-    }
+    aes_256_enc_constraints_prover(hasher, in, in_tag, out + b * blocksize, out_tag + b * blocksize,
+                                   w_tilde, w_tilde_tag, rkeys, rkeys_tag, params);
   }
+
   free(in);
   faest_aligned_free(in_tag);
   free(out);
@@ -4523,10 +4436,6 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
 
   free(w_tilde);
   faest_aligned_free(w_tilde_tag);
-
-  faest_aligned_free(z_tilde_deg0);
-  faest_aligned_free(z_tilde_deg1);
-  faest_aligned_free(z_tilde_deg2);
 }
 
 // OWF CONSTRAINTS VERIFIER
@@ -4605,25 +4514,21 @@ static void aes_128_constraints_verifier(zk_hash_128_ctx* hasher, const bf128_t*
   faest_aligned_free(w_tilde_key);
 }
 
-static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
+static void aes_192_constraints_verifier(zk_hash_192_ctx* hasher, const bf192_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
                                          bf192_t delta, const faest_paramset_t* params) {
-  const unsigned int lambda              = FAEST_192_LAMBDA;
-  const unsigned int R                   = params->R;
-  const unsigned int Lke                 = params->Lke;
-  const unsigned int Lenc                = params->Lenc;
-  const unsigned int Senc                = params->Senc;
-  const unsigned int Ske                 = params->Ske;
-  const unsigned int Nk                  = lambda / 32;
-  const unsigned int Nst                 = params->Nst;
-  const unsigned int num_enc_constraints = 3 * Senc / 2;
-  const unsigned int num_ks_constraints  = 2 * Ske;
-  const unsigned int blocksize           = 32 * Nst;
-  const unsigned int beta                = (lambda + blocksize - 1) / blocksize;
+  const unsigned int lambda    = FAEST_192_LAMBDA;
+  const unsigned int R         = params->R;
+  const unsigned int Lke       = params->Lke;
+  const unsigned int Lenc      = params->Lenc;
+  const unsigned int Nk        = lambda / 32;
+  const unsigned int Nst       = params->Nst;
+  const unsigned int blocksize = 32 * Nst;
+  const unsigned int beta      = (lambda + blocksize - 1) / blocksize;
   // ::1-3 owf_in, owf_out, z and z_tag
 
   // ::4-5
-  z_key[0] = bf192_mul(delta, bf192_mul(w_key[0], w_key[1]));
+  zk_hash_192_update(hasher, bf192_mul(delta, bf192_mul(w_key[0], w_key[1])));
 
   // ::7-8
   bf192_t* rkeys_key = BF192_ALLOC((R + 1) * blocksize);
@@ -4660,12 +4565,7 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
     constant_to_vole_192_verifier(out_key, owf_out, delta, beta * blocksize);
 
     // ::16
-    aes_192_expkey_constraints_verifier(z_key + 1, rkeys_key, w_key, delta, params);
-
-    // ::17 raise degree
-    for (unsigned int i = 0; i < num_ks_constraints; i++) {
-      z_key[1 + i] = bf192_mul(delta, z_key[1 + i]);
-    }
+    aes_192_expkey_constraints_verifier(hasher, rkeys_key, w_key, delta, params);
   }
   // ::18-20
   bf192_t* w_tilde_key = BF192_ALLOC(Lenc);
@@ -4678,9 +4578,8 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
     if (b == 1) {
       in_key[0] = bf192_add(in_key[0], delta); // adding one
     }
-    aes_192_enc_constraints_verifier(z_key + 1 + num_ks_constraints + b * num_enc_constraints,
-                                     in_key, out_key + b * blocksize, w_tilde_key, rkeys_key, delta,
-                                     params);
+    aes_192_enc_constraints_verifier(hasher, in_key, out_key + b * blocksize, w_tilde_key,
+                                     rkeys_key, delta, params);
   }
 
   faest_aligned_free(rkeys_key);
@@ -4689,25 +4588,21 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
   faest_aligned_free(w_tilde_key);
 }
 
-static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key,
+static void aes_256_constraints_verifier(zk_hash_256_ctx* hasher, const bf256_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
                                          bf256_t delta, const faest_paramset_t* params) {
-  const unsigned int lambda              = FAEST_256_LAMBDA;
-  const unsigned int R                   = params->R;
-  const unsigned int Lke                 = params->Lke;
-  const unsigned int Lenc                = params->Lenc;
-  const unsigned int Senc                = params->Senc;
-  const unsigned int Ske                 = params->Ske;
-  const unsigned int Nk                  = lambda / 32;
-  const unsigned int Nst                 = params->Nst;
-  const unsigned int num_enc_constraints = 3 * Senc / 2;
-  const unsigned int num_ks_constraints  = 2 * Ske;
-  const unsigned int blocksize           = 32 * Nst;
-  const unsigned int beta                = (lambda + blocksize - 1) / blocksize;
+  const unsigned int lambda    = FAEST_256_LAMBDA;
+  const unsigned int R         = params->R;
+  const unsigned int Lke       = params->Lke;
+  const unsigned int Lenc      = params->Lenc;
+  const unsigned int Nk        = lambda / 32;
+  const unsigned int Nst       = params->Nst;
+  const unsigned int blocksize = 32 * Nst;
+  const unsigned int beta      = (lambda + blocksize - 1) / blocksize;
   // ::1-3 owf_in, owf_out, z and z_tag
 
   // ::4-5
-  z_key[0] = bf256_mul(delta, bf256_mul(w_key[0], w_key[1]));
+  zk_hash_256_update(hasher, bf256_mul(delta, bf256_mul(w_key[0], w_key[1])));
 
   // ::7-8
   bf256_t* rkeys_key = BF256_ALLOC((R + 1) * blocksize);
@@ -4744,12 +4639,7 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key,
     constant_to_vole_256_verifier(out_key, owf_out, delta, beta * blocksize);
 
     // ::16
-    aes_256_expkey_constraints_verifier(z_key + 1, rkeys_key, w_key, delta, params);
-
-    // ::17 raise degree
-    for (unsigned int i = 0; i < num_ks_constraints; i++) {
-      z_key[1 + i] = bf256_mul(delta, z_key[1 + i]);
-    }
+    aes_256_expkey_constraints_verifier(hasher, rkeys_key, w_key, delta, params);
   }
   // ::18-20
   bf256_t* w_tilde_key = BF256_ALLOC(Lenc);
@@ -4762,9 +4652,8 @@ static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key,
     if (b == 1) {
       in_key[0] = bf256_add(in_key[0], delta); // adding one
     }
-    aes_256_enc_constraints_verifier(z_key + 1 + num_ks_constraints + b * num_enc_constraints,
-                                     in_key, out_key + b * blocksize, w_tilde_key, rkeys_key, delta,
-                                     params);
+    aes_256_enc_constraints_verifier(hasher, in_key, out_key + b * blocksize, w_tilde_key,
+                                     rkeys_key, delta, params);
   }
 
   faest_aligned_free(rkeys_key);
@@ -4779,7 +4668,6 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
   const unsigned int lambda = FAEST_128_LAMBDA;
-  const unsigned int c      = params->C;
   const unsigned int ell    = params->l;
 
   // ::1-5
@@ -4811,11 +4699,10 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
   const unsigned int lambda = FAEST_192_LAMBDA;
-  const unsigned int c      = params->C;
   const unsigned int ell    = params->l;
 
   // ::1-5
-  // V becomes the w_tag
+  // V becomes the w_tag: ell + 2*lambda field elements
   bf192_t* w_tag = column_to_row_major_and_shrink_V_192(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
@@ -4826,37 +4713,14 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf192_t bf_v_star_0 = bf192_sum_poly(w_tag + ell);
   bf192_t bf_v_star_1 = bf192_sum_poly(w_tag + ell + lambda);
 
-  // ::10-12
-  bf192_t* z0_tag   = BF192_ALLOC(c); // this contains the bf tag
-  bf192_t* z1_val   = BF192_ALLOC(c); // this contains the bf val
-  bf192_t* z2_gamma = BF192_ALLOC(c); // this contains the bf gamma
-  memset(z0_tag, 0, c * sizeof(bf192_t));
-  memset(z1_val, 0, c * sizeof(bf192_t));
-  memset(z2_gamma, 0, c * sizeof(bf192_t));
-
-  aes_192_constraints_prover(z0_tag, z1_val, z2_gamma, w_bits, w_tag, owf_in, owf_out, params);
-
   // Step: 13-18
-  zk_hash_192_ctx a0_ctx;
-  zk_hash_192_ctx a1_ctx;
-  zk_hash_192_ctx a2_ctx;
-  zk_hash_192_init(&a0_ctx, chall_2);
-  zk_hash_192_init(&a1_ctx, chall_2);
-  zk_hash_192_init(&a2_ctx, chall_2);
+  zk_hash_192_3_ctx hasher;
+  zk_hash_192_3_init(&hasher, chall_2);
 
-  for (unsigned int i = 0; i < c; i++) {
-    zk_hash_192_update(&a0_ctx, z0_tag[i]);
-    zk_hash_192_update(&a1_ctx, z1_val[i]);
-    zk_hash_192_update(&a2_ctx, z2_gamma[i]);
-  }
+  aes_192_constraints_prover(&hasher, w_bits, w_tag, owf_in, owf_out, params);
 
-  faest_aligned_free(z0_tag);
-  faest_aligned_free(z1_val);
-  faest_aligned_free(z2_gamma);
-
-  zk_hash_192_finalize(a0_tilde, &a0_ctx, bf_v_star_0);
-  zk_hash_192_finalize(a1_tilde, &a1_ctx, bf192_add(bf_u_star_0, bf_v_star_1));
-  zk_hash_192_finalize(a2_tilde, &a2_ctx, bf_u_star_1);
+  zk_hash_192_3_finalize(a0_tilde, a1_tilde, a2_tilde, &hasher, bf_v_star_0,
+                         bf192_add(bf_u_star_0, bf_v_star_1), bf_u_star_1);
 
   faest_aligned_free(w_tag);
 }
@@ -4866,11 +4730,10 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
   const unsigned int lambda = FAEST_256_LAMBDA;
-  const unsigned int c      = params->C;
   const unsigned int ell    = params->l;
 
   // ::1-5
-  // V becomes the w_tag
+  // V becomes the w_tag: ell + 2*lambda field elements
   bf256_t* w_tag = column_to_row_major_and_shrink_V_256(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
@@ -4881,37 +4744,14 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   bf256_t bf_v_star_0 = bf256_sum_poly(w_tag + ell);
   bf256_t bf_v_star_1 = bf256_sum_poly(w_tag + ell + lambda);
 
-  // ::10-12
-  bf256_t* z0_tag   = BF256_ALLOC(c); // this contains the bf tag
-  bf256_t* z1_val   = BF256_ALLOC(c); // this contains the bf val
-  bf256_t* z2_gamma = BF256_ALLOC(c); // this contains the bf gamma
-  memset(z0_tag, 0, c * sizeof(bf256_t));
-  memset(z1_val, 0, c * sizeof(bf256_t));
-  memset(z2_gamma, 0, c * sizeof(bf256_t));
-
-  aes_256_constraints_prover(z0_tag, z1_val, z2_gamma, w_bits, w_tag, owf_in, owf_out, params);
-
   // Step: 13-18
-  zk_hash_256_ctx a0_ctx;
-  zk_hash_256_ctx a1_ctx;
-  zk_hash_256_ctx a2_ctx;
-  zk_hash_256_init(&a0_ctx, chall_2);
-  zk_hash_256_init(&a1_ctx, chall_2);
-  zk_hash_256_init(&a2_ctx, chall_2);
+  zk_hash_256_3_ctx hasher;
+  zk_hash_256_3_init(&hasher, chall_2);
 
-  for (unsigned int i = 0; i < c; i++) {
-    zk_hash_256_update(&a0_ctx, z0_tag[i]);
-    zk_hash_256_update(&a1_ctx, z1_val[i]);
-    zk_hash_256_update(&a2_ctx, z2_gamma[i]);
-  }
+  aes_256_constraints_prover(&hasher, w_bits, w_tag, owf_in, owf_out, params);
 
-  faest_aligned_free(z0_tag);
-  faest_aligned_free(z1_val);
-  faest_aligned_free(z2_gamma);
-
-  zk_hash_256_finalize(a0_tilde, &a0_ctx, bf_v_star_0);
-  zk_hash_256_finalize(a1_tilde, &a1_ctx, bf256_add(bf_u_star_0, bf_v_star_1));
-  zk_hash_256_finalize(a2_tilde, &a2_ctx, bf_u_star_1);
+  zk_hash_256_3_finalize(a0_tilde, a1_tilde, a2_tilde, &hasher, bf_v_star_0,
+                         bf256_add(bf_u_star_0, bf_v_star_1), bf_u_star_1);
 
   faest_aligned_free(w_tag);
 }
@@ -4972,7 +4812,6 @@ static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
                              const uint8_t* a2_tilde, const faest_paramset_t* params) {
   const unsigned int lambda = FAEST_192_LAMBDA;
-  const unsigned int c      = params->C;
   const unsigned int ell    = params->l;
 
   // ::1
@@ -4989,26 +4828,22 @@ static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   // ::10
   bf192_t q_star = bf192_add(q_star_0, bf192_mul(bf_delta, q_star_1));
 
-  // ::11-12
-  bf192_t* z2_key = BF192_ALLOC(c);
-  bf192_t* w_key  = BF192_ALLOC(ell);
-  for (unsigned int i = 0; i < ell; i++) {
-    w_key[i] = bf192_add(q_key[i], bf192_mul_bit(bf_delta, ptr_get_bit(d, i)));
-  }
-  memset(z2_key, 0, c * sizeof(bf192_t));
-  aes_192_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params);
-
   // ::13-14
   zk_hash_192_ctx b_ctx;
   zk_hash_192_init(&b_ctx, chall_2);
-  for (unsigned int i = 0; i < c; i++) {
-    zk_hash_192_update(&b_ctx, z2_key[i]);
+
+  bf192_t* w_key = BF192_ALLOC(ell);
+  for (unsigned int i = 0; i < ell; i++) {
+    w_key[i] = bf192_add(q_key[i], bf192_mul_bit(bf_delta, ptr_get_bit(d, i)));
   }
 
+  // ::11-12
+  aes_192_constraints_verifier(&b_ctx, w_key, owf_in, owf_out, bf_delta, params);
+
+  // ::13-14
   uint8_t q_tilde[FAEST_192_LAMBDA / 8];
   zk_hash_192_finalize(q_tilde, &b_ctx, q_star);
 
-  faest_aligned_free(z2_key);
   faest_aligned_free(w_key);
 
   // ::16
@@ -5027,7 +4862,6 @@ static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
                              const uint8_t* a2_tilde, const faest_paramset_t* params) {
   const unsigned int lambda = FAEST_256_LAMBDA;
-  const unsigned int c      = params->C;
   const unsigned int ell    = params->l;
 
   // ::1
@@ -5044,26 +4878,22 @@ static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   // ::10
   bf256_t q_star = bf256_add(q_star_0, bf256_mul(bf_delta, q_star_1));
 
-  // ::11-12
-  bf256_t* z2_key = BF256_ALLOC(c);
-  bf256_t* w_key  = BF256_ALLOC(ell);
-  for (unsigned int i = 0; i < ell; i++) {
-    w_key[i] = bf256_add(q_key[i], bf256_mul_bit(bf_delta, ptr_get_bit(d, i)));
-  }
-  memset(z2_key, 0, c * sizeof(bf256_t));
-  aes_256_constraints_verifier(z2_key, w_key, owf_in, owf_out, bf_delta, params);
-
   // ::13-14
   zk_hash_256_ctx b_ctx;
   zk_hash_256_init(&b_ctx, chall_2);
-  for (unsigned int i = 0; i < c; i++) {
-    zk_hash_256_update(&b_ctx, z2_key[i]);
+
+  bf256_t* w_key = BF256_ALLOC(ell);
+  for (unsigned int i = 0; i < ell; i++) {
+    w_key[i] = bf256_add(q_key[i], bf256_mul_bit(bf_delta, ptr_get_bit(d, i)));
   }
 
-  uint8_t q_tilde[FAEST_256_LAMBDA];
+  // ::11-12
+  aes_256_constraints_verifier(&b_ctx, w_key, owf_in, owf_out, bf_delta, params);
+
+  // ::13-14
+  uint8_t q_tilde[FAEST_256_LAMBDA / 8];
   zk_hash_256_finalize(q_tilde, &b_ctx, q_star);
 
-  faest_aligned_free(z2_key);
   faest_aligned_free(w_key);
 
   // ::16
