@@ -36,6 +36,20 @@ void zk_hash_128_update(zk_hash_128_ctx* ctx, bf128_t v);
 void zk_hash_128_finalize(uint8_t* h, zk_hash_128_ctx* ctx, bf128_t x1);
 
 typedef struct {
+  bf128_t h0[3];
+  bf128_t h1[3];
+  bf128_t s;
+  bf64_t t;
+  const uint8_t* sd;
+} zk_hash_128_3_ctx;
+
+void zk_hash_128_3_init(zk_hash_128_3_ctx* ctx, const uint8_t* sd);
+void zk_hash_128_3_update(zk_hash_128_3_ctx* ctx, bf128_t v_0, bf128_t v_1, bf128_t v_2);
+void zk_hash_128_3_raise_and_update(zk_hash_128_3_ctx* ctx, bf128_t v_1, bf128_t v_2);
+void zk_hash_128_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_128_3_ctx* ctx,
+                            bf128_t x1_0, bf128_t x1_1, bf128_t x1_2);
+
+typedef struct {
   bf192_t h0;
   bf192_t h1;
   bf192_t s;

@@ -412,17 +412,15 @@ static void aes_256_inv_norm_to_conjugates_verifier(bf256_t* y_eval, const bf256
 }
 
 // // INV NORM CONSTRAINTS
-static void aes_128_inv_norm_constraints_prover(zk_hash_128_ctx* a0_hash, zk_hash_128_ctx* a1_hash,
-                                                zk_hash_128_ctx* a2_hash, const bf128_t* conjugates,
+static void aes_128_inv_norm_constraints_prover(zk_hash_128_3_ctx* hasher,
+                                                const bf128_t* conjugates,
                                                 const bf128_t* conjugates_tag, const bf128_t* y,
                                                 const bf128_t* y_tag) {
-  zk_hash_128_update(a0_hash, bf128_mul(bf128_mul(*y_tag, conjugates_tag[1]), conjugates_tag[4]));
-  zk_hash_128_update(
-      a1_hash, bf128_add(bf128_add(bf128_mul(bf128_mul(*y, conjugates_tag[1]), conjugates_tag[4]),
-                                   bf128_mul(bf128_mul(*y_tag, conjugates_tag[1]), conjugates[4])),
-                         bf128_mul(bf128_mul(*y_tag, conjugates[1]), conjugates_tag[4])));
-  zk_hash_128_update(
-      a2_hash,
+  zk_hash_128_3_update(
+      hasher, bf128_mul(bf128_mul(*y_tag, conjugates_tag[1]), conjugates_tag[4]),
+      bf128_add(bf128_add(bf128_mul(bf128_mul(*y, conjugates_tag[1]), conjugates_tag[4]),
+                          bf128_mul(bf128_mul(*y_tag, conjugates_tag[1]), conjugates[4])),
+                bf128_mul(bf128_mul(*y_tag, conjugates[1]), conjugates_tag[4])),
       bf128_add(bf128_add(bf128_add(bf128_mul(bf128_mul(*y, conjugates[1]), conjugates_tag[4]),
                                     bf128_mul(bf128_mul(*y, conjugates_tag[1]), conjugates[4])),
                           bf128_mul(bf128_mul(*y_tag, conjugates[1]), conjugates[4])),
@@ -2299,8 +2297,9 @@ static void aes_256_keyexp_backward_prover(uint8_t* y, bf256_t* y_tag, const uin
   }
 }
 
-static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_key, bf128_t* key_key,
-                                             bf128_t delta, const faest_paramset_t* params) {
+static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_key,
+                                             const bf128_t* key_key, bf128_t delta,
+                                             const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
   const unsigned int lambda = FAEST_128_LAMBDA;
 
@@ -2636,9 +2635,8 @@ static void aes_256_keyexp_forward_verifier(bf256_t* y_key, const bf256_t* w_key
 }
 
 // // KEY EXP CSTRNTS
-static void aes_128_expkey_constraints_prover(zk_hash_128_ctx* a0_hash, zk_hash_128_ctx* a1_hash,
-                                              uint8_t* k, bf128_t* k_tag, const uint8_t* w,
-                                              const bf128_t* w_tag,
+static void aes_128_expkey_constraints_prover(zk_hash_128_3_ctx* hasher, uint8_t* k, bf128_t* k_tag,
+                                              const uint8_t* w, const bf128_t* w_tag,
                                               const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
   const unsigned int lambda = FAEST_128_LAMBDA;
@@ -2701,15 +2699,14 @@ static void aes_128_expkey_constraints_prover(zk_hash_128_ctx* a0_hash, zk_hash_
     // ::17
     for (unsigned int r = 0; r < 4; r++) {
       // ::18-19
-      zk_hash_128_update(a1_hash, bf128_add(bf128_add(bf128_mul(k_hat_sq[r], w_hat_tag[r]),
-                                                      bf128_mul(k_hat_tag_sq[r], w_hat[r])),
-                                            k_hat_tag[r]));
-      zk_hash_128_update(a1_hash, bf128_add(bf128_add(bf128_mul(k_hat[r], w_hat_tag_sq[r]),
-                                                      bf128_mul(k_hat_tag[r], w_hat_sq[r])),
-                                            w_hat_tag[r]));
-
-      zk_hash_128_update(a0_hash, bf128_mul(k_hat_tag_sq[r], w_hat_tag[r]));
-      zk_hash_128_update(a0_hash, bf128_mul(k_hat_tag[r], w_hat_tag_sq[r]));
+      zk_hash_128_3_raise_and_update(hasher, bf128_mul(k_hat_tag_sq[r], w_hat_tag[r]),
+                                     bf128_add(bf128_add(bf128_mul(k_hat_sq[r], w_hat_tag[r]),
+                                                         bf128_mul(k_hat_tag_sq[r], w_hat[r])),
+                                               k_hat_tag[r]));
+      zk_hash_128_3_raise_and_update(hasher, bf128_mul(k_hat_tag[r], w_hat_tag_sq[r]),
+                                     bf128_add(bf128_add(bf128_mul(k_hat[r], w_hat_tag_sq[r]),
+                                                         bf128_mul(k_hat_tag[r], w_hat_sq[r])),
+                                               w_hat_tag[r]));
     }
     if (lambda == 192) {
       iwd += 192;
@@ -2901,7 +2898,7 @@ static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, 
   faest_aligned_free(w_flat_tag);
 }
 
-static void aes_128_expkey_constraints_verifier(zk_hash_128_ctx* hasher, const bf128_t* k_key,
+static void aes_128_expkey_constraints_verifier(zk_hash_128_ctx* hasher, bf128_t* k_key,
                                                 const bf128_t* w_key, bf128_t delta,
                                                 const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
@@ -3094,8 +3091,7 @@ static void aes_256_expkey_constraints_verifier(bf256_t* z_deg1, bf256_t* k_key,
 }
 
 // // ENC CSTRNTS
-static void aes_128_enc_constraints_prover(zk_hash_128_ctx* a0_hash, zk_hash_128_ctx* a1_hash,
-                                           zk_hash_128_ctx* a2_hash, const uint8_t* owf_in,
+static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint8_t* owf_in,
                                            const bf128_t* owf_in_tag, const uint8_t* owf_out,
                                            const bf128_t* owf_out_tag, const uint8_t* w,
                                            const bf128_t* w_tag, const uint8_t* k,
@@ -3143,8 +3139,8 @@ static void aes_128_enc_constraints_prover(zk_hash_128_ctx* a0_hash, zk_hash_128
       aes_128_inv_norm_to_conjugates_prover(y, y_tag, norms_ptr + 4 * i, norm_tags_ptr + 4 * i);
 
       // ::10-11
-      aes_128_inv_norm_constraints_prover(a0_hash, a1_hash, a2_hash, state_conj + 8 * i,
-                                          state_conj_tag + 8 * i, y, y_tag);
+      aes_128_inv_norm_constraints_prover(hasher, state_conj + 8 * i, state_conj_tag + 8 * i, y,
+                                          y_tag);
 
       // ::12
       for (unsigned int j = 0; j < 8; j++) {
@@ -3256,12 +3252,12 @@ static void aes_128_enc_constraints_prover(zk_hash_128_ctx* a0_hash, zk_hash_128
       //    deg1: s_sq[0] * st[1] + s_sq[1] * st[0]
       //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
       //
-      zk_hash_128_update(a0_hash, bf128_mul(s_sq_deg0, st_b_deg0[0][byte_i]));
-      zk_hash_128_update(a1_hash, bf128_add(bf128_mul(s_sq_deg0, st_b_deg1[0][byte_i]),
-                                            bf128_mul(s_sq_deg1, st_b_deg0[0][byte_i])));
-      zk_hash_128_update(a2_hash, bf128_add(bf128_add(bf128_mul(s_sq_deg0, st_b_deg2[0][byte_i]),
-                                                      bf128_mul(s_sq_deg1, st_b_deg1[0][byte_i])),
-                                            s_deg0));
+      zk_hash_128_3_update(hasher, bf128_mul(s_sq_deg0, st_b_deg0[0][byte_i]),
+                           bf128_add(bf128_mul(s_sq_deg0, st_b_deg1[0][byte_i]),
+                                     bf128_mul(s_sq_deg1, st_b_deg0[0][byte_i])),
+                           bf128_add(bf128_add(bf128_mul(s_sq_deg0, st_b_deg2[0][byte_i]),
+                                               bf128_mul(s_sq_deg1, st_b_deg1[0][byte_i])),
+                                     s_deg0));
 
       // ::37
       // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
@@ -3269,13 +3265,13 @@ static void aes_128_enc_constraints_prover(zk_hash_128_ctx* a0_hash, zk_hash_128
       //    deg1: s[0] * st_{1,i}[1] + s[1] * st_{1,i}[0] + st_{0,i}[0]
       //    deg2: s[0] * st_{1,i}[2] + s[1] * st_{1,i}[1] + st_{0,i}[1]
       //
-      zk_hash_128_update(a0_hash, bf128_mul(s_deg0, st_b_deg0[1][byte_i]));
-      zk_hash_128_update(a1_hash, bf128_add(bf128_add(bf128_mul(s_deg0, st_b_deg1[1][byte_i]),
-                                                      bf128_mul(s_deg1, st_b_deg0[1][byte_i])),
-                                            st_b_deg0[0][byte_i]));
-      zk_hash_128_update(a2_hash, bf128_add(bf128_add(bf128_mul(s_deg0, st_b_deg2[1][byte_i]),
-                                                      bf128_mul(s_deg1, st_b_deg1[1][byte_i])),
-                                            st_b_deg1[0][byte_i]));
+      zk_hash_128_3_update(hasher, bf128_mul(s_deg0, st_b_deg0[1][byte_i]),
+                           bf128_add(bf128_add(bf128_mul(s_deg0, st_b_deg1[1][byte_i]),
+                                               bf128_mul(s_deg1, st_b_deg0[1][byte_i])),
+                                     st_b_deg0[0][byte_i]),
+                           bf128_add(bf128_add(bf128_mul(s_deg0, st_b_deg2[1][byte_i]),
+                                               bf128_mul(s_deg1, st_b_deg1[1][byte_i])),
+                                     st_b_deg1[0][byte_i]));
     }
     if (r != (R / 2) - 1) {
       uint8_t* tmp_state     = malloc(Nstbits * sizeof(uint8_t));
@@ -4164,13 +4160,11 @@ static void aes_256_enc_constraints_verifier(bf256_t* z_key, const bf256_t* owf_
 }
 
 // OWF CONSTRAINTS
-static void aes_128_constraints_prover(zk_hash_128_ctx* a0_hash, zk_hash_128_ctx* a1_hash,
-                                       zk_hash_128_ctx* a2_hash, const uint8_t* w,
+static void aes_128_constraints_prover(zk_hash_128_3_ctx* hasher, const uint8_t* w,
                                        const bf128_t* w_tag, const uint8_t* owf_in,
                                        const uint8_t* owf_out, const faest_paramset_t* params) {
   const unsigned int lambda    = FAEST_128_LAMBDA;
   const unsigned int R         = params->R;
-  const unsigned int Ske       = params->Ske;
   const unsigned int Lke       = params->Lke;
   const unsigned int Lenc      = params->Lenc;
   const unsigned int Nk        = lambda / 32;
@@ -4180,10 +4174,9 @@ static void aes_128_constraints_prover(zk_hash_128_ctx* a0_hash, zk_hash_128_ctx
   // ::1-3 owf_in, owf_out, z and z_tag
 
   // ::4-5
-  zk_hash_128_update(a0_hash, bf128_zero());
-  zk_hash_128_update(a1_hash, bf128_mul(w_tag[0], w_tag[1]));
-  zk_hash_128_update(a2_hash,
-                     bf128_add(bf128_mul_bit(w_tag[0], w[1]), bf128_mul_bit(w_tag[1], w[0])));
+  zk_hash_128_3_raise_and_update(
+      hasher, bf128_mul(w_tag[0], w_tag[1]),
+      bf128_add(bf128_mul_bit(w_tag[0], w[1]), bf128_mul_bit(w_tag[1], w[0])));
 
   // ::7-8
   uint8_t* in        = malloc(blocksize);
@@ -4234,11 +4227,7 @@ static void aes_128_constraints_prover(zk_hash_128_ctx* a0_hash, zk_hash_128_ctx
 
     // ::15 skiped as B = 1
     // ::16
-    aes_128_expkey_constraints_prover(a1_hash, a2_hash, rkeys, rkeys_tag, w, w_tag, params);
-    // ::17 raise degree
-    for (unsigned int i = 0; i < 2 * Ske; i++) {
-      zk_hash_128_update(a0_hash, bf128_zero());
-    }
+    aes_128_expkey_constraints_prover(hasher, rkeys, rkeys_tag, w, w_tag, params);
   }
 
   uint8_t* w_tilde     = malloc(Lenc * sizeof(uint8_t));
@@ -4257,8 +4246,8 @@ static void aes_128_constraints_prover(zk_hash_128_ctx* a0_hash, zk_hash_128_ctx
       out_tag += blocksize;
     }
 
-    aes_128_enc_constraints_prover(a0_hash, a1_hash, a2_hash, in, in_tag, out, out_tag, w_tilde,
-                                   w_tilde_tag, rkeys, rkeys_tag, params);
+    aes_128_enc_constraints_prover(hasher, in, in_tag, out, out_tag, w_tilde, w_tilde_tag, rkeys,
+                                   rkeys_tag, params);
   }
 
   free(in);
@@ -4814,18 +4803,13 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
   memset(z2_gamma, 0, c * sizeof(bf128_t));
 
   // Step: 13-18
-  zk_hash_128_ctx a0_ctx;
-  zk_hash_128_ctx a1_ctx;
-  zk_hash_128_ctx a2_ctx;
-  zk_hash_128_init(&a0_ctx, chall_2);
-  zk_hash_128_init(&a1_ctx, chall_2);
-  zk_hash_128_init(&a2_ctx, chall_2);
+  zk_hash_128_3_ctx hasher;
+  zk_hash_128_3_init(&hasher, chall_2);
 
-  aes_128_constraints_prover(&a0_ctx, &a1_ctx, &a2_ctx, w_bits, w_tag, owf_in, owf_out, params);
+  aes_128_constraints_prover(&hasher, w_bits, w_tag, owf_in, owf_out, params);
 
-  zk_hash_128_finalize(a0_tilde, &a0_ctx, bf_v_star_0);
-  zk_hash_128_finalize(a1_tilde, &a1_ctx, bf128_add(bf_u_star_0, bf_v_star_1));
-  zk_hash_128_finalize(a2_tilde, &a2_ctx, bf_u_star_1);
+  zk_hash_128_3_finalize(a0_tilde, a1_tilde, a2_tilde, &hasher, bf_v_star_0,
+                         bf128_add(bf_u_star_0, bf_v_star_1), bf_u_star_1);
 
   faest_aligned_free(w_tag);
 }
