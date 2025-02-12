@@ -5033,7 +5033,8 @@ static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   for (unsigned int i = 0; i < c; i++) {
     zk_hash_128_update(&b_ctx, z2_key[i]);
   }
-  uint8_t* q_tilde = malloc((lambda / 8) * sizeof(uint8_t));
+
+  uint8_t q_tilde[FAEST_128_LAMBDA / 8];
   zk_hash_128_finalize(q_tilde, &b_ctx, q_star);
 
   faest_aligned_free(z2_key);
@@ -5045,7 +5046,6 @@ static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   bf128_t tmp3 = bf128_add(tmp1, tmp2);
   bf128_t ret  = bf128_add(bf128_load(q_tilde), tmp3);
 
-  free(q_tilde);
   faest_aligned_free(q_key);
 
   bf128_store(a0_tilde, ret);
@@ -5088,7 +5088,8 @@ static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   for (unsigned int i = 0; i < c; i++) {
     zk_hash_192_update(&b_ctx, z2_key[i]);
   }
-  uint8_t* q_tilde = (uint8_t*)malloc((lambda / 8) * sizeof(uint8_t));
+
+  uint8_t q_tilde[FAEST_192_LAMBDA / 8];
   zk_hash_192_finalize(q_tilde, &b_ctx, q_star);
 
   faest_aligned_free(z2_key);
@@ -5100,7 +5101,6 @@ static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   bf192_t tmp3 = bf192_add(tmp1, tmp2);
   bf192_t ret  = bf192_add(bf192_load(q_tilde), tmp3);
 
-  free(q_tilde);
   faest_aligned_free(q_key);
 
   bf192_store(a0_tilde, ret);
@@ -5143,7 +5143,8 @@ static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   for (unsigned int i = 0; i < c; i++) {
     zk_hash_256_update(&b_ctx, z2_key[i]);
   }
-  uint8_t* q_tilde = malloc((lambda / 8) * sizeof(uint8_t));
+
+  uint8_t q_tilde[FAEST_256_LAMBDA];
   zk_hash_256_finalize(q_tilde, &b_ctx, q_star);
 
   faest_aligned_free(z2_key);
@@ -5155,7 +5156,6 @@ static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   bf256_t tmp3 = bf256_add(tmp1, tmp2);
   bf256_t ret  = bf256_add(bf256_load(q_tilde), tmp3);
 
-  free(q_tilde);
   faest_aligned_free(q_key);
 
   bf256_store(a0_tilde, ret);
