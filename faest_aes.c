@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 
+static_assert(FAEST_128_LAMBDA == FAEST_128S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_128F_ELL == FAEST_128S_ELL, "Invalid parameters");
 static_assert(FAEST_128F_LAMBDA == FAEST_128S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_128F_Lke == FAEST_128S_Lke, "Invalid parameters");
@@ -28,6 +29,7 @@ static_assert(FAEST_128F_Senc == FAEST_128S_Senc, "Invalid parameters");
 static_assert(FAEST_128F_Ske == FAEST_128S_Ske, "Invalid parameters");
 static_assert(FAEST_128F_C == FAEST_128S_C, "Invalid parameters");
 
+static_assert(FAEST_192_LAMBDA == FAEST_192S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_192F_ELL == FAEST_192S_ELL, "Invalid parameters");
 static_assert(FAEST_192F_LAMBDA == FAEST_192S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_192F_Lke == FAEST_192S_Lke, "Invalid parameters");
@@ -37,6 +39,7 @@ static_assert(FAEST_192F_Senc == FAEST_192S_Senc, "Invalid parameters");
 static_assert(FAEST_192F_Ske == FAEST_192S_Ske, "Invalid parameters");
 static_assert(FAEST_192F_C == FAEST_192S_C, "Invalid parameters");
 
+static_assert(FAEST_256_LAMBDA == FAEST_256S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_256F_ELL == FAEST_256S_ELL, "Invalid parameters");
 static_assert(FAEST_256F_LAMBDA == FAEST_256S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_256F_Lke == FAEST_256S_Lke, "Invalid parameters");
@@ -46,6 +49,7 @@ static_assert(FAEST_256F_Senc == FAEST_256S_Senc, "Invalid parameters");
 static_assert(FAEST_256F_Ske == FAEST_256S_Ske, "Invalid parameters");
 static_assert(FAEST_256F_C == FAEST_256S_C, "Invalid parameters");
 
+static_assert(FAEST_128_LAMBDA == FAEST_EM_128S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_128F_Lenc == FAEST_EM_128S_Lenc, "Invalid parameters");
 static_assert(FAEST_EM_128F_Nst == FAEST_EM_128S_Nst, "Invalid parameters");
@@ -57,6 +61,7 @@ static_assert(FAEST_EM_128F_LAMBDA * (FAEST_EM_128F_R + 1) / 8 ==
                   sizeof(aes_word_t) * FAEST_EM_128F_Nst * (FAEST_EM_128F_R + 1),
               "Invalid parameters");
 
+static_assert(FAEST_192_LAMBDA == FAEST_EM_192S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_192F_Lenc == FAEST_EM_192S_Lenc, "Invalid parameters");
 static_assert(FAEST_EM_192F_Nst == FAEST_EM_192S_Nst, "Invalid parameters");
@@ -68,6 +73,7 @@ static_assert(FAEST_EM_192F_LAMBDA * (FAEST_EM_192F_R + 1) / 8 ==
                   sizeof(aes_word_t) * FAEST_EM_192F_Nst * (FAEST_EM_192F_R + 1),
               "Invalid parameters");
 
+static_assert(FAEST_256_LAMBDA == FAEST_EM_256S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_256F_Lenc == FAEST_EM_256S_Lenc, "Invalid parameters");
 static_assert(FAEST_EM_256F_Nst == FAEST_EM_256S_Nst, "Invalid parameters");
@@ -2157,7 +2163,7 @@ static void aes_128_keyexp_backward_prover(uint8_t* y, bf128_t* y_tag, const uin
                                            const bf128_t* x_tag, const uint8_t* key,
                                            const bf128_t* key_tag, const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_128_LAMBDA;
 
   // ::2
   uint8_t x_tilde[8];
@@ -2204,7 +2210,7 @@ static void aes_192_keyexp_backward_prover(uint8_t* y, bf192_t* y_tag, const uin
                                            const bf192_t* x_tag, const uint8_t* key,
                                            const bf192_t* key_tag, const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_192_LAMBDA;
 
   // ::2
   uint8_t x_tilde[8];
@@ -2251,7 +2257,7 @@ static void aes_256_keyexp_backward_prover(uint8_t* y, bf256_t* y_tag, const uin
                                            const bf256_t* x_tag, const uint8_t* key,
                                            const bf256_t* key_tag, const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_256_LAMBDA;
 
   // ::2
   uint8_t x_tilde[8];
@@ -2297,7 +2303,7 @@ static void aes_256_keyexp_backward_prover(uint8_t* y, bf256_t* y_tag, const uin
 static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_key, bf128_t* key_key,
                                              bf128_t delta, const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_128_LAMBDA;
 
   // ::2
   bf128_t x_tilde_key[8];
@@ -2340,7 +2346,7 @@ static void aes_128_keyexp_backward_verifier(bf128_t* y_key, const bf128_t* x_ke
 static void aes_192_keyexp_backward_verifier(bf192_t* y_key, const bf192_t* x_key, bf192_t* key_key,
                                              bf192_t delta, const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_192_LAMBDA;
 
   // ::2
   bf192_t x_tilde_key[8];
@@ -2383,7 +2389,7 @@ static void aes_192_keyexp_backward_verifier(bf192_t* y_key, const bf192_t* x_ke
 static void aes_256_keyexp_backward_verifier(bf256_t* y_key, const bf256_t* x_key, bf256_t* key_key,
                                              bf256_t delta, const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_256_LAMBDA;
 
   // ::2
   bf256_t x_tilde_key[8];
@@ -2425,7 +2431,7 @@ static void aes_256_keyexp_backward_verifier(bf256_t* y_key, const bf256_t* x_ke
 
 static void aes_128_keyexp_forward_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* w,
                                           const bf128_t* w_tag, const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_128_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   const unsigned int R      = params->R;
 
@@ -2461,7 +2467,7 @@ static void aes_128_keyexp_forward_prover(uint8_t* y, bf128_t* y_tag, const uint
 
 static void aes_192_keyexp_forward_prover(uint8_t* y, bf192_t* y_tag, const uint8_t* w,
                                           const bf192_t* w_tag, const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_192_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   const unsigned int R      = params->R;
 
@@ -2497,7 +2503,7 @@ static void aes_192_keyexp_forward_prover(uint8_t* y, bf192_t* y_tag, const uint
 
 static void aes_256_keyexp_forward_prover(uint8_t* y, bf256_t* y_tag, const uint8_t* w,
                                           const bf256_t* w_tag, const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_256_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   const unsigned int R      = params->R;
 
@@ -2533,7 +2539,7 @@ static void aes_256_keyexp_forward_prover(uint8_t* y, bf256_t* y_tag, const uint
 
 static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key,
                                             const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_128_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   const unsigned int R      = params->R;
 
@@ -2566,7 +2572,7 @@ static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key
 
 static void aes_192_keyexp_forward_verifier(bf192_t* y_key, const bf192_t* w_key,
                                             const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_192_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   const unsigned int R      = params->R;
 
@@ -2599,7 +2605,7 @@ static void aes_192_keyexp_forward_verifier(bf192_t* y_key, const bf192_t* w_key
 
 static void aes_256_keyexp_forward_verifier(bf256_t* y_key, const bf256_t* w_key,
                                             const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_256_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   const unsigned int R      = params->R;
 
@@ -2636,7 +2642,7 @@ static void aes_128_expkey_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, 
                                               const bf128_t* w_tag,
                                               const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_128_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -2726,7 +2732,7 @@ static void aes_192_expkey_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, 
                                               const bf192_t* w_tag,
                                               const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_192_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -2816,7 +2822,7 @@ static void aes_256_expkey_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, 
                                               const bf256_t* w_tag,
                                               const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_256_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -2905,7 +2911,7 @@ static void aes_128_expkey_constraints_verifier(bf128_t* z_deg1, bf128_t* k_key,
                                                 const bf128_t* w_key, bf128_t delta,
                                                 const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_128_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -2968,7 +2974,7 @@ static void aes_192_expkey_constraints_verifier(bf192_t* z_deg1, bf192_t* k_key,
                                                 const bf192_t* w_key, bf192_t delta,
                                                 const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_192_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -3031,7 +3037,7 @@ static void aes_256_expkey_constraints_verifier(bf256_t* z_deg1, bf256_t* k_key,
                                                 const bf256_t* w_key, bf256_t delta,
                                                 const faest_paramset_t* params) {
   const unsigned int Ske    = params->Ske;
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_256_LAMBDA;
   const unsigned int Nk     = lambda / 32;
   unsigned int r_prime;
 
@@ -4170,7 +4176,7 @@ static void aes_128_constraints_prover(bf128_t* z_deg0, bf128_t* z_deg1, bf128_t
                                        const uint8_t* w, const bf128_t* w_tag,
                                        const uint8_t* owf_in, const uint8_t* owf_out,
                                        const faest_paramset_t* params) {
-  const unsigned int lambda              = params->lambda;
+  const unsigned int lambda              = FAEST_128_LAMBDA;
   const unsigned int R                   = params->R;
   const unsigned int Ske                 = params->Ske;
   const unsigned int Lke                 = params->Lke;
@@ -4309,7 +4315,7 @@ static void aes_192_constraints_prover(bf192_t* z_deg0, bf192_t* z_deg1, bf192_t
                                        const uint8_t* w, const bf192_t* w_tag,
                                        const uint8_t* owf_in, const uint8_t* owf_out,
                                        const faest_paramset_t* params) {
-  const unsigned int lambda              = params->lambda;
+  const unsigned int lambda              = FAEST_192_LAMBDA;
   const unsigned int R                   = params->R;
   const unsigned int Ske                 = params->Ske;
   const unsigned int Lke                 = params->Lke;
@@ -4443,7 +4449,7 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
                                        const uint8_t* w, const bf256_t* w_tag,
                                        const uint8_t* owf_in, const uint8_t* owf_out,
                                        const faest_paramset_t* params) {
-  const unsigned int lambda              = params->lambda;
+  const unsigned int lambda              = FAEST_256_LAMBDA;
   const unsigned int R                   = params->R;
   const unsigned int Ske                 = params->Ske;
   const unsigned int Lke                 = params->Lke;
@@ -4577,7 +4583,7 @@ static void aes_256_constraints_prover(bf256_t* z_deg0, bf256_t* z_deg1, bf256_t
 static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
                                          bf128_t delta, const faest_paramset_t* params) {
-  const unsigned int lambda              = params->lambda;
+  const unsigned int lambda              = FAEST_128_LAMBDA;
   const unsigned int R                   = params->R;
   const unsigned int Lke                 = params->Lke;
   const unsigned int Lenc                = params->Lenc;
@@ -4673,7 +4679,7 @@ static void aes_128_constraints_verifier(bf128_t* z_key, const bf128_t* w_key,
 static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
                                          bf192_t delta, const faest_paramset_t* params) {
-  const unsigned int lambda              = params->lambda;
+  const unsigned int lambda              = FAEST_192_LAMBDA;
   const unsigned int R                   = params->R;
   const unsigned int Lke                 = params->Lke;
   const unsigned int Lenc                = params->Lenc;
@@ -4767,7 +4773,7 @@ static void aes_192_constraints_verifier(bf192_t* z_key, const bf192_t* w_key,
 static void aes_256_constraints_verifier(bf256_t* z_key, const bf256_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
                                          bf256_t delta, const faest_paramset_t* params) {
-  const unsigned int lambda              = params->lambda;
+  const unsigned int lambda              = FAEST_256_LAMBDA;
   const unsigned int R                   = params->R;
   const unsigned int Lke                 = params->Lke;
   const unsigned int Lenc                = params->Lenc;
@@ -4863,7 +4869,7 @@ static void aes_128_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                            const uint8_t* w_bits, const uint8_t* u, uint8_t** V,
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_128_LAMBDA;
   const unsigned int c      = params->C;
   const unsigned int ell    = params->l;
 
@@ -4918,7 +4924,7 @@ static void aes_192_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                            const uint8_t* w_bits, const uint8_t* u, uint8_t** V,
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_192_LAMBDA;
   const unsigned int c      = params->C;
   const unsigned int ell    = params->l;
 
@@ -4973,7 +4979,7 @@ static void aes_256_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_til
                            const uint8_t* w_bits, const uint8_t* u, uint8_t** V,
                            const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                            const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_256_LAMBDA;
   const unsigned int c      = params->C;
   const unsigned int ell    = params->l;
 
@@ -5029,7 +5035,7 @@ static void aes_128_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
                              const uint8_t* a2_tilde, const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_128_LAMBDA;
   const unsigned int c      = params->C;
   const unsigned int ell    = params->l;
 
@@ -5084,7 +5090,7 @@ static void aes_192_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
                              const uint8_t* a2_tilde, const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_192_LAMBDA;
   const unsigned int c      = params->C;
   const unsigned int ell    = params->l;
 
@@ -5139,7 +5145,7 @@ static void aes_256_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
                              const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const uint8_t* chall_3, const uint8_t* a1_tilde,
                              const uint8_t* a2_tilde, const faest_paramset_t* params) {
-  const unsigned int lambda = params->lambda;
+  const unsigned int lambda = FAEST_256_LAMBDA;
   const unsigned int c      = params->C;
   const unsigned int ell    = params->l;
 

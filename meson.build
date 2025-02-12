@@ -405,6 +405,9 @@ foreach parameter_set : parameter_sets
     parameter_data.set('@0@_@1@'.format(parameter_set_prefix, key), parameter_set.get(key))
   endforeach
 endforeach
+parameter_data.set('FAEST_128_LAMBDA', 128)
+parameter_data.set('FAEST_192_LAMBDA', 192)
+parameter_data.set('FAEST_256_LAMBDA', 256)
 
 # dependencies
 openssl = dependency('openssl', required: get_option('openssl'))
