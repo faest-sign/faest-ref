@@ -17,7 +17,7 @@ if boost_test.found()
     'vole.cpp',
   )
   test_deps = []
-  test_defines = ['-DBOOST_TEST_DYN_LINK', '-DFAEST_TESTS']
+  test_defines = ['-DFAEST_TESTS']
   if ntl.found()
     test_deps += ntl
     test_defines += ['-DHAVE_NTL']
