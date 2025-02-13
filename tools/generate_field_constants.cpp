@@ -14,7 +14,7 @@
 
 namespace {
   void print_u64(uint64_t v) {
-    std::cout << boost::format("UINT64_C(0x%08x)") % v;
+    std::cout << boost::format("UINT64_C(0x%016x)") % v;
   }
 
   void print_bf128(bf128_t v) {
@@ -46,6 +46,9 @@ namespace {
     print_u64(BF_VALUE(v, 3));
     std::cout << ")";
   }
+
+  constexpr uint8_t sbox_x[9]    = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
+  constexpr uint8_t sbox_x_sq[9] = {0x11, 0x41, 0x07, 0x7d, 0x56, 0x01, 0xfc, 0xcf, 0xc2};
 } // namespace
 
 int main() {
@@ -130,6 +133,69 @@ int main() {
     std::cout << "\n};\n";
     std::cout << "static const bf256_t bf256_beta_cubes[4] = {\n";
     for (auto v : cubes) {
+      print_bf256(v);
+      std::cout << ", \n";
+    }
+    std::cout << "};\n";
+  }
+
+  {
+    std::array<bf128_t, 9> c_squares, c;
+    for (unsigned i = 0; i < 9; i++) {
+      c[i]         = bf128_byte_combine_bits(sbox_x[i]);
+      c_squares[i] = bf128_byte_combine_bits(sbox_x_sq[i]);
+    }
+
+    std::cout << "static const bf128_t bf128_c[9] = {\n";
+    for (auto v : c) {
+      print_bf128(v);
+      std::cout << ", \n";
+    }
+    std::cout << "};\n";
+    std::cout << "static const bf128_t bf128_c_squares[9] = {\n";
+    for (auto v : c_squares) {
+      print_bf128(v);
+      std::cout << ", \n";
+    }
+    std::cout << "};\n";
+  }
+
+  {
+    std::array<bf192_t, 9> c_squares, c;
+    for (unsigned i = 0; i < 9; i++) {
+      c[i]         = bf192_byte_combine_bits(sbox_x[i]);
+      c_squares[i] = bf192_byte_combine_bits(sbox_x_sq[i]);
+    }
+
+    std::cout << "static const bf192_t bf192_c[9] = {\n";
+    for (auto v : c) {
+      print_bf192(v);
+      std::cout << ", \n";
+    }
+    std::cout << "};\n";
+    std::cout << "static const bf192_t bf192_c_squares[9] = {\n";
+    for (auto v : c_squares) {
+      print_bf192(v);
+      std::cout << ", \n";
+    }
+    std::cout << "};\n";
+  }
+
+  {
+    std::array<bf256_t, 9> c_squares, c;
+    for (unsigned i = 0; i < 9; i++) {
+      c[i]         = bf256_byte_combine_bits(sbox_x[i]);
+      c_squares[i] = bf256_byte_combine_bits(sbox_x_sq[i]);
+    }
+
+    std::cout << "static const bf256_t bf256_c[9] = {\n";
+    for (auto v : c) {
+      print_bf256(v);
+      std::cout << ", \n";
+    }
+    std::cout << "};\n";
+    std::cout << "static const bf256_t bf256_c_squares[9] = {\n";
+    for (auto v : c_squares) {
       print_bf256(v);
       std::cout << ", \n";
     }

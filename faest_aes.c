@@ -548,8 +548,111 @@ static void aes_256_state_to_bytes_verifier(bf256_t* out_key, const bf256_t* k_k
 }
 
 // SBOX AFFINE
-static const uint8_t sbox_x[9]    = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
-static const uint8_t sbox_x_sq[9] = {0x11, 0x41, 0x07, 0x7d, 0x56, 0x01, 0xfc, 0xcf, 0xc2};
+
+static const bf128_t bf128_c[9] = {
+    BF128C(UINT64_C(0xec7759ca3488aee0), UINT64_C(0x4cf4b7439cbfbb84)),
+    BF128C(UINT64_C(0xbfcf02ae363946a9), UINT64_C(0x35ad604f7d51d2c6)),
+    BF128C(UINT64_C(0x4c3607bab51b5aca), UINT64_C(0xb32fd29a04c0be08)),
+    BF128C(UINT64_C(0xc95c10ed4f932c54), UINT64_C(0x186ca7a286376521)),
+    BF128C(UINT64_C(0x1f8e5cdeb7aab282), UINT64_C(0xca760596e52ed74a)),
+    BF128C(UINT64_C(0x0000000000000001), UINT64_C(0x0000000000000000)),
+    BF128C(UINT64_C(0xd8a5ae31928b4da1), UINT64_C(0x1cf7a0fe8922c83f)),
+    BF128C(UINT64_C(0x88fd3d5cb6e7dff9), UINT64_C(0x7534634307ce7cbe)),
+    BF128C(UINT64_C(0x433f53640b5ab39a), UINT64_C(0x872430dcdf135bcc)),
+};
+static const bf128_t bf128_c_squares[9] = {
+    BF128C(UINT64_C(0x6b8330483c2e9848), UINT64_C(0x0dcb364640a222fe)),
+    BF128C(UINT64_C(0xc72bf2ef2521ff23), UINT64_C(0xd681a5686c0c1f75)),
+    BF128C(UINT64_C(0x4d48b16661e860ed), UINT64_C(0x49c9321635282198)),
+    BF128C(UINT64_C(0xda3bd0e460a50d97), UINT64_C(0xf68b54c3d7c88a6c)),
+    BF128C(UINT64_C(0xe1e073c178e70787), UINT64_C(0x9283a13819861c13)),
+    BF128C(UINT64_C(0x0000000000000001), UINT64_C(0x0000000000000000)),
+    BF128C(UINT64_C(0xa0415e708193f42a), UINT64_C(0xffdb65d9987f058c)),
+    BF128C(UINT64_C(0x4fd6cfb393c620db), UINT64_C(0xa3b5c62b6bc263cb)),
+    BF128C(UINT64_C(0x1c6e94d79177c893), UINT64_C(0xdaec11278a2c0a89)),
+};
+
+static const bf192_t bf192_c[9] = {
+    BF192C(UINT64_C(0xb233619e7cf450ba), UINT64_C(0x7bf61f19d5633f26),
+           UINT64_C(0xda933726d491db34)),
+    BF192C(UINT64_C(0x9c6d2c13f5398a0c), UINT64_C(0x8232e37706328d19),
+           UINT64_C(0x0c3b0d703c754ef6)),
+    BF192C(UINT64_C(0xfb039539490f3262), UINT64_C(0x638227a707652828),
+           UINT64_C(0x7170a38d85840211)),
+    BF192C(UINT64_C(0x6ae66d7cf63a7b42), UINT64_C(0x73e093aeb2bd81a2),
+           UINT64_C(0x0cee234c9f37ab71)),
+    BF192C(UINT64_C(0xd55dd8b4c0c2e8d5), UINT64_C(0x9a46dbc9d4349a17),
+           UINT64_C(0xa7d899db6d6097d3)),
+    BF192C(UINT64_C(0x0000000000000001), UINT64_C(0x0000000000000000),
+           UINT64_C(0x0000000000000000)),
+    BF192C(UINT64_C(0x425244c22e17096e), UINT64_C(0x69ac2c678be3ba5f),
+           UINT64_C(0x8e7e2484040c7d90)),
+    BF192C(UINT64_C(0x1702b39a83f3c8a5), UINT64_C(0x7fb8d6607c39e606),
+           UINT64_C(0x20dfa416e9086710)),
+    BF192C(UINT64_C(0x831233410b235d20), UINT64_C(0x1d99ac75ae672326),
+           UINT64_C(0xced061212ca1ac64)),
+};
+static const bf192_t bf192_c_squares[9] = {
+    BF192C(UINT64_C(0xdd20747cbd2bf75c), UINT64_C(0x7a5542ab0058d22e),
+           UINT64_C(0x45ec519c94bc1251)),
+    BF192C(UINT64_C(0x970f9c76eed5e1bb), UINT64_C(0xf3eaf7ae5fd72048),
+           UINT64_C(0x29a6bd5f696cea43)),
+    BF192C(UINT64_C(0x7efbc24b13ccc7d9), UINT64_C(0x9d93c875430d82cc),
+           UINT64_C(0xeb98ff32dafaed56)),
+    BF192C(UINT64_C(0xbca4a96550fde7a8), UINT64_C(0x786dc5dceb00fedd),
+           UINT64_C(0x6c9fc2ff5e921d95)),
+    BF192C(UINT64_C(0x34d42a414032d13f), UINT64_C(0x142c7d701c8270aa),
+           UINT64_C(0x87d213f1272a1544)),
+    BF192C(UINT64_C(0x0000000000000001), UINT64_C(0x0000000000000000),
+           UINT64_C(0x0000000000000000)),
+    BF192C(UINT64_C(0x4930f4a735fb62d8), UINT64_C(0x187438bed206170e),
+           UINT64_C(0xabe394ab5115d925)),
+    BF192C(UINT64_C(0x800d2fec6d26291f), UINT64_C(0x8c5221ce23eec64e),
+           UINT64_C(0x0979194980648d53)),
+    BF192C(UINT64_C(0xae536261e4ebf3a8), UINT64_C(0x7596dda0f0bf7471),
+           UINT64_C(0xdfd1231f68801891)),
+};
+
+static const bf256_t bf256_c[9] = {
+    BF256C(UINT64_C(0xa95af52ad52289c0), UINT64_C(0x2ba5c48d2c42072f), UINT64_C(0xd14a0d376c00b0ea),
+           UINT64_C(0x064e4d699c5b4af1)),
+    BF256C(UINT64_C(0x55dab3833f809d1c), UINT64_C(0x1771831e533b0f57), UINT64_C(0xfb96573fad3fac10),
+           UINT64_C(0x6195e3db7011f68d)),
+    BF256C(UINT64_C(0x372f5a920b67efff), UINT64_C(0x8748a24b4ab3a892), UINT64_C(0x214b28089e99af95),
+           UINT64_C(0xc6737a464da16302)),
+    BF256C(UINT64_C(0x319800033ca8b976), UINT64_C(0x30611f596cb383ad), UINT64_C(0xfef404a31149196b),
+           UINT64_C(0x24694604ed0c050d)),
+    BF256C(UINT64_C(0xcbaf1c3be1c5fb22), UINT64_C(0xbb9ce5d835caa0ea), UINT64_C(0x0b9772005fa6b36f),
+           UINT64_C(0xa1a8d4f4a1ebdf7e)),
+    BF256C(UINT64_C(0x0000000000000001), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
+           UINT64_C(0x0000000000000000)),
+    BF256C(UINT64_C(0x55dab3823f819c28), UINT64_C(0x1771831e533b0f56), UINT64_C(0xfb96573fad3fac11),
+           UINT64_C(0x6195e3db7011f68d)),
+    BF256C(UINT64_C(0xd0547873524e02b1), UINT64_C(0xd0350e7dfa862912), UINT64_C(0xda9be967cd26e8d5),
+           UINT64_C(0x702cec741ee89ff7)),
+    BF256C(UINT64_C(0x9020d2d23c10a95b), UINT64_C(0x09ff302a86476559), UINT64_C(0x009db4ee77215795),
+           UINT64_C(0xe6d3948d80643e3c)),
+};
+static const bf256_t bf256_c_squares[9] = {
+    BF256C(UINT64_C(0xde010519b01bcdd4), UINT64_C(0x752758911a30e3f6), UINT64_C(0x2a0778b6489ea03f),
+           UINT64_C(0x56c24fd64f768838)),
+    BF256C(UINT64_C(0x9e75afb9de44670a), UINT64_C(0xaced66c666f1afbc), UINT64_C(0xf001253ff2991f7e),
+           UINT64_C(0xc03d372fd1fa29f3)),
+    BF256C(UINT64_C(0x3fcd7d68defc7727), UINT64_C(0x957349b58c054948), UINT64_C(0x0e68957294f15180),
+           UINT64_C(0x0287e5a6bc9212c2)),
+    BF256C(UINT64_C(0x243619206d778eb5), UINT64_C(0xfedaa2104349c0b0), UINT64_C(0xdf640e1506710a3a),
+           UINT64_C(0xd303dd260391524b)),
+    BF256C(UINT64_C(0x7fb9d7c8b0a3ddf8), UINT64_C(0x4cb977e2f0c40502), UINT64_C(0xd46ec8fb2ef6eec1),
+           UINT64_C(0x94789d5f221eb309)),
+    BF256C(UINT64_C(0x0000000000000001), UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
+           UINT64_C(0x0000000000000000)),
+    BF256C(UINT64_C(0x9e75afb8de45663f), UINT64_C(0xaced66c666f1afbd), UINT64_C(0xf001253ff2991f7f),
+           UINT64_C(0xc03d372fd1fa29f3)),
+    BF256C(UINT64_C(0x4e21d7ca8c0a65ba), UINT64_C(0x7cd868bb9c7786ae), UINT64_C(0x2a9acc583fbff7ab),
+           UINT64_C(0xb011db5bcf12b604)),
+    BF256C(UINT64_C(0xb2a1916366a87167), UINT64_C(0x400c2f28e30e8ed6), UINT64_C(0x00469650fe80eb51),
+           UINT64_C(0xd7ca75e923580a78)),
+};
 
 static void aes_128_sbox_affine_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf128_t* out_deg2,
                                        const bf128_t* in_deg0, const bf128_t* in_deg1,
@@ -557,20 +660,9 @@ static void aes_128_sbox_affine_prover(bf128_t* out_deg0, bf128_t* out_deg1, bf1
                                        const faest_paramset_t* params) {
   const unsigned int Nst_bytes = params->Nst * 4;
 
-  bf128_t C[9];
-  uint8_t t;
   // ::5-6
-  if (dosq) {
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf128_byte_combine_bits(sbox_x_sq[i]);
-    }
-    t = 1;
-  } else {
-    t = 0;
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf128_byte_combine_bits(sbox_x[i]);
-    }
-  }
+  const bf128_t* C = dosq ? bf128_c_squares : bf128_c;
+  uint8_t t        = dosq ? 1 : 0;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
@@ -589,20 +681,9 @@ static void aes_192_sbox_affine_prover(bf192_t* out_deg0, bf192_t* out_deg1, bf1
                                        const faest_paramset_t* params) {
   const unsigned int Nst_bytes = params->Nst * 4;
 
-  bf192_t C[9];
-  uint8_t t;
   // ::5-6
-  if (dosq) {
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf192_byte_combine_bits(sbox_x_sq[i]);
-    }
-    t = 1;
-  } else {
-    t = 0;
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf192_byte_combine_bits(sbox_x[i]);
-    }
-  }
+  const bf192_t* C = dosq ? bf192_c_squares : bf192_c;
+  uint8_t t        = dosq ? 1 : 0;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
@@ -621,20 +702,9 @@ static void aes_256_sbox_affine_prover(bf256_t* out_deg0, bf256_t* out_deg1, bf2
                                        const faest_paramset_t* params) {
   const unsigned int Nst_bytes = params->Nst * 4;
 
-  bf256_t C[9];
-  uint8_t t;
   // ::5-6
-  if (dosq) {
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf256_byte_combine_bits(sbox_x_sq[i]);
-    }
-    t = 1;
-  } else {
-    t = 0;
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf256_byte_combine_bits(sbox_x[i]);
-    }
-  }
+  const bf256_t* C = dosq ? bf256_c_squares : bf256_c;
+  uint8_t t        = dosq ? 1 : 0;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
@@ -651,20 +721,9 @@ static void aes_128_sbox_affine_verifier(bf128_t* out_deg1, const bf128_t* in_de
                                          bool dosq, const faest_paramset_t* params) {
   const unsigned int Nst_bytes = params->Nst * 4;
 
-  bf128_t C[9];
-  uint8_t t;
   // ::5-6
-  if (dosq) {
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf128_byte_combine_bits(sbox_x_sq[i]);
-    }
-    t = 1;
-  } else {
-    t = 0;
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf128_byte_combine_bits(sbox_x[i]);
-    }
-  }
+  const bf128_t* C = dosq ? bf128_c_squares : bf128_c;
+  uint8_t t        = dosq ? 1 : 0;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
@@ -679,20 +738,9 @@ static void aes_192_sbox_affine_verifier(bf192_t* out_deg1, const bf192_t* in_de
                                          bool dosq, const faest_paramset_t* params) {
   const unsigned int Nst_bytes = params->Nst * 4;
 
-  bf192_t C[9];
-  uint8_t t;
   // ::5-6
-  if (dosq) {
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf192_byte_combine_bits(sbox_x_sq[i]);
-    }
-    t = 1;
-  } else {
-    t = 0;
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf192_byte_combine_bits(sbox_x[i]);
-    }
-  }
+  const bf192_t* C = dosq ? bf192_c_squares : bf192_c;
+  uint8_t t        = dosq ? 1 : 0;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
@@ -707,20 +755,9 @@ static void aes_256_sbox_affine_verifier(bf256_t* out_deg1, const bf256_t* in_de
                                          bool dosq, const faest_paramset_t* params) {
   const unsigned int Nst_bytes = params->Nst * 4;
 
-  bf256_t C[9];
-  uint8_t t;
   // ::5-6
-  if (dosq) {
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf256_byte_combine_bits(sbox_x_sq[i]);
-    }
-    t = 1;
-  } else {
-    t = 0;
-    for (unsigned i = 0; i < 9; i++) {
-      C[i] = bf256_byte_combine_bits(sbox_x[i]);
-    }
-  }
+  const bf256_t* C = dosq ? bf256_c_squares : bf256_c;
+  uint8_t t        = dosq ? 1 : 0;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
