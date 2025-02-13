@@ -3078,14 +3078,14 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
     }
 
     // ::15-16
-    bf128_t k_0_deg0[32];
-    bf128_t k_0_deg1[32];
+    bf128_t k_0_deg0[16];
+    bf128_t k_0_deg1[16];
     aes_128_state_to_bytes_prover(k_0_deg1, k_0_deg0, // k is in bits
                                   k + (2 * r + 1) * Nstbits, k_tag + (2 * r + 1) * Nstbits, params);
     // ::17
-    bf128_t k_1_deg0[32];
-    bf128_t k_1_deg1[32];
-    bf128_t k_1_deg2[32];
+    bf128_t k_1_deg0[16];
+    bf128_t k_1_deg1[16];
+    bf128_t k_1_deg2[16];
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
       k_1_deg0[byte_i] = bf128_mul(k_0_deg0[byte_i], k_0_deg0[byte_i]);
       k_1_deg1[byte_i] = bf128_zero();
@@ -3093,12 +3093,12 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
     }
 
     // ::18
-    bf128_t st_b_deg0[2][32];
-    bf128_t st_b_deg1[2][32];
-    bf128_t st_b_deg2[2][32];
-    bf128_t st_b_deg0_tmp[2][32];
-    bf128_t st_b_deg1_tmp[2][32];
-    bf128_t st_b_deg2_tmp[2][32];
+    bf128_t st_b_deg0[2][16];
+    bf128_t st_b_deg1[2][16];
+    bf128_t st_b_deg2[2][16];
+    bf128_t st_b_deg0_tmp[2][16];
+    bf128_t st_b_deg1_tmp[2][16];
+    bf128_t st_b_deg2_tmp[2][16];
     memset(st_b_deg0, 0x00, sizeof(st_b_deg0));
     memset(st_b_deg1, 0x00, sizeof(st_b_deg1));
     memset(st_b_deg2, 0x00, sizeof(st_b_deg2));
@@ -3293,14 +3293,14 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
     }
 
     // ::15-16
-    bf192_t k_0_deg0[32];
-    bf192_t k_0_deg1[32];
+    bf192_t k_0_deg0[24];
+    bf192_t k_0_deg1[24];
     aes_192_state_to_bytes_prover(k_0_deg1, k_0_deg0, // k is in bits
                                   k + (2 * r + 1) * Nstbits, k_tag + (2 * r + 1) * Nstbits, params);
     // ::17
-    bf192_t k_1_deg0[32];
-    bf192_t k_1_deg1[32];
-    bf192_t k_1_deg2[32];
+    bf192_t k_1_deg0[24];
+    bf192_t k_1_deg1[24];
+    bf192_t k_1_deg2[24];
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
       k_1_deg0[byte_i] = bf192_mul(k_0_deg0[byte_i], k_0_deg0[byte_i]);
       k_1_deg1[byte_i] = bf192_zero();
@@ -3308,12 +3308,12 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
     }
 
     // ::18
-    bf192_t st_b_deg0[2][32];
-    bf192_t st_b_deg1[2][32];
-    bf192_t st_b_deg2[2][32];
-    bf192_t st_b_deg0_tmp[2][32];
-    bf192_t st_b_deg1_tmp[2][32];
-    bf192_t st_b_deg2_tmp[2][32];
+    bf192_t st_b_deg0[2][24];
+    bf192_t st_b_deg1[2][24];
+    bf192_t st_b_deg2[2][24];
+    bf192_t st_b_deg0_tmp[2][24];
+    bf192_t st_b_deg1_tmp[2][24];
+    bf192_t st_b_deg2_tmp[2][24];
     memset(st_b_deg0, 0x00, sizeof(st_b_deg0));
     memset(st_b_deg1, 0x00, sizeof(st_b_deg1));
     memset(st_b_deg2, 0x00, sizeof(st_b_deg2));
@@ -3706,8 +3706,8 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
     }
 
     // ::15-16
-    bf128_t k_0_key[32];
-    bf128_t k_1_key[32];
+    bf128_t k_0_key[16];
+    bf128_t k_1_key[16];
     aes_128_state_to_bytes_verifier(k_0_key, rkeys_key + (2 * r + 1) * Nstbits, params);
     // ::17
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
@@ -3715,8 +3715,8 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
     }
 
     // ::18
-    bf128_t st_b_key[2][32];
-    bf128_t st_b_tmp_key[2][32];
+    bf128_t st_b_key[2][16];
+    bf128_t st_b_tmp_key[2][16];
     memset(st_b_key, 0x00, sizeof(st_b_key));
     memset(st_b_tmp_key, 0x00, sizeof(st_b_tmp_key));
 
@@ -3842,8 +3842,8 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
     }
 
     // ::15-16
-    bf192_t k_0_key[32];
-    bf192_t k_1_key[32];
+    bf192_t k_0_key[24];
+    bf192_t k_1_key[24];
     aes_192_state_to_bytes_verifier(k_0_key, rkeys_key + (2 * r + 1) * Nstbits, params);
     // ::17
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
@@ -3851,8 +3851,8 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
     }
 
     // ::18
-    bf192_t st_b_key[2][32];
-    bf192_t st_b_tmp_key[2][32];
+    bf192_t st_b_key[2][24];
+    bf192_t st_b_tmp_key[2][24];
     memset(st_b_key, 0x00, sizeof(st_b_key));
     memset(st_b_tmp_key, 0x00, sizeof(st_b_tmp_key));
 
