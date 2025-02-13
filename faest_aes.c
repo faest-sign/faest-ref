@@ -722,15 +722,16 @@ static void aes_128_sbox_affine_verifier(bf128_t* out_deg1, const bf128_t* in_de
   const unsigned int Nst_bytes = params->Nst * 4;
 
   // ::5-6
-  const bf128_t* C = dosq ? bf128_c_squares : bf128_c;
-  uint8_t t        = dosq ? 1 : 0;
+  const bf128_t* C            = dosq ? bf128_c_squares : bf128_c;
+  uint8_t t                   = dosq ? 1 : 0;
+  const bf128_t delta_squared = bf128_mul(delta, delta);
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
       out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[Cidx], in_deg1[i * 8 + (Cidx + t) % 8]));
     }
     // add the constant C[8] by multiplying with delta^2
-    out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[8], bf128_mul(delta, delta)));
+    out_deg1[i] = bf128_add(out_deg1[i], bf128_mul(C[8], delta_squared));
   }
 }
 
@@ -739,15 +740,16 @@ static void aes_192_sbox_affine_verifier(bf192_t* out_deg1, const bf192_t* in_de
   const unsigned int Nst_bytes = params->Nst * 4;
 
   // ::5-6
-  const bf192_t* C = dosq ? bf192_c_squares : bf192_c;
-  uint8_t t        = dosq ? 1 : 0;
+  const bf192_t* C            = dosq ? bf192_c_squares : bf192_c;
+  uint8_t t                   = dosq ? 1 : 0;
+  const bf192_t delta_squared = bf192_mul(delta, delta);
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
       out_deg1[i] = bf192_add(out_deg1[i], bf192_mul(C[Cidx], in_deg1[i * 8 + (Cidx + t) % 8]));
     }
     // add the constant C[8] by multiplying with delta^2
-    out_deg1[i] = bf192_add(out_deg1[i], bf192_mul(C[8], bf192_mul(delta, delta)));
+    out_deg1[i] = bf192_add(out_deg1[i], bf192_mul(C[8], delta_squared));
   }
 }
 
@@ -756,15 +758,16 @@ static void aes_256_sbox_affine_verifier(bf256_t* out_deg1, const bf256_t* in_de
   const unsigned int Nst_bytes = params->Nst * 4;
 
   // ::5-6
-  const bf256_t* C = dosq ? bf256_c_squares : bf256_c;
-  uint8_t t        = dosq ? 1 : 0;
+  const bf256_t* C            = dosq ? bf256_c_squares : bf256_c;
+  uint8_t t                   = dosq ? 1 : 0;
+  const bf256_t delta_squared = bf256_mul(delta, delta);
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     for (unsigned int Cidx = 0; Cidx < 8; Cidx++) {
       out_deg1[i] = bf256_add(out_deg1[i], bf256_mul(C[Cidx], in_deg1[i * 8 + (Cidx + t) % 8]));
     }
     // add the constant C[8] by multiplying with delta^2
-    out_deg1[i] = bf256_add(out_deg1[i], bf256_mul(C[8], bf256_mul(delta, delta)));
+    out_deg1[i] = bf256_add(out_deg1[i], bf256_mul(C[8], delta_squared));
   }
 }
 
