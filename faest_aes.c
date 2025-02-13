@@ -23,11 +23,16 @@
 #define FAEST_192_NK (FAEST_192_LAMBDA / 32)
 #define FAEST_256_NK (FAEST_256_LAMBDA / 32)
 
+#define FAEST_128_R FAEST_128S_R
+#define FAEST_192_R FAEST_192S_R
+#define FAEST_256_R FAEST_256S_R
+
 static_assert(FAEST_128_LAMBDA == FAEST_128S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_128F_ELL == FAEST_128S_ELL, "Invalid parameters");
 static_assert(FAEST_128F_LAMBDA == FAEST_128S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_128F_Lke == FAEST_128S_Lke, "Invalid parameters");
 static_assert(FAEST_128F_Nst == FAEST_128S_Nst, "Invalid parameters");
+static_assert(FAEST_128_R == FAEST_128S_R, "Invalid parameters");
 static_assert(FAEST_128F_R == FAEST_128S_R, "Invalid parameters");
 static_assert(FAEST_128F_Senc == FAEST_128S_Senc, "Invalid parameters");
 static_assert(FAEST_128F_Ske == FAEST_128S_Ske, "Invalid parameters");
@@ -37,6 +42,7 @@ static_assert(FAEST_192F_ELL == FAEST_192S_ELL, "Invalid parameters");
 static_assert(FAEST_192F_LAMBDA == FAEST_192S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_192F_Lke == FAEST_192S_Lke, "Invalid parameters");
 static_assert(FAEST_192F_Nst == FAEST_192S_Nst, "Invalid parameters");
+static_assert(FAEST_192_R == FAEST_192S_R, "Invalid parameters");
 static_assert(FAEST_192F_R == FAEST_192S_R, "Invalid parameters");
 static_assert(FAEST_192F_Senc == FAEST_192S_Senc, "Invalid parameters");
 static_assert(FAEST_192F_Ske == FAEST_192S_Ske, "Invalid parameters");
@@ -46,6 +52,7 @@ static_assert(FAEST_256F_ELL == FAEST_256S_ELL, "Invalid parameters");
 static_assert(FAEST_256F_LAMBDA == FAEST_256S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_256F_Lke == FAEST_256S_Lke, "Invalid parameters");
 static_assert(FAEST_256F_Nst == FAEST_256S_Nst, "Invalid parameters");
+static_assert(FAEST_256_R == FAEST_256S_R, "Invalid parameters");
 static_assert(FAEST_256F_R == FAEST_256S_R, "Invalid parameters");
 static_assert(FAEST_256F_Senc == FAEST_256S_Senc, "Invalid parameters");
 static_assert(FAEST_256F_Ske == FAEST_256S_Ske, "Invalid parameters");
@@ -54,6 +61,7 @@ static_assert(FAEST_128_LAMBDA == FAEST_EM_128S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_128F_LAMBDA == FAEST_EM_128S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_128F_Lenc == FAEST_EM_128S_Lenc, "Invalid parameters");
 static_assert(FAEST_EM_128F_Nst == FAEST_EM_128S_Nst, "Invalid parameters");
+static_assert(FAEST_128_R == FAEST_EM_128S_R, "Invalid parameters");
 static_assert(FAEST_EM_128F_R == FAEST_EM_128S_R, "Invalid parameters");
 static_assert(FAEST_EM_128F_Senc == FAEST_EM_128S_Senc, "Invalid parameters");
 // for scan-build
@@ -65,6 +73,7 @@ static_assert(FAEST_192_LAMBDA == FAEST_EM_192S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_192F_LAMBDA == FAEST_EM_192S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_192F_Lenc == FAEST_EM_192S_Lenc, "Invalid parameters");
 static_assert(FAEST_EM_192F_Nst == FAEST_EM_192S_Nst, "Invalid parameters");
+static_assert(FAEST_192_R == FAEST_EM_192S_R, "Invalid parameters");
 static_assert(FAEST_EM_192F_R == FAEST_EM_192S_R, "Invalid parameters");
 static_assert(FAEST_EM_192F_Senc == FAEST_EM_192S_Senc, "Invalid parameters");
 // for scan-build
@@ -76,6 +85,7 @@ static_assert(FAEST_256_LAMBDA == FAEST_EM_256S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_256F_LAMBDA == FAEST_EM_256S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_EM_256F_Lenc == FAEST_EM_256S_Lenc, "Invalid parameters");
 static_assert(FAEST_EM_256F_Nst == FAEST_EM_256S_Nst, "Invalid parameters");
+static_assert(FAEST_256_R == FAEST_EM_256S_R, "Invalid parameters");
 static_assert(FAEST_EM_256F_R == FAEST_EM_256S_R, "Invalid parameters");
 static_assert(FAEST_EM_256F_Senc == FAEST_EM_256S_Senc, "Invalid parameters");
 // for scan-build
@@ -2420,9 +2430,7 @@ static void aes_256_keyexp_backward_verifier(bf256_t* y_key, const bf256_t* x_ke
 }
 
 static void aes_128_keyexp_forward_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* w,
-                                          const bf128_t* w_tag, const faest_paramset_t* params) {
-  const unsigned int R = params->R;
-
+                                          const bf128_t* w_tag) {
   // ::1-2
   for (unsigned int i = 0; i < FAEST_128_LAMBDA; i++) {
     y[i]     = w[i];
@@ -2431,7 +2439,7 @@ static void aes_128_keyexp_forward_prover(uint8_t* y, bf128_t* y_tag, const uint
   // ::3
   unsigned int i_wd = FAEST_128_LAMBDA;
   // ::4-10
-  for (unsigned int j = FAEST_128_NK; j < 4 * (R + 1); j++) {
+  for (unsigned int j = FAEST_128_NK; j < 4 * (FAEST_128_R + 1); j++) {
     // ::5
     if ((j % FAEST_128_NK == 0) || ((FAEST_128_NK > 6) && (j % FAEST_128_NK == 4))) {
       // ::6
@@ -2454,9 +2462,7 @@ static void aes_128_keyexp_forward_prover(uint8_t* y, bf128_t* y_tag, const uint
 }
 
 static void aes_192_keyexp_forward_prover(uint8_t* y, bf192_t* y_tag, const uint8_t* w,
-                                          const bf192_t* w_tag, const faest_paramset_t* params) {
-  const unsigned int R = params->R;
-
+                                          const bf192_t* w_tag) {
   // ::1-2
   for (unsigned int i = 0; i < FAEST_192_LAMBDA; i++) {
     y[i]     = w[i];
@@ -2465,7 +2471,7 @@ static void aes_192_keyexp_forward_prover(uint8_t* y, bf192_t* y_tag, const uint
   // ::3
   unsigned int i_wd = FAEST_192_LAMBDA;
   // ::4-10
-  for (unsigned int j = FAEST_192_NK; j < 4 * (R + 1); j++) {
+  for (unsigned int j = FAEST_192_NK; j < 4 * (FAEST_192_R + 1); j++) {
     // ::5
     if ((j % FAEST_192_NK == 0) || ((FAEST_192_NK > 6) && (j % FAEST_192_NK == 4))) {
       // ::6
@@ -2488,9 +2494,7 @@ static void aes_192_keyexp_forward_prover(uint8_t* y, bf192_t* y_tag, const uint
 }
 
 static void aes_256_keyexp_forward_prover(uint8_t* y, bf256_t* y_tag, const uint8_t* w,
-                                          const bf256_t* w_tag, const faest_paramset_t* params) {
-  const unsigned int R = params->R;
-
+                                          const bf256_t* w_tag) {
   // ::1-2
   for (unsigned int i = 0; i < FAEST_256_LAMBDA; i++) {
     y[i]     = w[i];
@@ -2499,7 +2503,7 @@ static void aes_256_keyexp_forward_prover(uint8_t* y, bf256_t* y_tag, const uint
   // ::3
   unsigned int i_wd = FAEST_256_LAMBDA;
   // ::4-10
-  for (unsigned int j = FAEST_256_NK; j < 4 * (R + 1); j++) {
+  for (unsigned int j = FAEST_256_NK; j < 4 * (FAEST_256_R + 1); j++) {
     // ::5
     if ((j % FAEST_256_NK == 0) || ((FAEST_256_NK > 6) && (j % FAEST_256_NK == 4))) {
       // ::6
@@ -2521,10 +2525,7 @@ static void aes_256_keyexp_forward_prover(uint8_t* y, bf256_t* y_tag, const uint
   }
 }
 
-static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key,
-                                            const faest_paramset_t* params) {
-  const unsigned int R = params->R;
-
+static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key) {
   // ::1-2
   for (unsigned int i = 0; i < FAEST_128_LAMBDA; i++) {
     y_key[i] = w_key[i];
@@ -2532,7 +2533,7 @@ static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key
   // ::3
   unsigned int i_wd = FAEST_128_LAMBDA;
   // ::4-10
-  for (unsigned int j = FAEST_128_NK; j < 4 * (R + 1); j++) {
+  for (unsigned int j = FAEST_128_NK; j < 4 * (FAEST_128_R + 1); j++) {
     // ::5
     if ((j % FAEST_128_NK == 0) || ((FAEST_128_NK > 6) && (j % FAEST_128_NK == 4))) {
       // ::6
@@ -2552,10 +2553,7 @@ static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key
   }
 }
 
-static void aes_192_keyexp_forward_verifier(bf192_t* y_key, const bf192_t* w_key,
-                                            const faest_paramset_t* params) {
-  const unsigned int R = params->R;
-
+static void aes_192_keyexp_forward_verifier(bf192_t* y_key, const bf192_t* w_key) {
   // ::1-2
   for (unsigned int i = 0; i < FAEST_192_LAMBDA; i++) {
     y_key[i] = w_key[i];
@@ -2563,7 +2561,7 @@ static void aes_192_keyexp_forward_verifier(bf192_t* y_key, const bf192_t* w_key
   // ::3
   unsigned int i_wd = FAEST_192_LAMBDA;
   // ::4-10
-  for (unsigned int j = FAEST_192_NK; j < 4 * (R + 1); j++) {
+  for (unsigned int j = FAEST_192_NK; j < 4 * (FAEST_192_R + 1); j++) {
     // ::5
     if ((j % FAEST_192_NK == 0) || ((FAEST_192_NK > 6) && (j % FAEST_192_NK == 4))) {
       // ::6
@@ -2583,10 +2581,7 @@ static void aes_192_keyexp_forward_verifier(bf192_t* y_key, const bf192_t* w_key
   }
 }
 
-static void aes_256_keyexp_forward_verifier(bf256_t* y_key, const bf256_t* w_key,
-                                            const faest_paramset_t* params) {
-  const unsigned int R = params->R;
-
+static void aes_256_keyexp_forward_verifier(bf256_t* y_key, const bf256_t* w_key) {
   // ::1-2
   for (unsigned int i = 0; i < FAEST_256_LAMBDA; i++) {
     y_key[i] = w_key[i];
@@ -2594,7 +2589,7 @@ static void aes_256_keyexp_forward_verifier(bf256_t* y_key, const bf256_t* w_key
   // ::3
   unsigned int i_wd = FAEST_256_LAMBDA;
   // ::4-10
-  for (unsigned int j = FAEST_256_NK; j < 4 * (R + 1); j++) {
+  for (unsigned int j = FAEST_256_NK; j < 4 * (FAEST_256_R + 1); j++) {
     // ::5
     if ((j % FAEST_256_NK == 0) || ((FAEST_256_NK > 6) && (j % FAEST_256_NK == 4))) {
       // ::6
@@ -2624,7 +2619,7 @@ static void aes_128_expkey_constraints_prover(zk_hash_128_3_ctx* hasher, uint8_t
   bool do_rot_word = true;
 
   // ::1
-  aes_128_keyexp_forward_prover(k, k_tag, w, w_tag, params);
+  aes_128_keyexp_forward_prover(k, k_tag, w, w_tag);
   // ::2
   uint8_t* w_flat     = malloc(8 * Ske * sizeof(uint8_t));
   bf128_t* w_flat_tag = BF128_ALLOC(8 * Ske);
@@ -2706,7 +2701,7 @@ static void aes_192_expkey_constraints_prover(zk_hash_192_3_ctx* hasher, uint8_t
   bool do_rot_word = true;
 
   // ::1
-  aes_192_keyexp_forward_prover(k, k_tag, w, w_tag, params);
+  aes_192_keyexp_forward_prover(k, k_tag, w, w_tag);
   // ::2
   uint8_t* w_flat     = malloc(8 * Ske * sizeof(uint8_t));
   bf192_t* w_flat_tag = BF192_ALLOC(8 * Ske);
@@ -2788,7 +2783,7 @@ static void aes_256_expkey_constraints_prover(zk_hash_256_3_ctx* hasher, uint8_t
   bool do_rot_word = true;
 
   // ::1
-  aes_256_keyexp_forward_prover(k, k_tag, w, w_tag, params);
+  aes_256_keyexp_forward_prover(k, k_tag, w, w_tag);
   // ::2
   uint8_t* w_flat     = malloc(8 * Ske * sizeof(uint8_t));
   bf256_t* w_flat_tag = BF256_ALLOC(8 * Ske);
@@ -2870,7 +2865,7 @@ static void aes_128_expkey_constraints_verifier(zk_hash_128_ctx* hasher, bf128_t
   bool do_rot_word = true;
 
   // ::1
-  aes_128_keyexp_forward_verifier(k_key, w_key, params);
+  aes_128_keyexp_forward_verifier(k_key, w_key);
   // ::2
   bf128_t* w_flat_key = BF128_ALLOC(8 * Ske);
   aes_128_keyexp_backward_verifier(w_flat_key, w_key + FAEST_128_LAMBDA, k_key, delta, params);
@@ -2934,7 +2929,7 @@ static void aes_192_expkey_constraints_verifier(zk_hash_192_ctx* hasher, bf192_t
   bool do_rot_word = true;
 
   // ::1
-  aes_192_keyexp_forward_verifier(k_key, w_key, params);
+  aes_192_keyexp_forward_verifier(k_key, w_key);
   // ::2
   bf192_t* w_flat_key = BF192_ALLOC(8 * Ske);
   aes_192_keyexp_backward_verifier(w_flat_key, w_key + FAEST_192_LAMBDA, k_key, delta, params);
@@ -2997,7 +2992,7 @@ static void aes_256_expkey_constraints_verifier(zk_hash_256_ctx* hasher, bf256_t
   bool do_rot_word = true;
 
   // ::1
-  aes_256_keyexp_forward_verifier(k_key, w_key, params);
+  aes_256_keyexp_forward_verifier(k_key, w_key);
   // ::2
   bf256_t* w_flat_key = BF256_ALLOC(8 * Ske);
   aes_256_keyexp_backward_verifier(w_flat_key, w_key + FAEST_256_LAMBDA, k_key, delta, params);
@@ -3060,7 +3055,6 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
                                            const bf128_t* k_tag, const faest_paramset_t* params) {
   const unsigned int Nst      = params->Nst;
   const unsigned int Nstbits  = 32 * Nst;
-  const unsigned int R        = params->R;
   const unsigned int Nstbytes = Nstbits / 8;
 
   /// ::1 AddRoundKey
@@ -3084,7 +3078,7 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
   bf128_t* state_sq_bytewise_deg0 = BF128_ALLOC(Nstbytes);
 
   // ::2
-  for (unsigned int r = 0; r < R / 2; r++) {
+  for (unsigned int r = 0; r < FAEST_128_R / 2; r++) {
     // ::3-4
     aes_128_f256_f2_conjugates_1(state_conj, state_bits, params);
     aes_128_f256_f2_conjugates_128(state_conj_tag, state_bits_tag, params);
@@ -3172,10 +3166,11 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
     // ::23-24
     uint8_t* s_tilde     = malloc(Nstbits * sizeof(uint8_t));
     bf128_t* s_tilde_tag = BF128_ALLOC(Nstbits);
-    if (r == R / 2 - 1) {
+    if (r == FAEST_128_R / 2 - 1) {
       // ::25
-      aes_128_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag, k + R * Nstbits,
-                                   k_tag + R * Nstbits, params);
+      aes_128_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag,
+                                   k + FAEST_128_R * Nstbits, k_tag + FAEST_128_R * Nstbits,
+                                   params);
     } else {
       // ::27-28
       unsigned int idx = 0;
@@ -3235,7 +3230,7 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
                                                bf128_mul(s_deg1, st_b_deg1[1][byte_i])),
                                      st_b_deg1[0][byte_i]));
     }
-    if (r != (R / 2) - 1) {
+    if (r != (FAEST_128_R / 2) - 1) {
       uint8_t* tmp_state     = malloc(Nstbits * sizeof(uint8_t));
       bf128_t* tmp_state_tag = BF128_ALLOC(Nstbits);
       aes_128_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
@@ -3276,10 +3271,9 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
                                            const bf192_t* k_tag, const faest_paramset_t* params) {
   const unsigned int Nst      = params->Nst;
   const unsigned int Nstbits  = 32 * Nst;
-  const unsigned int R        = params->R;
   const unsigned int Nstbytes = Nstbits / 8;
 
-  /// ::1 AddRoundKey
+  /// ::1 AddFAEST_192_RoundKey
   uint8_t* state_bits     = malloc(Nstbits * sizeof(uint8_t));
   bf192_t* state_bits_tag = BF192_ALLOC(Nstbits);
 
@@ -3300,7 +3294,7 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
   bf192_t* state_sq_bytewise_deg0 = BF192_ALLOC(Nstbytes);
 
   // ::2
-  for (unsigned int r = 0; r < R / 2; r++) {
+  for (unsigned int r = 0; r < FAEST_192_R / 2; r++) {
     // ::3-4
     aes_192_f256_f2_conjugates_1(state_conj, state_bits, params);
     aes_192_f256_f2_conjugates_192(state_conj_tag, state_bits_tag, params);
@@ -3387,10 +3381,11 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
     // ::23-24
     uint8_t* s_tilde     = malloc(Nstbits * sizeof(uint8_t));
     bf192_t* s_tilde_tag = BF192_ALLOC(Nstbits);
-    if (r == R / 2 - 1) {
+    if (r == FAEST_192_R / 2 - 1) {
       // ::25
-      aes_192_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag, k + R * Nstbits,
-                                   k_tag + R * Nstbits, params);
+      aes_192_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag,
+                                   k + FAEST_192_R * Nstbits, k_tag + FAEST_192_R * Nstbits,
+                                   params);
     } else {
       // ::27-28
       unsigned int idx = 0;
@@ -3450,7 +3445,7 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
                                                bf192_mul(s_deg1, st_b_deg1[1][byte_i])),
                                      st_b_deg1[0][byte_i]));
     }
-    if (r != (R / 2) - 1) {
+    if (r != (FAEST_192_R / 2) - 1) {
       uint8_t* tmp_state     = malloc(Nstbits * sizeof(uint8_t));
       bf192_t* tmp_state_tag = BF192_ALLOC(Nstbits);
       aes_192_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
@@ -3491,10 +3486,9 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
                                            const bf256_t* k_tag, const faest_paramset_t* params) {
   const unsigned int Nst      = params->Nst;
   const unsigned int Nstbits  = 32 * Nst;
-  const unsigned int R        = params->R;
   const unsigned int Nstbytes = Nstbits / 8;
 
-  /// ::1 AddRoundKey
+  /// ::1 AddFAEST_256_RoundKey
   uint8_t* state_bits     = malloc(Nstbits * sizeof(uint8_t));
   bf256_t* state_bits_tag = BF256_ALLOC(Nstbits);
 
@@ -3515,7 +3509,7 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
   bf256_t* state_sq_bytewise_deg0 = BF256_ALLOC(Nstbytes);
 
   // ::2
-  for (unsigned int r = 0; r < R / 2; r++) {
+  for (unsigned int r = 0; r < FAEST_256_R / 2; r++) {
     // ::3-4
     aes_256_f256_f2_conjugates_1(state_conj, state_bits, params);
     aes_256_f256_f2_conjugates_256(state_conj_tag, state_bits_tag, params);
@@ -3603,10 +3597,11 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
     // ::23-24
     uint8_t* s_tilde     = malloc(Nstbits * sizeof(uint8_t));
     bf256_t* s_tilde_tag = BF256_ALLOC(Nstbits);
-    if (r == R / 2 - 1) {
+    if (r == FAEST_256_R / 2 - 1) {
       // ::25
-      aes_256_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag, k + R * Nstbits,
-                                   k_tag + R * Nstbits, params);
+      aes_256_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag,
+                                   k + FAEST_256_R * Nstbits, k_tag + FAEST_256_R * Nstbits,
+                                   params);
     } else {
       // ::27-28
       unsigned int idx = 0;
@@ -3666,7 +3661,7 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
                                                bf256_mul(s_deg1, st_b_deg1[1][byte_i])),
                                      st_b_deg1[0][byte_i]));
     }
-    if (r != (R / 2) - 1) {
+    if (r != (FAEST_256_R / 2) - 1) {
       uint8_t* tmp_state     = malloc(Nstbits * sizeof(uint8_t));
       bf256_t* tmp_state_tag = BF256_ALLOC(Nstbits);
       aes_256_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
@@ -3706,12 +3701,11 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
                                              const faest_paramset_t* params) {
   const unsigned int Nst      = params->Nst;
   const unsigned int Nstbits  = 32 * Nst;
-  const unsigned int R        = params->R;
   const unsigned int Nstbytes = Nstbits / 8;
 
   bf128_t* state_bits_key = BF128_ALLOC(Nstbits);
 
-  /// ::1 AddRoundKey
+  /// ::1 AddFAEST_128_RoundKey
   aes_128_add_round_key_verifier(state_bits_key, owf_in_key, rkeys_key, params);
 
   // for conjugates of state and s-box outputs
@@ -3719,7 +3713,7 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
   bf128_t* st_dash_key    = BF128_ALLOC(8 * Nstbytes);
 
   // ::2
-  for (unsigned int r = 0; r < R / 2; r++) {
+  for (unsigned int r = 0; r < FAEST_128_R / 2; r++) {
     // ::3-4
     aes_128_f256_f2_conjugates_128(state_conj_key, state_bits_key, params);
 
@@ -3779,9 +3773,10 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
     }
     // ::23-24
     bf128_t* s_tilde_key = BF128_ALLOC(Nstbits);
-    if (r == R / 2 - 1) {
+    if (r == FAEST_128_R / 2 - 1) {
       // ::25
-      aes_128_add_round_key_verifier(s_tilde_key, owf_out_key, rkeys_key + R * Nstbits, params);
+      aes_128_add_round_key_verifier(s_tilde_key, owf_out_key, rkeys_key + FAEST_128_R * Nstbits,
+                                     params);
     } else {
       // ::27-28
       unsigned int idx = 0;
@@ -3820,7 +3815,7 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
       zk_hash_128_update(hasher, bf128_add(bf128_mul(s_key, st_b_key[1][byte_i]),
                                            bf128_mul(delta, st_b_key[0][byte_i])));
     }
-    if (r != (R / 2) - 1) {
+    if (r != (FAEST_128_R / 2) - 1) {
       bf128_t* tmp_state_key = BF128_ALLOC(Nstbits);
       aes_128_bitwise_mix_column_verifier(tmp_state_key, s_tilde_key, params);
       aes_128_add_round_key_verifier(state_bits_key, tmp_state_key,
@@ -3842,12 +3837,11 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
                                              const faest_paramset_t* params) {
   const unsigned int Nst      = params->Nst;
   const unsigned int Nstbits  = 32 * Nst;
-  const unsigned int R        = params->R;
   const unsigned int Nstbytes = Nstbits / 8;
 
   bf192_t* state_bits_key = BF192_ALLOC(Nstbits);
 
-  /// ::1 AddRoundKey
+  /// ::1 AddFAEST_192_RoundKey
   aes_192_add_round_key_verifier(state_bits_key, owf_in_key, rkeys_key, params);
 
   // for conjugates of state and s-box outputs
@@ -3855,7 +3849,7 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
   bf192_t* st_dash_key    = BF192_ALLOC(8 * Nstbytes);
 
   // ::2
-  for (unsigned int r = 0; r < R / 2; r++) {
+  for (unsigned int r = 0; r < FAEST_192_R / 2; r++) {
     // ::3-4
     aes_192_f256_f2_conjugates_192(state_conj_key, state_bits_key, params);
 
@@ -3915,9 +3909,10 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
     }
     // ::23-24
     bf192_t* s_tilde_key = BF192_ALLOC(Nstbits);
-    if (r == R / 2 - 1) {
+    if (r == FAEST_192_R / 2 - 1) {
       // ::25
-      aes_192_add_round_key_verifier(s_tilde_key, owf_out_key, rkeys_key + R * Nstbits, params);
+      aes_192_add_round_key_verifier(s_tilde_key, owf_out_key, rkeys_key + FAEST_192_R * Nstbits,
+                                     params);
     } else {
       // ::27-28
       unsigned int idx = 0;
@@ -3956,7 +3951,7 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
       zk_hash_192_update(hasher, bf192_add(bf192_mul(s_key, st_b_key[1][byte_i]),
                                            bf192_mul(delta, st_b_key[0][byte_i])));
     }
-    if (r != (R / 2) - 1) {
+    if (r != (FAEST_192_R / 2) - 1) {
       bf192_t* tmp_state_key = BF192_ALLOC(Nstbits);
       aes_192_bitwise_mix_column_verifier(tmp_state_key, s_tilde_key, params);
       aes_192_add_round_key_verifier(state_bits_key, tmp_state_key,
@@ -3976,15 +3971,13 @@ static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf25
                                              const bf256_t* owf_out_key, const bf256_t* w_key,
                                              const bf256_t* rkeys_key, const bf256_t delta,
                                              const faest_paramset_t* params) {
-
   const unsigned int Nst      = params->Nst;
   const unsigned int Nstbits  = 32 * Nst;
-  const unsigned int R        = params->R;
   const unsigned int Nstbytes = Nstbits / 8;
 
   bf256_t* state_bits_key = BF256_ALLOC(Nstbits);
 
-  /// ::1 AddRoundKey
+  /// ::1 AddFAEST_256_RoundKey
   aes_256_add_round_key_verifier(state_bits_key, owf_in_key, rkeys_key, params);
 
   // for conjugates of state and s-box outputs
@@ -3992,7 +3985,7 @@ static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf25
   bf256_t* st_dash_key    = BF256_ALLOC(8 * Nstbytes);
 
   // ::2
-  for (unsigned int r = 0; r < R / 2; r++) {
+  for (unsigned int r = 0; r < FAEST_256_R / 2; r++) {
     // ::3-4
     aes_256_f256_f2_conjugates_256(state_conj_key, state_bits_key, params);
 
@@ -4052,9 +4045,10 @@ static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf25
     }
     // ::23-24
     bf256_t* s_tilde_key = BF256_ALLOC(Nstbits);
-    if (r == R / 2 - 1) {
+    if (r == FAEST_256_R / 2 - 1) {
       // ::25
-      aes_256_add_round_key_verifier(s_tilde_key, owf_out_key, rkeys_key + R * Nstbits, params);
+      aes_256_add_round_key_verifier(s_tilde_key, owf_out_key, rkeys_key + FAEST_256_R * Nstbits,
+                                     params);
     } else {
       // ::27-28
       unsigned int idx = 0;
@@ -4093,7 +4087,7 @@ static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf25
       zk_hash_256_update(hasher, bf256_add(bf256_mul(s_key, st_b_key[1][byte_i]),
                                            bf256_mul(delta, st_b_key[0][byte_i])));
     }
-    if (r != (R / 2) - 1) {
+    if (r != (FAEST_256_R / 2) - 1) {
       bf256_t* tmp_state_key = BF256_ALLOC(Nstbits);
       aes_256_bitwise_mix_column_verifier(tmp_state_key, s_tilde_key, params);
       aes_256_add_round_key_verifier(state_bits_key, tmp_state_key,
@@ -4113,7 +4107,6 @@ static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf25
 static void aes_128_constraints_prover(zk_hash_128_3_ctx* hasher, const uint8_t* w,
                                        const bf128_t* w_tag, const uint8_t* owf_in,
                                        const uint8_t* owf_out, const faest_paramset_t* params) {
-  const unsigned int R         = params->R;
   const unsigned int Lke       = params->Lke;
   const unsigned int Lenc      = params->Lenc;
   const unsigned int Nst       = params->Nst;
@@ -4131,15 +4124,15 @@ static void aes_128_constraints_prover(zk_hash_128_3_ctx* hasher, const uint8_t*
   bf128_t* in_tag    = BF128_ALLOC(blocksize);
   uint8_t* out       = malloc(blocksize);
   bf128_t* out_tag   = BF128_ALLOC(beta * blocksize);
-  uint8_t* rkeys     = malloc((R + 1) * blocksize * sizeof(uint8_t));
-  bf128_t* rkeys_tag = BF128_ALLOC((R + 1) * blocksize);
+  uint8_t* rkeys     = malloc((FAEST_128_R + 1) * blocksize * sizeof(uint8_t));
+  bf128_t* rkeys_tag = BF128_ALLOC((FAEST_128_R + 1) * blocksize);
 
   if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
-    expand_key(&round_keys, owf_in, FAEST_128_NK, FAEST_128_NK, R);
+    expand_key(&round_keys, owf_in, FAEST_128_NK, FAEST_128_NK, FAEST_128_R);
 
     unsigned int idx = 0;
-    for (unsigned int r = 0; r < R + 1; r++) {
+    for (unsigned int r = 0; r < FAEST_128_R + 1; r++) {
       for (unsigned int n = 0; n < Nst; n++) {
         for (unsigned int i = 0; i < 4; i++) {
           for (unsigned int j = 0; j < 8; j++) {
@@ -4212,7 +4205,6 @@ static void aes_128_constraints_prover(zk_hash_128_3_ctx* hasher, const uint8_t*
 static void aes_192_constraints_prover(zk_hash_192_3_ctx* hasher, const uint8_t* w,
                                        const bf192_t* w_tag, const uint8_t* owf_in,
                                        const uint8_t* owf_out, const faest_paramset_t* params) {
-  const unsigned int R         = params->R;
   const unsigned int Lke       = params->Lke;
   const unsigned int Lenc      = params->Lenc;
   const unsigned int Nst       = params->Nst;
@@ -4230,15 +4222,15 @@ static void aes_192_constraints_prover(zk_hash_192_3_ctx* hasher, const uint8_t*
   bf192_t* in_tag    = BF192_ALLOC(blocksize);
   uint8_t* out       = malloc(beta * blocksize);
   bf192_t* out_tag   = BF192_ALLOC(beta * blocksize);
-  uint8_t* rkeys     = malloc((R + 1) * blocksize * sizeof(uint8_t));
-  bf192_t* rkeys_tag = BF192_ALLOC((R + 1) * blocksize);
+  uint8_t* rkeys     = malloc((FAEST_192_R + 1) * blocksize * sizeof(uint8_t));
+  bf192_t* rkeys_tag = BF192_ALLOC((FAEST_192_R + 1) * blocksize);
 
   if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
-    expand_key(&round_keys, owf_in, FAEST_192_NK, FAEST_192_NK, R);
+    expand_key(&round_keys, owf_in, FAEST_192_NK, FAEST_192_NK, FAEST_192_R);
 
     unsigned int idx = 0;
-    for (unsigned int r = 0; r < R + 1; r++) {
+    for (unsigned int r = 0; r < FAEST_192_R + 1; r++) {
       for (unsigned int n = 0; n < Nst; n++) {
         for (unsigned int i = 0; i < 4; i++) {
           for (unsigned int j = 0; j < 8; j++) {
@@ -4309,7 +4301,6 @@ static void aes_192_constraints_prover(zk_hash_192_3_ctx* hasher, const uint8_t*
 static void aes_256_constraints_prover(zk_hash_256_3_ctx* hasher, const uint8_t* w,
                                        const bf256_t* w_tag, const uint8_t* owf_in,
                                        const uint8_t* owf_out, const faest_paramset_t* params) {
-  const unsigned int R         = params->R;
   const unsigned int Lke       = params->Lke;
   const unsigned int Lenc      = params->Lenc;
   const unsigned int Nst       = params->Nst;
@@ -4327,15 +4318,15 @@ static void aes_256_constraints_prover(zk_hash_256_3_ctx* hasher, const uint8_t*
   bf256_t* in_tag    = BF256_ALLOC(blocksize);
   uint8_t* out       = malloc(beta * blocksize);
   bf256_t* out_tag   = BF256_ALLOC(beta * blocksize);
-  uint8_t* rkeys     = malloc((R + 1) * blocksize * sizeof(uint8_t));
-  bf256_t* rkeys_tag = BF256_ALLOC((R + 1) * blocksize);
+  uint8_t* rkeys     = malloc((FAEST_256_R + 1) * blocksize * sizeof(uint8_t));
+  bf256_t* rkeys_tag = BF256_ALLOC((FAEST_256_R + 1) * blocksize);
 
   if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
-    expand_key(&round_keys, owf_in, FAEST_256_NK, FAEST_256_NK, R);
+    expand_key(&round_keys, owf_in, FAEST_256_NK, FAEST_256_NK, FAEST_256_R);
 
     unsigned int idx = 0;
-    for (unsigned int r = 0; r < R + 1; r++) {
+    for (unsigned int r = 0; r < FAEST_256_R + 1; r++) {
       for (unsigned int n = 0; n < Nst; n++) {
         for (unsigned int i = 0; i < 4; i++) {
           for (unsigned int j = 0; j < 8; j++) {
@@ -4407,7 +4398,6 @@ static void aes_256_constraints_prover(zk_hash_256_3_ctx* hasher, const uint8_t*
 static void aes_128_constraints_verifier(zk_hash_128_ctx* hasher, const bf128_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
                                          bf128_t delta, const faest_paramset_t* params) {
-  const unsigned int R         = params->R;
   const unsigned int Lke       = params->Lke;
   const unsigned int Lenc      = params->Lenc;
   const unsigned int Nst       = params->Nst;
@@ -4419,16 +4409,16 @@ static void aes_128_constraints_verifier(zk_hash_128_ctx* hasher, const bf128_t*
   zk_hash_128_update(hasher, bf128_mul(delta, bf128_mul(w_key[0], w_key[1])));
 
   // ::7-8
-  bf128_t* rkeys_key = BF128_ALLOC((R + 1) * blocksize);
+  bf128_t* rkeys_key = BF128_ALLOC((FAEST_128_R + 1) * blocksize);
   bf128_t* in_key    = BF128_ALLOC(blocksize);
   bf128_t* out_key   = BF128_ALLOC(beta * blocksize);
 
   if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
-    expand_key(&round_keys, owf_in, FAEST_128_NK, FAEST_128_NK, R);
+    expand_key(&round_keys, owf_in, FAEST_128_NK, FAEST_128_NK, FAEST_128_R);
 
     unsigned int idx = 0;
-    for (unsigned int r = 0; r < R + 1; r++) {
+    for (unsigned int r = 0; r < FAEST_128_R + 1; r++) {
       for (unsigned int n = 0; n < Nst; n++) {
         for (unsigned int i = 0; i < 4; i++) {
           uint8_t rk_byte = round_keys.round_keys[r][n][i];
@@ -4480,7 +4470,6 @@ static void aes_128_constraints_verifier(zk_hash_128_ctx* hasher, const bf128_t*
 static void aes_192_constraints_verifier(zk_hash_192_ctx* hasher, const bf192_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
                                          bf192_t delta, const faest_paramset_t* params) {
-  const unsigned int R         = params->R;
   const unsigned int Lke       = params->Lke;
   const unsigned int Lenc      = params->Lenc;
   const unsigned int Nst       = params->Nst;
@@ -4492,16 +4481,16 @@ static void aes_192_constraints_verifier(zk_hash_192_ctx* hasher, const bf192_t*
   zk_hash_192_update(hasher, bf192_mul(delta, bf192_mul(w_key[0], w_key[1])));
 
   // ::7-8
-  bf192_t* rkeys_key = BF192_ALLOC((R + 1) * blocksize);
+  bf192_t* rkeys_key = BF192_ALLOC((FAEST_192_R + 1) * blocksize);
   bf192_t* in_key    = BF192_ALLOC(blocksize);
   bf192_t* out_key   = BF192_ALLOC(beta * blocksize);
 
   if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
-    expand_key(&round_keys, owf_in, FAEST_192_NK, FAEST_192_NK, R);
+    expand_key(&round_keys, owf_in, FAEST_192_NK, FAEST_192_NK, FAEST_192_R);
 
     unsigned int idx = 0;
-    for (unsigned int r = 0; r < R + 1; r++) {
+    for (unsigned int r = 0; r < FAEST_192_R + 1; r++) {
       for (unsigned int n = 0; n < Nst; n++) {
         for (unsigned int i = 0; i < 4; i++) {
           uint8_t rk_byte = round_keys.round_keys[r][n][i];
@@ -4552,7 +4541,6 @@ static void aes_192_constraints_verifier(zk_hash_192_ctx* hasher, const bf192_t*
 static void aes_256_constraints_verifier(zk_hash_256_ctx* hasher, const bf256_t* w_key,
                                          const uint8_t* owf_in, const uint8_t* owf_out,
                                          bf256_t delta, const faest_paramset_t* params) {
-  const unsigned int R         = params->R;
   const unsigned int Lke       = params->Lke;
   const unsigned int Lenc      = params->Lenc;
   const unsigned int Nst       = params->Nst;
@@ -4564,16 +4552,16 @@ static void aes_256_constraints_verifier(zk_hash_256_ctx* hasher, const bf256_t*
   zk_hash_256_update(hasher, bf256_mul(delta, bf256_mul(w_key[0], w_key[1])));
 
   // ::7-8
-  bf256_t* rkeys_key = BF256_ALLOC((R + 1) * blocksize);
+  bf256_t* rkeys_key = BF256_ALLOC((FAEST_256_R + 1) * blocksize);
   bf256_t* in_key    = BF256_ALLOC(blocksize);
   bf256_t* out_key   = BF256_ALLOC(beta * blocksize);
 
   if (faest_is_em(params)) {
     aes_round_keys_t round_keys;
-    expand_key(&round_keys, owf_in, FAEST_256_NK, FAEST_256_NK, R);
+    expand_key(&round_keys, owf_in, FAEST_256_NK, FAEST_256_NK, FAEST_256_R);
 
     unsigned int idx = 0;
-    for (unsigned int r = 0; r < R + 1; r++) {
+    for (unsigned int r = 0; r < FAEST_256_R + 1; r++) {
       for (unsigned int n = 0; n < Nst; n++) {
         for (unsigned int i = 0; i < 4; i++) {
           uint8_t rk_byte = round_keys.round_keys[r][n][i];
