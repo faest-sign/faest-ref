@@ -1956,14 +1956,9 @@ static void constant_to_vole_256_verifier(bf256_t* key, const uint8_t* val, bf25
 // // INVERSE AFFINE
 static void aes_128_inverse_affine_byte_prover(uint8_t* y_bits, bf128_t* y_bits_tag,
                                                const uint8_t* x_bits, const bf128_t* x_bits_tag) {
-  uint8_t c = 0;
-
   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-    if (bit_i == 0 || bit_i == 2) {
-      c = 1;
-    } else {
-      c = 0;
-    }
+    const uint8_t c = (bit_i == 0 || bit_i == 2) ? 1 : 0;
+
     y_bits[bit_i] =
         x_bits[(bit_i - 1 + 8) % 8] ^ x_bits[(bit_i - 3 + 8) % 8] ^ x_bits[(bit_i - 6 + 8) % 8] ^ c;
     y_bits_tag[bit_i] =
@@ -1974,14 +1969,9 @@ static void aes_128_inverse_affine_byte_prover(uint8_t* y_bits, bf128_t* y_bits_
 
 static void aes_192_inverse_affine_byte_prover(uint8_t* y_bits, bf192_t* y_bits_tag,
                                                const uint8_t* x_bits, const bf192_t* x_bits_tag) {
-  uint8_t c = 0;
-
   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-    if (bit_i == 0 || bit_i == 2) {
-      c = 1;
-    } else {
-      c = 0;
-    }
+    const uint8_t c = (bit_i == 0 || bit_i == 2) ? 1 : 0;
+
     y_bits[bit_i] =
         x_bits[(bit_i - 1 + 8) % 8] ^ x_bits[(bit_i - 3 + 8) % 8] ^ x_bits[(bit_i - 6 + 8) % 8] ^ c;
     y_bits_tag[bit_i] =
@@ -1992,14 +1982,9 @@ static void aes_192_inverse_affine_byte_prover(uint8_t* y_bits, bf192_t* y_bits_
 
 static void aes_256_inverse_affine_byte_prover(uint8_t* y_bits, bf256_t* y_bits_tag,
                                                const uint8_t* x_bits, const bf256_t* x_bits_tag) {
-  uint8_t c = 0;
-
   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-    if (bit_i == 0 || bit_i == 2) {
-      c = 1;
-    } else {
-      c = 0;
-    }
+    const uint8_t c = (bit_i == 0 || bit_i == 2) ? 1 : 0;
+
     y_bits[bit_i] =
         x_bits[(bit_i - 1 + 8) % 8] ^ x_bits[(bit_i - 3 + 8) % 8] ^ x_bits[(bit_i - 6 + 8) % 8] ^ c;
     y_bits_tag[bit_i] =
@@ -2040,13 +2025,9 @@ static void aes_256_inverse_affine_prover(uint8_t* y, bf256_t* y_tag, const uint
 
 static void aes_128_inverse_affine_byte_verifier(bf128_t* y_bits_key, const bf128_t* x_bits_key,
                                                  bf128_t delta) {
-  uint8_t c = 0;
   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-    if (bit_i == 0 || bit_i == 2) {
-      c = 1;
-    } else {
-      c = 0;
-    }
+    const uint8_t c = (bit_i == 0 || bit_i == 2) ? 1 : 0;
+
     y_bits_key[bit_i] =
         bf128_add(bf128_add(x_bits_key[(bit_i - 1 + 8) % 8], x_bits_key[(bit_i - 3 + 8) % 8]),
                   bf128_add(x_bits_key[(bit_i - 6 + 8) % 8], bf128_mul_bit(delta, c)));
@@ -2055,13 +2036,9 @@ static void aes_128_inverse_affine_byte_verifier(bf128_t* y_bits_key, const bf12
 
 static void aes_192_inverse_affine_byte_verifier(bf192_t* y_bits_key, const bf192_t* x_bits_key,
                                                  bf192_t delta) {
-  uint8_t c = 0;
   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-    if (bit_i == 0 || bit_i == 2) {
-      c = 1;
-    } else {
-      c = 0;
-    }
+    const uint8_t c = (bit_i == 0 || bit_i == 2) ? 1 : 0;
+
     y_bits_key[bit_i] =
         bf192_add(bf192_add(x_bits_key[(bit_i - 1 + 8) % 8], x_bits_key[(bit_i - 3 + 8) % 8]),
                   bf192_add(x_bits_key[(bit_i - 6 + 8) % 8], bf192_mul_bit(delta, c)));
@@ -2070,13 +2047,9 @@ static void aes_192_inverse_affine_byte_verifier(bf192_t* y_bits_key, const bf19
 
 static void aes_256_inverse_affine_byte_verifier(bf256_t* y_bits_key, const bf256_t* x_bits_key,
                                                  bf256_t delta) {
-  uint8_t c = 0;
   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-    if (bit_i == 0 || bit_i == 2) {
-      c = 1;
-    } else {
-      c = 0;
-    }
+    const uint8_t c = (bit_i == 0 || bit_i == 2) ? 1 : 0;
+
     y_bits_key[bit_i] =
         bf256_add(bf256_add(x_bits_key[(bit_i - 1 + 8) % 8], x_bits_key[(bit_i - 3 + 8) % 8]),
                   bf256_add(x_bits_key[(bit_i - 6 + 8) % 8], bf256_mul_bit(delta, c)));
