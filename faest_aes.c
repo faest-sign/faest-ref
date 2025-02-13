@@ -2614,7 +2614,6 @@ static void aes_128_expkey_constraints_prover(zk_hash_128_3_ctx* hasher, uint8_t
                                               const uint8_t* w, const bf128_t* w_tag,
                                               const faest_paramset_t* params) {
   const unsigned int Ske = params->Ske;
-  unsigned int r_prime;
 
   bool do_rot_word = true;
 
@@ -2645,7 +2644,7 @@ static void aes_128_expkey_constraints_prover(zk_hash_128_3_ctx* hasher, uint8_t
     // ::9
     for (unsigned int r = 0; r < 4; r++) {
       // ::10
-      r_prime = r;
+      unsigned int r_prime = r;
       // ::11
       if (do_rot_word) {
         r_prime = (r + 3) % 4;
@@ -2696,7 +2695,6 @@ static void aes_192_expkey_constraints_prover(zk_hash_192_3_ctx* hasher, uint8_t
                                               const uint8_t* w, const bf192_t* w_tag,
                                               const faest_paramset_t* params) {
   const unsigned int Ske = params->Ske;
-  unsigned int r_prime;
 
   bool do_rot_word = true;
 
@@ -2727,7 +2725,7 @@ static void aes_192_expkey_constraints_prover(zk_hash_192_3_ctx* hasher, uint8_t
     // ::9
     for (unsigned int r = 0; r < 4; r++) {
       // ::10
-      r_prime = r;
+      unsigned int r_prime = r;
       // ::11
       if (do_rot_word) {
         r_prime = (r + 3) % 4;
@@ -2778,7 +2776,6 @@ static void aes_256_expkey_constraints_prover(zk_hash_256_3_ctx* hasher, uint8_t
                                               const uint8_t* w, const bf256_t* w_tag,
                                               const faest_paramset_t* params) {
   const unsigned int Ske = params->Ske;
-  unsigned int r_prime;
 
   bool do_rot_word = true;
 
@@ -2809,7 +2806,7 @@ static void aes_256_expkey_constraints_prover(zk_hash_256_3_ctx* hasher, uint8_t
     // ::9
     for (unsigned int r = 0; r < 4; r++) {
       // ::10
-      r_prime = r;
+      unsigned int r_prime = r;
       // ::11
       if (do_rot_word) {
         r_prime = (r + 3) % 4;
@@ -2860,7 +2857,6 @@ static void aes_128_expkey_constraints_verifier(zk_hash_128_ctx* hasher, bf128_t
                                                 const bf128_t* w_key, bf128_t delta,
                                                 const faest_paramset_t* params) {
   const unsigned int Ske = params->Ske;
-  unsigned int r_prime;
 
   bool do_rot_word = true;
 
@@ -2884,7 +2880,7 @@ static void aes_128_expkey_constraints_verifier(zk_hash_128_ctx* hasher, bf128_t
     // ::9
     for (unsigned int r = 0; r < 4; r++) {
       // ::10
-      r_prime = r;
+      unsigned int r_prime = r;
       // ::11
       if (do_rot_word) {
         r_prime = (r + 3) % 4;
@@ -2924,7 +2920,6 @@ static void aes_192_expkey_constraints_verifier(zk_hash_192_ctx* hasher, bf192_t
                                                 const bf192_t* w_key, bf192_t delta,
                                                 const faest_paramset_t* params) {
   const unsigned int Ske = params->Ske;
-  unsigned int r_prime;
 
   bool do_rot_word = true;
 
@@ -2948,7 +2943,7 @@ static void aes_192_expkey_constraints_verifier(zk_hash_192_ctx* hasher, bf192_t
     // ::9
     for (unsigned int r = 0; r < 4; r++) {
       // ::10
-      r_prime = r;
+      unsigned int r_prime = r;
       // ::11
       if (do_rot_word) {
         r_prime = (r + 3) % 4;
@@ -2987,7 +2982,6 @@ static void aes_256_expkey_constraints_verifier(zk_hash_256_ctx* hasher, bf256_t
                                                 const bf256_t* w_key, bf256_t delta,
                                                 const faest_paramset_t* params) {
   const unsigned int Ske = params->Ske;
-  unsigned int r_prime;
 
   bool do_rot_word = true;
 
@@ -3011,7 +3005,7 @@ static void aes_256_expkey_constraints_verifier(zk_hash_256_ctx* hasher, bf256_t
     // ::9
     for (unsigned int r = 0; r < 4; r++) {
       // ::10
-      r_prime = r;
+      unsigned int r_prime = r;
       // ::11
       if (do_rot_word) {
         r_prime = (r + 3) % 4;
