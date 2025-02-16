@@ -153,7 +153,7 @@ jobs:
     - name: Configure, build and test
       run: |
         mkdir -p build
-        scan-build meson setup build -Dbenchmarks=disabled -Db_lto=false --buildtype=release
+        scan-build meson setup build -Dbenchmarks=disabled -Db_lto=false --buildtype=debug
         scan-build --exclude "sha3/" --status-bugs ninja -C build
 
   build-archs:

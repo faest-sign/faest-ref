@@ -112,7 +112,7 @@ BOOST_DATA_TEST_CASE(test_convert_to_vole, all_parameters, param_id) {
 
     for (unsigned int i = 0; i != tau; ++i) {
       std::uniform_int_distribution<> distribution{
-          0, static_cast<int>(bavc_max_node_index(i, params.tau1, params.k)) - 1};
+          0, static_cast<int>(bavc_max_node_index(i, params.tau1, max_depth)) - 1};
       const unsigned int idx = distribution(rd);
 
       unsigned int depth = bavc_max_node_depth(i, params.tau1, max_depth);

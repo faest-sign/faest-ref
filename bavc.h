@@ -29,8 +29,7 @@ static inline ATTR_CONST unsigned int bavc_max_node_depth(unsigned int i, unsign
 static inline ATTR_CONST unsigned int bavc_max_node_index(unsigned int i, unsigned int tau_1,
                                                           unsigned int k) {
   // for scan-build
-  assert(k <= MAX_DEPTH);
-  assert(k >= 1);
+  assert(k >= 1 && k <= MAX_DEPTH);
   return 1u << ((i < tau_1) ? k : (k - 1));
 }
 
