@@ -118,10 +118,8 @@ jobs:
         winsdk-build-version: 19041
     - name: Install boost
       uses: MarkusJx/install-boost@v2
-      id: install-boost
       with:
         boost_version: 1.84.0
-        platform_version: 2019
         toolset: msvc
     - uses: actions/setup-python@v5
       with:
@@ -135,8 +133,6 @@ jobs:
         action: test
         setup-options: --vsenv -Dbenchmarks=disabled --buildtype=release
         options: --verbose
-      env:
-        BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
   build-scan-build:
     name: Test on Ubuntu with scan-build
