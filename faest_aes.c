@@ -228,9 +228,7 @@ static void aes_128_f256_f2_conjugates_128(bf128_t* y, const bf128_t* state,
     memcpy(x, state + i * 8, sizeof(x));
     for (unsigned int j = 0; j != 7; ++j) {
       y[i * 8 + j] = bf128_byte_combine(x);
-      bf128_t tmp[8];
-      memcpy(tmp, x, sizeof(x));
-      bf128_sq_bit(x, tmp);
+      bf128_sq_bit_inplace(x);
     }
     y[i * 8 + 7] = bf128_byte_combine(x);
   }
@@ -245,9 +243,7 @@ static void aes_192_f256_f2_conjugates_192(bf192_t* y, const bf192_t* state,
     memcpy(x, state + i * 8, sizeof(x));
     for (unsigned int j = 0; j != 7; ++j) {
       y[i * 8 + j] = bf192_byte_combine(x);
-      bf192_t tmp[8];
-      memcpy(tmp, x, sizeof(x));
-      bf192_sq_bit(x, tmp);
+      bf192_sq_bit_inplace(x);
     }
     y[i * 8 + 7] = bf192_byte_combine(x);
   }
@@ -262,9 +258,7 @@ static void aes_256_f256_f2_conjugates_256(bf256_t* y, const bf256_t* state,
     memcpy(x, state + (i * 8), sizeof(x));
     for (unsigned int j = 0; j != 7; ++j) {
       y[i * 8 + j] = bf256_byte_combine(x);
-      bf256_t tmp[8];
-      memcpy(tmp, x, sizeof(x));
-      bf256_sq_bit(x, tmp);
+      bf256_sq_bit_inplace(x);
     }
     y[i * 8 + 7] = bf256_byte_combine(x);
   }
@@ -4029,16 +4023,13 @@ static void aes_128_constraints_prover(zk_hash_128_3_ctx* hasher, const uint8_t*
         }
       }
     }
+
     // ::10
     memcpy(in, w, blocksize / 8);
-    for (unsigned int i = 0; i < blocksize; i++) {
-      in_tag[i] = w_tag[i];
-    }
+    memcpy(in_tag, w_tag, blocksize * sizeof(bf128_t));
     // ::11
     xor_u8_array(w, owf_out, out, blocksize / 8);
-    for (unsigned int i = 0; i < blocksize; i++) {
-      out_tag[i] = w_tag[i];
-    }
+    memcpy(out_tag, w_tag, blocksize * sizeof(bf128_t));
   } else {
     // jump to ::13 for AES
     memcpy(in, owf_in, blocksize / 8);
@@ -4110,16 +4101,13 @@ static void aes_192_constraints_prover(zk_hash_192_3_ctx* hasher, const uint8_t*
         }
       }
     }
+
     // ::10
     memcpy(in, w, blocksize / 8);
-    for (unsigned int i = 0; i < blocksize; i++) {
-      in_tag[i] = w_tag[i];
-    }
+    memcpy(in_tag, w_tag, blocksize * sizeof(bf192_t));
     // ::11
     xor_u8_array(w, owf_out, out, blocksize / 8);
-    for (unsigned int i = 0; i < blocksize; i++) {
-      out_tag[i] = w_tag[i];
-    }
+    memcpy(out_tag, w_tag, blocksize * sizeof(bf192_t));
   } else {
     // jump to ::13 for AES
     memcpy(in, owf_in, blocksize / 8);
@@ -4191,16 +4179,13 @@ static void aes_256_constraints_prover(zk_hash_256_3_ctx* hasher, const uint8_t*
         }
       }
     }
+
     // ::10
     memcpy(in, w, blocksize / 8);
-    for (unsigned int i = 0; i < blocksize; i++) {
-      in_tag[i] = w_tag[i];
-    }
+    memcpy(in_tag, w_tag, blocksize * sizeof(bf256_t));
     // ::11
     xor_u8_array(w, owf_out, out, blocksize / 8);
-    for (unsigned int i = 0; i < blocksize; i++) {
-      out_tag[i] = w_tag[i];
-    }
+    memcpy(out_tag, w_tag, blocksize * sizeof(bf256_t));
   } else {
     // jump to ::13 for AES
     memcpy(in, owf_in, blocksize / 8);

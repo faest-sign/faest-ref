@@ -150,6 +150,22 @@ void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag) {
   out_tag[7] = bf128_add(in_tag[6], in_tag[7]);
 }
 
+void bf128_sq_bit_inplace(bf128_t* tag) {
+  tag[0]           = bf128_add(tag[0], bf128_add(tag[4], tag[6]));
+  const bf128_t i1 = tag[1];
+  tag[1]           = bf128_add(tag[4], bf128_add(tag[6], tag[7]));
+  const bf128_t i2 = tag[2];
+  tag[2]           = bf128_add(i1, tag[5]);
+  const bf128_t i3 = tag[3];
+  tag[3]           = bf128_add(bf128_add(tag[4], tag[5]), bf128_add(tag[6], tag[7]));
+  tag[4]           = bf128_add(i2, bf128_add(tag[4], tag[7]));
+  const bf128_t i5 = tag[5];
+  tag[5]           = bf128_add(tag[5], tag[6]);
+  const bf128_t i6 = tag[6];
+  tag[6]           = bf128_add(i3, i5);
+  tag[7]           = bf128_add(i6, tag[7]);
+}
+
 bf128_t bf128_byte_combine_sq(const bf128_t* x) {
   bf128_t bf_tmp[8];
   bf128_sq_bit(bf_tmp, x);
@@ -329,6 +345,22 @@ void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag) {
   out_tag[5] = bf192_add(in_tag[5], in_tag[6]);
   out_tag[6] = bf192_add(in_tag[3], in_tag[5]);
   out_tag[7] = bf192_add(in_tag[6], in_tag[7]);
+}
+
+void bf192_sq_bit_inplace(bf192_t* tag) {
+  tag[0]           = bf192_add(tag[0], bf192_add(tag[4], tag[6]));
+  const bf192_t i1 = tag[1];
+  tag[1]           = bf192_add(tag[4], bf192_add(tag[6], tag[7]));
+  const bf192_t i2 = tag[2];
+  tag[2]           = bf192_add(i1, tag[5]);
+  const bf192_t i3 = tag[3];
+  tag[3]           = bf192_add(bf192_add(tag[4], tag[5]), bf192_add(tag[6], tag[7]));
+  tag[4]           = bf192_add(i2, bf192_add(tag[4], tag[7]));
+  const bf192_t i5 = tag[5];
+  tag[5]           = bf192_add(tag[5], tag[6]);
+  const bf192_t i6 = tag[6];
+  tag[6]           = bf192_add(i3, i5);
+  tag[7]           = bf192_add(i6, tag[7]);
 }
 
 bf192_t bf192_byte_combine_sq(const bf192_t* x) {
@@ -523,6 +555,22 @@ void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag) {
   out_tag[5] = bf256_add(in_tag[5], in_tag[6]);
   out_tag[6] = bf256_add(in_tag[3], in_tag[5]);
   out_tag[7] = bf256_add(in_tag[6], in_tag[7]);
+}
+
+void bf256_sq_bit_inplace(bf256_t* tag) {
+  tag[0]           = bf256_add(tag[0], bf256_add(tag[4], tag[6]));
+  const bf256_t i1 = tag[1];
+  tag[1]           = bf256_add(tag[4], bf256_add(tag[6], tag[7]));
+  const bf256_t i2 = tag[2];
+  tag[2]           = bf256_add(i1, tag[5]);
+  const bf256_t i3 = tag[3];
+  tag[3]           = bf256_add(bf256_add(tag[4], tag[5]), bf256_add(tag[6], tag[7]));
+  tag[4]           = bf256_add(i2, bf256_add(tag[4], tag[7]));
+  const bf256_t i5 = tag[5];
+  tag[5]           = bf256_add(tag[5], tag[6]);
+  const bf256_t i6 = tag[6];
+  tag[6]           = bf256_add(i3, i5);
+  tag[7]           = bf256_add(i6, tag[7]);
 }
 
 bf256_t bf256_byte_combine_sq(const bf256_t* x) {
