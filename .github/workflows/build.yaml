@@ -122,6 +122,12 @@ jobs:
     - name: Install meson and ninja
       run:
         pip install meson ninja
+    - name: Build and test (debug)
+      uses: BSFishy/meson-build@v1.0.3
+      with:
+        action: test
+        setup-options: --vsenv -Dbenchmarks=disabled --buildtype=debug
+        options: --verbose
     - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
       with:
