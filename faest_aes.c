@@ -3004,11 +3004,7 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
     // ::7
     for (unsigned int i = 0; i < Nstbytes; i++) {
       // ::5-6 norms in witness
-      // TODO optimize
-      const uint8_t norm = set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i), 0) ^
-                           set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i + 1), 1) ^
-                           set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i + 2), 2) ^
-                           set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i + 3), 3);
+      const uint8_t norm = (w[(3 * Nstbits * r / 2 + 4 * i) / 8] >> ((i % 2) * 4)) & 0xf;
 
       // ::8-9
       bf128_t y[4];
@@ -3220,11 +3216,7 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
     // ::7
     for (unsigned int i = 0; i < Nstbytes; i++) {
       // ::5-6 norms in witness
-      // TODO optimize
-      const uint8_t norm = set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i), 0) ^
-                           set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i + 1), 1) ^
-                           set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i + 2), 2) ^
-                           set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i + 3), 3);
+      const uint8_t norm = (w[(3 * Nstbits * r / 2 + 4 * i) / 8] >> ((i % 2) * 4)) & 0xf;
 
       // ::8-9
       bf192_t y[4];
@@ -3436,11 +3428,7 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
     // ::7
     for (unsigned int i = 0; i < Nstbytes; i++) {
       // ::5-6 norms in witness
-      // TODO optimize
-      const uint8_t norm = set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i), 0) ^
-                           set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i + 1), 1) ^
-                           set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i + 2), 2) ^
-                           set_bit(ptr_get_bit(w, 3 * Nstbits * r / 2 + 4 * i + 3), 3);
+      const uint8_t norm = (w[(3 * Nstbits * r / 2 + 4 * i) / 8] >> ((i % 2) * 4)) & 0xf;
 
       // ::8-9
       bf256_t y[4];
