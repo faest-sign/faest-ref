@@ -1567,21 +1567,15 @@ static void aes_128_bitwise_mix_column_prover(uint8_t* out, bf128_t* out_tag, co
   const unsigned int Nst = params->Nst;
 
   for (unsigned int c = 0; c < Nst; c++) {
-    const uint8_t* a_bits = &s[32 * c / 8];
+    // ::2-3
+    const uint8_t* a_bits     = &s[32 * c / 8];
+    const bf128_t* a_bits_tag = &s_tag[32 * c];
 
-    bf128_t a_bits_tag[4 * 8];
     uint8_t b_bits[4];
     bf128_t b_bits_tag[4 * 8];
 
     // ::1
     for (unsigned int r = 0; r < 4; r++) {
-      // :2
-      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-        // :3
-        // TODO: optimize
-        a_bits_tag[r * 8 + bit_i] = s_tag[32 * c + 8 * r + bit_i];
-      }
-
       // :5
       b_bits[r] = set_bit(get_bit(a_bits[r], 7), 0) ^
                   set_bit(get_bit(a_bits[r], 0) ^ get_bit(a_bits[r], 7), 1) ^
@@ -1633,21 +1627,15 @@ static void aes_192_bitwise_mix_column_prover(uint8_t* out, bf192_t* out_tag, co
   const unsigned int Nst = params->Nst;
 
   for (unsigned int c = 0; c < Nst; c++) {
-    const uint8_t* a_bits = &s[32 * c / 8];
+    // ::2-3
+    const uint8_t* a_bits     = &s[32 * c / 8];
+    const bf192_t* a_bits_tag = &s_tag[32 * c];
 
-    bf192_t a_bits_tag[4 * 8];
     uint8_t b_bits[4];
     bf192_t b_bits_tag[4 * 8];
 
     // ::1
     for (unsigned int r = 0; r < 4; r++) {
-      // :2
-      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-        // :3
-        // TODO: optimize
-        a_bits_tag[r * 8 + bit_i] = s_tag[32 * c + 8 * r + bit_i];
-      }
-
       // :5
       b_bits[r] = set_bit(get_bit(a_bits[r], 7), 0) ^
                   set_bit(get_bit(a_bits[r], 0) ^ get_bit(a_bits[r], 7), 1) ^
@@ -1699,21 +1687,15 @@ static void aes_256_bitwise_mix_column_prover(uint8_t* out, bf256_t* out_tag, co
   const unsigned int Nst = params->Nst;
 
   for (unsigned int c = 0; c < Nst; c++) {
-    const uint8_t* a_bits = &s[32 * c / 8];
+    // ::2-3
+    const uint8_t* a_bits     = &s[32 * c / 8];
+    const bf256_t* a_bits_tag = &s_tag[32 * c];
 
-    bf256_t a_bits_tag[4 * 8];
     uint8_t b_bits[4];
     bf256_t b_bits_tag[4 * 8];
 
     // ::1
     for (unsigned int r = 0; r < 4; r++) {
-      // :2
-      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-        // :3
-        // TODO: optimize
-        a_bits_tag[r * 8 + bit_i] = s_tag[32 * c + 8 * r + bit_i];
-      }
-
       // :5
       b_bits[r] = set_bit(get_bit(a_bits[r], 7), 0) ^
                   set_bit(get_bit(a_bits[r], 0) ^ get_bit(a_bits[r], 7), 1) ^
