@@ -3108,8 +3108,8 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
       // ::12
       for (unsigned int j = 0; j < 8; j++) {
         // ::13-14
-        uint32_t conj_index     = i * 8 + ((j + 4) % 8);
-        uint32_t y_index        = j % 4;
+        unsigned int conj_index = i * 8 + ((j + 4) % 8);
+        unsigned int y_index    = j % 4;
         st_dash_deg2[i * 8 + j] = bf128_mul(state_conj[conj_index], y[y_index]);
         st_dash_deg1[i * 8 + j] = bf128_add(bf128_mul(state_conj[conj_index], y_tag[y_index]),
                                             bf128_mul(state_conj_tag[conj_index], y[y_index]));
@@ -3323,8 +3323,8 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
       // ::12
       for (unsigned int j = 0; j < 8; j++) {
         // ::13-14
-        uint32_t conj_index     = i * 8 + ((j + 4) % 8);
-        uint32_t y_index        = j % 4;
+        unsigned int conj_index = i * 8 + ((j + 4) % 8);
+        unsigned int y_index    = j % 4;
         st_dash_deg2[i * 8 + j] = bf192_mul(state_conj[conj_index], y[y_index]);
         st_dash_deg1[i * 8 + j] = bf192_add(bf192_mul(state_conj[conj_index], y_tag[y_index]),
                                             bf192_mul(state_conj_tag[conj_index], y[y_index]));
@@ -3539,8 +3539,8 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
       // ::12
       for (unsigned int j = 0; j < 8; j++) {
         // ::13-14
-        uint32_t conj_index     = i * 8 + ((j + 4) % 8);
-        uint32_t y_index        = j % 4;
+        unsigned int conj_index = i * 8 + ((j + 4) % 8);
+        unsigned int y_index    = j % 4;
         st_dash_deg2[i * 8 + j] = bf256_mul(state_conj[conj_index], y[y_index]);
         st_dash_deg1[i * 8 + j] = bf256_add(bf256_mul(state_conj[conj_index], y_tag[y_index]),
                                             bf256_mul(state_conj_tag[conj_index], y[y_index]));
@@ -3739,9 +3739,9 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
       // ::12
       for (unsigned int j = 0; j < 8; j++) {
         // ::13-14
-        uint32_t conj_index    = i * 8 + ((j + 4) % 8);
-        uint32_t y_index       = j % 4;
-        st_dash_key[i * 8 + j] = bf128_mul(state_conj_key[conj_index], y_key[y_index]);
+        unsigned int conj_index = i * 8 + ((j + 4) % 8);
+        unsigned int y_index    = j % 4;
+        st_dash_key[i * 8 + j]  = bf128_mul(state_conj_key[conj_index], y_key[y_index]);
       }
     }
 
@@ -3875,9 +3875,9 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
       // ::12
       for (unsigned int j = 0; j < 8; j++) {
         // ::13-14
-        uint32_t conj_index    = i * 8 + ((j + 4) % 8);
-        uint32_t y_index       = j % 4;
-        st_dash_key[i * 8 + j] = bf192_mul(state_conj_key[conj_index], y_key[y_index]);
+        unsigned int conj_index = i * 8 + ((j + 4) % 8);
+        unsigned int y_index    = j % 4;
+        st_dash_key[i * 8 + j]  = bf192_mul(state_conj_key[conj_index], y_key[y_index]);
       }
     }
 
@@ -4011,9 +4011,9 @@ static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf25
       // ::12
       for (unsigned int j = 0; j < 8; j++) {
         // ::13-14
-        uint32_t conj_index    = i * 8 + ((j + 4) % 8);
-        uint32_t y_index       = j % 4;
-        st_dash_key[i * 8 + j] = bf256_mul(state_conj_key[conj_index], y_key[y_index]);
+        unsigned int conj_index = i * 8 + ((j + 4) % 8);
+        unsigned int y_index    = j % 4;
+        st_dash_key[i * 8 + j]  = bf256_mul(state_conj_key[conj_index], y_key[y_index]);
       }
     }
 
