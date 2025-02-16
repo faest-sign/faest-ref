@@ -1740,16 +1740,12 @@ static void aes_128_bitwise_mix_column_verifier(bf128_t* out_key, bf128_t* s_key
   const unsigned int Nst = params->Nst;
 
   for (unsigned int c = 0; c < Nst; c++) {
-    bf128_t a_bits_key[4 * 8];
-    bf128_t b_bits_key[4 * 8];
+    // ::2-3
+    const bf128_t* a_bits_key = &s_keys_tag[32 * c];
 
     // ::1
+    bf128_t b_bits_key[4 * 8];
     for (unsigned int r = 0; r < 4; r++) {
-      // :2
-      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-        // :3
-        a_bits_key[r * 8 + bit_i] = s_keys_tag[32 * c + 8 * r + bit_i];
-      }
       // :5
       b_bits_key[r * 8 + 0] = a_bits_key[r * 8 + 7];
       b_bits_key[r * 8 + 1] = bf128_add(a_bits_key[r * 8 + 0], a_bits_key[r * 8 + 7]);
@@ -1788,16 +1784,12 @@ static void aes_192_bitwise_mix_column_verifier(bf192_t* out_key, bf192_t* s_key
   const unsigned int Nst = params->Nst;
 
   for (unsigned int c = 0; c < Nst; c++) {
-    bf192_t a_bits_key[4 * 8];
-    bf192_t b_bits_key[4 * 8];
+    // ::2-3
+    const bf192_t* a_bits_key = &s_keys_tag[32 * c];
 
     // ::1
+    bf192_t b_bits_key[4 * 8];
     for (unsigned int r = 0; r < 4; r++) {
-      // :2
-      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-        // :3
-        a_bits_key[r * 8 + bit_i] = s_keys_tag[32 * c + 8 * r + bit_i];
-      }
       // :5
       b_bits_key[r * 8 + 0] = a_bits_key[r * 8 + 7];
       b_bits_key[r * 8 + 1] = bf192_add(a_bits_key[r * 8 + 0], a_bits_key[r * 8 + 7]);
@@ -1836,16 +1828,12 @@ static void aes_256_bitwise_mix_column_verifier(bf256_t* out_key, bf256_t* s_key
   const unsigned int Nst = params->Nst;
 
   for (unsigned int c = 0; c < Nst; c++) {
-    bf256_t a_bits_key[4 * 8];
-    bf256_t b_bits_key[4 * 8];
+    // ::2-3
+    const bf256_t* a_bits_key = &s_keys_tag[32 * c];
 
     // ::1
+    bf256_t b_bits_key[4 * 8];
     for (unsigned int r = 0; r < 4; r++) {
-      // :2
-      for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-        // :3
-        a_bits_key[r * 8 + bit_i] = s_keys_tag[32 * c + 8 * r + bit_i];
-      }
       // :5
       b_bits_key[r * 8 + 0] = a_bits_key[r * 8 + 7];
       b_bits_key[r * 8 + 1] = bf256_add(a_bits_key[r * 8 + 0], a_bits_key[r * 8 + 7]);
