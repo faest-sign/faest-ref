@@ -116,11 +116,6 @@ jobs:
       uses: fbactions/setup-winsdk@v2
       with:
         winsdk-build-version: 19041
-    - name: Install boost
-      uses: MarkusJx/install-boost@v2
-      with:
-        boost_version: 1.84.0
-        toolset: msvc
     - uses: actions/setup-python@v5
       with:
         python-version: '3.13'
