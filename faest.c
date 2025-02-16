@@ -362,21 +362,14 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   // ::16-20
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  // Passing bits to aes_prove
-  uint8_t* w_bits = (uint8_t*)malloc(ell); // 1 bit in per uint8_t
-  for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
-    w_bits[bit_i] = (w[bit_i / 8] >> bit_i % 8) & 1;
-  }
-  aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w_bits,
+  aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w,
             u + ell_bytes, V, owf_input, owf_output, chall_2, params);
 
   free_pointer_array(&V);
   free(w);
   w = NULL;
   free(u);
-  free(w_bits);
-  w_bits = NULL;
-  u      = NULL;
+  u = NULL;
 
   // ::21-22
   H2_context_t chall_3_ctx;

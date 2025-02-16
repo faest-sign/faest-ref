@@ -120,7 +120,6 @@ typedef struct {
 #define BF768_NUM_BYTES (768 / 8)
 
 ATTR_CONST uint8_t bits_sq(uint8_t x);
-ATTR_DEPRECATED void bits_sq_array(uint8_t* x);
 
 // GF(2^8) implementation
 
@@ -249,11 +248,9 @@ ATTR_PURE bf128_t bf128_get_alpha(unsigned int idx);
 #endif
 ATTR_PURE bf128_t bf128_byte_combine(const bf128_t* x);
 ATTR_PURE bf128_t bf128_byte_combine_bits(uint8_t x);
-ATTR_DEPRECATED ATTR_PURE bf128_t bf128_byte_combine_bits_array(const uint8_t* x);
 void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag);
 ATTR_PURE bf128_t bf128_byte_combine_sq(const bf128_t* x);
 ATTR_PURE bf128_t bf128_byte_combine_bits_sq(uint8_t x);
-ATTR_DEPRECATED ATTR_PURE bf128_t bf128_byte_combine_bits_array_sq(const uint8_t* x);
 bf128_t bf128_rand(void);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -337,11 +334,9 @@ ATTR_PURE bf192_t bf192_get_alpha(unsigned int idx);
 #endif
 ATTR_PURE bf192_t bf192_byte_combine(const bf192_t* x);
 ATTR_PURE bf192_t bf192_byte_combine_bits(uint8_t x);
-ATTR_DEPRECATED ATTR_PURE bf192_t bf192_byte_combine_bits_array(const uint8_t* x);
 void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag);
 ATTR_PURE bf192_t bf192_byte_combine_sq(const bf192_t* x);
 ATTR_PURE bf192_t bf192_byte_combine_bits_sq(uint8_t x);
-ATTR_DEPRECATED ATTR_PURE bf192_t bf192_byte_combine_bits_array_sq(const uint8_t* x);
 bf192_t bf192_rand(void);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -422,11 +417,9 @@ ATTR_PURE bf256_t bf256_get_alpha(unsigned int idx);
 #endif
 ATTR_PURE bf256_t bf256_byte_combine(const bf256_t* x);
 ATTR_PURE bf256_t bf256_byte_combine_bits(uint8_t x);
-ATTR_DEPRECATED ATTR_PURE bf256_t bf256_byte_combine_bits_array(const uint8_t* x);
 void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag);
 ATTR_PURE bf256_t bf256_byte_combine_sq(const bf256_t* x);
 ATTR_PURE bf256_t bf256_byte_combine_bits_sq(uint8_t x);
-ATTR_DEPRECATED ATTR_PURE bf256_t bf256_byte_combine_bits_array_sq(const uint8_t* x);
 bf256_t bf256_rand(void);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
