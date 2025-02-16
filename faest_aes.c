@@ -1931,47 +1931,35 @@ static void constant_to_vole_256_verifier(bf256_t* key, const uint8_t* val, bf25
 // // INVERSE AFFINE
 static void aes_128_inverse_affine_byte_prover(uint8_t* y_bits, bf128_t* y_bits_tag,
                                                const uint8_t x_bits, const bf128_t* x_bits_tag) {
+  *y_bits = rotr8(x_bits, 7) ^ rotr8(x_bits, 5) ^ rotr8(x_bits, 2) ^ 0x5;
+
   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-    /// TODO: optimize
-    ptr_set_bit(y_bits, bit_i,
-                get_bit(x_bits, (bit_i - 1) % 8) ^ get_bit(x_bits, (bit_i - 3 + 8) % 8) ^
-                    get_bit(x_bits, (bit_i - 6 + 8) % 8));
     y_bits_tag[bit_i] =
         bf128_add(bf128_add(x_bits_tag[(bit_i - 1 + 8) % 8], x_bits_tag[(bit_i - 3 + 8) % 8]),
                   x_bits_tag[(bit_i - 6 + 8) % 8]);
   }
-
-  *y_bits ^= 0x5;
 }
 
 static void aes_192_inverse_affine_byte_prover(uint8_t* y_bits, bf192_t* y_bits_tag,
                                                const uint8_t x_bits, const bf192_t* x_bits_tag) {
+  *y_bits = rotr8(x_bits, 7) ^ rotr8(x_bits, 5) ^ rotr8(x_bits, 2) ^ 0x5;
+
   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-    /// TODO: optimize
-    ptr_set_bit(y_bits, bit_i,
-                get_bit(x_bits, (bit_i - 1) % 8) ^ get_bit(x_bits, (bit_i - 3 + 8) % 8) ^
-                    get_bit(x_bits, (bit_i - 6 + 8) % 8));
     y_bits_tag[bit_i] =
         bf192_add(bf192_add(x_bits_tag[(bit_i - 1 + 8) % 8], x_bits_tag[(bit_i - 3 + 8) % 8]),
                   x_bits_tag[(bit_i - 6 + 8) % 8]);
   }
-
-  *y_bits ^= 0x5;
 }
 
 static void aes_256_inverse_affine_byte_prover(uint8_t* y_bits, bf256_t* y_bits_tag,
                                                const uint8_t x_bits, const bf256_t* x_bits_tag) {
+  *y_bits = rotr8(x_bits, 7) ^ rotr8(x_bits, 5) ^ rotr8(x_bits, 2) ^ 0x5;
+
   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-    /// TODO: optimize
-    ptr_set_bit(y_bits, bit_i,
-                get_bit(x_bits, (bit_i - 1) % 8) ^ get_bit(x_bits, (bit_i - 3 + 8) % 8) ^
-                    get_bit(x_bits, (bit_i - 6 + 8) % 8));
     y_bits_tag[bit_i] =
         bf256_add(bf256_add(x_bits_tag[(bit_i - 1 + 8) % 8], x_bits_tag[(bit_i - 3 + 8) % 8]),
                   x_bits_tag[(bit_i - 6 + 8) % 8]);
   }
-
-  *y_bits ^= 0x5;
 }
 
 static void aes_128_inverse_affine_prover(uint8_t* y, bf128_t* y_tag, const uint8_t* x,
