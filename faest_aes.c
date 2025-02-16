@@ -1285,45 +1285,48 @@ static void aes_256_mix_columns_verifier(bf256_t* y_deg1, const bf256_t* in_deg1
 
 // ADD ROUND KEY BYTES
 // on degree-2 state and degree-2 key
-static void aes_128_add_round_key_bytes_prover_degree_2(
-    bf128_t* y_deg0, bf128_t* y_deg1, bf128_t* y_deg2, const bf128_t* in_deg0,
-    const bf128_t* in_deg1, const bf128_t* in_deg2, const bf128_t* k_deg0, const bf128_t* k_deg1,
-    const bf128_t* k_deg2, const faest_paramset_t* params) {
+static void
+aes_128_add_round_key_bytes_prover_degree_2(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t* y_deg2,
+                                            const bf128_t* in_deg0, const bf128_t* in_deg1,
+                                            const bf128_t* in_deg2, const bf128_t* k_deg0,
+                                            const bf128_t* k_deg2, const faest_paramset_t* params) {
   const unsigned int Nst      = params->Nst;
   const unsigned int Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    y_deg2[i] = bf128_add(in_deg2[i], k_deg2[i]);
-    y_deg1[i] = bf128_add(in_deg1[i], k_deg1[i]);
     y_deg0[i] = bf128_add(in_deg0[i], k_deg0[i]);
+    y_deg1[i] = in_deg1[i]; // k_deg1[i] is 0
+    y_deg2[i] = bf128_add(in_deg2[i], k_deg2[i]);
   }
 }
 
-static void aes_192_add_round_key_bytes_prover_degree_2(
-    bf192_t* y_deg0, bf192_t* y_deg1, bf192_t* y_deg2, const bf192_t* in_deg0,
-    const bf192_t* in_deg1, const bf192_t* in_deg2, const bf192_t* k_deg0, const bf192_t* k_deg1,
-    const bf192_t* k_deg2, const faest_paramset_t* params) {
+static void
+aes_192_add_round_key_bytes_prover_degree_2(bf192_t* y_deg0, bf192_t* y_deg1, bf192_t* y_deg2,
+                                            const bf192_t* in_deg0, const bf192_t* in_deg1,
+                                            const bf192_t* in_deg2, const bf192_t* k_deg0,
+                                            const bf192_t* k_deg2, const faest_paramset_t* params) {
   const unsigned int Nst      = params->Nst;
   const unsigned int Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    y_deg2[i] = bf192_add(in_deg2[i], k_deg2[i]);
-    y_deg1[i] = bf192_add(in_deg1[i], k_deg1[i]);
     y_deg0[i] = bf192_add(in_deg0[i], k_deg0[i]);
+    y_deg1[i] = in_deg1[i]; // k_deg1[i] is 0
+    y_deg2[i] = bf192_add(in_deg2[i], k_deg2[i]);
   }
 }
 
-static void aes_256_add_round_key_bytes_prover_degree_2(
-    bf256_t* y_deg0, bf256_t* y_deg1, bf256_t* y_deg2, const bf256_t* in_deg0,
-    const bf256_t* in_deg1, const bf256_t* in_deg2, const bf256_t* k_deg0, const bf256_t* k_deg1,
-    const bf256_t* k_deg2, const faest_paramset_t* params) {
+static void
+aes_256_add_round_key_bytes_prover_degree_2(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t* y_deg2,
+                                            const bf256_t* in_deg0, const bf256_t* in_deg1,
+                                            const bf256_t* in_deg2, const bf256_t* k_deg0,
+                                            const bf256_t* k_deg2, const faest_paramset_t* params) {
   const unsigned int Nst      = params->Nst;
   const unsigned int Nstbytes = Nst * 4;
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    y_deg2[i] = bf256_add(in_deg2[i], k_deg2[i]);
-    y_deg1[i] = bf256_add(in_deg1[i], k_deg1[i]);
     y_deg0[i] = bf256_add(in_deg0[i], k_deg0[i]);
+    y_deg1[i] = in_deg1[i]; // k_deg1[i] is 0
+    y_deg2[i] = bf256_add(in_deg2[i], k_deg2[i]);
   }
 }
 
@@ -3011,11 +3014,9 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
 
     // ::17
     bf128_t k_1_deg0[FAEST_128_LAMBDA / 8];
-    bf128_t k_1_deg1[FAEST_128_LAMBDA / 8];
     bf128_t k_1_deg2[FAEST_128_LAMBDA / 8];
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
       k_1_deg0[byte_i] = bf128_mul(k_0_deg0[byte_i], k_0_deg0[byte_i]);
-      k_1_deg1[byte_i] = bf128_zero();
       k_1_deg2[byte_i] = bf128_mul(k_0_deg1[byte_i], k_0_deg1[byte_i]);
     }
 
@@ -3054,7 +3055,7 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
       } else {
         aes_128_add_round_key_bytes_prover_degree_2(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b],
                                                     st_b_deg0[b], st_b_deg1[b], st_b_deg2[b],
-                                                    k_1_deg0, k_1_deg1, k_1_deg2, params);
+                                                    k_1_deg0, k_1_deg2, params);
       }
     }
 
@@ -3223,11 +3224,9 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
 
     // ::17
     bf192_t k_1_deg0[FAEST_192_LAMBDA / 8];
-    bf192_t k_1_deg1[FAEST_192_LAMBDA / 8];
     bf192_t k_1_deg2[FAEST_192_LAMBDA / 8];
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
       k_1_deg0[byte_i] = bf192_mul(k_0_deg0[byte_i], k_0_deg0[byte_i]);
-      k_1_deg1[byte_i] = bf192_zero();
       k_1_deg2[byte_i] = bf192_mul(k_0_deg1[byte_i], k_0_deg1[byte_i]);
     }
 
@@ -3266,7 +3265,7 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
       } else {
         aes_192_add_round_key_bytes_prover_degree_2(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b],
                                                     st_b_deg0[b], st_b_deg1[b], st_b_deg2[b],
-                                                    k_1_deg0, k_1_deg1, k_1_deg2, params);
+                                                    k_1_deg0, k_1_deg2, params);
       }
     }
 
@@ -3435,11 +3434,9 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
 
     // ::17
     bf256_t k_1_deg0[FAEST_256_LAMBDA / 8];
-    bf256_t k_1_deg1[FAEST_256_LAMBDA / 8];
     bf256_t k_1_deg2[FAEST_256_LAMBDA / 8];
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
       k_1_deg0[byte_i] = bf256_mul(k_0_deg0[byte_i], k_0_deg0[byte_i]);
-      k_1_deg1[byte_i] = bf256_zero();
       k_1_deg2[byte_i] = bf256_mul(k_0_deg1[byte_i], k_0_deg1[byte_i]);
     }
 
@@ -3478,7 +3475,7 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
       } else {
         aes_256_add_round_key_bytes_prover_degree_2(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b],
                                                     st_b_deg0[b], st_b_deg1[b], st_b_deg2[b],
-                                                    k_1_deg0, k_1_deg1, k_1_deg2, params);
+                                                    k_1_deg0, k_1_deg2, params);
       }
     }
 
