@@ -336,14 +336,13 @@ static void aes_128_inv_norm_to_conjugates_prover(bf128_t* y_val, bf128_t* y_tag
                                                   const uint8_t x_val, const bf128_t* x_tag) {
   // :1-2
   for (unsigned int i = 0; i != 4; ++i) {
-    y_val[i] = bf128_add(bf128_add(bf128_mul_bit(bf128_one(), get_bit(x_val, 0)),
+    y_val[i] = bf128_add(bf128_add(bf128_from_bit(get_bit(x_val, 0)),
                                    bf128_mul_bit(bf128_beta_squares[i], get_bit(x_val, 1))),
                          bf128_add(bf128_mul_bit(bf128_beta_squares[i + 1], get_bit(x_val, 2)),
                                    bf128_mul_bit(bf128_beta_cubes[i], get_bit(x_val, 3))));
-    y_tag[i] = bf128_add(
-        bf128_add(bf128_mul(bf128_one(), x_tag[0]), bf128_mul(bf128_beta_squares[i], x_tag[1])),
-        bf128_add(bf128_mul(bf128_beta_squares[i + 1], x_tag[2]),
-                  bf128_mul(bf128_beta_cubes[i], x_tag[3])));
+    y_tag[i] = bf128_add(bf128_add(x_tag[0], bf128_mul(bf128_beta_squares[i], x_tag[1])),
+                         bf128_add(bf128_mul(bf128_beta_squares[i + 1], x_tag[2]),
+                                   bf128_mul(bf128_beta_cubes[i], x_tag[3])));
   }
 }
 
@@ -351,14 +350,13 @@ static void aes_192_inv_norm_to_conjugates_prover(bf192_t* y_val, bf192_t* y_tag
                                                   const uint8_t x_val, const bf192_t* x_tag) {
   // :1-2
   for (unsigned int i = 0; i != 4; ++i) {
-    y_val[i] = bf192_add(bf192_add(bf192_mul_bit(bf192_one(), get_bit(x_val, 0)),
+    y_val[i] = bf192_add(bf192_add(bf192_from_bit(get_bit(x_val, 0)),
                                    bf192_mul_bit(bf192_beta_squares[i], get_bit(x_val, 1))),
                          bf192_add(bf192_mul_bit(bf192_beta_squares[i + 1], get_bit(x_val, 2)),
                                    bf192_mul_bit(bf192_beta_cubes[i], get_bit(x_val, 3))));
-    y_tag[i] = bf192_add(
-        bf192_add(bf192_mul(bf192_one(), x_tag[0]), bf192_mul(bf192_beta_squares[i], x_tag[1])),
-        bf192_add(bf192_mul(bf192_beta_squares[i + 1], x_tag[2]),
-                  bf192_mul(bf192_beta_cubes[i], x_tag[3])));
+    y_tag[i] = bf192_add(bf192_add(x_tag[0], bf192_mul(bf192_beta_squares[i], x_tag[1])),
+                         bf192_add(bf192_mul(bf192_beta_squares[i + 1], x_tag[2]),
+                                   bf192_mul(bf192_beta_cubes[i], x_tag[3])));
   }
 }
 
@@ -366,44 +364,40 @@ static void aes_256_inv_norm_to_conjugates_prover(bf256_t* y_val, bf256_t* y_tag
                                                   const uint8_t x_val, const bf256_t* x_tag) {
   // :1-2
   for (unsigned int i = 0; i != 4; ++i) {
-    y_val[i] = bf256_add(bf256_add(bf256_mul_bit(bf256_one(), get_bit(x_val, 0)),
+    y_val[i] = bf256_add(bf256_add(bf256_from_bit(get_bit(x_val, 0)),
                                    bf256_mul_bit(bf256_beta_squares[i], get_bit(x_val, 1))),
                          bf256_add(bf256_mul_bit(bf256_beta_squares[i + 1], get_bit(x_val, 2)),
                                    bf256_mul_bit(bf256_beta_cubes[i], get_bit(x_val, 3))));
-    y_tag[i] = bf256_add(
-        bf256_add(bf256_mul(bf256_one(), x_tag[0]), bf256_mul(bf256_beta_squares[i], x_tag[1])),
-        bf256_add(bf256_mul(bf256_beta_squares[i + 1], x_tag[2]),
-                  bf256_mul(bf256_beta_cubes[i], x_tag[3])));
+    y_tag[i] = bf256_add(bf256_add(x_tag[0], bf256_mul(bf256_beta_squares[i], x_tag[1])),
+                         bf256_add(bf256_mul(bf256_beta_squares[i + 1], x_tag[2]),
+                                   bf256_mul(bf256_beta_cubes[i], x_tag[3])));
   }
 }
 
 static void aes_128_inv_norm_to_conjugates_verifier(bf128_t* y_eval, const bf128_t* x_eval) {
   // :1-2
   for (unsigned int i = 0; i != 4; ++i) {
-    y_eval[i] = bf128_add(
-        bf128_add(bf128_mul(bf128_one(), x_eval[0]), bf128_mul(bf128_beta_squares[i], x_eval[1])),
-        bf128_add(bf128_mul(bf128_beta_squares[i + 1], x_eval[2]),
-                  bf128_mul(bf128_beta_cubes[i], x_eval[3])));
+    y_eval[i] = bf128_add(bf128_add(x_eval[0], bf128_mul(bf128_beta_squares[i], x_eval[1])),
+                          bf128_add(bf128_mul(bf128_beta_squares[i + 1], x_eval[2]),
+                                    bf128_mul(bf128_beta_cubes[i], x_eval[3])));
   }
 }
 
 static void aes_192_inv_norm_to_conjugates_verifier(bf192_t* y_eval, const bf192_t* x_eval) {
   // :1-2
   for (unsigned int i = 0; i != 4; ++i) {
-    y_eval[i] = bf192_add(
-        bf192_add(bf192_mul(bf192_one(), x_eval[0]), bf192_mul(bf192_beta_squares[i], x_eval[1])),
-        bf192_add(bf192_mul(bf192_beta_squares[i + 1], x_eval[2]),
-                  bf192_mul(bf192_beta_cubes[i], x_eval[3])));
+    y_eval[i] = bf192_add(bf192_add(x_eval[0], bf192_mul(bf192_beta_squares[i], x_eval[1])),
+                          bf192_add(bf192_mul(bf192_beta_squares[i + 1], x_eval[2]),
+                                    bf192_mul(bf192_beta_cubes[i], x_eval[3])));
   }
 }
 
 static void aes_256_inv_norm_to_conjugates_verifier(bf256_t* y_eval, const bf256_t* x_eval) {
   // :1-2
   for (unsigned int i = 0; i != 4; ++i) {
-    y_eval[i] = bf256_add(
-        bf256_add(bf256_mul(bf256_one(), x_eval[0]), bf256_mul(bf256_beta_squares[i], x_eval[1])),
-        bf256_add(bf256_mul(bf256_beta_squares[i + 1], x_eval[2]),
-                  bf256_mul(bf256_beta_cubes[i], x_eval[3])));
+    y_eval[i] = bf256_add(bf256_add(x_eval[0], bf256_mul(bf256_beta_squares[i], x_eval[1])),
+                          bf256_add(bf256_mul(bf256_beta_squares[i + 1], x_eval[2]),
+                                    bf256_mul(bf256_beta_cubes[i], x_eval[3])));
   }
 }
 
