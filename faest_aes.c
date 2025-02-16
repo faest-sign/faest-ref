@@ -1889,21 +1889,21 @@ static void constant_to_vole_256_prover(bf256_t* tag, unsigned int n) {
 static void constant_to_vole_128_verifier(bf128_t* key, const uint8_t* val, bf128_t delta,
                                           unsigned int n) {
   for (unsigned int i = 0; i < n; i++) {
-    key[i] = bf128_mul_bit(delta, get_bit(val[i / 8], i % 8));
+    key[i] = bf128_mul_bit(delta, ptr_get_bit(val, i));
   }
 }
 
 static void constant_to_vole_192_verifier(bf192_t* key, const uint8_t* val, bf192_t delta,
                                           unsigned int n) {
   for (unsigned int i = 0; i < n; i++) {
-    key[i] = bf192_mul_bit(delta, get_bit(val[i / 8], i % 8));
+    key[i] = bf192_mul_bit(delta, ptr_get_bit(val, i));
   }
 }
 
 static void constant_to_vole_256_verifier(bf256_t* key, const uint8_t* val, bf256_t delta,
                                           unsigned int n) {
   for (unsigned int i = 0; i < n; i++) {
-    key[i] = bf256_mul_bit(delta, get_bit(val[i / 8], i % 8));
+    key[i] = bf256_mul_bit(delta, ptr_get_bit(val, i));
   }
 }
 
@@ -3024,29 +3024,26 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
     bf128_t st_b_deg0[2][FAEST_128_LAMBDA / 8];
     bf128_t st_b_deg1[2][FAEST_128_LAMBDA / 8];
     bf128_t st_b_deg2[2][FAEST_128_LAMBDA / 8];
-    bf128_t st_b_deg0_tmp[2][FAEST_128_LAMBDA / 8];
-    bf128_t st_b_deg1_tmp[2][FAEST_128_LAMBDA / 8];
-    bf128_t st_b_deg2_tmp[2][FAEST_128_LAMBDA / 8];
     memset(st_b_deg0, 0x00, sizeof(st_b_deg0));
     memset(st_b_deg1, 0x00, sizeof(st_b_deg1));
     memset(st_b_deg2, 0x00, sizeof(st_b_deg2));
-    memset(st_b_deg0_tmp, 0x00, sizeof(st_b_deg0_tmp));
-    memset(st_b_deg1_tmp, 0x00, sizeof(st_b_deg1_tmp));
-    memset(st_b_deg2_tmp, 0x00, sizeof(st_b_deg2_tmp));
-
     for (unsigned int b = 0; b < 2; b++) {
+      bf128_t st_b_deg0_tmp[FAEST_128_LAMBDA / 8];
+      bf128_t st_b_deg1_tmp[FAEST_128_LAMBDA / 8];
+      bf128_t st_b_deg2_tmp[FAEST_128_LAMBDA / 8];
+      memset(st_b_deg0_tmp, 0x00, sizeof(st_b_deg0_tmp));
+      memset(st_b_deg1_tmp, 0x00, sizeof(st_b_deg1_tmp));
+      memset(st_b_deg2_tmp, 0x00, sizeof(st_b_deg2_tmp));
+
       // ::19
       aes_128_sbox_affine_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_dash_deg0,
                                  st_dash_deg1, st_dash_deg2, b, params);
       // ::20
-      aes_128_shiftrows_prover(st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg0[b],
+      aes_128_shiftrows_prover(st_b_deg0_tmp, st_b_deg1_tmp, st_b_deg2_tmp, st_b_deg0[b],
                                st_b_deg1[b], st_b_deg2[b], params);
-      memcpy(st_b_deg0[b], st_b_deg0_tmp[b], sizeof(bf128_t) * Nstbytes);
-      memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf128_t) * Nstbytes);
-      memcpy(st_b_deg2[b], st_b_deg2_tmp[b], sizeof(bf128_t) * Nstbytes);
       // ::21
-      aes_128_mix_columns_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0_tmp[b],
-                                 st_b_deg1_tmp[b], st_b_deg2_tmp[b], b, params);
+      aes_128_mix_columns_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0_tmp,
+                                 st_b_deg1_tmp, st_b_deg2_tmp, b, params);
       // ::22
       if (b == 0) {
         aes_128_add_round_key_bytes_prover_degree_1(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b],
@@ -3234,29 +3231,26 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
     bf192_t st_b_deg0[2][FAEST_192_LAMBDA / 8];
     bf192_t st_b_deg1[2][FAEST_192_LAMBDA / 8];
     bf192_t st_b_deg2[2][FAEST_192_LAMBDA / 8];
-    bf192_t st_b_deg0_tmp[2][FAEST_192_LAMBDA / 8];
-    bf192_t st_b_deg1_tmp[2][FAEST_192_LAMBDA / 8];
-    bf192_t st_b_deg2_tmp[2][FAEST_192_LAMBDA / 8];
     memset(st_b_deg0, 0x00, sizeof(st_b_deg0));
     memset(st_b_deg1, 0x00, sizeof(st_b_deg1));
     memset(st_b_deg2, 0x00, sizeof(st_b_deg2));
-    memset(st_b_deg0_tmp, 0x00, sizeof(st_b_deg0_tmp));
-    memset(st_b_deg1_tmp, 0x00, sizeof(st_b_deg1_tmp));
-    memset(st_b_deg2_tmp, 0x00, sizeof(st_b_deg2_tmp));
-
     for (unsigned int b = 0; b < 2; b++) {
+      bf192_t st_b_deg0_tmp[FAEST_192_LAMBDA / 8];
+      bf192_t st_b_deg1_tmp[FAEST_192_LAMBDA / 8];
+      bf192_t st_b_deg2_tmp[FAEST_192_LAMBDA / 8];
+      memset(st_b_deg0_tmp, 0x00, sizeof(st_b_deg0_tmp));
+      memset(st_b_deg1_tmp, 0x00, sizeof(st_b_deg1_tmp));
+      memset(st_b_deg2_tmp, 0x00, sizeof(st_b_deg2_tmp));
+
       // ::19
       aes_192_sbox_affine_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_dash_deg0,
                                  st_dash_deg1, st_dash_deg2, b, params);
       // ::20
-      aes_192_shiftrows_prover(st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg0[b],
+      aes_192_shiftrows_prover(st_b_deg0_tmp, st_b_deg1_tmp, st_b_deg2_tmp, st_b_deg0[b],
                                st_b_deg1[b], st_b_deg2[b], params);
-      memcpy(st_b_deg0[b], st_b_deg0_tmp[b], sizeof(bf192_t) * Nstbytes);
-      memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf192_t) * Nstbytes);
-      memcpy(st_b_deg2[b], st_b_deg2_tmp[b], sizeof(bf192_t) * Nstbytes);
       // ::21
-      aes_192_mix_columns_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0_tmp[b],
-                                 st_b_deg1_tmp[b], st_b_deg2_tmp[b], b, params);
+      aes_192_mix_columns_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0_tmp,
+                                 st_b_deg1_tmp, st_b_deg2_tmp, b, params);
       // ::22
       if (b == 0) {
         aes_192_add_round_key_bytes_prover_degree_1(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b],
@@ -3444,29 +3438,27 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
     bf256_t st_b_deg0[2][FAEST_256_LAMBDA / 8];
     bf256_t st_b_deg1[2][FAEST_256_LAMBDA / 8];
     bf256_t st_b_deg2[2][FAEST_256_LAMBDA / 8];
-    bf256_t st_b_deg0_tmp[2][FAEST_256_LAMBDA / 8];
-    bf256_t st_b_deg1_tmp[2][FAEST_256_LAMBDA / 8];
-    bf256_t st_b_deg2_tmp[2][FAEST_256_LAMBDA / 8];
     memset(st_b_deg0, 0x00, sizeof(st_b_deg0));
     memset(st_b_deg1, 0x00, sizeof(st_b_deg1));
     memset(st_b_deg2, 0x00, sizeof(st_b_deg2));
-    memset(st_b_deg0_tmp, 0x00, sizeof(st_b_deg0_tmp));
-    memset(st_b_deg1_tmp, 0x00, sizeof(st_b_deg1_tmp));
-    memset(st_b_deg2_tmp, 0x00, sizeof(st_b_deg2_tmp));
 
     for (unsigned int b = 0; b < 2; b++) {
+      bf256_t st_b_deg0_tmp[FAEST_256_LAMBDA / 8];
+      bf256_t st_b_deg1_tmp[FAEST_256_LAMBDA / 8];
+      bf256_t st_b_deg2_tmp[FAEST_256_LAMBDA / 8];
+      memset(st_b_deg0_tmp, 0x00, sizeof(st_b_deg0_tmp));
+      memset(st_b_deg1_tmp, 0x00, sizeof(st_b_deg1_tmp));
+      memset(st_b_deg2_tmp, 0x00, sizeof(st_b_deg2_tmp));
+
       // ::19
       aes_256_sbox_affine_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_dash_deg0,
                                  st_dash_deg1, st_dash_deg2, b, params);
       // ::20
-      aes_256_shiftrows_prover(st_b_deg0_tmp[b], st_b_deg1_tmp[b], st_b_deg2_tmp[b], st_b_deg0[b],
+      aes_256_shiftrows_prover(st_b_deg0_tmp, st_b_deg1_tmp, st_b_deg2_tmp, st_b_deg0[b],
                                st_b_deg1[b], st_b_deg2[b], params);
-      memcpy(st_b_deg0[b], st_b_deg0_tmp[b], sizeof(bf256_t) * Nstbytes);
-      memcpy(st_b_deg1[b], st_b_deg1_tmp[b], sizeof(bf256_t) * Nstbytes);
-      memcpy(st_b_deg2[b], st_b_deg2_tmp[b], sizeof(bf256_t) * Nstbytes);
       // ::21
-      aes_256_mix_columns_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0_tmp[b],
-                                 st_b_deg1_tmp[b], st_b_deg2_tmp[b], b, params);
+      aes_256_mix_columns_prover(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b], st_b_deg0_tmp,
+                                 st_b_deg1_tmp, st_b_deg2_tmp, b, params);
       // ::22
       if (b == 0) {
         aes_256_add_round_key_bytes_prover_degree_1(st_b_deg0[b], st_b_deg1[b], st_b_deg2[b],
