@@ -854,6 +854,38 @@ static void aes_256_shiftrows_verifier(bf256_t* out_deg1, const bf256_t* in_deg1
 }
 
 // MIX COLOUMNS
+
+static const bf128_t bf128_bc_2 =
+    BF128C(UINT64_C(0xa13fe8ac5560ce0d), UINT64_C(0x053d8555a9979a1c));
+static const bf128_t bf128_bc_3 =
+    BF128C(UINT64_C(0xa13fe8ac5560ce0c), UINT64_C(0x053d8555a9979a1c));
+static const bf128_t bf128_bc_2_sq =
+    BF128C(UINT64_C(0xec7759ca3488aee1), UINT64_C(0x4cf4b7439cbfbb84));
+static const bf128_t bf128_bc_3_sq =
+    BF128C(UINT64_C(0xec7759ca3488aee0), UINT64_C(0x4cf4b7439cbfbb84));
+
+static const bf192_t bf192_bc_2 = BF192C(UINT64_C(0xccc8a3d56f389763), UINT64_C(0xe665d76c966ebdea),
+                                         UINT64_C(0x310bc8140e6b3662));
+static const bf192_t bf192_bc_3 = BF192C(UINT64_C(0xccc8a3d56f389762), UINT64_C(0xe665d76c966ebdea),
+                                         UINT64_C(0x310bc8140e6b3662));
+static const bf192_t bf192_bc_2_sq = BF192C(
+    UINT64_C(0xb233619e7cf450bb), UINT64_C(0x7bf61f19d5633f26), UINT64_C(0xda933726d491db34));
+static const bf192_t bf192_bc_3_sq = BF192C(
+    UINT64_C(0xb233619e7cf450ba), UINT64_C(0x7bf61f19d5633f26), UINT64_C(0xda933726d491db34));
+
+static const bf256_t bf256_bc_2 =
+    BF256C(UINT64_C(0x969788420bdefee7), UINT64_C(0xbed68d38a0474e67), UINT64_C(0xdf229845f8f1e16a),
+           UINT64_C(0x04c9a8cf20c95833));
+static const bf256_t bf256_bc_3 =
+    BF256C(UINT64_C(0x969788420bdefee6), UINT64_C(0xbed68d38a0474e67), UINT64_C(0xdf229845f8f1e16a),
+           UINT64_C(0x04c9a8cf20c95833));
+static const bf256_t bf256_bc_2_sq =
+    BF256C(UINT64_C(0xa95af52ad52289c1), UINT64_C(0x2ba5c48d2c42072f), UINT64_C(0xd14a0d376c00b0ea),
+           UINT64_C(0x064e4d699c5b4af1));
+static const bf256_t bf256_bc_3_sq =
+    BF256C(UINT64_C(0xa95af52ad52289c0), UINT64_C(0x2ba5c48d2c42072f), UINT64_C(0xd14a0d376c00b0ea),
+           UINT64_C(0x064e4d699c5b4af1));
+
 static void aes_128_mix_columns_prover(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t* y_deg2,
                                        const bf128_t* in_deg0, const bf128_t* in_deg1,
                                        const bf128_t* in_deg2, bool dosq,
@@ -861,12 +893,8 @@ static void aes_128_mix_columns_prover(bf128_t* y_deg0, bf128_t* y_deg1, bf128_t
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf128_t v2 = bf128_byte_combine_bits(2);
-  bf128_t v3 = bf128_byte_combine_bits(3);
-  if (dosq) {
-    v2 = bf128_mul(v2, v2);
-    v3 = bf128_mul(v3, v3);
-  }
+  const bf128_t v2 = dosq ? bf128_bc_2_sq : bf128_bc_2;
+  const bf128_t v3 = dosq ? bf128_bc_3_sq : bf128_bc_3;
 
   for (unsigned int c = 0; c < Nst; c++) {
     unsigned int i0 = 4 * c;
@@ -960,12 +988,8 @@ static void aes_192_mix_columns_prover(bf192_t* y_deg0, bf192_t* y_deg1, bf192_t
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf192_t v2 = bf192_byte_combine_bits(2);
-  bf192_t v3 = bf192_byte_combine_bits(3);
-  if (dosq) {
-    v2 = bf192_mul(v2, v2);
-    v3 = bf192_mul(v3, v3);
-  }
+  const bf192_t v2 = dosq ? bf192_bc_2_sq : bf192_bc_2;
+  const bf192_t v3 = dosq ? bf192_bc_3_sq : bf192_bc_3;
 
   for (unsigned int c = 0; c < Nst; c++) {
     unsigned int i0 = 4 * c;
@@ -1059,12 +1083,8 @@ static void aes_256_mix_columns_prover(bf256_t* y_deg0, bf256_t* y_deg1, bf256_t
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf256_t v2 = bf256_byte_combine_bits(2);
-  bf256_t v3 = bf256_byte_combine_bits(3);
-  if (dosq) {
-    v2 = bf256_mul(v2, v2);
-    v3 = bf256_mul(v3, v3);
-  }
+  const bf256_t v2 = dosq ? bf256_bc_2_sq : bf256_bc_2;
+  const bf256_t v3 = dosq ? bf256_bc_3_sq : bf256_bc_3;
 
   for (unsigned int c = 0; c < Nst; c++) {
     unsigned int i0 = 4 * c;
@@ -1156,12 +1176,8 @@ static void aes_128_mix_columns_verifier(bf128_t* y_deg1, const bf128_t* in_deg1
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf128_t v2 = bf128_byte_combine_bits(2);
-  bf128_t v3 = bf128_byte_combine_bits(3);
-  if (dosq) {
-    v2 = bf128_mul(v2, v2);
-    v3 = bf128_mul(v3, v3);
-  }
+  const bf128_t v2 = dosq ? bf128_bc_2_sq : bf128_bc_2;
+  const bf128_t v3 = dosq ? bf128_bc_3_sq : bf128_bc_3;
 
   for (unsigned int c = 0; c < Nst; c++) {
     unsigned int i0 = 4 * c;
@@ -1200,12 +1216,8 @@ static void aes_192_mix_columns_verifier(bf192_t* y_deg1, const bf192_t* in_deg1
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf192_t v2 = bf192_byte_combine_bits(2);
-  bf192_t v3 = bf192_byte_combine_bits(3);
-  if (dosq) {
-    v2 = bf192_mul(v2, v2);
-    v3 = bf192_mul(v3, v3);
-  }
+  const bf192_t v2 = dosq ? bf192_bc_2_sq : bf192_bc_2;
+  const bf192_t v3 = dosq ? bf192_bc_3_sq : bf192_bc_3;
 
   for (unsigned int c = 0; c < Nst; c++) {
     unsigned int i0 = 4 * c;
@@ -1244,12 +1256,8 @@ static void aes_256_mix_columns_verifier(bf256_t* y_deg1, const bf256_t* in_deg1
   const unsigned int Nst = params->Nst;
 
   //  ::2-4
-  bf256_t v2 = bf256_byte_combine_bits(2);
-  bf256_t v3 = bf256_byte_combine_bits(3);
-  if (dosq) {
-    v2 = bf256_mul(v2, v2);
-    v3 = bf256_mul(v3, v3);
-  }
+  const bf256_t v2 = dosq ? bf256_bc_2_sq : bf256_bc_2;
+  const bf256_t v3 = dosq ? bf256_bc_3_sq : bf256_bc_3;
 
   for (unsigned int c = 0; c < Nst; c++) {
     unsigned int i0 = 4 * c;

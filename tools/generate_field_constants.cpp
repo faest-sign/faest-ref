@@ -201,4 +201,76 @@ int main() {
     }
     std::cout << "};\n";
   }
+
+  {
+    auto v2 = bf128_byte_combine_bits(2);
+    auto v3 = bf128_byte_combine_bits(3);
+
+    std::cout << "static const bf128_t bf128_bc_2 = ";
+    print_bf128(v2);
+    std::cout << ";\n";
+
+    std::cout << "static const bf128_t bf128_bc_3 = ";
+    print_bf128(v3);
+    std::cout << ";\n";
+
+    v2 = bf128_mul(v2, v2);
+    v3 = bf128_mul(v3, v3);
+
+    std::cout << "static const bf128_t bf128_bc_2_sq = ";
+    print_bf128(v2);
+    std::cout << ";\n";
+
+    std::cout << "static const bf128_t bf128_bc_3_sq = ";
+    print_bf128(v3);
+    std::cout << ";\n";
+  }
+
+  {
+    auto v2 = bf192_byte_combine_bits(2);
+    auto v3 = bf192_byte_combine_bits(3);
+
+    std::cout << "static const bf192_t bf192_bc_2 = ";
+    print_bf192(v2);
+    std::cout << ";\n";
+
+    std::cout << "static const bf192_t bf192_bc_3 = ";
+    print_bf192(v3);
+    std::cout << ";\n";
+
+    v2 = bf192_mul(v2, v2);
+    v3 = bf192_mul(v3, v3);
+
+    std::cout << "static const bf192_t bf192_bc_2_sq = ";
+    print_bf192(v2);
+    std::cout << ";\n";
+
+    std::cout << "static const bf192_t bf192_bc_3_sq = ";
+    print_bf192(v3);
+    std::cout << ";\n";
+  }
+
+  {
+    auto v2 = bf256_byte_combine_bits(2);
+    auto v3 = bf256_byte_combine_bits(3);
+
+    std::cout << "static const bf256_t bf256_bc_2 = ";
+    print_bf256(v2);
+    std::cout << ";\n";
+
+    std::cout << "static const bf256_t bf256_bc_3 = ";
+    print_bf256(v3);
+    std::cout << ";\n";
+
+    v2 = bf256_mul(v2, v2);
+    v3 = bf256_mul(v3, v3);
+
+    std::cout << "static const bf256_t bf256_bc_2_sq = ";
+    print_bf256(v2);
+    std::cout << ";\n";
+
+    std::cout << "static const bf256_t bf256_bc_3_sq = ";
+    print_bf256(v3);
+    std::cout << ";\n";
+  }
 }
