@@ -3101,14 +3101,12 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
                                      st_b_deg1[0][byte_i]));
     }
     if (r != (FAEST_128_R / 2) - 1) {
-      uint8_t* tmp_state     = malloc(Nstbits / 8);
-      bf128_t* tmp_state_tag = BF128_ALLOC(Nstbits);
+      uint8_t* tmp_state     = s;
+      bf128_t* tmp_state_tag = s_tag;
       aes_128_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
       aes_128_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag,
                                    k + (2 * r + 2) * Nstbits / 8, k_tag + (2 * r + 2) * Nstbits,
                                    params);
-      faest_aligned_free(tmp_state_tag);
-      free(tmp_state);
     }
 
     faest_aligned_free(s_tilde_tag);
@@ -3295,14 +3293,12 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
                                      st_b_deg1[0][byte_i]));
     }
     if (r != (FAEST_192_R / 2) - 1) {
-      uint8_t* tmp_state     = malloc(Nstbits / 8);
-      bf192_t* tmp_state_tag = BF192_ALLOC(Nstbits);
+      uint8_t* tmp_state     = s;
+      bf192_t* tmp_state_tag = s_tag;
       aes_192_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
       aes_192_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag,
                                    k + (2 * r + 2) * Nstbits / 8, k_tag + (2 * r + 2) * Nstbits,
                                    params);
-      faest_aligned_free(tmp_state_tag);
-      free(tmp_state);
     }
 
     faest_aligned_free(s_tilde_tag);
@@ -3490,14 +3486,12 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
                                      st_b_deg1[0][byte_i]));
     }
     if (r != (FAEST_256_R / 2) - 1) {
-      uint8_t* tmp_state     = malloc(Nstbits / 8);
-      bf256_t* tmp_state_tag = BF256_ALLOC(Nstbits);
+      uint8_t* tmp_state     = s;
+      bf256_t* tmp_state_tag = s_tag;
       aes_256_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
       aes_256_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag,
                                    k + (2 * r + 2) * Nstbits / 8, k_tag + (2 * r + 2) * Nstbits,
                                    params);
-      faest_aligned_free(tmp_state_tag);
-      free(tmp_state);
     }
 
     faest_aligned_free(s_tilde_tag);
