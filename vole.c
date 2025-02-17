@@ -78,6 +78,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   bavc_commit(bavc, rootKey, iv, params);
 
   uint8_t* ui = malloc(tau * ellhat_bytes);
+  assert(ui);
 
   unsigned int v_idx = 0;
   uint8_t* sd_i      = bavc->sd;
@@ -120,6 +121,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
   bavc_rec_t bavc_rec;
   bavc_rec.h = com;
   bavc_rec.s = malloc((L - tau) * lambda_bytes);
+  assert(bavc_rec.s);
 
   if (!bavc_reconstruct(&bavc_rec, decom_i, i_delta, iv, params)) {
     free(bavc_rec.s);
@@ -128,6 +130,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
 
   uint8_t* sd   = malloc((1 << k) * lambda_bytes);
   uint8_t* qtmp = malloc(MAX_DEPTH * ellhat_bytes);
+  assert(sd);
+  assert(qtmp);
 
   // Step: 1
   unsigned int q_idx = 0;

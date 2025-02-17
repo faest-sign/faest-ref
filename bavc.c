@@ -108,6 +108,11 @@ static void bavc_commit_faest(bavc_t* bavc, const uint8_t* root_key, const uint8
   // Step: 1..3
   bavc->k = NODE(nodes, 0, lambda_bytes);
 
+  assert(bavc->h);
+  assert(bavc->com);
+  assert(bavc->sd);
+  assert(bavc->k);
+
   // Step: 4..5
   // compute commitments for remaining instances
   for (unsigned int i = 0, offset = 0; i < params->tau; ++i) {
@@ -158,6 +163,11 @@ static void bavc_commit_faest_em(bavc_t* bavc, const uint8_t* rootKey, const uin
 
   // Step: 1..3
   bavc->k = NODE(nodes, 0, lambda_bytes);
+
+  assert(bavc->h);
+  assert(bavc->com);
+  assert(bavc->sd);
+  assert(bavc->k);
 
   // Step: 4..5
   // compute commitments for remaining instances
