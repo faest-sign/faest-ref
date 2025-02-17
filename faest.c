@@ -320,9 +320,12 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // ::6-7
   bavc_t bavc;
   uint8_t* u = malloc(ell_hat_bytes);
+  assert(u);
   // v has \hat \ell rows, \lambda columns, storing in column-major order
   uint8_t** V = malloc(lambda * sizeof(uint8_t*));
-  V[0]        = calloc(lambda, ell_hat_bytes);
+  assert(V);
+  V[0] = calloc(lambda, ell_hat_bytes);
+  assert(V[0]);
   for (unsigned int i = 1; i < lambda; ++i) {
     V[i] = V[0] + i * ell_hat_bytes;
   }
@@ -434,7 +437,9 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   // Step: 6-7
   // q is a \hat \ell \times \lambda matrix
   uint8_t** q = malloc(lambda * sizeof(uint8_t*));
-  q[0]        = calloc(lambda, ell_hat_bytes);
+  assert(q);
+  q[0] = calloc(lambda, ell_hat_bytes);
+  assert(q[0]);
   for (unsigned int i = 1; i < lambda; ++i) {
     q[i] = q[0] + i * ell_hat_bytes;
   }
