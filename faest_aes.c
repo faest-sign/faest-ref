@@ -2965,13 +2965,6 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
   bf128_t* st_dash_deg1   = BF128_ALLOC(8 * Nstbytes);
   bf128_t* st_dash_deg0   = BF128_ALLOC(8 * Nstbytes);
 
-  bf128_t* state_bytewise_deg2    = BF128_ALLOC(Nstbytes);
-  bf128_t* state_bytewise_deg1    = BF128_ALLOC(Nstbytes);
-  bf128_t* state_bytewise_deg0    = BF128_ALLOC(Nstbytes);
-  bf128_t* state_sq_bytewise_deg2 = BF128_ALLOC(Nstbytes);
-  bf128_t* state_sq_bytewise_deg1 = BF128_ALLOC(Nstbytes);
-  bf128_t* state_sq_bytewise_deg0 = BF128_ALLOC(Nstbytes);
-
   // ::2
   for (unsigned int r = 0; r < FAEST_128_R / 2; r++) {
     // ::3-4
@@ -3135,12 +3128,6 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
     free(s);
   }
 
-  faest_aligned_free(state_sq_bytewise_deg0);
-  faest_aligned_free(state_sq_bytewise_deg1);
-  faest_aligned_free(state_sq_bytewise_deg2);
-  faest_aligned_free(state_bytewise_deg0);
-  faest_aligned_free(state_bytewise_deg1);
-  faest_aligned_free(state_bytewise_deg2);
   faest_aligned_free(st_dash_deg0);
   faest_aligned_free(st_dash_deg1);
   faest_aligned_free(st_dash_deg2);
@@ -3171,13 +3158,6 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
   bf192_t* st_dash_deg2   = BF192_ALLOC(8 * Nstbytes);
   bf192_t* st_dash_deg1   = BF192_ALLOC(8 * Nstbytes);
   bf192_t* st_dash_deg0   = BF192_ALLOC(8 * Nstbytes);
-
-  bf192_t* state_bytewise_deg2    = BF192_ALLOC(Nstbytes);
-  bf192_t* state_bytewise_deg1    = BF192_ALLOC(Nstbytes);
-  bf192_t* state_bytewise_deg0    = BF192_ALLOC(Nstbytes);
-  bf192_t* state_sq_bytewise_deg2 = BF192_ALLOC(Nstbytes);
-  bf192_t* state_sq_bytewise_deg1 = BF192_ALLOC(Nstbytes);
-  bf192_t* state_sq_bytewise_deg0 = BF192_ALLOC(Nstbytes);
 
   // ::2
   for (unsigned int r = 0; r < FAEST_192_R / 2; r++) {
@@ -3342,12 +3322,6 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
     free(s);
   }
 
-  faest_aligned_free(state_sq_bytewise_deg0);
-  faest_aligned_free(state_sq_bytewise_deg1);
-  faest_aligned_free(state_sq_bytewise_deg2);
-  faest_aligned_free(state_bytewise_deg0);
-  faest_aligned_free(state_bytewise_deg1);
-  faest_aligned_free(state_bytewise_deg2);
   faest_aligned_free(st_dash_deg0);
   faest_aligned_free(st_dash_deg1);
   faest_aligned_free(st_dash_deg2);
@@ -3378,13 +3352,6 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
   bf256_t* st_dash_deg2   = BF256_ALLOC(8 * Nstbytes);
   bf256_t* st_dash_deg1   = BF256_ALLOC(8 * Nstbytes);
   bf256_t* st_dash_deg0   = BF256_ALLOC(8 * Nstbytes);
-
-  bf256_t* state_bytewise_deg2    = BF256_ALLOC(Nstbytes);
-  bf256_t* state_bytewise_deg1    = BF256_ALLOC(Nstbytes);
-  bf256_t* state_bytewise_deg0    = BF256_ALLOC(Nstbytes);
-  bf256_t* state_sq_bytewise_deg2 = BF256_ALLOC(Nstbytes);
-  bf256_t* state_sq_bytewise_deg1 = BF256_ALLOC(Nstbytes);
-  bf256_t* state_sq_bytewise_deg0 = BF256_ALLOC(Nstbytes);
 
   // ::2
   for (unsigned int r = 0; r < FAEST_256_R / 2; r++) {
@@ -3550,12 +3517,6 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
     free(s);
   }
 
-  faest_aligned_free(state_sq_bytewise_deg0);
-  faest_aligned_free(state_sq_bytewise_deg1);
-  faest_aligned_free(state_sq_bytewise_deg2);
-  faest_aligned_free(state_bytewise_deg0);
-  faest_aligned_free(state_bytewise_deg1);
-  faest_aligned_free(state_bytewise_deg2);
   faest_aligned_free(st_dash_deg0);
   faest_aligned_free(st_dash_deg1);
   faest_aligned_free(st_dash_deg2);
