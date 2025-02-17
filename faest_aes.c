@@ -3649,12 +3649,7 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
                                      params);
     } else {
       // ::27-28
-      unsigned int idx = 0;
-      for (unsigned int i = ((Nstbits / 2) + (Nstbits / 2) * 3 * r);
-           i < ((Nstbits / 2 * 3 * r) + (Nstbits / 2 * 3)); i++) {
-        s_tilde_key[idx] = w_key[i];
-        idx++;
-      }
+      memcpy(s_tilde_key, w_key + (Nstbits / 2) + (Nstbits / 2) * 3 * r, Nstbits * sizeof(bf128_t));
     }
     // ::29
     bf128_t* s_dash_dash_key = BF128_ALLOC(Nstbits);
@@ -3786,12 +3781,7 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
                                      params);
     } else {
       // ::27-28
-      unsigned int idx = 0;
-      for (unsigned int i = ((Nstbits / 2) + (Nstbits / 2) * 3 * r);
-           i < ((Nstbits / 2 * 3 * r) + (Nstbits / 2 * 3)); i++) {
-        s_tilde_key[idx] = w_key[i];
-        idx++;
-      }
+      memcpy(s_tilde_key, w_key + (Nstbits / 2) + (Nstbits / 2) * 3 * r, Nstbits * sizeof(bf192_t));
     }
     // ::29
     bf192_t* s_dash_dash_key = BF192_ALLOC(Nstbits);
@@ -3923,12 +3913,7 @@ static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf25
                                      params);
     } else {
       // ::27-28
-      unsigned int idx = 0;
-      for (unsigned int i = ((Nstbits / 2) + (Nstbits / 2) * 3 * r);
-           i < ((Nstbits / 2 * 3 * r) + (Nstbits / 2 * 3)); i++) {
-        s_tilde_key[idx] = w_key[i];
-        idx++;
-      }
+      memcpy(s_tilde_key, w_key + (Nstbits / 2) + (Nstbits / 2) * 3 * r, Nstbits * sizeof(bf256_t));
     }
     // ::29
     bf256_t* s_dash_dash_key = BF256_ALLOC(Nstbits);

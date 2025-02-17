@@ -88,6 +88,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
         convert_to_vole(iv, sd_i, false, i, ellhat_bytes, ui + i * ellhat_bytes, v[v_idx], params);
     sd_i += lambda_bytes * bavc_max_node_index(i, tau_1, k);
   }
+
   // ensure 0-padding up to lambda
   for (; v_idx != lambda; ++v_idx) {
     memset(v[v_idx], 0, ellhat_bytes);
