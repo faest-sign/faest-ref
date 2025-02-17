@@ -1440,9 +1440,7 @@ static void aes_128_inverse_shiftrows_prover(uint8_t* out, bf128_t* out_tag, con
       }
 
       out[4 * c + r] = in[i];
-      for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
-        out_tag[8 * (4 * c + r) + byte_idx] = in_tag[8 * i + byte_idx];
-      }
+      memcpy(out_tag + 8 * (4 * c + r), in_tag + 8 * i, 8 * sizeof(bf128_t));
     }
   }
 }
@@ -1462,9 +1460,7 @@ static void aes_192_inverse_shiftrows_prover(uint8_t* out, bf192_t* out_tag, con
       }
 
       out[4 * c + r] = in[i];
-      for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
-        out_tag[8 * (4 * c + r) + byte_idx] = in_tag[8 * i + byte_idx];
-      }
+      memcpy(out_tag + 8 * (4 * c + r), in_tag + 8 * i, 8 * sizeof(bf192_t));
     }
   }
 }
@@ -1484,9 +1480,7 @@ static void aes_256_inverse_shiftrows_prover(uint8_t* out, bf256_t* out_tag, con
       }
 
       out[4 * c + r] = in[i];
-      for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
-        out_tag[8 * (4 * c + r) + byte_idx] = in_tag[8 * i + byte_idx];
-      }
+      memcpy(out_tag + 8 * (4 * c + r), in_tag + 8 * i, 8 * sizeof(bf256_t));
     }
   }
 }
@@ -1504,9 +1498,7 @@ static void aes_128_inverse_shiftrows_verifier(bf128_t* out_tag, const bf128_t* 
         i = 4 * ((c + Nst - r - 1) % Nst) + r;
       }
 
-      for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
-        out_tag[8 * (4 * c + r) + byte_idx] = in_tag[8 * i + byte_idx];
-      }
+      memcpy(out_tag + 8 * (4 * c + r), in_tag + 8 * i, 8 * sizeof(bf128_t));
     }
   }
 }
@@ -1524,9 +1516,7 @@ static void aes_192_inverse_shiftrows_verifier(bf192_t* out_tag, const bf192_t* 
         i = 4 * ((c + Nst - r - 1) % Nst) + r;
       }
 
-      for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
-        out_tag[8 * (4 * c + r) + byte_idx] = in_tag[8 * i + byte_idx];
-      }
+      memcpy(out_tag + 8 * (4 * c + r), in_tag + 8 * i, 8 * sizeof(bf192_t));
     }
   }
 }
@@ -1544,9 +1534,7 @@ static void aes_256_inverse_shiftrows_verifier(bf256_t* out_tag, const bf256_t* 
         i = 4 * ((c + Nst - r - 1) % Nst) + r;
       }
 
-      for (unsigned int byte_idx = 0; byte_idx < 8; byte_idx++) {
-        out_tag[8 * (4 * c + r) + byte_idx] = in_tag[8 * i + byte_idx];
-      }
+      memcpy(out_tag + 8 * (4 * c + r), in_tag + 8 * i, 8 * sizeof(bf256_t));
     }
   }
 }
