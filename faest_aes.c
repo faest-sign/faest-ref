@@ -3688,11 +3688,10 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
                                            bf128_mul(delta, st_b_key[0][byte_i])));
     }
     if (r != (FAEST_128_R / 2) - 1) {
-      bf128_t* tmp_state_key = BF128_ALLOC(Nstbits);
+      bf128_t* tmp_state_key = s_state_key;
       aes_128_bitwise_mix_column_verifier(tmp_state_key, s_tilde_key, params);
       aes_128_add_round_key_verifier(state_bits_key, tmp_state_key,
                                      rkeys_key + (2 * r + 2) * Nstbits, params);
-      faest_aligned_free(tmp_state_key);
     }
     faest_aligned_free(s_tilde_key);
     faest_aligned_free(s_dash_dash_key);
@@ -3828,11 +3827,10 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
                                            bf192_mul(delta, st_b_key[0][byte_i])));
     }
     if (r != (FAEST_192_R / 2) - 1) {
-      bf192_t* tmp_state_key = BF192_ALLOC(Nstbits);
+      bf192_t* tmp_state_key = s_state_key;
       aes_192_bitwise_mix_column_verifier(tmp_state_key, s_tilde_key, params);
       aes_192_add_round_key_verifier(state_bits_key, tmp_state_key,
                                      rkeys_key + (2 * r + 2) * Nstbits, params);
-      faest_aligned_free(tmp_state_key);
     }
     faest_aligned_free(s_tilde_key);
     faest_aligned_free(s_dash_dash_key);
@@ -3968,11 +3966,10 @@ static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf25
                                            bf256_mul(delta, st_b_key[0][byte_i])));
     }
     if (r != (FAEST_256_R / 2) - 1) {
-      bf256_t* tmp_state_key = BF256_ALLOC(Nstbits);
+      bf256_t* tmp_state_key = s_state_key;
       aes_256_bitwise_mix_column_verifier(tmp_state_key, s_tilde_key, params);
       aes_256_add_round_key_verifier(state_bits_key, tmp_state_key,
                                      rkeys_key + (2 * r + 2) * Nstbits, params);
-      faest_aligned_free(tmp_state_key);
     }
     faest_aligned_free(s_tilde_key);
     faest_aligned_free(s_dash_dash_key);
