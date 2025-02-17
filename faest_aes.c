@@ -2956,7 +2956,7 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
   const unsigned int Nstbytes = Nstbits / 8;
 
   /// ::1 AddFAEST_128_RoundKey
-  uint8_t* state_bits     = malloc(Nstbits / 8);
+  uint8_t* state_bits     = malloc(Nstbytes);
   bf128_t* state_bits_tag = BF128_ALLOC(Nstbits);
   assert(state_bits);
   assert(state_bits_tag);
@@ -3012,7 +3012,7 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
     // ::15-16
     bf128_t k_0_deg0[FAEST_128_LAMBDA / 8];
     bf128_t k_0_deg1[FAEST_128_LAMBDA / 8];
-    aes_128_state_to_bytes_prover(k_0_deg1, k_0_deg0, k + (2 * r + 1) * Nstbits / 8,
+    aes_128_state_to_bytes_prover(k_0_deg1, k_0_deg0, k + (2 * r + 1) * Nstbytes,
                                   k_tag + (2 * r + 1) * Nstbits, params);
 
     // ::17
@@ -3060,30 +3060,30 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
     }
 
     // ::23-24
-    uint8_t* s_tilde     = malloc(Nstbits / 8);
+    uint8_t* s_tilde     = malloc(Nstbytes);
     bf128_t* s_tilde_tag = BF128_ALLOC(Nstbits);
     assert(s_tilde);
     assert(s_tilde_tag);
     if (r == FAEST_128_R / 2 - 1) {
       // ::25
       aes_128_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag,
-                                   k + FAEST_128_R * Nstbits / 8, k_tag + FAEST_128_R * Nstbits,
+                                   k + FAEST_128_R * Nstbytes, k_tag + FAEST_128_R * Nstbits,
                                    params);
     } else {
       // ::27-28
-      memcpy(s_tilde, &w[((Nstbits / 2) + (Nstbits / 2) * 3 * r) / 8], Nstbits / 8);
+      memcpy(s_tilde, &w[((Nstbits / 2) + (Nstbits / 2) * 3 * r) / 8], Nstbytes);
       memcpy(s_tilde_tag, &w_tag[((Nstbits / 2) + (Nstbits / 2) * 3 * r)],
              Nstbits * sizeof(bf128_t));
     }
 
     // ::29
-    uint8_t* s_dash_dash     = malloc(Nstbits / 8);
+    uint8_t* s_dash_dash     = malloc(Nstbytes);
     bf128_t* s_dash_dash_tag = BF128_ALLOC(Nstbits);
     assert(s_dash_dash);
     assert(s_dash_dash_tag);
     aes_128_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
     // ::30
-    uint8_t* s     = malloc(Nstbits / 8);
+    uint8_t* s     = malloc(Nstbytes);
     bf128_t* s_tag = BF128_ALLOC(Nstbits);
     assert(s);
     assert(s_tag);
@@ -3130,7 +3130,7 @@ static void aes_128_enc_constraints_prover(zk_hash_128_3_ctx* hasher, const uint
       bf128_t* tmp_state_tag = s_tag;
       aes_128_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
       aes_128_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag,
-                                   k + (2 * r + 2) * Nstbits / 8, k_tag + (2 * r + 2) * Nstbits,
+                                   k + (2 * r + 2) * Nstbytes, k_tag + (2 * r + 2) * Nstbits,
                                    params);
     }
 
@@ -3161,7 +3161,7 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
   const unsigned int Nstbytes = Nstbits / 8;
 
   /// ::1 AddFAEST_192_RoundKey
-  uint8_t* state_bits     = malloc(Nstbits / 8);
+  uint8_t* state_bits     = malloc(Nstbytes);
   bf192_t* state_bits_tag = BF192_ALLOC(Nstbits);
   assert(state_bits);
   assert(state_bits_tag);
@@ -3217,7 +3217,7 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
     // ::15-16
     bf192_t k_0_deg0[FAEST_192_LAMBDA / 8];
     bf192_t k_0_deg1[FAEST_192_LAMBDA / 8];
-    aes_192_state_to_bytes_prover(k_0_deg1, k_0_deg0, k + (2 * r + 1) * Nstbits / 8,
+    aes_192_state_to_bytes_prover(k_0_deg1, k_0_deg0, k + (2 * r + 1) * Nstbytes,
                                   k_tag + (2 * r + 1) * Nstbits, params);
 
     // ::17
@@ -3265,30 +3265,30 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
     }
 
     // ::23-24
-    uint8_t* s_tilde     = malloc(Nstbits / 8);
+    uint8_t* s_tilde     = malloc(Nstbytes);
     bf192_t* s_tilde_tag = BF192_ALLOC(Nstbits);
     assert(s_tilde);
     assert(s_tilde_tag);
     if (r == FAEST_192_R / 2 - 1) {
       // ::25
       aes_192_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag,
-                                   k + FAEST_192_R * Nstbits / 8, k_tag + FAEST_192_R * Nstbits,
+                                   k + FAEST_192_R * Nstbytes, k_tag + FAEST_192_R * Nstbits,
                                    params);
     } else {
       // ::27-28
-      memcpy(s_tilde, &w[((Nstbits / 2) + (Nstbits / 2) * 3 * r) / 8], Nstbits / 8);
+      memcpy(s_tilde, &w[((Nstbits / 2) + (Nstbits / 2) * 3 * r) / 8], Nstbytes);
       memcpy(s_tilde_tag, &w_tag[((Nstbits / 2) + (Nstbits / 2) * 3 * r)],
              Nstbits * sizeof(bf192_t));
     }
 
     // ::29
-    uint8_t* s_dash_dash     = malloc(Nstbits / 8);
+    uint8_t* s_dash_dash     = malloc(Nstbytes);
     bf192_t* s_dash_dash_tag = BF192_ALLOC(Nstbits);
     assert(s_dash_dash);
     assert(s_dash_dash_tag);
     aes_192_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
     // ::30
-    uint8_t* s     = malloc(Nstbits / 8);
+    uint8_t* s     = malloc(Nstbytes);
     bf192_t* s_tag = BF192_ALLOC(Nstbits);
     assert(s);
     assert(s_tag);
@@ -3335,7 +3335,7 @@ static void aes_192_enc_constraints_prover(zk_hash_192_3_ctx* hasher, const uint
       bf192_t* tmp_state_tag = s_tag;
       aes_192_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
       aes_192_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag,
-                                   k + (2 * r + 2) * Nstbits / 8, k_tag + (2 * r + 2) * Nstbits,
+                                   k + (2 * r + 2) * Nstbytes, k_tag + (2 * r + 2) * Nstbits,
                                    params);
     }
 
@@ -3366,7 +3366,7 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
   const unsigned int Nstbytes = Nstbits / 8;
 
   /// ::1 AddFAEST_256_RoundKey
-  uint8_t* state_bits     = malloc(Nstbits / 8);
+  uint8_t* state_bits     = malloc(Nstbytes);
   bf256_t* state_bits_tag = BF256_ALLOC(Nstbits);
   assert(state_bits);
   assert(state_bits_tag);
@@ -3422,7 +3422,7 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
     // ::15-16
     bf256_t k_0_deg0[FAEST_256_LAMBDA / 8];
     bf256_t k_0_deg1[FAEST_256_LAMBDA / 8];
-    aes_256_state_to_bytes_prover(k_0_deg1, k_0_deg0, k + (2 * r + 1) * Nstbits / 8,
+    aes_256_state_to_bytes_prover(k_0_deg1, k_0_deg0, k + (2 * r + 1) * Nstbytes,
                                   k_tag + (2 * r + 1) * Nstbits, params);
 
     // ::17
@@ -3471,7 +3471,7 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
     }
 
     // ::23-24
-    uint8_t* s_tilde     = malloc(Nstbits / 8);
+    uint8_t* s_tilde     = malloc(Nstbytes);
     bf256_t* s_tilde_tag = BF256_ALLOC(Nstbits);
     assert(s_tilde);
     assert(s_tilde_tag);
@@ -3479,23 +3479,23 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
     if (r == FAEST_256_R / 2 - 1) {
       // ::25
       aes_256_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag,
-                                   k + FAEST_256_R * Nstbits / 8, k_tag + FAEST_256_R * Nstbits,
+                                   k + FAEST_256_R * Nstbytes, k_tag + FAEST_256_R * Nstbits,
                                    params);
     } else {
       // ::27-28
-      memcpy(s_tilde, &w[((Nstbits / 2) + (Nstbits / 2) * 3 * r) / 8], Nstbits / 8);
+      memcpy(s_tilde, &w[((Nstbits / 2) + (Nstbits / 2) * 3 * r) / 8], Nstbytes);
       memcpy(s_tilde_tag, &w_tag[((Nstbits / 2) + (Nstbits / 2) * 3 * r)],
              Nstbits * sizeof(bf256_t));
     }
 
     // ::29
-    uint8_t* s_dash_dash     = malloc(Nstbits / 8);
+    uint8_t* s_dash_dash     = malloc(Nstbytes);
     bf256_t* s_dash_dash_tag = BF256_ALLOC(Nstbits);
     assert(s_dash_dash);
     assert(s_dash_dash_tag);
     aes_256_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
     // ::30
-    uint8_t* s     = malloc(Nstbits / 8);
+    uint8_t* s     = malloc(Nstbytes);
     bf256_t* s_tag = BF256_ALLOC(Nstbits);
     assert(s);
     assert(s_tag);
@@ -3542,7 +3542,7 @@ static void aes_256_enc_constraints_prover(zk_hash_256_3_ctx* hasher, const uint
       bf256_t* tmp_state_tag = s_tag;
       aes_256_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, params);
       aes_256_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag,
-                                   k + (2 * r + 2) * Nstbits / 8, k_tag + (2 * r + 2) * Nstbits,
+                                   k + (2 * r + 2) * Nstbytes, k_tag + (2 * r + 2) * Nstbits,
                                    params);
     }
 
