@@ -4251,8 +4251,8 @@ static void aes_128_constraints_verifier(zk_hash_128_ctx* hasher, const bf128_t*
       }
     }
     // ::10-11
+    memcpy(in_key, w_key, blocksize * sizeof(bf128_t));
     for (unsigned int i = 0; i < blocksize; i++) {
-      in_key[i]  = w_key[i];
       out_key[i] = bf128_add(w_key[i], bf128_mul_bit(delta, ptr_get_bit(owf_out, i)));
     }
   } else {
@@ -4268,26 +4268,19 @@ static void aes_128_constraints_verifier(zk_hash_128_ctx* hasher, const bf128_t*
   }
 
   // ::18-20
-  bf128_t* w_tilde_key = BF128_ALLOC(Lenc);
-  assert(w_tilde_key);
-
   for (unsigned int b = 0; b < beta; b++) {
-    for (unsigned int i = 0; i < Lenc; i++) {
-      w_tilde_key[i] = w_key[Lke + b * Lenc + i];
-    }
     // ::21
     if (b == 1) {
       in_key[0] = bf128_add(in_key[0], delta); // adding one
       out_key += blocksize;
     }
-    aes_128_enc_constraints_verifier(hasher, in_key, out_key, w_tilde_key, rkeys_key, delta,
-                                     params);
+    aes_128_enc_constraints_verifier(hasher, in_key, out_key, w_key + Lke + b * Lenc, rkeys_key,
+                                     delta, params);
   }
 
   faest_aligned_free(rkeys_key);
   faest_aligned_free(in_key);
   faest_aligned_free(out_key);
-  faest_aligned_free(w_tilde_key);
 }
 
 static void aes_192_constraints_verifier(zk_hash_192_ctx* hasher, const bf192_t* w_key,
@@ -4328,8 +4321,8 @@ static void aes_192_constraints_verifier(zk_hash_192_ctx* hasher, const bf192_t*
       }
     }
     // ::10-11
+    memcpy(in_key, w_key, blocksize * sizeof(bf192_t));
     for (unsigned int i = 0; i < blocksize; i++) {
-      in_key[i]  = w_key[i];
       out_key[i] = bf192_add(w_key[i], bf192_mul_bit(delta, ptr_get_bit(owf_out, i)));
     }
   } else {
@@ -4345,25 +4338,18 @@ static void aes_192_constraints_verifier(zk_hash_192_ctx* hasher, const bf192_t*
   }
 
   // ::18-20
-  bf192_t* w_tilde_key = BF192_ALLOC(Lenc);
-  assert(w_tilde_key);
-
   for (unsigned int b = 0; b < beta; b++) {
-    for (unsigned int i = 0; i < Lenc; i++) {
-      w_tilde_key[i] = w_key[Lke + b * Lenc + i];
-    }
     // ::21
     if (b == 1) {
       in_key[0] = bf192_add(in_key[0], delta); // adding one
     }
-    aes_192_enc_constraints_verifier(hasher, in_key, out_key + b * blocksize, w_tilde_key,
-                                     rkeys_key, delta, params);
+    aes_192_enc_constraints_verifier(hasher, in_key, out_key + b * blocksize,
+                                     w_key + Lke + b * Lenc, rkeys_key, delta, params);
   }
 
   faest_aligned_free(rkeys_key);
   faest_aligned_free(in_key);
   faest_aligned_free(out_key);
-  faest_aligned_free(w_tilde_key);
 }
 
 static void aes_256_constraints_verifier(zk_hash_256_ctx* hasher, const bf256_t* w_key,
@@ -4404,8 +4390,8 @@ static void aes_256_constraints_verifier(zk_hash_256_ctx* hasher, const bf256_t*
       }
     }
     // ::10-11
+    memcpy(in_key, w_key, blocksize * sizeof(bf256_t));
     for (unsigned int i = 0; i < blocksize; i++) {
-      in_key[i]  = w_key[i];
       out_key[i] = bf256_add(w_key[i], bf256_mul_bit(delta, ptr_get_bit(owf_out, i)));
     }
   } else {
@@ -4421,25 +4407,18 @@ static void aes_256_constraints_verifier(zk_hash_256_ctx* hasher, const bf256_t*
   }
 
   // ::18-20
-  bf256_t* w_tilde_key = BF256_ALLOC(Lenc);
-  assert(w_tilde_key);
-
   for (unsigned int b = 0; b < beta; b++) {
-    for (unsigned int i = 0; i < Lenc; i++) {
-      w_tilde_key[i] = w_key[Lke + b * Lenc + i];
-    }
     // ::21
     if (b == 1) {
       in_key[0] = bf256_add(in_key[0], delta); // adding one
     }
-    aes_256_enc_constraints_verifier(hasher, in_key, out_key + b * blocksize, w_tilde_key,
-                                     rkeys_key, delta, params);
+    aes_256_enc_constraints_verifier(hasher, in_key, out_key + b * blocksize,
+                                     w_key + Lke + b * Lenc, rkeys_key, delta, params);
   }
 
   faest_aligned_free(rkeys_key);
   faest_aligned_free(in_key);
   faest_aligned_free(out_key);
-  faest_aligned_free(w_tilde_key);
 }
 
 // OWF PROVER
