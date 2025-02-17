@@ -36,7 +36,8 @@ def generate(
         shutil.copy(header, target)
 
     # copy generated files
-    for build_source in (f"{param_name}.c", f"{param_name}.h", "parameters.h"):
+    for build_source in (f"{param_name}.c", f"{param_name}.h", "parameters.h", "faest_aes_128.c",
+                         "faest_aes_192.c", "faest_aes_256.c"):
         shutil.copy(build_root / build_source, target)
     build_param = build_root / f"{param_name}"
     for build_source in ("crypto_sign.c", "crypto_sign.h", "api.h"):
