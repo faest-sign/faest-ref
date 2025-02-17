@@ -3611,12 +3611,10 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
 
     // ::31
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
-      bf128_t s_key;
-      bf128_t s_sq_key;
       // ::32
-      s_key = bf128_byte_combine(s_state_key + 8 * byte_i);
+      const bf128_t s_key = bf128_byte_combine(s_state_key + 8 * byte_i);
       // ::33
-      s_sq_key = bf128_byte_combine_sq(s_state_key + 8 * byte_i);
+      const bf128_t s_sq_key = bf128_byte_combine_sq(s_state_key + 8 * byte_i);
 
       // ::36
       // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
@@ -3747,12 +3745,10 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
 
     // ::31
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
-      bf192_t s_key;
-      bf192_t s_sq_key;
       // ::32
-      s_key = bf192_byte_combine(s_state_key + 8 * byte_i);
+      const bf192_t s_key = bf192_byte_combine(s_state_key + 8 * byte_i);
       // ::33
-      s_sq_key = bf192_byte_combine_sq(s_state_key + 8 * byte_i);
+      const bf192_t s_sq_key = bf192_byte_combine_sq(s_state_key + 8 * byte_i);
 
       // ::36
       // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
@@ -3883,12 +3879,10 @@ static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf25
 
     // ::31
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
-      bf256_t s_key;
-      bf256_t s_sq_key;
       // ::32
-      s_key = bf256_byte_combine(s_state_key + 8 * byte_i);
+      const bf256_t s_key = bf256_byte_combine(s_state_key + 8 * byte_i);
       // ::33
-      s_sq_key = bf256_byte_combine_sq(s_state_key + 8 * byte_i);
+      const bf256_t s_sq_key = bf256_byte_combine_sq(s_state_key + 8 * byte_i);
 
       // ::36
       // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
