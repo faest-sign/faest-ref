@@ -2427,9 +2427,8 @@ static void aes_256_keyexp_forward_prover(uint8_t* y, bf256_t* y_tag, const uint
 
 static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key) {
   // ::1-2
-  for (unsigned int i = 0; i < FAEST_128_LAMBDA; i++) {
-    y_key[i] = w_key[i];
-  }
+  memcpy(y_key, w_key, FAEST_128_LAMBDA * sizeof(bf128_t));
+
   // ::3
   unsigned int i_wd = FAEST_128_LAMBDA;
   // ::4-10
@@ -2437,9 +2436,7 @@ static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key
     // ::5
     if ((j % FAEST_128_NK == 0) || ((FAEST_128_NK > 6) && (j % FAEST_128_NK == 4))) {
       // ::6
-      for (unsigned int word_idx = 0; word_idx < 32; word_idx++) {
-        y_key[32 * j + word_idx] = w_key[i_wd + word_idx];
-      }
+      memcpy(&y_key[32 * j], &w_key[i_wd], 32 * sizeof(bf128_t));
       // ::7
       i_wd += 32; // 32 bits -> 4 words
       // ::8
@@ -2455,9 +2452,8 @@ static void aes_128_keyexp_forward_verifier(bf128_t* y_key, const bf128_t* w_key
 
 static void aes_192_keyexp_forward_verifier(bf192_t* y_key, const bf192_t* w_key) {
   // ::1-2
-  for (unsigned int i = 0; i < FAEST_192_LAMBDA; i++) {
-    y_key[i] = w_key[i];
-  }
+  memcpy(y_key, w_key, FAEST_192_LAMBDA * sizeof(bf192_t));
+
   // ::3
   unsigned int i_wd = FAEST_192_LAMBDA;
   // ::4-10
@@ -2465,9 +2461,7 @@ static void aes_192_keyexp_forward_verifier(bf192_t* y_key, const bf192_t* w_key
     // ::5
     if ((j % FAEST_192_NK == 0) || ((FAEST_192_NK > 6) && (j % FAEST_192_NK == 4))) {
       // ::6
-      for (unsigned int word_idx = 0; word_idx < 32; word_idx++) {
-        y_key[32 * j + word_idx] = w_key[i_wd + word_idx];
-      }
+      memcpy(&y_key[32 * j], &w_key[i_wd], 32 * sizeof(bf192_t));
       // ::7
       i_wd += 32; // 32 bits -> 4 words
       // ::8
@@ -2483,9 +2477,8 @@ static void aes_192_keyexp_forward_verifier(bf192_t* y_key, const bf192_t* w_key
 
 static void aes_256_keyexp_forward_verifier(bf256_t* y_key, const bf256_t* w_key) {
   // ::1-2
-  for (unsigned int i = 0; i < FAEST_256_LAMBDA; i++) {
-    y_key[i] = w_key[i];
-  }
+  memcpy(y_key, w_key, FAEST_256_LAMBDA * sizeof(bf256_t));
+
   // ::3
   unsigned int i_wd = FAEST_256_LAMBDA;
   // ::4-10
@@ -2493,9 +2486,7 @@ static void aes_256_keyexp_forward_verifier(bf256_t* y_key, const bf256_t* w_key
     // ::5
     if ((j % FAEST_256_NK == 0) || ((FAEST_256_NK > 6) && (j % FAEST_256_NK == 4))) {
       // ::6
-      for (unsigned int word_idx = 0; word_idx < 32; word_idx++) {
-        y_key[32 * j + word_idx] = w_key[i_wd + word_idx];
-      }
+      memcpy(&y_key[32 * j], &w_key[i_wd], 32 * sizeof(bf256_t));
       // ::7
       i_wd += 32; // 32 bits -> 4 words
       // ::8
