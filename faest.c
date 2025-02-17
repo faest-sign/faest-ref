@@ -380,6 +380,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   for (; true; ++ctr) {
     uint8_t* chall_3 = signature_chall_3(sig, params);
     hash_challenge_3_final(chall_3, &chall_3_ctx, ctr, lambda);
+    // declassify chall_3 which is put into the signature
+    faest_declassify(chall_3, lambda / 8);
 
     // ::23
     if (!check_challenge_3(chall_3, lambda - w_grind, lambda)) {
