@@ -3610,8 +3610,8 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
     }
 
     // ::15-16
-    bf128_t k_0_key[16];
-    bf128_t k_1_key[16];
+    bf128_t k_0_key[FAEST_128_LAMBDA / 8];
+    bf128_t k_1_key[FAEST_128_LAMBDA / 8];
     aes_128_state_to_bytes_verifier(k_0_key, rkeys_key + (2 * r + 1) * Nstbits, params);
     // ::17
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
@@ -3619,20 +3619,18 @@ static void aes_128_enc_constraints_verifier(zk_hash_128_ctx* hasher, const bf12
     }
 
     // ::18
-    bf128_t st_b_key[2][16];
-    bf128_t st_b_tmp_key[2][16];
+    bf128_t st_b_key[2][FAEST_128_LAMBDA / 8];
     memset(st_b_key, 0x00, sizeof(st_b_key));
-    memset(st_b_tmp_key, 0x00, sizeof(st_b_tmp_key));
-
     for (unsigned int b = 0; b < 2; b++) {
+      bf128_t st_b_tmp_key[16];
+      memset(st_b_tmp_key, 0x00, sizeof(st_b_tmp_key));
+
       // ::19
       aes_128_sbox_affine_verifier(st_b_key[b], st_dash_key, delta, b, params);
       // ::20
-      aes_128_shiftrows_verifier(st_b_tmp_key[b], st_b_key[b], params);
-      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf128_t) * Nstbytes);
+      aes_128_shiftrows_verifier(st_b_tmp_key, st_b_key[b], params);
       // ::21
-      aes_128_mix_columns_verifier(st_b_tmp_key[b], st_b_key[b], b, params);
-      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf128_t) * Nstbytes);
+      aes_128_mix_columns_verifier(st_b_key[b], st_b_tmp_key, b, params);
       // ::22
       if (b == 0) {
         aes_128_add_round_key_bytes_verifier(st_b_key[b], st_b_key[b], k_0_key, delta, true,
@@ -3749,8 +3747,8 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
     }
 
     // ::15-16
-    bf192_t k_0_key[24];
-    bf192_t k_1_key[24];
+    bf192_t k_0_key[FAEST_192_LAMBDA / 8];
+    bf192_t k_1_key[FAEST_192_LAMBDA / 8];
     aes_192_state_to_bytes_verifier(k_0_key, rkeys_key + (2 * r + 1) * Nstbits, params);
     // ::17
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
@@ -3758,20 +3756,18 @@ static void aes_192_enc_constraints_verifier(zk_hash_192_ctx* hasher, const bf19
     }
 
     // ::18
-    bf192_t st_b_key[2][24];
-    bf192_t st_b_tmp_key[2][24];
+    bf192_t st_b_key[2][FAEST_192_LAMBDA / 8];
     memset(st_b_key, 0x00, sizeof(st_b_key));
-    memset(st_b_tmp_key, 0x00, sizeof(st_b_tmp_key));
-
     for (unsigned int b = 0; b < 2; b++) {
+      bf192_t st_b_tmp_key[FAEST_192_LAMBDA / 8];
+      memset(st_b_tmp_key, 0x00, sizeof(st_b_tmp_key));
+
       // ::19
       aes_192_sbox_affine_verifier(st_b_key[b], st_dash_key, delta, b, params);
       // ::20
-      aes_192_shiftrows_verifier(st_b_tmp_key[b], st_b_key[b], params);
-      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf192_t) * Nstbytes);
+      aes_192_shiftrows_verifier(st_b_tmp_key, st_b_key[b], params);
       // ::21
-      aes_192_mix_columns_verifier(st_b_tmp_key[b], st_b_key[b], b, params);
-      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf192_t) * Nstbytes);
+      aes_192_mix_columns_verifier(st_b_key[b], st_b_tmp_key, b, params);
       // ::22
       if (b == 0) {
         aes_192_add_round_key_bytes_verifier(st_b_key[b], st_b_key[b], k_0_key, delta, true,
@@ -3888,8 +3884,8 @@ static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf25
     }
 
     // ::15-16
-    bf256_t k_0_key[32];
-    bf256_t k_1_key[32];
+    bf256_t k_0_key[FAEST_256_LAMBDA / 8];
+    bf256_t k_1_key[FAEST_256_LAMBDA / 8];
     aes_256_state_to_bytes_verifier(k_0_key, rkeys_key + (2 * r + 1) * Nstbits, params);
     // ::17
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
@@ -3897,20 +3893,18 @@ static void aes_256_enc_constraints_verifier(zk_hash_256_ctx* hasher, const bf25
     }
 
     // ::18
-    bf256_t st_b_key[2][32];
-    bf256_t st_b_tmp_key[2][32];
+    bf256_t st_b_key[2][FAEST_256_LAMBDA / 8];
     memset(st_b_key, 0x00, sizeof(st_b_key));
-    memset(st_b_tmp_key, 0x00, sizeof(st_b_tmp_key));
-
     for (unsigned int b = 0; b < 2; b++) {
+      bf256_t st_b_tmp_key[FAEST_256_LAMBDA / 8];
+      memset(st_b_tmp_key, 0x00, sizeof(st_b_tmp_key));
+
       // ::19
       aes_256_sbox_affine_verifier(st_b_key[b], st_dash_key, delta, b, params);
       // ::20
-      aes_256_shiftrows_verifier(st_b_tmp_key[b], st_b_key[b], params);
-      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf256_t) * Nstbytes);
+      aes_256_shiftrows_verifier(st_b_tmp_key, st_b_key[b], params);
       // ::21
-      aes_256_mix_columns_verifier(st_b_tmp_key[b], st_b_key[b], b, params);
-      memcpy(st_b_key[b], st_b_tmp_key[b], sizeof(bf256_t) * Nstbytes);
+      aes_256_mix_columns_verifier(st_b_key[b], st_b_tmp_key, b, params);
       // ::22
       if (b == 0) {
         aes_256_add_round_key_bytes_verifier(st_b_key[b], st_b_key[b], k_0_key, delta, true,
