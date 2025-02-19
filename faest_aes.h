@@ -6,7 +6,6 @@
 #define FAEST_FAEST_AES_H
 
 #include <stdint.h>
-#include <assert.h>
 
 #include "instances.h"
 #include "aes.h"
