@@ -6,7 +6,6 @@
 #include <config.h>
 #endif
 
-#include "faest.h"
 #include "faest_aes.h"
 #include "fields.h"
 #include "vole.h"
