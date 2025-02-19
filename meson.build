@@ -450,28 +450,26 @@ defines += '-DHAVE_CONFIG_H'
 # generate parameters.h
 parameters_header = configure_file(output: 'parameters.h', output_format: 'c', configuration: parameter_data)
 
-# generate faest_aes_SSS.c
-prog_sed = find_program('sed')
-faest_aes_128 = custom_target(
-    'faest_aes_128.c',
-    output : 'faest_aes_128.c',
-    input : 'faest_aes.c.in',
-    command : [prog_sed, '-e', 's/SSS/128/g', '@INPUT@'],
-    capture: true,
+faest_128_data = configuration_data()
+faest_128_data.set('SSS', '128')
+faest_aes_128 = configure_file(
+  output: 'faest_aes_128.c',
+  input: 'faest_aes.c.in',
+  configuration: faest_128_data,
 )
-faest_aes_192 = custom_target(
-    'faest_aes_192.c',
-    output : 'faest_aes_192.c',
-    input : 'faest_aes.c.in',
-    command : [prog_sed, '-e', 's/SSS/192/g', '@INPUT@'],
-    capture: true,
+faest_192_data = configuration_data()
+faest_192_data.set('SSS', '192')
+faest_aes_192 = configure_file(
+  output: 'faest_aes_192.c',
+  input: 'faest_aes.c.in',
+  configuration: faest_192_data,
 )
-faest_aes_256 = custom_target(
-    'faest_aes_256.c',
-    output : 'faest_aes_256.c',
-    input : 'faest_aes.c.in',
-    command : [prog_sed, '-e', 's/SSS/256/g', '@INPUT@'],
-    capture: true,
+faest_256_data = configuration_data()
+faest_256_data.set('SSS', '256')
+faest_aes_256 = configure_file(
+  output: 'faest_aes_256.c',
+  input: 'faest_aes.c.in',
+  configuration: faest_256_data,
 )
 
 include_directories = [include_directories('.')]

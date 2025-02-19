@@ -17,35 +17,65 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// clang-format off
+#define FAEST_SSS_LAMBDA FAEST_@SSS@_LAMBDA
 #define FAEST_SSS_NK (FAEST_SSS_LAMBDA / 32)
+#define FAEST_SSS_R FAEST_@SSS@S_R
 
-#define FAEST_SSS_R FAEST_SSSS_R
+#define bfSSS_t bf@SSS@_t
+#define bfSSS_load bf@SSS@_load
+#define bfSSS_from_bit bf@SSS@_from_bit
+#define bfSSS_store bf@SSS@_store
+#define bfSSS_zero bf@SSS@_zero
+#define bfSSS_one bf@SSS@_one
+#define bfSSS_add bf@SSS@_add
+#define bfSSS_mul bf@SSS@_mul
+#define bfSSS_mul_bit bf@SSS@_mul_bit
+#define bfSSS_byte_combine bf@SSS@_byte_combine
+#define bfSSS_byte_combine_bits bf@SSS@_byte_combine_bits
+#define bfSSS_byte_combine_sq bf@SSS@_byte_combine_sq
+#define bfSSS_byte_combine_bits_sq bf@SSS@_byte_combine_bits_sq
+#define bfSSS_sq_bit_inplace bf@SSS@_sq_bit_inplace
+#define bfSSS_sum_poly bf@SSS@_sum_poly
+#define bfSSS_sum_poly_bits bf@SSS@_sum_poly_bits
+#define BFSSS_NUM_BYTES BF@SSS@_NUM_BYTES
+#define BFSSS_ALIGN BF@SSS@_ALIGN
 
-static_assert(FAEST_SSS_LAMBDA == FAEST_SSSS_LAMBDA, "Invalid parameters");
-static_assert(FAEST_SSSF_ELL == FAEST_SSSS_ELL, "Invalid parameters");
-static_assert(FAEST_SSSF_LAMBDA == FAEST_SSSS_LAMBDA, "Invalid parameters");
-static_assert(FAEST_SSSF_Lke == FAEST_SSSS_Lke, "Invalid parameters");
-static_assert(FAEST_SSSF_Nst == FAEST_SSSS_Nst, "Invalid parameters");
-static_assert(FAEST_SSS_R == FAEST_SSSS_R, "Invalid parameters");
-static_assert(FAEST_SSSF_R == FAEST_SSSS_R, "Invalid parameters");
-static_assert(FAEST_SSSF_Senc == FAEST_SSSS_Senc, "Invalid parameters");
-static_assert(FAEST_SSSF_Ske == FAEST_SSSS_Ske, "Invalid parameters");
+#define zk_hash_SSS_3_ctx zk_hash_@SSS@_3_ctx
+#define zk_hash_SSS_3_finalize zk_hash_@SSS@_3_finalize
+#define zk_hash_SSS_3_init zk_hash_@SSS@_3_init
+#define zk_hash_SSS_3_raise_and_update zk_hash_@SSS@_3_raise_and_update
+#define zk_hash_SSS_3_update zk_hash_@SSS@_3_update
+#define zk_hash_SSS_ctx zk_hash_@SSS@_ctx
+#define zk_hash_SSS_finalize zk_hash_@SSS@_finalize
+#define zk_hash_SSS_init zk_hash_@SSS@_init
+#define zk_hash_SSS_update zk_hash_@SSS@_update
 
-static_assert(FAEST_SSS_LAMBDA == FAEST_EM_SSSS_LAMBDA, "Invalid parameters");
-static_assert(FAEST_EM_SSSF_LAMBDA == FAEST_EM_SSSS_LAMBDA, "Invalid parameters");
-static_assert(FAEST_EM_SSSF_Lenc == FAEST_EM_SSSS_Lenc, "Invalid parameters");
-static_assert(FAEST_EM_SSSF_Nst == FAEST_EM_SSSS_Nst, "Invalid parameters");
-static_assert(FAEST_SSS_R == FAEST_EM_SSSS_R, "Invalid parameters");
-static_assert(FAEST_EM_SSSF_R == FAEST_EM_SSSS_R, "Invalid parameters");
-static_assert(FAEST_EM_SSSF_Senc == FAEST_EM_SSSS_Senc, "Invalid parameters");
+static_assert(FAEST_SSS_LAMBDA == FAEST_@SSS@S_LAMBDA, "Invalid parameters");
+static_assert(FAEST_@SSS@F_ELL == FAEST_@SSS@S_ELL, "Invalid parameters");
+static_assert(FAEST_@SSS@F_LAMBDA == FAEST_@SSS@S_LAMBDA, "Invalid parameters");
+static_assert(FAEST_@SSS@F_Lke == FAEST_@SSS@S_Lke, "Invalid parameters");
+static_assert(FAEST_@SSS@F_Nst == FAEST_@SSS@S_Nst, "Invalid parameters");
+static_assert(FAEST_SSS_R == FAEST_@SSS@S_R, "Invalid parameters");
+static_assert(FAEST_@SSS@F_R == FAEST_@SSS@S_R, "Invalid parameters");
+static_assert(FAEST_@SSS@F_Senc == FAEST_@SSS@S_Senc, "Invalid parameters");
+static_assert(FAEST_@SSS@F_Ske == FAEST_@SSS@S_Ske, "Invalid parameters");
+
+static_assert(FAEST_SSS_LAMBDA == FAEST_EM_@SSS@S_LAMBDA, "Invalid parameters");
+static_assert(FAEST_EM_@SSS@F_LAMBDA == FAEST_EM_@SSS@S_LAMBDA, "Invalid parameters");
+static_assert(FAEST_EM_@SSS@F_Lenc == FAEST_EM_@SSS@S_Lenc, "Invalid parameters");
+static_assert(FAEST_EM_@SSS@F_Nst == FAEST_EM_@SSS@S_Nst, "Invalid parameters");
+static_assert(FAEST_SSS_R == FAEST_EM_@SSS@S_R, "Invalid parameters");
+static_assert(FAEST_EM_@SSS@F_R == FAEST_EM_@SSS@S_R, "Invalid parameters");
+static_assert(FAEST_EM_@SSS@F_Senc == FAEST_EM_@SSS@S_Senc, "Invalid parameters");
 // for scan-build
-static_assert(FAEST_EM_SSSF_LAMBDA * (FAEST_EM_SSSF_R + 1) / 8 ==
-                  sizeof(aes_word_t) * FAEST_EM_SSSF_Nst * (FAEST_EM_SSSF_R + 1),
+static_assert(FAEST_EM_@SSS@F_LAMBDA * (FAEST_EM_@SSS@F_R + 1) / 8 ==
+                  sizeof(aes_word_t) * FAEST_EM_@SSS@F_Nst * (FAEST_EM_@SSS@F_R + 1),
               "Invalid parameters");
+// clang-format on
 
 /* pad sizes to multiples of some value; assumes that a is a power of 2 */
 #define PAD_TO(s, a) (((s) + (a) - 1) & ~((a) - 1))
-
 #define BFSSS_ALLOC(s) faest_aligned_alloc(BFSSS_ALIGN, PAD_TO((s) * sizeof(bfSSS_t), BFSSS_ALIGN))
 
 static const bf8_t Rcon[30] = {
@@ -113,21 +143,21 @@ static void aes_SSS_f256_f2_conjugates_SSS(bfSSS_t* y, const bfSSS_t* state,
 // INV NORM TO CONJUGATES
 
 #if (FAEST_SSS_LAMBDA == 128)
-static const bf128_t bf128_beta_squares[5] = {
+static const bf128_t bfSSS_beta_squares[5] = {
     BF128C(UINT64_C(0xaca8c2a7190f676b), UINT64_C(0xdb4a932e2cae3d8b)),
     BF128C(UINT64_C(0x34d2f7fba603e341), UINT64_C(0x500317bd159d73bb)),
     BF128C(UINT64_C(0xcbc26e38bdbd6c62), UINT64_C(0xf210539fd8dd2772)),
     BF128C(UINT64_C(0x53b85b6402b1e849), UINT64_C(0x7959d70ce1ee6942)),
     BF128C(UINT64_C(0xaca8c2a7190f676b), UINT64_C(0xdb4a932e2cae3d8b)),
 };
-static const bf128_t bf128_beta_cubes[4] = {
+static const bf128_t bfSSS_beta_cubes[4] = {
     BF128C(UINT64_C(0x53b85b6402b1e849), UINT64_C(0x7959d70ce1ee6942)),
     BF128C(UINT64_C(0xaca8c2a7190f676b), UINT64_C(0xdb4a932e2cae3d8b)),
     BF128C(UINT64_C(0x34d2f7fba603e341), UINT64_C(0x500317bd159d73bb)),
     BF128C(UINT64_C(0xcbc26e38bdbd6c62), UINT64_C(0xf210539fd8dd2772)),
 };
 #elif (FAEST_SSS_LAMBDA == 192)
-static const bf192_t bf192_beta_squares[5] = {
+static const bf192_t bfSSS_beta_squares[5] = {
     BF192C(UINT64_C(0x4a2fe80a53fe16e7), UINT64_C(0x89bfb5055f8ff266),
            UINT64_C(0x6c4aecc3fdd0f812)),
     BF192C(UINT64_C(0xf061255c52e359d4), UINT64_C(0x125a337e5e808579),
@@ -139,7 +169,7 @@ static const bf192_t bf192_beta_squares[5] = {
     BF192C(UINT64_C(0x4a2fe80a53fe16e7), UINT64_C(0x89bfb5055f8ff266),
            UINT64_C(0x6c4aecc3fdd0f812)),
 };
-static const bf192_t bf192_beta_cubes[4] = {
+static const bf192_t bfSSS_beta_cubes[4] = {
     BF192C(UINT64_C(0x2e5e4d8d89cddab6), UINT64_C(0xf9c4fc6ed351b23f),
            UINT64_C(0xd6a83a56e8e495c2)),
     BF192C(UINT64_C(0x4a2fe80a53fe16e7), UINT64_C(0x89bfb5055f8ff266),
@@ -150,7 +180,7 @@ static const bf192_t bf192_beta_cubes[4] = {
            UINT64_C(0xee0fc537c5a9cb74)),
 };
 #elif (FAEST_SSS_LAMBDA == 256)
-static const bf256_t bf256_beta_squares[5] = {
+static const bf256_t bfSSS_beta_squares[5] = {
     BF256C(UINT64_C(0x4074aaa06e5faade), UINT64_C(0xd9ca3e577cc14c4a), UINT64_C(0xda065d89ba07bf41),
            UINT64_C(0x96ff78f99e8ca1cb)),
     BF256C(UINT64_C(0xfc8046a8eaa315e8), UINT64_C(0x3cd447937f790879), UINT64_C(0x2adc5a08c13f1cfb),
@@ -162,7 +192,7 @@ static const bf256_t bf256_beta_squares[5] = {
     BF256C(UINT64_C(0x4074aaa06e5faade), UINT64_C(0xd9ca3e577cc14c4a), UINT64_C(0xda065d89ba07bf41),
            UINT64_C(0x96ff78f99e8ca1cb)),
 };
-static const bf256_t bf256_beta_cubes[4] = {
+static const bf256_t bfSSS_beta_cubes[4] = {
     BF256C(UINT64_C(0xfc8046a9eaa214dc), UINT64_C(0x3cd447937f790878), UINT64_C(0x2adc5a08c13f1cfa),
            UINT64_C(0x67dbaeb2ec4abc7c)),
     BF256C(UINT64_C(0x4074aaa06e5faade), UINT64_C(0xd9ca3e577cc14c4a), UINT64_C(0xda065d89ba07bf41),
@@ -246,7 +276,7 @@ static void aes_SSS_state_to_bytes_verifier(bfSSS_t* out_key, const bfSSS_t* k_k
 // SBOX AFFINE
 
 #if (FAEST_SSS_LAMBDA == 128)
-static const bf128_t bf128_c[9] = {
+static const bf128_t bfSSS_c[9] = {
     BF128C(UINT64_C(0xec7759ca3488aee0), UINT64_C(0x4cf4b7439cbfbb84)),
     BF128C(UINT64_C(0xbfcf02ae363946a9), UINT64_C(0x35ad604f7d51d2c6)),
     BF128C(UINT64_C(0x4c3607bab51b5aca), UINT64_C(0xb32fd29a04c0be08)),
@@ -257,7 +287,7 @@ static const bf128_t bf128_c[9] = {
     BF128C(UINT64_C(0x88fd3d5cb6e7dff9), UINT64_C(0x7534634307ce7cbe)),
     BF128C(UINT64_C(0x433f53640b5ab39a), UINT64_C(0x872430dcdf135bcc)),
 };
-static const bf128_t bf128_c_squares[9] = {
+static const bf128_t bfSSS_c_squares[9] = {
     BF128C(UINT64_C(0x6b8330483c2e9848), UINT64_C(0x0dcb364640a222fe)),
     BF128C(UINT64_C(0xc72bf2ef2521ff23), UINT64_C(0xd681a5686c0c1f75)),
     BF128C(UINT64_C(0x4d48b16661e860ed), UINT64_C(0x49c9321635282198)),
@@ -269,7 +299,7 @@ static const bf128_t bf128_c_squares[9] = {
     BF128C(UINT64_C(0x1c6e94d79177c893), UINT64_C(0xdaec11278a2c0a89)),
 };
 #elif (FAEST_SSS_LAMBDA == 192)
-static const bf192_t bf192_c[9] = {
+static const bf192_t bfSSS_c[9] = {
     BF192C(UINT64_C(0xb233619e7cf450ba), UINT64_C(0x7bf61f19d5633f26),
            UINT64_C(0xda933726d491db34)),
     BF192C(UINT64_C(0x9c6d2c13f5398a0c), UINT64_C(0x8232e37706328d19),
@@ -289,7 +319,7 @@ static const bf192_t bf192_c[9] = {
     BF192C(UINT64_C(0x831233410b235d20), UINT64_C(0x1d99ac75ae672326),
            UINT64_C(0xced061212ca1ac64)),
 };
-static const bf192_t bf192_c_squares[9] = {
+static const bf192_t bfSSS_c_squares[9] = {
     BF192C(UINT64_C(0xdd20747cbd2bf75c), UINT64_C(0x7a5542ab0058d22e),
            UINT64_C(0x45ec519c94bc1251)),
     BF192C(UINT64_C(0x970f9c76eed5e1bb), UINT64_C(0xf3eaf7ae5fd72048),
@@ -310,7 +340,7 @@ static const bf192_t bf192_c_squares[9] = {
            UINT64_C(0xdfd1231f68801891)),
 };
 #elif (FAEST_SSS_LAMBDA == 256)
-static const bf256_t bf256_c[9] = {
+static const bf256_t bfSSS_c[9] = {
     BF256C(UINT64_C(0xa95af52ad52289c0), UINT64_C(0x2ba5c48d2c42072f), UINT64_C(0xd14a0d376c00b0ea),
            UINT64_C(0x064e4d699c5b4af1)),
     BF256C(UINT64_C(0x55dab3833f809d1c), UINT64_C(0x1771831e533b0f57), UINT64_C(0xfb96573fad3fac10),
@@ -330,7 +360,7 @@ static const bf256_t bf256_c[9] = {
     BF256C(UINT64_C(0x9020d2d23c10a95b), UINT64_C(0x09ff302a86476559), UINT64_C(0x009db4ee77215795),
            UINT64_C(0xe6d3948d80643e3c)),
 };
-static const bf256_t bf256_c_squares[9] = {
+static const bf256_t bfSSS_c_squares[9] = {
     BF256C(UINT64_C(0xde010519b01bcdd4), UINT64_C(0x752758911a30e3f6), UINT64_C(0x2a0778b6489ea03f),
            UINT64_C(0x56c24fd64f768838)),
     BF256C(UINT64_C(0x9e75afb9de44670a), UINT64_C(0xaced66c666f1afbc), UINT64_C(0xf001253ff2991f7e),
@@ -432,34 +462,34 @@ static void aes_SSS_shiftrows_verifier(bfSSS_t* out_deg1, const bfSSS_t* in_deg1
 // MIX COLOUMNS
 
 #if (FAEST_SSS_LAMBDA == 128)
-static const bf128_t bf128_bc_2 =
+static const bf128_t bfSSS_bc_2 =
     BF128C(UINT64_C(0xa13fe8ac5560ce0d), UINT64_C(0x053d8555a9979a1c));
-static const bf128_t bf128_bc_3 =
+static const bf128_t bfSSS_bc_3 =
     BF128C(UINT64_C(0xa13fe8ac5560ce0c), UINT64_C(0x053d8555a9979a1c));
-static const bf128_t bf128_bc_2_sq =
+static const bf128_t bfSSS_bc_2_sq =
     BF128C(UINT64_C(0xec7759ca3488aee1), UINT64_C(0x4cf4b7439cbfbb84));
-static const bf128_t bf128_bc_3_sq =
+static const bf128_t bfSSS_bc_3_sq =
     BF128C(UINT64_C(0xec7759ca3488aee0), UINT64_C(0x4cf4b7439cbfbb84));
 #elif (FAEST_SSS_LAMBDA == 192)
-static const bf192_t bf192_bc_2 = BF192C(UINT64_C(0xccc8a3d56f389763), UINT64_C(0xe665d76c966ebdea),
+static const bf192_t bfSSS_bc_2 = BF192C(UINT64_C(0xccc8a3d56f389763), UINT64_C(0xe665d76c966ebdea),
                                          UINT64_C(0x310bc8140e6b3662));
-static const bf192_t bf192_bc_3 = BF192C(UINT64_C(0xccc8a3d56f389762), UINT64_C(0xe665d76c966ebdea),
+static const bf192_t bfSSS_bc_3 = BF192C(UINT64_C(0xccc8a3d56f389762), UINT64_C(0xe665d76c966ebdea),
                                          UINT64_C(0x310bc8140e6b3662));
-static const bf192_t bf192_bc_2_sq = BF192C(
+static const bf192_t bfSSS_bc_2_sq = BF192C(
     UINT64_C(0xb233619e7cf450bb), UINT64_C(0x7bf61f19d5633f26), UINT64_C(0xda933726d491db34));
-static const bf192_t bf192_bc_3_sq = BF192C(
+static const bf192_t bfSSS_bc_3_sq = BF192C(
     UINT64_C(0xb233619e7cf450ba), UINT64_C(0x7bf61f19d5633f26), UINT64_C(0xda933726d491db34));
 #elif (FAEST_SSS_LAMBDA == 256)
-static const bf256_t bf256_bc_2 =
+static const bf256_t bfSSS_bc_2 =
     BF256C(UINT64_C(0x969788420bdefee7), UINT64_C(0xbed68d38a0474e67), UINT64_C(0xdf229845f8f1e16a),
            UINT64_C(0x04c9a8cf20c95833));
-static const bf256_t bf256_bc_3 =
+static const bf256_t bfSSS_bc_3 =
     BF256C(UINT64_C(0x969788420bdefee6), UINT64_C(0xbed68d38a0474e67), UINT64_C(0xdf229845f8f1e16a),
            UINT64_C(0x04c9a8cf20c95833));
-static const bf256_t bf256_bc_2_sq =
+static const bf256_t bfSSS_bc_2_sq =
     BF256C(UINT64_C(0xa95af52ad52289c1), UINT64_C(0x2ba5c48d2c42072f), UINT64_C(0xd14a0d376c00b0ea),
            UINT64_C(0x064e4d699c5b4af1));
-static const bf256_t bf256_bc_3_sq =
+static const bf256_t bfSSS_bc_3_sq =
     BF256C(UINT64_C(0xa95af52ad52289c0), UINT64_C(0x2ba5c48d2c42072f), UINT64_C(0xd14a0d376c00b0ea),
            UINT64_C(0x064e4d699c5b4af1));
 #else
@@ -859,11 +889,11 @@ static bfSSS_t* column_to_row_major_and_shrink_V_SSS(uint8_t** v, unsigned int e
   // V is \hat \ell times \lambda matrix over F_2
   // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + 2
   // \lambda rows and \lambda columns storing in row-major order
-  bfSSS_t* new_v = BFSSS_ALLOC(ell + FAEST_SSSF_LAMBDA * 2);
+  bfSSS_t* new_v = BFSSS_ALLOC(ell + FAEST_SSS_LAMBDA * 2);
   assert(new_v);
-  for (unsigned int row = 0; row != ell + FAEST_SSSF_LAMBDA * 2; ++row) {
+  for (unsigned int row = 0; row != ell + FAEST_SSS_LAMBDA * 2; ++row) {
     uint8_t new_row[BFSSS_NUM_BYTES] = {0};
-    for (unsigned int column = 0; column != FAEST_SSSF_LAMBDA; ++column) {
+    for (unsigned int column = 0; column != FAEST_SSS_LAMBDA; ++column) {
       ptr_set_bit(new_row, column, ptr_get_bit(v[column], row));
     }
     new_v[row] = bfSSS_load(new_row);
@@ -1647,9 +1677,11 @@ static void aes_SSS_constraints_verifier(zk_hash_SSS_ctx* hasher, const bfSSS_t*
 }
 
 // OWF PROVER
-void aes_SSS_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w,
+// clang-format off
+void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w,
                     const uint8_t* u, uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out,
                     const uint8_t* chall_2, const faest_paramset_t* params) {
+  // clang-format on
   const unsigned int ell = params->l;
 
   // ::1-5
@@ -1677,10 +1709,12 @@ void aes_SSS_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, con
 }
 
 // OWF VERIFIER
-void aes_SSS_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_t* owf_in,
+// clang-format off
+void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_t* owf_in,
                       const uint8_t* owf_out, const uint8_t* chall_2, const uint8_t* chall_3,
                       const uint8_t* a1_tilde, const uint8_t* a2_tilde,
                       const faest_paramset_t* params) {
+  // clang-format on
   const unsigned int ell = params->l;
 
   // ::1
