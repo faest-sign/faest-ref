@@ -1,8 +1,12 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
+#if defined(HAVE_CONFIG_H)
+#include <config.h>
+#endif
+
 #include "faest_aes.h"
-
-
-
-
 
 // AES(-EM) OWF dispatchers
 void aes_prove(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w,
