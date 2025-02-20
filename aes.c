@@ -107,18 +107,13 @@ static void shift_row(aes_block_t state, unsigned int block_words) {
 
 static void mix_column(aes_block_t state, unsigned int block_words) {
   for (unsigned int c = 0; c < block_words; c++) {
-    bf8_t tmp = bf8_mul(state[c][0], 0x02) ^ bf8_mul(state[c][1], 0x03) ^ state[c][2] ^ state[c][3];
-    bf8_t tmp_1 =
-        state[c][0] ^ bf8_mul(state[c][1], 0x02) ^ bf8_mul(state[c][2], 0x03) ^ state[c][3];
-    bf8_t tmp_2 =
-        state[c][0] ^ state[c][1] ^ bf8_mul(state[c][2], 0x02) ^ bf8_mul(state[c][3], 0x03);
-    bf8_t tmp_3 =
-        bf8_mul(state[c][0], 0x03) ^ state[c][1] ^ state[c][2] ^ bf8_mul(state[c][3], 0x02);
+    bf8_t tmp[4];
+    tmp[0] = bf8_mul(state[c][0], 0x02) ^ bf8_mul(state[c][1], 0x03) ^ state[c][2] ^ state[c][3];
+    tmp[1] = state[c][0] ^ bf8_mul(state[c][1], 0x02) ^ bf8_mul(state[c][2], 0x03) ^ state[c][3];
+    tmp[2] = state[c][0] ^ state[c][1] ^ bf8_mul(state[c][2], 0x02) ^ bf8_mul(state[c][3], 0x03);
+    tmp[3] = bf8_mul(state[c][0], 0x03) ^ state[c][1] ^ state[c][2] ^ bf8_mul(state[c][3], 0x02);
 
-    state[c][0] = tmp;
-    state[c][1] = tmp_1;
-    state[c][2] = tmp_2;
-    state[c][3] = tmp_3;
+    memcpy(state[c], tmp, sizeof(tmp));
   }
 }
 
