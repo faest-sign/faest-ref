@@ -59,6 +59,31 @@ BOOST_AUTO_TEST_CASE(test_sign) {
   // clang-format on
 }
 
+BOOST_AUTO_TEST_CASE(test_unpacked_sign) {
+  pk_t pk;
+  sk_t sk;
+  // clang-format off
+  BOOST_TEST(faest_@PARAM_L@_keygen(pk.data(), sk.data()) == 0);
+
+  faest_@PARAM_L@_unpacked_private_key_t unpacked_sk;
+  BOOST_TEST(faest_@PARAM_L@_unpack_private_key(&unpacked_sk, sk.data()) == 0);
+  // clang-format on
+
+  std::vector<uint8_t> sig;
+  size_t sig_size = signature_size;
+  sig.resize(signature_size);
+
+  std::vector<uint8_t> msg;
+  msg.resize(1024);
+  rand_bytes(msg.data(), msg.size());
+
+  // clang-format off
+  BOOST_TEST(faest_@PARAM_L@_unpacked_sign(&unpacked_sk, msg.data(), msg.size(), sig.data(), &sig_size) == 0);
+  BOOST_TEST(sig_size == signature_size);
+  BOOST_TEST(faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size()) == 0);
+  // clang-format on
+}
+
 BOOST_AUTO_TEST_CASE(test_rand_verify_fails) {
   pk_t pk;
   sk_t sk;

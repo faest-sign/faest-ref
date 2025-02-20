@@ -14,6 +14,7 @@
 #include "faest.h"
 #include "parameters.h"
 #include "utils.h"
+#include "aes.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -51,6 +52,24 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
   return 0;
 }
 
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpack_private_key(faest_@PARAM_L@_unpacked_private_key_t* unpacked_sk, const uint8_t* sk) {
+  if (!unpacked_sk || !sk) {
+    return -1;
+  }
+
+  memcpy(unpacked_sk->owf_input, SK_INPUT(sk), sizeof(unpacked_sk->owf_input));
+  memcpy(unpacked_sk->owf_key, SK_KEY(sk), sizeof(unpacked_sk->owf_key));
+
+  faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), unpacked_sk->owf_output);
+  // declassify OWF output
+  faest_declassify(unpacked_sk->owf_output, sizeof(unpacked_sk->owf_output));
+
+  const faest_paramset_t* params = faest_get_paramset(FAEST_@PARAM@);
+  aes_extend_witness(unpacked_sk->witness, unpacked_sk->owf_key, unpacked_sk->owf_input, params);
+
+  return 0;
+}
+
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk, const uint8_t* sk) {
   if (!sk || !pk) {
     return -1;
@@ -72,16 +91,16 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign_with_randomness(const uint8_t*
     return -1;
   }
 
-  uint8_t owf_output[@OWF_OUTPUT_SIZE@];
-  faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), owf_output);
-  // declassify OWF output
-  faest_declassify(owf_output, sizeof(owf_output));
+  faest_@PARAM_L@_unpacked_private_key_t unpacked_sk;
+  int ret = faest_@PARAM_L@_unpack_private_key(&unpacked_sk, sk);
+  if (ret) {
+    faest_@PARAM_L@_clear_unpacked_private_key(&unpacked_sk);
+    return ret;
+  }
 
-  const faest_paramset_t* params = faest_get_paramset(FAEST_@PARAM@);
-  faest_sign(signature, message, message_len, SK_KEY(sk), SK_INPUT(sk), owf_output, rho, rho_len, params);
-  *signature_len = FAEST_@PARAM@_SIGNATURE_SIZE;
-
-  return 0;
+  ret = faest_@PARAM_L@_unpacked_sign_with_randomness(&unpacked_sk, message, message_len, rho, rho_len, signature, signature_len);
+  faest_@PARAM_L@_clear_unpacked_private_key(&unpacked_sk);
+  return ret;
 }
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len) {
@@ -95,6 +114,29 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8
   return faest_@PARAM_L@_sign_with_randomness(sk, message, message_len, rho, sizeof(rho), signature, signature_len);
 }
 
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign(const faest_@PARAM_L@_unpacked_private_key_t* sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len) {
+  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE) {
+    return -1;
+  }
+
+  uint8_t rho[FAEST_@PARAM@_LAMBDA / 8];
+  rand_bytes(rho, sizeof(rho));
+
+  return faest_@PARAM_L@_unpacked_sign_with_randomness(sk, message, message_len, rho, sizeof(rho), signature, signature_len);
+}
+
+int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign_with_randomness(const faest_@PARAM_L@_unpacked_private_key_t* sk, const uint8_t* message, size_t message_len, const uint8_t* rho, size_t rho_len, uint8_t* signature, size_t* signature_len) {
+  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE) {
+    return -1;
+  }
+
+  const faest_paramset_t* params = faest_get_paramset(FAEST_@PARAM@);
+  faest_sign(signature, message, message_len, sk->owf_key, sk->owf_input, sk->owf_output, sk->witness, rho, rho_len, params);
+  *signature_len = FAEST_@PARAM@_SIGNATURE_SIZE;
+
+  return 0;
+}
+
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* pk, const uint8_t* message, size_t message_len, const uint8_t* signature, size_t signature_len) {
   if (!pk || !signature || signature_len != FAEST_@PARAM@_SIGNATURE_SIZE) {
     return -1;
@@ -106,6 +148,10 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* pk, const uin
 
 void FAEST_CALLING_CONVENTION faest_@PARAM_L@_clear_private_key(uint8_t* key) {
   faest_explicit_bzero(key, FAEST_@PARAM@_PRIVATE_KEY_SIZE);
+}
+
+void FAEST_CALLING_CONVENTION faest_@PARAM_L@_clear_unpacked_private_key(faest_@PARAM_L@_unpacked_private_key_t* key) {
+  faest_explicit_bzero(key, sizeof(*key));
 }
 
 // vim: ft=c

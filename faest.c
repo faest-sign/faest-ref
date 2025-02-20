@@ -332,8 +332,8 @@ static inline void aes_verify(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
 
 // FAEST.Sign()
 void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t* owf_key,
-                const uint8_t* owf_input, const uint8_t* owf_output, const uint8_t* rho,
-                size_t rholen, const faest_paramset_t* params) {
+                const uint8_t* owf_input, const uint8_t* owf_output, const uint8_t* witness,
+                const uint8_t* rho, size_t rholen, const faest_paramset_t* params) {
   const unsigned int ell           = params->l;
   const unsigned int ell_bytes     = ell / 8;
   const unsigned int lambda        = params->lambda;
@@ -388,12 +388,9 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     }
   }
 
-  // ::13
-  uint8_t* w = malloc(ell_bytes);
-  assert(w);
-  aes_extend_witness(w, owf_key, owf_input, params);
+  // ::13 witness provided by caller
   // ::14
-  xor_u8_array(w, u, signature_d(sig, params), ell_bytes);
+  xor_u8_array(witness, u, signature_d(sig, params), ell_bytes);
 
   // :15
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
@@ -401,12 +398,10 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   // ::16-20
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), w,
+  aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), witness,
             u + ell_bytes, V, owf_input, owf_output, chall_2, params);
 
   free_pointer_array(&V);
-  free(w);
-  w = NULL;
   free(u);
   u = NULL;
 
