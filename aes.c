@@ -142,7 +142,6 @@ static void rot_word(bf8_t* words) {
 
 void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
                 unsigned int block_words, unsigned int num_rounds) {
-
   for (unsigned int k = 0; k < key_words; k++) {
     round_keys->round_keys[k / block_words][k % block_words][0] = bf8_load(&key[4 * k]);
     round_keys->round_keys[k / block_words][k % block_words][1] = bf8_load(&key[(4 * k) + 1]);
@@ -164,7 +163,7 @@ void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int k
       sub_words(tmp);
     }
 
-    unsigned int m = k - key_words;
+    const unsigned int m = k - key_words;
     round_keys->round_keys[k / block_words][k % block_words][0] =
         round_keys->round_keys[m / block_words][m % block_words][0] ^ tmp[0];
     round_keys->round_keys[k / block_words][k % block_words][1] =
