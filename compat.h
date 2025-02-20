@@ -133,9 +133,13 @@ static inline bool sub_overflow_size_t(const size_t x, const size_t y, size_t* d
 
 #define rotl8 __rolb
 #define rotr8 __rorb
+#define rotl32 __rold
+#define rotr32 __rord
 #elif __has_builtin(__builtin_rotateleft) && __has_builtin(__builtin_rotateright)
 #define rotl8 __builtin_rotateleft8
 #define rotr8 __builtin_rotateright8
+#define rotl32 __builtin_rotateleft32
+#define rotr32 __builtin_rotateright32
 #else
 ATTR_CONST static inline uint8_t rotl8(uint8_t n, unsigned int c) {
   const unsigned int mask = (CHAR_BIT * sizeof(n) - 1);
@@ -144,6 +148,18 @@ ATTR_CONST static inline uint8_t rotl8(uint8_t n, unsigned int c) {
 }
 
 ATTR_CONST static inline uint8_t rotr8(uint8_t n, unsigned int c) {
+  const unsigned int mask = (CHAR_BIT * sizeof(n) - 1);
+  c &= mask;
+  return (n >> c) | (n << ((-c) & mask));
+}
+
+ATTR_CONST static inline uint32_t rotl32(uint32_t n, unsigned int c) {
+  const unsigned int mask = (CHAR_BIT * sizeof(n) - 1);
+  c &= mask;
+  return (n << c) | (n >> ((-c) & mask));
+}
+
+ATTR_CONST static inline uint32_t rotr32(uint32_t n, unsigned int c) {
   const unsigned int mask = (CHAR_BIT * sizeof(n) - 1);
   c &= mask;
   return (n >> c) | (n << ((-c) & mask));

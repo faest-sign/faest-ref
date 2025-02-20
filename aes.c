@@ -126,11 +126,18 @@ static void sub_words(bf8_t* words) {
 }
 
 static void rot_word(bf8_t* words) {
+#if 0
   bf8_t tmp = words[0];
   words[0]  = words[1];
   words[1]  = words[2];
   words[2]  = words[3];
   words[3]  = tmp;
+#else
+  uint32_t w;
+  memcpy(&w, words, sizeof(w));
+  w = htole32(rotr32(le32toh(w), 8));
+  memcpy(words, &w, sizeof(w));
+#endif
 }
 
 void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
