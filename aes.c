@@ -450,20 +450,20 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
 #endif
 }
 
-uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_paramset_t* params) {
+void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
+                        const faest_paramset_t* params) {
   const unsigned int lambda      = params->lambda;
-  const unsigned int l           = params->l;
-  const unsigned int S_ke        = params->Ske;
   const unsigned int num_rounds  = params->R;
-  const unsigned int nk          = lambda / 32;
   const unsigned int blocksize   = 32 * params->Nst;
   const unsigned int beta        = (lambda + blocksize - 1) / blocksize;
   const unsigned int block_words = blocksize / 32;
+  const bool is_em               = faest_is_em(params);
 
-  uint8_t* w           = malloc((l + 7) / 8);
+#if !defined(NDEBUG)
   uint8_t* const w_out = w;
+#endif
 
-  if (faest_is_em(params)) {
+  if (is_em) {
     // switch input and key for EM
     const uint8_t* tmp = key;
     key                = in;
@@ -474,14 +474,14 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   aes_round_keys_t round_keys;
   switch (lambda) {
   case 256:
-    if (block_words == RIJNDAEL_BLOCK_WORDS_256) {
+    if (is_em) {
       rijndael256_init_round_keys(&round_keys, key);
     } else {
       aes256_init_round_keys(&round_keys, key);
     }
     break;
   case 192:
-    if (block_words == RIJNDAEL_BLOCK_WORDS_192) {
+    if (is_em) {
       rijndael192_init_round_keys(&round_keys, key);
     } else {
       aes192_init_round_keys(&round_keys, key);
@@ -493,22 +493,27 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
   }
 
   // Step 4
-  if (!faest_is_em(params)) {
+  if (!is_em) {
+    const unsigned int nk = lambda / 32;
+
     // Key schedule constraints only needed for normal AES, not EM variant.
     for (unsigned int i = 0; i != nk; ++i) {
       memcpy(w, round_keys.round_keys[i / 4][i % 4], sizeof(aes_word_t));
       w += sizeof(aes_word_t);
     }
 
+    const unsigned int S_ke = params->Ske;
     for (unsigned int j = 0, ik = nk; j < S_ke / 4; ++j) {
       memcpy(w, round_keys.round_keys[ik / 4][ik % 4], sizeof(aes_word_t));
       w += sizeof(aes_word_t);
       ik += lambda == 192 ? 6 : 4;
     }
   } else {
+    const unsigned int lambda_bytes = lambda / 8;
+
     // saving the OWF key to the extended witness
-    memcpy(w, in, lambda / 8);
-    w += lambda / 8;
+    memcpy(w, in, lambda_bytes);
+    w += lambda_bytes;
   }
 
   assert(w - w_out == params->Lke / 8);
@@ -578,6 +583,5 @@ uint8_t* aes_extend_witness(const uint8_t* key, const uint8_t* in, const faest_p
     // last round is not commited to, so not computed
   }
 
-  assert(w - w_out == l / 8);
-  return w_out;
+  assert(w - w_out == params->l / 8);
 }

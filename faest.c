@@ -389,7 +389,9 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   }
 
   // ::13
-  uint8_t* w = aes_extend_witness(owf_key, owf_input, params);
+  uint8_t* w = malloc(ell_bytes);
+  assert(w);
+  aes_extend_witness(w, owf_key, owf_input, params);
   // ::14
   xor_u8_array(w, u, signature_d(sig, params), ell_bytes);
 
