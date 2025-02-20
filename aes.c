@@ -476,6 +476,8 @@ void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
   switch (lambda) {
   case 256:
     if (is_em) {
+      // for scan-build
+      assert(block_words == RIJNDAEL_BLOCK_WORDS_256);
       rijndael256_init_round_keys(&round_keys, key);
     } else {
       aes256_init_round_keys(&round_keys, key);
@@ -483,6 +485,8 @@ void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
     break;
   case 192:
     if (is_em) {
+      // for scan-build
+      assert(block_words == RIJNDAEL_BLOCK_WORDS_192);
       rijndael192_init_round_keys(&round_keys, key);
     } else {
       aes192_init_round_keys(&round_keys, key);
