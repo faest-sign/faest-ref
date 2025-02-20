@@ -133,6 +133,7 @@ static void rot_word(bf8_t* words) {
   words[2]  = words[3];
   words[3]  = tmp;
 #else
+  // in the most ideal case, this generates a simple rord instruction
   uint32_t w;
   memcpy(&w, words, sizeof(w));
   w = htole32(rotr32(le32toh(w), 8));
@@ -143,10 +144,7 @@ static void rot_word(bf8_t* words) {
 void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
                 unsigned int block_words, unsigned int num_rounds) {
   for (unsigned int k = 0; k < key_words; k++) {
-    round_keys->round_keys[k / block_words][k % block_words][0] = bf8_load(&key[4 * k]);
-    round_keys->round_keys[k / block_words][k % block_words][1] = bf8_load(&key[(4 * k) + 1]);
-    round_keys->round_keys[k / block_words][k % block_words][2] = bf8_load(&key[(4 * k) + 2]);
-    round_keys->round_keys[k / block_words][k % block_words][3] = bf8_load(&key[(4 * k) + 3]);
+    memcpy(round_keys->round_keys[k / block_words][k % block_words], &key[4 * k], 4);
   }
 
   for (unsigned int k = key_words; k < block_words * (num_rounds + 1); ++k) {
@@ -164,14 +162,8 @@ void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int k
     }
 
     const unsigned int m = k - key_words;
-    round_keys->round_keys[k / block_words][k % block_words][0] =
-        round_keys->round_keys[m / block_words][m % block_words][0] ^ tmp[0];
-    round_keys->round_keys[k / block_words][k % block_words][1] =
-        round_keys->round_keys[m / block_words][m % block_words][1] ^ tmp[1];
-    round_keys->round_keys[k / block_words][k % block_words][2] =
-        round_keys->round_keys[m / block_words][m % block_words][2] ^ tmp[2];
-    round_keys->round_keys[k / block_words][k % block_words][3] =
-        round_keys->round_keys[m / block_words][m % block_words][3] ^ tmp[3];
+    xor_u8_array(round_keys->round_keys[m / block_words][m % block_words], tmp,
+                 round_keys->round_keys[k / block_words][k % block_words], 4);
   }
 }
 
