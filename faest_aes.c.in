@@ -864,12 +864,13 @@ static void aes_SSS_inverse_affine_prover(uint8_t* y, bfSSS_t* y_tag, const uint
 static void aes_SSS_inverse_affine_byte_verifier(bfSSS_t* y_bits_key, const bfSSS_t* x_bits_key,
                                                  bfSSS_t delta) {
   for (unsigned int bit_i = 0; bit_i < 8; bit_i++) {
-    const uint8_t c = (bit_i == 0 || bit_i == 2) ? 1 : 0;
-
     y_bits_key[bit_i] =
         bfSSS_add(bfSSS_add(x_bits_key[(bit_i - 1 + 8) % 8], x_bits_key[(bit_i - 3 + 8) % 8]),
-                  bfSSS_add(x_bits_key[(bit_i - 6 + 8) % 8], bfSSS_mul_bit(delta, c)));
+                  x_bits_key[(bit_i - 6 + 8) % 8]);
   }
+
+  y_bits_key[0] = bfSSS_add(y_bits_key[0], delta);
+  y_bits_key[2] = bfSSS_add(y_bits_key[2], delta);
 }
 
 static void aes_SSS_inverse_affine_verifier(bfSSS_t* y_key, const bfSSS_t* x_key, bfSSS_t delta,
