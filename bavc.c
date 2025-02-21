@@ -246,10 +246,9 @@ bool bavc_open(uint8_t* decom_i, const bavc_t* vc, const uint16_t* i_delta,
 
   // Step 3
   const uint8_t* com = vc->com;
-  for (unsigned int i = 0; i < tau; ++i) {
+  for (unsigned int i = 0; i < tau; ++i, decom_i += com_size) {
     memcpy(decom_i, com + i_delta[i] * com_size, com_size);
     com += bavc_max_node_index(i, tau_1, k) * com_size;
-    decom_i += com_size;
   }
 
   // Step 19..25
