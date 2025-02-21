@@ -3,7 +3,7 @@ CXX?=g++
 CFLAGS+=-g -O3 -std=gnu11 -march=native -Wno-psabi
 CPPFLAGS+=-I. -Isha3 -DNDEBUG -DHAVE_OPENSSL -DFAEST_EXPORT=
 
-SOURCES=$(filter-out randomness.c,$(wildcard *.c)) $(wildcard sha3/*.c) $(wildcard sha3/*.s)
+SOURCES=$(filter-out randomness.c,$(wildcard *.c)) $(wildcard sha3/*.c)
 EXECUTABLE_APITEST=tests/api_test
 EXECUTABLE_NISTKAT=NIST-KATs/PQCgenKAT_sign
 LIBFAEST=libfaest.a
@@ -11,7 +11,7 @@ NISTKAT_SOURCES=$(wildcard NIST-KATs/*.c)
 
 all: $(LIBFAEST) $(EXECUTABLE_APITEST) $(EXECUTABLE_NISTKAT)
 
-$(LIBFAEST): $(SOURCES:.c=.o) $(SOURCES:.s=.o)
+$(LIBFAEST): $(addsuffix .o, $(SOURCES))
 	ar rcs $@ $^
 
 %.c.o: %.c
@@ -27,9 +27,5 @@ $(EXECUTABLE_NISTKAT): $(addsuffix .o, $(NISTKAT_SOURCES)) $(LIBFAEST) randomnes
 	$(CC) $(CPPFLAGS) $(LDFLAGS) $^ -lcrypto -o $@
 
 clean:
-	rm -f \
-		$(wildcard *.o) \
-		$(wildcard sha3/*.o) \
-		$(wildcard NIST-KATs/*.o) \
-		$(wildcard tests/*.o) \
+	rm -f $(wildcard *.o) $(wildcard sha3/*.o) $(wildcard NIST-KATs/*.o) $(wildcard tests/*.o) \
 		$(LIBFAEST) $(EXECUTABLE_APITEST) $(EXECUTABLE_NISTKAT)
