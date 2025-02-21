@@ -642,5 +642,6 @@ run_target(
   ],
 )
 
+subdir('doc')
 subdir('tests')
 subdir('tools')

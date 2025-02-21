@@ -17,10 +17,23 @@ extern "C" {
 #endif
 
 // clang-format off
+
+/**
+ * Size of the public key in bytes.
+ */
 #define FAEST_@PARAM@_PUBLIC_KEY_SIZE @PK_SIZE@
+/**
+ * Size of the private key in bytes.
+ */
 #define FAEST_@PARAM@_PRIVATE_KEY_SIZE @SK_SIZE@
+/**
+ * Size of the signature in bytes.
+ */
 #define FAEST_@PARAM@_SIGNATURE_SIZE @SIG_SIZE@
 
+/**
+ * Unpacked private key with pre-computed OWF output and witness.
+ */
 typedef struct {
   uint8_t owf_input[@OWF_INPUT_SIZE@];
   uint8_t owf_key[@LAMBDA@ / 8];
@@ -58,13 +71,13 @@ FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpack_private_key(fae
  * @param[in] message The message to be signed.
  * @param[in] message_len The length of the message, in bytes.
  * @param[out] signature A buffer to hold the signature. The specific max number of
- * bytes required for a parameter set is given by faest_@PARAM_L@_signature_size().
+ * bytes required for a parameter set is given by FAEST_@PARAM@_SIGNATURE_SIZE.
  * @param[in,out] signature_len The length of the provided signature buffer.
  * On success, this is set to the number of bytes written to the signature buffer.
  *
  * @return Returns 0 for success, or a nonzero value indicating an error.
  *
- * @see faest_@PARAM_L@_verify(), faest_@PARAM_L@_keygen(), faest_@PARAM_L@_signature_size()
+ * @see faest_@PARAM_L@_verify(), faest_@PARAM_L@_keygen()
  */
 FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len);
 
@@ -78,13 +91,13 @@ FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk
  * @param[in] rho     Additonal randomness; providing randomness renders the signature non-determinstic
  * @param[in] rho_len Length of rho, in bytes.
  * @param[out] signature A buffer to hold the signature. The specific max number of
- * bytes required for a parameter set is given by faest_@PARAM_L@_signature_size().
+ * bytes required for a parameter set is given by FAEST_@PARAM@_SIGNATURE_SIZE.
  * @param[in,out] signature_len The length of the provided signature buffer.
  * On success, this is set to the number of bytes written to the signature buffer.
  *
  * @return Returns 0 for success, or a nonzero value indicating an error.
  *
- * @see faest_@PARAM_L@_verify(), faest_@PARAM_L@_keygen(), faest_@PARAM_L@_signature_size()
+ * @see faest_@PARAM_L@_verify(), faest_@PARAM_L@_keygen()
  */
 FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign_with_randomness(const uint8_t* sk, const uint8_t* message, size_t message_len, const uint8_t* rho, size_t rho_len, uint8_t* signature, size_t* signature_len);
 
@@ -92,39 +105,39 @@ FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign_with_randomness(c
  * Signature function.
  * Signs a message with the given private key. Samples rho internally.
  *
- * @param[in] sk      The signer's private key.
+ * @param[in] unpacked_sk The signer's private key.
  * @param[in] message The message to be signed.
  * @param[in] message_len The length of the message, in bytes.
  * @param[out] signature A buffer to hold the signature. The specific max number of
- * bytes required for a parameter set is given by faest_@PARAM_L@_signature_size().
+ * bytes required for a parameter set is given by FAEST_@PARAM@_SIGNATURE_SIZE.
  * @param[in,out] signature_len The length of the provided signature buffer.
  * On success, this is set to the number of bytes written to the signature buffer.
  *
  * @return Returns 0 for success, or a nonzero value indicating an error.
  *
- * @see faest_@PARAM_L@_verify(), faest_@PARAM_L@_keygen(), faest_@PARAM_L@_unpack_private_key() faest_@PARAM_L@_signature_size()
+ * @see faest_@PARAM_L@_verify(), faest_@PARAM_L@_keygen(), faest_@PARAM_L@_unpack_private_key()
  */
-FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign(const faest_@PARAM_L@_unpacked_private_key_t* sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len);
+FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign(const faest_@PARAM_L@_unpacked_private_key_t* unpacked_sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len);
 
 /**
  * Signature function (with custom randomness input).
  * Signs a message with the given private key.
  *
- * @param[in] sk      The signer's private key.
+ * @param[in] unpacked_sk The signer's private key.
  * @param[in] message The message to be signed.
  * @param[in] message_len The length of the message, in bytes.
  * @param[in] rho     Additonal randomness; providing randomness renders the signature non-determinstic
  * @param[in] rho_len Length of rho, in bytes.
  * @param[out] signature A buffer to hold the signature. The specific max number of
- * bytes required for a parameter set is given by faest_@PARAM_L@_signature_size().
+ * bytes required for a parameter set is given by FAEST_@PARAM@_SIGNATURE_SIZE.
  * @param[in,out] signature_len The length of the provided signature buffer.
  * On success, this is set to the number of bytes written to the signature buffer.
  *
  * @return Returns 0 for success, or a nonzero value indicating an error.
  *
- * @see faest_@PARAM_L@_verify(), faest_@PARAM_L@_keygen(), faest_@PARAM_L@_unpack_private_key() faest_@PARAM_L@_signature_size()
+ * @see faest_@PARAM_L@_verify(), faest_@PARAM_L@_keygen(), faest_@PARAM_L@_unpack_private_key()
  */
-FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign_with_randomness(const faest_@PARAM_L@_unpacked_private_key_t* , const uint8_t* message, size_t message_len, const uint8_t* rho, size_t rho_len, uint8_t* signature, size_t* signature_len);
+FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign_with_randomness(const faest_@PARAM_L@_unpacked_private_key_t* unpacked_sk, const uint8_t* message, size_t message_len, const uint8_t* rho, size_t rho_len, uint8_t* signature, size_t* signature_len);
 
 /**
  * Verification function.
@@ -139,7 +152,7 @@ FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign_with_ran
  * @return Returns 0 for success, indicating a valid signature, or a nonzero
  * value indicating an error or an invalid signature.
  *
- * @see faest_@PARAM_L@_sign(), faest_@PARAM_L@_keygen(), faest_@PARAM_L@_unpack_private_key() faest_@PARAM_L@_signature_size()
+ * @see faest_@PARAM_L@_sign(), faest_@PARAM_L@_keygen()
  */
 FAEST_EXPORT int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* pk, const uint8_t* message, size_t message_len, const uint8_t* signature, size_t signature_len);
 
@@ -163,9 +176,9 @@ FAEST_EXPORT void FAEST_CALLING_CONVENTION faest_@PARAM_L@_clear_private_key(uin
 /**
  * Clear data of an unpacked private key.
  *
- * @param[out] key The private key to clear.
+ * @param[out] unpacked_sk The private key to clear.
  */
-FAEST_EXPORT void FAEST_CALLING_CONVENTION faest_@PARAM_L@_clear_unpacked_private_key(faest_@PARAM_L@_unpacked_private_key_t* key);
+FAEST_EXPORT void FAEST_CALLING_CONVENTION faest_@PARAM_L@_clear_unpacked_private_key(faest_@PARAM_L@_unpacked_private_key_t* unpacked_sk);
 
 // clang-format on
 

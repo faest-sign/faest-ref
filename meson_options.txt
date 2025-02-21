@@ -41,3 +41,9 @@ option(
   value: 'disabled',
   description: 'Build with test vector generators',
 )
+option(
+  'docs',
+  type: 'feature',
+  value: 'auto',
+  description: 'doxygen API documentation',
+)

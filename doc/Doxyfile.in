@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: MIT
+
+# General information
+PROJECT_NAME          = faest-ref
+OUTPUT_DIRECTORY      = @DOXYGEN_OUTPUT@
+OUTPUT_LANGUAGE       = English
+TAB_SIZE              = 2
+EXTRACT_ALL           = YES
+OPTIMIZE_OUTPUT_FOR_C = YES
+DOXYFILE_ENCODING     = UTF-8
+TYPEDEF_HIDES_STRUCT  = YES
+
+# Warning and progress messages
+QUIET                = YES
+WARNINGS             = YES
+WARN_IF_UNDOCUMENTED = YES
+
+# Input files
+INPUT         = @DOXYGEN_INPUT@ @DOXYGEN_OUTPUT@/..
+FILE_PATTERNS = faest_*.h
+EXCLUDE       = @DOXYGEN_INPUT@/faest_aes.h
+RECURSIVE     = NO
+
+# Output files
+GENERATE_HTML  = YES
+GENERATE_LATEX = NO
+GENERATE_RTF   = NO
+GENERATE_XML   = NO
+
+SOURCE_BROWSER = YES
