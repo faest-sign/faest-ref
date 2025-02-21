@@ -19,4 +19,12 @@
 #define FAEST_CALLING_CONVENTION
 #endif
 
+#if defined(__cplusplus)
+#define FAEST_BEGIN_C_DECL extern "C" {
+#define FAEST_END_C_DECL }
+#else
+#define FAEST_BEGIN_C_DECL
+#define FAEST_END_C_DECL
+#endif
+
 #endif

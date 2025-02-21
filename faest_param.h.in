@@ -12,9 +12,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+FAEST_BEGIN_C_DECL
 
 // clang-format off
 
@@ -182,9 +180,7 @@ FAEST_EXPORT void FAEST_CALLING_CONVENTION faest_@PARAM_L@_clear_unpacked_privat
 
 // clang-format on
 
-#ifdef __cplusplus
-}
-#endif
+FAEST_END_C_DECL
 
 #endif
 

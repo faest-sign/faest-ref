@@ -5,6 +5,8 @@
 #ifndef FAEST_MACROS_H
 #define FAEST_MACROS_H
 
+#include "faest_defines.h"
+
 /* compatibility with clang and other compilers */
 #if !defined(__has_attribute)
 #define __has_attribute(a) 0
@@ -59,14 +61,6 @@
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
-
-#if defined(__cplusplus)
-#define FAEST_BEGIN_C_DECL extern "C" {
-#define FAEST_END_C_DECL }
-#else
-#define FAEST_BEGIN_C_DECL
-#define FAEST_END_C_DECL
 #endif
 
 /* assume */
