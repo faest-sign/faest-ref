@@ -195,21 +195,31 @@ static void load_state(aes_block_t state, const uint8_t* src, unsigned int block
   }
 }
 
+ATTR_CONST static bf8_t bf_exp_238(bf8_t x) {
+  // 238 == 0b11101110
+  bf8_t y = bf8_square(x); // x^2
+  x       = bf8_square(y); // x^4
+  y       = bf8_mul(x, y);
+  x       = bf8_square(x); // x^8
+  y       = bf8_mul(x, y);
+  x       = bf8_square(x); // x^16
+  x       = bf8_square(x); // x^32
+  y       = bf8_mul(x, y);
+  x       = bf8_square(x); // x^64
+  y       = bf8_mul(x, y);
+  x       = bf8_square(x); // x^128
+  return bf8_mul(x, y);
+}
+
 #if !defined(FAEST_TESTS)
 static
 #endif
     uint8_t
     invnorm(uint8_t in) {
-  // check for in == 0 is not necessary, since bf8_inv(0) == 0
-
-  const bf8_t bf_x_inv = bf8_inv(in);
-  bf8_t bf_x_17        = bf_x_inv;
-  for (unsigned int i = 0; i < 4; i++) {
-    bf_x_17 = bf8_square(bf_x_17);
-  }
-  bf_x_17         = bf8_mul(bf_x_17, bf_x_inv);
+  // instead of computing in^(-17), we calculate in^238
   uint8_t y_prime = 0;
-  bf8_store(&y_prime, bf_x_17);
+  bf8_store(&y_prime, bf_exp_238(bf8_load(&in)));
+
   uint8_t y = 0;
   y ^= ((y_prime >> 0) & 1) << 0;
   y ^= ((y_prime >> 6) & 1) << 1;
