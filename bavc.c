@@ -13,6 +13,7 @@
 #include "instances.h"
 #include "universal_hashing.h"
 
+#include <assert.h>
 #include <string.h>
 
 #define NODE(nodes, node, lambda_bytes) (&nodes[(node) * (lambda_bytes)])
@@ -21,7 +22,7 @@ static void expand_seeds(uint8_t* nodes, const uint8_t* iv, const faest_paramset
   const unsigned int lambda_bytes = params->lambda / 8;
 
   for (unsigned int alpha = 0; alpha < params->L - 1; ++alpha) {
-    // the nodes are located other in memory consecutively
+    // the nodes are located in memory consecutively
     prg(NODE(nodes, alpha, lambda_bytes), iv, alpha, NODE(nodes, 2 * alpha + 1, lambda_bytes),
         params->lambda, lambda_bytes * 2);
   }
@@ -31,6 +32,7 @@ static uint8_t* generate_seeds(const uint8_t* root_seed, const uint8_t* iv,
                                const faest_paramset_t* params) {
   unsigned int lambda_bytes = params->lambda / 8;
   uint8_t* nodes            = calloc(2 * params->L - 1, lambda_bytes);
+  assert(nodes);
 
   memcpy(NODE(nodes, 0, lambda_bytes), root_seed, lambda_bytes);
   expand_seeds(nodes, iv, params);
@@ -70,8 +72,8 @@ void leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* i
 #endif
 
 // BAVC.PosInTree
-static inline unsigned int pos_in_tree(unsigned int i, unsigned int j,
-                                       const faest_paramset_t* params) {
+ATTR_PURE static inline unsigned int pos_in_tree(unsigned int i, unsigned int j,
+                                                 const faest_paramset_t* params) {
   const unsigned int tmp = 1 << (params->k - 1);
   if (j < tmp) {
     return params->L - 1 + params->tau * j + i;
@@ -104,6 +106,7 @@ static void bavc_commit_faest(bavc_t* bavc, const uint8_t* root_key, const uint8
   bavc->h   = malloc(lambda_bytes * 2);
   bavc->com = malloc(L * com_size);
   bavc->sd  = malloc(L * lambda_bytes);
+  assert(bavc->h && bavc->com && bavc->sd);
 
   // Step: 1..3
   bavc->k = NODE(nodes, 0, lambda_bytes);
@@ -160,6 +163,7 @@ static void bavc_commit_faest_em(bavc_t* bavc, const uint8_t* rootKey, const uin
   bavc->h   = malloc(lambda_bytes * 2);
   bavc->com = malloc(L * com_size);
   bavc->sd  = malloc(L * lambda_bytes);
+  assert(bavc->h && bavc->com && bavc->sd);
 
   // Step: 1..3
   bavc->k = NODE(nodes, 0, lambda_bytes);
@@ -217,6 +221,7 @@ bool bavc_open(uint8_t* decom_i, const bavc_t* vc, const uint16_t* i_delta,
 
   // Step 5
   uint8_t* s = calloc((2 * L - 1 + 7) / 8, 1);
+  assert(s);
   // Step 6
   unsigned int nh = 0;
 
@@ -323,8 +328,10 @@ static bool bavc_reconstruct_faest(bavc_rec_t* bavc_rec, const uint8_t* decom_i,
   const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
 
   // Step 6
-  uint8_t* s    = calloc((2 * L - 1 + 7) >> 3, 1);
+  uint8_t* s = calloc((2 * L - 1 + 7) / 8, 1);
+  assert(s);
   uint8_t* keys = calloc(2 * params->L - 1, lambda_bytes);
+  assert(keys);
 
   if (!reconstruct_keys(s, keys, decom_i, i_delta, iv, params)) {
     free(keys);
@@ -387,8 +394,10 @@ static bool bavc_reconstruct_faest_em(bavc_rec_t* bavc_rec, const uint8_t* decom
   const unsigned int com_size     = lambda_bytes * 2; // size of com_ij
 
   // Step 6
-  uint8_t* s    = calloc((2 * L - 1 + 7) / 8, 1);
+  uint8_t* s = calloc((2 * L - 1 + 7) / 8, 1);
+  assert(s);
   uint8_t* keys = calloc(2 * params->L - 1, lambda_bytes);
+  assert(keys);
 
   // Step 7..10
   if (!reconstruct_keys(s, keys, decom_i, i_delta, iv, params)) {
