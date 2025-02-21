@@ -448,6 +448,6 @@ bool bavc_reconstruct(bavc_rec_t* bavc_rec, const uint8_t* decom_i, const uint16
 void bavc_clear(bavc_t* com) {
   free(com->sd);
   free(com->com);
-  free(com->k);
   free(com->h);
+  free(com->k);
 }
