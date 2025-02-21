@@ -1214,6 +1214,19 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_3_ctx* hasher, const uint
   assert(st_dash_deg1);
   assert(st_dash_deg2);
 
+  uint8_t* s_tilde     = malloc(Nstbytes);
+  bfSSS_t* s_tilde_tag = BFSSS_ALLOC(Nstbits);
+  assert(s_tilde);
+  assert(s_tilde_tag);
+  uint8_t* s_dash_dash     = malloc(Nstbytes);
+  bfSSS_t* s_dash_dash_tag = BFSSS_ALLOC(Nstbits);
+  assert(s_dash_dash);
+  assert(s_dash_dash_tag);
+  uint8_t* s     = malloc(Nstbytes);
+  bfSSS_t* s_tag = BFSSS_ALLOC(Nstbits);
+  assert(s);
+  assert(s_tag);
+
   // ::2
   for (unsigned int r = 0; r < FAEST_SSS_R / 2; r++) {
     // ::3-4
@@ -1269,6 +1282,7 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_3_ctx* hasher, const uint
     memset(st_b_deg0, 0x00, sizeof(st_b_deg0));
     memset(st_b_deg1, 0x00, sizeof(st_b_deg1));
     memset(st_b_deg2, 0x00, sizeof(st_b_deg2));
+
     for (unsigned int b = 0; b < 2; b++) {
       bfSSS_t st_b_deg0_tmp[FAEST_SSS_LAMBDA / 8];
       bfSSS_t st_b_deg1_tmp[FAEST_SSS_LAMBDA / 8];
@@ -1299,10 +1313,6 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_3_ctx* hasher, const uint
     }
 
     // ::23-24
-    uint8_t* s_tilde     = malloc(Nstbytes);
-    bfSSS_t* s_tilde_tag = BFSSS_ALLOC(Nstbits);
-    assert(s_tilde);
-    assert(s_tilde_tag);
     if (r == FAEST_SSS_R / 2 - 1) {
       // ::25
       aes_SSS_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag,
@@ -1316,16 +1326,8 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_3_ctx* hasher, const uint
     }
 
     // ::29
-    uint8_t* s_dash_dash     = malloc(Nstbytes);
-    bfSSS_t* s_dash_dash_tag = BFSSS_ALLOC(Nstbits);
-    assert(s_dash_dash);
-    assert(s_dash_dash_tag);
     aes_SSS_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, params);
     // ::30
-    uint8_t* s     = malloc(Nstbytes);
-    bfSSS_t* s_tag = BFSSS_ALLOC(Nstbits);
-    assert(s);
-    assert(s_tag);
     aes_SSS_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag, params);
 
     // ::31
@@ -1372,14 +1374,14 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_3_ctx* hasher, const uint
                                    k + (2 * r + 2) * Nstbytes, k_tag + (2 * r + 2) * Nstbits,
                                    params);
     }
-
-    faest_aligned_free(s_tag);
-    free(s);
-    faest_aligned_free(s_dash_dash_tag);
-    free(s_dash_dash);
-    faest_aligned_free(s_tilde_tag);
-    free(s_tilde);
   }
+
+  faest_aligned_free(s_tag);
+  free(s);
+  faest_aligned_free(s_dash_dash_tag);
+  free(s_dash_dash);
+  faest_aligned_free(s_tilde_tag);
+  free(s_tilde);
 
   faest_aligned_free(st_dash_deg0);
   faest_aligned_free(st_dash_deg1);
