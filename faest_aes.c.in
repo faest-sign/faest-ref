@@ -142,7 +142,7 @@ static void aes_SSS_f256_f2_conjugates_SSS(bfSSS_t* y, const bfSSS_t* state,
 
 // INV NORM TO CONJUGATES
 
-#if (FAEST_SSS_LAMBDA == 128)
+#if FAEST_SSS_LAMBDA == 128
 static const bf128_t bfSSS_beta_squares[5] = {
     BF128C(UINT64_C(0xaca8c2a7190f676b), UINT64_C(0xdb4a932e2cae3d8b)),
     BF128C(UINT64_C(0x34d2f7fba603e341), UINT64_C(0x500317bd159d73bb)),
@@ -156,7 +156,7 @@ static const bf128_t bfSSS_beta_cubes[4] = {
     BF128C(UINT64_C(0x34d2f7fba603e341), UINT64_C(0x500317bd159d73bb)),
     BF128C(UINT64_C(0xcbc26e38bdbd6c62), UINT64_C(0xf210539fd8dd2772)),
 };
-#elif (FAEST_SSS_LAMBDA == 192)
+#elif FAEST_SSS_LAMBDA == 192
 static const bf192_t bfSSS_beta_squares[5] = {
     BF192C(UINT64_C(0x4a2fe80a53fe16e7), UINT64_C(0x89bfb5055f8ff266),
            UINT64_C(0x6c4aecc3fdd0f812)),
@@ -179,7 +179,7 @@ static const bf192_t bfSSS_beta_cubes[4] = {
     BF192C(UINT64_C(0x941080db88d09584), UINT64_C(0x62217a15d25ec520),
            UINT64_C(0xee0fc537c5a9cb74)),
 };
-#elif (FAEST_SSS_LAMBDA == 256)
+#elif FAEST_SSS_LAMBDA == 256
 static const bf256_t bfSSS_beta_squares[5] = {
     BF256C(UINT64_C(0x4074aaa06e5faade), UINT64_C(0xd9ca3e577cc14c4a), UINT64_C(0xda065d89ba07bf41),
            UINT64_C(0x96ff78f99e8ca1cb)),
@@ -275,7 +275,7 @@ static void aes_SSS_state_to_bytes_verifier(bfSSS_t* out_key, const bfSSS_t* k_k
 
 // SBOX AFFINE
 
-#if (FAEST_SSS_LAMBDA == 128)
+#if FAEST_SSS_LAMBDA == 128
 static const bf128_t bfSSS_c[9] = {
     BF128C(UINT64_C(0xec7759ca3488aee0), UINT64_C(0x4cf4b7439cbfbb84)),
     BF128C(UINT64_C(0xbfcf02ae363946a9), UINT64_C(0x35ad604f7d51d2c6)),
@@ -298,7 +298,7 @@ static const bf128_t bfSSS_c_squares[9] = {
     BF128C(UINT64_C(0x4fd6cfb393c620db), UINT64_C(0xa3b5c62b6bc263cb)),
     BF128C(UINT64_C(0x1c6e94d79177c893), UINT64_C(0xdaec11278a2c0a89)),
 };
-#elif (FAEST_SSS_LAMBDA == 192)
+#elif FAEST_SSS_LAMBDA == 192
 static const bf192_t bfSSS_c[9] = {
     BF192C(UINT64_C(0xb233619e7cf450ba), UINT64_C(0x7bf61f19d5633f26),
            UINT64_C(0xda933726d491db34)),
@@ -339,7 +339,7 @@ static const bf192_t bfSSS_c_squares[9] = {
     BF192C(UINT64_C(0xae536261e4ebf3a8), UINT64_C(0x7596dda0f0bf7471),
            UINT64_C(0xdfd1231f68801891)),
 };
-#elif (FAEST_SSS_LAMBDA == 256)
+#elif FAEST_SSS_LAMBDA == 256
 static const bf256_t bfSSS_c[9] = {
     BF256C(UINT64_C(0xa95af52ad52289c0), UINT64_C(0x2ba5c48d2c42072f), UINT64_C(0xd14a0d376c00b0ea),
            UINT64_C(0x064e4d699c5b4af1)),
@@ -461,7 +461,7 @@ static void aes_SSS_shiftrows_verifier(bfSSS_t* out_deg1, const bfSSS_t* in_deg1
 
 // MIX COLOUMNS
 
-#if (FAEST_SSS_LAMBDA == 128)
+#if FAEST_SSS_LAMBDA == 128
 static const bf128_t bfSSS_bc_2 =
     BF128C(UINT64_C(0xa13fe8ac5560ce0d), UINT64_C(0x053d8555a9979a1c));
 static const bf128_t bfSSS_bc_3 =
@@ -470,7 +470,7 @@ static const bf128_t bfSSS_bc_2_sq =
     BF128C(UINT64_C(0xec7759ca3488aee1), UINT64_C(0x4cf4b7439cbfbb84));
 static const bf128_t bfSSS_bc_3_sq =
     BF128C(UINT64_C(0xec7759ca3488aee0), UINT64_C(0x4cf4b7439cbfbb84));
-#elif (FAEST_SSS_LAMBDA == 192)
+#elif FAEST_SSS_LAMBDA == 192
 static const bf192_t bfSSS_bc_2 = BF192C(UINT64_C(0xccc8a3d56f389763), UINT64_C(0xe665d76c966ebdea),
                                          UINT64_C(0x310bc8140e6b3662));
 static const bf192_t bfSSS_bc_3 = BF192C(UINT64_C(0xccc8a3d56f389762), UINT64_C(0xe665d76c966ebdea),
@@ -479,7 +479,7 @@ static const bf192_t bfSSS_bc_2_sq = BF192C(
     UINT64_C(0xb233619e7cf450bb), UINT64_C(0x7bf61f19d5633f26), UINT64_C(0xda933726d491db34));
 static const bf192_t bfSSS_bc_3_sq = BF192C(
     UINT64_C(0xb233619e7cf450ba), UINT64_C(0x7bf61f19d5633f26), UINT64_C(0xda933726d491db34));
-#elif (FAEST_SSS_LAMBDA == 256)
+#elif FAEST_SSS_LAMBDA == 256
 static const bf256_t bfSSS_bc_2 =
     BF256C(UINT64_C(0x969788420bdefee7), UINT64_C(0xbed68d38a0474e67), UINT64_C(0xdf229845f8f1e16a),
            UINT64_C(0x04c9a8cf20c95833));
@@ -932,7 +932,7 @@ static void aes_SSS_keyexp_backward_prover(uint8_t* y, bfSSS_t* y_tag, const uin
 
     // ::12-16 lines only relavant for aes-128
     if (j % 4 == 3) {
-#if (FAEST_SSS_LAMBDA == 192)
+#if FAEST_SSS_LAMBDA == 192
       iwd += 192;
 #else
       iwd += 128;
@@ -972,7 +972,7 @@ static void aes_SSS_keyexp_backward_verifier(bfSSS_t* y_key, const bfSSS_t* x_ke
 
     // ::12-16 lines only relavant for aes-128
     if (j % 4 == 3) {
-#if (FAEST_SSS_LAMBDA == 192)
+#if FAEST_SSS_LAMBDA == 192
       iwd += 192;
 #else
       iwd += 128;
