@@ -351,7 +351,7 @@ ATTR_TARGET_AESNI static void prg_aesni_128(const uint8_t* key, const uint8_t* i
   rk[9]  = KEYEXP128(rk[8], 0x1B);
   rk[10] = KEYEXP128(rk[9], 0x36);
 
-  __m128i miv = _mm_load_si128((const __m128i_u*)iv);
+  __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
     m         = _mm_aesenc_si128(m, rk[1]);
@@ -420,7 +420,7 @@ ATTR_TARGET_AESNI static void prg_aesni_192(const uint8_t* key, uint8_t* iv, uin
       _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(temp[0]), _mm_castsi128_pd(temp[1]), 1));
   rk[12] = KEYEXP192(temp[0], temp[1], 0x80);
 
-  __m128i miv = _mm_load_si128((const __m128i_u*)iv);
+  __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
     m         = _mm_aesenc_si128(m, rk[1]);
@@ -481,7 +481,7 @@ ATTR_TARGET_AESNI static void prg_aesni_256(const uint8_t* key, uint8_t* iv, uin
   rk[13] = KEYEXP256_2(rk[11], rk[12]);
   rk[14] = KEYEXP256(rk[12], rk[13], 0x40);
 
-  __m128i miv = _mm_load_si128((const __m128i_u*)iv);
+  __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
     m         = _mm_aesenc_si128(m, rk[1]);
