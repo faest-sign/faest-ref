@@ -643,9 +643,10 @@ aes_SSS_add_round_key_bytes_prover_degree_2(bfSSS_t* y_deg0, bfSSS_t* y_deg1, bf
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
     y_deg0[i] = bfSSS_add(in_deg0[i], k_deg0[i]);
-    y_deg1[i] = in_deg1[i]; // k_deg1[i] is 0
     y_deg2[i] = bfSSS_add(in_deg2[i], k_deg2[i]);
   }
+  // k_deg1[i] is 0
+  memcpy(y_deg1, in_deg1, sizeof(bfSSS_t) * Nstbytes);
 }
 
 static void
@@ -659,8 +660,8 @@ aes_SSS_add_round_key_bytes_prover_degree_1(bfSSS_t* y_deg0, bfSSS_t* y_deg1, bf
   for (unsigned int i = 0; i < Nstbytes; i++) {
     y_deg2[i] = bfSSS_add(in_deg2[i], k_deg2[i]);
     y_deg1[i] = bfSSS_add(in_deg1[i], k_deg1[i]);
-    y_deg0[i] = in_deg0[i];
   }
+  memcpy(y_deg0, in_deg0, sizeof(bfSSS_t) * Nstbytes);
 }
 
 // Use shift_tag if key is degree-1 instead of degree-2
@@ -827,9 +828,8 @@ static void aes_SSS_bitwise_mix_column_verifier(bfSSS_t* out_key, bfSSS_t* s_key
 // CONSTANT TO VOLE
 static void constant_to_vole_SSS_prover(bfSSS_t* tag, unsigned int n) {
   // the val stay the same as the val is a pub const!
-  for (unsigned int i = 0; i < n; i++) {
-    tag[i] = bfSSS_zero(); // for constant values the tag is zero
-  }
+  // for constant values the tag is zero
+  memset(tag, 0, sizeof(bfSSS_t) * n);
 }
 
 static void constant_to_vole_SSS_verifier(bfSSS_t* key, const uint8_t* val, bfSSS_t delta,
