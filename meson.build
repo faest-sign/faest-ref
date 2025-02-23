@@ -68,7 +68,10 @@ cpp_flags = cpp.get_supported_arguments(flags) + cc.get_supported_arguments(cpp_
 linker_flags = cc.get_supported_link_arguments(flags)
 
 # check availability of some headers
+conf_data.set('HAVE_ASM_HWCAP_H', cc.has_header('asm/hwcap.h'))
 conf_data.set('HAVE_SYS_RANDOM_H', cc.has_header('sys/random.h'))
+conf_data.set('HAVE_SYS_AUXV_H', cc.has_header('sys/auxv.h'))
+conf_data.set('HAVE_WMMINTRIN_H', cc.has_header('wmmintrin.h'))
 
 # check availability of some functions
 conf_data.set(
@@ -479,6 +482,7 @@ faest_sources = files(
   'aes.c',
   'bavc.c',
   'compat.c',
+  'cpu.c',
   'faest.c',
   'fields.c',
   'instances.c',
