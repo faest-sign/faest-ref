@@ -13,7 +13,8 @@
 #include "compat.h"
 #include "utils.h"
 
-#if defined(HAVE_WMMINTRIN_H)
+#if (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)) &&         \
+    (defined(__GNUC__) || defined(__clang__)) && defined(HAVE_WMMINTRIN_H)
 #include <wmmintrin.h>
 #endif
 #if defined(HAVE_OPENSSL)
@@ -307,7 +308,8 @@ static void add_to_upper_word(uint8_t* iv, uint32_t tweak) {
   memcpy(iv + IV_SIZE - sizeof(uint32_t), &iv3, sizeof(uint32_t));
 }
 
-#if defined(HAVE_WMMINTRIN_H)
+#if (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)) &&         \
+    (defined(__GNUC__) || defined(__clang__)) && defined(HAVE_WMMINTRIN_H)
 ATTR_TARGET_AESNI ATTR_ALWAYS_INLINE static inline __m128i sse2_increment_iv(__m128i iv) {
   return _mm_add_epi32(iv, _mm_set_epi32(0, 0, 0, 1));
 }
@@ -531,7 +533,8 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
   memcpy(internal_iv, iv, IV_SIZE);
   add_to_upper_word(internal_iv, tweak);
 
-#if defined(HAVE_WMMINTRIN_H)
+#if (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)) &&         \
+    (defined(__GNUC__) || defined(__clang__)) && defined(HAVE_WMMINTRIN_H)
   // use AES-NI if possible
   if (CPU_SUPPORTS_AESNI) {
     switch (seclvl) {

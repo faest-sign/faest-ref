@@ -30,7 +30,7 @@ static unsigned int init_caps(void) {
 }
 
 #elif (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)) &&       \
-    (defined(__GNUC__) || defined(_MSC_VER))
+    (defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER))
 
 #ifdef _MSC_VER
 #include <intrin.h>
