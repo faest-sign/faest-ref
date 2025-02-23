@@ -217,15 +217,9 @@ static
     uint8_t
     invnorm(uint8_t in) {
   // instead of computing in^(-17), we calculate in^238
-  uint8_t y_prime = 0;
-  bf8_store(&y_prime, bf_exp_238(bf8_load(&in)));
-
-  uint8_t y = 0;
-  y ^= ((y_prime >> 0) & 1) << 0;
-  y ^= ((y_prime >> 6) & 1) << 1;
-  y ^= ((y_prime >> 7) & 1) << 2;
-  y ^= ((y_prime >> 2) & 1) << 3;
-  return y;
+  in = bf_exp_238(in);
+  return set_bit(get_bit(in, 0), 0) ^ set_bit(get_bit(in, 6), 1) ^ set_bit(get_bit(in, 7), 2) ^
+         set_bit(get_bit(in, 2), 3);
 }
 
 static uint8_t* store_invnorm_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
