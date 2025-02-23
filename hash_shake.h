@@ -239,9 +239,9 @@ static inline void hash_squeeze(hash_context* ctx, uint8_t* buffer, size_t bufle
   { (void)ctx; }
 #endif
 
-static inline void hash_update_uint16_le(hash_context* ctx, uint16_t data) {
-  const uint16_t data_le = htole16(data);
-  hash_update(ctx, (const uint8_t*)&data_le, sizeof(data_le));
+static inline void hash_update_uint32_le(hash_context* ctx, uint32_t data) {
+  data = htole32(data);
+  hash_update(ctx, (const uint8_t*)&data, sizeof(data));
 }
 
 static inline void hash_init_prefix(hash_context* ctx, unsigned int security_param,
@@ -362,16 +362,16 @@ static inline void hash_squeeze_x4_4(hash_context_x4* ctx, uint8_t* buffer0, uin
 #define hash_clear_x4(ctx)
 #endif
 
-static inline void hash_update_x4_uint16_le(hash_context_x4* ctx, uint16_t data) {
-  const uint16_t data_le = htole16(data);
+static inline void hash_update_x4_uint32_le(hash_context_x4* ctx, uint32_t data) {
+  const uint32_t data_le = htole32(data);
   hash_update_x4_1(ctx, (const uint8_t*)&data_le, sizeof(data_le));
 }
 
-static inline void hash_update_x4_uint16s_le(hash_context_x4* ctx, const uint16_t data[4]) {
-  const uint16_t data0_le = htole16(data[0]);
-  const uint16_t data1_le = htole16(data[1]);
-  const uint16_t data2_le = htole16(data[2]);
-  const uint16_t data3_le = htole16(data[3]);
+static inline void hash_update_x4_uint32s_le(hash_context_x4* ctx, const uint32_t data[4]) {
+  const uint32_t data0_le = htole16(data[0]);
+  const uint32_t data1_le = htole16(data[1]);
+  const uint32_t data2_le = htole16(data[2]);
+  const uint32_t data3_le = htole16(data[3]);
   hash_update_x4_4(ctx, (const uint8_t*)&data0_le, (const uint8_t*)&data1_le,
                    (const uint8_t*)&data2_le, (const uint8_t*)&data3_le, sizeof(data[0]));
 }

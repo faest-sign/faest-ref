@@ -96,6 +96,10 @@ void H2_update(H2_context_t* ctx, const uint8_t* src, size_t len) {
   hash_update(ctx, src, len);
 }
 
+void H2_update_u32_le(H2_context_t* ctx, uint32_t v) {
+  hash_update_uint32_le(ctx, v);
+}
+
 void H2_0_final(H2_context_t* ctx, uint8_t* digest, size_t len) {
   hash_update(ctx, &domain_sep_H2_0, sizeof(domain_sep_H2_0));
   hash_final(ctx);
