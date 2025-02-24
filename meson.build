@@ -114,7 +114,6 @@ conf_data.set('HAVE_AVX2', supports_avx2)
 conf_data.set('HAVE_ASM_HWCAP_H', cc.has_header('asm/hwcap.h'))
 conf_data.set('HAVE_SYS_RANDOM_H', cc.has_header('sys/random.h'))
 conf_data.set('HAVE_SYS_AUXV_H', cc.has_header('sys/auxv.h'))
-conf_data.set('HAVE_WMMINTRIN_H', cc.has_header('wmmintrin.h'))
 
 # check availability of some functions
 conf_data.set(
