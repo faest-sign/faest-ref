@@ -65,11 +65,14 @@ bool cpu_supports(unsigned int caps);
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
 #if defined(BUILTIN_CPU_SUPPORTED)
 #define CPU_SUPPORTS_AESNI (__builtin_cpu_supports("sse2") && __builtin_cpu_supports("aes"))
+#define CPU_SUPPORTS_AESNI_AVX (__builtin_cpu_supports("avx2") && __builtin_cpu_supports("aes"))
 #else
 #define CPU_SUPPORTS_AESNI cpu_supports(CPU_CAP_SSE2 | CPU_CAP_AESNI)
+#define CPU_SUPPORTS_AESNI_AVX cpu_supports(CPU_CAP_AVX2 | CPU_CAP_AESNI)
 #endif
 #else
 #define CPU_SUPPORTS_AESNI 0
+#define CPU_SUPPORTS_AESNI_AVX 0
 #endif
 
 #if defined(__aarch64__)

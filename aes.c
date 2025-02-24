@@ -477,6 +477,149 @@ ATTR_TARGET_AESNI static void prg_aesni_256(const uint8_t* key, uint8_t* iv, uin
     memcpy(out, last_block, outlen % IV_SIZE);
   }
 }
+
+ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_128(const uint8_t* key, const uint8_t* iv,
+                                                    uint8_t* out, size_t outlen) {
+  __m128i rk[11];
+  /* 128 bit key setup */
+  rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
+  rk[1]  = KEYEXP128(rk[0], 0x01);
+  rk[2]  = KEYEXP128(rk[1], 0x02);
+  rk[3]  = KEYEXP128(rk[2], 0x04);
+  rk[4]  = KEYEXP128(rk[3], 0x08);
+  rk[5]  = KEYEXP128(rk[4], 0x10);
+  rk[6]  = KEYEXP128(rk[5], 0x20);
+  rk[7]  = KEYEXP128(rk[6], 0x40);
+  rk[8]  = KEYEXP128(rk[7], 0x80);
+  rk[9]  = KEYEXP128(rk[8], 0x1B);
+  rk[10] = KEYEXP128(rk[9], 0x36);
+
+  __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
+  for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
+    __m128i m = _mm_xor_si128(miv, rk[0]);
+    for (unsigned int round = 1; round != 10; ++round) {
+      m = _mm_aesenc_si128(m, rk[round]);
+    }
+    m = _mm_aesenclast_si128(m, rk[10]);
+    _mm_storeu_si128((__m128i_u*)out, m);
+    miv = sse2_increment_iv(miv);
+  }
+
+  if (outlen % IV_SIZE) {
+    __m128i m = _mm_xor_si128(miv, rk[0]);
+    for (unsigned int round = 1; round != 10; ++round) {
+      m = _mm_aesenc_si128(m, rk[round]);
+    }
+    m = _mm_aesenclast_si128(m, rk[10]);
+
+    uint8_t last_block[IV_SIZE];
+    _mm_storeu_si128((__m128i_u*)last_block, m);
+
+    memcpy(out, last_block, outlen % IV_SIZE);
+  }
+}
+
+ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_192(const uint8_t* key, uint8_t* iv, uint8_t* out,
+                                                    size_t outlen) {
+  __m128i rk[13];
+  /* 192 bit key setup */
+  __m128i temp[2];
+  rk[0]   = _mm_loadu_si128((const __m128i_u*)key);
+  rk[1]   = _mm_loadu_si64((const __m128i_u*)(key + 16));
+  temp[0] = KEYEXP192(rk[0], rk[1], 0x01);
+  temp[1] = KEYEXP192_2(temp[0], rk[1]);
+  rk[1]   = _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(rk[1]), _mm_castsi128_pd(temp[0]), 0));
+  rk[2] = _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(temp[0]), _mm_castsi128_pd(temp[1]), 1));
+  rk[3] = KEYEXP192(temp[0], temp[1], 0x02);
+  rk[4] = KEYEXP192_2(rk[3], temp[1]);
+  temp[0] = KEYEXP192(rk[3], rk[4], 0x04);
+  temp[1] = KEYEXP192_2(temp[0], rk[4]);
+  rk[4]   = _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(rk[4]), _mm_castsi128_pd(temp[0]), 0));
+  rk[5] = _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(temp[0]), _mm_castsi128_pd(temp[1]), 1));
+  rk[6] = KEYEXP192(temp[0], temp[1], 0x08);
+  rk[7] = KEYEXP192_2(rk[6], temp[1]);
+  temp[0] = KEYEXP192(rk[6], rk[7], 0x10);
+  temp[1] = KEYEXP192_2(temp[0], rk[7]);
+  rk[7]   = _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(rk[7]), _mm_castsi128_pd(temp[0]), 0));
+  rk[8] = _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(temp[0]), _mm_castsi128_pd(temp[1]), 1));
+  rk[9] = KEYEXP192(temp[0], temp[1], 0x20);
+  rk[10]  = KEYEXP192_2(rk[9], temp[1]);
+  temp[0] = KEYEXP192(rk[9], rk[10], 0x40);
+  temp[1] = KEYEXP192_2(temp[0], rk[10]);
+  rk[10] = _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(rk[10]), _mm_castsi128_pd(temp[0]), 0));
+  rk[11] =
+      _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(temp[0]), _mm_castsi128_pd(temp[1]), 1));
+  rk[12] = KEYEXP192(temp[0], temp[1], 0x80);
+
+  __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
+  for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
+    __m128i m = _mm_xor_si128(miv, rk[0]);
+    for (unsigned int round = 1; round != 12; ++round) {
+      m = _mm_aesenc_si128(m, rk[round]);
+    }
+    m = _mm_aesenclast_si128(m, rk[12]);
+    _mm_storeu_si128((__m128i_u*)out, m);
+    miv = sse2_increment_iv(miv);
+  }
+
+  if (outlen % IV_SIZE) {
+    __m128i m = _mm_xor_si128(miv, rk[0]);
+    for (unsigned int round = 1; round != 12; ++round) {
+      m = _mm_aesenc_si128(m, rk[round]);
+    }
+    m = _mm_aesenclast_si128(m, rk[12]);
+
+    uint8_t last_block[IV_SIZE];
+    _mm_storeu_si128((__m128i_u*)last_block, m);
+
+    memcpy(out, last_block, outlen % IV_SIZE);
+  }
+}
+
+ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_256(const uint8_t* key, uint8_t* iv, uint8_t* out,
+                                                    size_t outlen) {
+  __m128i rk[15];
+  /* 256 bit key setup */
+  rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
+  rk[1]  = _mm_loadu_si128((const __m128i_u*)(key + 16));
+  rk[2]  = KEYEXP256(rk[0], rk[1], 0x01);
+  rk[3]  = KEYEXP256_2(rk[1], rk[2]);
+  rk[4]  = KEYEXP256(rk[2], rk[3], 0x02);
+  rk[5]  = KEYEXP256_2(rk[3], rk[4]);
+  rk[6]  = KEYEXP256(rk[4], rk[5], 0x04);
+  rk[7]  = KEYEXP256_2(rk[5], rk[6]);
+  rk[8]  = KEYEXP256(rk[6], rk[7], 0x08);
+  rk[9]  = KEYEXP256_2(rk[7], rk[8]);
+  rk[10] = KEYEXP256(rk[8], rk[9], 0x10);
+  rk[11] = KEYEXP256_2(rk[9], rk[10]);
+  rk[12] = KEYEXP256(rk[10], rk[11], 0x20);
+  rk[13] = KEYEXP256_2(rk[11], rk[12]);
+  rk[14] = KEYEXP256(rk[12], rk[13], 0x40);
+
+  __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
+  for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
+    __m128i m = _mm_xor_si128(miv, rk[0]);
+    for (unsigned int round = 1; round != 14; ++round) {
+      m = _mm_aesenc_si128(m, rk[round]);
+    }
+    m = _mm_aesenclast_si128(m, rk[14]);
+    _mm_storeu_si128((__m128i_u*)out, m);
+    miv = sse2_increment_iv(miv);
+  }
+
+  if (outlen % IV_SIZE) {
+    __m128i m = _mm_xor_si128(miv, rk[0]);
+    for (unsigned int round = 1; round != 14; ++round) {
+      m = _mm_aesenc_si128(m, rk[round]);
+    }
+    m = _mm_aesenclast_si128(m, rk[14]);
+
+    uint8_t last_block[IV_SIZE];
+    _mm_storeu_si128((__m128i_u*)last_block, m);
+
+    memcpy(out, last_block, outlen % IV_SIZE);
+  }
+}
 #endif
 
 void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, unsigned int seclvl,
@@ -488,6 +631,21 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
 #if (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)) &&         \
     (defined(__GNUC__) || defined(__clang__)) && defined(HAVE_WMMINTRIN_H)
   // use AES-NI if possible
+  if (CPU_SUPPORTS_AESNI_AVX) {
+    switch (seclvl) {
+    case 256:
+      prg_aesni_avx_256(key, internal_iv, out, outlen);
+      break;
+    case 192:
+      prg_aesni_avx_192(key, internal_iv, out, outlen);
+      break;
+    default:
+      prg_aesni_avx_128(key, internal_iv, out, outlen);
+      break;
+    }
+    return;
+  }
+
   if (CPU_SUPPORTS_AESNI) {
     switch (seclvl) {
     case 256:
