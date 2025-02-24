@@ -15,7 +15,7 @@
 #define HAVE_AVX2
 #endif
 
-#if GNUC_CHECK(9, 0)
+#if GNUC_CHECK(9, 0) || CLANG_CHECK(8)
 #define HAVE_MM_LOADU_SI64
 #endif
 #endif
@@ -327,9 +327,12 @@ static void add_to_upper_word(uint8_t* iv, uint32_t tweak) {
 
 #if defined(HAVE_AESNI)
 #if defined(_MSC_VER)
-// workarounds for MS VC
+// workarounds for MSVC
 #include <immintrin.h>
 
+#define __m128i_u __m128i
+#elif !GNUC_CHECK(7, 0) && !CLANG_CHECK(9)
+// workaround for gcc and clang
 #define __m128i_u __m128i
 #endif
 

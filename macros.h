@@ -28,6 +28,13 @@
 #define GNUC_CHECK(maj, min) 0
 #endif
 
+/* clang version check macro */
+#if defined(__clang__) && defined(__clang_major__)
+#define CLANG_CHECK(maj) (__clang_major__ >= (maj))
+#else
+#define CLANG_CHECK(maj) 0
+#endif
+
 /* glibc version check macro */
 #if defined(__GLIBC__)
 #define GLIBC_CHECK(maj, min) __GLIBC_PREREQ(maj, min)
