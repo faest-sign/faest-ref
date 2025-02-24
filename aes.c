@@ -15,6 +15,8 @@
 #if __has_include(<emmintrin.h>)
 #define HAVE_AVX2
 #endif
+
+// TODO: extend fallback check for MS VC
 #endif
 #endif
 
@@ -323,6 +325,33 @@ static void add_to_upper_word(uint8_t* iv, uint32_t tweak) {
 }
 
 #if defined(HAVE_AESNI)
+#if defined(_MSC_VER)
+// workarounds for MS VC
+#define __m128i_u __m128i
+
+ATTR_ALWAYS_INLINE static inline __m128i _mm_loadu_si64(const void* src) {
+  uint64_t u0;
+  memcpy(&u0, src, sizeof(u0));
+#if defined(__x86_64__)
+// MS VC for x86-64
+#if _MSC_VER < 1700
+  __m128i x0 = _mm_cvtsi64_si128(u0);
+  return     = _mm_unpacklo_epi64(x0, _mm_setzero_si128());
+#else
+  return _mm_set_epi64x(0, u0);
+#endif
+#else
+  // MS VC for x86 (untested)
+  union {
+    uint64_t q;
+    uint32_t r[2];
+  } u;
+  u.q = u0;
+  return _mm_setr_epi32(u.r[0], u.r[1], 0, 0);
+#endif
+}
+#endif
+
 ATTR_TARGET_AESNI ATTR_ALWAYS_INLINE static inline __m128i sse2_increment_iv(__m128i iv) {
   return _mm_add_epi32(iv, _mm_set_epi32(0, 0, 0, 1));
 }
