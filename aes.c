@@ -379,7 +379,7 @@ ATTR_TARGET_AESNI static inline __m128i aes192_keyexpand_2(__m128i key, __m128i 
 
 ATTR_TARGET_AESNI static void prg_aesni_128(const uint8_t* key, const uint8_t* iv, uint8_t* out,
                                             size_t outlen) {
-  __m128i rk[11];
+  __m128i rk[ROUNDS_128 + 1];
   /* 128 bit key setup */
   rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
   rk[1]  = KEYEXP128(rk[0], 0x01);
@@ -396,20 +396,20 @@ ATTR_TARGET_AESNI static void prg_aesni_128(const uint8_t* key, const uint8_t* i
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 10; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_128; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[10]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_128]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 10; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_128; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[10]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_128]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
@@ -420,7 +420,7 @@ ATTR_TARGET_AESNI static void prg_aesni_128(const uint8_t* key, const uint8_t* i
 
 ATTR_TARGET_AESNI static void prg_aesni_192(const uint8_t* key, uint8_t* iv, uint8_t* out,
                                             size_t outlen) {
-  __m128i rk[13];
+  __m128i rk[ROUNDS_192 + 1];
   /* 192 bit key setup */
   __m128i temp[2];
   rk[0]   = _mm_loadu_si128((const __m128i_u*)key);
@@ -453,20 +453,20 @@ ATTR_TARGET_AESNI static void prg_aesni_192(const uint8_t* key, uint8_t* iv, uin
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 12; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_192; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[12]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_192]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 12; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_192; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[12]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_192]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
@@ -477,7 +477,7 @@ ATTR_TARGET_AESNI static void prg_aesni_192(const uint8_t* key, uint8_t* iv, uin
 
 ATTR_TARGET_AESNI static void prg_aesni_256(const uint8_t* key, uint8_t* iv, uint8_t* out,
                                             size_t outlen) {
-  __m128i rk[15];
+  __m128i rk[ROUNDS_256 + 1];
   /* 256 bit key setup */
   rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
   rk[1]  = _mm_loadu_si128((const __m128i_u*)(key + 16));
@@ -498,20 +498,20 @@ ATTR_TARGET_AESNI static void prg_aesni_256(const uint8_t* key, uint8_t* iv, uin
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 14; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_256; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[14]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_256]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 14; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_256; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[14]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_256]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
@@ -523,7 +523,7 @@ ATTR_TARGET_AESNI static void prg_aesni_256(const uint8_t* key, uint8_t* iv, uin
 #if defined(HAVE_AVX2)
 ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_128(const uint8_t* key, const uint8_t* iv,
                                                     uint8_t* out, size_t outlen) {
-  __m128i rk[11];
+  __m128i rk[ROUNDS_128 + 1];
   /* 128 bit key setup */
   rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
   rk[1]  = KEYEXP128(rk[0], 0x01);
@@ -540,20 +540,20 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_128(const uint8_t* key, const ui
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 10; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_128; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[10]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_128]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 10; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_128; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[10]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_128]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
@@ -564,7 +564,7 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_128(const uint8_t* key, const ui
 
 ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_192(const uint8_t* key, uint8_t* iv, uint8_t* out,
                                                     size_t outlen) {
-  __m128i rk[13];
+  __m128i rk[ROUNDS_192 + 1];
   /* 192 bit key setup */
   __m128i temp[2];
   rk[0]   = _mm_loadu_si128((const __m128i_u*)key);
@@ -597,20 +597,20 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_192(const uint8_t* key, uint8_t*
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 12; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_192; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[12]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_192]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 12; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_192; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[12]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_192]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
@@ -621,7 +621,7 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_192(const uint8_t* key, uint8_t*
 
 ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_256(const uint8_t* key, uint8_t* iv, uint8_t* out,
                                                     size_t outlen) {
-  __m128i rk[15];
+  __m128i rk[ROUNDS_256 + 1];
   /* 256 bit key setup */
   rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
   rk[1]  = _mm_loadu_si128((const __m128i_u*)(key + 16));
@@ -642,20 +642,20 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_256(const uint8_t* key, uint8_t*
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 14; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_256; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[14]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_256]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != 14; ++round) {
+    for (unsigned int round = 1; round != ROUNDS_256; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[14]);
+    m = _mm_aesenclast_si128(m, rk[ROUNDS_256]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
