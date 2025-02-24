@@ -16,6 +16,10 @@
 #define __has_builtin(b) 0
 #endif
 
+#if !defined(__has_include)
+#define __has_include(h) 0
+#endif
+
 /* gcc version check macro */
 #if defined(__GNUC__) && defined(__GNUC_MINOR__)
 #define GNUC_CHECK(maj, min)                                                                       \

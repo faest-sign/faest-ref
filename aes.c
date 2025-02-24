@@ -4,6 +4,18 @@
 
 #if defined(HAVE_CONFIG_H)
 #include <config.h>
+#else
+#include "macros.h"
+
+#if (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)) &&         \
+    (defined(__GNUC__) || defined(__clang__))
+#if __has_include(<wmmintrin.h>)
+#define HAVE_AESNI
+#endif
+#if __has_include(<emmintrin.h>)
+#define HAVE_AVX2
+#endif
+#endif
 #endif
 
 #include "aes.h"
@@ -13,9 +25,11 @@
 #include "compat.h"
 #include "utils.h"
 
-#if (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)) &&         \
-    (defined(__GNUC__) || defined(__clang__)) && defined(HAVE_WMMINTRIN_H)
+#if defined(HAVE_AESNI)
 #include <wmmintrin.h>
+#if defined(HAVE_AVX2)
+#include <emmintrin.h>
+#endif
 #endif
 #if defined(HAVE_OPENSSL)
 #include <openssl/evp.h>
@@ -308,8 +322,7 @@ static void add_to_upper_word(uint8_t* iv, uint32_t tweak) {
   memcpy(iv + IV_SIZE - sizeof(uint32_t), &iv3, sizeof(uint32_t));
 }
 
-#if (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)) &&         \
-    (defined(__GNUC__) || defined(__clang__)) && defined(HAVE_WMMINTRIN_H)
+#if defined(HAVE_AESNI)
 ATTR_TARGET_AESNI ATTR_ALWAYS_INLINE static inline __m128i sse2_increment_iv(__m128i iv) {
   return _mm_add_epi32(iv, _mm_set_epi32(0, 0, 0, 1));
 }
@@ -478,6 +491,7 @@ ATTR_TARGET_AESNI static void prg_aesni_256(const uint8_t* key, uint8_t* iv, uin
   }
 }
 
+#if defined(HAVE_AVX2)
 ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_128(const uint8_t* key, const uint8_t* iv,
                                                     uint8_t* out, size_t outlen) {
   __m128i rk[11];
@@ -621,6 +635,7 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_256(const uint8_t* key, uint8_t*
   }
 }
 #endif
+#endif
 
 void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, unsigned int seclvl,
          size_t outlen) {
@@ -628,9 +643,9 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
   memcpy(internal_iv, iv, IV_SIZE);
   add_to_upper_word(internal_iv, tweak);
 
-#if (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)) &&         \
-    (defined(__GNUC__) || defined(__clang__)) && defined(HAVE_WMMINTRIN_H)
-  // use AES-NI if possible
+#if defined(HAVE_AESNI)
+// use AES-NI if possible
+#if defined(HAVE_AVX2)
   if (CPU_SUPPORTS_AESNI_AVX) {
     switch (seclvl) {
     case 256:
@@ -645,6 +660,7 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
     }
     return;
   }
+#endif
 
   if (CPU_SUPPORTS_AESNI) {
     switch (seclvl) {

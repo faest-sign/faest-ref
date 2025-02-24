@@ -67,6 +67,49 @@ c_flags = cc.get_supported_arguments(flags) + cc.get_supported_arguments(c_flags
 cpp_flags = cpp.get_supported_arguments(flags) + cc.get_supported_arguments(cpp_flags)
 linker_flags = cc.get_supported_link_arguments(flags)
 
+# check compiler if compiler supports __builtin_cpu_supports
+has_usable_builtin = cc.compiles(
+  '''
+#include "cpu.h"
+
+#if !defined(BUILTIN_CPU_SUPPORTED) || defined(BUILTIN_CPU_SUPPORTED_BROKEN_BMI2)
+#error "__builtin_cpu_supports is not supported"
+#endif
+''',
+  name: 'compiler supports __builtin_cpu_supports',
+  include_directories: include_directories('.'),
+)
+
+# check compiler if compiler supports AES-NI
+aesni_flag = cc.get_supported_arguments('-maes')
+supports_aesni = cc.compiles(
+  '''
+#include <wmmintrin.h>
+
+void enc() {
+  _mm_aesenc_si128(_mm_setzero_si128(), _mm_setzero_si128());
+}
+''',
+  name: 'compiler supports AES-NI',
+  args: [aesni_flag],
+)
+conf_data.set('HAVE_AESNI', supports_aesni)
+
+# check compiler if compiler supports AVX2
+avx2_flag = cc.get_supported_arguments('-mavx2')
+supports_avx2 = cc.compiles(
+  '''
+#include <emmintrin.h>
+
+void enc() {
+  _mm256_xor_si256(_mm256_setzero_si256(), _mm256_setzero_si256());
+}
+''',
+  name: 'compiler supports AVX2',
+  args: [avx2_flag],
+)
+conf_data.set('HAVE_AVX2', supports_avx2)
+
 # check availability of some headers
 conf_data.set('HAVE_ASM_HWCAP_H', cc.has_header('asm/hwcap.h'))
 conf_data.set('HAVE_SYS_RANDOM_H', cc.has_header('sys/random.h'))
@@ -482,7 +525,6 @@ faest_sources = files(
   'aes.c',
   'bavc.c',
   'compat.c',
-  'cpu.c',
   'faest.c',
   'fields.c',
   'instances.c',
@@ -498,6 +540,10 @@ faest_sources = files(
   faest_aes_192,
   faest_aes_256,
 ]
+
+if has_usable_builtin == false
+  faest_sources += ['cpu.c']
+endif
 
 # header files to install
 headers = files('faest_defines.h')
