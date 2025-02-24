@@ -78,6 +78,8 @@ static_assert(FAEST_EM_@SSS@F_LAMBDA * (FAEST_EM_@SSS@F_R + 1) / 8 ==
 #define PAD_TO(s, a) (((s) + (a) - 1) & ~((a) - 1))
 #define BFSSS_ALLOC(s) faest_aligned_alloc(BFSSS_ALIGN, PAD_TO((s) * sizeof(bfSSS_t), BFSSS_ALIGN))
 
+#define RCON_EVERY (4 * (FAEST_SSS_LAMBDA / 128))
+
 static const bf8_t Rcon[30] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
     0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
@@ -910,8 +912,6 @@ static void aes_SSS_keyexp_backward_prover(uint8_t* y, bfSSS_t* y_tag, const uin
 
   // ::3
   unsigned int iwd = 0;
-  // ::4
-  const unsigned int rcon_every = 4 * (FAEST_SSS_LAMBDA / 128);
   // ::5-6
   for (unsigned int j = 0; j < Ske; j++) {
     // ::7-10
@@ -923,9 +923,9 @@ static void aes_SSS_keyexp_backward_prover(uint8_t* y, bfSSS_t* y_tag, const uin
       x_tilde_tag[bit_i] = bfSSS_add(x_tag[j * 8 + bit_i], key_tag[iwd + (j % 4) * 8 + bit_i]);
     }
 
-    if (j % rcon_every == 0) {
+    if (j % RCON_EVERY == 0) {
       // adding round constant to the witness
-      x_tilde ^= Rcon[j / rcon_every];
+      x_tilde ^= Rcon[j / RCON_EVERY];
     }
 
     // ::11
@@ -951,8 +951,6 @@ static void aes_SSS_keyexp_backward_verifier(bfSSS_t* y_key, const bfSSS_t* x_ke
   bfSSS_t x_tilde_key[8];
   // ::3
   unsigned int iwd = 0;
-  // ::4
-  const unsigned int rcon_every = 4 * (FAEST_SSS_LAMBDA / 128);
   // ::5-6
   for (unsigned int j = 0; j < Ske; j++) {
     // ::7
@@ -961,9 +959,9 @@ static void aes_SSS_keyexp_backward_verifier(bfSSS_t* y_key, const bfSSS_t* x_ke
           bfSSS_add(x_key[j * 8 + bit_i],
                     key_key[iwd + (j % 4) * 8 + bit_i]); // for the tags of each witness bit
       // ::8-10
-      if (j % rcon_every == 0) {
+      if (j % RCON_EVERY == 0) {
         bfSSS_t rcon_key;
-        const uint8_t c = (Rcon[j / rcon_every] >> bit_i) & 1;
+        const uint8_t c = (Rcon[j / RCON_EVERY] >> bit_i) & 1;
         constant_to_vole_SSS_verifier(&rcon_key, &c, delta, 1);
         x_tilde_key[bit_i] = bfSSS_add(x_tilde_key[bit_i], rcon_key);
       }
