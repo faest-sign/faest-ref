@@ -99,7 +99,7 @@ conf_data.set('HAVE_AESNI', supports_aesni)
 avx2_flag = cc.get_supported_arguments('-mavx2')
 supports_avx2 = cc.compiles(
   '''
-#include <emmintrin.h>
+#include <immintrin.h>
 
 void enc() {
   _mm256_xor_si256(_mm256_setzero_si256(), _mm256_setzero_si256());

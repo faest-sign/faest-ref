@@ -12,7 +12,7 @@
 #if __has_include(<wmmintrin.h>)
 #define HAVE_AESNI
 #endif
-#if __has_include(<emmintrin.h>)
+#if __has_include(<immintrin.h>)
 #define HAVE_AVX2
 #endif
 
@@ -30,7 +30,7 @@
 #if defined(HAVE_AESNI)
 #include <wmmintrin.h>
 #if defined(HAVE_AVX2)
-#include <emmintrin.h>
+#include <immintrin.h>
 #endif
 #endif
 #if defined(HAVE_OPENSSL)
