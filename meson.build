@@ -101,7 +101,7 @@ supports_avx2 = cc.compiles(
   '''
 #include <immintrin.h>
 
-void enc() {
+void xor() {
   _mm256_xor_si256(_mm256_setzero_si256(), _mm256_setzero_si256());
 }
 ''',
@@ -109,6 +109,23 @@ void enc() {
   args: [avx2_flag],
 )
 conf_data.set('HAVE_AVX2', supports_avx2)
+
+sse2_flag = cc.get_supported_arguments('-msse2')
+supports_loadu_si64 = cc.compiles(
+  '''
+#include <immintrin.h>
+#include <stdint.h>
+
+void load() {
+  uint64_t v = 0;
+  void* p = &v;
+  _mm_loadu_si64(p);
+}
+''',
+  name: 'compiler supports _mm_loadu_si64',
+  args: [sse2_flag],
+)
+conf_data.set('HAVE_MM_LOADU_SI64', supports_loadu_si64)
 
 # check availability of some headers
 conf_data.set('HAVE_ASM_HWCAP_H', cc.has_header('asm/hwcap.h'))

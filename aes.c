@@ -7,8 +7,7 @@
 #else
 #include "macros.h"
 
-#if (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)) &&         \
-    (defined(__GNUC__) || defined(__clang__))
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)
 #if __has_include(<wmmintrin.h>)
 #define HAVE_AESNI
 #endif
@@ -16,7 +15,9 @@
 #define HAVE_AVX2
 #endif
 
-// TODO: extend fallback check for MS VC
+#if GNUC_CHECK(9, 0)
+#define HAVE_MM_LOADU_SI64
+#endif
 #endif
 #endif
 
@@ -327,19 +328,17 @@ static void add_to_upper_word(uint8_t* iv, uint32_t tweak) {
 #if defined(HAVE_AESNI)
 #if defined(_MSC_VER)
 // workarounds for MS VC
-#define __m128i_u __m128i
+#include <immintrin.h>
 
+#define __m128i_u __m128i
+#endif
+
+#if !defined(HAVE_MM_LOADU_SI64)
 ATTR_ALWAYS_INLINE static inline __m128i _mm_loadu_si64(const void* src) {
   uint64_t u0;
   memcpy(&u0, src, sizeof(u0));
-#if defined(__x86_64__)
-// MS VC for x86-64
-#if _MSC_VER < 1700
-  __m128i x0 = _mm_cvtsi64_si128(u0);
-  return     = _mm_unpacklo_epi64(x0, _mm_setzero_si128());
-#else
+#if !defined(_MSC_VER) || defined(__x86_64__)
   return _mm_set_epi64x(0, u0);
-#endif
 #else
   // MS VC for x86 (untested)
   union {
