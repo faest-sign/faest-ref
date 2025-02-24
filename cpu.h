@@ -69,7 +69,7 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_AESNI cpu_supports(CPU_CAP_SSE2 | CPU_CAP_AESNI)
 #endif
 #else
-#define CPU_SUPPORTA_ESNI 0
+#define CPU_SUPPORTS_AESNI 0
 #endif
 
 #if defined(__aarch64__)
