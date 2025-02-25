@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 2.0.2 -- TODO
+
+* Add AES-NI-based implementation for PRNG.
+* Small efficiency improvements.
+
 ## Version 2.0.1 -- 2025-02-21
 
 * Reduce memory usage.
