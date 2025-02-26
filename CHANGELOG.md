@@ -8,7 +8,7 @@
 ## Version 2.0.1 -- 2025-02-21
 
 * Reduce memory usage.
-* Remove converstion of bit-packed storage to 1 bit/byte.
+* Remove conversion of bit-packed storage to 1 bit/byte.
 * Precompute finite field constants.
 * Generate prover and verifier implementations from template.
 
