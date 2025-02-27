@@ -726,7 +726,6 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
 
   EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
   assert(ctx);
-  EVP_CIPHER_CTX_set_padding(ctx, 1);
 
   EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
 
