@@ -83,6 +83,41 @@ jobs:
         CC_LD: ${{ matrix.cfg.ld }}
         CXX_LD: ${{ matrix.cfg.ld }}
 
+  build-flags-ubuntu-20:
+    name: Test on ubuntu-20.04 with ${{ matrix.cfg.compiler }}
+    needs: [build-base]
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - { os: ubuntu-20.04, compiler: gcc, cxxcompiler: g++ } # = gcc-9
+        - { os: ubuntu-20.04, compiler: clang, cxxcompiler: clang++, ld: lld } # = clang-10
+        - { os: ubuntu-20.04, compiler: gcc-8, cxxcompiler: g++-8 }
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - name: Install Linux dependencies
+      run: |
+        sudo apt-get -q update
+        sudo apt-get -q -y install ${{ matrix.cfg.compiler }} ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev python3-pip
+        pip install meson
+        if [[ ! "${{matrix.cfg.cxxcompiler}}" =~ clang ]]; then sudo apt-get -q -y install ${{ matrix.cfg.cxxcompiler }}; fi
+        if [[ "${{matrix.cfg.ld}}" != "bfd" ]]; then sudo apt-get -q -y install ${{ matrix.cfg.ld }}; fi
+    - name: Build and test
+      uses: BSFishy/meson-build@v1.0.3
+      with:
+        action: test
+        options: --verbose
+        setup-options: -Dbenchmarks=disabled -Db_lto=false --buildtype=release
+      env:
+        CC: ${{ matrix.cfg.compiler }}
+        CXX: ${{ matrix.cfg.cxxcompiler }}
+        CC_LD: ${{ matrix.cfg.ld }}
+        CXX_LD: ${{ matrix.cfg.ld }}
+
   build-flags-macos:
     name: Test on macOS
     needs: [build-base]
