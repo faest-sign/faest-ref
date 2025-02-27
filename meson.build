@@ -82,11 +82,11 @@ has_usable_builtin = cc.compiles(
 
 # check compiler if compiler supports AES-NI
 aesni_flag = cc.get_supported_arguments('-maes')
-supports_aesni = cc.compiles(
+supports_aesni = cc.links(
   '''
 #include <wmmintrin.h>
 
-void enc() {
+int main() {
   _mm_aesenc_si128(_mm_setzero_si128(), _mm_setzero_si128());
 }
 ''',
@@ -97,11 +97,11 @@ conf_data.set('HAVE_AESNI', supports_aesni)
 
 # check compiler if compiler supports AVX2
 avx2_flag = cc.get_supported_arguments('-mavx2')
-supports_avx2 = cc.compiles(
+supports_avx2 = cc.links(
   '''
 #include <immintrin.h>
 
-void xor() {
+int main() {
   _mm256_xor_si256(_mm256_setzero_si256(), _mm256_setzero_si256());
 }
 ''',
@@ -111,12 +111,12 @@ void xor() {
 conf_data.set('HAVE_AVX2', supports_avx2)
 
 sse2_flag = cc.get_supported_arguments('-msse2')
-supports_loadu_si64 = cc.compiles(
+supports_loadu_si64 = cc.links(
   '''
 #include <immintrin.h>
 #include <stdint.h>
 
-void load() {
+int main() {
   uint64_t v = 0;
   void* p = &v;
   _mm_loadu_si64(p);
@@ -706,6 +706,7 @@ run_target(
     ]
     + all_names,
   ],
+
 )
 
 subdir('doc')
