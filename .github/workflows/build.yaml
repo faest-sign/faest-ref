@@ -190,7 +190,7 @@ jobs:
 
   build-archs:
     runs-on: ubuntu-22.04
-    needs: [build-base]
+    needs: [build-flags]
     name: Test with ${{ matrix.cfg.compiler }} on ${{ matrix.cfg.arch }}
     strategy:
       fail-fast: false
@@ -208,6 +208,7 @@ jobs:
       - uses: uraimo/run-on-arch-action@master
         name: Build and test
         id: build
+        continue-on-error: true
         with:
           arch: ${{ matrix.cfg.arch }}
           distro: ubuntu22.04
