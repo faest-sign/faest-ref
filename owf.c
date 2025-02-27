@@ -23,12 +23,11 @@ void owf_128(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   assert(cipher);
   EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
   assert(ctx);
-  EVP_CIPHER_CTX_set_padding(ctx, 0);
 
   EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
   int len = 0;
   EVP_EncryptUpdate(ctx, output, &len, input, IV_SIZE);
-  EVP_EncryptFinal_ex(ctx, output + IV_SIZE, &len);
+  assert((unsigned int)len == IV_SIZE);
   EVP_CIPHER_CTX_free(ctx);
 #else
   aes_round_keys_t round_keys;
@@ -43,16 +42,16 @@ void owf_192(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   assert(cipher);
   EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
   assert(ctx);
-  EVP_CIPHER_CTX_set_padding(ctx, 0);
 
   EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
   int len = 0;
   EVP_EncryptUpdate(ctx, output, &len, input, IV_SIZE);
+  assert((unsigned int)len == IV_SIZE);
   uint8_t buf[16];
   memcpy(buf, input, sizeof(buf));
   buf[0] ^= 0x1;
   EVP_EncryptUpdate(ctx, output + IV_SIZE, &len, buf, IV_SIZE);
-  EVP_EncryptFinal_ex(ctx, output + 2 * IV_SIZE, &len);
+  assert((unsigned int)len == IV_SIZE);
   EVP_CIPHER_CTX_free(ctx);
 #else
   aes_round_keys_t round_keys;
@@ -72,16 +71,16 @@ void owf_256(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   assert(cipher);
   EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
   assert(ctx);
-  EVP_CIPHER_CTX_set_padding(ctx, 0);
 
   EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
   int len = 0;
   EVP_EncryptUpdate(ctx, output, &len, input, IV_SIZE);
+  assert((unsigned int)len == IV_SIZE);
   uint8_t buf[16];
   memcpy(buf, input, sizeof(buf));
   buf[0] ^= 0x1;
   EVP_EncryptUpdate(ctx, output + IV_SIZE, &len, buf, IV_SIZE);
-  EVP_EncryptFinal_ex(ctx, output + 2 * IV_SIZE, &len);
+  assert((unsigned int)len == IV_SIZE);
   EVP_CIPHER_CTX_free(ctx);
 #else
   aes_round_keys_t round_keys;
@@ -101,12 +100,11 @@ void owf_em_128(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   assert(cipher);
   EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
   assert(ctx);
-  EVP_CIPHER_CTX_set_padding(ctx, 0);
 
   EVP_EncryptInit_ex(ctx, cipher, NULL, input, NULL);
   int len = 0;
   EVP_EncryptUpdate(ctx, output, &len, key, IV_SIZE);
-  EVP_EncryptFinal_ex(ctx, output + IV_SIZE, &len);
+  assert((unsigned int)len == IV_SIZE);
   EVP_CIPHER_CTX_free(ctx);
   xor_u8_array(output, key, output, 16);
 #else
