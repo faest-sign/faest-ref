@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 2.0.3 -- 2025-02-28
+
+* Fix stack smashing during OWF computation with OpenSSL.
+
 ## Version 2.0.2 -- 2025-02-25
 
 * Add AES-NI-based implementation for PRNG.
