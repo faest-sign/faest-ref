@@ -961,7 +961,7 @@ static void aes_SSS_keyexp_backward_verifier(bfSSS_t* y_key, const bfSSS_t* x_ke
       // ::8-10
       if (j % RCON_EVERY == 0) {
         bfSSS_t rcon_key;
-        const uint8_t c = (Rcon[j / RCON_EVERY] >> bit_i) & 1;
+        const uint8_t c = get_bit(Rcon[j / RCON_EVERY], bit_i);
         constant_to_vole_SSS_verifier(&rcon_key, &c, delta, 1);
         x_tilde_key[bit_i] = bfSSS_add(x_tilde_key[bit_i], rcon_key);
       }
