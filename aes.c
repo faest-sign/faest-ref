@@ -949,13 +949,15 @@ void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
     // last round is not commited to, so not computed
   }
 
-  // AES-192 and AES-256
   if (beta == 2) {
+    // AES-192 and AES-256
+    uint8_t buf[16];
+    memcpy(buf, in, sizeof(buf));
+    buf[0] ^= 0x1;
+
     // Step 12
     aes_block_t state;
-    load_state(state, in, block_words);
-    // instead of xoring before loading state, directly xor into the state
-    state[0][0] ^= 0x1;
+    load_state(state, buf, block_words);
 
     // Step 13
     add_round_key(0, state, &round_keys, block_words);
