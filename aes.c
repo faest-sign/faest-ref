@@ -23,10 +23,6 @@
 #endif
 #include <string.h>
 
-#define ROUNDS_128 10
-#define ROUNDS_192 12
-#define ROUNDS_256 14
-
 #define KEY_WORDS_128 4
 #define KEY_WORDS_192 6
 #define KEY_WORDS_256 8
@@ -174,23 +170,23 @@ void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int k
 // Calling Functions
 
 void aes128_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
-  expand_key(round_key, key, KEY_WORDS_128, AES_BLOCK_WORDS, ROUNDS_128);
+  expand_key(round_key, key, KEY_WORDS_128, AES_BLOCK_WORDS, AES_ROUNDS_128);
 }
 
 void aes192_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
-  expand_key(round_key, key, KEY_WORDS_192, AES_BLOCK_WORDS, ROUNDS_192);
+  expand_key(round_key, key, KEY_WORDS_192, AES_BLOCK_WORDS, AES_ROUNDS_192);
 }
 
 void aes256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
-  expand_key(round_key, key, KEY_WORDS_256, AES_BLOCK_WORDS, ROUNDS_256);
+  expand_key(round_key, key, KEY_WORDS_256, AES_BLOCK_WORDS, AES_ROUNDS_256);
 }
 
 void rijndael192_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
-  expand_key(round_key, key, KEY_WORDS_192, RIJNDAEL_BLOCK_WORDS_192, ROUNDS_192);
+  expand_key(round_key, key, KEY_WORDS_192, RIJNDAEL_BLOCK_WORDS_192, AES_ROUNDS_192);
 }
 
 void rijndael256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key) {
-  expand_key(round_key, key, KEY_WORDS_256, RIJNDAEL_BLOCK_WORDS_256, ROUNDS_256);
+  expand_key(round_key, key, KEY_WORDS_256, RIJNDAEL_BLOCK_WORDS_256, AES_ROUNDS_256);
 }
 
 static void load_state(aes_block_t state, const uint8_t* src, unsigned int block_words) {
@@ -264,7 +260,7 @@ void aes128_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext) {
   aes_block_t state;
   load_state(state, plaintext, AES_BLOCK_WORDS);
-  aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_128);
+  aes_encrypt(key, state, AES_BLOCK_WORDS, AES_ROUNDS_128);
   store_state(ciphertext, state, AES_BLOCK_WORDS);
 }
 
@@ -272,7 +268,7 @@ void aes192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext) {
   aes_block_t state;
   load_state(state, plaintext, AES_BLOCK_WORDS);
-  aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_192);
+  aes_encrypt(key, state, AES_BLOCK_WORDS, AES_ROUNDS_192);
   store_state(ciphertext, state, AES_BLOCK_WORDS);
 }
 
@@ -280,7 +276,7 @@ void aes256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext) {
   aes_block_t state;
   load_state(state, plaintext, AES_BLOCK_WORDS);
-  aes_encrypt(key, state, AES_BLOCK_WORDS, ROUNDS_256);
+  aes_encrypt(key, state, AES_BLOCK_WORDS, AES_ROUNDS_256);
   store_state(ciphertext, state, AES_BLOCK_WORDS);
 }
 
@@ -288,7 +284,7 @@ void rijndael192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plain
                                uint8_t* ciphertext) {
   aes_block_t state;
   load_state(state, plaintext, RIJNDAEL_BLOCK_WORDS_192);
-  aes_encrypt(key, state, RIJNDAEL_BLOCK_WORDS_192, ROUNDS_192);
+  aes_encrypt(key, state, RIJNDAEL_BLOCK_WORDS_192, AES_ROUNDS_192);
   store_state(ciphertext, state, RIJNDAEL_BLOCK_WORDS_192);
 }
 
@@ -296,7 +292,7 @@ void rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plain
                                uint8_t* ciphertext) {
   aes_block_t state;
   load_state(state, plaintext, RIJNDAEL_BLOCK_WORDS_256);
-  aes_encrypt(key, state, RIJNDAEL_BLOCK_WORDS_256, ROUNDS_256);
+  aes_encrypt(key, state, RIJNDAEL_BLOCK_WORDS_256, AES_ROUNDS_256);
   store_state(ciphertext, state, RIJNDAEL_BLOCK_WORDS_256);
 }
 
@@ -314,7 +310,7 @@ ATTR_TARGET_AESNI ATTR_ALWAYS_INLINE static inline __m128i sse2_increment_iv(__m
 
 ATTR_TARGET_AESNI static void prg_aesni_128(const uint8_t* key, const uint8_t* iv, uint8_t* out,
                                             size_t outlen) {
-  __m128i rk[ROUNDS_128 + 1];
+  __m128i rk[AES_ROUNDS_128 + 1];
   /* 128 bit key setup */
   rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
   rk[1]  = KEYEXP128(rk[0], 0x01);
@@ -331,20 +327,20 @@ ATTR_TARGET_AESNI static void prg_aesni_128(const uint8_t* key, const uint8_t* i
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_128; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_128; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_128]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_128]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_128; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_128; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_128]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_128]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
@@ -355,7 +351,7 @@ ATTR_TARGET_AESNI static void prg_aesni_128(const uint8_t* key, const uint8_t* i
 
 ATTR_TARGET_AESNI static void prg_aesni_192(const uint8_t* key, uint8_t* iv, uint8_t* out,
                                             size_t outlen) {
-  __m128i rk[ROUNDS_192 + 1];
+  __m128i rk[AES_ROUNDS_192 + 1];
   /* 192 bit key setup */
   __m128i temp[2];
   rk[0]   = _mm_loadu_si128((const __m128i_u*)key);
@@ -388,20 +384,20 @@ ATTR_TARGET_AESNI static void prg_aesni_192(const uint8_t* key, uint8_t* iv, uin
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_192; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_192; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_192]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_192]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_192; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_192; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_192]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_192]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
@@ -412,7 +408,7 @@ ATTR_TARGET_AESNI static void prg_aesni_192(const uint8_t* key, uint8_t* iv, uin
 
 ATTR_TARGET_AESNI static void prg_aesni_256(const uint8_t* key, uint8_t* iv, uint8_t* out,
                                             size_t outlen) {
-  __m128i rk[ROUNDS_256 + 1];
+  __m128i rk[AES_ROUNDS_256 + 1];
   /* 256 bit key setup */
   rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
   rk[1]  = _mm_loadu_si128((const __m128i_u*)(key + 16));
@@ -433,20 +429,20 @@ ATTR_TARGET_AESNI static void prg_aesni_256(const uint8_t* key, uint8_t* iv, uin
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_256; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_256; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_256]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_256]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_256; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_256; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_256]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_256]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
@@ -458,7 +454,7 @@ ATTR_TARGET_AESNI static void prg_aesni_256(const uint8_t* key, uint8_t* iv, uin
 #if defined(HAVE_AVX2)
 ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_128(const uint8_t* key, const uint8_t* iv,
                                                     uint8_t* out, size_t outlen) {
-  __m128i rk[ROUNDS_128 + 1];
+  __m128i rk[AES_ROUNDS_128 + 1];
   /* 128 bit key setup */
   rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
   rk[1]  = KEYEXP128(rk[0], 0x01);
@@ -475,20 +471,20 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_128(const uint8_t* key, const ui
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_128; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_128; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_128]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_128]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_128; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_128; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_128]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_128]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
@@ -499,7 +495,7 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_128(const uint8_t* key, const ui
 
 ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_192(const uint8_t* key, uint8_t* iv, uint8_t* out,
                                                     size_t outlen) {
-  __m128i rk[ROUNDS_192 + 1];
+  __m128i rk[AES_ROUNDS_192 + 1];
   /* 192 bit key setup */
   __m128i temp[2];
   rk[0]   = _mm_loadu_si128((const __m128i_u*)key);
@@ -532,20 +528,20 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_192(const uint8_t* key, uint8_t*
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_192; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_192; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_192]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_192]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_192; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_192; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_192]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_192]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
@@ -556,7 +552,7 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_192(const uint8_t* key, uint8_t*
 
 ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_256(const uint8_t* key, uint8_t* iv, uint8_t* out,
                                                     size_t outlen) {
-  __m128i rk[ROUNDS_256 + 1];
+  __m128i rk[AES_ROUNDS_256 + 1];
   /* 256 bit key setup */
   rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
   rk[1]  = _mm_loadu_si128((const __m128i_u*)(key + 16));
@@ -577,20 +573,20 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_256(const uint8_t* key, uint8_t*
   __m128i miv = _mm_loadu_si128((const __m128i_u*)iv);
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_256; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_256; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_256]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_256]);
     _mm_storeu_si128((__m128i_u*)out, m);
     miv = sse2_increment_iv(miv);
   }
 
   if (outlen % IV_SIZE) {
     __m128i m = _mm_xor_si128(miv, rk[0]);
-    for (unsigned int round = 1; round != ROUNDS_256; ++round) {
+    for (unsigned int round = 1; round != AES_ROUNDS_256; ++round) {
       m = _mm_aesenc_si128(m, rk[round]);
     }
-    m = _mm_aesenclast_si128(m, rk[ROUNDS_256]);
+    m = _mm_aesenclast_si128(m, rk[AES_ROUNDS_256]);
 
     uint8_t last_block[IV_SIZE];
     _mm_storeu_si128((__m128i_u*)last_block, m);
@@ -726,14 +722,14 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
     for (; outlen >= 16; outlen -= 16, out += 16) {
       aes_block_t state;
       load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, ROUNDS_256);
+      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_256);
       store_state(out, state, AES_BLOCK_WORDS);
       aes_increment_iv(internal_iv);
     }
     if (outlen) {
       aes_block_t state;
       load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, ROUNDS_256);
+      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_256);
       uint8_t tmp[16];
       store_state(tmp, state, AES_BLOCK_WORDS);
       memcpy(out, tmp, outlen);
@@ -744,14 +740,14 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
     for (; outlen >= 16; outlen -= 16, out += 16) {
       aes_block_t state;
       load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, ROUNDS_192);
+      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_192);
       store_state(out, state, AES_BLOCK_WORDS);
       aes_increment_iv(internal_iv);
     }
     if (outlen) {
       aes_block_t state;
       load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, ROUNDS_192);
+      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_192);
       uint8_t tmp[16];
       store_state(tmp, state, AES_BLOCK_WORDS);
       memcpy(out, tmp, outlen);
@@ -762,14 +758,14 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
     for (; outlen >= 16; outlen -= 16, out += 16) {
       aes_block_t state;
       load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, ROUNDS_128);
+      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_128);
       store_state(out, state, AES_BLOCK_WORDS);
       aes_increment_iv(internal_iv);
     }
     if (outlen) {
       aes_block_t state;
       load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, ROUNDS_128);
+      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_128);
       uint8_t tmp[16];
       store_state(tmp, state, AES_BLOCK_WORDS);
       memcpy(out, tmp, outlen);

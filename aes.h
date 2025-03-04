@@ -13,6 +13,9 @@
 
 FAEST_BEGIN_C_DECL
 
+#define AES_ROUNDS_128 10
+#define AES_ROUNDS_192 12
+#define AES_ROUNDS_256 14
 #define AES_MAX_ROUNDS 14
 
 typedef uint8_t aes_word_t[4];
