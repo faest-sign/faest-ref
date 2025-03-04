@@ -4,21 +4,6 @@
 
 #if defined(HAVE_CONFIG_H)
 #include <config.h>
-#else
-#include "macros.h"
-
-#if defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)
-#if __has_include(<wmmintrin.h>)
-#define HAVE_AESNI
-#endif
-#if __has_include(<immintrin.h>)
-#define HAVE_AVX2
-#endif
-
-#if GNUC_CHECK(9, 0) || CLANG_CHECK(8)
-#define HAVE_MM_LOADU_SI64
-#endif
-#endif
 #endif
 
 #include "aes.h"
@@ -326,34 +311,6 @@ static void add_to_upper_word(uint8_t* iv, uint32_t tweak) {
 }
 
 #if defined(HAVE_AESNI)
-#if defined(_MSC_VER)
-// workarounds for MSVC
-#include <immintrin.h>
-
-#define __m128i_u __m128i
-#elif !GNUC_CHECK(7, 0) && !CLANG_CHECK(9)
-// workaround for gcc and clang
-#define __m128i_u __m128i
-#endif
-
-#if !defined(HAVE_MM_LOADU_SI64)
-ATTR_ALWAYS_INLINE static inline __m128i _mm_loadu_si64(const void* src) {
-  uint64_t u0;
-  memcpy(&u0, src, sizeof(u0));
-#if !defined(_MSC_VER) || defined(__x86_64__)
-  return _mm_set_epi64x(0, u0);
-#else
-  // MS VC for x86 (untested)
-  union {
-    uint64_t q;
-    uint32_t r[2];
-  } u;
-  u.q = u0;
-  return _mm_setr_epi32(u.r[0], u.r[1], 0, 0);
-#endif
-}
-#endif
-
 ATTR_TARGET_AESNI ATTR_ALWAYS_INLINE static inline __m128i sse2_increment_iv(__m128i iv) {
   return _mm_add_epi32(iv, _mm_set_epi32(0, 0, 0, 1));
 }

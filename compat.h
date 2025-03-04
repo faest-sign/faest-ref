@@ -14,7 +14,7 @@
 #include <stddef.h>
 
 #if !defined(HAVE_CONFIG_H) && !defined(OQS)
-/* In case cmake checks were not run, define HAVE_* for known good configurations. We skip those if
+/* In case meson checks were not run, define HAVE_* for known good configurations. We skip those if
  * building for OQS, as the compat functions from there can be used instead. */
 #if defined(__OpenBSD__)
 #include <sys/param.h>
@@ -40,6 +40,19 @@
 /* timingsafe_bcmp was introduced in OpenBSD 4.9, FreeBSD 12.0, and MacOS X 10.12 */
 #define HAVE_TIMINGSAFE_BCMP
 #endif /* HAVE_TIMINGSAFE_BCMP */
+
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)
+#if __has_include(<wmmintrin.h>)
+#define HAVE_AESNI
+#endif
+#if __has_include(<immintrin.h>)
+#define HAVE_AVX2
+#endif
+
+#if GNUC_CHECK(9, 0) || CLANG_CHECK(8)
+#define HAVE_MM_LOADU_SI64
+#endif
+#endif
 #endif /* !HAVE_CONFIG_H && !OQS */
 
 #if defined(HAVE_ALIGNED_ALLOC)
@@ -189,5 +202,35 @@ ATTR_CONST ATTR_ARTIFICIAL static inline uint8_t parity8(uint8_t n) {
 #define static_assert _Static_assert
 #endif
 #endif
+
+#if defined(HAVE_AESNI)
+#if defined(_MSC_VER)
+// workarounds for MSVC
+#include <immintrin.h>
+
+#define __m128i_u __m128i
+#elif !GNUC_CHECK(7, 0) && !CLANG_CHECK(9)
+// workaround for gcc and clang
+#define __m128i_u __m128i
+#endif
+
+#if !defined(HAVE_MM_LOADU_SI64)
+ATTR_ALWAYS_INLINE static inline __m128i _mm_loadu_si64(const void* src) {
+  uint64_t u0;
+  memcpy(&u0, src, sizeof(u0));
+#if !defined(_MSC_VER) || defined(__x86_64__)
+  return _mm_set_epi64x(0, u0);
+#else
+  // MS VC for x86 (untested)
+  union {
+    uint64_t q;
+    uint32_t r[2];
+  } u;
+  u.q = u0;
+  return _mm_setr_epi32(u.r[0], u.r[1], 0, 0);
+#endif
+}
+#endif /* !HAVE_MM_LOADU_SI64 */
+#endif /* HAVE_AESNI */
 
 #endif
