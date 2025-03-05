@@ -221,8 +221,10 @@ void owf_192(const uint8_t* key, const uint8_t* input, uint8_t* output) {
 #else
   aes_round_keys_t round_keys;
   aes192_init_round_keys(&round_keys, key);
-  aes192_encrypt_block(&round_keys, input, output);
 
+  // first block
+  aes192_encrypt_block(&round_keys, input, output);
+  // second block
   uint8_t buf[16];
   memcpy(buf, input, sizeof(buf));
   buf[0] ^= 0x1;
@@ -252,8 +254,10 @@ void owf_256(const uint8_t* key, const uint8_t* input, uint8_t* output) {
 
   EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
   int len = 0;
+  // first block
   EVP_EncryptUpdate(ctx, output, &len, input, IV_SIZE);
   assert((unsigned int)len == IV_SIZE);
+  // second block
   uint8_t buf[16];
   memcpy(buf, input, sizeof(buf));
   buf[0] ^= 0x1;
@@ -263,8 +267,10 @@ void owf_256(const uint8_t* key, const uint8_t* input, uint8_t* output) {
 #else
   aes_round_keys_t round_keys;
   aes256_init_round_keys(&round_keys, key);
-  aes256_encrypt_block(&round_keys, input, output);
 
+  // first block
+  aes256_encrypt_block(&round_keys, input, output);
+  // second block
   uint8_t buf[16];
   memcpy(buf, input, sizeof(buf));
   buf[0] ^= 0x1;
@@ -286,24 +292,9 @@ void owf_em_128(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   }
 #endif
 
-#if defined(HAVE_OPENSSL)
-  const EVP_CIPHER* cipher = EVP_aes_128_ecb();
-  assert(cipher);
-  EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-  assert(ctx);
-
-  EVP_EncryptInit_ex(ctx, cipher, NULL, input, NULL);
-  int len = 0;
-  EVP_EncryptUpdate(ctx, output, &len, key, IV_SIZE);
-  assert((unsigned int)len == IV_SIZE);
-  EVP_CIPHER_CTX_free(ctx);
+  // same as owf_128 with swapped keys and the additional xor
+  owf_128(input, key, output);
   xor_u8_array(output, key, output, 16);
-#else
-  aes_round_keys_t round_keys;
-  aes128_init_round_keys(&round_keys, input);
-  aes128_encrypt_block(&round_keys, key, output);
-  xor_u8_array(output, key, output, 16);
-#endif
 }
 
 void owf_em_192(const uint8_t* key, const uint8_t* input, uint8_t* output) {
