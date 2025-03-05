@@ -491,47 +491,8 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_256(const uint8_t* key, uint8_t*
 #endif
 #endif
 
-void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, unsigned int seclvl,
-         size_t outlen) {
-  uint8_t internal_iv[IV_SIZE];
-  memcpy(internal_iv, iv, IV_SIZE);
-  add_to_upper_word(internal_iv, tweak);
-
-#if defined(HAVE_AESNI)
-// use AES-NI if possible
-#if defined(HAVE_AVX2)
-  if (CPU_SUPPORTS_AESNI_AVX) {
-    switch (seclvl) {
-    case 256:
-      prg_aesni_avx_256(key, internal_iv, out, outlen);
-      break;
-    case 192:
-      prg_aesni_avx_192(key, internal_iv, out, outlen);
-      break;
-    default:
-      prg_aesni_avx_128(key, internal_iv, out, outlen);
-      break;
-    }
-    return;
-  }
-#endif
-
-  if (CPU_SUPPORTS_AESNI) {
-    switch (seclvl) {
-    case 256:
-      prg_aesni_256(key, internal_iv, out, outlen);
-      break;
-    case 192:
-      prg_aesni_192(key, internal_iv, out, outlen);
-      break;
-    default:
-      prg_aesni_128(key, internal_iv, out, outlen);
-      break;
-    }
-    return;
-  }
-#endif
-
+static void generic_prg(const uint8_t* key, uint8_t* internal_iv, uint8_t* out, unsigned int seclvl,
+                        size_t outlen) {
 #if defined(HAVE_OPENSSL)
   const EVP_CIPHER* cipher;
   switch (seclvl) {
@@ -667,6 +628,63 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
     return;
   }
 #endif
+}
+
+void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, unsigned int seclvl,
+         size_t outlen) {
+  uint8_t internal_iv[IV_SIZE];
+  memcpy(internal_iv, iv, IV_SIZE);
+  add_to_upper_word(internal_iv, tweak);
+
+#if defined(HAVE_AESNI)
+// use AES-NI if possible
+#if defined(HAVE_AVX2)
+  if (CPU_SUPPORTS_AESNI_AVX) {
+    switch (seclvl) {
+    case 256:
+      prg_aesni_avx_256(key, internal_iv, out, outlen);
+      return;
+    case 192:
+      prg_aesni_avx_192(key, internal_iv, out, outlen);
+      return;
+    default:
+      prg_aesni_avx_128(key, internal_iv, out, outlen);
+      return;
+    }
+  }
+#endif
+
+  if (CPU_SUPPORTS_AESNI) {
+    switch (seclvl) {
+    case 256:
+      prg_aesni_256(key, internal_iv, out, outlen);
+      return;
+    case 192:
+      prg_aesni_192(key, internal_iv, out, outlen);
+      return;
+    default:
+      prg_aesni_128(key, internal_iv, out, outlen);
+      return;
+    }
+  }
+#endif
+
+void prg_2_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out,
+                  unsigned int seclvl) {
+  uint8_t internal_iv[IV_SIZE];
+  memcpy(internal_iv, iv, IV_SIZE);
+  add_to_upper_word(internal_iv, tweak);
+
+  generic_prg(key, internal_iv, out, seclvl, seclvl * 2 / 8);
+}
+
+void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out,
+                  unsigned int seclvl) {
+  uint8_t internal_iv[IV_SIZE];
+  memcpy(internal_iv, iv, IV_SIZE);
+  add_to_upper_word(internal_iv, tweak);
+
+  generic_prg(key, internal_iv, out, seclvl, seclvl * 4 / 8);
 }
 
 void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,

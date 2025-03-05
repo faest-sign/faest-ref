@@ -62,4 +62,52 @@ BOOST_AUTO_TEST_CASE(test_prg_256) {
   BOOST_TEST(output_256 == expected_256);
 }
 
+BOOST_AUTO_TEST_CASE(test_prg_128_2_lambda) {
+  std::array<uint8_t, 2 * 128 / 8> expected_output, output;
+  prg(key_128.data(), iv_128.data(), tweak_128, expected_output.data(), 128,
+      expected_output.size());
+  prg_2_lambda(key_128.data(), iv_128.data(), tweak_128, output.data(), 128);
+  BOOST_TEST(expected_output == output);
+}
+
+BOOST_AUTO_TEST_CASE(test_prg_128_4_lambda) {
+  std::array<uint8_t, 4 * 128 / 8> expected_output, output;
+  prg(key_128.data(), iv_128.data(), tweak_128, expected_output.data(), 128,
+      expected_output.size());
+  prg_4_lambda(key_128.data(), iv_128.data(), tweak_128, output.data(), 128);
+  BOOST_TEST(expected_output == output);
+}
+
+BOOST_AUTO_TEST_CASE(test_prg_192_2_lambda) {
+  std::array<uint8_t, 2 * 192 / 8> expected_output, output;
+  prg(key_192.data(), iv_192.data(), tweak_192, expected_output.data(), 192,
+      expected_output.size());
+  prg_2_lambda(key_192.data(), iv_192.data(), tweak_192, output.data(), 192);
+  BOOST_TEST(expected_output == output);
+}
+
+BOOST_AUTO_TEST_CASE(test_prg_192_4_lambda) {
+  std::array<uint8_t, 4 * 192 / 8> expected_output, output;
+  prg(key_192.data(), iv_192.data(), tweak_192, expected_output.data(), 192,
+      expected_output.size());
+  prg_4_lambda(key_192.data(), iv_192.data(), tweak_192, output.data(), 192);
+  BOOST_TEST(expected_output == output);
+}
+
+BOOST_AUTO_TEST_CASE(test_prg_256_2_lambda) {
+  std::array<uint8_t, 2 * 256 / 8> expected_output, output;
+  prg(key_256.data(), iv_256.data(), tweak_256, expected_output.data(), 256,
+      expected_output.size());
+  prg_2_lambda(key_256.data(), iv_256.data(), tweak_256, output.data(), 256);
+  BOOST_TEST(expected_output == output);
+}
+
+BOOST_AUTO_TEST_CASE(test_prg_256_4_lambda) {
+  std::array<uint8_t, 4 * 256 / 8> expected_output, output;
+  prg(key_256.data(), iv_256.data(), tweak_256, expected_output.data(), 256,
+      expected_output.size());
+  prg_4_lambda(key_256.data(), iv_256.data(), tweak_256, output.data(), 256);
+  BOOST_TEST(expected_output == output);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

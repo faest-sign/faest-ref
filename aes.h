@@ -63,6 +63,11 @@ void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int k
 
 void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, unsigned int bits,
          size_t outlen);
+void prg_2_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out,
+                  unsigned int bits);
+void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out,
+                  unsigned int bits);
+
 FAEST_END_C_DECL
 
 #endif

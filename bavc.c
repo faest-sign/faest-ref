@@ -23,8 +23,8 @@ static void expand_seeds(uint8_t* nodes, const uint8_t* iv, const faest_paramset
 
   for (unsigned int alpha = 0; alpha < params->L - 1; ++alpha) {
     // the nodes are located in memory consecutively
-    prg(NODE(nodes, alpha, lambda_bytes), iv, alpha, NODE(nodes, 2 * alpha + 1, lambda_bytes),
-        params->lambda, lambda_bytes * 2);
+    prg_2_lambda(NODE(nodes, alpha, lambda_bytes), iv, alpha,
+                 NODE(nodes, 2 * alpha + 1, lambda_bytes), params->lambda);
   }
 }
 
@@ -46,7 +46,7 @@ static void faest_leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, con
   const unsigned int lambda_bytes = lambda / 8;
 
   uint8_t buffer[MAX_LAMBDA_BYTES * 4];
-  prg(key, iv, tweak, buffer, lambda, lambda_bytes * 4);
+  prg_4_lambda(key, iv, tweak, buffer, lambda);
   leaf_hash(com, uhash, buffer, lambda);
   memcpy(sd, buffer, lambda_bytes);
 }
@@ -57,7 +57,7 @@ static void faest_em_leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, 
   const unsigned int lambda_bytes = lambda / 8;
 
   memcpy(sd, key, lambda_bytes);
-  prg(key, iv, tweak, com, lambda, lambda_bytes * 2);
+  prg_2_lambda(key, iv, tweak, com, lambda);
 }
 
 #if defined(FAEST_TESTS)
@@ -306,8 +306,7 @@ static bool reconstruct_keys(uint8_t* s, uint8_t* keys, const uint8_t* decom_i,
 
   for (unsigned int i = 0; i != L - 1; ++i) {
     if (!ptr_get_bit(s, i)) {
-      prg(keys + i * lambda_bytes, iv, i, keys + (2 * i + 1) * lambda_bytes, lambda,
-          2 * lambda_bytes);
+      prg_2_lambda(keys + i * lambda_bytes, iv, i, keys + (2 * i + 1) * lambda_bytes, lambda);
     }
   }
 
