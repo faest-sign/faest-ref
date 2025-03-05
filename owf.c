@@ -42,7 +42,7 @@ ATTR_TARGET_AESNI static void owf_192_aesni(const uint8_t* key, const uint8_t* i
   __m128i temp[2];
   temp[1] = _mm_loadu_si128((const __m128i_u*)input);
   temp[0] = _mm_xor_si128(temp[1], rk[0]);
-  temp[1] = _mm_xor_si128(temp[1], _mm_xor_si128(rk[0], _mm_setr_epi32(1, 0, 0, 0)));
+  temp[1] = _mm_xor_si128(temp[0], _mm_setr_epi32(1, 0, 0, 0));
   for (unsigned int round = 1; round != AES_ROUNDS_192; ++round) {
     temp[0] = _mm_aesenc_si128(temp[0], rk[round]);
     temp[1] = _mm_aesenc_si128(temp[1], rk[round]);
@@ -61,7 +61,7 @@ ATTR_TARGET_AESNI static void owf_256_aesni(const uint8_t* key, const uint8_t* i
   __m128i temp[2];
   temp[1] = _mm_loadu_si128((const __m128i_u*)input);
   temp[0] = _mm_xor_si128(temp[1], rk[0]);
-  temp[1] = _mm_xor_si128(temp[1], _mm_xor_si128(rk[0], _mm_setr_epi32(1, 0, 0, 0)));
+  temp[1] = _mm_xor_si128(temp[0], _mm_setr_epi32(1, 0, 0, 0));
   for (unsigned int round = 1; round != AES_ROUNDS_256; ++round) {
     temp[0] = _mm_aesenc_si128(temp[0], rk[round]);
     temp[1] = _mm_aesenc_si128(temp[1], rk[round]);
@@ -109,7 +109,7 @@ ATTR_TARGET_AESNI_AVX static void owf_192_aesni_avx2(const uint8_t* key, const u
   __m128i temp[2];
   temp[1] = _mm_loadu_si128((const __m128i_u*)input);
   temp[0] = _mm_xor_si128(temp[1], rk[0]);
-  temp[1] = _mm_xor_si128(temp[1], _mm_xor_si128(rk[0], _mm_setr_epi32(1, 0, 0, 0)));
+  temp[1] = _mm_xor_si128(temp[0], _mm_setr_epi32(1, 0, 0, 0));
   for (unsigned int round = 1; round != AES_ROUNDS_192; ++round) {
     temp[0] = _mm_aesenc_si128(temp[0], rk[round]);
     temp[1] = _mm_aesenc_si128(temp[1], rk[round]);
@@ -128,7 +128,7 @@ ATTR_TARGET_AESNI_AVX static void owf_256_aesni_avx2(const uint8_t* key, const u
   __m128i temp[2];
   temp[1] = _mm_loadu_si128((const __m128i_u*)input);
   temp[0] = _mm_xor_si128(temp[1], rk[0]);
-  temp[1] = _mm_xor_si128(temp[1], _mm_xor_si128(rk[0], _mm_setr_epi32(1, 0, 0, 0)));
+  temp[1] = _mm_xor_si128(temp[0], _mm_setr_epi32(1, 0, 0, 0));
   for (unsigned int round = 1; round != AES_ROUNDS_256; ++round) {
     temp[0] = _mm_aesenc_si128(temp[0], rk[round]);
     temp[1] = _mm_aesenc_si128(temp[1], rk[round]);
