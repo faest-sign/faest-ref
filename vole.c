@@ -21,8 +21,7 @@ static
 #endif
     unsigned int
     convert_to_vole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,
-                    unsigned int outLenBytes, uint8_t* u, uint8_t* v,
-                    const faest_paramset_t* params) {
+                    unsigned int outlen, uint8_t* u, uint8_t* v, const faest_paramset_t* params) {
   const unsigned int lambda        = params->lambda;
   const unsigned int tau_1         = params->tau1;
   const unsigned int k             = params->k;
@@ -30,36 +29,36 @@ static
   const unsigned int lambda_bytes  = lambda / 8;
   const unsigned int depth         = bavc_max_node_depth(i, tau_1, k);
 
-  // (depth + 1) x num_instances array of outLenBytes; but we only need two rows at a time
-  uint8_t* r = calloc(2 * num_instances, outLenBytes);
+  // (depth + 1) x num_instances array of outlen; but we only need two rows at a time
+  uint8_t* r = calloc(2 * num_instances, outlen);
 
-#define R(row, column) (r + (((row) % 2) * num_instances + (column)) * outLenBytes)
-#define V(idx) (v + (idx) * outLenBytes)
+#define R(row, column) (r + (((row) % 2) * num_instances + (column)) * outlen)
+#define V(idx) (v + (idx) * outlen)
 
   uint32_t tweak = i ^ TWEAK_OFFSET;
 
   // Step: 2
   if (!sd0_bot) {
-    prg(sd, iv, tweak, R(0, 0), lambda, outLenBytes);
+    prg(sd, iv, tweak, R(0, 0), lambda, outlen);
   }
 
   // Step: 3..4
   for (unsigned int j = 1; j < num_instances; ++j) {
-    prg(sd + lambda_bytes * j, iv, tweak, R(0, j), lambda, outLenBytes);
+    prg(sd + lambda_bytes * j, iv, tweak, R(0, j), lambda, outlen);
   }
 
   // Step: 5..9
-  memset(v, 0, depth * outLenBytes);
+  memset(v, 0, depth * outlen);
   for (unsigned int j = 0; j < depth; j++) {
     unsigned int depthloop = num_instances >> (j + 1);
     for (unsigned int idx = 0; idx < depthloop; idx++) {
-      xor_u8_array(V(j), R(j, 2 * idx + 1), V(j), outLenBytes);
-      xor_u8_array(R(j, 2 * idx), R(j, 2 * idx + 1), R(j + 1, idx), outLenBytes);
+      xor_u8_array(V(j), R(j, 2 * idx + 1), V(j), outlen);
+      xor_u8_array(R(j, 2 * idx), R(j, 2 * idx + 1), R(j + 1, idx), outlen);
     }
   }
   // Step: 10
   if (!sd0_bot && u != NULL) {
-    memcpy(u, R(depth, 0), outLenBytes);
+    memcpy(u, R(depth, 0), outlen);
   }
   free(r);
   return depth;
