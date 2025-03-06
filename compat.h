@@ -215,7 +215,9 @@ ATTR_CONST ATTR_ARTIFICIAL static inline uint8_t parity8(uint8_t n) {
 #endif
 
 #if !defined(HAVE_MM_LOADU_SI64)
-ATTR_ALWAYS_INLINE static inline __m128i _mm_loadu_si64(const void* src) {
+#include <string.h>>
+
+ATTR_TARGET_SSE2 ATTR_ALWAYS_INLINE static inline __m128i _mm_loadu_si64(const void* src) {
   uint64_t u0;
   memcpy(&u0, src, sizeof(u0));
 #if !defined(_MSC_VER) || defined(__x86_64__)

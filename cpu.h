@@ -68,7 +68,7 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_AESNI_AVX2 (CPU_SUPPORTS_AVX2 && __builtin_cpu_supports("aes"))
 #else
 #define CPU_SUPPORTS_AESNI cpu_supports(CPU_CAP_SSE2 | CPU_CAP_AESNI)
-#define CPU_SUPPORTS_AESNI_AVX2 cpu_supports(CPU_CAP_AVX2 | | CPU_CAP_BMI2 | CPU_CAP_AESNI)
+#define CPU_SUPPORTS_AESNI_AVX2 cpu_supports(CPU_CAP_AVX2 | CPU_CAP_BMI2 | CPU_CAP_AESNI)
 #endif
 #else
 #define CPU_SUPPORTS_AESNI 0
