@@ -82,6 +82,17 @@ jobs:
         CXX: ${{ matrix.cfg.cxxcompiler }}
         CC_LD: ${{ matrix.cfg.ld }}
         CXX_LD: ${{ matrix.cfg.ld }}
+    - name: Check NIST submission package
+      run: |
+        mkdir build-nist
+        cd build-nist
+        meson -Dbenchmarks=disabled -Db_lto=false ..
+        ninja prepare_nist
+      env:
+        CC: ${{ matrix.cfg.compiler }}
+        CXX: ${{ matrix.cfg.cxxcompiler }}
+        CC_LD: ${{ matrix.cfg.ld }}
+        CXX_LD: ${{ matrix.cfg.ld }}
 
   build-flags-ubuntu-20:
     name: Test on ubuntu-20.04 with ${{ matrix.cfg.compiler }}
@@ -112,6 +123,17 @@ jobs:
         action: test
         options: --verbose
         setup-options: -Dbenchmarks=disabled -Db_lto=false --buildtype=release
+      env:
+        CC: ${{ matrix.cfg.compiler }}
+        CXX: ${{ matrix.cfg.cxxcompiler }}
+        CC_LD: ${{ matrix.cfg.ld }}
+        CXX_LD: ${{ matrix.cfg.ld }}
+    - name: Check NIST submission package
+      run: |
+        mkdir build-nist
+        cd build-nist
+        meson -Dbenchmarks=disabled -Db_lto=false ..
+        ninja prepare_nist
       env:
         CC: ${{ matrix.cfg.compiler }}
         CXX: ${{ matrix.cfg.cxxcompiler }}
