@@ -99,8 +99,8 @@ ATTR_TARGET_AESNI static inline void aes256_expand_key_aesni(__m128i* rk, const 
 }
 
 #if defined(HAVE_AVX2)
-ATTR_TARGET_AESNI_AVX static inline void aes128_expand_key_aesni_avx2(__m128i* rk,
-                                                                      const uint8_t* key) {
+ATTR_TARGET_AESNI_AVX2 static inline void aes128_expand_key_aesni_avx2(__m128i* rk,
+                                                                       const uint8_t* key) {
   rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
   rk[1]  = KEYEXP128(rk[0], 0x01);
   rk[2]  = KEYEXP128(rk[1], 0x02);
@@ -114,8 +114,8 @@ ATTR_TARGET_AESNI_AVX static inline void aes128_expand_key_aesni_avx2(__m128i* r
   rk[10] = KEYEXP128(rk[9], 0x36);
 }
 
-ATTR_TARGET_AESNI_AVX static inline void aes192_expand_key_aesni_avx2(__m128i* rk,
-                                                                      const uint8_t* key) {
+ATTR_TARGET_AESNI_AVX2 static inline void aes192_expand_key_aesni_avx2(__m128i* rk,
+                                                                       const uint8_t* key) {
   __m128i temp[2];
   rk[0]   = _mm_loadu_si128((const __m128i_u*)key);
   rk[1]   = _mm_loadu_si64((const __m128i_u*)(key + 16));
@@ -145,8 +145,8 @@ ATTR_TARGET_AESNI_AVX static inline void aes192_expand_key_aesni_avx2(__m128i* r
   rk[12] = KEYEXP192(temp[0], temp[1], 0x80);
 }
 
-ATTR_TARGET_AESNI_AVX static inline void aes256_expand_key_aesni_avx2(__m128i* rk,
-                                                                      const uint8_t* key) {
+ATTR_TARGET_AESNI_AVX2 static inline void aes256_expand_key_aesni_avx2(__m128i* rk,
+                                                                       const uint8_t* key) {
   rk[0]  = _mm_loadu_si128((const __m128i_u*)key);
   rk[1]  = _mm_loadu_si128((const __m128i_u*)(key + 16));
   rk[2]  = KEYEXP256(rk[0], rk[1], 0x01);

@@ -528,8 +528,8 @@ ATTR_TARGET_AESNI static void prg_4_aesni_256(const uint8_t* key, uint8_t* iv, u
 }
 
 #if defined(HAVE_AVX2)
-ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_128(const uint8_t* key, const uint8_t* iv,
-                                                    uint8_t* out, size_t outlen) {
+ATTR_TARGET_AESNI_AVX2 static void prg_aesni_avx_128(const uint8_t* key, const uint8_t* iv,
+                                                     uint8_t* out, size_t outlen) {
   __m128i rk[AES_ROUNDS_128 + 1];
   aes128_expand_key_aesni_avx2(rk, key);
 
@@ -558,8 +558,8 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_128(const uint8_t* key, const ui
   }
 }
 
-ATTR_TARGET_AESNI_AVX static void prg_2_aesni_avx_128(const uint8_t* key, const uint8_t* iv,
-                                                      uint8_t* out) {
+ATTR_TARGET_AESNI_AVX2 static void prg_2_aesni_avx_128(const uint8_t* key, const uint8_t* iv,
+                                                       uint8_t* out) {
   __m128i rk[AES_ROUNDS_128 + 1];
   aes128_expand_key_aesni_avx2(rk, key);
 
@@ -578,8 +578,8 @@ ATTR_TARGET_AESNI_AVX static void prg_2_aesni_avx_128(const uint8_t* key, const 
   _mm_storeu_si128((__m128i_u*)(out + IV_SIZE), temp[1]);
 }
 
-ATTR_TARGET_AESNI_AVX static void prg_4_aesni_avx_128(const uint8_t* key, const uint8_t* iv,
-                                                      uint8_t* out) {
+ATTR_TARGET_AESNI_AVX2 static void prg_4_aesni_avx_128(const uint8_t* key, const uint8_t* iv,
+                                                       uint8_t* out) {
   __m128i rk[AES_ROUNDS_128 + 1];
   aes128_expand_key_aesni_avx2(rk, key);
 
@@ -604,8 +604,8 @@ ATTR_TARGET_AESNI_AVX static void prg_4_aesni_avx_128(const uint8_t* key, const 
   _mm_storeu_si128((__m128i_u*)out + 3, _mm_aesenclast_si128(temp[3], rk[AES_ROUNDS_128]));
 }
 
-ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_192(const uint8_t* key, uint8_t* iv, uint8_t* out,
-                                                    size_t outlen) {
+ATTR_TARGET_AESNI_AVX2 static void prg_aesni_avx_192(const uint8_t* key, uint8_t* iv, uint8_t* out,
+                                                     size_t outlen) {
   __m128i rk[AES_ROUNDS_192 + 1];
   aes192_expand_key_aesni_avx2(rk, key);
 
@@ -634,8 +634,8 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_192(const uint8_t* key, uint8_t*
   }
 }
 
-ATTR_TARGET_AESNI_AVX static void prg_2_aesni_avx_192(const uint8_t* key, uint8_t* iv,
-                                                      uint8_t* out) {
+ATTR_TARGET_AESNI_AVX2 static void prg_2_aesni_avx_192(const uint8_t* key, uint8_t* iv,
+                                                       uint8_t* out) {
   __m128i rk[AES_ROUNDS_192 + 1];
   aes192_expand_key_aesni(rk, key);
 
@@ -656,8 +656,8 @@ ATTR_TARGET_AESNI_AVX static void prg_2_aesni_avx_192(const uint8_t* key, uint8_
   _mm_storeu_si128((__m128i_u*)out + 2, _mm_aesenclast_si128(temp[2], rk[AES_ROUNDS_192]));
 }
 
-ATTR_TARGET_AESNI_AVX static void prg_4_aesni_avx_192(const uint8_t* key, uint8_t* iv,
-                                                      uint8_t* out) {
+ATTR_TARGET_AESNI_AVX2 static void prg_4_aesni_avx_192(const uint8_t* key, uint8_t* iv,
+                                                       uint8_t* out) {
   __m128i rk[AES_ROUNDS_192 + 1];
   aes192_expand_key_aesni(rk, key);
 
@@ -679,8 +679,8 @@ ATTR_TARGET_AESNI_AVX static void prg_4_aesni_avx_192(const uint8_t* key, uint8_
   }
 }
 
-ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_256(const uint8_t* key, uint8_t* iv, uint8_t* out,
-                                                    size_t outlen) {
+ATTR_TARGET_AESNI_AVX2 static void prg_aesni_avx_256(const uint8_t* key, uint8_t* iv, uint8_t* out,
+                                                     size_t outlen) {
   __m128i rk[AES_ROUNDS_256 + 1];
   aes256_expand_key_aesni_avx2(rk, key);
 
@@ -709,8 +709,8 @@ ATTR_TARGET_AESNI_AVX static void prg_aesni_avx_256(const uint8_t* key, uint8_t*
   }
 }
 
-ATTR_TARGET_AESNI_AVX static void prg_2_aesni_avx_256(const uint8_t* key, uint8_t* iv,
-                                                      uint8_t* out) {
+ATTR_TARGET_AESNI_AVX2 static void prg_2_aesni_avx_256(const uint8_t* key, uint8_t* iv,
+                                                       uint8_t* out) {
   __m128i rk[AES_ROUNDS_256 + 1];
   aes256_expand_key_aesni(rk, key);
 
@@ -732,8 +732,8 @@ ATTR_TARGET_AESNI_AVX static void prg_2_aesni_avx_256(const uint8_t* key, uint8_
   }
 }
 
-ATTR_TARGET_AESNI_AVX static void prg_4_aesni_avx_256(const uint8_t* key, uint8_t* iv,
-                                                      uint8_t* out) {
+ATTR_TARGET_AESNI_AVX2 static void prg_4_aesni_avx_256(const uint8_t* key, uint8_t* iv,
+                                                       uint8_t* out) {
   __m128i rk[AES_ROUNDS_256 + 1];
   aes256_expand_key_aesni(rk, key);
 
@@ -905,7 +905,7 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
 #if defined(HAVE_AESNI)
 // use AES-NI if possible
 #if defined(HAVE_AVX2)
-  if (CPU_SUPPORTS_AESNI_AVX) {
+  if (CPU_SUPPORTS_AESNI_AVX2) {
     switch (seclvl) {
     case 256:
       prg_aesni_avx_256(key, internal_iv, out, outlen);
@@ -947,7 +947,7 @@ void prg_2_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
 #if defined(HAVE_AESNI)
 // use AES-NI if possible
 #if defined(HAVE_AVX2)
-  if (CPU_SUPPORTS_AESNI_AVX) {
+  if (CPU_SUPPORTS_AESNI_AVX2) {
     switch (seclvl) {
     case 256:
       prg_2_aesni_avx_256(key, internal_iv, out);
@@ -989,7 +989,7 @@ void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
 #if defined(HAVE_AESNI)
 // use AES-NI if possible
 #if defined(HAVE_AVX2)
-  if (CPU_SUPPORTS_AESNI_AVX) {
+  if (CPU_SUPPORTS_AESNI_AVX2) {
     switch (seclvl) {
     case 256:
       prg_4_aesni_avx_256(key, internal_iv, out);
