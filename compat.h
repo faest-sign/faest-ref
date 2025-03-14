@@ -110,15 +110,16 @@ FAEST_END_C_DECL
 #endif /* HAVE_EXPLICIT_BZERO */
 
 #if defined(OQS)
+#include <oqs/common.h>
+
 #define faest_aligned_alloc(alignment, size) OQS_MEM_aligned_alloc((alignment), (size))
 #define faest_aligned_free(ptr) OQS_MEM_aligned_free((ptr))
 #define faest_timingsafe_bcmp(a, b, len) OQS_MEM_secure_bcmp((a), (b), (len))
 #define faest_explicit_bzero(ptr, len) OQS_MEM_cleanse(ptr, len)
 #endif
 
-
-#include <stdint.h>
 #include <limits.h>
+#include <stdint.h>
 
 /* helper functions for left and right rotations of bytes */
 #if GNUC_CHECK(4, 9) && (defined(__x86_64__) || defined(__i386__))

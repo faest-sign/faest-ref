@@ -6,6 +6,8 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include "random_oracle.h"
 #include "instances.h"
 
