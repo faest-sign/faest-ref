@@ -7,14 +7,14 @@
 #endif
 
 #include "faest_@PARAM_L@.h"
-#include "compat.h"
-#include "randomness.h"
-#include "owf.h"
-#include "instances.h"
-#include "faest.h"
-#include "parameters.h"
-#include "utils.h"
 #include "aes.h"
+#include "compat.h"
+#include "faest_impl.h"
+#include "instances.h"
+#include "owf.h"
+#include "parameters.h"
+#include "randomness.h"
+#include "utils.h"
 
 #include <stdlib.h>
 #include <string.h>

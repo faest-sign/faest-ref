@@ -541,7 +541,7 @@ faest_sources = files(
   'aes.c',
   'bavc.c',
   'compat.c',
-  'faest.c',
+  'faest_impl.c',
   'fields.c',
   'instances.c',
   'owf.c',
@@ -562,7 +562,10 @@ if has_usable_builtin == false
 endif
 
 # header files to install
-headers = files('faest_defines.h')
+headers = files(
+  'faest.h',
+  'faest_defines.h',
+)
 
 # SHA3 implementation
 sha3 = get_option('SHA3')

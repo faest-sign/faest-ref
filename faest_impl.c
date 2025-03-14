@@ -6,7 +6,7 @@
 #include <config.h>
 #endif
 
-#include "faest.h"
+#include "faest_impl.h"
 #include "aes.h"
 #include "faest_aes.h"
 #include "randomness.h"
