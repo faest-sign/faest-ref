@@ -138,7 +138,7 @@ static inline void hash_update_x4_1(hash_context_x4* ctx, const uint8_t* data, s
   }
 }
 
-static inline void hash_init_prefix_x4(hash_context_x4* ctx, unsigned int security_parameter,
+static inline void hash_init_prefix_x4(hash_context_x4* ctx, unsigned int security_param,
                                        const uint8_t prefix) {
   if (security_param == 128) {
     OQS_SHA3_shake128_x4_inc_init(&ctx->shake128_ctx);
