@@ -450,7 +450,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // ::4-5
   if (!check_challenge_3(dsignature_chall_3(sig, params), lambda - params->w_grind, lambda)) {
-    return -2;
+    return -1;
   }
 
   // ::2
@@ -477,7 +477,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
                         dsignature_decom_i(sig, params), dsignature_c(sig, 0, params), ell_hat,
                         params)) {
     free_pointer_array(&q);
-    return -3;
+    return -1;
   }
 
   // ::10
