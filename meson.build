@@ -96,7 +96,7 @@ int main() {
 conf_data.set('HAVE_AESNI', supports_aesni)
 
 # check compiler if compiler supports AVX2
-avx2_flag = cc.get_supported_arguments('-mavx2')
+avx2_flag = cc.get_supported_arguments(['-mavx2', '-mbmi2'])
 supports_avx2 = cc.links(
   '''
 #include <immintrin.h>
