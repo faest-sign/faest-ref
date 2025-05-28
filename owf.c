@@ -6,16 +6,12 @@
 #include <config.h>
 #endif
 
+#include <assert.h>
+#include <string.h>
+
 #include "owf.h"
 #include "aes.h"
 #include "utils.h"
-
-#include <string.h>
-
-#if defined(HAVE_OPENSSL)
-#include <openssl/evp.h>
-#include <assert.h>
-#endif
 
 #if defined(HAVE_AESNI)
 #include "cpu.h"
@@ -170,22 +166,16 @@ void owf_128(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   }
 #endif
 
-#if defined(HAVE_OPENSSL)
-  const EVP_CIPHER* cipher = EVP_aes_128_ecb();
-  assert(cipher);
-  EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-  assert(ctx);
+  generic_aes_ecb_t ctx;
+  int ret = generic_aes_ecb_new(&ctx, key, 128);
+  assert(ret == 0);
+  (void)ret;
 
-  EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
-  int len = 0;
-  EVP_EncryptUpdate(ctx, output, &len, input, IV_SIZE);
-  assert((unsigned int)len == IV_SIZE);
-  EVP_CIPHER_CTX_free(ctx);
-#else
-  aes_round_keys_t round_keys;
-  aes128_init_round_keys(&round_keys, key);
-  aes128_encrypt_block(&round_keys, input, output);
-#endif
+  ret = generic_aes_ecb_encrypt(&ctx, output, input, 1);
+  assert(ret == 0);
+  (void)ret;
+
+  generic_aes_ecb_free(&ctx);
 }
 
 void owf_192(const uint8_t* key, const uint8_t* input, uint8_t* output) {
@@ -202,34 +192,21 @@ void owf_192(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   }
 #endif
 
-#if defined(HAVE_OPENSSL)
-  const EVP_CIPHER* cipher = EVP_aes_192_ecb();
-  assert(cipher);
-  EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-  assert(ctx);
+  generic_aes_ecb_t ctx;
+  int ret = generic_aes_ecb_new(&ctx, key, 192);
+  assert(ret == 0);
+  (void)ret;
 
   uint8_t buf[2 * IV_SIZE];
   memcpy(buf, input, IV_SIZE);
   memcpy(buf + IV_SIZE, input, IV_SIZE);
   buf[IV_SIZE] ^= 0x1;
 
-  EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
-  int len = 0;
-  EVP_EncryptUpdate(ctx, output, &len, buf, 2 * IV_SIZE);
-  assert((unsigned int)len == 2 * IV_SIZE);
-  EVP_CIPHER_CTX_free(ctx);
-#else
-  aes_round_keys_t round_keys;
-  aes192_init_round_keys(&round_keys, key);
+  ret = generic_aes_ecb_encrypt(&ctx, output, buf, 2);
+  assert(ret == 0);
+  (void)ret;
 
-  // first block
-  aes192_encrypt_block(&round_keys, input, output);
-  // second block
-  uint8_t buf[16];
-  memcpy(buf, input, sizeof(buf));
-  buf[0] ^= 0x1;
-  aes192_encrypt_block(&round_keys, buf, output + 16);
-#endif
+  generic_aes_ecb_free(&ctx);
 }
 
 void owf_256(const uint8_t* key, const uint8_t* input, uint8_t* output) {
@@ -246,34 +223,21 @@ void owf_256(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   }
 #endif
 
-#if defined(HAVE_OPENSSL)
-  const EVP_CIPHER* cipher = EVP_aes_256_ecb();
-  assert(cipher);
-  EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-  assert(ctx);
+  generic_aes_ecb_t ctx;
+  int ret = generic_aes_ecb_new(&ctx, key, 256);
+  assert(ret == 0);
+  (void)ret;
 
   uint8_t buf[2 * IV_SIZE];
   memcpy(buf, input, IV_SIZE);
   memcpy(buf + IV_SIZE, input, IV_SIZE);
   buf[IV_SIZE] ^= 0x1;
 
-  EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
-  int len = 0;
-  EVP_EncryptUpdate(ctx, output, &len, buf, 2 * IV_SIZE);
-  assert((unsigned int)len == 2 * IV_SIZE);
-  EVP_CIPHER_CTX_free(ctx);
-#else
-  aes_round_keys_t round_keys;
-  aes256_init_round_keys(&round_keys, key);
+  ret = generic_aes_ecb_encrypt(&ctx, output, buf, 2);
+  assert(ret == 0);
+  (void)ret;
 
-  // first block
-  aes256_encrypt_block(&round_keys, input, output);
-  // second block
-  uint8_t buf[16];
-  memcpy(buf, input, sizeof(buf));
-  buf[0] ^= 0x1;
-  aes256_encrypt_block(&round_keys, buf, output + 16);
-#endif
+  generic_aes_ecb_free(&ctx);
 }
 
 void owf_em_128(const uint8_t* key, const uint8_t* input, uint8_t* output) {

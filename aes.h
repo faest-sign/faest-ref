@@ -11,6 +11,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#if defined(HAVE_OPENSSL)
+#include <openssl/evp.h>
+#elif defined(_WIN32)
+#include <windows.h>
+#endif
+
 FAEST_BEGIN_C_DECL
 
 #define AES_ROUNDS_128 10
@@ -67,6 +73,22 @@ void prg_2_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
                   unsigned int bits);
 void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out,
                   unsigned int bits);
+
+typedef struct {
+#if defined(HAVE_OPENSSL)
+  EVP_CIPHER_CTX* ctx;
+#elif defined(_WIN32)
+  BCRYPT_ALG_HANDLE aes_handle;
+  BCRYPT_KEY_HANDLE key_handle;
+#else
+  aes_round_keys_t round_keys;
+#endif
+} generic_aes_ecb_t;
+
+int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int seclvl);
+int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext,
+                            size_t blocks);
+void generic_aes_ecb_free(generic_aes_ecb_t* ctx);
 
 FAEST_END_C_DECL
 

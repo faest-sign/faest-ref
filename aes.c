@@ -759,141 +759,27 @@ ATTR_TARGET_AESNI_AVX2 static void prg_4_aesni_avx_256(const uint8_t* key, uint8
 
 static void generic_prg(const uint8_t* key, uint8_t* internal_iv, uint8_t* out, unsigned int seclvl,
                         size_t outlen) {
-#if defined(HAVE_OPENSSL)
-  const EVP_CIPHER* cipher;
-  switch (seclvl) {
-  case 256:
-    cipher = EVP_aes_256_ecb();
-    break;
-  case 192:
-    cipher = EVP_aes_192_ecb();
-    break;
-  default:
-    cipher = EVP_aes_128_ecb();
-    break;
-  }
-  assert(cipher);
-
-  EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-  assert(ctx);
-
-  EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
-
-  int len = 0;
-  for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
-    int ret = EVP_EncryptUpdate(ctx, out, &len, internal_iv, IV_SIZE);
-    assert(ret == 1);
-    assert(len == (int)IV_SIZE);
-    (void)ret;
-    (void)len;
-    aes_increment_iv(internal_iv);
-  }
-  if (outlen % IV_SIZE) {
-    uint8_t last_block[IV_SIZE];
-    int ret = EVP_EncryptUpdate(ctx, last_block, &len, internal_iv, IV_SIZE);
-    assert(ret == 1);
-    assert(len == (int)IV_SIZE);
-    (void)ret;
-    (void)len;
-    memcpy(out, last_block, outlen % IV_SIZE);
-  }
-  EVP_CIPHER_CTX_free(ctx);
-#elif defined(_WIN32)
-  BCRYPT_ALG_HANDLE aes_handle = NULL;
-  BCRYPT_KEY_HANDLE key_handle = NULL;
-
-  NTSTATUS ret = BCryptOpenAlgorithmProvider(&aes_handle, BCRYPT_AES_ALGORITHM, NULL, 0);
-  assert(BCRYPT_SUCCESS(ret));
-  ret = BCryptGenerateSymmetricKey(aes_handle, &key_handle, NULL, 0, (PUCHAR)key, seclvl / 8, 0);
-  assert(BCRYPT_SUCCESS(ret));
-
-  ret = BCryptSetProperty(aes_handle, BCRYPT_CHAINING_MODE, (PUCHAR)BCRYPT_CHAIN_MODE_ECB,
-                          (ULONG)((wcslen(BCRYPT_CHAIN_MODE_ECB) + 1) * sizeof(wchar_t)), 0);
-  assert(BCRYPT_SUCCESS(ret));
+  generic_aes_ecb_t ctx;
+  int ret = generic_aes_ecb_new(&ctx, key, seclvl);
+  assert(ret == 0);
+  (void)ret;
 
   for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
-    ULONG len = 0;
-    ret = BCryptEncrypt(key_handle, internal_iv, IV_SIZE, NULL, NULL, 0, out, IV_SIZE, &len, 0);
-    assert(BCRYPT_SUCCESS(ret));
-    assert(len == (ULONG)IV_SIZE);
+    ret = generic_aes_ecb_encrypt(&ctx, out, internal_iv, 1);
+    assert(ret == 0);
     (void)ret;
-    (void)len;
     aes_increment_iv(internal_iv);
   }
+
   if (outlen % IV_SIZE) {
     uint8_t last_block[IV_SIZE];
-    ULONG len = 0;
-    ret = BCryptEncrypt(key_handle, internal_iv, IV_SIZE, NULL, NULL, 0, last_block, IV_SIZE, &len,
-                        0);
-    assert(BCRYPT_SUCCESS(ret));
-    assert(len == (ULONG)IV_SIZE);
+    ret = generic_aes_ecb_encrypt(&ctx, last_block, internal_iv, 1);
+    assert(ret == 0);
     (void)ret;
-    (void)len;
     memcpy(out, last_block, outlen % IV_SIZE);
   }
 
-  BCryptDestroyKey(key_handle);
-  BCryptCloseAlgorithmProvider(aes_handle, 0);
-#else
-  aes_round_keys_t round_key;
-
-  switch (seclvl) {
-  case 256:
-    aes256_init_round_keys(&round_key, key);
-    for (; outlen >= 16; outlen -= 16, out += 16) {
-      aes_block_t state;
-      load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_256);
-      store_state(out, state, AES_BLOCK_WORDS);
-      aes_increment_iv(internal_iv);
-    }
-    if (outlen) {
-      aes_block_t state;
-      load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_256);
-      uint8_t tmp[16];
-      store_state(tmp, state, AES_BLOCK_WORDS);
-      memcpy(out, tmp, outlen);
-    }
-    return;
-  case 192:
-    aes192_init_round_keys(&round_key, key);
-    for (; outlen >= 16; outlen -= 16, out += 16) {
-      aes_block_t state;
-      load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_192);
-      store_state(out, state, AES_BLOCK_WORDS);
-      aes_increment_iv(internal_iv);
-    }
-    if (outlen) {
-      aes_block_t state;
-      load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_192);
-      uint8_t tmp[16];
-      store_state(tmp, state, AES_BLOCK_WORDS);
-      memcpy(out, tmp, outlen);
-    }
-    return;
-  default:
-    aes128_init_round_keys(&round_key, key);
-    for (; outlen >= 16; outlen -= 16, out += 16) {
-      aes_block_t state;
-      load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_128);
-      store_state(out, state, AES_BLOCK_WORDS);
-      aes_increment_iv(internal_iv);
-    }
-    if (outlen) {
-      aes_block_t state;
-      load_state(state, internal_iv, AES_BLOCK_WORDS);
-      aes_encrypt(&round_key, state, AES_BLOCK_WORDS, AES_ROUNDS_128);
-      uint8_t tmp[16];
-      store_state(tmp, state, AES_BLOCK_WORDS);
-      memcpy(out, tmp, outlen);
-    }
-    return;
-  }
-#endif
+  generic_aes_ecb_free(&ctx);
 }
 
 void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, unsigned int seclvl,
@@ -1161,3 +1047,80 @@ void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
 
   assert(w - w_out == params->l / 8);
 }
+
+#if defined(HAVE_OPENSSL)
+int generic_aes_ecb_new(generic_aes_ecb_t* context, const uint8_t* key, unsigned int seclvl) {
+  const EVP_CIPHER* cipher;
+  switch (seclvl) {
+  case 256:
+    cipher = EVP_aes_256_ecb();
+    break;
+  case 192:
+    cipher = EVP_aes_192_ecb();
+    break;
+  default:
+    cipher = EVP_aes_128_ecb();
+    break;
+  }
+  if (!cipher) {
+    return -1;
+  }
+
+  EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+  if (!ctx) {
+    return -1;
+  }
+
+  EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
+  context->ctx = ctx;
+  return 0;
+}
+
+int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext,
+                            size_t blocks) {
+  int len = 0;
+  int ret = EVP_EncryptUpdate(ctx->ctx, ciphertext, &len, plaintext, blocks * IV_SIZE);
+  if (ret != 1 || len != (int)blocks * IV_SIZE) {
+    return -1;
+  }
+  return 0;
+}
+
+void generic_aes_ecb_free(generic_aes_ecb_t* ctx) {
+  EVP_CIPHER_CTX_free(ctx->ctx);
+}
+#elif defined(_WIN32)
+int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int seclvl) {
+  BCRYPT_ALG_HANDLE aes_handle = NULL;
+  BCRYPT_KEY_HANDLE key_handle = NULL;
+
+  NTSTATUS ret = BCryptOpenAlgorithmProvider(&aes_handle, BCRYPT_AES_ALGORITHM, NULL, 0);
+  assert(BCRYPT_SUCCESS(ret));
+  ret = BCryptGenerateSymmetricKey(aes_handle, &key_handle, NULL, 0, (PUCHAR)key, seclvl / 8, 0);
+  assert(BCRYPT_SUCCESS(ret));
+
+  ret = BCryptSetProperty(aes_handle, BCRYPT_CHAINING_MODE, (PUCHAR)BCRYPT_CHAIN_MODE_ECB,
+                          (ULONG)((wcslen(BCRYPT_CHAIN_MODE_ECB) + 1) * sizeof(wchar_t)), 0);
+  assert(BCRYPT_SUCCESS(ret));
+  ctx->aes_handle = aes_handle;
+  ctx->key_handle = key_handle;
+  return 0;
+}
+
+int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext,
+                            size_t blocks) {
+  ULONG len    = 0;
+  NTSTATUS ret = BCryptEncrypt(ctx->key_handle, plaintext, blocks * IV_SIZE, NULL, NULL, 0,
+                               ciphertext, blocks * IV_SIZE, &len, 0);
+  assert(BCRYPT_SUCCESS(ret));
+  assert(len == (ULONG)IV_SIZE);
+  (void)ret;
+  (void)len;
+  return 0;
+}
+
+void generic_aes_ecb_free(generic_aes_ecb_t* ctx) {
+  BCryptDestroyKey(ctx->key_handle);
+  BCryptCloseAlgorithmProvider(ctx->aes_handle, 0);
+}
+#endif
