@@ -17,7 +17,6 @@ headers = [
 ]
 
 boost_program_options = dependency('boost', required: get_option('benchmarks'), modules: ['program_options'])
-threads = dependency('threads')
 
 libfaest_192s = static_library('faest_192s',
   sources,
@@ -45,6 +44,7 @@ if openssl.found()
   )
 endif
 if boost_program_options.found() and get_option('benchmarks').enabled()
+  threads = dependency('threads')
   bench_sources = files(join_paths(meson.project_source_root(), 'tools', 'bench.cpp'))
   bench = executable('faest_192s_bench', bench_sources,
     dependencies: [libfaest_192s_dependency, boost_program_options, threads],
