@@ -144,6 +144,12 @@ jobs:
         action: test
         setup-options: --vsenv -Dbenchmarks=disabled --buildtype=release
         options: --verbose
+    - name: Build and test (no openssl, no AES NI)
+      uses: BSFishy/meson-build@v1.0.3
+      with:
+        action: test
+        setup-options: --vsenv -Dbenchmarks=disabled --buildtype=release -Dopenssl=disabled -Daesni=disabled
+        options: --verbose
 
   build-scan-build:
     name: Test on Ubuntu with scan-build
