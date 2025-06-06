@@ -2,7 +2,7 @@ project(
   'faest-ref',
   ['c', 'cpp'],
   version: '2.0.3',
-  meson_version: '>=0.57',
+  meson_version: '>=0.59',
   default_options: [
     'c_std=c11',
     'cpp_std=c++17',
@@ -93,7 +93,10 @@ int main() {
   name: 'compiler supports AES-NI',
   args: [aesni_flag],
 )
-conf_data.set('HAVE_AESNI', supports_aesni)
+conf_data.set(
+  'HAVE_AESNI',
+  get_option('aesni').require(supports_aesni, error_message: 'AES ISA support enabled but not available').allowed(),
+)
 
 # check compiler if compiler supports AVX2
 avx2_flag = cc.get_supported_arguments(['-mavx2', '-mbmi2'])

@@ -5,6 +5,12 @@ option(
   description: 'Use OpenSSL for AES-CTR implementation',
 )
 option(
+  'aesni',
+  type: 'feature',
+  value: 'auto',
+  description: 'Use ISA extensions for AES',
+)
+option(
   'SHA3',
   type: 'combo',
   choices: ['auto', 'opt64', 'plain32', 'avx2', 'armv8a-neon', 's390-cpacf'],
