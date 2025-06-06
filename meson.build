@@ -464,8 +464,6 @@ parameter_data.set('FAEST_256_LAMBDA', 256)
 
 # dependencies
 openssl = dependency('openssl', required: get_option('openssl'))
-boost_program_options = dependency('boost', required: get_option('benchmarks'), modules: ['program_options'])
-threads = dependency('threads')
 valgrind = dependency('valgrind', required: get_option('valgrind'))
 valgrind_exec = find_program('valgrind', required: valgrind.found())
 
@@ -484,7 +482,7 @@ pymod = import('python')
 python = pymod.find_installation('python3', required: true)
 
 if host_machine.system() == 'windows'
-  # require new enough Windows for bcrypt to be available
+  # require new enough Windows for bcrypt to be available with automatic memory management (Windows 7)
   defines += '-D_WIN32_WINNT=0x0601'
   build_dependencies += cc.find_library('bcrypt')
 endif

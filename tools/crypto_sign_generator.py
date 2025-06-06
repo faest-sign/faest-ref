@@ -37,6 +37,9 @@ headers = [
     )
 ]
 
+boost_program_options = dependency('boost', required: get_option('benchmarks'), modules: ['program_options'])
+threads = dependency('threads')
+
 libfaest_{param_name} = static_library('faest_{param_name}',
   sources,
   dependencies: libfaest_static_dependency,
