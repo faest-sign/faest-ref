@@ -1,7 +1,7 @@
 project(
   'faest-ref',
   ['c', 'cpp'],
-  version: '2.0.3',
+  version: '2.0.4',
   meson_version: '>=0.59',
   default_options: [
     'c_std=c11',

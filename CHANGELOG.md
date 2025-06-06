@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 2.0.4 -- 2025-06-06
+
+* Fix usage of bcrypt for AES192 and AES256.
+* Refactor AES providers.
+
 ## Version 2.0.3 -- 2025-02-28
 
 * Fix stack smashing during OWF computation with OpenSSL.
