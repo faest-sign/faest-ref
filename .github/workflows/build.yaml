@@ -19,19 +19,7 @@ jobs:
       run: |
         sudo apt-get -q update
         sudo apt-get -q -y install meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev
-    - name: Build and test (no openssl, no AES instructions)
-      uses: BSFishy/meson-build@v1.0.3
-      with:
-        action: test
-        options: --verbose
-        setup-options: -Dbenchmarks=disabled --buildtype=debugoptimized -Dopenssl=disabled -Daesni=disabled
-    - name: Build and test (no openssl)
-      uses: BSFishy/meson-build@v1.0.3
-      with:
-        action: test
-        options: --verbose
-        setup-options: -Dbenchmarks=disabled --buildtype=debugoptimized -Dopenssl=disabled
-    - name: Build and test (default features)
+    - name: Build and test
       uses: BSFishy/meson-build@v1.0.3
       with:
         action: test

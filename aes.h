@@ -82,6 +82,7 @@ typedef struct {
   BCRYPT_KEY_HANDLE key_handle;
 #else
   aes_round_keys_t round_keys;
+  unsigned int seclvl;
 #endif
 } generic_aes_ecb_t;
 

@@ -1123,4 +1123,59 @@ void generic_aes_ecb_free(generic_aes_ecb_t* ctx) {
   BCryptDestroyKey(ctx->key_handle);
   BCryptCloseAlgorithmProvider(ctx->aes_handle, 0);
 }
+#else
+int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int seclvl) {
+  switch (seclvl) {
+  case 256:
+    aes256_init_round_keys(&ctx->round_keys, key);
+    break;
+  case 192:
+    aes192_init_round_keys(&ctx->round_keys, key);
+    break;
+  case 128:
+    aes128_init_round_keys(&ctx->round_keys, key);
+    break;
+  default:
+    return 1;
+  }
+
+  ctx->seclvl = seclvl;
+  return 0;
+}
+
+int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext,
+                            size_t blocks) {
+  switch (ctx->seclvl) {
+  case 256: {
+    for (; blocks; --blocks, plaintext += IV_SIZE, ciphertext += IV_SIZE) {
+      aes_block_t state;
+      load_state(state, plaintext, AES_BLOCK_WORDS);
+      aes_encrypt(&ctx->round_keys, state, AES_BLOCK_WORDS, AES_ROUNDS_256);
+      store_state(ciphertext, state, AES_BLOCK_WORDS);
+    }
+  }
+  case 192: {
+    for (; blocks; --blocks, plaintext += IV_SIZE, ciphertext += IV_SIZE) {
+      aes_block_t state;
+      load_state(state, plaintext, AES_BLOCK_WORDS);
+      aes_encrypt(&ctx->round_keys, state, AES_BLOCK_WORDS, AES_ROUNDS_192);
+      store_state(ciphertext, state, AES_BLOCK_WORDS);
+    }
+  }
+  case 128: {
+    for (; blocks; --blocks, plaintext += IV_SIZE, ciphertext += IV_SIZE) {
+      aes_block_t state;
+      load_state(state, plaintext, AES_BLOCK_WORDS);
+      aes_encrypt(&ctx->round_keys, state, AES_BLOCK_WORDS, AES_ROUNDS_128);
+      store_state(ciphertext, state, AES_BLOCK_WORDS);
+    }
+  }
+  }
+
+  return 0;
+}
+
+void generic_aes_ecb_free(generic_aes_ecb_t* ctx) {
+  faest_explicit_bzero(&ctx->round_keys, sizeof(ctx->round_keys));
+}
 #endif
