@@ -211,7 +211,7 @@ jobs:
         flag:
         - -Dopenssl=disabled
         - -Daesni=disabled
-        - -Daesni=disabled -Dopenssl=disabled"
+        - -Daesni=disabled -Dopenssl=disabled
     steps:
     - uses: actions/checkout@v4
       with:
