@@ -1103,13 +1103,22 @@ int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int
   BCRYPT_KEY_HANDLE key_handle = NULL;
 
   NTSTATUS ret = BCryptOpenAlgorithmProvider(&aes_handle, BCRYPT_AES_ALGORITHM, NULL, 0);
-  assert(BCRYPT_SUCCESS(ret));
-  ret = BCryptGenerateSymmetricKey(aes_handle, &key_handle, NULL, 0, (PUCHAR)key, seclvl / 8, 0);
-  assert(BCRYPT_SUCCESS(ret));
-
+  if (!BCRYPT_SUCCESS(ret)) {
+    return -1;
+  }
   ret = BCryptSetProperty(aes_handle, BCRYPT_CHAINING_MODE, (PUCHAR)BCRYPT_CHAIN_MODE_ECB,
                           (ULONG)((wcslen(BCRYPT_CHAIN_MODE_ECB) + 1) * sizeof(wchar_t)), 0);
-  assert(BCRYPT_SUCCESS(ret));
+  if (!BCRYPT_SUCCESS(ret)) {
+    BCryptCloseAlgorithmProvider(aes_handle, 0);
+    return -1;
+  }
+
+  ret = BCryptGenerateSymmetricKey(aes_handle, &key_handle, NULL, 0, (PUCHAR)key, seclvl / 8, 0);
+  if (!BCRYPT_SUCCESS(ret)) {
+    BCryptCloseAlgorithmProvider(aes_handle, 0);
+    return -1;
+  }
+
   ctx->aes_handle = aes_handle;
   ctx->key_handle = key_handle;
   return 0;
@@ -1117,13 +1126,15 @@ int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int
 
 int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext,
                             size_t blocks) {
-  ULONG len    = 0;
-  NTSTATUS ret = BCryptEncrypt(ctx->key_handle, plaintext, blocks * IV_SIZE, NULL, NULL, 0,
-                               ciphertext, blocks * IV_SIZE, &len, 0);
-  assert(BCRYPT_SUCCESS(ret));
-  assert(len == (ULONG)IV_SIZE);
-  (void)ret;
-  (void)len;
+  ULONG len          = 0;
+  const ULONG length = blocks * IV_SIZE;
+
+  NTSTATUS ret =
+      BCryptEncrypt(ctx->key_handle, plaintext, length, NULL, NULL, 0, ciphertext, length, &len, 0);
+  if (!BCRYPT_SUCCESS(ret) || len != length) {
+    return -1;
+  }
+
   return 0;
 }
 
@@ -1144,7 +1155,7 @@ int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int
     aes128_init_round_keys(&ctx->round_keys, key);
     break;
   default:
-    return 1;
+    return -1;
   }
 
   ctx->seclvl = seclvl;
