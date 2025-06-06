@@ -177,7 +177,7 @@ jobs:
 
   build-archs:
     runs-on: ubuntu-22.04
-    needs: [build-flags]
+    needs: [build-ubuntu-compilers]
     name: Test with ${{ matrix.cfg.compiler }} on ${{ matrix.cfg.arch }}
     strategy:
       fail-fast: false
