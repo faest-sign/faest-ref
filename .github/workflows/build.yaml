@@ -136,7 +136,7 @@ jobs:
       uses: BSFishy/meson-build@v1.0.3
       with:
         action: test
-        setup-options: --vsenv -Dbenchmarks=disabled --buildtype=debug
+        setup-options: --vsenv -Dbenchmarks=disabled --buildtype=debug  -Dopenssl=disabled -Daesni=disabled
         options: --verbose
         directory: build-debug
     - name: Build and test
