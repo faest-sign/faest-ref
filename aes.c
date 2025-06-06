@@ -6,6 +6,14 @@
 #include <config.h>
 #endif
 
+#if defined(_WIN32) && !defined(HAVE_OPENSSL)
+#if !defined(_WIN32_WINNT)
+#define _WIN32_WINNT 0x0601
+#elif _WIN32_WINNT < 0x0601
+#error "At least Windows 7 is required."
+#endif
+#endif
+
 #include "aes.h"
 
 #include "cpu.h"
