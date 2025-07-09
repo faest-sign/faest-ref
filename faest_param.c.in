@@ -87,7 +87,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_validate_keypair(const uint8_t* pk,
 }
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign_with_randomness(const uint8_t* sk, const uint8_t* message, size_t message_len, const uint8_t* rho, size_t rho_len, uint8_t* signature, size_t* signature_len) {
-  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE || (!rho && rho_len)) {
+  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE || (!rho && rho_len) || (!message && message_len)) {
     return -1;
   }
 
@@ -104,7 +104,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign_with_randomness(const uint8_t*
 }
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len) {
-  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE) {
+  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE || (!message && message_len)) {
     return -1;
   }
 
@@ -115,7 +115,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8
 }
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign(const faest_@PARAM_L@_unpacked_private_key_t* sk, const uint8_t* message, size_t message_len, uint8_t* signature, size_t* signature_len) {
-  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE) {
+  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE || (!message && message_len)) {
     return -1;
   }
 
@@ -126,7 +126,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign(const faest_@PARAM_L@
 }
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign_with_randomness(const faest_@PARAM_L@_unpacked_private_key_t* sk, const uint8_t* message, size_t message_len, const uint8_t* rho, size_t rho_len, uint8_t* signature, size_t* signature_len) {
-  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE) {
+  if (!sk || !signature || !signature_len || *signature_len < FAEST_@PARAM@_SIGNATURE_SIZE || (!message && message_len)) {
     return -1;
   }
 
@@ -138,7 +138,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign_with_randomness(const
 }
 
 int FAEST_CALLING_CONVENTION faest_@PARAM_L@_verify(const uint8_t* pk, const uint8_t* message, size_t message_len, const uint8_t* signature, size_t signature_len) {
-  if (!pk || !signature || signature_len != FAEST_@PARAM@_SIGNATURE_SIZE) {
+  if (!pk || !signature || signature_len != FAEST_@PARAM@_SIGNATURE_SIZE || (!message && message_len)) {
     return -1;
   }
 
