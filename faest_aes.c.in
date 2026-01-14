@@ -513,83 +513,58 @@ static void aes_SSS_mix_columns_prover(bfSSS_t* y_deg0, bfSSS_t* y_deg1, bfSSS_t
     unsigned int i1 = 4 * c + 1;
     unsigned int i2 = 4 * c + 2;
     unsigned int i3 = 4 * c + 3;
-    bfSSS_t tmp1, tmp2, tmp3, tmp4;
 
     // ::7
-    tmp1       = bfSSS_mul(in_deg2[i0], v2);
-    tmp2       = bfSSS_mul(in_deg2[i1], v3);
-    tmp3       = in_deg2[i2];
-    tmp4       = in_deg2[i3];
-    y_deg2[i0] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    bfSSS_t tmp1 = bfSSS_mul(in_deg2[i0], v2);
+    bfSSST_ tmp2 = bfSSS_mul(in_deg2[i1], v3);
+    y_deg2[i0]   = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(in_deg2[i2], in_deg2[i3]));
 
     tmp1       = bfSSS_mul(in_deg1[i0], v2);
     tmp2       = bfSSS_mul(in_deg1[i1], v3);
-    tmp3       = in_deg1[i2];
-    tmp4       = in_deg1[i3];
-    y_deg1[i0] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    y_deg1[i0] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(in_deg1[i2], in_deg1[i3]));
 
     tmp1       = bfSSS_mul(in_deg0[i0], v2);
     tmp2       = bfSSS_mul(in_deg0[i1], v3);
-    tmp3       = in_deg0[i2];
-    tmp4       = in_deg0[i3];
-    y_deg0[i0] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    y_deg0[i0] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(in_deg0[i2], in_deg0[i3]));
 
     // ::8
-    tmp1       = in_deg2[i0];
-    tmp2       = bfSSS_mul(in_deg2[i1], v2);
-    tmp3       = bfSSS_mul(in_deg2[i2], v3);
-    tmp4       = in_deg2[i3];
-    y_deg2[i1] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    tmp1       = bfSSS_mul(in_deg2[i1], v2);
+    tmp2       = bfSSS_mul(in_deg2[i2], v3);
+    y_deg2[i1] = bfSSS_add(bfSSS_add(in_deg2[i0], tmp1), bfSSS_add(tmp2, in_deg2[i3]));
 
-    tmp1       = in_deg1[i0];
-    tmp2       = bfSSS_mul(in_deg1[i1], v2);
-    tmp3       = bfSSS_mul(in_deg1[i2], v3);
-    tmp4       = in_deg1[i3];
-    y_deg1[i1] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    tmp1       = bfSSS_mul(in_deg1[i1], v2);
+    tmp2       = bfSSS_mul(in_deg1[i2], v3);
+    y_deg1[i1] = bfSSS_add(bfSSS_add(in_deg1[i0], tmp1), bfSSS_add(tmp2, in_deg1[i3]));
 
-    tmp1       = in_deg0[i0];
-    tmp2       = bfSSS_mul(in_deg0[i1], v2);
-    tmp3       = bfSSS_mul(in_deg0[i2], v3);
-    tmp4       = in_deg0[i3];
-    y_deg0[i1] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    tmp1       = bfSSS_mul(in_deg0[i1], v2);
+    tmp2       = bfSSS_mul(in_deg0[i2], v3);
+    y_deg0[i1] = bfSSS_add(bfSSS_add(in_deg0[i0], tmp1), bfSSS_add(tmp2, in_deg0[i3]));
 
     // ::9
-    tmp1       = in_deg2[i0];
-    tmp2       = in_deg2[i1];
-    tmp3       = bfSSS_mul(in_deg2[i2], v2);
-    tmp4       = bfSSS_mul(in_deg2[i3], v3);
-    y_deg2[i2] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    tmp1       = bfSSS_mul(in_deg2[i2], v2);
+    tmp2       = bfSSS_mul(in_deg2[i3], v3);
+    y_deg2[i2] = bfSSS_add(bfSSS_add(in_deg2[i0], in_deg2[i1]), bfSSS_add(tmp1, tmp2));
 
-    tmp1       = in_deg1[i0];
-    tmp2       = in_deg1[i1];
-    tmp3       = bfSSS_mul(in_deg1[i2], v2);
-    tmp4       = bfSSS_mul(in_deg1[i3], v3);
-    y_deg1[i2] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    tmp1       = bfSSS_mul(in_deg1[i2], v2);
+    tmp2       = bfSSS_mul(in_deg1[i3], v3);
+    y_deg1[i2] = bfSSS_add(bfSSS_add(in_deg1[i0], in_deg1[i1]), bfSSS_add(tmp1, tmp2));
 
-    tmp1       = in_deg0[i0];
-    tmp2       = in_deg0[i1];
-    tmp3       = bfSSS_mul(in_deg0[i2], v2);
-    tmp4       = bfSSS_mul(in_deg0[i3], v3);
-    y_deg0[i2] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    tmp1       = bfSSS_mul(in_deg0[i2], v2);
+    tmp2       = bfSSS_mul(in_deg0[i3], v3);
+    y_deg0[i2] = bfSSS_add(bfSSS_add(in_deg0[i0], in_deg0[i1]), bfSSS_add(tmp1, tmp2));
 
     // ::10
     tmp1       = bfSSS_mul(in_deg2[i0], v3);
-    tmp2       = in_deg2[i1];
-    tmp3       = in_deg2[i2];
-    tmp4       = bfSSS_mul(in_deg2[i3], v2);
-    y_deg2[i3] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    tmp2       = bfSSS_mul(in_deg2[i3], v2);
+    y_deg2[i3] = bfSSS_add(bfSSS_add(tmp1, in_deg2[i1]), bfSSS_add(in_deg2[i2], tmp2));
 
     tmp1       = bfSSS_mul(in_deg1[i0], v3);
-    tmp2       = in_deg1[i1];
-    tmp3       = in_deg1[i2];
-    tmp4       = bfSSS_mul(in_deg1[i3], v2);
-    y_deg1[i3] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    tmp2       = bfSSS_mul(in_deg1[i3], v2);
+    y_deg1[i3] = bfSSS_add(bfSSS_add(tmp1, in_deg1[i1]), bfSSS_add(in_deg1[i2], tmp2));
 
     tmp1       = bfSSS_mul(in_deg0[i0], v3);
-    tmp2       = in_deg0[i1];
-    tmp3       = in_deg0[i2];
-    tmp4       = bfSSS_mul(in_deg0[i3], v2);
-    y_deg0[i3] = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(tmp3, tmp4));
+    tmp2       = bfSSS_mul(in_deg0[i3], v2);
+    y_deg0[i3] = bfSSS_add(bfSSS_add(tmp1, in_deg0[i1]), bfSSS_add(in_deg0[i2], tmp2));
   }
 }
 
@@ -609,27 +584,19 @@ static void aes_SSS_mix_columns_verifier(bfSSS_t* y_deg1, const bfSSS_t* in_deg1
 
     bfSSS_t tmp1_tag = bfSSS_mul(in_deg1[i0], v2);
     bfSSS_t tmp2_tag = bfSSS_mul(in_deg1[i1], v3);
-    bfSSS_t tmp3_tag = in_deg1[i2];
-    bfSSS_t tmp4_tag = in_deg1[i3];
-    y_deg1[i0]       = bfSSS_add(bfSSS_add(tmp1_tag, tmp2_tag), bfSSS_add(tmp3_tag, tmp4_tag));
+    y_deg1[i0]       = bfSSS_add(bfSSS_add(tmp1_tag, tmp2_tag), bfSSS_add(in_deg1[i2], in_deg1[i3]));
 
-    tmp1_tag   = in_deg1[i0];
-    tmp2_tag   = bfSSS_mul(in_deg1[i1], v2);
-    tmp3_tag   = bfSSS_mul(in_deg1[i2], v3);
-    tmp4_tag   = in_deg1[i3];
-    y_deg1[i1] = bfSSS_add(bfSSS_add(tmp1_tag, tmp2_tag), bfSSS_add(tmp3_tag, tmp4_tag));
+    tmp1_tag   = bfSSS_mul(in_deg1[i1], v2);
+    tmp2_tag   = bfSSS_mul(in_deg1[i2], v3);
+    y_deg1[i1] = bfSSS_add(bfSSS_add(in_deg1[i0], tmp1_tag), bfSSS_add(tmp2_tag, in_deg1[i3]));
 
-    tmp1_tag   = in_deg1[i0];
-    tmp2_tag   = in_deg1[i1];
-    tmp3_tag   = bfSSS_mul(in_deg1[i2], v2);
-    tmp4_tag   = bfSSS_mul(in_deg1[i3], v3);
-    y_deg1[i2] = bfSSS_add(bfSSS_add(tmp1_tag, tmp2_tag), bfSSS_add(tmp3_tag, tmp4_tag));
+    tmp1_tag   = bfSSS_mul(in_deg1[i2], v2);
+    tmp2_tag   = bfSSS_mul(in_deg1[i3], v3);
+    y_deg1[i2] = bfSSS_add(bfSSS_add(in_deg1[i0], in_deg1[i1]), bfSSS_add(tmp1_tag, tmp2_tag));
 
     tmp1_tag   = bfSSS_mul(in_deg1[i0], v3);
-    tmp2_tag   = in_deg1[i1];
-    tmp3_tag   = in_deg1[i2];
-    tmp4_tag   = bfSSS_mul(in_deg1[i3], v2);
-    y_deg1[i3] = bfSSS_add(bfSSS_add(tmp1_tag, tmp2_tag), bfSSS_add(tmp3_tag, tmp4_tag));
+    tmp2_tag   = bfSSS_mul(in_deg1[i3], v2);
+    y_deg1[i3] = bfSSS_add(bfSSS_add(tmp1_tag, in_deg1[i1]), bfSSS_add(in_deg1[i2], tmp2_tag));
   }
 }
 
