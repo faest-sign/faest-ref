@@ -1058,7 +1058,7 @@ void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
 
 #if defined(HAVE_OPENSSL)
 int generic_aes_ecb_new(generic_aes_ecb_t* context, const uint8_t* key, unsigned int seclvl) {
-  const EVP_CIPHER* cipher;
+  const EVP_CIPHER* cipher = NULL;
   switch (seclvl) {
   case 256:
     cipher = EVP_aes_256_ecb();
@@ -1066,7 +1066,7 @@ int generic_aes_ecb_new(generic_aes_ecb_t* context, const uint8_t* key, unsigned
   case 192:
     cipher = EVP_aes_192_ecb();
     break;
-  default:
+  case 128:
     cipher = EVP_aes_128_ecb();
     break;
   }
