@@ -516,7 +516,7 @@ static void aes_SSS_mix_columns_prover(bfSSS_t* y_deg0, bfSSS_t* y_deg1, bfSSS_t
 
     // ::7
     bfSSS_t tmp1 = bfSSS_mul(in_deg2[i0], v2);
-    bfSSST_ tmp2 = bfSSS_mul(in_deg2[i1], v3);
+    bfSSS_t tmp2 = bfSSS_mul(in_deg2[i1], v3);
     y_deg2[i0]   = bfSSS_add(bfSSS_add(tmp1, tmp2), bfSSS_add(in_deg2[i2], in_deg2[i3]));
 
     tmp1       = bfSSS_mul(in_deg1[i0], v2);
