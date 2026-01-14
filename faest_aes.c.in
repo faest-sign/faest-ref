@@ -752,9 +752,7 @@ static void aes_SSS_bitwise_mix_column_prover(uint8_t* out, bfSSS_t* out_tag, co
       b_bits_tag[r * 8 + 2] = a_bits_tag[r * 8 + 1];
       b_bits_tag[r * 8 + 3] = bfSSS_add(a_bits_tag[r * 8 + 2], a_bits_tag[r * 8 + 7]);
       b_bits_tag[r * 8 + 4] = bfSSS_add(a_bits_tag[r * 8 + 3], a_bits_tag[r * 8 + 7]);
-      b_bits_tag[r * 8 + 5] = a_bits_tag[r * 8 + 4];
-      b_bits_tag[r * 8 + 6] = a_bits_tag[r * 8 + 5];
-      b_bits_tag[r * 8 + 7] = a_bits_tag[r * 8 + 6];
+      memcpy(&b_bits_tag[r * 8 + 5], &a_bits_tag[r * 8 + 4], 3 * sizeof(bfSSS_t));
     }
 
     out[c * 4]     = b_bits[0] ^ a_bits[3] ^ a_bits[2] ^ b_bits[1] ^ a_bits[1];
@@ -800,9 +798,7 @@ static void aes_SSS_bitwise_mix_column_verifier(bfSSS_t* out_key, bfSSS_t* s_key
       b_bits_key[r * 8 + 2] = a_bits_key[r * 8 + 1];
       b_bits_key[r * 8 + 3] = bfSSS_add(a_bits_key[r * 8 + 2], a_bits_key[r * 8 + 7]);
       b_bits_key[r * 8 + 4] = bfSSS_add(a_bits_key[r * 8 + 3], a_bits_key[r * 8 + 7]);
-      b_bits_key[r * 8 + 5] = a_bits_key[r * 8 + 4];
-      b_bits_key[r * 8 + 6] = a_bits_key[r * 8 + 5];
-      b_bits_key[r * 8 + 7] = a_bits_key[r * 8 + 6];
+      memcpy(&b_bits_key[r * 8 + 5], &a_bits_key[r * 8 + 4], 3 * sizeof(bfSSS_t));
     }
 
     // ::6-9
