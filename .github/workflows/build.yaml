@@ -56,6 +56,8 @@ jobs:
         cfg:
         - { os: ubuntu-24.04, compiler: gcc, cxxcompiler: g++, ld: bfd } # = gcc-13
         - { os: ubuntu-24.04, compiler: clang, cxxcompiler: clang++, ld: lld } # = clang-18
+        - { os: ubuntu-24.04-arm, compiler: gcc, cxxcompiler: g++, ld: bfd } # = gcc-13
+        - { os: ubuntu-24.04-arm, compiler: clang, cxxcompiler: clang++, ld: lld } # = clang-18
         - { os: ubuntu-24.04, compiler: gcc-14, cxxcompiler: g++-14, ld: bfd }
         - { os: ubuntu-24.04, compiler: clang-19, cxxcompiler: clang++-19, ld: lld-19 }
         - { os: ubuntu-22.04, compiler: gcc, cxxcompiler: g++, ld: bfd } # = gcc-11
@@ -181,7 +183,6 @@ jobs:
       matrix:
         cfg:
         - { arch: armv7, compiler: gcc, cxxcompiler: g++ }
-        - { arch: aarch64, compiler: gcc, cxxcompiler: g++ }
         - { arch: ppc64le, compiler: gcc, cxxcompiler: g++ }
         - { arch: riscv64, compiler: gcc, cxxcompiler: g++ }
         - { arch: s390x, compiler: gcc, cxxcompiler: g++ }
