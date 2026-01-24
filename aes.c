@@ -982,8 +982,7 @@ void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
     const unsigned int lambda_bytes = lambda / 8;
 
     // saving the OWF key to the extended witness
-    memcpy(w, in, lambda_bytes);
-    w += lambda_bytes;
+    w = faest_mempcpy(w, in, lambda_bytes);
   }
 
   assert(w - w_out == params->Lke / 8);

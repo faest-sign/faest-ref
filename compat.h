@@ -41,6 +41,11 @@
 #define HAVE_TIMINGSAFE_BCMP
 #endif /* HAVE_TIMINGSAFE_BCMP */
 
+#if !defined(HAVE_MEMPCPY) && GLIBC_CHECK(2, 1)
+/* mempcpy was introduced in glibc 2.1*/
+#define HAVE_MEMPCPY
+#endif /* HAVE_MEMPCPY */
+
 #if defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)
 #if __has_include(<wmmintrin.h>)
 #define HAVE_AESNI
@@ -108,6 +113,18 @@ void faest_explicit_bzero(void* a, size_t len);
 
 FAEST_END_C_DECL
 #endif /* HAVE_EXPLICIT_BZERO */
+
+#if defined(HAVE_MEMPCPY)
+#include <string.h>
+
+#define faest_mempcpy(dst, src, len) mempcpy((dst), (src), (len))
+#else
+
+/**
+ * Compatibility implementation of mempcpy
+ */
+void* faest_mempcpy(void* dst, const void* src, size_t len);
+#endif /* HAVE_MEMPCPY */
 
 #if defined(OQS)
 #include <oqs/common.h>

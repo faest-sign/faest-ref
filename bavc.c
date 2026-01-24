@@ -246,8 +246,8 @@ bool bavc_open(uint8_t* decom_i, const bavc_t* vc, const uint16_t* i_delta,
 
   // Step 3
   const uint8_t* com = vc->com;
-  for (unsigned int i = 0; i < tau; ++i, decom_i += com_size) {
-    memcpy(decom_i, com + i_delta[i] * com_size, com_size);
+  for (unsigned int i = 0; i < tau; ++i) {
+    decom_i = faest_mempcpy(decom_i, com + i_delta[i] * com_size, com_size);
     com += bavc_max_node_index(i, tau_1, k) * com_size;
   }
 
@@ -256,8 +256,7 @@ bool bavc_open(uint8_t* decom_i, const bavc_t* vc, const uint16_t* i_delta,
     ptr_set_bit(s, i, ptr_get_bit(s, 2 * i + 1) | ptr_get_bit(s, 2 * i + 2));
     if ((ptr_get_bit(s, 2 * i + 1) ^ ptr_get_bit(s, 2 * i + 2)) == 1) {
       const unsigned int alpha = 2 * i + 1 + ptr_get_bit(s, 2 * i + 1);
-      memcpy(decom_i, NODE(vc->k, alpha, lambda_bytes), lambda_bytes);
-      decom_i += lambda_bytes;
+      decom_i = faest_mempcpy(decom_i, NODE(vc->k, alpha, lambda_bytes), lambda_bytes);
     }
   }
 

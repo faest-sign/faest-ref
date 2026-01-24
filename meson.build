@@ -169,6 +169,10 @@ conf_data.set(
   'HAVE_PTHREAD_SETAFFINITY_NP',
   cc.has_header_symbol('pthread.h', 'pthread_setaffinity_np', args: defines),
 )
+conf_data.set(
+  'HAVE_MEMPCPY',
+  cc.has_header_symbol('string.h', 'mempcpy', args: defines),
+)
 
 # parameter sets
 # After changing the parameter sets, be sure to run crypto_sign_generator.py to create the corresponding meson files.

@@ -142,3 +142,10 @@ void faest_explicit_bzero(void* a, size_t len) {
 #endif
 }
 #endif /* HAVE_EXPLICIT_BZERO */
+
+#if !defined(HAVE_MEMPCPY)
+void* faest_mempcpy(void* dst, const void* src, size_t len) {
+  memcpy(dst, src, len);
+  return dst + len;
+}
+#endif
