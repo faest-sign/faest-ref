@@ -36,6 +36,10 @@
 #endif
 
 /* glibc version check macro */
+#if __has_include(<features.h>)
+#include <features.h>
+#endif
+
 #if defined(__GLIBC__)
 #define GLIBC_CHECK(maj, min) __GLIBC_PREREQ(maj, min)
 #else
