@@ -119,11 +119,16 @@ FAEST_END_C_DECL
 
 #define faest_mempcpy(dst, src, len) mempcpy((dst), (src), (len))
 #else
+#include <string.h>
 
 /**
  * Compatibility implementation of mempcpy
  */
-void* faest_mempcpy(void* dst, const void* src, size_t len);
+#if defined(_MSC_VER)
+#define faest_mempcpy(dst, src, len) ((void*)(((char*)memcpy((dst), (src), (len))) + (len)))
+#else
+#define faest_mempcpy(dst, src, len) (memcpy((dst), (src), (len)) + (len))
+#endif
 #endif /* HAVE_MEMPCPY */
 
 #if defined(OQS)
