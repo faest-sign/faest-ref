@@ -32,15 +32,13 @@
    (UINT64_C(x3) << 24) | (UINT64_C(x2) << 16) | (UINT64_C(x1) << 8) | UINT64_C(x0))
 
 ATTR_CONST uint8_t bits_sq(uint8_t x) {
-  uint8_t res = set_bit(get_bit(x, 0) ^ get_bit(x, 4) ^ get_bit(x, 6), 0);
-  res |= set_bit(get_bit(x, 4) ^ get_bit(x, 6) ^ get_bit(x, 7), 1);
-  res |= set_bit(get_bit(x, 1) ^ get_bit(x, 5), 2);
-  res |= set_bit(get_bit(x, 4) ^ get_bit(x, 5) ^ get_bit(x, 6) ^ get_bit(x, 7), 3);
-  res |= set_bit(get_bit(x, 2) ^ get_bit(x, 4) ^ get_bit(x, 7), 4);
-  res |= set_bit(get_bit(x, 5) ^ get_bit(x, 6), 5);
-  res |= set_bit(get_bit(x, 3) ^ get_bit(x, 5), 6);
-  res |= set_bit(get_bit(x, 6) ^ get_bit(x, 7), 7);
-  return res;
+  return set_bit(get_bit(x, 0) ^ get_bit(x, 4) ^ get_bit(x, 6), 0) |
+         set_bit(get_bit(x, 4) ^ get_bit(x, 6) ^ get_bit(x, 7), 1) |
+         set_bit(get_bit(x, 1) ^ get_bit(x, 5), 2) |
+         set_bit(get_bit(x, 4) ^ get_bit(x, 5) ^ get_bit(x, 6) ^ get_bit(x, 7), 3) |
+         set_bit(get_bit(x, 2) ^ get_bit(x, 4) ^ get_bit(x, 7), 4) |
+         set_bit(get_bit(x, 5) ^ get_bit(x, 6), 5) | set_bit(get_bit(x, 3) ^ get_bit(x, 5), 6) |
+         set_bit(get_bit(x, 6) ^ get_bit(x, 7), 7);
 }
 
 // GF(2^8) implementation
@@ -278,20 +276,18 @@ ATTR_CONST static inline bf128_t bf128_dbl(bf128_t lhs) {
   return lhs;
 }
 
-bf128_t bf128_sum_poly(const bf128_t* xs) {
-  bf128_t ret = xs[128 - 1];
+void bf128_sum_poly(bf128_t* dst, const bf128_t* xs) {
+  *dst = xs[128 - 1];
   for (size_t i = 1; i < 128; ++i) {
-    ret = bf128_add(bf128_dbl(ret), xs[128 - 1 - i]);
+    *dst = bf128_add(bf128_dbl(*dst), xs[128 - 1 - i]);
   }
-  return ret;
 }
 
-bf128_t bf128_sum_poly_bits(const uint8_t* xs) {
-  bf128_t ret = bf128_from_bit(ptr_get_bit(xs, 128 - 1));
+void bf128_sum_poly_bits(bf128_t* dst, const uint8_t* xs) {
+  *dst = bf128_from_bit(ptr_get_bit(xs, 128 - 1));
   for (size_t i = 1; i < 128; ++i) {
-    ret = bf128_add(bf128_dbl(ret), bf128_from_bit(ptr_get_bit(xs, 128 - 1 - i)));
+    *dst = bf128_add(bf128_dbl(*dst), bf128_from_bit(ptr_get_bit(xs, 128 - 1 - i)));
   }
-  return ret;
 }
 
 // GF(2^192) implementation
@@ -479,20 +475,18 @@ ATTR_CONST static inline bf192_t bf192_dbl(bf192_t lhs) {
   return lhs;
 }
 
-bf192_t bf192_sum_poly(const bf192_t* xs) {
-  bf192_t ret = xs[192 - 1];
+void bf192_sum_poly(bf192_t* dst, const bf192_t* xs) {
+  *dst = xs[192 - 1];
   for (size_t i = 1; i < 192; ++i) {
-    ret = bf192_add(bf192_dbl(ret), xs[192 - 1 - i]);
+    *dst = bf192_add(bf192_dbl(*dst), xs[192 - 1 - i]);
   }
-  return ret;
 }
 
-bf192_t bf192_sum_poly_bits(const uint8_t* xs) {
-  bf192_t ret = bf192_from_bit(ptr_get_bit(xs, 192 - 1));
+void bf192_sum_poly_bits(bf192_t* dst, const uint8_t* xs) {
+  *dst = bf192_from_bit(ptr_get_bit(xs, 192 - 1));
   for (size_t i = 1; i < 192; ++i) {
-    ret = bf192_add(bf192_dbl(ret), bf192_from_bit(ptr_get_bit(xs, 192 - 1 - i)));
+    *dst = bf192_add(bf192_dbl(*dst), bf192_from_bit(ptr_get_bit(xs, 192 - 1 - i)));
   }
-  return ret;
 }
 
 // GF(2^256) implementation
@@ -703,20 +697,18 @@ ATTR_CONST static inline bf256_t bf256_dbl(bf256_t lhs) {
 #endif
 }
 
-bf256_t bf256_sum_poly(const bf256_t* xs) {
-  bf256_t ret = xs[256 - 1];
+void bf256_sum_poly(bf256_t* dst, const bf256_t* xs) {
+  *dst = xs[256 - 1];
   for (size_t i = 1; i < 256; ++i) {
-    ret = bf256_add(bf256_dbl(ret), xs[256 - 1 - i]);
+    *dst = bf256_add(bf256_dbl(*dst), xs[256 - 1 - i]);
   }
-  return ret;
 }
 
-bf256_t bf256_sum_poly_bits(const uint8_t* xs) {
-  bf256_t ret = bf256_from_bit(ptr_get_bit(xs, 256 - 1));
+void bf256_sum_poly_bits(bf256_t* dst, const uint8_t* xs) {
+  *dst = bf256_from_bit(ptr_get_bit(xs, 256 - 1));
   for (size_t i = 1; i < 256; ++i) {
-    ret = bf256_add(bf256_dbl(ret), bf256_from_bit(ptr_get_bit(xs, 256 - 1 - i)));
+    *dst = bf256_add(bf256_dbl(*dst), bf256_from_bit(ptr_get_bit(xs, 256 - 1 - i)));
   }
-  return ret;
 }
 
 // GF(2^384)

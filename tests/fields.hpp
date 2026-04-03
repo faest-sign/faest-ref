@@ -326,6 +326,18 @@ namespace {
       bf128_byte_combine_bits(&r.value, x);
       return r;
     }
+
+    static bf128 sum_poly(const bf128_t* xs) {
+      bf128 r;
+      bf128_sum_poly(&r.value, xs);
+      return r;
+    }
+
+    static bf128 sum_poly_bits(const uint8_t* xs) {
+      bf128 r;
+      bf128_sum_poly_bits(&r.value, xs);
+      return r;
+    }
   };
 
   static inline std::ostream& operator<<(std::ostream& stream, bf128 v) {
@@ -449,6 +461,18 @@ namespace {
     static bf192 byte_combine_bits(uint8_t x) {
       bf192 r;
       bf192_byte_combine_bits(&r.value, x);
+      return r;
+    }
+
+    static bf192 sum_poly(const bf192_t* xs) {
+      bf192 r;
+      bf192_sum_poly(&r.value, xs);
+      return r;
+    }
+
+    static bf192 sum_poly_bits(const uint8_t* xs) {
+      bf192 r;
+      bf192_sum_poly_bits(&r.value, xs);
       return r;
     }
   };
@@ -580,6 +604,18 @@ namespace {
     static bf256 byte_combine_bits(uint8_t x) {
       bf256 r;
       bf256_byte_combine_bits(&r.value, x);
+      return r;
+    }
+
+    static bf256 sum_poly(const bf256_t* xs) {
+      bf256 r;
+      bf256_sum_poly(&r.value, xs);
+      return r;
+    }
+
+    static bf256 sum_poly_bits(const uint8_t* xs) {
+      bf256 r;
+      bf256_sum_poly_bits(&r.value, xs);
       return r;
     }
   };

@@ -1748,7 +1748,7 @@ BOOST_AUTO_TEST_CASE(test_bf128_sum_poly_invariants) {
     polys[bit] = bf128::zero().as_internal();
   }
 
-  bf128 sum = bf128_sum_poly(polys);
+  bf128 sum = bf128::sum_poly(polys);
   BOOST_TEST(sum == bf128::zero());
 
   for (size_t bit = 0; bit < 128; ++bit) {
@@ -1758,7 +1758,7 @@ BOOST_AUTO_TEST_CASE(test_bf128_sum_poly_invariants) {
   bf128::bytes all_ones;
   all_ones.fill(0xff);
 
-  sum = bf128_sum_poly(polys);
+  sum = bf128::sum_poly(polys);
   BOOST_TEST(sum == bf128(all_ones));
 }
 
@@ -1768,7 +1768,7 @@ BOOST_AUTO_TEST_CASE(test_bf192_sum_poly_invariants) {
     polys[bit] = bf192::zero().as_internal();
   }
 
-  bf192 sum = bf192_sum_poly(polys);
+  bf192 sum = bf192::sum_poly(polys);
   BOOST_TEST(sum == bf192::zero());
 
   for (size_t bit = 0; bit < 192; ++bit) {
@@ -1778,7 +1778,7 @@ BOOST_AUTO_TEST_CASE(test_bf192_sum_poly_invariants) {
   bf192::bytes all_ones;
   all_ones.fill(0xff);
 
-  sum = bf192_sum_poly(polys);
+  sum = bf192::sum_poly(polys);
   BOOST_TEST(sum == bf192(all_ones));
 }
 
@@ -1788,7 +1788,7 @@ BOOST_AUTO_TEST_CASE(test_bf256_sum_poly_invariants) {
     polys[bit] = bf256::zero().as_internal();
   }
 
-  bf256 sum = bf256_sum_poly(polys);
+  bf256 sum = bf256::sum_poly(polys);
   BOOST_TEST(sum == bf256::zero());
 
   for (size_t bit = 0; bit < 256; ++bit) {
@@ -1798,7 +1798,7 @@ BOOST_AUTO_TEST_CASE(test_bf256_sum_poly_invariants) {
   bf256::bytes all_ones;
   all_ones.fill(0xff);
 
-  sum = bf256_sum_poly(polys);
+  sum = bf256::sum_poly(polys);
   BOOST_TEST(sum == bf256(all_ones));
 }
 
@@ -1813,7 +1813,7 @@ BOOST_AUTO_TEST_CASE(test_bf128_sum_poly) {
     polys[bit] = bf128(tmp).as_internal();
   }
 
-  bf128 sum = bf128_sum_poly(polys);
+  bf128 sum = bf128::sum_poly(polys);
   BOOST_TEST(sum == bf128(output));
 }
 
@@ -1826,8 +1826,8 @@ BOOST_AUTO_TEST_CASE(test_bf128_sum_poly_bits) {
     bf_bits[i] = bf128_from_bit(ptr_get_bit(bits.data(), i));
   }
 
-  bf128 sum   = bf128_sum_poly_bits(bits.data());
-  bf128 check = bf128_sum_poly(bf_bits.data());
+  bf128 sum   = bf128::sum_poly_bits(bits.data());
+  bf128 check = bf128::sum_poly(bf_bits.data());
   BOOST_TEST(sum == check);
 }
 
@@ -1845,7 +1845,7 @@ BOOST_AUTO_TEST_CASE(test_bf192_sum_poly) {
     polys[bit] = bf192(tmp).as_internal();
   }
 
-  bf192 sum = bf192_sum_poly(polys);
+  bf192 sum = bf192::sum_poly(polys);
   BOOST_TEST(sum == bf192(output));
 }
 
@@ -1858,8 +1858,8 @@ BOOST_AUTO_TEST_CASE(test_bf192_sum_poly_bits) {
     bf_bits[i] = bf192_from_bit(ptr_get_bit(bits.data(), i));
   }
 
-  bf192 sum   = bf192_sum_poly_bits(bits.data());
-  bf192 check = bf192_sum_poly(bf_bits.data());
+  bf192 sum   = bf192::sum_poly_bits(bits.data());
+  bf192 check = bf192::sum_poly(bf_bits.data());
   BOOST_TEST(sum == check);
 }
 
@@ -1877,7 +1877,7 @@ BOOST_AUTO_TEST_CASE(test_bf256_sum_poly) {
     polys[bit] = bf256(tmp).as_internal();
   }
 
-  bf256 sum = bf256_sum_poly(polys);
+  bf256 sum = bf256::sum_poly(polys);
   BOOST_TEST(sum == bf256(output));
 }
 
@@ -1890,8 +1890,8 @@ BOOST_AUTO_TEST_CASE(test_bf256_sum_poly_bits) {
     bf_bits[i] = bf256_from_bit(ptr_get_bit(bits.data(), i));
   }
 
-  bf256 sum   = bf256_sum_poly_bits(bits.data());
-  bf256 check = bf256_sum_poly(bf_bits.data());
+  bf256 sum   = bf256::sum_poly_bits(bits.data());
+  bf256 check = bf256::sum_poly(bf_bits.data());
   BOOST_TEST(sum == check);
 }
 

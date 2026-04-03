@@ -1661,12 +1661,16 @@ void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, c
   bfSSS_t* w_tag = column_to_row_major_and_shrink_V_SSS(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
-  bfSSS_t bf_u_star_0 = bfSSS_sum_poly_bits(u);
-  bfSSS_t bf_u_star_1 = bfSSS_sum_poly_bits(u + FAEST_SSS_LAMBDA / 8);
+  bfSSS_t bf_u_star_0;
+  bfSSS_sum_poly_bits(&bf_u_star_0, u);
+  bfSSS_t bf_u_star_1;
+  bfSSS_sum_poly_bits(&bf_u_star_1, u + FAEST_SSS_LAMBDA / 8);
 
   // ::8-9
-  bfSSS_t bf_v_star_0 = bfSSS_sum_poly(w_tag + ell);
-  bfSSS_t bf_v_star_1 = bfSSS_sum_poly(w_tag + ell + FAEST_SSS_LAMBDA);
+  bfSSS_t bf_v_star_0;
+  bfSSS_sum_poly(&bf_v_star_0, w_tag + ell);
+  bfSSS_t bf_v_star_1;
+  bfSSS_sum_poly(&bf_v_star_1, w_tag + ell + FAEST_SSS_LAMBDA);
 
   // Step: 13-18
   zk_hash_SSS_3_ctx hasher;
@@ -1699,8 +1703,10 @@ void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const 
   bfSSS_t* q_key = column_to_row_major_and_shrink_V_SSS(Q, ell);
 
   // ::7-9
-  bfSSS_t q_star_0 = bfSSS_sum_poly(q_key + ell);
-  bfSSS_t q_star_1 = bfSSS_sum_poly(q_key + ell + FAEST_SSS_LAMBDA);
+  bfSSS_t q_star_0;
+  bfSSS_sum_poly(&q_star_0, q_key + ell);
+  bfSSS_t q_star_1;
+  bfSSS_sum_poly(&q_star_1, q_key + ell + FAEST_SSS_LAMBDA);
 
   // ::10
   bfSSS_t q_star = bfSSS_add(q_star_0, bfSSS_mul(bf_delta, q_star_1));
