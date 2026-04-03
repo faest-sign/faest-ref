@@ -304,7 +304,9 @@ namespace {
 #endif
 
     static bf128 random() {
-      return bf128_rand();
+      bf128 r;
+      bf128_rand(&r.value);
+      return r;
     }
 
     static bf128 zero() {
@@ -417,7 +419,9 @@ namespace {
 #endif
 
     static bf192 random() {
-      return bf192_rand();
+      bf192 r;
+      bf192_rand(&r.value);
+      return r;
     }
 
     static bf192 zero() {
@@ -536,7 +540,9 @@ namespace {
 #endif
 
     static bf256 random() {
-      return bf256_rand();
+      bf256 r;
+      bf256_rand(&r.value);
+      return r;
     }
 
     static bf256 zero() {

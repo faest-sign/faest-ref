@@ -194,13 +194,10 @@ bf128_t bf128_byte_combine_bits_sq(uint8_t x) {
   return bf128_byte_combine_bits(bits_sq(x));
 }
 
-bf128_t bf128_rand(void) {
+void bf128_rand(bf128_t* dst) {
   uint8_t buf[BF128_NUM_BYTES];
   rand_bytes(buf, sizeof(buf));
-
-  bf128_t ret;
-  bf128_load(&ret, buf);
-  return ret;
+  bf128_load(dst, buf);
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -394,13 +391,10 @@ bf192_t bf192_byte_combine_bits_sq(uint8_t x) {
   return bf192_byte_combine_bits(bits_sq(x));
 }
 
-bf192_t bf192_rand(void) {
+void bf192_rand(bf192_t* dst) {
   uint8_t buf[BF192_NUM_BYTES];
   rand_bytes(buf, sizeof(buf));
-
-  bf192_t ret;
-  bf192_load(&ret, buf);
-  return ret;
+  bf192_load(dst, buf);
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -607,13 +601,10 @@ bf256_t bf256_byte_combine_bits_sq(uint8_t x) {
   return bf256_byte_combine_bits(bits_sq(x));
 }
 
-bf256_t bf256_rand(void) {
+void bf256_rand(bf256_t* dst) {
   uint8_t buf[BF256_NUM_BYTES];
   rand_bytes(buf, sizeof(buf));
-
-  bf256_t ret;
-  bf256_load(&ret, buf);
-  return ret;
+  bf256_load(dst, buf);
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)

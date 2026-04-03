@@ -265,7 +265,7 @@ void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag);
 void bf128_sq_bit_inplace(bf128_t* tag);
 ATTR_PURE bf128_t bf128_byte_combine_sq(const bf128_t* x);
 ATTR_PURE bf128_t bf128_byte_combine_bits_sq(uint8_t x);
-bf128_t bf128_rand(void);
+void bf128_rand(bf128_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #define bf128_add(lhs, rhs) ((lhs) ^ (rhs))
@@ -350,7 +350,7 @@ void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag);
 void bf192_sq_bit_inplace(bf192_t* tag);
 ATTR_PURE bf192_t bf192_byte_combine_sq(const bf192_t* x);
 ATTR_PURE bf192_t bf192_byte_combine_bits_sq(uint8_t x);
-bf192_t bf192_rand(void);
+void bf192_rand(bf192_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #define bf192_add(lhs, rhs) ((lhs) ^ (rhs))
@@ -432,7 +432,7 @@ void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag);
 void bf256_sq_bit_inplace(bf256_t* tag);
 ATTR_PURE bf256_t bf256_byte_combine_sq(const bf256_t* x);
 ATTR_PURE bf256_t bf256_byte_combine_bits_sq(uint8_t x);
-bf256_t bf256_rand(void);
+void bf256_rand(bf256_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #define bf256_add(lhs, rhs) ((lhs) ^ (rhs))
