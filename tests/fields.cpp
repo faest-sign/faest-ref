@@ -72,9 +72,12 @@ namespace {
 
   template <class B>
   void add_invariants() {
-    check_add<B>(0xFF, B::zero(), 0xFF);
-    check_add<B>(B::zero(), 0xFF, 0xFF);
-    check_add<B>(0xFF, 0xFF, B::zero());
+    for (unsigned int i = 50; i; --i) {
+      auto rand = B::random();
+      check_add<B>(rand, B::zero(), rand);
+      check_add<B>(B::zero(), rand, rand);
+      check_add<B>(rand, rand, B::zero());
+    }
   }
 
 #if defined(HAVE_NTL)
@@ -90,15 +93,21 @@ namespace {
 
   template <class B>
   void mul_invariants() {
-    check_mul<B>(0xFF, B::zero(), B::zero());
-    check_mul<B>(B::zero(), 0xFF, B::zero());
-    check_mul<B>(0xFF, B::one(), 0xFF);
-    check_mul<B>(B::one(), 0xFF, 0xFF);
+    for (unsigned int i = 50; i; --i) {
+      auto rand = B::random();
+      check_mul<B>(rand, B::zero(), B::zero());
+      check_mul<B>(B::zero(), rand, B::zero());
+      check_mul<B>(rand, B::one(), rand);
+      check_mul<B>(B::one(), rand, rand);
+    }
   }
 
   template <class B>
   void div_invariants() {
-    check_div<B>(0xFF, B::one(), 0xFF);
+    for (unsigned int i = 50; i; --i) {
+      auto rand = B::random();
+      check_div<B>(rand, B::one(), rand);
+    }
   }
 
 #if defined(HAVE_NTL)
@@ -271,13 +280,10 @@ BOOST_AUTO_TEST_CASE(test_bf128_test_vectors_with64) {
                                   0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40};
 
   bf128 l{lhs};
-  bf128 r{bf64{rhs}};
+  bf64 r{rhs};
 
   const auto o = (l * r).as_uint8();
   BOOST_TEST(o == expected);
-
-  const auto o2 = (l * bf64{rhs}).as_uint8();
-  BOOST_TEST(o2 == expected);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf192_test_vectors) {
@@ -309,13 +315,10 @@ BOOST_AUTO_TEST_CASE(test_bf192_test_vectors_with64) {
                                   0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40};
 
   bf192 l{lhs};
-  bf192 r{bf64{rhs}};
+  bf64 r{rhs};
 
   const auto o = (l * r).as_uint8();
   BOOST_TEST(o == expected);
-
-  const auto o2 = (l * bf64{rhs}).as_uint8();
-  BOOST_TEST(o2 == expected);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf256_test_vectors) {
@@ -348,13 +351,10 @@ BOOST_AUTO_TEST_CASE(test_bf256_test_vectors_with64) {
                                   0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40};
 
   bf256 l{lhs};
-  bf256 r{bf64{rhs}};
+  bf64 r{rhs};
 
   const auto o = (l * r).as_uint8();
   BOOST_TEST(o == expected);
-
-  const auto o2 = (l * bf64{rhs}).as_uint8();
-  BOOST_TEST(o2 == expected);
 }
 
 namespace {

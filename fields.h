@@ -230,12 +230,6 @@ ATTR_ALWAYS_INLINE static inline void bf128_store(uint8_t* dst, const bf128_t* s
 #endif
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_from_bf64(bf64_t src) {
-  bf128_t ret      = BF128C(0, 0);
-  BF_VALUE(ret, 0) = src;
-  return ret;
-}
-
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_from_bf8(bf8_t src) {
   bf128_t ret      = BF128C(0, 0);
   BF_VALUE(ret, 0) = src;
@@ -315,12 +309,6 @@ ATTR_ALWAYS_INLINE static inline void bf192_store(uint8_t* dst, const bf192_t* s
 #endif
 }
 
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_from_bf64(bf64_t src) {
-  bf192_t ret      = BF192C(0, 0, 0);
-  BF_VALUE(ret, 0) = src;
-  return ret;
-}
-
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_from_bf8(bf8_t src) {
   bf192_t ret      = BF192C(0, 0, 0);
   BF_VALUE(ret, 0) = src;
@@ -395,12 +383,6 @@ ATTR_ALWAYS_INLINE static inline void bf256_store(uint8_t* dst, const bf256_t* s
 #else
   memcpy(dst, src, BF256_NUM_BYTES);
 #endif
-}
-
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_from_bf64(bf64_t src) {
-  bf256_t ret      = BF256C(0, 0, 0, 0);
-  BF_VALUE(ret, 0) = src;
-  return ret;
 }
 
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_from_bf8(bf8_t src) {

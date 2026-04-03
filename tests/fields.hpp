@@ -221,9 +221,7 @@ namespace {
     typedef std::array<uint8_t, BF128_NUM_BYTES> bytes;
 
     bf128() : value{0} {}
-    bf128(uint64_t v) : value{bf128_from_bf64(v)} {}
     bf128(bf128_t v) : value{v} {}
-    bf128(bf64 v) : value{bf128_from_bf64(v.as_internal())} {}
     bf128(const bytes& b) {
       bf128_load(&value, b.data());
     }
@@ -331,9 +329,7 @@ namespace {
     typedef std::array<uint8_t, BF192_NUM_BYTES> bytes;
 
     bf192() : value{0} {}
-    bf192(uint64_t v) : value{bf192_from_bf64(v)} {}
     bf192(bf192_t v) : value{v} {}
-    bf192(bf64 v) : value{bf192_from_bf64(v.as_internal())} {}
     bf192(const bytes& b) {
       bf192_load(&value, b.data());
     }
@@ -447,9 +443,7 @@ namespace {
     typedef std::array<uint8_t, BF256_NUM_BYTES> bytes;
 
     bf256() : value{0} {}
-    bf256(uint64_t v) : value{bf256_from_bf64(v)} {}
     bf256(bf256_t v) : value{v} {}
-    bf256(bf64 v) : value{bf256_from_bf64(v.as_internal())} {}
     bf256(const bytes& b) {
       bf256_load(&value, b.data());
     }
