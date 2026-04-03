@@ -224,7 +224,9 @@ namespace {
     bf128(uint64_t v) : value{bf128_from_bf64(v)} {}
     bf128(bf128_t v) : value{v} {}
     bf128(bf64 v) : value{bf128_from_bf64(v.as_internal())} {}
-    bf128(const bytes& b) : value{bf128_load(b.data())} {}
+    bf128(const bytes& b) {
+      bf128_load(&value, b.data());
+    }
     bf128(const bf128&) = default;
 
     bf128& operator=(const bf128&) = default;
@@ -330,7 +332,9 @@ namespace {
     bf192(uint64_t v) : value{bf192_from_bf64(v)} {}
     bf192(bf192_t v) : value{v} {}
     bf192(bf64 v) : value{bf192_from_bf64(v.as_internal())} {}
-    bf192(const bytes& b) : value{bf192_load(b.data())} {}
+    bf192(const bytes& b) {
+      bf192_load(&value, b.data());
+    }
     bf192(const bf192&) = default;
 
     bf192& operator=(const bf192&) = default;
@@ -442,7 +446,9 @@ namespace {
     bf256(uint64_t v) : value{bf256_from_bf64(v)} {}
     bf256(bf256_t v) : value{v} {}
     bf256(bf64 v) : value{bf256_from_bf64(v.as_internal())} {}
-    bf256(const bytes& b) : value{bf256_load(b.data())} {}
+    bf256(const bytes& b) {
+      bf256_load(&value, b.data());
+    }
     bf256(const bf256&) = default;
 
     bf256& operator=(const bf256&) = default;

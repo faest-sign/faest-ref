@@ -862,7 +862,7 @@ static bfSSS_t* column_to_row_major_and_shrink_V_SSS(uint8_t** v, unsigned int e
     for (unsigned int column = 0; column != FAEST_SSS_LAMBDA; ++column) {
       ptr_set_bit(new_row, column, ptr_get_bit(v[column], row));
     }
-    new_v[row] = bfSSS_load(new_row);
+    bfSSS_load(&new_v[row], new_row);
   }
   return new_v;
 }
@@ -1684,7 +1684,9 @@ void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const 
   const unsigned int ell = params->l;
 
   // ::1
-  bfSSS_t bf_delta    = bfSSS_load(chall_3);
+  bfSSS_t bf_delta;
+  bfSSS_load(&bf_delta, chall_3);
+
   bfSSS_t bf_delta_sq = bfSSS_mul(bf_delta, bf_delta);
 
   // ::2-6
@@ -1714,10 +1716,15 @@ void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const 
   zk_hash_SSS_finalize(q_tilde, &b_ctx, q_star);
 
   // ::16
-  bfSSS_t tmp1 = bfSSS_mul(bfSSS_load(a1_tilde), bf_delta);
-  bfSSS_t tmp2 = bfSSS_mul(bfSSS_load(a2_tilde), bf_delta_sq);
-  bfSSS_t tmp3 = bfSSS_add(tmp1, tmp2);
-  bfSSS_t ret  = bfSSS_add(bfSSS_load(q_tilde), tmp3);
+  bfSSS_t tmp;
+  bfSSS_load(&tmp, a1_tilde);
+  const bfSSS_t tmp1 = bfSSS_mul(tmp, bf_delta);
 
+  bfSSS_load(&tmp, a2_tilde);
+  const bfSSS_t tmp2 = bfSSS_mul(tmp, bf_delta_sq);
+  const bfSSS_t tmp3 = bfSSS_add(tmp1, tmp2);
+
+  bfSSS_load(&tmp, q_tilde);
+  const bfSSS_t ret = bfSSS_add(tmp, tmp3);
   bfSSS_store(a0_tilde, ret);
 }

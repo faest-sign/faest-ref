@@ -37,23 +37,26 @@ typedef struct {
 #define BF192_ALIGN 32
 #define BF256_ALIGN 32
 
-#define BF128C(x0, x1)                                                                             \
-  { x0, x1 }
-#define BF192C(x0, x1, x2)                                                                         \
-  { x0, x1, x2, UINT64_C(0) }
-#define BF256C(x0, x1, x2, x3)                                                                     \
-  { x0, x1, x2, x3 }
+#define BF128C(x0, x1) {x0, x1}
+#define BF192C(x0, x1, x2) {x0, x1, x2, UINT64_C(0)}
+#define BF256C(x0, x1, x2, x3) {x0, x1, x2, x3}
 #define BF384C(x0, x1, x2, x3, x4, x5)                                                             \
   {                                                                                                \
-    { BF128C(x0, x1), BF128C(x2, x3), BF128C(x4, x5) }                                             \
+    {                                                                                              \
+      BF128C(x0, x1), BF128C(x2, x3), BF128C(x4, x5)                                               \
+    }                                                                                              \
   }
 #define BF576C(x0, x1, x2, x3, x4, x5, x6, x7, x8)                                                 \
   {                                                                                                \
-    { BF192C(x0, x1, x2), BF192C(x3, x4, x5), BF192C(x6, x7, x8) }                                 \
+    {                                                                                              \
+      BF192C(x0, x1, x2), BF192C(x3, x4, x5), BF192C(x6, x7, x8)                                   \
+    }                                                                                              \
   }
 #define BF768C(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11)                                   \
   {                                                                                                \
-    { BF256C(x0, x1, x2, x3), BF256C(x4, x5, x6, x7), BF256C(x8, x9, x10, x11) }                   \
+    {                                                                                              \
+      BF256C(x0, x1, x2, x3), BF256C(x4, x5, x6, x7), BF256C(x8, x9, x10, x11)                     \
+    }                                                                                              \
   }
 #else
 #define BF_VALUE(v, i) ((v).values[i])
@@ -84,27 +87,39 @@ typedef struct {
 
 #define BF128C(x0, x1)                                                                             \
   {                                                                                                \
-    { x0, x1 }                                                                                     \
+    {                                                                                              \
+      x0, x1                                                                                       \
+    }                                                                                              \
   }
 #define BF192C(x0, x1, x2)                                                                         \
   {                                                                                                \
-    { x0, x1, x2 }                                                                                 \
+    {                                                                                              \
+      x0, x1, x2                                                                                   \
+    }                                                                                              \
   }
 #define BF256C(x0, x1, x2, x3)                                                                     \
   {                                                                                                \
-    { x0, x1, x2, x3 }                                                                             \
+    {                                                                                              \
+      x0, x1, x2, x3                                                                               \
+    }                                                                                              \
   }
 #define BF384C(x0, x1, x2, x3, x4, x5)                                                             \
   {                                                                                                \
-    { x0, x1, x2, x3, x4, x5 }                                                                     \
+    {                                                                                              \
+      x0, x1, x2, x3, x4, x5                                                                       \
+    }                                                                                              \
   }
 #define BF576C(x0, x1, x2, x3, x4, x5, x6, x7, x8)                                                 \
   {                                                                                                \
-    { x0, x1, x2, x3, x4, x5, x6, x7, x8 }                                                         \
+    {                                                                                              \
+      x0, x1, x2, x3, x4, x5, x6, x7, x8                                                           \
+    }                                                                                              \
   }
 #define BF768C(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11)                                   \
   {                                                                                                \
-    { x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11 }                                           \
+    {                                                                                              \
+      x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11                                             \
+    }                                                                                              \
   }
 
 #define BF128_ALIGN 8
@@ -193,17 +208,15 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf64_t bf64_from_bit(uint8_t bit) {
 
 // GF(2^128) implementation
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf128_t bf128_load(const uint8_t* src) {
-  bf128_t ret;
+ATTR_ALWAYS_INLINE static inline void bf128_load(bf128_t* dst, const uint8_t* src) {
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF128_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
-    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
-    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+    memcpy(&BF_VALUE(*dst, i), src, sizeof(uint64_t));
+    BF_VALUE(*dst, i) = le64toh(BF_VALUE(*dst, i));
   }
 #else
-  memcpy(&ret, src, BF128_NUM_BYTES);
+  memcpy(dst, src, BF128_NUM_BYTES);
 #endif
-  return ret;
 }
 
 ATTR_ALWAYS_INLINE static inline void bf128_store(uint8_t* dst, bf128_t src) {
@@ -277,20 +290,18 @@ ATTR_PURE bf128_t bf128_sum_poly_bits(const uint8_t* xs);
 
 // GF(2^192) implemenation
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf192_t bf192_load(const uint8_t* src) {
-  bf192_t ret;
+ATTR_ALWAYS_INLINE static inline void bf192_load(bf192_t* dst, const uint8_t* src) {
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF192_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
-    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
-    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+    memcpy(&BF_VALUE(*dst, i), src, sizeof(uint64_t));
+    BF_VALUE(*dst, i) = le64toh(BF_VALUE(*dst, i));
   }
 #else
-  memcpy(&ret, src, BF192_NUM_BYTES);
+  memcpy(dst, src, BF192_NUM_BYTES);
 #endif
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  BF_VALUE(ret, 3) = 0;
+  BF_VALUE(*dst, 3) = 0;
 #endif
-  return ret;
 }
 
 ATTR_ALWAYS_INLINE static inline void bf192_store(uint8_t* dst, bf192_t src) {
@@ -364,17 +375,15 @@ ATTR_PURE bf192_t bf192_sum_poly_bits(const uint8_t* xs);
 
 // GF(2^256) implementation
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf256_t bf256_load(const uint8_t* src) {
-  bf256_t ret;
+ATTR_ALWAYS_INLINE static inline void bf256_load(bf256_t* dst, const uint8_t* src) {
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF256_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
-    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
-    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+    memcpy(&BF_VALUE(*dst, i), src, sizeof(uint64_t));
+    BF_VALUE(*dst, i) = le64toh(BF_VALUE(*dst, i));
   }
 #else
-  memcpy(&ret, src, BF256_NUM_BYTES);
+  memcpy(dst, src, BF256_NUM_BYTES);
 #endif
-  return ret;
 }
 
 ATTR_ALWAYS_INLINE static inline void bf256_store(uint8_t* dst, bf256_t src) {
@@ -448,23 +457,21 @@ ATTR_PURE bf256_t bf256_sum_poly_bits(const uint8_t* xs);
 
 // GF(2^384) implementation
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf384_t bf384_load(const uint8_t* src) {
-  bf384_t ret;
+ATTR_ALWAYS_INLINE static inline void bf384_load(bf384_t* dst, const uint8_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   for (unsigned int i = 0; i != BF384_NUM_BYTES / BF128_NUM_BYTES; ++i, src += BF128_NUM_BYTES) {
-    ret.inner[i] = bf128_load(src);
+    bf128_load(&dst->inner[i], src);
   }
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF384_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
-    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
-    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+    memcpy(&BF_VALUE(*dst, i), src, sizeof(uint64_t));
+    BF_VALUE(*dst, i) = le64toh(BF_VALUE(*dst, i));
   }
 #else
-  memcpy(&ret, src, BF384_NUM_BYTES);
+  memcpy(dst, src, BF384_NUM_BYTES);
 #endif
 #endif
-  return ret;
 }
 
 ATTR_ALWAYS_INLINE static inline void bf384_store(uint8_t* dst, bf384_t src) {
@@ -509,23 +516,21 @@ ATTR_CONST bf384_t bf384_mul_128(bf384_t lhs, bf128_t rhs);
 
 // GF(2^576) implementation
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf576_t bf576_load(const uint8_t* src) {
-  bf576_t ret;
+ATTR_ALWAYS_INLINE static inline void bf576_load(bf576_t* dst, const uint8_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   for (unsigned int i = 0; i != BF576_NUM_BYTES / BF192_NUM_BYTES; ++i, src += BF192_NUM_BYTES) {
-    ret.inner[i] = bf192_load(src);
+    bf192_load(&dst->inner[i], src);
   }
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF576_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
-    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
-    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+    memcpy(&BF_VALUE(*dst, i), src, sizeof(uint64_t));
+    BF_VALUE(*dst, i) = le64toh(BF_VALUE(*dst, i));
   }
 #else
-  memcpy(&ret, src, BF576_NUM_BYTES);
+  memcpy(dst, src, BF576_NUM_BYTES);
 #endif
 #endif
-  return ret;
 }
 
 ATTR_ALWAYS_INLINE static inline void bf576_store(uint8_t* dst, bf576_t src) {
@@ -570,23 +575,21 @@ ATTR_CONST bf576_t bf576_mul_192(bf576_t lhs, bf192_t rhs);
 
 // GF(2^768) implementation
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline bf768_t bf768_load(const uint8_t* src) {
-  bf768_t ret;
+ATTR_ALWAYS_INLINE static inline void bf768_load(bf768_t* dst, const uint8_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   for (unsigned int i = 0; i != BF768_NUM_BYTES / BF256_NUM_BYTES; ++i, src += BF256_NUM_BYTES) {
-    ret.inner[i] = bf256_load(src);
+    bf256_load(&dst->inner[i], src);
   }
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF768_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
-    memcpy(&BF_VALUE(ret, i), src, sizeof(uint64_t));
-    BF_VALUE(ret, i) = le64toh(BF_VALUE(ret, i));
+    memcpy(&BF_VALUE(*dst, i), src, sizeof(uint64_t));
+    BF_VALUE(*dst, i) = le64toh(BF_VALUE(*dst, i));
   }
 #else
-  memcpy(&ret, src, BF768_NUM_BYTES);
+  memcpy(dst, src, BF768_NUM_BYTES);
 #endif
 #endif
-  return ret;
 }
 
 ATTR_ALWAYS_INLINE static inline void bf768_store(uint8_t* dst, bf768_t src) {
