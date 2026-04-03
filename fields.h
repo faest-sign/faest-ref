@@ -219,14 +219,14 @@ ATTR_ALWAYS_INLINE static inline void bf128_load(bf128_t* dst, const uint8_t* sr
 #endif
 }
 
-ATTR_ALWAYS_INLINE static inline void bf128_store(uint8_t* dst, bf128_t src) {
+ATTR_ALWAYS_INLINE static inline void bf128_store(uint8_t* dst, const bf128_t* src) {
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF128_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
-    uint64_t tmp = htole64(BF_VALUE(src, i));
+    uint64_t tmp = htole64(BF_VALUE(*src, i));
     memcpy(dst, &tmp, sizeof(tmp));
   }
 #else
-  memcpy(dst, &src, BF128_NUM_BYTES);
+  memcpy(dst, src, BF128_NUM_BYTES);
 #endif
 }
 
@@ -304,14 +304,14 @@ ATTR_ALWAYS_INLINE static inline void bf192_load(bf192_t* dst, const uint8_t* sr
 #endif
 }
 
-ATTR_ALWAYS_INLINE static inline void bf192_store(uint8_t* dst, bf192_t src) {
+ATTR_ALWAYS_INLINE static inline void bf192_store(uint8_t* dst, const bf192_t* src) {
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF192_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
-    uint64_t tmp = htole64(BF_VALUE(src, i));
+    uint64_t tmp = htole64(BF_VALUE(*src, i));
     memcpy(dst, &tmp, sizeof(tmp));
   }
 #else
-  memcpy(dst, &src, BF192_NUM_BYTES);
+  memcpy(dst, src, BF192_NUM_BYTES);
 #endif
 }
 
@@ -386,14 +386,14 @@ ATTR_ALWAYS_INLINE static inline void bf256_load(bf256_t* dst, const uint8_t* sr
 #endif
 }
 
-ATTR_ALWAYS_INLINE static inline void bf256_store(uint8_t* dst, bf256_t src) {
+ATTR_ALWAYS_INLINE static inline void bf256_store(uint8_t* dst, const bf256_t* src) {
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF256_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
-    uint64_t tmp = htole64(BF_VALUE(src, i));
+    uint64_t tmp = htole64(BF_VALUE(*src, i));
     memcpy(dst, &tmp, sizeof(tmp));
   }
 #else
-  memcpy(dst, &src, BF256_NUM_BYTES);
+  memcpy(dst, src, BF256_NUM_BYTES);
 #endif
 }
 
@@ -474,19 +474,19 @@ ATTR_ALWAYS_INLINE static inline void bf384_load(bf384_t* dst, const uint8_t* sr
 #endif
 }
 
-ATTR_ALWAYS_INLINE static inline void bf384_store(uint8_t* dst, bf384_t src) {
+ATTR_ALWAYS_INLINE static inline void bf384_store(uint8_t* dst, const bf384_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   for (unsigned int i = 0; i != BF384_NUM_BYTES / BF128_NUM_BYTES; ++i, dst += BF128_NUM_BYTES) {
-    bf128_store(dst, src.inner[i]);
+    bf128_store(dst, &src->inner[i]);
   }
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF384_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
-    uint64_t tmp = htole64(BF_VALUE(src, i));
+    uint64_t tmp = htole64(BF_VALUE(*src, i));
     memcpy(dst, &tmp, sizeof(tmp));
   }
 #else
-  memcpy(dst, &src, BF384_NUM_BYTES);
+  memcpy(dst, src, BF384_NUM_BYTES);
 #endif
 #endif
 }
@@ -533,19 +533,19 @@ ATTR_ALWAYS_INLINE static inline void bf576_load(bf576_t* dst, const uint8_t* sr
 #endif
 }
 
-ATTR_ALWAYS_INLINE static inline void bf576_store(uint8_t* dst, bf576_t src) {
+ATTR_ALWAYS_INLINE static inline void bf576_store(uint8_t* dst, const bf576_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   for (unsigned int i = 0; i != BF576_NUM_BYTES / BF192_NUM_BYTES; ++i, dst += BF192_NUM_BYTES) {
-    bf192_store(dst, src.inner[i]);
+    bf192_store(dst, &src->inner[i]);
   }
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF576_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
-    uint64_t tmp = htole64(BF_VALUE(src, i));
+    uint64_t tmp = htole64(BF_VALUE(*src, i));
     memcpy(dst, &tmp, sizeof(tmp));
   }
 #else
-  memcpy(dst, &src, BF576_NUM_BYTES);
+  memcpy(dst, src, BF576_NUM_BYTES);
 #endif
 #endif
 }
@@ -592,19 +592,19 @@ ATTR_ALWAYS_INLINE static inline void bf768_load(bf768_t* dst, const uint8_t* sr
 #endif
 }
 
-ATTR_ALWAYS_INLINE static inline void bf768_store(uint8_t* dst, bf768_t src) {
+ATTR_ALWAYS_INLINE static inline void bf768_store(uint8_t* dst, const bf768_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   for (unsigned int i = 0; i != BF768_NUM_BYTES / BF256_NUM_BYTES; ++i, dst += BF256_NUM_BYTES) {
-    bf256_store(dst, src.inner[i]);
+    bf256_store(dst, &src->inner[i]);
   }
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF768_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
-    uint64_t tmp = htole64(BF_VALUE(src, i));
+    uint64_t tmp = htole64(BF_VALUE(*src, i));
     memcpy(dst, &tmp, sizeof(tmp));
   }
 #else
-  memcpy(dst, &src, BF768_NUM_BYTES);
+  memcpy(dst, src, BF768_NUM_BYTES);
 #endif
 #endif
 }

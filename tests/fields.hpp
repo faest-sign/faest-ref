@@ -287,7 +287,7 @@ namespace {
 
     bytes as_uint8() const {
       bytes ret;
-      bf128_store(ret.data(), value);
+      bf128_store(ret.data(), &value);
       return ret;
     }
 
@@ -402,7 +402,7 @@ namespace {
 
     bytes as_uint8() const {
       bytes ret;
-      bf192_store(ret.data(), value);
+      bf192_store(ret.data(), &value);
       return ret;
     }
 
@@ -523,7 +523,7 @@ namespace {
 
     bytes as_uint8() const {
       bytes ret;
-      bf256_store(ret.data(), value);
+      bf256_store(ret.data(), &value);
       return ret;
     }
 
