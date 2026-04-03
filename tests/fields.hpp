@@ -256,7 +256,9 @@ namespace {
     }
 
     bf128 operator*(bf64 other) const {
-      return {bf128_mul_64(value, other.as_internal())};
+      auto ret = value;
+      bf128_mul_64_inplace(&ret, other.as_internal());
+      return {ret};
     }
 
     bool operator==(bf128 other) const {
@@ -388,7 +390,9 @@ namespace {
     }
 
     bf192 operator*(bf64 other) const {
-      return {bf192_mul_64(value, other.as_internal())};
+      auto ret = value;
+      bf192_mul_64_inplace(&ret, other.as_internal());
+      return {ret};
     }
 
     bool operator==(bf192 other) const {
@@ -526,7 +530,9 @@ namespace {
     }
 
     bf256 operator*(bf64 other) const {
-      return {bf256_mul_64(value, other.as_internal())};
+      auto ret = value;
+      bf256_mul_64_inplace(&ret, other.as_internal());
+      return {ret};
     }
 
     bool operator==(bf256 other) const {

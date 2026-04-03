@@ -250,16 +250,16 @@ bf128_t bf128_mul(bf128_t lhs, bf128_t rhs) {
   return result;
 }
 
-bf128_t bf128_mul_64(bf128_t lhs, bf64_t rhs) {
-  bf128_t result = bf128_and_64(lhs, bf64_bit_to_mask(rhs, 0));
+void bf128_mul_64_inplace(bf128_t* lhs, bf64_t rhs) {
+  bf128_t tmp = *lhs;
+  *lhs        = bf128_and_64(*lhs, bf64_bit_to_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 64; ++idx) {
-    const uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
-    lhs                 = bf128_shift_left_1(lhs);
-    BF_VALUE(lhs, 0) ^= (mask & bf128_modulus);
+    const uint64_t mask = bf128_bit_to_uint64_mask(tmp, 128 - 1);
+    tmp                 = bf128_shift_left_1(tmp);
+    BF_VALUE(tmp, 0) ^= (mask & bf128_modulus);
 
-    result = bf128_add(result, bf128_and_64(lhs, bf64_bit_to_mask(rhs, idx)));
+    *lhs = bf128_add(*lhs, bf128_and_64(tmp, bf64_bit_to_mask(rhs, idx)));
   }
-  return result;
 }
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)
@@ -449,16 +449,16 @@ bf192_t bf192_mul(bf192_t lhs, bf192_t rhs) {
   return result;
 }
 
-bf192_t bf192_mul_64(bf192_t lhs, bf64_t rhs) {
-  bf192_t result = bf192_and_64(lhs, bf64_bit_to_mask(rhs, 0));
+void bf192_mul_64_inplace(bf192_t* lhs, bf64_t rhs) {
+  bf192_t tmp = *lhs;
+  *lhs        = bf192_and_64(*lhs, bf64_bit_to_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 64; ++idx) {
-    const uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
-    lhs                 = bf192_shift_left_1(lhs);
-    BF_VALUE(lhs, 0) ^= (mask & bf192_modulus);
+    const uint64_t mask = bf192_bit_to_uint64_mask(tmp, 192 - 1);
+    tmp                 = bf192_shift_left_1(tmp);
+    BF_VALUE(tmp, 0) ^= (mask & bf192_modulus);
 
-    result = bf192_add(result, bf192_and_64(lhs, bf64_bit_to_mask(rhs, idx)));
+    *lhs = bf192_add(*lhs, bf192_and_64(tmp, bf64_bit_to_mask(rhs, idx)));
   }
-  return result;
 }
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)
@@ -660,23 +660,23 @@ bf256_t bf256_mul(bf256_t lhs, bf256_t rhs) {
   return result;
 }
 
-bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs) {
+void bf256_mul_64_inplace(bf256_t* lhs, bf64_t rhs) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   const bf256_t mod = BF256C(bf256_modulus, 0, 0, 0);
 #endif
-  bf256_t result = bf256_and_64(lhs, bf64_bit_to_mask(rhs, 0));
+  bf256_t tmp = *lhs;
+  *lhs        = bf256_and_64(*lhs, bf64_bit_to_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 64; ++idx) {
-    const uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
-    lhs                 = bf256_shift_left_1(lhs);
+    const uint64_t mask = bf256_bit_to_uint64_mask(tmp, 256 - 1);
+    tmp                 = bf256_shift_left_1(tmp);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-    lhs ^= bf256_and_64(mod, mask);
+    tmp ^= bf256_and_64(mod, mask);
 #else
-    BF_VALUE(lhs, 0) ^= mask & bf256_modulus;
+    BF_VALUE(tmp, 0) ^= (mask & bf256_modulus);
 #endif
 
-    result = bf256_add(result, bf256_and_64(lhs, bf64_bit_to_mask(rhs, idx)));
+    *lhs = bf256_add(*lhs, bf256_and_64(tmp, bf64_bit_to_mask(rhs, idx)));
   }
-  return result;
 }
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)

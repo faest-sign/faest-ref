@@ -273,7 +273,7 @@ ATTR_CONST static inline bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
 #endif
 
 ATTR_CONST bf128_t bf128_mul(bf128_t lhs, bf128_t rhs);
-ATTR_CONST bf128_t bf128_mul_64(bf128_t lhs, bf64_t rhs);
+void bf128_mul_64_inplace(bf128_t* lhs, bf64_t rhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #define bf128_mul_bit(lhs, rhs) ((lhs) & -((uint64_t)(rhs) & 1))
 #else
@@ -352,7 +352,7 @@ ATTR_CONST static inline bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
 #endif
 
 ATTR_CONST bf192_t bf192_mul(bf192_t lhs, bf192_t rhs);
-ATTR_CONST bf192_t bf192_mul_64(bf192_t lhs, bf64_t rhs);
+void bf192_mul_64_inplace(bf192_t* lhs, bf64_t rhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #define bf192_mul_bit(lhs, rhs) ((lhs) & -((uint64_t)(rhs) & 1))
 #else
@@ -428,7 +428,7 @@ ATTR_CONST static inline bf256_t bf256_add(bf256_t lhs, bf256_t rhs) {
 #endif
 
 ATTR_CONST bf256_t bf256_mul(bf256_t lhs, bf256_t rhs);
-ATTR_CONST bf256_t bf256_mul_64(bf256_t lhs, bf64_t rhs);
+void bf256_mul_64_inplace(bf256_t* lhs, bf64_t rhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #define bf256_mul_bit(lhs, rhs) ((lhs) & -((uint64_t)(rhs) & 1))
 #else
