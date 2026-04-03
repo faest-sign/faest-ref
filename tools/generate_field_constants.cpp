@@ -142,8 +142,8 @@ int main() {
   {
     std::array<bf128_t, 9> c_squares, c;
     for (unsigned i = 0; i < 9; i++) {
-      c[i]         = bf128_byte_combine_bits(sbox_x[i]);
-      c_squares[i] = bf128_byte_combine_bits(sbox_x_sq[i]);
+      bf128_byte_combine_bits(&c[i], sbox_x[i]);
+      bf128_byte_combine_bits(&c_squares[i], sbox_x_sq[i]);
     }
 
     std::cout << "static const bf128_t bf128_c[9] = {\n";
@@ -163,8 +163,8 @@ int main() {
   {
     std::array<bf192_t, 9> c_squares, c;
     for (unsigned i = 0; i < 9; i++) {
-      c[i]         = bf192_byte_combine_bits(sbox_x[i]);
-      c_squares[i] = bf192_byte_combine_bits(sbox_x_sq[i]);
+      bf192_byte_combine_bits(&c[i], sbox_x[i]);
+      bf192_byte_combine_bits(&c_squares[i], sbox_x_sq[i]);
     }
 
     std::cout << "static const bf192_t bf192_c[9] = {\n";
@@ -184,8 +184,8 @@ int main() {
   {
     std::array<bf256_t, 9> c_squares, c;
     for (unsigned i = 0; i < 9; i++) {
-      c[i]         = bf256_byte_combine_bits(sbox_x[i]);
-      c_squares[i] = bf256_byte_combine_bits(sbox_x_sq[i]);
+      bf256_byte_combine_bits(&c[i], sbox_x[i]);
+      bf256_byte_combine_bits(&c_squares[i], sbox_x_sq[i]);
     }
 
     std::cout << "static const bf256_t bf256_c[9] = {\n";
@@ -203,8 +203,10 @@ int main() {
   }
 
   {
-    auto v2 = bf128_byte_combine_bits(2);
-    auto v3 = bf128_byte_combine_bits(3);
+    bf128_t v2;
+    bf128_byte_combine_bits(&v2, 2);
+    bf128_t v3;
+    bf128_byte_combine_bits(&v3, 3);
 
     std::cout << "static const bf128_t bf128_bc_2 = ";
     print_bf128(v2);
@@ -227,8 +229,10 @@ int main() {
   }
 
   {
-    auto v2 = bf192_byte_combine_bits(2);
-    auto v3 = bf192_byte_combine_bits(3);
+    bf192_t v2;
+    bf192_byte_combine_bits(&v2, 2);
+    bf192_t v3;
+    bf192_byte_combine_bits(&v3, 3);
 
     std::cout << "static const bf192_t bf192_bc_2 = ";
     print_bf192(v2);
@@ -251,8 +255,10 @@ int main() {
   }
 
   {
-    auto v2 = bf256_byte_combine_bits(2);
-    auto v3 = bf256_byte_combine_bits(3);
+    bf256_t v2;
+    bf256_byte_combine_bits(&v2, 2);
+    bf256_t v3;
+    bf256_byte_combine_bits(&v3, 3);
 
     std::cout << "static const bf256_t bf256_bc_2 = ";
     print_bf256(v2);

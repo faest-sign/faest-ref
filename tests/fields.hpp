@@ -314,6 +314,18 @@ namespace {
     static bf128 one() {
       return bf128_one();
     }
+
+    static bf128 byte_combine(const bf128_t* x) {
+      bf128 r;
+      bf128_byte_combine(&r.value, x);
+      return r;
+    }
+
+    static bf128 byte_combine_bits(uint8_t x) {
+      bf128 r;
+      bf128_byte_combine_bits(&r.value, x);
+      return r;
+    }
   };
 
   static inline std::ostream& operator<<(std::ostream& stream, bf128 v) {
@@ -426,6 +438,18 @@ namespace {
 
     static bf192 one() {
       return bf192_one();
+    }
+
+    static bf192 byte_combine(const bf192_t* x) {
+      bf192 r;
+      bf192_byte_combine(&r.value, x);
+      return r;
+    }
+
+    static bf192 byte_combine_bits(uint8_t x) {
+      bf192 r;
+      bf192_byte_combine_bits(&r.value, x);
+      return r;
     }
   };
 
@@ -545,6 +569,18 @@ namespace {
 
     static bf256 one() {
       return bf256_one();
+    }
+
+    static bf256 byte_combine(const bf256_t* x) {
+      bf256 r;
+      bf256_byte_combine(&r.value, x);
+      return r;
+    }
+
+    static bf256 byte_combine_bits(uint8_t x) {
+      bf256 r;
+      bf256_byte_combine_bits(&r.value, x);
+      return r;
     }
   };
 

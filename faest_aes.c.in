@@ -120,10 +120,10 @@ static void aes_SSS_f256_f2_conjugates_1(bfSSS_t* y, const uint8_t* state,
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     uint8_t x0 = state[i];
     for (unsigned int j = 0; j != 7; ++j) {
-      y[i * 8 + j] = bfSSS_byte_combine_bits(x0);
-      x0           = bits_sq(x0);
+      bfSSS_byte_combine_bits(&y[i * 8 + j], x0);
+      x0 = bits_sq(x0);
     }
-    y[i * 8 + 7] = bfSSS_byte_combine_bits(x0);
+    bfSSS_byte_combine_bits(&y[i * 8 + 7], x0);
   }
 }
 
@@ -135,10 +135,10 @@ static void aes_SSS_f256_f2_conjugates_SSS(bfSSS_t* y, const bfSSS_t* state,
     bfSSS_t x[8];
     memcpy(x, state + i * 8, sizeof(x));
     for (unsigned int j = 0; j != 7; ++j) {
-      y[i * 8 + j] = bfSSS_byte_combine(x);
+      bfSSS_byte_combine(&y[i * 8 + j], x);
       bfSSS_sq_bit_inplace(x);
     }
-    y[i * 8 + 7] = bfSSS_byte_combine(x);
+    bfSSS_byte_combine(&y[i * 8 + 7], x);
   }
 }
 
@@ -261,8 +261,8 @@ static void aes_SSS_state_to_bytes_prover(bfSSS_t* out, bfSSS_t* out_tag, const 
   const unsigned int Nst_bytes = params->Nst * 4;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
-    out[i]     = bfSSS_byte_combine_bits(k[i]);
-    out_tag[i] = bfSSS_byte_combine(k_tag + i * 8);
+    bfSSS_byte_combine_bits(&out[i], k[i]);
+    bfSSS_byte_combine(&out_tag[i], k_tag + i * 8);
   }
 }
 
@@ -271,7 +271,7 @@ static void aes_SSS_state_to_bytes_verifier(bfSSS_t* out_key, const bfSSS_t* k_k
   const unsigned int Nst_bytes = params->Nst * 4;
 
   for (unsigned int i = 0; i < Nst_bytes; i++) {
-    out_key[i] = bfSSS_byte_combine(k_key + i * 8);
+    bfSSS_byte_combine(&out_key[i], k_key + i * 8);
   }
 }
 
@@ -1040,19 +1040,19 @@ static void aes_SSS_expkey_constraints_prover(zk_hash_SSS_3_ctx* hasher, uint8_t
         r_prime = (r + 3) % 4;
       }
       // ::12-15
-      k_hat[r_prime]    = bfSSS_byte_combine_bits(k[(iwd + 8 * r) / 8]);    // lifted key witness
-      k_hat_sq[r_prime] = bfSSS_byte_combine_bits_sq(k[(iwd + 8 * r) / 8]); // lifted key witness sq
+      bfSSS_byte_combine_bits(&k_hat[r_prime], k[(iwd + 8 * r) / 8]);       // lifted key witness
+      bfSSS_byte_combine_bits_sq(&k_hat_sq[r_prime], k[(iwd + 8 * r) / 8]); // lifted key witness sq
 
-      w_hat[r]    = bfSSS_byte_combine_bits(w_flat[(32 * j + 8 * r) / 8]);    // lifted output
-      w_hat_sq[r] = bfSSS_byte_combine_bits_sq(w_flat[(32 * j + 8 * r) / 8]); // lifted output sq
+      bfSSS_byte_combine_bits(&w_hat[r], w_flat[(32 * j + 8 * r) / 8]);       // lifted output
+      bfSSS_byte_combine_bits_sq(&w_hat_sq[r], w_flat[(32 * j + 8 * r) / 8]); // lifted output sq
 
       // done by both prover and verifier
-      k_hat_tag[r_prime]    = bfSSS_byte_combine(k_tag + (iwd + 8 * r));    // lifted key tag
-      k_hat_tag_sq[r_prime] = bfSSS_byte_combine_sq(k_tag + (iwd + 8 * r)); // lifted key tag sq
+      bfSSS_byte_combine(&k_hat_tag[r_prime], k_tag + (iwd + 8 * r));       // lifted key tag
+      bfSSS_byte_combine_sq(&k_hat_tag_sq[r_prime], k_tag + (iwd + 8 * r)); // lifted key tag sq
 
-      w_hat_tag[r] = bfSSS_byte_combine(w_flat_tag + ((32 * j + 8 * r))); // lifted output tag
-      w_hat_tag_sq[r] =
-          bfSSS_byte_combine_sq(w_flat_tag + (32 * j + 8 * r)); // lifted output tag sq
+      bfSSS_byte_combine(&w_hat_tag[r], w_flat_tag + ((32 * j + 8 * r))); // lifted output tag
+      bfSSS_byte_combine_sq(&w_hat_tag_sq[r],
+                            w_flat_tag + (32 * j + 8 * r)); // lifted output tag sq
     }
 
 #if FAEST_SSS_LAMBDA == 256
@@ -1115,12 +1115,12 @@ static void aes_SSS_expkey_constraints_verifier(zk_hash_SSS_ctx* hasher, bfSSS_t
         r_prime = (r + 3) % 4;
       }
       // ::12-15
-      k_hat_key[r_prime]    = bfSSS_byte_combine(k_key + (iwd + 8 * r));    // lifted key tag
-      k_hat_key_sq[r_prime] = bfSSS_byte_combine_sq(k_key + (iwd + 8 * r)); // lifted key tag sq
+      bfSSS_byte_combine(&k_hat_key[r_prime], k_key + (iwd + 8 * r));       // lifted key tag
+      bfSSS_byte_combine_sq(&k_hat_key_sq[r_prime], k_key + (iwd + 8 * r)); // lifted key tag sq
 
-      w_hat_key[r] = bfSSS_byte_combine(w_flat_key + ((32 * j + 8 * r))); // lifted output tag
-      w_hat_key_sq[r] =
-          bfSSS_byte_combine_sq(w_flat_key + (32 * j + 8 * r)); // lifted output tag sq
+      bfSSS_byte_combine(&w_hat_key[r], w_flat_key + ((32 * j + 8 * r))); // lifted output tag
+      bfSSS_byte_combine_sq(&w_hat_key_sq[r],
+                            w_flat_key + (32 * j + 8 * r)); // lifted output tag sq
     }
 #if FAEST_SSS_LAMBDA == 256
     // ::16 used only for AES-256
@@ -1294,11 +1294,15 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_3_ctx* hasher, const uint
     // ::31
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
       // ::32
-      bfSSS_t s_deg1 = bfSSS_byte_combine_bits(s[byte_i]);
-      bfSSS_t s_deg0 = bfSSS_byte_combine(s_tag + 8 * byte_i);
+      bfSSS_t s_deg1;
+      bfSSS_byte_combine_bits(&s_deg1, s[byte_i]);
+      bfSSS_t s_deg0;
+      bfSSS_byte_combine(&s_deg0, s_tag + 8 * byte_i);
       // ::33
-      bfSSS_t s_sq_deg1 = bfSSS_byte_combine_bits_sq(s[byte_i]);
-      bfSSS_t s_sq_deg0 = bfSSS_byte_combine_sq(s_tag + 8 * byte_i);
+      bfSSS_t s_sq_deg1;
+      bfSSS_byte_combine_bits_sq(&s_sq_deg1, s[byte_i]);
+      bfSSS_t s_sq_deg0;
+      bfSSS_byte_combine_sq(&s_sq_deg0, s_tag + 8 * byte_i);
 
       // ::36
       // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
@@ -1454,9 +1458,11 @@ static void aes_SSS_enc_constraints_verifier(zk_hash_SSS_ctx* hasher, const bfSS
     // ::31
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
       // ::32
-      const bfSSS_t s_key = bfSSS_byte_combine(s_state_key + 8 * byte_i);
+      bfSSS_t s_key;
+      bfSSS_byte_combine(&s_key, s_state_key + 8 * byte_i);
       // ::33
-      const bfSSS_t s_sq_key = bfSSS_byte_combine_sq(s_state_key + 8 * byte_i);
+      bfSSS_t s_sq_key;
+      bfSSS_byte_combine_sq(&s_sq_key, s_state_key + 8 * byte_i);
 
       // ::36
       // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1

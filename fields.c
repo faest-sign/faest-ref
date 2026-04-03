@@ -131,12 +131,11 @@ bf128_t bf128_get_alpha(unsigned int idx) {
 }
 #endif
 
-bf128_t bf128_byte_combine(const bf128_t* x) {
-  bf128_t bf_out = x[0];
+void bf128_byte_combine(bf128_t* dst, const bf128_t* x) {
+  *dst = x[0];
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf128_add(bf_out, bf128_mul(x[i], bf128_alpha[i - 1]));
+    *dst = bf128_add(*dst, bf128_mul(x[i], bf128_alpha[i - 1]));
   }
-  return bf_out;
 }
 
 void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag) {
@@ -166,15 +165,15 @@ void bf128_sq_bit_inplace(bf128_t* tag) {
   tag[7]           = bf128_add(i6, tag[7]);
 }
 
-bf128_t bf128_byte_combine_sq(const bf128_t* x) {
+void bf128_byte_combine_sq(bf128_t* dst, const bf128_t* x) {
   bf128_t bf_tmp[8];
   bf128_sq_bit(bf_tmp, x);
-  return bf128_byte_combine(bf_tmp);
+  bf128_byte_combine(dst, bf_tmp);
 }
 
-bf128_t bf128_byte_combine_bits(uint8_t x) {
+void bf128_byte_combine_bits(bf128_t* dst, uint8_t x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  return bf128_from_bit(get_bit(x, 0)) ^ bf128_mul_bit(bf128_alpha[1 - 1], get_bit(x, 1)) ^
+  *dst = bf128_from_bit(get_bit(x, 0)) ^ bf128_mul_bit(bf128_alpha[1 - 1], get_bit(x, 1)) ^
          bf128_mul_bit(bf128_alpha[2 - 1], get_bit(x, 2)) ^
          bf128_mul_bit(bf128_alpha[3 - 1], get_bit(x, 3)) ^
          bf128_mul_bit(bf128_alpha[4 - 1], get_bit(x, 4)) ^
@@ -182,16 +181,15 @@ bf128_t bf128_byte_combine_bits(uint8_t x) {
          bf128_mul_bit(bf128_alpha[6 - 1], get_bit(x, 6)) ^
          bf128_mul_bit(bf128_alpha[7 - 1], get_bit(x, 7));
 #else
-  bf128_t bf_out = bf128_from_bit(get_bit(x, 0));
+  *dst = bf128_from_bit(get_bit(x, 0));
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf128_add(bf_out, bf128_mul_bit(bf128_alpha[i - 1], get_bit(x, i)));
+    *dst = bf128_add(*dst, bf128_mul_bit(bf128_alpha[i - 1], get_bit(x, i)));
   }
-  return bf_out;
 #endif
 }
 
-bf128_t bf128_byte_combine_bits_sq(uint8_t x) {
-  return bf128_byte_combine_bits(bits_sq(x));
+void bf128_byte_combine_bits_sq(bf128_t* dst, uint8_t x) {
+  bf128_byte_combine_bits(dst, bits_sq(x));
 }
 
 void bf128_rand(bf128_t* dst) {
@@ -328,12 +326,11 @@ bf192_t bf192_get_alpha(unsigned int idx) {
 }
 #endif
 
-bf192_t bf192_byte_combine(const bf192_t* x) {
-  bf192_t bf_out = x[0];
+void bf192_byte_combine(bf192_t* dst, const bf192_t* x) {
+  *dst = x[0];
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf192_add(bf_out, bf192_mul(x[i], bf192_alpha[i - 1]));
+    *dst = bf192_add(*dst, bf192_mul(x[i], bf192_alpha[i - 1]));
   }
-  return bf_out;
 }
 
 void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag) {
@@ -363,15 +360,15 @@ void bf192_sq_bit_inplace(bf192_t* tag) {
   tag[7]           = bf192_add(i6, tag[7]);
 }
 
-bf192_t bf192_byte_combine_sq(const bf192_t* x) {
+void bf192_byte_combine_sq(bf192_t* dst, const bf192_t* x) {
   bf192_t bf_tmp[8];
   bf192_sq_bit(bf_tmp, x);
-  return bf192_byte_combine(bf_tmp);
+  bf192_byte_combine(dst, bf_tmp);
 }
 
-bf192_t bf192_byte_combine_bits(uint8_t x) {
+void bf192_byte_combine_bits(bf192_t* dst, uint8_t x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  return bf192_from_bit(get_bit(x, 0)) ^ bf192_mul_bit(bf192_alpha[1 - 1], get_bit(x, 1)) ^
+  *dst = bf192_from_bit(get_bit(x, 0)) ^ bf192_mul_bit(bf192_alpha[1 - 1], get_bit(x, 1)) ^
          bf192_mul_bit(bf192_alpha[2 - 1], get_bit(x, 2)) ^
          bf192_mul_bit(bf192_alpha[3 - 1], get_bit(x, 3)) ^
          bf192_mul_bit(bf192_alpha[4 - 1], get_bit(x, 4)) ^
@@ -379,16 +376,15 @@ bf192_t bf192_byte_combine_bits(uint8_t x) {
          bf192_mul_bit(bf192_alpha[6 - 1], get_bit(x, 6)) ^
          bf192_mul_bit(bf192_alpha[7 - 1], get_bit(x, 7));
 #else
-  bf192_t bf_out = bf192_from_bit(get_bit(x, 0));
+  *dst = bf192_from_bit(get_bit(x, 0));
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf192_add(bf_out, bf192_mul_bit(bf192_alpha[i - 1], get_bit(x, i)));
+    *dst = bf192_add(*dst, bf192_mul_bit(bf192_alpha[i - 1], get_bit(x, i)));
   }
-  return bf_out;
 #endif
 }
 
-bf192_t bf192_byte_combine_bits_sq(uint8_t x) {
-  return bf192_byte_combine_bits(bits_sq(x));
+void bf192_byte_combine_bits_sq(bf192_t* dst, uint8_t x) {
+  bf192_byte_combine_bits(dst, bits_sq(x));
 }
 
 void bf192_rand(bf192_t* dst) {
@@ -538,12 +534,11 @@ bf256_t bf256_get_alpha(unsigned int idx) {
 }
 #endif
 
-bf256_t bf256_byte_combine(const bf256_t* x) {
-  bf256_t bf_out = x[0];
+void bf256_byte_combine(bf256_t* dst, const bf256_t* x) {
+  *dst = x[0];
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf256_add(bf_out, bf256_mul(x[i], bf256_alpha[i - 1]));
+    *dst = bf256_add(*dst, bf256_mul(x[i], bf256_alpha[i - 1]));
   }
-  return bf_out;
 }
 
 void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag) {
@@ -573,15 +568,15 @@ void bf256_sq_bit_inplace(bf256_t* tag) {
   tag[7]           = bf256_add(i6, tag[7]);
 }
 
-bf256_t bf256_byte_combine_sq(const bf256_t* x) {
+void bf256_byte_combine_sq(bf256_t* dst, const bf256_t* x) {
   bf256_t bf_tmp[8];
   bf256_sq_bit(bf_tmp, x);
-  return bf256_byte_combine(bf_tmp);
+  bf256_byte_combine(dst, bf_tmp);
 }
 
-bf256_t bf256_byte_combine_bits(uint8_t x) {
+void bf256_byte_combine_bits(bf256_t* dst, uint8_t x) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  return bf256_from_bit(get_bit(x, 0)) ^ bf256_mul_bit(bf256_alpha[1 - 1], get_bit(x, 1)) ^
+  *dst = bf256_from_bit(get_bit(x, 0)) ^ bf256_mul_bit(bf256_alpha[1 - 1], get_bit(x, 1)) ^
          bf256_mul_bit(bf256_alpha[2 - 1], get_bit(x, 2)) ^
          bf256_mul_bit(bf256_alpha[3 - 1], get_bit(x, 3)) ^
          bf256_mul_bit(bf256_alpha[4 - 1], get_bit(x, 4)) ^
@@ -589,16 +584,15 @@ bf256_t bf256_byte_combine_bits(uint8_t x) {
          bf256_mul_bit(bf256_alpha[6 - 1], get_bit(x, 6)) ^
          bf256_mul_bit(bf256_alpha[7 - 1], get_bit(x, 7));
 #else
-  bf256_t bf_out = bf256_from_bit(get_bit(x, 0));
+  *dst = bf256_from_bit(get_bit(x, 0));
   for (unsigned int i = 1; i < 8; ++i) {
-    bf_out = bf256_add(bf_out, bf256_mul_bit(bf256_alpha[i - 1], get_bit(x, i)));
+    *dst = bf256_add(*dst, bf256_mul_bit(bf256_alpha[i - 1], get_bit(x, i)));
   }
-  return bf_out;
 #endif
 }
 
-bf256_t bf256_byte_combine_bits_sq(uint8_t x) {
-  return bf256_byte_combine_bits(bits_sq(x));
+void bf256_byte_combine_bits_sq(bf256_t* dst, uint8_t x) {
+  bf256_byte_combine_bits(dst, bits_sq(x));
 }
 
 void bf256_rand(bf256_t* dst) {

@@ -1608,14 +1608,14 @@ BOOST_AUTO_TEST_CASE(test_bf256_tv) {
 }
 
 BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_invariants) {
-  BOOST_TEST(bf128{bf128_byte_combine_bits(0)} == bf128::zero());
-  BOOST_TEST(bf128{bf128_byte_combine_bits(1)} == bf128::one());
+  BOOST_TEST(bf128::byte_combine_bits(0) == bf128::zero());
+  BOOST_TEST(bf128::byte_combine_bits(1) == bf128::one());
 
   std::array<bf128_t, 8> all_zeroes;
   for (auto& x : all_zeroes) {
     x = bf128_zero();
   }
-  BOOST_TEST(bf128{bf128_byte_combine(all_zeroes.data())} == bf128::zero());
+  BOOST_TEST(bf128::byte_combine(all_zeroes.data()) == bf128::zero());
 }
 
 BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_bits) {
@@ -1626,20 +1626,20 @@ BOOST_AUTO_TEST_CASE(test_bf128_byte_combine_bits) {
     bf128::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
 
-    bf128 combined = bf128(bf128_byte_combine_bits(inputs[index]));
-    BOOST_TEST(combined == bf128(out));
+    bf128 combined = bf128::byte_combine_bits(inputs[index]);
+    BOOST_TEST(combined == bf128{out});
   }
 }
 
 BOOST_AUTO_TEST_CASE(test_bf192_byte_combine_invariants) {
-  BOOST_TEST(bf192{bf192_byte_combine_bits(0)} == bf192::zero());
-  BOOST_TEST(bf192{bf192_byte_combine_bits(1)} == bf192::one());
+  BOOST_TEST(bf192::byte_combine_bits(0) == bf192::zero());
+  BOOST_TEST(bf192::byte_combine_bits(1) == bf192::one());
 
   std::array<bf192_t, 8> all_zeroes;
   for (auto& x : all_zeroes) {
     x = bf192_zero();
   }
-  BOOST_TEST(bf192{bf192_byte_combine(all_zeroes.data())} == bf192::zero());
+  BOOST_TEST(bf192::byte_combine(all_zeroes.data()) == bf192::zero());
 }
 
 BOOST_AUTO_TEST_CASE(test_bf192_byte_combine_bits) {
@@ -1650,20 +1650,20 @@ BOOST_AUTO_TEST_CASE(test_bf192_byte_combine_bits) {
     bf192::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
 
-    bf192 combined = bf192_byte_combine_bits(inputs[index]);
-    BOOST_TEST(combined == bf192(out));
+    bf192 combined = bf192::byte_combine_bits(inputs[index]);
+    BOOST_TEST(combined == bf192{out});
   }
 }
 
 BOOST_AUTO_TEST_CASE(test_bf256_byte_combine_invariants) {
-  BOOST_TEST(bf256{bf256_byte_combine_bits(0)} == bf256::zero());
-  BOOST_TEST(bf256{bf256_byte_combine_bits(1)} == bf256::one());
+  BOOST_TEST(bf256::byte_combine_bits(0) == bf256::zero());
+  BOOST_TEST(bf256::byte_combine_bits(1) == bf256::one());
 
   std::array<bf256_t, 8> all_zeroes;
   for (auto& x : all_zeroes) {
     x = bf256_zero();
   }
-  BOOST_TEST(bf256{bf256_byte_combine(all_zeroes.data())} == bf256::zero());
+  BOOST_TEST(bf256::byte_combine(all_zeroes.data()) == bf256::zero());
 }
 
 BOOST_AUTO_TEST_CASE(test_bf256_byte_combine_bits) {
@@ -1674,8 +1674,8 @@ BOOST_AUTO_TEST_CASE(test_bf256_byte_combine_bits) {
     bf256::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
 
-    bf256 combined = bf256_byte_combine_bits(inputs[index]);
-    BOOST_TEST(combined == bf256(out));
+    bf256 combined = bf256::byte_combine_bits(inputs[index]);
+    BOOST_TEST(combined == bf256{out});
   }
 }
 
@@ -1695,7 +1695,7 @@ BOOST_AUTO_TEST_CASE(test_bf128_byte_combine) {
     bf128::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
 
-    bf128 combined = bf128_byte_combine(polys);
+    bf128 combined = bf128::byte_combine(polys);
     BOOST_TEST(combined == bf128(out));
   }
 }
@@ -1716,7 +1716,7 @@ BOOST_AUTO_TEST_CASE(test_bf192_byte_combine) {
     bf192::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
 
-    bf192 combined = bf192_byte_combine(polys);
+    bf192 combined = bf192::byte_combine(polys);
     BOOST_TEST(combined == bf192(out));
   }
 }
@@ -1737,7 +1737,7 @@ BOOST_AUTO_TEST_CASE(test_bf256_byte_combine) {
     bf256::bytes out;
     std::copy(outputs[index].begin(), outputs[index].end(), out.begin());
 
-    bf256 combined = bf256_byte_combine(polys);
+    bf256 combined = bf256::byte_combine(polys);
     BOOST_TEST(combined == bf256(out));
   }
 }
