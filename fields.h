@@ -257,7 +257,9 @@ void bf128_byte_combine_bits_sq(bf128_t* dst, uint8_t x);
 void bf128_rand(bf128_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-#define bf128_add(lhs, rhs) ((lhs) ^ (rhs))
+ATTR_CONST static inline bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
+  return lhs ^ rhs;
+}
 #else
 ATTR_CONST static inline bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
@@ -331,7 +333,9 @@ void bf192_byte_combine_bits_sq(bf192_t* dst, uint8_t x);
 void bf192_rand(bf192_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-#define bf192_add(lhs, rhs) ((lhs) ^ (rhs))
+ATTR_CONST static inline bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
+  return lhs ^ rhs;
+}
 #else
 ATTR_CONST static inline bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
@@ -402,7 +406,9 @@ void bf256_byte_combine_bits_sq(bf256_t* dst, uint8_t x);
 void bf256_rand(bf256_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-#define bf256_add(lhs, rhs) ((lhs) ^ (rhs))
+ATTR_CONST static inline bf256_t bf256_add(bf256_t lhs, bf256_t rhs) {
+  return lhs ^ rhs;
+}
 #else
 ATTR_CONST static inline bf256_t bf256_add(bf256_t lhs, bf256_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
