@@ -132,35 +132,46 @@ bf128_t bf128_get_alpha(unsigned int idx) {
 void bf128_byte_combine(bf128_t* dst, const bf128_t* x) {
   *dst = x[0];
   for (unsigned int i = 1; i < 8; ++i) {
-    *dst = bf128_add(*dst, bf128_mul(x[i], bf128_alpha[i - 1]));
+    const bf128_t tmp = bf128_mul(x[i], bf128_alpha[i - 1]);
+    bf128_add_inplace(dst, &tmp);
   }
 }
 
 void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag) {
-  out_tag[0] = bf128_add(in_tag[0], bf128_add(in_tag[4], in_tag[6]));
-  out_tag[1] = bf128_add(in_tag[4], bf128_add(in_tag[6], in_tag[7]));
-  out_tag[2] = bf128_add(in_tag[1], in_tag[5]);
-  out_tag[3] = bf128_add(bf128_add(in_tag[4], in_tag[5]), bf128_add(in_tag[6], in_tag[7]));
-  out_tag[4] = bf128_add(in_tag[2], bf128_add(in_tag[4], in_tag[7]));
-  out_tag[5] = bf128_add(in_tag[5], in_tag[6]);
-  out_tag[6] = bf128_add(in_tag[3], in_tag[5]);
-  out_tag[7] = bf128_add(in_tag[6], in_tag[7]);
+  bf128_add(&out_tag[0], &in_tag[0], &in_tag[4]);
+  bf128_add_inplace(&out_tag[0], &in_tag[6]);
+  bf128_add(&out_tag[1], &in_tag[4], &in_tag[6]);
+  bf128_add_inplace(&out_tag[1], &in_tag[7]);
+  bf128_add(&out_tag[2], &in_tag[1], &in_tag[5]);
+  bf128_add(&out_tag[3], &in_tag[4], &in_tag[5]);
+  bf128_add_inplace(&out_tag[3], &in_tag[6]);
+  bf128_add_inplace(&out_tag[3], &in_tag[7]);
+  bf128_add(&out_tag[4], &in_tag[2], &in_tag[4]);
+  bf128_add_inplace(&out_tag[4], &in_tag[7]);
+  bf128_add(&out_tag[5], &in_tag[5], &in_tag[6]);
+  bf128_add(&out_tag[6], &in_tag[3], &in_tag[5]);
+  bf128_add(&out_tag[7], &in_tag[6], &in_tag[7]);
 }
 
 void bf128_sq_bit_inplace(bf128_t* tag) {
-  tag[0]           = bf128_add(tag[0], bf128_add(tag[4], tag[6]));
+  bf128_add_inplace(&tag[0], &tag[4]);
+  bf128_add_inplace(&tag[0], &tag[6]);
   const bf128_t i1 = tag[1];
-  tag[1]           = bf128_add(tag[4], bf128_add(tag[6], tag[7]));
+  bf128_add(&tag[1], &tag[4], &tag[6]);
+  bf128_add_inplace(&tag[1], &tag[7]);
   const bf128_t i2 = tag[2];
-  tag[2]           = bf128_add(i1, tag[5]);
+  bf128_add(&tag[2], &i1, &tag[5]);
   const bf128_t i3 = tag[3];
-  tag[3]           = bf128_add(bf128_add(tag[4], tag[5]), bf128_add(tag[6], tag[7]));
-  tag[4]           = bf128_add(i2, bf128_add(tag[4], tag[7]));
+  bf128_add(&tag[3], &tag[4], &tag[5]);
+  bf128_add_inplace(&tag[3], &tag[6]);
+  bf128_add_inplace(&tag[3], &tag[7]);
+  bf128_add_inplace(&tag[4], &tag[7]);
+  bf128_add_inplace(&tag[4], &i2);
   const bf128_t i5 = tag[5];
-  tag[5]           = bf128_add(tag[5], tag[6]);
+  bf128_add_inplace(&tag[5], &tag[6]);
   const bf128_t i6 = tag[6];
-  tag[6]           = bf128_add(i3, i5);
-  tag[7]           = bf128_add(i6, tag[7]);
+  bf128_add(&tag[6], &i3, &i5);
+  bf128_add_inplace(&tag[7], &i6);
 }
 
 void bf128_byte_combine_sq(bf128_t* dst, const bf128_t* x) {
@@ -245,7 +256,8 @@ bf128_t bf128_mul(bf128_t lhs, bf128_t rhs) {
     lhs                 = bf128_shift_left_1(lhs);
     BF_VALUE(lhs, 0) ^= (mask & bf128_modulus);
 
-    result = bf128_add(result, bf128_and_64(lhs, bf128_bit_to_uint64_mask(rhs, idx)));
+    const bf128_t tmp = bf128_and_64(lhs, bf128_bit_to_uint64_mask(rhs, idx));
+    bf128_add_inplace(&result, &tmp);
   }
   return result;
 }
@@ -258,7 +270,8 @@ void bf128_mul_64_inplace(bf128_t* lhs, bf64_t rhs) {
     tmp                 = bf128_shift_left_1(tmp);
     BF_VALUE(tmp, 0) ^= (mask & bf128_modulus);
 
-    *lhs = bf128_add(*lhs, bf128_and_64(tmp, bf64_bit_to_mask(rhs, idx)));
+    const bf128_t tmp1 = bf128_and_64(tmp, bf64_bit_to_mask(rhs, idx));
+    bf128_add_inplace(lhs, &tmp1);
   }
 }
 
@@ -279,14 +292,17 @@ ATTR_CONST static inline bf128_t bf128_dbl(bf128_t lhs) {
 void bf128_sum_poly(bf128_t* dst, const bf128_t* xs) {
   *dst = xs[128 - 1];
   for (size_t i = 1; i < 128; ++i) {
-    *dst = bf128_add(bf128_dbl(*dst), xs[128 - 1 - i]);
+    *dst = bf128_dbl(*dst);
+    bf128_add_inplace(dst, &xs[128 - 1 - i]);
   }
 }
 
 void bf128_sum_poly_bits(bf128_t* dst, const uint8_t* xs) {
   *dst = bf128_from_bit(ptr_get_bit(xs, 128 - 1));
   for (size_t i = 1; i < 128; ++i) {
-    *dst = bf128_add(bf128_dbl(*dst), bf128_from_bit(ptr_get_bit(xs, 128 - 1 - i)));
+    *dst              = bf128_dbl(*dst);
+    const bf128_t tmp = bf128_from_bit(ptr_get_bit(xs, 128 - 1 - i));
+    bf128_add_inplace(dst, &tmp);
   }
 }
 
@@ -325,35 +341,46 @@ bf192_t bf192_get_alpha(unsigned int idx) {
 void bf192_byte_combine(bf192_t* dst, const bf192_t* x) {
   *dst = x[0];
   for (unsigned int i = 1; i < 8; ++i) {
-    *dst = bf192_add(*dst, bf192_mul(x[i], bf192_alpha[i - 1]));
+    const bf192_t tmp = bf192_mul(x[i], bf192_alpha[i - 1]);
+    bf192_add_inplace(dst, &tmp);
   }
 }
 
 void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag) {
-  out_tag[0] = bf192_add(in_tag[0], bf192_add(in_tag[4], in_tag[6]));
-  out_tag[1] = bf192_add(in_tag[4], bf192_add(in_tag[6], in_tag[7]));
-  out_tag[2] = bf192_add(in_tag[1], in_tag[5]);
-  out_tag[3] = bf192_add(bf192_add(in_tag[4], in_tag[5]), bf192_add(in_tag[6], in_tag[7]));
-  out_tag[4] = bf192_add(in_tag[2], bf192_add(in_tag[4], in_tag[7]));
-  out_tag[5] = bf192_add(in_tag[5], in_tag[6]);
-  out_tag[6] = bf192_add(in_tag[3], in_tag[5]);
-  out_tag[7] = bf192_add(in_tag[6], in_tag[7]);
+  bf192_add(&out_tag[0], &in_tag[0], &in_tag[4]);
+  bf192_add_inplace(&out_tag[0], &in_tag[6]);
+  bf192_add(&out_tag[1], &in_tag[4], &in_tag[6]);
+  bf192_add_inplace(&out_tag[1], &in_tag[7]);
+  bf192_add(&out_tag[2], &in_tag[1], &in_tag[5]);
+  bf192_add(&out_tag[3], &in_tag[4], &in_tag[5]);
+  bf192_add_inplace(&out_tag[3], &in_tag[6]);
+  bf192_add_inplace(&out_tag[3], &in_tag[7]);
+  bf192_add(&out_tag[4], &in_tag[2], &in_tag[4]);
+  bf192_add_inplace(&out_tag[4], &in_tag[7]);
+  bf192_add(&out_tag[5], &in_tag[5], &in_tag[6]);
+  bf192_add(&out_tag[6], &in_tag[3], &in_tag[5]);
+  bf192_add(&out_tag[7], &in_tag[6], &in_tag[7]);
 }
 
 void bf192_sq_bit_inplace(bf192_t* tag) {
-  tag[0]           = bf192_add(tag[0], bf192_add(tag[4], tag[6]));
+  bf192_add_inplace(&tag[0], &tag[4]);
+  bf192_add_inplace(&tag[0], &tag[6]);
   const bf192_t i1 = tag[1];
-  tag[1]           = bf192_add(tag[4], bf192_add(tag[6], tag[7]));
+  bf192_add(&tag[1], &tag[4], &tag[6]);
+  bf192_add_inplace(&tag[1], &tag[7]);
   const bf192_t i2 = tag[2];
-  tag[2]           = bf192_add(i1, tag[5]);
+  bf192_add(&tag[2], &i1, &tag[5]);
   const bf192_t i3 = tag[3];
-  tag[3]           = bf192_add(bf192_add(tag[4], tag[5]), bf192_add(tag[6], tag[7]));
-  tag[4]           = bf192_add(i2, bf192_add(tag[4], tag[7]));
+  bf192_add(&tag[3], &tag[4], &tag[5]);
+  bf192_add_inplace(&tag[3], &tag[6]);
+  bf192_add_inplace(&tag[3], &tag[7]);
+  bf192_add_inplace(&tag[4], &tag[7]);
+  bf192_add_inplace(&tag[4], &i2);
   const bf192_t i5 = tag[5];
-  tag[5]           = bf192_add(tag[5], tag[6]);
+  bf192_add_inplace(&tag[5], &tag[6]);
   const bf192_t i6 = tag[6];
-  tag[6]           = bf192_add(i3, i5);
-  tag[7]           = bf192_add(i6, tag[7]);
+  bf192_add(&tag[6], &i3, &i5);
+  bf192_add_inplace(&tag[7], &i6);
 }
 
 void bf192_byte_combine_sq(bf192_t* dst, const bf192_t* x) {
@@ -444,7 +471,8 @@ bf192_t bf192_mul(bf192_t lhs, bf192_t rhs) {
     lhs                 = bf192_shift_left_1(lhs);
     BF_VALUE(lhs, 0) ^= (mask & bf192_modulus);
 
-    result = bf192_add(result, bf192_and_64(lhs, bf192_bit_to_uint64_mask(rhs, idx)));
+    const bf192_t tmp = bf192_and_64(lhs, bf192_bit_to_uint64_mask(rhs, idx));
+    bf192_add_inplace(&result, &tmp);
   }
   return result;
 }
@@ -457,7 +485,8 @@ void bf192_mul_64_inplace(bf192_t* lhs, bf64_t rhs) {
     tmp                 = bf192_shift_left_1(tmp);
     BF_VALUE(tmp, 0) ^= (mask & bf192_modulus);
 
-    *lhs = bf192_add(*lhs, bf192_and_64(tmp, bf64_bit_to_mask(rhs, idx)));
+    const bf192_t tmp1 = bf192_and_64(tmp, bf64_bit_to_mask(rhs, idx));
+    bf192_add_inplace(lhs, &tmp1);
   }
 }
 
@@ -478,14 +507,17 @@ ATTR_CONST static inline bf192_t bf192_dbl(bf192_t lhs) {
 void bf192_sum_poly(bf192_t* dst, const bf192_t* xs) {
   *dst = xs[192 - 1];
   for (size_t i = 1; i < 192; ++i) {
-    *dst = bf192_add(bf192_dbl(*dst), xs[192 - 1 - i]);
+    *dst = bf192_dbl(*dst);
+    bf192_add_inplace(dst, &xs[192 - 1 - i]);
   }
 }
 
 void bf192_sum_poly_bits(bf192_t* dst, const uint8_t* xs) {
   *dst = bf192_from_bit(ptr_get_bit(xs, 192 - 1));
   for (size_t i = 1; i < 192; ++i) {
-    *dst = bf192_add(bf192_dbl(*dst), bf192_from_bit(ptr_get_bit(xs, 192 - 1 - i)));
+    *dst              = bf192_dbl(*dst);
+    const bf192_t tmp = bf192_from_bit(ptr_get_bit(xs, 192 - 1 - i));
+    bf192_add_inplace(dst, &tmp);
   }
 }
 
@@ -531,35 +563,46 @@ bf256_t bf256_get_alpha(unsigned int idx) {
 void bf256_byte_combine(bf256_t* dst, const bf256_t* x) {
   *dst = x[0];
   for (unsigned int i = 1; i < 8; ++i) {
-    *dst = bf256_add(*dst, bf256_mul(x[i], bf256_alpha[i - 1]));
+    const bf256_t tmp = bf256_mul(x[i], bf256_alpha[i - 1]);
+    bf256_add_inplace(dst, &tmp);
   }
 }
 
 void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag) {
-  out_tag[0] = bf256_add(in_tag[0], bf256_add(in_tag[4], in_tag[6]));
-  out_tag[1] = bf256_add(in_tag[4], bf256_add(in_tag[6], in_tag[7]));
-  out_tag[2] = bf256_add(in_tag[1], in_tag[5]);
-  out_tag[3] = bf256_add(bf256_add(in_tag[4], in_tag[5]), bf256_add(in_tag[6], in_tag[7]));
-  out_tag[4] = bf256_add(in_tag[2], bf256_add(in_tag[4], in_tag[7]));
-  out_tag[5] = bf256_add(in_tag[5], in_tag[6]);
-  out_tag[6] = bf256_add(in_tag[3], in_tag[5]);
-  out_tag[7] = bf256_add(in_tag[6], in_tag[7]);
+  bf256_add(&out_tag[0], &in_tag[0], &in_tag[4]);
+  bf256_add_inplace(&out_tag[0], &in_tag[6]);
+  bf256_add(&out_tag[1], &in_tag[4], &in_tag[6]);
+  bf256_add_inplace(&out_tag[1], &in_tag[7]);
+  bf256_add(&out_tag[2], &in_tag[1], &in_tag[5]);
+  bf256_add(&out_tag[3], &in_tag[4], &in_tag[5]);
+  bf256_add_inplace(&out_tag[3], &in_tag[6]);
+  bf256_add_inplace(&out_tag[3], &in_tag[7]);
+  bf256_add(&out_tag[4], &in_tag[2], &in_tag[4]);
+  bf256_add_inplace(&out_tag[4], &in_tag[7]);
+  bf256_add(&out_tag[5], &in_tag[5], &in_tag[6]);
+  bf256_add(&out_tag[6], &in_tag[3], &in_tag[5]);
+  bf256_add(&out_tag[7], &in_tag[6], &in_tag[7]);
 }
 
 void bf256_sq_bit_inplace(bf256_t* tag) {
-  tag[0]           = bf256_add(tag[0], bf256_add(tag[4], tag[6]));
+  bf256_add_inplace(&tag[0], &tag[4]);
+  bf256_add_inplace(&tag[0], &tag[6]);
   const bf256_t i1 = tag[1];
-  tag[1]           = bf256_add(tag[4], bf256_add(tag[6], tag[7]));
+  bf256_add(&tag[1], &tag[4], &tag[6]);
+  bf256_add_inplace(&tag[1], &tag[7]);
   const bf256_t i2 = tag[2];
-  tag[2]           = bf256_add(i1, tag[5]);
+  bf256_add(&tag[2], &i1, &tag[5]);
   const bf256_t i3 = tag[3];
-  tag[3]           = bf256_add(bf256_add(tag[4], tag[5]), bf256_add(tag[6], tag[7]));
-  tag[4]           = bf256_add(i2, bf256_add(tag[4], tag[7]));
+  bf256_add(&tag[3], &tag[4], &tag[5]);
+  bf256_add_inplace(&tag[3], &tag[6]);
+  bf256_add_inplace(&tag[3], &tag[7]);
+  bf256_add_inplace(&tag[4], &tag[7]);
+  bf256_add_inplace(&tag[4], &i2);
   const bf256_t i5 = tag[5];
-  tag[5]           = bf256_add(tag[5], tag[6]);
+  bf256_add_inplace(&tag[5], &tag[6]);
   const bf256_t i6 = tag[6];
-  tag[6]           = bf256_add(i3, i5);
-  tag[7]           = bf256_add(i6, tag[7]);
+  bf256_add(&tag[6], &i3, &i5);
+  bf256_add_inplace(&tag[7], &i6);
 }
 
 void bf256_byte_combine_sq(bf256_t* dst, const bf256_t* x) {
@@ -655,7 +698,8 @@ bf256_t bf256_mul(bf256_t lhs, bf256_t rhs) {
     BF_VALUE(lhs, 0) ^= mask & bf256_modulus;
 #endif
 
-    result = bf256_add(result, bf256_and_64(lhs, bf256_bit_to_uint64_mask(rhs, idx)));
+    const bf256_t tmp = bf256_and_64(lhs, bf256_bit_to_uint64_mask(rhs, idx));
+    bf256_add_inplace(&result, &tmp);
   }
   return result;
 }
@@ -675,7 +719,8 @@ void bf256_mul_64_inplace(bf256_t* lhs, bf64_t rhs) {
     BF_VALUE(tmp, 0) ^= (mask & bf256_modulus);
 #endif
 
-    *lhs = bf256_add(*lhs, bf256_and_64(tmp, bf64_bit_to_mask(rhs, idx)));
+    const bf256_t tmp1 = bf256_and_64(tmp, bf64_bit_to_mask(rhs, idx));
+    bf256_add_inplace(lhs, &tmp1);
   }
 }
 
@@ -700,14 +745,17 @@ ATTR_CONST static inline bf256_t bf256_dbl(bf256_t lhs) {
 void bf256_sum_poly(bf256_t* dst, const bf256_t* xs) {
   *dst = xs[256 - 1];
   for (size_t i = 1; i < 256; ++i) {
-    *dst = bf256_add(bf256_dbl(*dst), xs[256 - 1 - i]);
+    *dst = bf256_dbl(*dst);
+    bf256_add_inplace(dst, &xs[256 - 1 - i]);
   }
 }
 
 void bf256_sum_poly_bits(bf256_t* dst, const uint8_t* xs) {
   *dst = bf256_from_bit(ptr_get_bit(xs, 256 - 1));
   for (size_t i = 1; i < 256; ++i) {
-    *dst = bf256_add(bf256_dbl(*dst), bf256_from_bit(ptr_get_bit(xs, 256 - 1 - i)));
+    *dst              = bf256_dbl(*dst);
+    const bf256_t tmp = bf256_from_bit(ptr_get_bit(xs, 256 - 1 - i));
+    bf256_add_inplace(dst, &tmp);
   }
 }
 
@@ -806,7 +854,8 @@ bf384_t bf384_mul_128(bf384_t lhs, bf128_t rhs) {
     BF_VALUE(lhs, 0) ^= mask & bf384_modulus;
 #endif
 
-    result = bf384_add(result, bf384_and_64(lhs, bf128_bit_to_uint64_mask(rhs, idx)));
+    const bf384_t tmp = bf384_and_64(lhs, bf128_bit_to_uint64_mask(rhs, idx));
+    bf384_add_inplace(&result, &tmp);
   }
   return result;
 }
@@ -909,7 +958,8 @@ bf576_t bf576_mul_192(bf576_t lhs, bf192_t rhs) {
     BF_VALUE(lhs, 0) ^= mask & bf576_modulus;
 #endif
 
-    result = bf576_add(result, bf576_and_64(lhs, bf192_bit_to_uint64_mask(rhs, idx)));
+    const bf576_t tmp = bf576_and_64(lhs, bf192_bit_to_uint64_mask(rhs, idx));
+    bf576_add_inplace(&result, &tmp);
   }
   return result;
 }
@@ -1015,7 +1065,8 @@ bf768_t bf768_mul_256(bf768_t lhs, bf256_t rhs) {
     BF_VALUE(lhs, 0) ^= mask & bf768_modulus;
 #endif
 
-    result = bf768_add(result, bf768_and_64(lhs, bf256_bit_to_uint64_mask(rhs, idx)));
+    const bf768_t tmp = bf768_and_64(lhs, bf256_bit_to_uint64_mask(rhs, idx));
+    bf768_add_inplace(&result, &tmp);
   }
   return result;
 }

@@ -241,7 +241,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_zero(void) {
 }
 
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_one(void) {
-  const bf128_t ret = BF128C(1, 0);
+  const bf128_t ret = BF128C(1u, 0);
   return ret;
 }
 
@@ -257,15 +257,24 @@ void bf128_byte_combine_bits_sq(bf128_t* dst, uint8_t x);
 void bf128_rand(bf128_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-ATTR_CONST static inline bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
-  return lhs ^ rhs;
+static inline void bf128_add(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs) {
+  *dst = *lhs ^ *rhs;
+}
+
+static inline void bf128_add_inplace(bf128_t* lhs, const bf128_t* rhs) {
+  *lhs ^= *rhs;
 }
 #else
-ATTR_CONST static inline bf128_t bf128_add(bf128_t lhs, bf128_t rhs) {
+static inline void bf128_add(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
-    lhs.values[i] ^= rhs.values[i];
+    dst->values[i] = lhs->values[i] ^ rhs->values[i];
   }
-  return lhs;
+}
+
+static inline void bf128_add_inplace(bf128_t* lhs, const bf128_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+    lhs->values[i] ^= rhs->values[i];
+  }
 }
 #endif
 
@@ -333,15 +342,24 @@ void bf192_byte_combine_bits_sq(bf192_t* dst, uint8_t x);
 void bf192_rand(bf192_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-ATTR_CONST static inline bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
-  return lhs ^ rhs;
+static inline void bf192_add(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs) {
+  *dst = *lhs ^ *rhs;
+}
+
+static inline void bf192_add_inplace(bf192_t* lhs, const bf192_t* rhs) {
+  *lhs ^= *rhs;
 }
 #else
-ATTR_CONST static inline bf192_t bf192_add(bf192_t lhs, bf192_t rhs) {
+static inline void bf192_add(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
-    lhs.values[i] ^= rhs.values[i];
+    dst->values[i] = lhs->values[i] ^ rhs->values[i];
   }
-  return lhs;
+}
+
+static inline void bf192_add_inplace(bf192_t* lhs, const bf192_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+    lhs->values[i] ^= rhs->values[i];
+  }
 }
 #endif
 
@@ -406,15 +424,24 @@ void bf256_byte_combine_bits_sq(bf256_t* dst, uint8_t x);
 void bf256_rand(bf256_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-ATTR_CONST static inline bf256_t bf256_add(bf256_t lhs, bf256_t rhs) {
-  return lhs ^ rhs;
+static inline void bf256_add(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs) {
+  *dst = *lhs ^ *rhs;
+}
+
+static inline void bf256_add_inplace(bf256_t* lhs, const bf256_t* rhs) {
+  *lhs ^= *rhs;
 }
 #else
-ATTR_CONST static inline bf256_t bf256_add(bf256_t lhs, bf256_t rhs) {
+static inline void bf256_add(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
-    lhs.values[i] ^= rhs.values[i];
+    dst->values[i] = lhs->values[i] ^ rhs->values[i];
   }
-  return lhs;
+}
+
+static inline void bf256_add_inplace(bf256_t* lhs, const bf256_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+    lhs->values[i] ^= rhs->values[i];
+  }
 }
 #endif
 
@@ -470,18 +497,28 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_zero(void) {
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-ATTR_CONST static inline bf384_t bf384_add(bf384_t lhs, bf384_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.inner); ++i) {
-    lhs.inner[i] ^= rhs.inner[i];
+static inline void bf384_add(bf384_t* dst, const bf384_t* lhs, const bf384_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->inner); ++i) {
+    dst->inner[i] = lhs->inner[i] ^ rhs->inner[i];
   }
-  return lhs;
+}
+
+static inline void bf384_add_inplace(bf384_t* lhs, const bf384_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->inner); ++i) {
+    lhs->inner[i] ^= rhs->inner[i];
+  }
 }
 #else
-ATTR_CONST static inline bf384_t bf384_add(bf384_t lhs, bf384_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
-    lhs.values[i] ^= rhs.values[i];
+static inline void bf384_add(bf384_t* dst, const bf384_t* lhs, const bf384_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
+    dst->values[i] = lhs->values[i] ^ rhs->values[i];
   }
-  return lhs;
+}
+
+static inline void bf384_add_inplace(bf384_t* lhs, const bf384_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
+    lhs->values[i] ^= rhs->values[i];
+  }
 }
 #endif
 
@@ -529,18 +566,28 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_zero(void) {
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-ATTR_CONST static inline bf576_t bf576_add(bf576_t lhs, bf576_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.inner); ++i) {
-    lhs.inner[i] ^= rhs.inner[i];
+static inline void bf576_add(bf576_t* dst, const bf576_t* lhs, const bf576_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->inner); ++i) {
+    dst->inner[i] = lhs->inner[i] ^ rhs->inner[i];
   }
-  return lhs;
+}
+
+static inline void bf576_add_inplace(bf576_t* lhs, const bf576_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->inner); ++i) {
+    lhs->inner[i] ^= rhs->inner[i];
+  }
 }
 #else
-ATTR_CONST static inline bf576_t bf576_add(bf576_t lhs, bf576_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
-    lhs.values[i] ^= rhs.values[i];
+static inline void bf576_add(bf576_t* dst, const bf576_t* lhs, const bf576_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
+    dst->values[i] = lhs->values[i] ^ rhs->values[i];
   }
-  return lhs;
+}
+
+static inline void bf576_add_inplace(bf576_t* lhs, const bf576_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
+    lhs->values[i] ^= rhs->values[i];
+  }
 }
 #endif
 
@@ -588,18 +635,28 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_zero(void) {
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-ATTR_CONST static inline bf768_t bf768_add(bf768_t lhs, bf768_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.inner); ++i) {
-    lhs.inner[i] ^= rhs.inner[i];
+static inline void bf768_add(bf768_t* dst, const bf768_t* lhs, const bf768_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->inner); ++i) {
+    dst->inner[i] = lhs->inner[i] ^ rhs->inner[i];
   }
-  return lhs;
+}
+
+static inline void bf768_add_inplace(bf768_t* lhs, const bf768_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->inner); ++i) {
+    lhs->inner[i] ^= rhs->inner[i];
+  }
 }
 #else
-ATTR_CONST static inline bf768_t bf768_add(bf768_t lhs, bf768_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
-    lhs.values[i] ^= rhs.values[i];
+static inline void bf768_add(bf768_t* dst, const bf768_t* lhs, const bf768_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
+    dst->values[i] = lhs->values[i] ^ rhs->values[i];
   }
-  return lhs;
+}
+
+static inline void bf768_add_inplace(bf768_t* lhs, const bf768_t* rhs) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
+    lhs->values[i] ^= rhs->values[i];
+  }
 }
 #endif
 

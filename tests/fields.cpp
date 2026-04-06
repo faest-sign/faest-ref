@@ -21,6 +21,8 @@ namespace {
     const auto ntl_result = lhs.as_ntl() + rhs.as_ntl();
     BOOST_TEST(ntl_result == result.as_ntl());
 #endif
+    lhs += rhs;
+    BOOST_TEST(lhs == expected);
   }
 
 #if defined(HAVE_NTL)

@@ -53,7 +53,9 @@ namespace {
 
 int main() {
   {
-    bf128_t beta = bf128_add(bf128_get_alpha(5), bf128_get_alpha(3));
+    bf128_t beta      = bf128_get_alpha(5);
+    const bf128_t tmp = bf128_get_alpha(3);
+    bf128_add_inplace(&beta, &tmp);
 
     std::array<bf128_t, 5> squares;
     std::array<bf128_t, 4> cubes;
@@ -82,7 +84,9 @@ int main() {
   }
 
   {
-    bf192_t beta = bf192_add(bf192_get_alpha(5), bf192_get_alpha(3));
+    bf192_t beta      = bf192_get_alpha(5);
+    const bf192_t tmp = bf192_get_alpha(3);
+    bf192_add_inplace(&beta, &tmp);
 
     std::array<bf192_t, 5> squares;
     std::array<bf192_t, 4> cubes;
@@ -111,7 +115,9 @@ int main() {
   }
 
   {
-    bf256_t beta = bf256_add(bf256_get_alpha(5), bf256_get_alpha(3));
+    bf256_t beta      = bf256_get_alpha(5);
+    const bf256_t tmp = bf256_get_alpha(3);
+    bf256_add_inplace(&beta, &tmp);
 
     std::array<bf256_t, 5> squares;
     std::array<bf256_t, 4> cubes;

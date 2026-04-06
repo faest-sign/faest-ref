@@ -230,7 +230,7 @@ namespace {
     bf128& operator=(const bf128&) = default;
 
     bf128& operator+=(bf128 other) {
-      value = bf128_add(value, other.value);
+      bf128_add_inplace(&value, &other.value);
       return *this;
     }
 
@@ -244,7 +244,9 @@ namespace {
     }
 
     bf128 operator+(bf128 other) const {
-      return {bf128_add(value, other.value)};
+      bf128_t v;
+      bf128_add(&v, &value, &other.value);
+      return {v};
     }
 
     bf128 operator-(bf128 other) const {
@@ -364,7 +366,7 @@ namespace {
     bf192& operator=(const bf192&) = default;
 
     bf192& operator+=(bf192 other) {
-      value = bf192_add(value, other.value);
+      bf192_add_inplace(&value, &other.value);
       return *this;
     }
 
@@ -378,7 +380,9 @@ namespace {
     }
 
     bf192 operator+(bf192 other) const {
-      return {bf192_add(value, other.value)};
+      bf192_t v;
+      bf192_add(&v, &value, &other.value);
+      return {v};
     }
 
     bf192 operator-(bf192 other) const {
@@ -504,7 +508,7 @@ namespace {
     bf256& operator=(const bf256&) = default;
 
     bf256& operator+=(bf256 other) {
-      value = bf256_add(value, other.value);
+      bf256_add_inplace(&value, &other.value);
       return *this;
     }
 
@@ -518,7 +522,9 @@ namespace {
     }
 
     bf256 operator+(bf256 other) const {
-      return {bf256_add(value, other.value)};
+      bf256_t v;
+      bf256_add(&v, &value, &other.value);
+      return {v};
     }
 
     bf256 operator-(bf256 other) const {
