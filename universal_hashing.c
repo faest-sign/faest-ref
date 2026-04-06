@@ -224,14 +224,14 @@ void zk_hash_128_init(zk_hash_128_ctx* ctx, const uint8_t* sd) {
   ctx->sd = sd;
 }
 
-void zk_hash_128_update(zk_hash_128_ctx* ctx, bf128_t v) {
+void zk_hash_128_update(zk_hash_128_ctx* ctx, const bf128_t* v) {
   ctx->h0 = bf128_mul(ctx->h0, ctx->s);
-  bf128_add_inplace(&ctx->h0, &v);
+  bf128_add_inplace(&ctx->h0, v);
   bf128_mul_64_inplace(&ctx->h1, ctx->t);
-  bf128_add_inplace(&ctx->h1, &v);
+  bf128_add_inplace(&ctx->h1, v);
 }
 
-void zk_hash_128_finalize(uint8_t* h, zk_hash_128_ctx* ctx, bf128_t x1) {
+void zk_hash_128_finalize(uint8_t* h, zk_hash_128_ctx* ctx, const bf128_t* x1) {
   bf128_t r0;
   bf128_t r1;
   bf128_load(&r0, ctx->sd);
@@ -241,7 +241,7 @@ void zk_hash_128_finalize(uint8_t* h, zk_hash_128_ctx* ctx, bf128_t x1) {
   r1 = bf128_mul(r1, ctx->h1);
 
   bf128_add_inplace(&r0, &r1);
-  bf128_add_inplace(&r0, &x1);
+  bf128_add_inplace(&r0, x1);
   bf128_store(h, &r0);
 }
 
@@ -260,27 +260,30 @@ void zk_hash_128_3_init(zk_hash_128_3_ctx* ctx, const uint8_t* sd) {
   ctx->sd = sd;
 }
 
-void zk_hash_128_3_update(zk_hash_128_3_ctx* ctx, bf128_t v_0, bf128_t v_1, bf128_t v_2) {
+void zk_hash_128_3_update(zk_hash_128_3_ctx* ctx, const bf128_t* v_0, const bf128_t* v_1,
+                          const bf128_t* v_2) {
   ctx->h0[0] = bf128_mul(ctx->h0[0], ctx->s);
-  bf128_add_inplace(&ctx->h0[0], &v_0);
+  bf128_add_inplace(&ctx->h0[0], v_0);
   bf128_mul_64_inplace(&ctx->h1[0], ctx->t);
-  bf128_add_inplace(&ctx->h1[0], &v_0);
+  bf128_add_inplace(&ctx->h1[0], v_0);
   ctx->h0[1] = bf128_mul(ctx->h0[1], ctx->s);
-  bf128_add_inplace(&ctx->h0[1], &v_1);
+  bf128_add_inplace(&ctx->h0[1], v_1);
   bf128_mul_64_inplace(&ctx->h1[1], ctx->t);
-  bf128_add_inplace(&ctx->h1[1], &v_1);
+  bf128_add_inplace(&ctx->h1[1], v_1);
   ctx->h0[2] = bf128_mul(ctx->h0[2], ctx->s);
-  bf128_add_inplace(&ctx->h0[2], &v_2);
+  bf128_add_inplace(&ctx->h0[2], v_2);
   bf128_mul_64_inplace(&ctx->h1[2], ctx->t);
-  bf128_add_inplace(&ctx->h1[2], &v_2);
+  bf128_add_inplace(&ctx->h1[2], v_2);
 }
 
-void zk_hash_128_3_raise_and_update(zk_hash_128_3_ctx* ctx, bf128_t v_1, bf128_t v_2) {
-  zk_hash_128_3_update(ctx, bf128_zero(), v_1, v_2);
+void zk_hash_128_3_raise_and_update(zk_hash_128_3_ctx* ctx, const bf128_t* v_1,
+                                    const bf128_t* v_2) {
+  const bf128_t zero = bf128_zero();
+  zk_hash_128_3_update(ctx, &zero, v_1, v_2);
 }
 
 void zk_hash_128_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_128_3_ctx* ctx,
-                            bf128_t x1_0, bf128_t x1_1, bf128_t x1_2) {
+                            const bf128_t* x1_0, const bf128_t* x1_1, const bf128_t* x1_2) {
   bf128_t r0;
   bf128_t r1;
   bf128_load(&r0, ctx->sd);
@@ -289,17 +292,17 @@ void zk_hash_128_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_12
   bf128_t t0 = bf128_mul(r0, ctx->h0[0]);
   bf128_t t1 = bf128_mul(r1, ctx->h1[0]);
   bf128_add_inplace(&t0, &t1);
-  bf128_add_inplace(&t0, &x1_0);
+  bf128_add_inplace(&t0, x1_0);
   bf128_store(h_0, &t0);
   t0 = bf128_mul(r0, ctx->h0[1]);
   t1 = bf128_mul(r1, ctx->h1[1]);
   bf128_add_inplace(&t0, &t1);
-  bf128_add_inplace(&t0, &x1_1);
+  bf128_add_inplace(&t0, x1_1);
   bf128_store(h_1, &t0);
   t0 = bf128_mul(r0, ctx->h0[2]);
   t1 = bf128_mul(r1, ctx->h1[2]);
   bf128_add_inplace(&t0, &t1);
-  bf128_add_inplace(&t0, &x1_2);
+  bf128_add_inplace(&t0, x1_2);
   bf128_store(h_2, &t0);
 }
 
@@ -314,14 +317,14 @@ void zk_hash_192_init(zk_hash_192_ctx* ctx, const uint8_t* sd) {
   ctx->sd = sd;
 }
 
-void zk_hash_192_update(zk_hash_192_ctx* ctx, bf192_t v) {
+void zk_hash_192_update(zk_hash_192_ctx* ctx, const bf192_t* v) {
   ctx->h0 = bf192_mul(ctx->h0, ctx->s);
-  bf192_add_inplace(&ctx->h0, &v);
+  bf192_add_inplace(&ctx->h0, v);
   bf192_mul_64_inplace(&ctx->h1, ctx->t);
-  bf192_add_inplace(&ctx->h1, &v);
+  bf192_add_inplace(&ctx->h1, v);
 }
 
-void zk_hash_192_finalize(uint8_t* h, zk_hash_192_ctx* ctx, bf192_t x1) {
+void zk_hash_192_finalize(uint8_t* h, zk_hash_192_ctx* ctx, const bf192_t* x1) {
   bf192_t r0;
   bf192_t r1;
   bf192_load(&r0, ctx->sd);
@@ -331,7 +334,7 @@ void zk_hash_192_finalize(uint8_t* h, zk_hash_192_ctx* ctx, bf192_t x1) {
   r1 = bf192_mul(r1, ctx->h1);
 
   bf192_add_inplace(&r0, &r1);
-  bf192_add_inplace(&r0, &x1);
+  bf192_add_inplace(&r0, x1);
   bf192_store(h, &r0);
 }
 
@@ -350,27 +353,30 @@ void zk_hash_192_3_init(zk_hash_192_3_ctx* ctx, const uint8_t* sd) {
   ctx->sd = sd;
 }
 
-void zk_hash_192_3_update(zk_hash_192_3_ctx* ctx, bf192_t v_0, bf192_t v_1, bf192_t v_2) {
+void zk_hash_192_3_update(zk_hash_192_3_ctx* ctx, const bf192_t* v_0, const bf192_t* v_1,
+                          const bf192_t* v_2) {
   ctx->h0[0] = bf192_mul(ctx->h0[0], ctx->s);
-  bf192_add_inplace(&ctx->h0[0], &v_0);
+  bf192_add_inplace(&ctx->h0[0], v_0);
   bf192_mul_64_inplace(&ctx->h1[0], ctx->t);
-  bf192_add_inplace(&ctx->h1[0], &v_0);
+  bf192_add_inplace(&ctx->h1[0], v_0);
   ctx->h0[1] = bf192_mul(ctx->h0[1], ctx->s);
-  bf192_add_inplace(&ctx->h0[1], &v_1);
+  bf192_add_inplace(&ctx->h0[1], v_1);
   bf192_mul_64_inplace(&ctx->h1[1], ctx->t);
-  bf192_add_inplace(&ctx->h1[1], &v_1);
+  bf192_add_inplace(&ctx->h1[1], v_1);
   ctx->h0[2] = bf192_mul(ctx->h0[2], ctx->s);
-  bf192_add_inplace(&ctx->h0[2], &v_2);
+  bf192_add_inplace(&ctx->h0[2], v_2);
   bf192_mul_64_inplace(&ctx->h1[2], ctx->t);
-  bf192_add_inplace(&ctx->h1[2], &v_2);
+  bf192_add_inplace(&ctx->h1[2], v_2);
 }
 
-void zk_hash_192_3_raise_and_update(zk_hash_192_3_ctx* ctx, bf192_t v_1, bf192_t v_2) {
-  zk_hash_192_3_update(ctx, bf192_zero(), v_1, v_2);
+void zk_hash_192_3_raise_and_update(zk_hash_192_3_ctx* ctx, const bf192_t* v_1,
+                                    const bf192_t* v_2) {
+  const bf192_t zero = bf192_zero();
+  zk_hash_192_3_update(ctx, &zero, v_1, v_2);
 }
 
 void zk_hash_192_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_192_3_ctx* ctx,
-                            bf192_t x1_0, bf192_t x1_1, bf192_t x1_2) {
+                            const bf192_t* x1_0, const bf192_t* x1_1, const bf192_t* x1_2) {
   bf192_t r0;
   bf192_t r1;
   bf192_load(&r0, ctx->sd);
@@ -379,17 +385,17 @@ void zk_hash_192_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_19
   bf192_t t0 = bf192_mul(r0, ctx->h0[0]);
   bf192_t t1 = bf192_mul(r1, ctx->h1[0]);
   bf192_add_inplace(&t0, &t1);
-  bf192_add_inplace(&t0, &x1_0);
+  bf192_add_inplace(&t0, x1_0);
   bf192_store(h_0, &t0);
   t0 = bf192_mul(r0, ctx->h0[1]);
   t1 = bf192_mul(r1, ctx->h1[1]);
   bf192_add_inplace(&t0, &t1);
-  bf192_add_inplace(&t0, &x1_1);
+  bf192_add_inplace(&t0, x1_1);
   bf192_store(h_1, &t0);
   t0 = bf192_mul(r0, ctx->h0[2]);
   t1 = bf192_mul(r1, ctx->h1[2]);
   bf192_add_inplace(&t0, &t1);
-  bf192_add_inplace(&t0, &x1_2);
+  bf192_add_inplace(&t0, x1_2);
   bf192_store(h_2, &t0);
 }
 
@@ -404,14 +410,14 @@ void zk_hash_256_init(zk_hash_256_ctx* ctx, const uint8_t* sd) {
   ctx->sd = sd;
 }
 
-void zk_hash_256_update(zk_hash_256_ctx* ctx, bf256_t v) {
+void zk_hash_256_update(zk_hash_256_ctx* ctx, const bf256_t* v) {
   ctx->h0 = bf256_mul(ctx->h0, ctx->s);
-  bf256_add_inplace(&ctx->h0, &v);
+  bf256_add_inplace(&ctx->h0, v);
   bf256_mul_64_inplace(&ctx->h1, ctx->t);
-  bf256_add_inplace(&ctx->h1, &v);
+  bf256_add_inplace(&ctx->h1, v);
 }
 
-void zk_hash_256_finalize(uint8_t* h, zk_hash_256_ctx* ctx, bf256_t x1) {
+void zk_hash_256_finalize(uint8_t* h, zk_hash_256_ctx* ctx, const bf256_t* x1) {
   bf256_t r0;
   bf256_t r1;
   bf256_load(&r0, ctx->sd);
@@ -421,7 +427,7 @@ void zk_hash_256_finalize(uint8_t* h, zk_hash_256_ctx* ctx, bf256_t x1) {
   r1 = bf256_mul(r1, ctx->h1);
 
   bf256_add_inplace(&r0, &r1);
-  bf256_add_inplace(&r0, &x1);
+  bf256_add_inplace(&r0, x1);
   bf256_store(h, &r0);
 }
 
@@ -440,27 +446,30 @@ void zk_hash_256_3_init(zk_hash_256_3_ctx* ctx, const uint8_t* sd) {
   ctx->sd = sd;
 }
 
-void zk_hash_256_3_update(zk_hash_256_3_ctx* ctx, bf256_t v_0, bf256_t v_1, bf256_t v_2) {
+void zk_hash_256_3_update(zk_hash_256_3_ctx* ctx, const bf256_t* v_0, const bf256_t* v_1,
+                          const bf256_t* v_2) {
   ctx->h0[0] = bf256_mul(ctx->h0[0], ctx->s);
-  bf256_add_inplace(&ctx->h0[0], &v_0);
+  bf256_add_inplace(&ctx->h0[0], v_0);
   bf256_mul_64_inplace(&ctx->h1[0], ctx->t);
-  bf256_add_inplace(&ctx->h1[0], &v_0);
+  bf256_add_inplace(&ctx->h1[0], v_0);
   ctx->h0[1] = bf256_mul(ctx->h0[1], ctx->s);
-  bf256_add_inplace(&ctx->h0[1], &v_1);
+  bf256_add_inplace(&ctx->h0[1], v_1);
   bf256_mul_64_inplace(&ctx->h1[1], ctx->t);
-  bf256_add_inplace(&ctx->h1[1], &v_1);
+  bf256_add_inplace(&ctx->h1[1], v_1);
   ctx->h0[2] = bf256_mul(ctx->h0[2], ctx->s);
-  bf256_add_inplace(&ctx->h0[2], &v_2);
+  bf256_add_inplace(&ctx->h0[2], v_2);
   bf256_mul_64_inplace(&ctx->h1[2], ctx->t);
-  bf256_add_inplace(&ctx->h1[2], &v_2);
+  bf256_add_inplace(&ctx->h1[2], v_2);
 }
 
-void zk_hash_256_3_raise_and_update(zk_hash_256_3_ctx* ctx, bf256_t v_1, bf256_t v_2) {
-  zk_hash_256_3_update(ctx, bf256_zero(), v_1, v_2);
+void zk_hash_256_3_raise_and_update(zk_hash_256_3_ctx* ctx, const bf256_t* v_1,
+                                    const bf256_t* v_2) {
+  const bf256_t zero = bf256_zero();
+  zk_hash_256_3_update(ctx, &zero, v_1, v_2);
 }
 
 void zk_hash_256_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_256_3_ctx* ctx,
-                            bf256_t x1_0, bf256_t x1_1, bf256_t x1_2) {
+                            const bf256_t* x1_0, const bf256_t* x1_1, const bf256_t* x1_2) {
   bf256_t r0;
   bf256_t r1;
   bf256_load(&r0, ctx->sd);
@@ -469,17 +478,17 @@ void zk_hash_256_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_25
   bf256_t t0 = bf256_mul(r0, ctx->h0[0]);
   bf256_t t1 = bf256_mul(r1, ctx->h1[0]);
   bf256_add_inplace(&t0, &t1);
-  bf256_add_inplace(&t0, &x1_0);
+  bf256_add_inplace(&t0, x1_0);
   bf256_store(h_0, &t0);
   t0 = bf256_mul(r0, ctx->h0[1]);
   t1 = bf256_mul(r1, ctx->h1[1]);
   bf256_add_inplace(&t0, &t1);
-  bf256_add_inplace(&t0, &x1_1);
+  bf256_add_inplace(&t0, x1_1);
   bf256_store(h_1, &t0);
   t0 = bf256_mul(r0, ctx->h0[2]);
   t1 = bf256_mul(r1, ctx->h1[2]);
   bf256_add_inplace(&t0, &t1);
-  bf256_add_inplace(&t0, &x1_2);
+  bf256_add_inplace(&t0, x1_2);
   bf256_store(h_2, &t0);
 }
 
@@ -488,27 +497,27 @@ void zk_hash_128(uint8_t* h, const uint8_t* sd, const bf128_t* x, unsigned int e
   zk_hash_128_ctx ctx;
   zk_hash_128_init(&ctx, sd);
   for (unsigned int i = 0; i != ell; ++i) {
-    zk_hash_128_update(&ctx, x[i]);
+    zk_hash_128_update(&ctx, &x[i]);
   }
-  zk_hash_128_finalize(h, &ctx, x[ell]);
+  zk_hash_128_finalize(h, &ctx, &x[ell]);
 }
 
 void zk_hash_192(uint8_t* h, const uint8_t* sd, const bf192_t* x, unsigned int ell) {
   zk_hash_192_ctx ctx;
   zk_hash_192_init(&ctx, sd);
   for (unsigned int i = 0; i != ell; ++i) {
-    zk_hash_192_update(&ctx, x[i]);
+    zk_hash_192_update(&ctx, &x[i]);
   }
-  zk_hash_192_finalize(h, &ctx, x[ell]);
+  zk_hash_192_finalize(h, &ctx, &x[ell]);
 }
 
 void zk_hash_256(uint8_t* h, const uint8_t* sd, const bf256_t* x, unsigned int ell) {
   zk_hash_256_ctx ctx;
   zk_hash_256_init(&ctx, sd);
   for (unsigned int i = 0; i != ell; ++i) {
-    zk_hash_256_update(&ctx, x[i]);
+    zk_hash_256_update(&ctx, &x[i]);
   }
-  zk_hash_256_finalize(h, &ctx, x[ell]);
+  zk_hash_256_finalize(h, &ctx, &x[ell]);
 }
 #endif
 
