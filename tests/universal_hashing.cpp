@@ -691,6 +691,105 @@ BOOST_DATA_TEST_CASE(test_zk_hash_256_tv, xrange(TEST_VECTORS), i) {
   BOOST_TEST(digest == expected_digest);
 }
 
+BOOST_AUTO_TEST_CASE(test_zk_hash_128_3) {
+  zk_hash_128_ctx ctx0, ctx1, ctx2;
+  zk_hash_128_3_ctx ctx;
+  zk_hash_128_init(&ctx0, zk_hash_128_sd.data());
+  zk_hash_128_init(&ctx1, zk_hash_128_sd.data());
+  zk_hash_128_init(&ctx2, zk_hash_128_sd.data());
+  zk_hash_128_3_init(&ctx, zk_hash_128_sd.data());
+
+  for (unsigned int j = 0; j != xs; ++j) {
+    auto v0 = bf128::random().as_internal();
+    auto v1 = bf128::random().as_internal();
+    auto v2 = bf128::random().as_internal();
+
+    zk_hash_128_update(&ctx0, &v0);
+    zk_hash_128_update(&ctx1, &v1);
+    zk_hash_128_update(&ctx2, &v2);
+    zk_hash_128_3_update(&ctx, &v0, &v1, &v2);
+  }
+
+  auto v0 = bf128::random().as_internal();
+  auto v1 = bf128::random().as_internal();
+  auto v2 = bf128::random().as_internal();
+
+  std::array<uint8_t, sizeof(bf128::bytes)> digest0, digest1, digest2, cdigest0, cdigest1, cdigest2;
+  zk_hash_128_finalize(digest0.data(), &ctx0, &v0);
+  zk_hash_128_finalize(digest1.data(), &ctx1, &v1);
+  zk_hash_128_finalize(digest2.data(), &ctx2, &v2);
+  zk_hash_128_3_finalize(cdigest0.data(), cdigest1.data(), cdigest2.data(), &ctx, &v0, &v1, &v2);
+  BOOST_TEST(digest0 == cdigest0);
+  BOOST_TEST(digest1 == cdigest1);
+  BOOST_TEST(digest2 == cdigest2);
+}
+
+BOOST_AUTO_TEST_CASE(test_zk_hash_192_3) {
+  zk_hash_192_ctx ctx0, ctx1, ctx2;
+  zk_hash_192_3_ctx ctx;
+  zk_hash_192_init(&ctx0, zk_hash_192_sd.data());
+  zk_hash_192_init(&ctx1, zk_hash_192_sd.data());
+  zk_hash_192_init(&ctx2, zk_hash_192_sd.data());
+  zk_hash_192_3_init(&ctx, zk_hash_192_sd.data());
+
+  for (unsigned int j = 0; j != xs; ++j) {
+    auto v0 = bf192::random().as_internal();
+    auto v1 = bf192::random().as_internal();
+    auto v2 = bf192::random().as_internal();
+
+    zk_hash_192_update(&ctx0, &v0);
+    zk_hash_192_update(&ctx1, &v1);
+    zk_hash_192_update(&ctx2, &v2);
+    zk_hash_192_3_update(&ctx, &v0, &v1, &v2);
+  }
+
+  auto v0 = bf192::random().as_internal();
+  auto v1 = bf192::random().as_internal();
+  auto v2 = bf192::random().as_internal();
+
+  std::array<uint8_t, sizeof(bf192::bytes)> digest0, digest1, digest2, cdigest0, cdigest1, cdigest2;
+  zk_hash_192_finalize(digest0.data(), &ctx0, &v0);
+  zk_hash_192_finalize(digest1.data(), &ctx1, &v1);
+  zk_hash_192_finalize(digest2.data(), &ctx2, &v2);
+  zk_hash_192_3_finalize(cdigest0.data(), cdigest1.data(), cdigest2.data(), &ctx, &v0, &v1, &v2);
+  BOOST_TEST(digest0 == cdigest0);
+  BOOST_TEST(digest1 == cdigest1);
+  BOOST_TEST(digest2 == cdigest2);
+}
+
+BOOST_AUTO_TEST_CASE(test_zk_hash_265_3) {
+  zk_hash_256_ctx ctx0, ctx1, ctx2;
+  zk_hash_256_3_ctx ctx;
+  zk_hash_256_init(&ctx0, zk_hash_256_sd.data());
+  zk_hash_256_init(&ctx1, zk_hash_256_sd.data());
+  zk_hash_256_init(&ctx2, zk_hash_256_sd.data());
+  zk_hash_256_3_init(&ctx, zk_hash_256_sd.data());
+
+  for (unsigned int j = 0; j != xs; ++j) {
+    auto v0 = bf256::random().as_internal();
+    auto v1 = bf256::random().as_internal();
+    auto v2 = bf256::random().as_internal();
+
+    zk_hash_256_update(&ctx0, &v0);
+    zk_hash_256_update(&ctx1, &v1);
+    zk_hash_256_update(&ctx2, &v2);
+    zk_hash_256_3_update(&ctx, &v0, &v1, &v2);
+  }
+
+  auto v0 = bf256::random().as_internal();
+  auto v1 = bf256::random().as_internal();
+  auto v2 = bf256::random().as_internal();
+
+  std::array<uint8_t, sizeof(bf256::bytes)> digest0, digest1, digest2, cdigest0, cdigest1, cdigest2;
+  zk_hash_256_finalize(digest0.data(), &ctx0, &v0);
+  zk_hash_256_finalize(digest1.data(), &ctx1, &v1);
+  zk_hash_256_finalize(digest2.data(), &ctx2, &v2);
+  zk_hash_256_3_finalize(cdigest0.data(), cdigest1.data(), cdigest2.data(), &ctx, &v0, &v1, &v2);
+  BOOST_TEST(digest0 == cdigest0);
+  BOOST_TEST(digest1 == cdigest1);
+  BOOST_TEST(digest2 == cdigest2);
+}
+
 BOOST_AUTO_TEST_CASE(test_leaf_hash_128_tv) {
   std::array<uint8_t, 3 * BF128_NUM_BYTES> digest{};
   leaf_hash_128(digest.data(), universal_hashing_tvs::leaf_hash_128::uhash.data(),
