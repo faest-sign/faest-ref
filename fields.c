@@ -201,7 +201,8 @@ void bf128_rand(bf128_t* dst) {
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-static inline void bf128_and_64(bf128_t* dst, const bf128_t* lhs, bf64_t rhs) {
+ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf128_and_64(bf128_t* dst, const bf128_t* lhs,
+                                                                   bf64_t rhs) {
   *dst = *lhs & rhs;
 }
 #else
@@ -216,7 +217,8 @@ static inline void bf128_and_64(bf128_t* dst, const bf128_t* lhs, bf64_t rhs) {
 #if __has_builtin(__builtin_shufflevector)
 #define bf128_shift_right_64(v1) __builtin_shufflevector((v1), bf128_zero(), 2, 0)
 #else
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_shift_right_64(bf128_t v1) {
+ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf128_t
+bf128_shift_right_64(bf128_t v1) {
   bf128_t ret;
   BF_VALUE(ret, 0) = 0;
   BF_VALUE(ret, 1) = BF_VALUE(v1, 0);
@@ -234,8 +236,8 @@ static inline bf128_t bf128_shift_left_1(bf128_t value) {
 }
 #endif
 
-ATTR_PURE
-static inline uint64_t bf128_bit_to_uint64_mask(const bf128_t* value, unsigned int bit) {
+ATTR_PURE ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
+bf128_bit_to_uint64_mask(const bf128_t* value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
@@ -417,7 +419,8 @@ void bf192_rand(bf192_t* dst) {
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-static inline void bf192_and_64(bf192_t* dst, const bf192_t* lhs, bf64_t rhs) {
+ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf192_and_64(bf192_t* dst, const bf192_t* lhs,
+                                                                   bf64_t rhs) {
   *dst = *lhs & rhs;
 }
 #else
@@ -456,8 +459,8 @@ static inline bf192_t bf192_shift_left_1(bf192_t value) {
   return value;
 }
 
-ATTR_PURE
-static inline uint64_t bf192_bit_to_uint64_mask(const bf192_t* value, unsigned int bit) {
+ATTR_PURE ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
+bf192_bit_to_uint64_mask(const bf192_t* value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
@@ -646,11 +649,12 @@ void bf256_rand(bf256_t* dst) {
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-static inline void bf256_and_64(bf256_t* dst, const bf256_t* lhs, bf64_t rhs) {
+ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf256_and_64(bf256_t* dst, const bf256_t* lhs,
+                                                                   bf64_t rhs) {
   *dst = *lhs & rhs;
 }
 #else
-static inline void bf256_and_64(bf256_t* dst, const bf256_t* lhs, bf64_t rhs) {
+ATTR_ALWAYS_INLINE static inline void bf256_and_64(bf256_t* dst, const bf256_t* lhs, bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
     dst->values[i] = lhs->values[i] & rhs;
   }
@@ -683,8 +687,8 @@ static inline bf256_t bf256_shift_left_1(bf256_t value) {
 }
 #endif
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline uint64_t bf256_bit_to_uint64_mask(const bf256_t* value,
-                                                                             unsigned int bit) {
+ATTR_PURE ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
+bf256_bit_to_uint64_mask(const bf256_t* value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
@@ -792,7 +796,8 @@ void bf256_sum_poly_bits(bf256_t* dst, const uint8_t* xs) {
 // GF(2^384)
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-static inline void bf384_and_64(bf384_t* dst, const bf384_t* lhs, bf64_t rhs) {
+ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf384_and_64(bf384_t* dst, const bf384_t* lhs,
+                                                                   bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs->inner); ++i) {
     dst->inner[i] = lhs->inner[i] & rhs;
   }
@@ -807,7 +812,8 @@ static inline void bf384_and_64(bf384_t* dst, const bf384_t* lhs, bf64_t rhs) {
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #if __has_builtin(__builtin_shufflevector)
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf384_t bf384_shift_right_64(bf384_t v1) {
+ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf384_t
+bf384_shift_right_64(bf384_t v1) {
   bf384_t ret;
   ret.inner[0] = __builtin_shufflevector(v1.inner[0], bf128_zero(), 2, 0);
   ret.inner[1] = __builtin_shufflevector(v1.inner[1], bf128_zero(), 2, 0) |
@@ -838,8 +844,8 @@ static inline bf384_t bf384_shift_left_1(bf384_t value) {
   return value;
 }
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline uint64_t bf384_bit_to_uint64_mask(const bf384_t* value,
-                                                                             unsigned int bit) {
+ATTR_PURE ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
+bf384_bit_to_uint64_mask(const bf384_t* value, unsigned int bit) {
   const unsigned int inner_idx = bit / 128;
   const unsigned int inner_bit = bit % 128;
   const unsigned int byte_idx  = inner_bit / 64;
@@ -857,8 +863,8 @@ static inline bf384_t bf384_shift_left_1(bf384_t value) {
   return value;
 }
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline uint64_t bf384_bit_to_uint64_mask(const bf384_t* value,
-                                                                             unsigned int bit) {
+ATTR_PURE ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
+bf384_bit_to_uint64_mask(const bf384_t* value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
@@ -890,7 +896,8 @@ void bf384_mul_128_inplace(bf384_t* lhs, const bf128_t* rhs) {
 // GF(2^576)
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-static inline void bf576_and_64(bf576_t* dst, const bf576_t* lhs, bf64_t rhs) {
+ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf576_and_64(bf576_t* dst, const bf576_t* lhs,
+                                                                   bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs->inner); ++i) {
     dst->inner[i] = lhs->inner[i] & rhs;
   }
@@ -905,7 +912,8 @@ static inline void bf576_and_64(bf576_t* dst, const bf576_t* lhs, bf64_t rhs) {
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #if __has_builtin(__builtin_shufflevector)
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_shift_right_64(bf576_t v1) {
+ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf576_t
+bf576_shift_right_64(bf576_t v1) {
   bf576_t ret;
   ret.inner[0] = __builtin_shufflevector(v1.inner[0], bf256_zero(), 4, 0, 1, 7);
   ret.inner[1] = __builtin_shufflevector(v1.inner[1], bf256_zero(), 4, 0, 1, 7) |
@@ -915,7 +923,8 @@ ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_shift_right_64(bf576_t
   return ret;
 }
 #else
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf576_t bf576_shift_right_64(bf576_t v1) {
+ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf576_t
+bf576_shift_right_64(bf576_t v1) {
   bf576_t ret;
   BF_VALUE(ret.inner[0], 0) = 0;
   BF_VALUE(ret.inner[0], 1) = BF_VALUE(v1.inner[0], 0);
@@ -958,8 +967,8 @@ static inline bf576_t bf576_shift_left_1(bf576_t value) {
   return value;
 }
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline uint64_t bf576_bit_to_uint64_mask(const bf576_t* value,
-                                                                             unsigned int bit) {
+ATTR_PURE ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
+bf576_bit_to_uint64_mask(const bf576_t* value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
@@ -991,7 +1000,7 @@ void bf576_mul_192_inplace(bf576_t* lhs, const bf192_t* rhs) {
 // GF(2^768)
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-static inline void bf768_and_64(bf768_t* dst, const bf768_t* lhs, bf64_t rhs) {
+ATTR_ALWAYS_INLINE static inline void bf768_and_64(bf768_t* dst, const bf768_t* lhs, bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs->inner); ++i) {
     dst->inner[i] = lhs->inner[i] & rhs;
   }
@@ -1006,7 +1015,8 @@ static inline void bf768_and_64(bf768_t* dst, const bf768_t* lhs, bf64_t rhs) {
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #if __has_builtin(__builtin_shufflevector)
-ATTR_CONST ATTR_ALWAYS_INLINE static inline bf768_t bf768_shift_right_64(bf768_t v1) {
+ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf768_t
+bf768_shift_right_64(bf768_t v1) {
   bf768_t ret;
   ret.inner[0] = __builtin_shufflevector(v1.inner[0], bf256_zero(), 4, 0, 1, 2);
   ret.inner[1] = __builtin_shufflevector(v1.inner[1], bf256_zero(), 4, 0, 1, 2) |
@@ -1043,8 +1053,8 @@ static inline bf768_t bf768_shift_left_1(bf768_t value) {
   return value;
 }
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline uint64_t bf768_bit_to_uint64_mask(const bf768_t* value,
-                                                                             unsigned int bit) {
+ATTR_PURE ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
+bf768_bit_to_uint64_mask(const bf768_t* value, unsigned int bit) {
   const unsigned int inner_idx = bit / 256;
   const unsigned int inner_bit = bit % 256;
   const unsigned int byte_idx  = inner_bit / 64;
@@ -1062,8 +1072,8 @@ static inline bf768_t bf768_shift_left_1(bf768_t value) {
   return value;
 }
 
-ATTR_PURE ATTR_ALWAYS_INLINE static inline uint64_t bf768_bit_to_uint64_mask(const bf768_t* value,
-                                                                             unsigned int bit) {
+ATTR_PURE ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
+bf768_bit_to_uint64_mask(const bf768_t* value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
   const unsigned int bit_idx  = bit % 64;
 
