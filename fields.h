@@ -534,7 +534,7 @@ static inline void bf384_add_inplace(bf384_t* lhs, const bf384_t* rhs) {
 }
 #endif
 
-ATTR_CONST bf384_t bf384_mul_128(bf384_t lhs, bf128_t rhs);
+void bf384_mul_128_inplace(bf384_t* lhs, const bf128_t* rhs);
 
 // GF(2^576) implementation
 
@@ -603,7 +603,7 @@ static inline void bf576_add_inplace(bf576_t* lhs, const bf576_t* rhs) {
 }
 #endif
 
-ATTR_CONST bf576_t bf576_mul_192(bf576_t lhs, bf192_t rhs);
+void bf576_mul_192_inplace(bf576_t* lhs, const bf192_t* rhs);
 
 // GF(2^768) implementation
 
@@ -672,7 +672,7 @@ static inline void bf768_add_inplace(bf768_t* lhs, const bf768_t* rhs) {
 }
 #endif
 
-ATTR_CONST bf768_t bf768_mul_256(bf768_t lhs, bf256_t rhs);
+void bf768_mul_256_inplace(bf768_t* lhs, const bf256_t* rhs);
 
 FAEST_END_C_DECL
 

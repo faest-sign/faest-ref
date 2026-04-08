@@ -535,7 +535,7 @@ void leaf_hash_128(uint8_t* h, const uint8_t* uhash, const uint8_t* x) {
   bf384_load(&x1, x + BF128_NUM_BYTES);
   bf384_load(&u, uhash);
 
-  u = bf384_mul_128(u, x0);
+  bf384_mul_128_inplace(&u, &x0);
   bf384_add_inplace(&u, &x1);
   bf384_store(h, &u);
 }
@@ -548,7 +548,7 @@ void leaf_hash_192(uint8_t* h, const uint8_t* uhash, const uint8_t* x) {
   bf576_load(&x1, x + BF192_NUM_BYTES);
   bf576_load(&u, uhash);
 
-  u = bf576_mul_192(u, x0);
+  bf576_mul_192_inplace(&u, &x0);
   bf576_add_inplace(&u, &x1);
   bf576_store(h, &u);
 }
@@ -561,7 +561,7 @@ void leaf_hash_256(uint8_t* h, const uint8_t* uhash, const uint8_t* x) {
   bf768_load(&x1, x + BF256_NUM_BYTES);
   bf768_load(&u, uhash);
 
-  u = bf768_mul_256(u, x0);
+  bf768_mul_256_inplace(&u, &x0);
   bf768_add_inplace(&u, &x1);
   bf768_store(h, &u);
 }
