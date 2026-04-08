@@ -206,7 +206,7 @@ static inline void bf128_and_64(bf128_t* dst, const bf128_t* lhs, bf64_t rhs) {
 }
 #else
 static inline void bf128_and_64(bf128_t* dst, const bf128_t* lhs, bf64_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
     dst->values[i] = lhs->values[i] & rhs;
   }
 }
@@ -286,7 +286,7 @@ void bf128_mul_64_inplace(bf128_t* lhs, bf64_t rhs) {
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)
 void bf128_mul_bit(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
-  *dst = bf128_and_64(*lhs, -((uint64_t)rhs & 1));
+  bf128_and_64(dst, lhs, -((uint64_t)rhs & 1));
 }
 #endif
 
@@ -422,7 +422,7 @@ static inline void bf192_and_64(bf192_t* dst, const bf192_t* lhs, bf64_t rhs) {
 }
 #else
 static inline void bf192_and_64(bf192_t* dst, const bf192_t* lhs, bf64_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
     dst->values[i] = lhs->values[i] & rhs;
   }
 }
@@ -508,7 +508,7 @@ void bf192_mul_64_inplace(bf192_t* lhs, bf64_t rhs) {
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)
 void bf192_mul_bit(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
-  *dst = bf192_and_64(*lhs, -((uint64_t)rhs & 1));
+  bf192_and_64(dst, lhs, -((uint64_t)rhs & 1));
 }
 #endif
 
@@ -651,7 +651,7 @@ static inline void bf256_and_64(bf256_t* dst, const bf256_t* lhs, bf64_t rhs) {
 }
 #else
 static inline void bf256_and_64(bf256_t* dst, const bf256_t* lhs, bf64_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
     dst->values[i] = lhs->values[i] & rhs;
   }
 }
@@ -757,7 +757,7 @@ void bf256_mul_64_inplace(bf256_t* lhs, bf64_t rhs) {
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)
 void bf256_mul_bit(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
-  *dst = bf256_and_64(*lhs, -((uint64_t)rhs & 1));
+  bf256_and_64(dst, lhs, -((uint64_t)rhs & 1));
 }
 #endif
 
@@ -799,8 +799,8 @@ static inline void bf384_and_64(bf384_t* dst, const bf384_t* lhs, bf64_t rhs) {
 }
 #else
 static inline void bf384_and_64(bf384_t* dst, const bf384_t* lhs, bf64_t rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs - < values); ++i) {
-    dst->inner[i] = lhs->values[i] & rhs;
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
+    dst->values[i] = lhs->values[i] & rhs;
   }
 }
 #endif
@@ -898,7 +898,7 @@ static inline void bf576_and_64(bf576_t* dst, const bf576_t* lhs, bf64_t rhs) {
 #else
 static inline void bf576_and_64(bf576_t* dst, const bf576_t* lhs, bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
-    dst->values[i] = lhs->inner[i] & rhs;
+    dst->values[i] = lhs->values[i] & rhs;
   }
 }
 #endif

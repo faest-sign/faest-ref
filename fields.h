@@ -267,13 +267,13 @@ static inline void bf128_add_inplace(bf128_t* lhs, const bf128_t* rhs) {
 }
 #else
 static inline void bf128_add(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
     dst->values[i] = lhs->values[i] ^ rhs->values[i];
   }
 }
 
 static inline void bf128_add_inplace(bf128_t* lhs, const bf128_t* rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
     lhs->values[i] ^= rhs->values[i];
   }
 }
@@ -356,13 +356,13 @@ static inline void bf192_add_inplace(bf192_t* lhs, const bf192_t* rhs) {
 }
 #else
 static inline void bf192_add(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
     dst->values[i] = lhs->values[i] ^ rhs->values[i];
   }
 }
 
 static inline void bf192_add_inplace(bf192_t* lhs, const bf192_t* rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
     lhs->values[i] ^= rhs->values[i];
   }
 }
@@ -442,13 +442,13 @@ static inline void bf256_add_inplace(bf256_t* lhs, const bf256_t* rhs) {
 }
 #else
 static inline void bf256_add(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
     dst->values[i] = lhs->values[i] ^ rhs->values[i];
   }
 }
 
 static inline void bf256_add_inplace(bf256_t* lhs, const bf256_t* rhs) {
-  for (unsigned int i = 0; i != ARRAY_SIZE(lhs.values); ++i) {
+  for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
     lhs->values[i] ^= rhs->values[i];
   }
 }
