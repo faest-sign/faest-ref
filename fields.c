@@ -290,18 +290,16 @@ void bf128_mul_bit(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
 }
 #endif
 
-ATTR_CONST static inline bf128_t bf128_dbl(bf128_t lhs) {
-  uint64_t mask = bf128_bit_to_uint64_mask(&lhs, 128 - 1);
-  lhs           = bf128_shift_left_1(lhs);
-  BF_VALUE(lhs, 0) ^= (mask & bf128_modulus);
-
-  return lhs;
+static inline void bf128_dbl_inplace(bf128_t* lhs) {
+  uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
+  *lhs          = bf128_shift_left_1(*lhs);
+  BF_VALUE(*lhs, 0) ^= (mask & bf128_modulus);
 }
 
 void bf128_sum_poly(bf128_t* dst, const bf128_t* xs) {
   *dst = xs[128 - 1];
   for (size_t i = 1; i < 128; ++i) {
-    *dst = bf128_dbl(*dst);
+    bf128_dbl_inplace(dst);
     bf128_add_inplace(dst, &xs[128 - 1 - i]);
   }
 }
@@ -309,7 +307,7 @@ void bf128_sum_poly(bf128_t* dst, const bf128_t* xs) {
 void bf128_sum_poly_bits(bf128_t* dst, const uint8_t* xs) {
   *dst = bf128_from_bit(ptr_get_bit(xs, 128 - 1));
   for (size_t i = 1; i < 128; ++i) {
-    *dst              = bf128_dbl(*dst);
+    bf128_dbl_inplace(dst);
     const bf128_t tmp = bf128_from_bit(ptr_get_bit(xs, 128 - 1 - i));
     bf128_add_inplace(dst, &tmp);
   }
@@ -514,18 +512,16 @@ void bf192_mul_bit(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
 }
 #endif
 
-ATTR_CONST static inline bf192_t bf192_dbl(bf192_t lhs) {
-  uint64_t mask = bf192_bit_to_uint64_mask(&lhs, 192 - 1);
-  lhs           = bf192_shift_left_1(lhs);
-  BF_VALUE(lhs, 0) ^= (mask & bf192_modulus);
-
-  return lhs;
+static inline void bf192_dbl_inplace(bf192_t* lhs) {
+  uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
+  *lhs          = bf192_shift_left_1(*lhs);
+  BF_VALUE(*lhs, 0) ^= (mask & bf192_modulus);
 }
 
 void bf192_sum_poly(bf192_t* dst, const bf192_t* xs) {
   *dst = xs[192 - 1];
   for (size_t i = 1; i < 192; ++i) {
-    *dst = bf192_dbl(*dst);
+    bf192_dbl_inplace(dst);
     bf192_add_inplace(dst, &xs[192 - 1 - i]);
   }
 }
@@ -533,7 +529,7 @@ void bf192_sum_poly(bf192_t* dst, const bf192_t* xs) {
 void bf192_sum_poly_bits(bf192_t* dst, const uint8_t* xs) {
   *dst = bf192_from_bit(ptr_get_bit(xs, 192 - 1));
   for (size_t i = 1; i < 192; ++i) {
-    *dst              = bf192_dbl(*dst);
+    bf192_dbl_inplace(dst);
     const bf192_t tmp = bf192_from_bit(ptr_get_bit(xs, 192 - 1 - i));
     bf192_add_inplace(dst, &tmp);
   }
@@ -765,22 +761,21 @@ void bf256_mul_bit(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
 }
 #endif
 
-ATTR_CONST static inline bf256_t bf256_dbl(bf256_t lhs) {
-  uint64_t mask = bf256_bit_to_uint64_mask(&lhs, 256 - 1);
-  lhs           = bf256_shift_left_1(lhs);
+static inline void bf256_dbl_inplace(bf256_t* lhs) {
+  uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
+  *lhs          = bf256_shift_left_1(*lhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   const bf256_t mod = BF256C(bf256_modulus, 0, 0, 0);
-  return lhs ^ (mod & mask);
+  *lhs ^= mod & mask;
 #else
-  BF_VALUE(lhs, 0) ^= mask & bf256_modulus;
-  return lhs;
+  BF_VALUE(*lhs, 0) ^= mask & bf256_modulus;
 #endif
 }
 
 void bf256_sum_poly(bf256_t* dst, const bf256_t* xs) {
   *dst = xs[256 - 1];
   for (size_t i = 1; i < 256; ++i) {
-    *dst = bf256_dbl(*dst);
+    bf256_dbl_inplace(dst);
     bf256_add_inplace(dst, &xs[256 - 1 - i]);
   }
 }
@@ -788,7 +783,7 @@ void bf256_sum_poly(bf256_t* dst, const bf256_t* xs) {
 void bf256_sum_poly_bits(bf256_t* dst, const uint8_t* xs) {
   *dst = bf256_from_bit(ptr_get_bit(xs, 256 - 1));
   for (size_t i = 1; i < 256; ++i) {
-    *dst              = bf256_dbl(*dst);
+    bf256_dbl_inplace(dst);
     const bf256_t tmp = bf256_from_bit(ptr_get_bit(xs, 256 - 1 - i));
     bf256_add_inplace(dst, &tmp);
   }
