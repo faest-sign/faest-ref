@@ -231,7 +231,8 @@ ATTR_ALWAYS_INLINE static inline void bf128_store(uint8_t* dst, const bf128_t* s
 }
 
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf128_t bf128_from_bit(uint8_t bit) {
-  bf128_t ret = BF128C(bit & 1u, 0);
+  bf128_t ret      = BF128C(0, 0);
+  BF_VALUE(ret, 0) = bit & 1u;
   return ret;
 }
 
@@ -278,12 +279,15 @@ static inline void bf128_add_inplace(bf128_t* lhs, const bf128_t* rhs) {
 }
 #endif
 
-ATTR_CONST bf128_t bf128_mul(bf128_t lhs, bf128_t rhs);
+void bf128_mul(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs);
+void bf128_mul_inplace(bf128_t* lhs, const bf128_t* rhs);
 void bf128_mul_64_inplace(bf128_t* lhs, bf64_t rhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-#define bf128_mul_bit(lhs, rhs) ((lhs) & -((uint64_t)(rhs) & 1))
+static inline void bf128_mul_bit(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
+  *dst = *lhs & -((uint64_t)(rhs) & 1);
+}
 #else
-ATTR_CONST bf128_t bf128_mul_bit(bf128_t lhs, uint8_t rhs);
+void bf128_mul_bit(bf128_t* dst, const bf128_t* lhs, uint8_t rhs);
 #endif
 void bf128_sum_poly(bf128_t* dst, const bf128_t* xs);
 void bf128_sum_poly_bits(bf128_t* dst, const uint8_t* xs);
@@ -316,7 +320,8 @@ ATTR_ALWAYS_INLINE static inline void bf192_store(uint8_t* dst, const bf192_t* s
 }
 
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf192_t bf192_from_bit(uint8_t bit) {
-  bf192_t ret = BF192C(bit & 1u, 0, 0);
+  bf192_t ret      = BF192C(0, 0, 0);
+  BF_VALUE(ret, 0) = bit & 1u;
   return ret;
 }
 
@@ -363,12 +368,15 @@ static inline void bf192_add_inplace(bf192_t* lhs, const bf192_t* rhs) {
 }
 #endif
 
-ATTR_CONST bf192_t bf192_mul(bf192_t lhs, bf192_t rhs);
+void bf192_mul(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs);
+void bf192_mul_inplace(bf192_t* lhs, const bf192_t* rhs);
 void bf192_mul_64_inplace(bf192_t* lhs, bf64_t rhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-#define bf192_mul_bit(lhs, rhs) ((lhs) & -((uint64_t)(rhs) & 1))
+static inline void bf192_mul_bit(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
+  *dst = *lhs & -((uint64_t)(rhs) & 1);
+}
 #else
-ATTR_CONST bf192_t bf192_mul_bit(bf192_t lhs, uint8_t rhs);
+void bf192_mul_bit(bf192_t* dst, const bf192_t* lhs, uint8_t rhs);
 #endif
 void bf192_sum_poly(bf192_t* dst, const bf192_t* xs);
 void bf192_sum_poly_bits(bf192_t* dst, const uint8_t* xs);
@@ -398,7 +406,8 @@ ATTR_ALWAYS_INLINE static inline void bf256_store(uint8_t* dst, const bf256_t* s
 }
 
 ATTR_CONST ATTR_ALWAYS_INLINE static inline bf256_t bf256_from_bit(uint8_t bit) {
-  bf256_t ret = BF256C(bit & 1u, 0, 0, 0);
+  bf256_t ret      = BF256C(0, 0, 0, 0);
+  BF_VALUE(ret, 0) = bit & 1u;
   return ret;
 }
 
@@ -445,12 +454,15 @@ static inline void bf256_add_inplace(bf256_t* lhs, const bf256_t* rhs) {
 }
 #endif
 
-ATTR_CONST bf256_t bf256_mul(bf256_t lhs, bf256_t rhs);
+void bf256_mul(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs);
+void bf256_mul_inplace(bf256_t* lhs, const bf256_t* rhs);
 void bf256_mul_64_inplace(bf256_t* lhs, bf64_t rhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-#define bf256_mul_bit(lhs, rhs) ((lhs) & -((uint64_t)(rhs) & 1))
+static inline void bf256_mul_bit(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
+  *dst = *lhs & -((uint64_t)(rhs) & 1);
+}
 #else
-ATTR_CONST bf256_t bf256_mul_bit(bf256_t lhs, uint8_t rhs);
+void bf256_mul_bit(bf256_t* dst, const bf256_t* lhs, uint8_t rhs);
 #endif
 void bf256_sum_poly(bf256_t* dst, const bf256_t* xs);
 void bf256_sum_poly_bits(bf256_t* dst, const uint8_t* xs);

@@ -62,11 +62,11 @@ int main() {
 
     squares[0] = beta;
     for (size_t idx = 1; idx != squares.size(); ++idx) {
-      squares[idx] = bf128_mul(squares[idx - 1], squares[idx - 1]);
+      bf128_mul(&squares[idx], &squares[idx - 1], &squares[idx - 1]);
     }
-    cubes[0] = bf128_mul(squares[1], beta);
+    bf128_mul(&cubes[0], &squares[1], &beta);
     for (size_t idx = 1; idx != cubes.size(); ++idx) {
-      cubes[idx] = bf128_mul(cubes[idx - 1], cubes[idx - 1]);
+      bf128_mul(&cubes[idx], &cubes[idx - 1], &cubes[idx - 1]);
     }
 
     std::cout << "static const bf128_t bf128_beta_squares[5] = {\n";
@@ -93,11 +93,11 @@ int main() {
 
     squares[0] = beta;
     for (size_t idx = 1; idx != squares.size(); ++idx) {
-      squares[idx] = bf192_mul(squares[idx - 1], squares[idx - 1]);
+      bf192_mul(&squares[idx], &squares[idx - 1], &squares[idx - 1]);
     }
-    cubes[0] = bf192_mul(squares[1], beta);
+    bf192_mul(&cubes[0], &squares[1], &beta);
     for (size_t idx = 1; idx != cubes.size(); ++idx) {
-      cubes[idx] = bf192_mul(cubes[idx - 1], cubes[idx - 1]);
+      bf192_mul(&cubes[idx], &cubes[idx - 1], &cubes[idx - 1]);
     }
 
     std::cout << "static const bf192_t bf192_beta_squares[5] = {\n";
@@ -124,11 +124,11 @@ int main() {
 
     squares[0] = beta;
     for (size_t idx = 1; idx != squares.size(); ++idx) {
-      squares[idx] = bf256_mul(squares[idx - 1], squares[idx - 1]);
+      bf256_mul(&squares[idx], &squares[idx - 1], &squares[idx - 1]);
     }
-    cubes[0] = bf256_mul(squares[1], beta);
+    bf256_mul(&cubes[0], &squares[1], &beta);
     for (size_t idx = 1; idx != cubes.size(); ++idx) {
-      cubes[idx] = bf256_mul(cubes[idx - 1], cubes[idx - 1]);
+      bf256_mul(&cubes[idx], &cubes[idx - 1], &cubes[idx - 1]);
     }
 
     std::cout << "static const bf256_t bf256_beta_squares[5] = {\n";
@@ -222,8 +222,10 @@ int main() {
     print_bf128(v3);
     std::cout << ";\n";
 
-    v2 = bf128_mul(v2, v2);
-    v3 = bf128_mul(v3, v3);
+    auto tmp = v2;
+    bf128_mul(&v2, &tmp, &tmp);
+    tmp = v3;
+    bf128_mul(&v3, &tmp, &tmp);
 
     std::cout << "static const bf128_t bf128_bc_2_sq = ";
     print_bf128(v2);
@@ -248,8 +250,10 @@ int main() {
     print_bf192(v3);
     std::cout << ";\n";
 
-    v2 = bf192_mul(v2, v2);
-    v3 = bf192_mul(v3, v3);
+    auto tmp = v2;
+    bf192_mul(&v2, &tmp, &tmp);
+    tmp = v3;
+    bf192_mul(&v3, &tmp, &tmp);
 
     std::cout << "static const bf192_t bf192_bc_2_sq = ";
     print_bf192(v2);
@@ -274,8 +278,10 @@ int main() {
     print_bf256(v3);
     std::cout << ";\n";
 
-    v2 = bf256_mul(v2, v2);
-    v3 = bf256_mul(v3, v3);
+    auto tmp = v2;
+    bf256_mul(&v2, &tmp, &tmp);
+    tmp = v3;
+    bf256_mul(&v3, &tmp, &tmp);
 
     std::cout << "static const bf256_t bf256_bc_2_sq = ";
     print_bf256(v2);

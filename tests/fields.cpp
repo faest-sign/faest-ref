@@ -42,6 +42,11 @@ namespace {
     const auto ntl_result = MulMod(lhs.as_ntl(), rhs.as_ntl(), B::ntl_residue());
     BOOST_TEST(ntl_result == result.as_ntl());
 #endif
+    lhs *= rhs;
+    BOOST_TEST(lhs == expected);
+
+    BOOST_TEST(lhs * uint8_t{1} == lhs);
+    BOOST_TEST(lhs * uint8_t{0} == B::zero());
   }
 
 #if defined(HAVE_NTL)

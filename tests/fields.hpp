@@ -239,7 +239,7 @@ namespace {
     }
 
     bf128& operator*=(bf128 other) {
-      value = bf128_mul(value, other.value);
+      bf128_mul_inplace(&value, &other.value);
       return *this;
     }
 
@@ -254,13 +254,21 @@ namespace {
     }
 
     bf128 operator*(bf128 other) const {
-      return {bf128_mul(value, other.value)};
+      bf128_t v;
+      bf128_mul(&v, &value, &other.value);
+      return {v};
     }
 
     bf128 operator*(bf64 other) const {
       auto ret = value;
       bf128_mul_64_inplace(&ret, other.as_internal());
       return {ret};
+    }
+
+    bf128 operator*(uint8_t bit) const {
+      bf128_t v;
+      bf128_mul_bit(&v, &value, bit);
+      return {v};
     }
 
     bool operator==(bf128 other) const {
@@ -375,7 +383,7 @@ namespace {
     }
 
     bf192& operator*=(bf192 other) {
-      value = bf192_mul(value, other.value);
+      bf192_mul_inplace(&value, &other.value);
       return *this;
     }
 
@@ -390,13 +398,21 @@ namespace {
     }
 
     bf192 operator*(bf192 other) const {
-      return {bf192_mul(value, other.value)};
+      bf192_t v;
+      bf192_mul(&v, &value, &other.value);
+      return {v};
     }
 
     bf192 operator*(bf64 other) const {
       auto ret = value;
       bf192_mul_64_inplace(&ret, other.as_internal());
       return {ret};
+    }
+
+    bf192 operator*(uint8_t bit) const {
+      bf192_t v;
+      bf192_mul_bit(&v, &value, bit);
+      return {v};
     }
 
     bool operator==(bf192 other) const {
@@ -517,7 +533,7 @@ namespace {
     }
 
     bf256& operator*=(bf256 other) {
-      value = bf256_mul(value, other.value);
+      bf256_mul_inplace(&value, &other.value);
       return *this;
     }
 
@@ -532,13 +548,21 @@ namespace {
     }
 
     bf256 operator*(bf256 other) const {
-      return {bf256_mul(value, other.value)};
+      bf256_t v;
+      bf256_mul(&v, &value, &other.value);
+      return {v};
     }
 
     bf256 operator*(bf64 other) const {
       auto ret = value;
       bf256_mul_64_inplace(&ret, other.as_internal());
       return {ret};
+    }
+
+    bf256 operator*(uint8_t bit) const {
+      bf256_t v;
+      bf256_mul_bit(&v, &value, bit);
+      return {v};
     }
 
     bool operator==(bf256 other) const {
