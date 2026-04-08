@@ -1761,8 +1761,8 @@ static void aes_SSS_constraints_verifier(zk_hash_SSS_ctx* hasher, const bfSSS_t*
 // OWF PROVER
 // clang-format off
 void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, const uint8_t* w,
-                    const uint8_t* u, uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out,
-                    const uint8_t* chall_2, const faest_paramset_t* params) {
+                      const uint8_t* u, uint8_t** V, const uint8_t* owf_in, const uint8_t* owf_out,
+                      const uint8_t* chall_2, const faest_paramset_t* params) {
   // clang-format on
   const unsigned int ell = params->l;
 
@@ -1798,9 +1798,9 @@ void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1_tilde, uint8_t* a2_tilde, c
 // OWF VERIFIER
 // clang-format off
 void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_t* owf_in,
-                      const uint8_t* owf_out, const uint8_t* chall_2, const uint8_t* chall_3,
-                      const uint8_t* a1_tilde, const uint8_t* a2_tilde,
-                      const faest_paramset_t* params) {
+                        const uint8_t* owf_out, const uint8_t* chall_2, const uint8_t* chall_3,
+                        const uint8_t* a1_tilde, const uint8_t* a2_tilde,
+                        const faest_paramset_t* params) {
   // clang-format on
   const unsigned int ell = params->l;
 
@@ -1821,15 +1821,15 @@ void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const 
   bfSSS_sum_poly(&q_star_1, q_key + ell + FAEST_SSS_LAMBDA);
 
   // ::10
-  bfSSS_t tmp;
-  bfSSS_mul(&tmp, &bf_delta, &q_star_1);
-  bfSSS_add_inplace(&q_star_0, &tmp);
+  bfSSS_mul_inplace(&q_star_1, &bf_delta);
+  bfSSS_add_inplace(&q_star_0, &q_star_1);
 
   // ::13-14
   zk_hash_SSS_ctx b_ctx;
   zk_hash_SSS_init(&b_ctx, chall_2);
 
   for (unsigned int i = 0; i < ell; i++) {
+    bfSSS_t tmp;
     bfSSS_mul_bit(&tmp, &bf_delta, ptr_get_bit(d, i));
     bfSSS_add_inplace(&q_key[i], &tmp);
   }
@@ -1843,16 +1843,16 @@ void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const 
   zk_hash_SSS_finalize(q_tilde, &b_ctx, &q_star_0);
 
   // ::16
-  bfSSS_load(&tmp, a1_tilde);
   bfSSS_t tmp1;
-  bfSSS_mul(&tmp1, &tmp, &bf_delta);
+  bfSSS_load(&tmp1, a1_tilde);
+  bfSSS_mul_inplace(&tmp1, &bf_delta);
 
-  bfSSS_load(&tmp, a2_tilde);
   bfSSS_t tmp2;
-  bfSSS_mul(&tmp2, &tmp, &bf_delta_sq);
+  bfSSS_load(&tmp2, a2_tilde);
+  bfSSS_mul_inplace(&tmp2, &bf_delta_sq);
   bfSSS_add_inplace(&tmp1, &tmp2);
 
-  bfSSS_load(&tmp, q_tilde);
-  bfSSS_add_inplace(&tmp, &tmp1);
-  bfSSS_store(a0_tilde, &tmp);
+  bfSSS_load(&tmp2, q_tilde);
+  bfSSS_add_inplace(&tmp1, &tmp2);
+  bfSSS_store(a0_tilde, &tmp1);
 }
