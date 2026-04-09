@@ -87,10 +87,20 @@ namespace {
   }
 
   void print_timings(const std::vector<timing_and_size_t>& timings) {
+    double keygen = 0, sign = 0, verify = 0;
+
     for (const auto& timing : timings) {
       std::cout << timing.keygen.count() << ',' << timing.sign.count() << ','
                 << timing.verify.count() << std::endl;
+
+      keygen += timing.keygen.count();
+      sign += timing.sign.count();
+      verify += timing.verify.count();
     }
+
+    std::cout << "\n# avg keygen: " << (keygen / timings.size())
+              << "\n# avg sign: " << (sign / timings.size())
+              << "\n# avg verify: " << (verify / timings.size()) << std::endl;
   }
 
   void bench_sign_and_verify(unsigned int iter) {
