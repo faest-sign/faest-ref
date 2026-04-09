@@ -1089,7 +1089,7 @@ static void aes_SSS_expkey_constraints_prover(zk_hash_SSS_3_ctx* hasher, uint8_t
   unsigned int iwd = 32 * (FAEST_SSS_NK - 1);
   // ::6 Used only on AES-256
   // ::7
-  for (unsigned int j = 0; j < Ske / 4; j++) {
+  for (unsigned int j = 0; j < Ske; j += 4) {
     // ::8
     bfSSS_t k_hat[4];    // expnaded key witness
     bfSSS_t w_hat[4];    // inverse output
@@ -1113,16 +1113,16 @@ static void aes_SSS_expkey_constraints_prover(zk_hash_SSS_3_ctx* hasher, uint8_t
       bfSSS_byte_combine_bits(&k_hat[r_prime], k[(iwd + 8 * r) / 8]);       // lifted key witness
       bfSSS_byte_combine_bits_sq(&k_hat_sq[r_prime], k[(iwd + 8 * r) / 8]); // lifted key witness sq
 
-      bfSSS_byte_combine_bits(&w_hat[r], w_flat[(32 * j + 8 * r) / 8]);       // lifted output
-      bfSSS_byte_combine_bits_sq(&w_hat_sq[r], w_flat[(32 * j + 8 * r) / 8]); // lifted output sq
+      bfSSS_byte_combine_bits(&w_hat[r], w_flat[(8 * j + 8 * r) / 8]);       // lifted output
+      bfSSS_byte_combine_bits_sq(&w_hat_sq[r], w_flat[(8 * j + 8 * r) / 8]); // lifted output sq
 
       // done by both prover and verifier
       bfSSS_byte_combine(&k_hat_tag[r_prime], k_tag + (iwd + 8 * r));       // lifted key tag
       bfSSS_byte_combine_sq(&k_hat_tag_sq[r_prime], k_tag + (iwd + 8 * r)); // lifted key tag sq
 
-      bfSSS_byte_combine(&w_hat_tag[r], w_flat_tag + ((32 * j + 8 * r))); // lifted output tag
+      bfSSS_byte_combine(&w_hat_tag[r], w_flat_tag + ((8 * j + 8 * r))); // lifted output tag
       bfSSS_byte_combine_sq(&w_hat_tag_sq[r],
-                            w_flat_tag + (32 * j + 8 * r)); // lifted output tag sq
+                            w_flat_tag + (8 * j + 8 * r)); // lifted output tag sq
     }
 
 #if FAEST_SSS_LAMBDA == 256
@@ -1175,7 +1175,7 @@ static void aes_SSS_expkey_constraints_verifier(zk_hash_SSS_ctx* hasher, bfSSS_t
   unsigned int iwd = 32 * (FAEST_SSS_NK - 1); // as 1 unit8 has 8 bits
   // ::6 Used only on AES-256
   // ::7
-  for (unsigned int j = 0; j < Ske / 4; j++) {
+  for (unsigned int j = 0; j < Ske; j += 4) {
     // ::8
     bfSSS_t k_hat_key[4];    // expanded key witness tag
     bfSSS_t w_hat_key[4];    // inverse output tag
@@ -1194,9 +1194,9 @@ static void aes_SSS_expkey_constraints_verifier(zk_hash_SSS_ctx* hasher, bfSSS_t
       bfSSS_byte_combine(&k_hat_key[r_prime], k_key + (iwd + 8 * r));       // lifted key tag
       bfSSS_byte_combine_sq(&k_hat_key_sq[r_prime], k_key + (iwd + 8 * r)); // lifted key tag sq
 
-      bfSSS_byte_combine(&w_hat_key[r], w_flat_key + ((32 * j + 8 * r))); // lifted output tag
+      bfSSS_byte_combine(&w_hat_key[r], w_flat_key + ((8 * j + 8 * r))); // lifted output tag
       bfSSS_byte_combine_sq(&w_hat_key_sq[r],
-                            w_flat_key + (32 * j + 8 * r)); // lifted output tag sq
+                            w_flat_key + (8 * j + 8 * r)); // lifted output tag sq
     }
 #if FAEST_SSS_LAMBDA == 256
     // ::16 used only for AES-256
