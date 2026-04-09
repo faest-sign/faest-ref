@@ -14,6 +14,33 @@
 #include <vector>
 
 namespace {
+  void zk_hash_128(uint8_t* h, const uint8_t* sd, const bf128_t* x, unsigned int ell) {
+    zk_hash_128_ctx ctx;
+    zk_hash_128_init(&ctx, sd);
+    for (unsigned int i = 0; i != ell; ++i) {
+      zk_hash_128_update(&ctx, &x[i]);
+    }
+    zk_hash_128_finalize(h, &ctx, &x[ell]);
+  }
+
+  void zk_hash_192(uint8_t* h, const uint8_t* sd, const bf192_t* x, unsigned int ell) {
+    zk_hash_192_ctx ctx;
+    zk_hash_192_init(&ctx, sd);
+    for (unsigned int i = 0; i != ell; ++i) {
+      zk_hash_192_update(&ctx, &x[i]);
+    }
+    zk_hash_192_finalize(h, &ctx, &x[ell]);
+  }
+
+  void zk_hash_256(uint8_t* h, const uint8_t* sd, const bf256_t* x, unsigned int ell) {
+    zk_hash_256_ctx ctx;
+    zk_hash_256_init(&ctx, sd);
+    for (unsigned int i = 0; i != ell; ++i) {
+      zk_hash_256_update(&ctx, &x[i]);
+    }
+    zk_hash_256_finalize(h, &ctx, &x[ell]);
+  }
+
   static constexpr size_t xs        = 8;
   static constexpr unsigned int ell = 32;
 } // namespace
