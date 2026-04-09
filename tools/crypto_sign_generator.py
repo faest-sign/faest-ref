@@ -107,7 +107,7 @@ if get_option('catch2').enabled() and get_option('benchmarks').enabled()
     join_paths(meson.project_source_root(), 'tools', 'bench_c2.cpp'),
   )
   bench_catch = executable('faest_{param_name}_bench_c2', bench_sources,
-    dependencies: [libfaest_{param_name}_dependency, boost_program_options, catch2],
+    dependencies: [libfaest_{param_name}_dependency, catch2],
     include_directories: include_directories,
     c_args: defines + c_flags,
     cpp_args: defines + cpp_flags,
