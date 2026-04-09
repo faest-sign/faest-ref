@@ -1406,9 +1406,8 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_3_ctx* hasher, const uint
       bfSSS_add_inplace(&v2, &tmp);
       bfSSS_add_inplace(&v2, &s_deg0);
 
-      bfSSS_t v0;
-      bfSSS_mul(&v0, &s_sq_deg0, &st_b_deg0[0][byte_i]);
-      zk_hash_SSS_3_update(hasher, &v0, &v1, &v2);
+      bfSSS_mul(&tmp, &s_sq_deg0, &st_b_deg0[0][byte_i]);
+      zk_hash_SSS_3_update(hasher, &tmp, &v1, &v2);
 
       // ::37
       // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
@@ -1426,8 +1425,8 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_3_ctx* hasher, const uint
       bfSSS_add_inplace(&v2, &tmp);
       bfSSS_add_inplace(&v2, &st_b_deg1[0][byte_i]);
 
-      bfSSS_mul(&v0, &s_deg0, &st_b_deg0[1][byte_i]);
-      zk_hash_SSS_3_update(hasher, &v0, &v1, &v2);
+      bfSSS_mul(&tmp, &s_deg0, &st_b_deg0[1][byte_i]);
+      zk_hash_SSS_3_update(hasher, &tmp, &v1, &v2);
     }
 
     if (r != (FAEST_SSS_R / 2) - 1) {
