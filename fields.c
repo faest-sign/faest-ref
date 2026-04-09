@@ -139,19 +139,28 @@ void bf128_byte_combine(bf128_t* dst, const bf128_t* x) {
 }
 
 void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag) {
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  out_tag[7] = in_tag[6] ^ in_tag[7];
+  out_tag[0] = in_tag[0] ^ in_tag[4] ^ in_tag[6];
+  out_tag[1] = in_tag[4] ^ out_tag[7];
+  out_tag[2] = in_tag[1] ^ in_tag[5];
+  out_tag[3] = out_tag[1] ^ in_tag[5];
+  out_tag[4] = in_tag[2] ^ in_tag[4] ^ in_tag[7];
+  out_tag[5] = in_tag[5] ^ in_tag[6];
+  out_tag[6] = in_tag[3] ^ in_tag[5];
+  out_tag[7] = in_tag[6] ^ in_tag[7];
+#else
+  bf128_add(&out_tag[7], &in_tag[6], &in_tag[7]);
   bf128_add(&out_tag[0], &in_tag[0], &in_tag[4]);
   bf128_add_inplace(&out_tag[0], &in_tag[6]);
-  bf128_add(&out_tag[1], &in_tag[4], &in_tag[6]);
-  bf128_add_inplace(&out_tag[1], &in_tag[7]);
+  bf128_add(&out_tag[1], &in_tag[4], &out_tag[7]);
   bf128_add(&out_tag[2], &in_tag[1], &in_tag[5]);
-  bf128_add(&out_tag[3], &in_tag[4], &in_tag[5]);
-  bf128_add_inplace(&out_tag[3], &in_tag[6]);
-  bf128_add_inplace(&out_tag[3], &in_tag[7]);
+  bf128_add(&out_tag[3], &out_tag[1], &in_tag[5]);
   bf128_add(&out_tag[4], &in_tag[2], &in_tag[4]);
   bf128_add_inplace(&out_tag[4], &in_tag[7]);
   bf128_add(&out_tag[5], &in_tag[5], &in_tag[6]);
   bf128_add(&out_tag[6], &in_tag[3], &in_tag[5]);
-  bf128_add(&out_tag[7], &in_tag[6], &in_tag[7]);
+#endif
 }
 
 void bf128_sq_bit_inplace(bf128_t* tag) {
@@ -357,19 +366,28 @@ void bf192_byte_combine(bf192_t* dst, const bf192_t* x) {
 }
 
 void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag) {
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  out_tag[7] = in_tag[6] ^ in_tag[7];
+  out_tag[0] = in_tag[0] ^ in_tag[4] ^ in_tag[6];
+  out_tag[1] = in_tag[4] ^ out_tag[7];
+  out_tag[2] = in_tag[1] ^ in_tag[5];
+  out_tag[3] = out_tag[1] ^ in_tag[5];
+  out_tag[4] = in_tag[2] ^ in_tag[4] ^ in_tag[7];
+  out_tag[5] = in_tag[5] ^ in_tag[6];
+  out_tag[6] = in_tag[3] ^ in_tag[5];
+  out_tag[7] = in_tag[6] ^ in_tag[7];
+#else
+  bf192_add(&out_tag[7], &in_tag[6], &in_tag[7]);
   bf192_add(&out_tag[0], &in_tag[0], &in_tag[4]);
   bf192_add_inplace(&out_tag[0], &in_tag[6]);
-  bf192_add(&out_tag[1], &in_tag[4], &in_tag[6]);
-  bf192_add_inplace(&out_tag[1], &in_tag[7]);
+  bf192_add(&out_tag[1], &in_tag[4], &out_tag[7]);
   bf192_add(&out_tag[2], &in_tag[1], &in_tag[5]);
-  bf192_add(&out_tag[3], &in_tag[4], &in_tag[5]);
-  bf192_add_inplace(&out_tag[3], &in_tag[6]);
-  bf192_add_inplace(&out_tag[3], &in_tag[7]);
+  bf192_add(&out_tag[3], &out_tag[1], &in_tag[5]);
   bf192_add(&out_tag[4], &in_tag[2], &in_tag[4]);
   bf192_add_inplace(&out_tag[4], &in_tag[7]);
   bf192_add(&out_tag[5], &in_tag[5], &in_tag[6]);
   bf192_add(&out_tag[6], &in_tag[3], &in_tag[5]);
-  bf192_add(&out_tag[7], &in_tag[6], &in_tag[7]);
+#endif
 }
 
 void bf192_sq_bit_inplace(bf192_t* tag) {
@@ -587,19 +605,28 @@ void bf256_byte_combine(bf256_t* dst, const bf256_t* x) {
 }
 
 void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag) {
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  out_tag[7] = in_tag[6] ^ in_tag[7];
+  out_tag[0] = in_tag[0] ^ in_tag[4] ^ in_tag[6];
+  out_tag[1] = in_tag[4] ^ out_tag[7];
+  out_tag[2] = in_tag[1] ^ in_tag[5];
+  out_tag[3] = out_tag[1] ^ in_tag[5];
+  out_tag[4] = in_tag[2] ^ in_tag[4] ^ in_tag[7];
+  out_tag[5] = in_tag[5] ^ in_tag[6];
+  out_tag[6] = in_tag[3] ^ in_tag[5];
+  out_tag[7] = in_tag[6] ^ in_tag[7];
+#else
+  bf256_add(&out_tag[7], &in_tag[6], &in_tag[7]);
   bf256_add(&out_tag[0], &in_tag[0], &in_tag[4]);
   bf256_add_inplace(&out_tag[0], &in_tag[6]);
-  bf256_add(&out_tag[1], &in_tag[4], &in_tag[6]);
-  bf256_add_inplace(&out_tag[1], &in_tag[7]);
+  bf256_add(&out_tag[1], &in_tag[4], &out_tag[7]);
   bf256_add(&out_tag[2], &in_tag[1], &in_tag[5]);
-  bf256_add(&out_tag[3], &in_tag[4], &in_tag[5]);
-  bf256_add_inplace(&out_tag[3], &in_tag[6]);
-  bf256_add_inplace(&out_tag[3], &in_tag[7]);
+  bf256_add(&out_tag[3], &out_tag[1], &in_tag[5]);
   bf256_add(&out_tag[4], &in_tag[2], &in_tag[4]);
   bf256_add_inplace(&out_tag[4], &in_tag[7]);
   bf256_add(&out_tag[5], &in_tag[5], &in_tag[6]);
   bf256_add(&out_tag[6], &in_tag[3], &in_tag[5]);
-  bf256_add(&out_tag[7], &in_tag[6], &in_tag[7]);
+#endif
 }
 
 void bf256_sq_bit_inplace(bf256_t* tag) {
