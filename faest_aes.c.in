@@ -92,16 +92,6 @@ static const bf8_t Rcon[30] = {
 Called in EncCstrnts, takes in owf_in (bits) and their tags (0 for prover, owf_in (bit) * delta for
 verifier)
 */
-static void aes_SSS_add_round_key_prover(uint8_t* out, bfSSS_t* out_tag, const uint8_t* in,
-                                         const bfSSS_t* in_tag, const uint8_t* k,
-                                         const bfSSS_t* k_tag, unsigned int Nst) {
-  const unsigned int Nstbits = Nst * 32;
-
-  xor_u8_array(in, k, out, Nstbits / 8);
-  for (unsigned int i = 0; i < Nstbits; i++) {
-    bfSSS_add(&out_tag[i], &in_tag[i], &k_tag[i]);
-  }
-}
 
 static void aes_SSS_add_round_key_verifier(bfSSS_t* out_key, const bfSSS_t* in_key,
                                            const bfSSS_t* k_key, unsigned int Nst) {
@@ -110,6 +100,15 @@ static void aes_SSS_add_round_key_verifier(bfSSS_t* out_key, const bfSSS_t* in_k
   for (unsigned int i = 0; i < Nstbits; i++) {
     bfSSS_add(&out_key[i], &in_key[i], &k_key[i]);
   }
+}
+
+static void aes_SSS_add_round_key_prover(uint8_t* out, bfSSS_t* out_tag, const uint8_t* in,
+                                         const bfSSS_t* in_tag, const uint8_t* k,
+                                         const bfSSS_t* k_tag, unsigned int Nst) {
+  const unsigned int Nstbits = Nst * 32;
+
+  xor_u8_array(in, k, out, Nstbits / 8);
+  aes_SSS_add_round_key_verifier(out_tag, in_tag, k_tag, Nst);
 }
 
 // F256/F2.CONJUGATES
@@ -282,31 +281,30 @@ static void aes_SSS_inv_norm_constraints_verifier(zk_hash_SSS_ctx* hasher,
   bfSSS_t tmp1;
   bfSSS_t tmp2;
   bfSSS_mul(&tmp1, y_eval, &conjugates_eval[1]);
-  bfSSS_mul_inplace(&tmp1, &conjugates_eval[4]);
   bfSSS_mul(&tmp2, &conjugates_eval[0], delta);
+  bfSSS_mul_inplace(&tmp1, &conjugates_eval[4]);
   bfSSS_mul_inplace(&tmp2, delta);
   bfSSS_add_inplace(&tmp1, &tmp2);
   zk_hash_SSS_update(hasher, &tmp1);
 }
 
 // STATE TO BYTES
-static void aes_SSS_state_to_bytes_prover(bfSSS_t* out, bfSSS_t* out_tag, const uint8_t* k,
-                                          const bfSSS_t* k_tag, unsigned int Nst) {
-  const unsigned int Nst_bytes = Nst * 4;
-
-  for (unsigned int i = 0; i < Nst_bytes; i++) {
-    bfSSS_byte_combine_bits(&out[i], k[i]);
-    bfSSS_byte_combine(&out_tag[i], k_tag + i * 8);
-  }
-}
-
 static void aes_SSS_state_to_bytes_verifier(bfSSS_t* out_key, const bfSSS_t* k_key,
                                             unsigned int Nst) {
   const unsigned int Nst_bytes = Nst * 4;
-
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     bfSSS_byte_combine(&out_key[i], k_key + i * 8);
   }
+}
+
+static void aes_SSS_state_to_bytes_prover(bfSSS_t* out, bfSSS_t* out_tag, const uint8_t* k,
+                                          const bfSSS_t* k_tag, unsigned int Nst) {
+  const unsigned int Nst_bytes = Nst * 4;
+  for (unsigned int i = 0; i < Nst_bytes; i++) {
+    bfSSS_byte_combine_bits(&out[i], k[i]);
+  }
+
+  aes_SSS_state_to_bytes_verifier(out_tag, k_tag, Nst);
 }
 
 // SBOX AFFINE
@@ -472,15 +470,15 @@ static void aes_SSS_shiftrows_prover(bfSSS_t* out_deg0, bfSSS_t* out_deg1, bfSSS
                                      const bfSSS_t* in_deg2, unsigned int Nst) {
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
+      unsigned int i;
       if ((Nst != 8) || (r <= 1)) {
-        out_deg2[4 * c + r] = in_deg2[4 * ((c + r) % Nst) + r];
-        out_deg1[4 * c + r] = in_deg1[4 * ((c + r) % Nst) + r];
-        out_deg0[4 * c + r] = in_deg0[4 * ((c + r) % Nst) + r];
+        i = 4 * ((c + r) % Nst) + r;
       } else {
-        out_deg2[4 * c + r] = in_deg2[4 * ((c + r + 1) % Nst) + r];
-        out_deg1[4 * c + r] = in_deg1[4 * ((c + r + 1) % Nst) + r];
-        out_deg0[4 * c + r] = in_deg0[4 * ((c + r + 1) % Nst) + r];
+        i = 4 * ((c + r + 1) % Nst) + r;
       }
+      out_deg2[4 * c + r] = in_deg2[i];
+      out_deg1[4 * c + r] = in_deg1[i];
+      out_deg0[4 * c + r] = in_deg0[i];
     }
   }
 }
@@ -543,10 +541,10 @@ static void aes_SSS_mix_columns_prover(bfSSS_t* y_deg0, bfSSS_t* y_deg1, bfSSS_t
   const bfSSS_t* v3 = dosq ? &bfSSS_bc_3_sq : &bfSSS_bc_3;
 
   for (unsigned int c = 0; c < Nst; c++) {
-    unsigned int i0 = 4 * c;
-    unsigned int i1 = 4 * c + 1;
-    unsigned int i2 = 4 * c + 2;
-    unsigned int i3 = 4 * c + 3;
+    const unsigned int i0 = 4 * c;
+    const unsigned int i1 = 4 * c + 1;
+    const unsigned int i2 = 4 * c + 2;
+    const unsigned int i3 = 4 * c + 3;
 
     // ::7
     bfSSS_t tmp1;
@@ -635,10 +633,10 @@ static void aes_SSS_mix_columns_verifier(bfSSS_t* y_deg1, const bfSSS_t* in_deg1
   const bfSSS_t* v3 = dosq ? &bfSSS_bc_3_sq : &bfSSS_bc_3;
 
   for (unsigned int c = 0; c < Nst; c++) {
-    unsigned int i0 = 4 * c;
-    unsigned int i1 = 4 * c + 1;
-    unsigned int i2 = 4 * c + 2;
-    unsigned int i3 = 4 * c + 3;
+    const unsigned int i0 = 4 * c;
+    const unsigned int i1 = 4 * c + 1;
+    const unsigned int i2 = 4 * c + 2;
+    const unsigned int i3 = 4 * c + 3;
 
     bfSSS_t tmp1;
     bfSSS_t tmp2;
