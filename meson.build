@@ -586,33 +586,26 @@ include_directories += [include_directories('sha3'), include_directories('sha3/'
 if sha3 == 's390-cpacf'
   defines += '-DWITH_SHAKE_S390_CPACF'
 else
-  defines += '-DWITH_KECCAK_X4'
   faest_sources += files(
     'sha3/KeccakHash.c',
-    'sha3/KeccakHashtimes4.c',
     'sha3/KeccakSponge.c',
-    'sha3/KeccakSpongetimes4.c',
   )
 
   if sha3 == 'avx2'
     faest_sources += files(
       'sha3/avx2/KeccakP-1600-AVX2.s',
-      'sha3/avx2/KeccakP-1600-times4-SIMD256.c',
     )
   elif sha3 == 'opt64'
     faest_sources += files(
       'sha3/opt64/KeccakP-1600-opt64.c',
-      'sha3/opt64/KeccakP-1600-times4-on1.c',
     )
   elif sha3 == 'plain32'
     faest_sources += files(
       'sha3/plain32/KeccakP-1600-inplace32BI.c',
-      'sha3/plain32/KeccakP-1600-times4-on1.c',
     )
   elif sha3 == 'armv8a-neon'
     faest_sources += files(
       'sha3/armv8a-neon/KeccakP-1600-armv8a-neon.s',
-      'sha3/opt64/KeccakP-1600-times4-on1.c',
     )
   endif
 
