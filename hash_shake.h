@@ -18,7 +18,6 @@
 #if defined(OQS)
 /* use OQS's SHAKE implementation */
 #include <oqs/sha3.h>
-#include <oqs/sha3x4.h>
 #elif defined(PQCLEAN)
 /* PQClean's SHAKE implementation
  *
