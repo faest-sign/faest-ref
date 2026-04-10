@@ -575,17 +575,26 @@ headers = files(
 # SHA3 implementation
 sha3 = get_option('SHA3')
 if sha3 == 'auto'
-  if cc.sizeof('void*') == 4
+elif sha3 == 'auto'
+  size_of_voidp = cc.sizeof('void*')
+  if openssl.found() and openssl.version() >= '3.2' and size_of_voidp < 8
+    sha3 = 'openssl'
+  elif size_of_voidp == 4
     sha3 = 'plain32'
   else
     sha3 = 'opt64'
   endif
 endif
-include_directories += [include_directories('sha3'), include_directories('sha3/' + sha3)]
 
-if sha3 == 's390-cpacf'
-  defines += '-DWITH_SHAKE_S390_CPACF'
+if sha3 == 'openssl'
+  if not openssl.found() or openssl.version() < '3.2'
+    error(
+      'OpenSSL-based SHA3 implementation requested, but openssl wa not found or is too old.',
+    )
+  endif
+  defines += '-DWITH_SHAKE_OPENSSL'
 else
+  include_directories += [include_directories('sha3'), include_directories('sha3/' + sha3)]
   faest_sources += files(
     'sha3/KeccakHash.c',
     'sha3/KeccakSponge.c',

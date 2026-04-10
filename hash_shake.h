@@ -14,6 +14,54 @@
 #if defined(WITH_SHAKE_S390_CPACF)
 /* use the KIMD/KLMD instructions from CPACF for SHAKE support on S390 */
 #include "sha3/s390_cpacf.h"
+#elif defined(WITH_SHAKE_OPENSSL)
+#include <openssl/evp.h>
+
+typedef struct hash_context_openssl_s {
+  EVP_MD_CTX* ctx;
+} hash_context;
+
+/**
+ * Initialize hash context based on the security parameter. If the security parameter is 128,
+ * SHAKE128 is used, otherwise SHAKE256 is used.
+ */
+static inline void hash_init(hash_context* ctx, unsigned int security_param) {
+  const EVP_MD* md = NULL;
+  if (security_param == 128) {
+    md = EVP_shake128();
+  } else {
+    md = EVP_shake256();
+  }
+
+  ctx->ctx = EVP_MD_CTX_new();
+  if (!EVP_DigestInit_ex2(ctx->ctx, md, NULL)) {
+    EVP_MD_CTX_free(ctx->ctx);
+    ctx->ctx = NULL;
+  }
+}
+
+static inline void hash_copy(hash_context* dst, const hash_context* src) {
+  dst->ctx = EVP_MD_CTX_dup(src->ctx);
+}
+
+static inline void hash_update(hash_context* ctx, const uint8_t* data, size_t size) {
+  EVP_DigestUpdate(ctx->ctx, data, size);
+}
+
+#define hash_final(ctx)                                                                            \
+  {                                                                                                \
+    (void)ctx;                                                                                     \
+  }
+
+static inline void hash_squeeze(hash_context* ctx, uint8_t* buffer, size_t buflen) {
+  EVP_DigestSqueeze(ctx->ctx, buffer, buflen);
+}
+
+static inline void hash_clear(hash_context* ctx) {
+  EVP_MD_CTX_free(ctx->ctx);
+  ctx->ctx = NULL;
+}
+
 #elif defined(OQS)
 #include <oqs/sha3.h>
 
@@ -129,7 +177,9 @@ static inline void hash_squeeze(hash_context* ctx, uint8_t* buffer, size_t bufle
 }
 
 #define hash_clear(ctx)                                                                            \
-  { (void)ctx; }
+  {                                                                                                \
+    (void)ctx;                                                                                     \
+  }
 #endif
 
 static inline void hash_update_uint32_le(hash_context* ctx, uint32_t data) {
