@@ -154,8 +154,6 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf8_t bf8_one(void) 
   return 1;
 }
 
-bf8_t bf8_rand(void);
-
 ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL inline bf8_t bf8_add(bf8_t lhs, bf8_t rhs) {
   return lhs ^ rhs;
 }
@@ -193,8 +191,6 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_zero(voi
 ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_one(void) {
   return 1;
 }
-
-bf64_t bf64_rand(void);
 
 ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_add(bf64_t lhs,
                                                                             bf64_t rhs) {
@@ -257,7 +253,6 @@ void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag);
 void bf128_sq_bit_inplace(bf128_t* tag);
 void bf128_byte_combine_sq(bf128_t* dst, const bf128_t* x);
 void bf128_byte_combine_bits_sq(bf128_t* dst, uint8_t x);
-void bf128_rand(bf128_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf128_add(bf128_t* dst, const bf128_t* lhs,
@@ -352,7 +347,6 @@ void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag);
 void bf192_sq_bit_inplace(bf192_t* tag);
 void bf192_byte_combine_sq(bf192_t* dst, const bf192_t* x);
 void bf192_byte_combine_bits_sq(bf192_t* dst, uint8_t x);
-void bf192_rand(bf192_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf192_add(bf192_t* dst, const bf192_t* lhs,
@@ -444,7 +438,6 @@ void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag);
 void bf256_sq_bit_inplace(bf256_t* tag);
 void bf256_byte_combine_sq(bf256_t* dst, const bf256_t* x);
 void bf256_byte_combine_bits_sq(bf256_t* dst, uint8_t x);
-void bf256_rand(bf256_t* dst);
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf256_add(bf256_t* dst, const bf256_t* lhs,

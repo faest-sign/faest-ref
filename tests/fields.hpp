@@ -6,6 +6,7 @@
 #define FAEST_TESTS_FIELDS_HPP
 
 #include "../fields.h"
+#include "../randomness.h"
 
 #include <boost/format.hpp>
 #include <algorithm>
@@ -24,6 +25,36 @@ namespace {
     return MulMod(lhs, denom, modulus);
   }
 #endif
+
+  bf8_t bf8_rand(void) {
+    bf8_t ret;
+    rand_bytes(&ret, sizeof(ret));
+    return ret;
+  }
+
+  bf64_t bf64_rand(void) {
+    bf64_t ret;
+    rand_bytes((uint8_t*)&ret, sizeof(ret));
+    return ret;
+  }
+
+  void bf128_rand(bf128_t* dst) {
+    uint8_t buf[BF128_NUM_BYTES];
+    rand_bytes(buf, sizeof(buf));
+    bf128_load(dst, buf);
+  }
+
+  void bf192_rand(bf192_t* dst) {
+    uint8_t buf[BF192_NUM_BYTES];
+    rand_bytes(buf, sizeof(buf));
+    bf192_load(dst, buf);
+  }
+
+  void bf256_rand(bf256_t* dst) {
+    uint8_t buf[BF256_NUM_BYTES];
+    rand_bytes(buf, sizeof(buf));
+    bf256_load(dst, buf);
+  }
 
   class bf8 {
     bf8_t value;

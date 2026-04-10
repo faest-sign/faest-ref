@@ -7,7 +7,6 @@
 #endif
 
 #include "fields.h"
-#include "randomness.h"
 #include "utils.h"
 
 // GF(2^8) with X^8 + X^4 + X^3 + X^1 + 1
@@ -42,12 +41,6 @@ ATTR_CONST uint8_t bits_sq(uint8_t x) {
 }
 
 // GF(2^8) implementation
-
-bf8_t bf8_rand(void) {
-  bf8_t ret;
-  rand_bytes(&ret, sizeof(ret));
-  return ret;
-}
 
 bf8_t bf8_mul(bf8_t lhs, bf8_t rhs) {
   bf8_t result = -(rhs & 1) & lhs;
@@ -85,12 +78,6 @@ bf8_t bf8_inv(bf8_t in) {
 }
 
 // GF(2^64) implementation
-
-bf64_t bf64_rand(void) {
-  bf64_t ret;
-  rand_bytes((uint8_t*)&ret, sizeof(ret));
-  return ret;
-}
 
 bf64_t bf64_mul(bf64_t lhs, bf64_t rhs) {
   bf64_t result = (-(rhs & 1)) & lhs;
@@ -200,12 +187,6 @@ void bf128_byte_combine_bits(bf128_t* dst, uint8_t x) {
 
 void bf128_byte_combine_bits_sq(bf128_t* dst, uint8_t x) {
   bf128_byte_combine_bits(dst, bits_sq(x));
-}
-
-void bf128_rand(bf128_t* dst) {
-  uint8_t buf[BF128_NUM_BYTES];
-  rand_bytes(buf, sizeof(buf));
-  bf128_load(dst, buf);
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -426,12 +407,6 @@ void bf192_byte_combine_bits(bf192_t* dst, uint8_t x) {
 
 void bf192_byte_combine_bits_sq(bf192_t* dst, uint8_t x) {
   bf192_byte_combine_bits(dst, bits_sq(x));
-}
-
-void bf192_rand(bf192_t* dst) {
-  uint8_t buf[BF192_NUM_BYTES];
-  rand_bytes(buf, sizeof(buf));
-  bf192_load(dst, buf);
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -664,12 +639,6 @@ void bf256_byte_combine_bits(bf256_t* dst, uint8_t x) {
 
 void bf256_byte_combine_bits_sq(bf256_t* dst, uint8_t x) {
   bf256_byte_combine_bits(dst, bits_sq(x));
-}
-
-void bf256_rand(bf256_t* dst) {
-  uint8_t buf[BF256_NUM_BYTES];
-  rand_bytes(buf, sizeof(buf));
-  bf256_load(dst, buf);
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
