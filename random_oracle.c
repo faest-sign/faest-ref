@@ -72,7 +72,7 @@ void H2_init(H2_context_t* ctx, unsigned int security_param) {
 }
 
 void H2_copy(H2_context_t* new_ctx, const H2_context_t* ctx) {
-  memcpy(new_ctx, ctx, sizeof(*ctx));
+  hash_copy(new_ctx, ctx);
 }
 
 void H2_update(H2_context_t* ctx, const uint8_t* src, size_t len) {

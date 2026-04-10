@@ -60,6 +60,18 @@ static inline void hash_init(hash_context* ctx, unsigned int security_param) {
   }
 }
 
+static inline void hash_copy(hash_context* dst, const hash_context* src) {
+  if (!src->shake256) {
+    OQS_SHA3_shake128_inc_init(&dst->shake128_ctx);
+    OQS_SHA3_shake128_inc_ctx_clone(&dst->shake128_ctx, src->shake128_ctx);
+    dst->shake256 = 0;
+  } else {
+    OQS_SHA3_shake256_inc_init(&dst->shake256_ctx);
+    OQS_SHA3_shake256_inc_ctx_clone(&dst->shake256_ctx, src->shake256_ctx);
+    dst->shake256 = 1;
+  }
+}
+
 static inline void hash_update(hash_context* ctx, const uint8_t* data, size_t size) {
   if (ctx->shake256) {
     OQS_SHA3_shake256_inc_absorb(&ctx->shake256_ctx, data, size);
@@ -119,6 +131,10 @@ static inline void hash_init(hash_context* ctx, unsigned int security_param) {
   } else {
     Keccak_HashInitialize_SHAKE256(ctx);
   }
+}
+
+static inline void hash_copy(hash_context* dst, const hash_context* src) {
+  memcpy(dst, src, sizeof(*dst));
 }
 
 static inline void hash_update(hash_context* ctx, const uint8_t* data, size_t size) {
