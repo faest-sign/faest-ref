@@ -574,12 +574,19 @@ headers = files(
 
 # SHA3 implementation
 sha3 = get_option('SHA3')
-if sha3 == 'auto'
-  size_of_voidp = cc.sizeof('void*')
-  if openssl.found() and openssl.version() >= '3.2' and (size_of_voidp < 8 or host_machine.cpu_family() == 's390x')
-    # use OpenSSL as default implementation on non-64 bit targets and s390x
+size_of_voidp = cc.sizeof('void*')
+if sha3 == 'auto' and openssl.found() and openssl.version() >= '3.2'
+  # use OpenSSL as default implementation
+  if size_of_voidp < 8
     sha3 = 'openssl'
-  elif size_of_voidp == 4
+  elif host_machine.cpu_family() == 's390x'
+    sha3 = 'openssl'
+  endif
+endif
+if sha3 == 'auto'
+  if host_machine.cpu_family() == 'aarch64'
+    sha3 = 'armv8a-neon'
+  elif size_of_voidp < 8
     sha3 = 'plain32'
   else
     sha3 = 'opt64'
