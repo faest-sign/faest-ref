@@ -584,7 +584,7 @@ if sha3 == 'auto' and openssl.found() and openssl.version() >= '3.2'
   endif
 endif
 if sha3 == 'auto'
-  if host_machine.cpu_family() == 'aarch64'
+  if host_machine.cpu_family() == 'aarch64' and cc.get_id() == 'gcc'
     sha3 = 'armv8a-neon'
   elif size_of_voidp < 8
     sha3 = 'plain32'
