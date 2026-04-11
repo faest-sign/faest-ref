@@ -278,16 +278,18 @@ static void hash_challenge_3(uint8_t* chall_3, const uint8_t* chall_2, const uin
   H2_3_final(&h2_ctx, chall_3, lambda / 8);
 }
 
-static bool check_challenge_3(const uint8_t* chall_3, unsigned int start, unsigned int lambda) {
-  for (unsigned int bit_i = start; bit_i != lambda; ++bit_i) {
-    if (ptr_get_bit(chall_3, bit_i)) {
-      return false;
-    }
+static inline bool check_challenge_3(const uint8_t* chall_3, unsigned int start,
+                                     unsigned int lambda) {
+  const unsigned int lambda_bytes = lambda / 8;
+
+  uint8_t res = (start % 8) ? (chall_3[start / 8] >> (start % 8)) : 0;
+  for (unsigned int bytes = (start + 7) / 8; bytes != lambda_bytes; ++bytes) {
+    res |= chall_3[bytes];
   }
-  return true;
+  return !res;
 }
 
-static void free_pointer_array(uint8_t*** ptr) {
+static inline void free_pointer_array(uint8_t*** ptr) {
   free((*ptr)[0]);
   free(*ptr);
   *ptr = NULL;
