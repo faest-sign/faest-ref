@@ -596,7 +596,7 @@ endif
 if sha3 == 'openssl'
   if not openssl.found() or openssl.version() < '3.2'
     error(
-      'OpenSSL-based SHA3 implementation requested, but openssl wa not found or is too old.',
+      'OpenSSL-based SHA3 implementation requested, but openssl was not found or is too old.',
     )
   endif
   defines += '-DWITH_SHAKE_OPENSSL'
