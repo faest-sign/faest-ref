@@ -1065,12 +1065,9 @@ int generic_aes_ecb_new(generic_aes_ecb_t* context, const uint8_t* key, unsigned
   case 192:
     cipher = EVP_aes_192_ecb();
     break;
-  case 128:
+  default:
     cipher = EVP_aes_128_ecb();
     break;
-  }
-  if (!cipher) {
-    return -1;
   }
 
   EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
@@ -1150,11 +1147,9 @@ int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int
   case 192:
     aes192_init_round_keys(&ctx->round_keys, key);
     break;
-  case 128:
+  default:
     aes128_init_round_keys(&ctx->round_keys, key);
     break;
-  default:
-    return -1;
   }
 
   ctx->seclvl = seclvl;
@@ -1180,7 +1175,7 @@ int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const u
       store_state(ciphertext, state, AES_BLOCK_WORDS);
     }
   }
-  case 128: {
+  default: {
     for (; blocks; --blocks, plaintext += IV_SIZE, ciphertext += IV_SIZE) {
       aes_block_t state;
       load_state(state, plaintext, AES_BLOCK_WORDS);
