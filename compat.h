@@ -124,8 +124,8 @@ FAEST_END_C_DECL
 /**
  * Compatibility implementation of mempcpy
  */
-#if defined(_MSC_VER)
-#define faest_mempcpy(dst, src, len) ((void*)(((char*)memcpy((dst), (src), (len))) + (len)))
+#if defined(_MSC_VER) || defined(__clang__)
+#define faest_mempcpy(dst, src, len) ((void*)(((uint8_t*)memcpy((dst), (src), (len))) + (len)))
 #else
 #define faest_mempcpy(dst, src, len) (memcpy((dst), (src), (len)) + (len))
 #endif
