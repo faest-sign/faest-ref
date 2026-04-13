@@ -1083,20 +1083,8 @@ static void aes_SSS_expkey_constraints_prover(zk_hash_SSS_3_ctx* hasher, uint8_t
 
   // ::3-5
   unsigned int iwd = 32 * (FAEST_SSS_NK - 1);
-  // ::6 Used only on AES-256
   // ::7
   for (unsigned int j = 0; j < Ske; j += 4) {
-    // ::8
-    bfSSS_t k_hat[4];    // expnaded key witness
-    bfSSS_t w_hat[4];    // inverse output
-    bfSSS_t k_hat_sq[4]; // expanded key witness sq
-    bfSSS_t w_hat_sq[4]; // inverse output sq
-
-    bfSSS_t k_hat_tag[4];    // expanded key witness tag
-    bfSSS_t w_hat_tag[4];    // inverse output tag
-    bfSSS_t k_hat_tag_sq[4]; // expanded key tag sq
-    bfSSS_t w_hat_tag_sq[4]; // inverser output tag sq
-
     // ::9
     for (unsigned int r = 0; r < 4; r++) {
 #if FAEST_SSS_LAMBDA == 256
@@ -1104,43 +1092,51 @@ static void aes_SSS_expkey_constraints_prover(zk_hash_SSS_3_ctx* hasher, uint8_t
       unsigned int r_prime = r;
       // ::11
       if (j % 8 == 0) {
-        r_prime = (r + 3) % 4;
+        r_prime = (r + 1) % 4;
       }
 #else
-      unsigned int r_prime = (r + 3) % 4;
+      unsigned int r_prime = (r + 1) % 4;
 #endif
-      // ::12-15
-      bfSSS_byte_combine_bits(&k_hat[r_prime], k[(iwd + 8 * r) / 8]);       // lifted key witness
-      bfSSS_byte_combine_bits_sq(&k_hat_sq[r_prime], k[(iwd + 8 * r) / 8]); // lifted key witness sq
+      bfSSS_t k_hat;    // expanded key witness
+      bfSSS_t w_hat;    // inverse output
+      bfSSS_t k_hat_sq; // expanded key witness sq
+      bfSSS_t w_hat_sq; // inverse output sq
 
-      bfSSS_byte_combine_bits(&w_hat[r], w_flat[(8 * j + 8 * r) / 8]);       // lifted output
-      bfSSS_byte_combine_bits_sq(&w_hat_sq[r], w_flat[(8 * j + 8 * r) / 8]); // lifted output sq
+      bfSSS_t k_hat_tag;    // expanded key witness tag
+      bfSSS_t w_hat_tag;    // inverse output tag
+      bfSSS_t k_hat_tag_sq; // expanded key tag sq
+      bfSSS_t w_hat_tag_sq; // inverser output tag sq
+
+      // ::12-15
+      bfSSS_byte_combine_bits(&k_hat, k[(iwd + 8 * r_prime) / 8]);       // lifted key witness
+      bfSSS_byte_combine_bits_sq(&k_hat_sq, k[(iwd + 8 * r_prime) / 8]); // lifted key witness sq
+
+      bfSSS_byte_combine_bits(&w_hat, w_flat[(8 * j + 8 * r) / 8]);       // lifted output
+      bfSSS_byte_combine_bits_sq(&w_hat_sq, w_flat[(8 * j + 8 * r) / 8]); // lifted output sq
 
       // done by both prover and verifier
-      bfSSS_byte_combine(&k_hat_tag[r_prime], k_tag + (iwd + 8 * r));       // lifted key tag
-      bfSSS_byte_combine_sq(&k_hat_tag_sq[r_prime], k_tag + (iwd + 8 * r)); // lifted key tag sq
+      bfSSS_byte_combine(&k_hat_tag, k_tag + (iwd + 8 * r_prime));       // lifted key tag
+      bfSSS_byte_combine_sq(&k_hat_tag_sq, k_tag + (iwd + 8 * r_prime)); // lifted key tag sq
 
-      bfSSS_byte_combine(&w_hat_tag[r], w_flat_tag + ((8 * j + 8 * r))); // lifted output tag
-      bfSSS_byte_combine_sq(&w_hat_tag_sq[r],
+      bfSSS_byte_combine(&w_hat_tag, w_flat_tag + ((8 * j + 8 * r))); // lifted output tag
+      bfSSS_byte_combine_sq(&w_hat_tag_sq,
                             w_flat_tag + (8 * j + 8 * r)); // lifted output tag sq
-    }
 
-    // ::17
-    for (unsigned int r = 0; r < 4; r++) {
       // ::18-19
       bfSSS_t v1;
       bfSSS_t tmp;
-      bfSSS_mul(&v1, &k_hat_sq[r], &w_hat_tag[r]);
-      bfSSS_mul(&tmp, &k_hat_tag_sq[r], &w_hat[r]);
-      bfSSS_add_inplace(&v1, &k_hat_tag[r]);
+      bfSSS_mul(&v1, &k_hat_sq, &w_hat_tag);
+      bfSSS_mul(&tmp, &k_hat_tag_sq, &w_hat);
+      bfSSS_add_inplace(&v1, &k_hat_tag);
       bfSSS_add_inplace(&v1, &tmp);
-      bfSSS_mul(&tmp, &k_hat_tag_sq[r], &w_hat_tag[r]);
+      bfSSS_mul(&tmp, &k_hat_tag_sq, &w_hat_tag);
       zk_hash_SSS_3_raise_and_update(hasher, &tmp, &v1);
-      bfSSS_mul(&v1, &k_hat[r], &w_hat_tag_sq[r]);
-      bfSSS_mul(&tmp, &k_hat_tag[r], &w_hat_sq[r]);
-      bfSSS_add_inplace(&v1, &w_hat_tag[r]);
+
+      bfSSS_mul(&v1, &k_hat, &w_hat_tag_sq);
+      bfSSS_mul(&tmp, &k_hat_tag, &w_hat_sq);
+      bfSSS_add_inplace(&v1, &w_hat_tag);
       bfSSS_add_inplace(&v1, &tmp);
-      bfSSS_mul(&tmp, &k_hat_tag[r], &w_hat_tag_sq[r]);
+      bfSSS_mul(&tmp, &k_hat_tag, &w_hat_tag_sq);
       zk_hash_SSS_3_raise_and_update(hasher, &tmp, &v1);
     }
 #if FAEST_SSS_LAMBDA == 192
@@ -1166,16 +1162,10 @@ static void aes_SSS_expkey_constraints_verifier(zk_hash_SSS_ctx* hasher, bfSSS_t
   aes_SSS_keyexp_backward_verifier(w_flat_key, w_key + FAEST_SSS_LAMBDA, k_key, delta, params);
 
   // ::3-5
-  unsigned int iwd = 32 * (FAEST_SSS_NK - 1); // as 1 unit8 has 8 bits
+  unsigned int iwd = 32 * (FAEST_SSS_NK - 1); // as 1 unit has 8 bits
   // ::6 Used only on AES-256
   // ::7
   for (unsigned int j = 0; j < Ske; j += 4) {
-    // ::8
-    bfSSS_t k_hat_key[4];    // expanded key witness tag
-    bfSSS_t w_hat_key[4];    // inverse output tag
-    bfSSS_t k_hat_key_sq[4]; // expanded key tag sq
-    bfSSS_t w_hat_key_sq[4]; // inverser output tag sq
-
     // ::9
     for (unsigned int r = 0; r < 4; r++) {
 #if FAEST_SSS_LAMBDA == 256
@@ -1183,33 +1173,36 @@ static void aes_SSS_expkey_constraints_verifier(zk_hash_SSS_ctx* hasher, bfSSS_t
       unsigned int r_prime = r;
       // ::11
       if (j % 8 == 0) {
-        r_prime = (r + 3) % 4;
+        r_prime = (r + 1) % 4;
       }
 #else
-      unsigned int r_prime = (r + 3) % 4;
+      unsigned int r_prime = (r + 1) % 4;
 #endif
+      bfSSS_t k_hat_key;    // expanded key witness tag
+      bfSSS_t w_hat_key;    // inverse output tag
+      bfSSS_t k_hat_key_sq; // expanded key tag sq
+      bfSSS_t w_hat_key_sq; // inverser output tag sq
+
       // ::12-15
-      bfSSS_byte_combine(&k_hat_key[r_prime], k_key + (iwd + 8 * r));       // lifted key tag
-      bfSSS_byte_combine_sq(&k_hat_key_sq[r_prime], k_key + (iwd + 8 * r)); // lifted key tag sq
+      bfSSS_byte_combine(&k_hat_key, k_key + (iwd + 8 * r_prime));       // lifted key tag
+      bfSSS_byte_combine_sq(&k_hat_key_sq, k_key + (iwd + 8 * r_prime)); // lifted key tag sq
 
-      bfSSS_byte_combine(&w_hat_key[r], w_flat_key + ((8 * j + 8 * r))); // lifted output tag
-      bfSSS_byte_combine_sq(&w_hat_key_sq[r],
+      bfSSS_byte_combine(&w_hat_key, w_flat_key + ((8 * j + 8 * r))); // lifted output tag
+      bfSSS_byte_combine_sq(&w_hat_key_sq,
                             w_flat_key + (8 * j + 8 * r)); // lifted output tag sq
-    }
 
-    // ::17-20
-    for (unsigned int r = 0; r < 4; r++) {
+      // ::17-20
       // also raise degree
       bfSSS_t v;
       bfSSS_t tmp;
-      bfSSS_mul(&v, &k_hat_key_sq[r], &w_hat_key[r]);
-      bfSSS_mul(&tmp, delta, &k_hat_key[r]);
+      bfSSS_mul(&v, &k_hat_key_sq, &w_hat_key);
+      bfSSS_mul(&tmp, delta, &k_hat_key);
       bfSSS_add_inplace(&v, &tmp);
       bfSSS_mul_inplace(&v, delta);
       zk_hash_SSS_update(hasher, &v);
 
-      bfSSS_mul(&v, &k_hat_key[r], &w_hat_key_sq[r]);
-      bfSSS_mul(&tmp, delta, &w_hat_key[r]);
+      bfSSS_mul(&v, &k_hat_key, &w_hat_key_sq);
+      bfSSS_mul(&tmp, delta, &w_hat_key);
       bfSSS_add_inplace(&v, &tmp);
       bfSSS_mul_inplace(&v, delta);
       zk_hash_SSS_update(hasher, &v);
