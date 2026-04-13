@@ -1902,4 +1902,58 @@ BOOST_AUTO_TEST_CASE(test_bf256_sum_poly_bits) {
   BOOST_TEST(sum == check);
 }
 
+BOOST_AUTO_TEST_CASE(test_bf128_sq_bit) {
+  std::array<bf128_t, 8> in, out;
+  for (auto& v : in) {
+    v = bf128::random().as_internal();
+  }
+
+  bf128_sq_bit(out.data(), in.data());
+  bf128_sq_bit_inplace(in.data());
+  BOOST_TEST(bf128{in[0]} == bf128{out[0]});
+  BOOST_TEST(bf128{in[1]} == bf128{out[1]});
+  BOOST_TEST(bf128{in[2]} == bf128{out[2]});
+  BOOST_TEST(bf128{in[3]} == bf128{out[3]});
+  BOOST_TEST(bf128{in[4]} == bf128{out[4]});
+  BOOST_TEST(bf128{in[5]} == bf128{out[5]});
+  BOOST_TEST(bf128{in[6]} == bf128{out[6]});
+  BOOST_TEST(bf128{in[7]} == bf128{out[7]});
+}
+
+BOOST_AUTO_TEST_CASE(test_bf192_sq_bit) {
+  std::array<bf192_t, 8> in, out;
+  for (auto& v : in) {
+    v = bf192::random().as_internal();
+  }
+
+  bf192_sq_bit(out.data(), in.data());
+  bf192_sq_bit_inplace(in.data());
+  BOOST_TEST(bf192{in[0]} == bf192{out[0]});
+  BOOST_TEST(bf192{in[1]} == bf192{out[1]});
+  BOOST_TEST(bf192{in[2]} == bf192{out[2]});
+  BOOST_TEST(bf192{in[3]} == bf192{out[3]});
+  BOOST_TEST(bf192{in[4]} == bf192{out[4]});
+  BOOST_TEST(bf192{in[5]} == bf192{out[5]});
+  BOOST_TEST(bf192{in[6]} == bf192{out[6]});
+  BOOST_TEST(bf192{in[7]} == bf192{out[7]});
+}
+
+BOOST_AUTO_TEST_CASE(test_bf256_sq_bit) {
+  std::array<bf256_t, 8> in, out;
+  for (auto& v : in) {
+    v = bf256::random().as_internal();
+  }
+
+  bf256_sq_bit(out.data(), in.data());
+  bf256_sq_bit_inplace(in.data());
+  BOOST_TEST(bf256{in[0]} == bf256{out[0]});
+  BOOST_TEST(bf256{in[1]} == bf256{out[1]});
+  BOOST_TEST(bf256{in[2]} == bf256{out[2]});
+  BOOST_TEST(bf256{in[3]} == bf256{out[3]});
+  BOOST_TEST(bf256{in[4]} == bf256{out[4]});
+  BOOST_TEST(bf256{in[5]} == bf256{out[5]});
+  BOOST_TEST(bf256{in[6]} == bf256{out[6]});
+  BOOST_TEST(bf256{in[7]} == bf256{out[7]});
+}
+
 BOOST_AUTO_TEST_SUITE_END()
