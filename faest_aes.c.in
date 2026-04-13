@@ -43,6 +43,7 @@
 #define bfSSS_byte_combine_bits bf@SSS@_byte_combine_bits
 #define bfSSS_byte_combine_sq bf@SSS@_byte_combine_sq
 #define bfSSS_byte_combine_bits_sq bf@SSS@_byte_combine_bits_sq
+#define bfSSS_sq_bit bf@SSS@_sq_bit
 #define bfSSS_sq_bit_inplace bf@SSS@_sq_bit_inplace
 #define bfSSS_sum_poly bf@SSS@_sum_poly
 #define bfSSS_sum_poly_bits bf@SSS@_sum_poly_bits
@@ -136,8 +137,9 @@ static void aes_SSS_f256_f2_conjugates_SSS(bfSSS_t* y, const bfSSS_t* state, uns
 
   for (unsigned int i = 0; i != Nst_bytes; ++i) {
     bfSSS_t x[8];
-    memcpy(x, state + i * 8, sizeof(x));
-    for (unsigned int j = 0; j != 7; ++j) {
+    bfSSS_byte_combine(&y[i * 8], state + i * 8);
+    bfSSS_sq_bit(x, state + i * 8);
+    for (unsigned int j = 1; j != 7; ++j) {
       bfSSS_byte_combine(&y[i * 8 + j], x);
       bfSSS_sq_bit_inplace(x);
     }
