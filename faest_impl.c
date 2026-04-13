@@ -364,26 +364,28 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   }
   vole_commit(rootkey, iv, ell_hat, params, &bavc, signature_c(sig, 0, params), u, V);
 
-  // ::8
-  uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
-  hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), iv, lambda, ell, tau);
-
-  // ::9-10
-  vole_hash(signature_u_tilde(sig, params), chall_1, u, ell, lambda);
-
-  // ::11-12
-  // To save memory consumption, the chall_2 is computed in an
-  // Init-Update-Finalize style as V_tilde is only fed into to the hash and not
-  // used elsewhere.
-  H2_context_t chall_2_ctx;
-  hash_challenge_2_init(&chall_2_ctx, chall_1, signature_u_tilde(sig, params), lambda);
+  H2_context_t h2_ctx;
   {
-    uint8_t V_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
-    for (unsigned int i = 0; i != lambda; ++i) {
-      // Step 11
-      vole_hash(V_tilde, chall_1, V[i], ell, lambda);
-      // Step 14
-      hash_challenge_2_update_v_tilde(&chall_2_ctx, V_tilde, lambda);
+    // ::8
+    uint8_t chall_1[(5 * MAX_LAMBDA_BYTES) + 8];
+    hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), iv, lambda, ell, tau);
+
+    // ::9-10
+    vole_hash(signature_u_tilde(sig, params), chall_1, u, ell, lambda);
+
+    // ::11-12
+    // To save memory consumption, the chall_2 is computed in an
+    // Init-Update-Finalize style as V_tilde is only fed into to the hash and not
+    // used elsewhere.
+    hash_challenge_2_init(&h2_ctx, chall_1, signature_u_tilde(sig, params), lambda);
+    {
+      uint8_t V_tilde[MAX_LAMBDA_BYTES + UNIVERSAL_HASH_B];
+      for (unsigned int i = 0; i != lambda; ++i) {
+        // Step 11
+        vole_hash(V_tilde, chall_1, V[i], ell, lambda);
+        // Step 14
+        hash_challenge_2_update_v_tilde(&h2_ctx, V_tilde, lambda);
+      }
     }
   }
 
@@ -391,28 +393,29 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // ::14
   xor_u8_array(witness, u, signature_d(sig, params), ell_bytes);
 
-  // :15
-  uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
-  hash_challenge_2_finalize(chall_2, &chall_2_ctx, signature_d(sig, params), lambda, ell);
+  {
+    // :15
+    uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
+    hash_challenge_2_finalize(chall_2, &h2_ctx, signature_d(sig, params), lambda, ell);
 
-  // ::16-20
-  uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), witness,
-            u + ell_bytes, V, owf_input, owf_output, chall_2, params);
+    // ::16-20
+    uint8_t a0_tilde[MAX_LAMBDA_BYTES];
+    aes_prove(a0_tilde, signature_a1_tilde(sig, params), signature_a2_tilde(sig, params), witness,
+              u + ell_bytes, V, owf_input, owf_output, chall_2, params);
 
-  free_pointer_array(&V);
-  free(u);
-  u = NULL;
+    free_pointer_array(&V);
+    free(u);
+    u = NULL;
 
-  // ::21-22
-  H2_context_t chall_3_ctx;
-  hash_challenge_3_init(&chall_3_ctx, chall_2, a0_tilde, signature_a1_tilde(sig, params),
-                        signature_a2_tilde(sig, params), lambda);
+    // ::21-22
+    hash_challenge_3_init(&h2_ctx, chall_2, a0_tilde, signature_a1_tilde(sig, params),
+                          signature_a2_tilde(sig, params), lambda);
+  }
 
   uint32_t ctr = 0;
   for (; true; ++ctr) {
     uint8_t* chall_3 = signature_chall_3(sig, params);
-    hash_challenge_3_final(chall_3, &chall_3_ctx, ctr, lambda);
+    hash_challenge_3_final(chall_3, &h2_ctx, ctr, lambda);
     // declassify chall_3 which is put into the signature
     faest_declassify(chall_3, lambda / 8);
 
@@ -432,7 +435,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
       break;
     }
   }
-  hash_clear(&chall_3_ctx);
+  hash_clear(&h2_ctx);
   bavc_clear(&bavc);
 
   // copy counter to signature
