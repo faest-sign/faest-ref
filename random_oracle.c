@@ -13,7 +13,7 @@
 
 // H_0
 void H0_init(H0_context_t* ctx, unsigned int security_param) {
-  hash_init(ctx, security_param == 128 ? 128 : 256);
+  hash_init(ctx, security_param);
 }
 
 void H0_update(H0_context_t* ctx, const uint8_t* src, size_t len) {
@@ -44,7 +44,7 @@ void H0_clear(H0_context_t* H0_ctx) {
 
 // H_1
 void H1_init(H1_context_t* ctx, unsigned int security_param) {
-  hash_init(ctx, security_param == 128 ? 128 : 256);
+  hash_init(ctx, security_param);
 }
 
 void H1_update(H1_context_t* ctx, const uint8_t* src, size_t len) {
@@ -61,7 +61,7 @@ void H1_final(H1_context_t* ctx, uint8_t* digest, size_t len) {
 
 // H_2
 void H2_init(H2_context_t* ctx, unsigned int security_param) {
-  hash_init(ctx, security_param == 128 ? 128 : 256);
+  hash_init(ctx, security_param);
 }
 
 void H2_copy(H2_context_t* new_ctx, const H2_context_t* ctx) {
@@ -110,7 +110,7 @@ void H2_3_final(H2_context_t* ctx, uint8_t* digest, size_t len) {
 
 // H_3
 void H3_init(H3_context_t* ctx, unsigned int security_param) {
-  hash_init(ctx, security_param == 128 ? 128 : 256);
+  hash_init(ctx, security_param);
 }
 
 void H3_update(H3_context_t* ctx, const uint8_t* src, size_t len) {
@@ -127,18 +127,13 @@ void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len, uint8_t* iv) {
 }
 
 // H_4
-void H4_init(H4_context_t* ctx, unsigned int security_param) {
-  hash_init(ctx, security_param == 128 ? 128 : 256);
-}
-
-void H4_update(H4_context_t* ctx, const uint8_t* iv) {
-  hash_update(ctx, iv, IV_SIZE);
-}
-
-void H4_final(H4_context_t* ctx, uint8_t* iv) {
+void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params) {
+  hash_context ctx;
+  hash_init(&ctx, security_params);
+  hash_update(&ctx, pre_iv, IV_SIZE);
   const uint8_t domain_sep_H4 = 4;
-  hash_update(ctx, &domain_sep_H4, sizeof(domain_sep_H4));
-  hash_final(ctx);
-  hash_squeeze(ctx, iv, IV_SIZE);
-  hash_clear(ctx);
+  hash_update(&ctx, &domain_sep_H4, sizeof(domain_sep_H4));
+  hash_final(&ctx);
+  hash_squeeze(&ctx, iv, IV_SIZE);
+  hash_clear(&ctx);
 }

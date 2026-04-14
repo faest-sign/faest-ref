@@ -54,11 +54,7 @@ void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len, uint8_t* iv);
 
 // implementation for H_4
 
-typedef hash_context H4_context_t;
-
-void H4_init(H4_context_t* ctx, unsigned int security_param);
-void H4_update(H4_context_t* ctx, const uint8_t* pre_iv);
-void H4_final(H4_context_t* ctx, uint8_t* iv);
+void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params);
 
 FAEST_END_C_DECL
 
