@@ -70,7 +70,7 @@ typedef struct faest_paramset_t {
 const char* ATTR_CONST faest_get_param_name(faest_paramid_t paramid);
 const faest_paramset_t* ATTR_CONST faest_get_paramset(faest_paramid_t paramid);
 
-static inline bool ATTR_PURE faest_is_em(const faest_paramset_t* params) {
+static inline bool ATTR_PURE ATTR_ALWAYS_INLINE faest_is_em(const faest_paramset_t* params) {
   // EM instances do not have key expansion constraints
   return params->Ske == 0;
 }

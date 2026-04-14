@@ -52,7 +52,7 @@ void H1_update(H1_context_t* ctx, const uint8_t* src, size_t len) {
 }
 
 void H1_final(H1_context_t* ctx, uint8_t* digest, size_t len) {
-  static const uint8_t domain_sep_H1 = 1;
+  const uint8_t domain_sep_H1 = 1;
   hash_update(ctx, &domain_sep_H1, sizeof(domain_sep_H1));
   hash_final(ctx);
   hash_squeeze(ctx, digest, len);
@@ -85,7 +85,7 @@ void H2_0_final(H2_context_t* ctx, uint8_t* digest, size_t len) {
 }
 
 void H2_1_final(H2_context_t* ctx, uint8_t* digest, size_t len) {
-  uint8_t domain_sep_H2_1 = 8 + 1;
+  const uint8_t domain_sep_H2_1 = 8 + 1;
   hash_update(ctx, &domain_sep_H2_1, sizeof(domain_sep_H2_1));
   hash_final(ctx);
   hash_squeeze(ctx, digest, len);
