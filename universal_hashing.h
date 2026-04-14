@@ -101,7 +101,6 @@ void zk_hash_256_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_25
 void leaf_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x);
 void leaf_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x);
 void leaf_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x);
-void leaf_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int lambda);
 
 FAEST_END_C_DECL
 

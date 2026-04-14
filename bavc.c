@@ -12,6 +12,7 @@
 #include "aes.h"
 #include "instances.h"
 #include "universal_hashing.h"
+#include "parameters.h"
 
 #include <assert.h>
 #include <string.h>
@@ -41,19 +42,33 @@ static uint8_t* generate_seeds(const uint8_t* root_seed, const uint8_t* iv,
 }
 
 // FAEST.LeafCommit
-static void faest_leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* iv,
-                              uint32_t tweak, const uint8_t* uhash, unsigned int lambda) {
-  const unsigned int lambda_bytes = lambda / 8;
+static inline void faest_leaf_commit_128(uint8_t* sd, uint8_t* com, const uint8_t* key,
+                                         const uint8_t* iv, uint32_t tweak, const uint8_t* uhash) {
+  uint8_t buffer[FAEST_128_LAMBDA / 8 * 4];
+  prg_4_lambda(key, iv, tweak, buffer, FAEST_128_LAMBDA);
+  leaf_hash_128(com, uhash, buffer);
+  memcpy(sd, buffer, FAEST_128_LAMBDA / 8);
+}
 
-  uint8_t buffer[MAX_LAMBDA_BYTES * 4];
-  prg_4_lambda(key, iv, tweak, buffer, lambda);
-  leaf_hash(com, uhash, buffer, lambda);
-  memcpy(sd, buffer, lambda_bytes);
+static inline void faest_leaf_commit_192(uint8_t* sd, uint8_t* com, const uint8_t* key,
+                                         const uint8_t* iv, uint32_t tweak, const uint8_t* uhash) {
+  uint8_t buffer[FAEST_192_LAMBDA / 8 * 4];
+  prg_4_lambda(key, iv, tweak, buffer, FAEST_192_LAMBDA);
+  leaf_hash_192(com, uhash, buffer);
+  memcpy(sd, buffer, FAEST_192_LAMBDA / 8);
+}
+
+static inline void faest_leaf_commit_256(uint8_t* sd, uint8_t* com, const uint8_t* key,
+                                         const uint8_t* iv, uint32_t tweak, const uint8_t* uhash) {
+  uint8_t buffer[FAEST_256_LAMBDA / 8 * 4];
+  prg_4_lambda(key, iv, tweak, buffer, FAEST_256_LAMBDA);
+  leaf_hash_256(com, uhash, buffer);
+  memcpy(sd, buffer, FAEST_256_LAMBDA / 8);
 }
 
 // FAEST-EM.LeafCommit
-static void faest_em_leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* iv,
-                                 uint32_t tweak, unsigned int lambda) {
+static inline void faest_em_leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key,
+                                        const uint8_t* iv, uint32_t tweak, unsigned int lambda) {
   const unsigned int lambda_bytes = lambda / 8;
 
   memcpy(sd, key, lambda_bytes);
@@ -66,7 +81,20 @@ void leaf_commit(uint8_t* sd, uint8_t* com, const uint8_t* key, const uint8_t* i
   if (faest_is_em(params)) {
     faest_em_leaf_commit(sd, com, key, iv, tweak, params->lambda);
   } else {
-    faest_leaf_commit(sd, com, key, iv, tweak, uhash, params->lambda);
+    switch (params->lambda) {
+    case 256: {
+      faest_leaf_commit_256(sd, com, key, iv, tweak, uhash);
+      break;
+    }
+    case 192: {
+      faest_leaf_commit_192(sd, com, key, iv, tweak, uhash);
+      break;
+    }
+    default: {
+      faest_leaf_commit_128(sd, com, key, iv, tweak, uhash);
+      break;
+    }
+    }
   }
 }
 #endif
@@ -81,6 +109,102 @@ ATTR_PURE static inline unsigned int pos_in_tree(unsigned int i, unsigned int j,
   // mod 2^(k-1) is the same as & 2^(k-1)-1
   const unsigned int mask = tmp - 1;
   return params->L - 1 + params->tau * tmp + params->tau1 * (j & mask) + i;
+}
+
+static void bavc_commit_faest_128_loop(bavc_t* bavc, H0_context_t* uhash_ctx,
+                                       H1_context_t* h1_com_ctx, const uint8_t* nodes,
+                                       const uint8_t* iv, const faest_paramset_t* params) {
+  const unsigned int L            = params->L;
+  const unsigned int lambda_bytes = FAEST_128_LAMBDA / 8;
+  const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
+
+  // Step: 4..5
+  // compute commitments for remaining instances
+  for (unsigned int i = 0, offset = 0; i < params->tau; ++i) {
+    uint8_t uhash[FAEST_128_LAMBDA / 8 * 3];
+    H0_squeeze(uhash_ctx, uhash, sizeof(uhash));
+
+    H1_context_t h1_ctx;
+    H1_init(&h1_ctx, FAEST_128_LAMBDA);
+
+    const unsigned int N_i = bavc_max_node_index(i, params->tau1, params->k);
+    for (unsigned int j = 0; j < N_i; ++j, ++offset) {
+      const unsigned int alpha = pos_in_tree(i, j, params);
+      faest_leaf_commit_128(bavc->sd + offset * lambda_bytes, bavc->com + offset * com_size,
+                            NODE(nodes, alpha, lambda_bytes), iv, i + L - 1, uhash);
+      H1_update(&h1_ctx, bavc->com + offset * com_size, com_size);
+    }
+
+    uint8_t hi[FAEST_128_LAMBDA / 8 * 2];
+    // Step 11
+    H1_final(&h1_ctx, hi, sizeof(hi));
+    // Step 12
+    H1_update(h1_com_ctx, hi, sizeof(hi));
+  }
+}
+
+static void bavc_commit_faest_192_loop(bavc_t* bavc, H0_context_t* uhash_ctx,
+                                       H1_context_t* h1_com_ctx, const uint8_t* nodes,
+                                       const uint8_t* iv, const faest_paramset_t* params) {
+  const unsigned int L            = params->L;
+  const unsigned int lambda_bytes = FAEST_192_LAMBDA / 8;
+  const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
+
+  // Step: 4..5
+  // compute commitments for remaining instances
+  for (unsigned int i = 0, offset = 0; i < params->tau; ++i) {
+    uint8_t uhash[FAEST_192_LAMBDA / 8 * 3];
+    H0_squeeze(uhash_ctx, uhash, sizeof(uhash));
+
+    H1_context_t h1_ctx;
+    H1_init(&h1_ctx, FAEST_192_LAMBDA);
+
+    const unsigned int N_i = bavc_max_node_index(i, params->tau1, params->k);
+    for (unsigned int j = 0; j < N_i; ++j, ++offset) {
+      const unsigned int alpha = pos_in_tree(i, j, params);
+      faest_leaf_commit_192(bavc->sd + offset * lambda_bytes, bavc->com + offset * com_size,
+                            NODE(nodes, alpha, lambda_bytes), iv, i + L - 1, uhash);
+      H1_update(&h1_ctx, bavc->com + offset * com_size, com_size);
+    }
+
+    uint8_t hi[FAEST_192_LAMBDA / 8 * 2];
+    // Step 11
+    H1_final(&h1_ctx, hi, sizeof(hi));
+    // Step 12
+    H1_update(h1_com_ctx, hi, sizeof(hi));
+  }
+}
+
+static void bavc_commit_faest_256_loop(bavc_t* bavc, H0_context_t* uhash_ctx,
+                                       H1_context_t* h1_com_ctx, const uint8_t* nodes,
+                                       const uint8_t* iv, const faest_paramset_t* params) {
+  const unsigned int L            = params->L;
+  const unsigned int lambda_bytes = FAEST_256_LAMBDA / 8;
+  const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
+
+  // Step: 4..5
+  // compute commitments for remaining instances
+  for (unsigned int i = 0, offset = 0; i < params->tau; ++i) {
+    uint8_t uhash[FAEST_256_LAMBDA / 8 * 3];
+    H0_squeeze(uhash_ctx, uhash, sizeof(uhash));
+
+    H1_context_t h1_ctx;
+    H1_init(&h1_ctx, FAEST_256_LAMBDA);
+
+    const unsigned int N_i = bavc_max_node_index(i, params->tau1, params->k);
+    for (unsigned int j = 0; j < N_i; ++j, ++offset) {
+      const unsigned int alpha = pos_in_tree(i, j, params);
+      faest_leaf_commit_256(bavc->sd + offset * lambda_bytes, bavc->com + offset * com_size,
+                            NODE(nodes, alpha, lambda_bytes), iv, i + L - 1, uhash);
+      H1_update(&h1_ctx, bavc->com + offset * com_size, com_size);
+    }
+
+    uint8_t hi[FAEST_256_LAMBDA / 8 * 2];
+    // Step 11
+    H1_final(&h1_ctx, hi, sizeof(hi));
+    // Step 12
+    H1_update(h1_com_ctx, hi, sizeof(hi));
+  }
 }
 
 // BAVC.Commit for FAEST
@@ -118,26 +242,19 @@ static void bavc_commit_faest(bavc_t* bavc, const uint8_t* root_key, const uint8
 
   // Step: 4..5
   // compute commitments for remaining instances
-  for (unsigned int i = 0, offset = 0; i < params->tau; ++i) {
-    uint8_t uhash[MAX_LAMBDA_BYTES * 3];
-    H0_squeeze(&uhash_ctx, uhash, 3 * lambda_bytes);
-
-    H1_context_t h1_ctx;
-    H1_init(&h1_ctx, lambda);
-
-    const unsigned int N_i = bavc_max_node_index(i, params->tau1, params->k);
-    for (unsigned int j = 0; j < N_i; ++j, ++offset) {
-      const unsigned int alpha = pos_in_tree(i, j, params);
-      faest_leaf_commit(bavc->sd + offset * lambda_bytes, bavc->com + offset * com_size,
-                        NODE(nodes, alpha, lambda_bytes), iv, i + L - 1, uhash, lambda);
-      H1_update(&h1_ctx, bavc->com + offset * com_size, com_size);
-    }
-
-    uint8_t hi[MAX_LAMBDA_BYTES * 2];
-    // Step 11
-    H1_final(&h1_ctx, hi, lambda_bytes * 2);
-    // Step 12
-    H1_update(&h1_com_ctx, hi, lambda_bytes * 2);
+  switch (lambda) {
+  case 256: {
+    bavc_commit_faest_256_loop(bavc, &uhash_ctx, &h1_com_ctx, nodes, iv, params);
+    break;
+  }
+  case 192: {
+    bavc_commit_faest_192_loop(bavc, &uhash_ctx, &h1_com_ctx, nodes, iv, params);
+    break;
+  }
+  default: {
+    bavc_commit_faest_128_loop(bavc, &uhash_ctx, &h1_com_ctx, nodes, iv, params);
+    break;
+  }
   }
   H0_clear(&uhash_ctx);
 
@@ -312,6 +429,126 @@ static bool reconstruct_keys(uint8_t* s, uint8_t* keys, const uint8_t* decom_i,
   return true;
 }
 
+static void bavc_reconstruct_faest_128_loop(bavc_rec_t* bavc_rec, H0_context_t* uhash_ctx,
+                                            H1_context_t* h1_com_ctx, const uint8_t* s,
+                                            const uint8_t* keys, const uint8_t* decom_i,
+                                            const uint8_t* iv, const faest_paramset_t* params) {
+  // Initializing
+  const unsigned int L            = params->L;
+  const unsigned int lambda_bytes = FAEST_128_LAMBDA / 8;
+  const unsigned int k            = params->k;
+  const unsigned int tau          = params->tau;
+  const unsigned int tau_1        = params->tau1;
+  const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
+
+  // Step 6
+  for (unsigned int i = 0, offset = 0; i != tau; ++i) {
+    uint8_t uhash[FAEST_128_LAMBDA / 8 * 3];
+    H0_squeeze(uhash_ctx, uhash, sizeof(uhash));
+
+    H1_context_t h1_ctx;
+    H1_init(&h1_ctx, FAEST_128_LAMBDA);
+
+    const unsigned int N_i = bavc_max_node_index(i, tau_1, k);
+    for (unsigned int j = 0; j != N_i; ++j) {
+      const unsigned int alpha = pos_in_tree(i, j, params);
+      if (ptr_get_bit(s, alpha)) {
+        H1_update(&h1_ctx, decom_i + i * com_size, com_size);
+      } else {
+        uint8_t com[3 * MAX_LAMBDA_BYTES];
+        faest_leaf_commit_128(bavc_rec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
+                              iv, i + L - 1, uhash);
+        ++offset;
+        H1_update(&h1_ctx, com, com_size);
+      }
+    }
+
+    uint8_t hi[FAEST_128_LAMBDA / 8 * 2];
+    H1_final(&h1_ctx, hi, sizeof(hi));
+    H1_update(h1_com_ctx, hi, sizeof(hi));
+  }
+}
+
+static void bavc_reconstruct_faest_192_loop(bavc_rec_t* bavc_rec, H0_context_t* uhash_ctx,
+                                            H1_context_t* h1_com_ctx, const uint8_t* s,
+                                            const uint8_t* keys, const uint8_t* decom_i,
+                                            const uint8_t* iv, const faest_paramset_t* params) {
+  // Initializing
+  const unsigned int L            = params->L;
+  const unsigned int lambda_bytes = FAEST_192_LAMBDA / 8;
+  const unsigned int k            = params->k;
+  const unsigned int tau          = params->tau;
+  const unsigned int tau_1        = params->tau1;
+  const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
+
+  // Step 6
+  for (unsigned int i = 0, offset = 0; i != tau; ++i) {
+    uint8_t uhash[FAEST_192_LAMBDA / 8 * 3];
+    H0_squeeze(uhash_ctx, uhash, sizeof(uhash));
+
+    H1_context_t h1_ctx;
+    H1_init(&h1_ctx, FAEST_192_LAMBDA);
+
+    const unsigned int N_i = bavc_max_node_index(i, tau_1, k);
+    for (unsigned int j = 0; j != N_i; ++j) {
+      const unsigned int alpha = pos_in_tree(i, j, params);
+      if (ptr_get_bit(s, alpha)) {
+        H1_update(&h1_ctx, decom_i + i * com_size, com_size);
+      } else {
+        uint8_t com[3 * MAX_LAMBDA_BYTES];
+        faest_leaf_commit_192(bavc_rec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
+                              iv, i + L - 1, uhash);
+        ++offset;
+        H1_update(&h1_ctx, com, com_size);
+      }
+    }
+
+    uint8_t hi[FAEST_192_LAMBDA / 8 * 2];
+    H1_final(&h1_ctx, hi, sizeof(hi));
+    H1_update(h1_com_ctx, hi, sizeof(hi));
+  }
+}
+
+static void bavc_reconstruct_faest_256_loop(bavc_rec_t* bavc_rec, H0_context_t* uhash_ctx,
+                                            H1_context_t* h1_com_ctx, const uint8_t* s,
+                                            const uint8_t* keys, const uint8_t* decom_i,
+                                            const uint8_t* iv, const faest_paramset_t* params) {
+  // Initializing
+  const unsigned int L            = params->L;
+  const unsigned int lambda_bytes = FAEST_256_LAMBDA / 8;
+  const unsigned int k            = params->k;
+  const unsigned int tau          = params->tau;
+  const unsigned int tau_1        = params->tau1;
+  const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
+
+  // Step 6
+  for (unsigned int i = 0, offset = 0; i != tau; ++i) {
+    uint8_t uhash[FAEST_256_LAMBDA / 8 * 3];
+    H0_squeeze(uhash_ctx, uhash, sizeof(uhash));
+
+    H1_context_t h1_ctx;
+    H1_init(&h1_ctx, FAEST_256_LAMBDA);
+
+    const unsigned int N_i = bavc_max_node_index(i, tau_1, k);
+    for (unsigned int j = 0; j != N_i; ++j) {
+      const unsigned int alpha = pos_in_tree(i, j, params);
+      if (ptr_get_bit(s, alpha)) {
+        H1_update(&h1_ctx, decom_i + i * com_size, com_size);
+      } else {
+        uint8_t com[3 * MAX_LAMBDA_BYTES];
+        faest_leaf_commit_256(bavc_rec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
+                              iv, i + L - 1, uhash);
+        ++offset;
+        H1_update(&h1_ctx, com, com_size);
+      }
+    }
+
+    uint8_t hi[FAEST_256_LAMBDA / 8 * 2];
+    H1_final(&h1_ctx, hi, sizeof(hi));
+    H1_update(h1_com_ctx, hi, sizeof(hi));
+  }
+}
+
 static bool bavc_reconstruct_faest(bavc_rec_t* bavc_rec, const uint8_t* decom_i,
                                    const uint16_t* i_delta, const uint8_t* iv,
                                    const faest_paramset_t* params) {
@@ -319,10 +556,6 @@ static bool bavc_reconstruct_faest(bavc_rec_t* bavc_rec, const uint8_t* decom_i,
   const unsigned int lambda       = params->lambda;
   const unsigned int L            = params->L;
   const unsigned int lambda_bytes = lambda / 8;
-  const unsigned int k            = params->k;
-  const unsigned int tau          = params->tau;
-  const unsigned int tau_1        = params->tau1;
-  const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
 
   // Step 6
   uint8_t* s = calloc((2 * L - 1 + 7) / 8, 1);
@@ -344,30 +577,22 @@ static bool bavc_reconstruct_faest(bavc_rec_t* bavc_rec, const uint8_t* decom_i,
   H1_context_t h1_com_ctx;
   H1_init(&h1_com_ctx, lambda);
 
-  for (unsigned int i = 0, offset = 0; i != tau; ++i) {
-    uint8_t uhash[MAX_LAMBDA_BYTES * 3];
-    H0_squeeze(&uhash_ctx, uhash, com_size);
-
-    H1_context_t h1_ctx;
-    H1_init(&h1_ctx, lambda);
-
-    const unsigned int N_i = bavc_max_node_index(i, tau_1, k);
-    for (unsigned int j = 0; j != N_i; ++j) {
-      const unsigned int alpha = pos_in_tree(i, j, params);
-      if (ptr_get_bit(s, alpha)) {
-        H1_update(&h1_ctx, decom_i + i * com_size, com_size);
-      } else {
-        uint8_t com[3 * MAX_LAMBDA_BYTES];
-        faest_leaf_commit(bavc_rec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes, iv,
-                          i + L - 1, uhash, lambda);
-        ++offset;
-        H1_update(&h1_ctx, com, com_size);
-      }
-    }
-
-    uint8_t hi[MAX_LAMBDA_BYTES * 2];
-    H1_final(&h1_ctx, hi, lambda_bytes * 2);
-    H1_update(&h1_com_ctx, hi, lambda_bytes * 2);
+  switch (lambda) {
+  case 256: {
+    bavc_reconstruct_faest_256_loop(bavc_rec, &uhash_ctx, &h1_com_ctx, s, keys, decom_i, iv,
+                                    params);
+    break;
+  }
+  case 192: {
+    bavc_reconstruct_faest_192_loop(bavc_rec, &uhash_ctx, &h1_com_ctx, s, keys, decom_i, iv,
+                                    params);
+    break;
+  }
+  default: {
+    bavc_reconstruct_faest_128_loop(bavc_rec, &uhash_ctx, &h1_com_ctx, s, keys, decom_i, iv,
+                                    params);
+    break;
+  }
   }
   H0_clear(&uhash_ctx);
 

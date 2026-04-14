@@ -536,17 +536,3 @@ void leaf_hash_256(uint8_t* h, const uint8_t* uhash, const uint8_t* x) {
   bf768_add_inplace(&u, &x1);
   bf768_store(h, &u);
 }
-
-void leaf_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int lambda) {
-  switch (lambda) {
-  case 256:
-    leaf_hash_256(h, sd, x);
-    break;
-  case 192:
-    leaf_hash_192(h, sd, x);
-    break;
-  default:
-    leaf_hash_128(h, sd, x);
-    break;
-  }
-}
