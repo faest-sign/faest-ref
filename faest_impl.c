@@ -179,8 +179,8 @@ static void hash_mu(uint8_t* mu, const uint8_t* owf_input, size_t owf_input_size
   H2_0_final(&h1_ctx, mu, 2 * lambda / 8);
 }
 
-static inline void ATTR_ALWAYS_INLINE hash_iv(uint8_t* iv, const uint8_t* iv_pre,
-                                              unsigned int lambda) {
+ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void hash_iv(uint8_t* iv, const uint8_t* iv_pre,
+                                                              unsigned int lambda) {
   H4(iv, iv_pre, lambda);
 }
 

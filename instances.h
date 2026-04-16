@@ -67,10 +67,10 @@ typedef struct faest_paramset_t {
   uint8_t owf_output_size;
 } faest_paramset_t;
 
-const char* ATTR_CONST faest_get_param_name(faest_paramid_t paramid);
-const faest_paramset_t* ATTR_CONST faest_get_paramset(faest_paramid_t paramid);
+ATTR_CONST const char* faest_get_param_name(faest_paramid_t paramid);
+ATTR_CONST const faest_paramset_t* faest_get_paramset(faest_paramid_t paramid);
 
-static inline bool ATTR_PURE ATTR_ALWAYS_INLINE faest_is_em(const faest_paramset_t* params) {
+ATTR_PURE ATTR_ALWAYS_INLINE static inline bool faest_is_em(const faest_paramset_t* params) {
   // EM instances do not have key expansion constraints
   return params->Ske == 0;
 }
