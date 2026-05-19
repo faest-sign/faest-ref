@@ -434,12 +434,10 @@ static void bavc_reconstruct_faest_128_loop(bavc_rec_t* bavc_rec, H0_context_t* 
                                             const uint8_t* keys, const uint8_t* decom_i,
                                             const uint8_t* iv, const faest_paramset_t* params) {
   // Initializing
-  const unsigned int L            = params->L;
-  const unsigned int lambda_bytes = FAEST_128_LAMBDA / 8;
-  const unsigned int k            = params->k;
-  const unsigned int tau          = params->tau;
-  const unsigned int tau_1        = params->tau1;
-  const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
+  const unsigned int L     = params->L;
+  const unsigned int k     = params->k;
+  const unsigned int tau   = params->tau;
+  const unsigned int tau_1 = params->tau1;
 
   // Step 6
   for (unsigned int i = 0, offset = 0; i != tau; ++i) {
@@ -453,13 +451,13 @@ static void bavc_reconstruct_faest_128_loop(bavc_rec_t* bavc_rec, H0_context_t* 
     for (unsigned int j = 0; j != N_i; ++j) {
       const unsigned int alpha = pos_in_tree(i, j, params);
       if (ptr_get_bit(s, alpha)) {
-        H1_update(&h1_ctx, decom_i + i * com_size, com_size);
+        H1_update(&h1_ctx, decom_i + i * 3 * FAEST_128_LAMBDA / 8, 3 * FAEST_128_LAMBDA / 8);
       } else {
-        uint8_t com[3 * MAX_LAMBDA_BYTES];
-        faest_leaf_commit_128(bavc_rec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
-                              iv, i + L - 1, uhash);
+        uint8_t com[3 * FAEST_128_LAMBDA / 8];
+        faest_leaf_commit_128(bavc_rec->s + offset * FAEST_128_LAMBDA / 8, com,
+                              keys + alpha * FAEST_128_LAMBDA / 8, iv, i + L - 1, uhash);
         ++offset;
-        H1_update(&h1_ctx, com, com_size);
+        H1_update(&h1_ctx, com, sizeof(com));
       }
     }
 
@@ -474,12 +472,10 @@ static void bavc_reconstruct_faest_192_loop(bavc_rec_t* bavc_rec, H0_context_t* 
                                             const uint8_t* keys, const uint8_t* decom_i,
                                             const uint8_t* iv, const faest_paramset_t* params) {
   // Initializing
-  const unsigned int L            = params->L;
-  const unsigned int lambda_bytes = FAEST_192_LAMBDA / 8;
-  const unsigned int k            = params->k;
-  const unsigned int tau          = params->tau;
-  const unsigned int tau_1        = params->tau1;
-  const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
+  const unsigned int L     = params->L;
+  const unsigned int k     = params->k;
+  const unsigned int tau   = params->tau;
+  const unsigned int tau_1 = params->tau1;
 
   // Step 6
   for (unsigned int i = 0, offset = 0; i != tau; ++i) {
@@ -493,13 +489,13 @@ static void bavc_reconstruct_faest_192_loop(bavc_rec_t* bavc_rec, H0_context_t* 
     for (unsigned int j = 0; j != N_i; ++j) {
       const unsigned int alpha = pos_in_tree(i, j, params);
       if (ptr_get_bit(s, alpha)) {
-        H1_update(&h1_ctx, decom_i + i * com_size, com_size);
+        H1_update(&h1_ctx, decom_i + i * 3 * FAEST_192_LAMBDA / 8, 3 * FAEST_192_LAMBDA / 8);
       } else {
-        uint8_t com[3 * MAX_LAMBDA_BYTES];
-        faest_leaf_commit_192(bavc_rec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
-                              iv, i + L - 1, uhash);
+        uint8_t com[3 * FAEST_192_LAMBDA / 8];
+        faest_leaf_commit_192(bavc_rec->s + offset * FAEST_192_LAMBDA / 8, com,
+                              keys + alpha * FAEST_192_LAMBDA / 8, iv, i + L - 1, uhash);
         ++offset;
-        H1_update(&h1_ctx, com, com_size);
+        H1_update(&h1_ctx, com, sizeof(com));
       }
     }
 
@@ -514,12 +510,10 @@ static void bavc_reconstruct_faest_256_loop(bavc_rec_t* bavc_rec, H0_context_t* 
                                             const uint8_t* keys, const uint8_t* decom_i,
                                             const uint8_t* iv, const faest_paramset_t* params) {
   // Initializing
-  const unsigned int L            = params->L;
-  const unsigned int lambda_bytes = FAEST_256_LAMBDA / 8;
-  const unsigned int k            = params->k;
-  const unsigned int tau          = params->tau;
-  const unsigned int tau_1        = params->tau1;
-  const unsigned int com_size     = lambda_bytes * 3; // size of com_ij
+  const unsigned int L     = params->L;
+  const unsigned int k     = params->k;
+  const unsigned int tau   = params->tau;
+  const unsigned int tau_1 = params->tau1;
 
   // Step 6
   for (unsigned int i = 0, offset = 0; i != tau; ++i) {
@@ -533,13 +527,13 @@ static void bavc_reconstruct_faest_256_loop(bavc_rec_t* bavc_rec, H0_context_t* 
     for (unsigned int j = 0; j != N_i; ++j) {
       const unsigned int alpha = pos_in_tree(i, j, params);
       if (ptr_get_bit(s, alpha)) {
-        H1_update(&h1_ctx, decom_i + i * com_size, com_size);
+        H1_update(&h1_ctx, decom_i + i * 3 * FAEST_256_LAMBDA / 8, 3 * FAEST_256_LAMBDA / 8);
       } else {
-        uint8_t com[3 * MAX_LAMBDA_BYTES];
-        faest_leaf_commit_256(bavc_rec->s + offset * lambda_bytes, com, keys + alpha * lambda_bytes,
-                              iv, i + L - 1, uhash);
+        uint8_t com[3 * FAEST_256_LAMBDA / 8];
+        faest_leaf_commit_256(bavc_rec->s + offset * FAEST_256_LAMBDA / 8, com,
+                              keys + alpha * FAEST_256_LAMBDA / 8, iv, i + L - 1, uhash);
         ++offset;
-        H1_update(&h1_ctx, com, com_size);
+        H1_update(&h1_ctx, com, sizeof(com));
       }
     }
 
