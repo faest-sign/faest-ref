@@ -499,15 +499,18 @@ void zk_hash_256_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_25
 }
 
 void leaf_hash_128(uint8_t* h, const uint8_t* uhash, const uint8_t* x) {
-  bf128_t x0;
-  bf384_t x1;
   bf384_t u;
-  bf128_load(&x0, x);
-  bf384_load(&x1, x + BF128_NUM_BYTES);
   bf384_load(&u, uhash);
-
-  bf384_mul_128_inplace(&u, &x0);
-  bf384_add_inplace(&u, &x1);
+  {
+    bf128_t x0;
+    bf128_load(&x0, x);
+    bf384_mul_128_inplace(&u, &x0);
+  }
+  {
+    bf384_t x1;
+    bf384_load(&x1, x + BF128_NUM_BYTES);
+    bf384_add_inplace(&u, &x1);
+  }
   bf384_store(h, &u);
 }
 
