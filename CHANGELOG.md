@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 2.0.5 -- 2026-07-02
+
+* Add option to use SHAKE implementation from OpenSSL.
+* Refactor finite field implementations.
+
 ## Version 2.0.4 -- 2025-06-06
 
 * Fix usage of bcrypt for AES192 and AES256.
