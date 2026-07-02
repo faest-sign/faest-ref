@@ -483,9 +483,9 @@ void bf256_sum_poly_bits(bf256_t* dst, const uint8_t* xs);
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf384_load(bf384_t* dst, const uint8_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  for (unsigned int i = 0; i != BF384_NUM_BYTES / BF128_NUM_BYTES; ++i, src += BF128_NUM_BYTES) {
-    bf128_load(&dst->inner[i], src);
-  }
+  bf128_load(&dst->inner[0], src);
+  bf128_load(&dst->inner[1], src + BF128_NUM_BYTES);
+  bf128_load(&dst->inner[2], src + 2 * BF128_NUM_BYTES);
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF384_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
@@ -501,9 +501,9 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf384_load(bf384_t* dst, c
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf384_store(uint8_t* dst,
                                                                   const bf384_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  for (unsigned int i = 0; i != BF384_NUM_BYTES / BF128_NUM_BYTES; ++i, dst += BF128_NUM_BYTES) {
-    bf128_store(dst, &src->inner[i]);
-  }
+  bf128_store(dst, &src->inner[0]);
+  bf128_store(dst + BF128_NUM_BYTES, &src->inner[1]);
+  bf128_store(dst + 2 * BF128_NUM_BYTES, &src->inner[2]);
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF384_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
@@ -557,9 +557,9 @@ void bf384_mul_128_inplace(bf384_t* lhs, const bf128_t* rhs);
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf576_load(bf576_t* dst, const uint8_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  for (unsigned int i = 0; i != BF576_NUM_BYTES / BF192_NUM_BYTES; ++i, src += BF192_NUM_BYTES) {
-    bf192_load(&dst->inner[i], src);
-  }
+  bf192_load(&dst->inner[0], src);
+  bf192_load(&dst->inner[1], src + BF192_NUM_BYTES);
+  bf192_load(&dst->inner[2], src + 2 * BF192_NUM_BYTES);
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF576_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
@@ -575,9 +575,9 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf576_load(bf576_t* dst, c
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf576_store(uint8_t* dst,
                                                                   const bf576_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  for (unsigned int i = 0; i != BF576_NUM_BYTES / BF192_NUM_BYTES; ++i, dst += BF192_NUM_BYTES) {
-    bf192_store(dst, &src->inner[i]);
-  }
+  bf192_store(dst, &src->inner[0]);
+  bf192_store(dst + BF192_NUM_BYTES, &src->inner[1]);
+  bf192_store(dst + 2 * BF192_NUM_BYTES, &src->inner[2]);
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF576_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
@@ -631,9 +631,9 @@ void bf576_mul_192_inplace(bf576_t* lhs, const bf192_t* rhs);
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf768_load(bf768_t* dst, const uint8_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  for (unsigned int i = 0; i != BF768_NUM_BYTES / BF256_NUM_BYTES; ++i, src += BF256_NUM_BYTES) {
-    bf256_load(&dst->inner[i], src);
-  }
+  bf256_load(&dst->inner[0], src);
+  bf256_load(&dst->inner[1], src + BF256_NUM_BYTES);
+  bf256_load(&dst->inner[2], src + 2 * BF256_NUM_BYTES);
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF768_NUM_BYTES / sizeof(uint64_t); ++i, src += sizeof(uint64_t)) {
@@ -649,9 +649,9 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf768_load(bf768_t* dst, c
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf768_store(uint8_t* dst,
                                                                   const bf768_t* src) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
-  for (unsigned int i = 0; i != BF768_NUM_BYTES / BF256_NUM_BYTES; ++i, dst += BF256_NUM_BYTES) {
-    bf256_store(dst, &src->inner[i]);
-  }
+  bf256_store(dst, &src->inner[0]);
+  bf256_store(dst + BF256_NUM_BYTES, &src->inner[1]);
+  bf256_store(dst + 2 * BF256_NUM_BYTES, &src->inner[2]);
 #else
 #if defined(FAEST_IS_BIG_ENDIAN)
   for (unsigned int i = 0; i != BF768_NUM_BYTES / sizeof(uint64_t); ++i, dst += sizeof(uint64_t)) {
