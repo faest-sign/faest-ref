@@ -30,3 +30,11 @@ meson ..
 ninja
 ninja test
 ```
+
+## Notes on Benchmarking
+
+This implementation represents the reference implementation of FAEST. While it aims to be as
+efficient as possible, its main goal is to provide an implementation that is mapped from the
+specification. A optimized implementation using is available
+[here](https://github.com/faest-sign/faest-arch-opt). For benchmarking and comparisons we recommend
+the optimized implementation.
