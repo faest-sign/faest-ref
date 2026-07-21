@@ -32,7 +32,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     const auto params                = faest_get_paramset(param_id);
     const unsigned int lambda        = params->lambda;
     const unsigned int lambda_bytes  = lambda / 8;
-    const unsigned int ell_hat       = params->l + params->lambda * 3 + UNIVERSAL_HASH_B_BITS;
+    const unsigned int ell_hat       = params->ell + params->lambda * 3 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
 
@@ -152,7 +152,7 @@ namespace {
                const std::array<uint8_t, 64>& expected_hashed_q) {
     const unsigned int lambda        = params->lambda;
     const unsigned int lambda_bytes  = lambda / 8;
-    const unsigned int ell_hat       = params->l + params->lambda * 3 + UNIVERSAL_HASH_B_BITS;
+    const unsigned int ell_hat       = params->ell + params->lambda * 3 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
 

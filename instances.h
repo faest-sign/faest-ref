@@ -45,7 +45,7 @@ typedef struct faest_paramset_t {
   uint8_t tau;
   uint8_t w_grind;
   uint16_t T_open;
-  uint16_t l;
+  uint16_t ell;
 
   // extra parameters
   uint16_t k;
@@ -65,6 +65,12 @@ typedef struct faest_paramset_t {
   uint16_t sig_size;
   uint8_t owf_input_size;
   uint8_t owf_output_size;
+
+  // new round 3 params
+  uint16_t d_zk;     // maximum degree used in Quicksilver
+  uint16_t n_mask;  // number of masks that are generated, d_zk + 2
+  uint16_t n_mult;  // number of AND gates in the F_2^lambda multiplication circuit
+
 } faest_paramset_t;
 
 ATTR_CONST const char* faest_get_param_name(faest_paramid_t paramid);

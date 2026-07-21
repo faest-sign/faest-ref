@@ -1052,7 +1052,7 @@ void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
     // last round is not commited to, so not computed
   }
 
-  assert(w - w_out == params->l / 8);
+  assert(w - w_out == params->ell / 8);
 }
 
 #if defined(HAVE_OPENSSL)

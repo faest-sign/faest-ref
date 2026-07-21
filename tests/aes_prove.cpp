@@ -166,9 +166,9 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     const unsigned int lambdaBytes = lambda / 8;
     const unsigned int ell = params->faest_param.l;
     const unsigned int ell_hat =
-        params->faest_param.l + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
+        params->faest_param.ell + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-    const unsigned int ell_bytes = (params->faest_param.l + 7) / 8;
+    const unsigned int ell_bytes = (params->faest_param.ell + 7) / 8;
 
     // extended witness
     //std::vector<uint8_t> w;
@@ -302,9 +302,9 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     const unsigned int lambdaBytes = lambda / 8;
     const unsigned int ell = params->faest_param.l;
     const unsigned int ell_hat =
-        params->faest_param.l + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
+        params->faest_param.ell + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-    const unsigned int ell_bytes = (params->faest_param.l + 7) / 8;
+    const unsigned int ell_bytes = (params->faest_param.ell + 7) / 8;
 
     // extended witness
     //std::vector<uint8_t> w;
@@ -437,9 +437,9 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     const unsigned int lambdaBytes = lambda / 8;
     const unsigned int ell         = params->faest_param.l;
     const unsigned int ell_hat =
-        params->faest_param.l + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
+        params->faest_param.ell + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-    const unsigned int ell_bytes     = (params->faest_param.l + 7) / 8;
+    const unsigned int ell_bytes     = (params->faest_param.ell + 7) / 8;
 
     // extended witness
     // std::vector<uint8_t> w;

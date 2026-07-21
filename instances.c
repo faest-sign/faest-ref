@@ -68,6 +68,9 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
       name##_SIG_SIZE,                                                                             \
       name##_OWF_INPUT_SIZE,                                                                       \
       name##_OWF_OUTPUT_SIZE,                                                                      \
+      name##_D_ZK,                                                                                 \
+      name##_N_MASK,                                                                               \
+      name##_N_MULT,                                                                               \
   }
 
 #define FAEST_128S_PARAMS PARAMS(FAEST_128S)

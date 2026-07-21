@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes128) {
   auto params  = faest_get_paramset(FAEST_128S);
 
   std::vector<uint8_t> witness;
-  witness.resize(params->l / 8);
+  witness.resize(params->ell / 8);
 
   aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
 
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes192) {
   auto params  = faest_get_paramset(FAEST_192S);
 
   std::vector<uint8_t> witness;
-  witness.resize(params->l / 8);
+  witness.resize(params->ell / 8);
 
   aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
 
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_aes256) {
   auto params  = faest_get_paramset(FAEST_256S);
 
   std::vector<uint8_t> witness;
-  witness.resize(params->l / 8);
+  witness.resize(params->ell / 8);
 
   aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
 
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_em128) {
   auto params  = faest_get_paramset(FAEST_EM_128S);
 
   std::vector<uint8_t> witness;
-  witness.resize(params->l / 8);
+  witness.resize(params->ell / 8);
 
   aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
 
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_em192) {
   auto params  = faest_get_paramset(FAEST_EM_192S);
 
   std::vector<uint8_t> witness;
-  witness.resize(params->l / 8);
+  witness.resize(params->ell / 8);
 
   aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
 
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_em256) {
   auto params  = faest_get_paramset(FAEST_EM_256S);
 
   std::vector<uint8_t> witness;
-  witness.resize(params->l / 8);
+  witness.resize(params->ell / 8);
 
   aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
 

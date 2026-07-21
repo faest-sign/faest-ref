@@ -71,9 +71,15 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   const unsigned int lambda       = params->lambda;
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int ellhat_bytes = (ellhat + 7) / 8;
+  const unsigned int ell_bytes    = (params->ell + 7) / 8;
   const unsigned int tau          = params->tau;
+  const unsigned int tau_0        = params->tau0;
   const unsigned int tau_1        = params->tau1;
   const unsigned int k            = params->k;
+  const unsigned int k_bytes      = (k+7) / 8;
+  const unsigned int n_mask       = params->n_mask;
+  const unsigned int n_mult       = params->n_mult;
+  const unsigned int w_grind      = params->w_grind;
 
   bavc_commit(bavc, rootKey, iv, params);
 
@@ -83,24 +89,75 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   unsigned int v_idx = 0;
   uint8_t* sd_i      = bavc->sd;
   for (unsigned int i = 0; i < tau; ++i) {
-    // Step 6
+
     v_idx +=
         convert_to_vole(iv, sd_i, false, i, ellhat_bytes, ui + i * ellhat_bytes, v[v_idx], params);
     sd_i += lambda_bytes * bavc_max_node_index(i, tau_1, k);
   }
 
-  // ensure 0-padding up to lambda
-  for (; v_idx != lambda; ++v_idx) {
-    memset(v[v_idx], 0, ellhat_bytes);
-  }
+  // TODO: I guess we don't need this?
+  // // ensure 0-padding up to lambda
+  // for (; v_idx != lambda; ++v_idx) {
+  //   memset(v[v_idx], 0, ellhat_bytes);
+  // }
 
-  // Step 9
-  memcpy(u, ui, ellhat_bytes);
+  // line 7
+  memcpy(u, ui, ell_bytes);
+
+  // line 8-9
   for (unsigned int i = 1; i < tau; i++) {
-    // Step 11
-    xor_u8_array(u, ui + i * ellhat_bytes, c + (i - 1) * ellhat_bytes, ellhat_bytes);
+    xor_u8_array(u, ui + i * ellhat_bytes, c + (i - 1) * ell_bytes, ell_bytes);
   }
   free(ui);
+
+  uint8_t* A = malloc(lambda_bytes * (lambda_bytes - params->w_grind));
+  // line 11
+  for (unsigned int i = 0; i < tau * k; i++) {
+    memcpy(A, v[i], lambda_bytes);
+  }
+
+  // line 14
+  uint8_t* u_hi = malloc(n_mask * (w_grind + 7) / 8);
+  prg(rootKey, iv, (2 << 31) - 1, u_hi, lambda, n_mask*w_grind);
+
+  // line 15
+  uint8_t* u_low = malloc(n_mask * tau * k_bytes);
+  for (unsigned m = 0; m < n_mask; m++) {
+
+    // line 16
+    for (unsigned t = 0; t < tau; t++) {
+      memcpy(u_low + (m * tau * k_bytes) + (t * k_bytes), u + (t * ellhat_bytes) + (ell_bytes + m * k_bytes), 
+              (bavc_max_node_index(t, tau_1, k - 1) + 7) / 8);
+    }
+
+    // line 17
+    uint8_t* u_dash_m = malloc(lambda_bytes);
+    for (unsigned r = 0; r < lambda; r++) {
+      for (unsigned c = 0; c < lambda - w_grind; c++) {
+        // TODO:
+      }
+    }
+
+    // line 18
+    uint8_t* r_tilde = malloc(tau * n_mask * lambda_bytes);
+    for (unsigned i = 0; i < tau; i++) {
+      // TODO:
+    }
+
+    // line 22
+    for (unsigned e = 0; e < n_mult; e++) {
+
+    }
+
+  }
+
+  // line 17
+  
+
+  free(A);
+  free(u_hi);
+  free(u_low);
+
 }
 
 bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_t* chall_3,
