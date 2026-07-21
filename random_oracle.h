@@ -56,6 +56,11 @@ void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len, uint8_t* iv);
 
 void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params);
 
+// implementation for H_5
+
+void H5(const uint8_t* iv, uint16_t e, const uint8_t* L_e, uint8_t* digest, 
+        unsigned int L_e_len, unsigned int digest_len, unsigned int security_params);
+
 FAEST_END_C_DECL
 
 #endif

@@ -10,6 +10,7 @@
 #include "aes.h"
 #include "utils.h"
 #include "random_oracle.h"
+#include "tables/tables_128f.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -66,8 +67,8 @@ static
 
 // TODO: Modify vole_commit
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                 const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* u,
-                 uint8_t** v) {
+                 const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* c_mult,
+                 uint8_t* u, uint8_t** v, uint8_t* u_dash_m, uint8_t* v_dash_m) {
   const unsigned int lambda       = params->lambda;
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int ellhat_bytes = (ellhat + 7) / 8;
@@ -78,6 +79,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   const unsigned int k            = params->k;
   const unsigned int k_bytes      = (k+7) / 8;
   const unsigned int n_mask       = params->n_mask;
+  const unsigned int n_mask_bytes = (n_mask + 7) / 8;
   const unsigned int n_mult       = params->n_mult;
   const unsigned int w_grind      = params->w_grind;
 
@@ -110,7 +112,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   }
   free(ui);
 
-  uint8_t* A = malloc(lambda_bytes * (lambda_bytes - params->w_grind));
+  uint8_t* A = malloc((lambda - params->w_grind) * lambda_bytes);
   // line 11
   for (unsigned int i = 0; i < tau * k; i++) {
     memcpy(A, v[i], lambda_bytes);
@@ -131,7 +133,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     }
 
     // line 17
-    uint8_t* u_dash_m = malloc(lambda_bytes);
+    // uint8_t* u_dash_m = malloc(lambda_bytes);
     for (unsigned r = 0; r < lambda; r++) {
       for (unsigned c = 0; c < lambda - w_grind; c++) {
         // TODO:
@@ -145,19 +147,60 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     }
 
     // line 22
+    uint8_t* L_e_zero = malloc(lambda_bytes);
+    memset(L_e_zero, 0, lambda_bytes);
+    uint8_t* L_e_one = malloc(lambda_bytes);
+    // line 24
+    memcpy(L_e_one, u, lambda_bytes);
+    uint8_t* h_e_zero = malloc(n_mult * n_mask_bytes);
+    uint8_t* h_e_one = malloc(n_mult * n_mask_bytes);
+    // uint8_t* c_mult = malloc(n_mult * n_mask_bytes);
     for (unsigned e = 0; e < n_mult; e++) {
 
+      // line 24
+      for (unsigned j = 0; j < (lambda - params->w_grind); j++) {
+        for (unsigned b = 0; b < lambda_bytes; b++) {
+          L_e_zero[b] ^= A[j * lambda_bytes + b];
+        }
+      }
+      for (unsigned b = 0; b < lambda_bytes; b++) {
+        L_e_one[b] ^= L_e_zero[b];
+      }
+
+      // line 25
+      H5(iv, e, L_e_zero, h_e_zero + e * n_mask_bytes, lambda_bytes, n_mask_bytes, lambda);
+      H5(iv, e, L_e_one, h_e_one + e * n_mask_bytes, lambda_bytes, n_mask_bytes, lambda);
+
+      // line 26
+      for (unsigned m = 0; m < n_mask_bytes; m++) {
+        c_mult[e * n_mask_bytes + m] = h_e_zero[e * n_mask_bytes + m] ^ h_e_one[e * n_mask_bytes + m]; // TODO: ^ <F_e, u_dash_,>
+      }
     }
 
-  }
+    // line 29-30
+    // uint8_t* v_dash_m = malloc(lambda_bytes);
+    for (unsigned int m = 0; m < n_mask_bytes; m++) {
+      // TODO:
+    }
 
-  // line 17
-  
+    // line 31
+    // TODO:
+
+    // free(u_dash_m);
+    free(r_tilde);
+    free(L_e_zero);
+    free(L_e_one);
+    free(h_e_zero);
+    free(h_e_one);
+    // free(c_mult);
+    // free(v_dash_m);
+
+  }  
 
   free(A);
   free(u_hi);
   free(u_low);
-
+  
 }
 
 bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_t* chall_3,

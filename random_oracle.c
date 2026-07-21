@@ -137,3 +137,16 @@ void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params) {
   hash_squeeze(&ctx, iv, IV_SIZE);
   hash_clear(&ctx);
 }
+
+// H5
+void H5(const uint8_t* iv, uint16_t e, const uint8_t* L_e, uint8_t* digest, 
+        unsigned int L_e_len, unsigned int digest_len, unsigned int security_params) {
+  hash_context ctx;
+  hash_init(&ctx, security_params);
+  hash_update(&ctx, iv, IV_SIZE);
+  hash_update(&ctx, &e, 2);
+  hash_update(&ctx, L_e, L_e_len);
+  hash_final(&ctx);
+  hash_squeeze(&ctx, digest, digest_len);
+  hash_clear(&ctx);
+}
