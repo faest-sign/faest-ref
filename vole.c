@@ -65,6 +65,19 @@ static
   return depth;
 }
 
+void column_to_row_major_V(uint8_t** v, uint8_t** v_row_maj, unsigned int row_bits_len, unsigned int col_bits_len) {
+
+  for (unsigned int r = 0; r < row_bits_len; r++) {
+
+        for (unsigned int c = 0; c < col_bits_len; c++) {
+
+            uint8_t bit = (v[r][c / 8] >> (c % 7)) & 1u;
+            v_row_maj[c][r / 8] |= (uint8_t)(bit << (r % 8));
+
+        }
+    }
+}
+
 // TODO: Modify vole_commit
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* c_mult,
@@ -97,12 +110,6 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     sd_i += lambda_bytes * bavc_max_node_index(i, tau_1, k);
   }
 
-  // TODO: I guess we don't need this?
-  // // ensure 0-padding up to lambda
-  // for (; v_idx != lambda; ++v_idx) {
-  //   memset(v[v_idx], 0, ellhat_bytes);
-  // }
-
   // line 7
   memcpy(u, ui, ell_bytes);
 
@@ -110,26 +117,34 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   for (unsigned int i = 1; i < tau; i++) {
     xor_u8_array(u, ui + i * ellhat_bytes, c + (i - 1) * ell_bytes, ell_bytes);
   }
-  free(ui);
 
-  uint8_t* A = malloc((lambda - params->w_grind) * lambda_bytes);
   // line 11
-  for (unsigned int i = 0; i < tau * k; i++) {
-    memcpy(A, v[i], lambda_bytes);
+  uint8_t* A = malloc((lambda - w_grind) * lambda_bytes);
+  for (unsigned int i = 0; i < lambda - w_grind; i++) {
+    memcpy(A + i * lambda_bytes, v[i], lambda_bytes);
   }
+
+  // Switching from coloumn major to row major order
+  uint8_t** v_row_maj = malloc(ellhat_bytes);
+  for (unsigned i = 0; i < ellhat_bytes; i++) {
+    v_row_maj[i] = malloc(lambda - w_grind);
+  }
+  column_to_row_major_V(v, v_row_maj, lambda - w_grind, ellhat);
 
   // line 14
   uint8_t* u_hi = malloc(n_mask * (w_grind + 7) / 8);
-  prg(rootKey, iv, (2 << 31) - 1, u_hi, lambda, n_mask*w_grind);
+  prg(rootKey, iv, (2 << 30) - 1, u_hi, lambda, n_mask * (w_grind + 7) / 8);  // NOTE: I think this takes in bytes
 
   // line 15
   uint8_t* u_low = malloc(n_mask * tau * k_bytes);
   for (unsigned m = 0; m < n_mask; m++) {
 
-    // line 16
     for (unsigned t = 0; t < tau; t++) {
-      memcpy(u_low + (m * tau * k_bytes) + (t * k_bytes), u + (t * ellhat_bytes) + (ell_bytes + m * k_bytes), 
-              (bavc_max_node_index(t, tau_1, k - 1) + 7) / 8);
+
+      memcpy(u_low + (m * tau * k_bytes) + (t * k_bytes), 
+              u + (t * ellhat_bytes) + (ell_bytes + m * k_bytes), 
+              (bavc_max_node_depth(t, tau_1, k) + 7) / 8);
+              
     }
 
     // line 17
@@ -187,6 +202,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     // TODO:
 
     // free(u_dash_m);
+    free(ui);
     free(r_tilde);
     free(L_e_zero);
     free(L_e_one);
