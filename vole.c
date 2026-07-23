@@ -162,6 +162,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   const unsigned int lambda_minus_w_grind = lambda - w_grind;
   const unsigned int lambda_minus_w_grind_bytes = ((lambda - w_grind) + 7 ) / 8;
 
+  print_u8_array(rootKey, 5);
+  print_u8_array(iv, 5);
+
   bavc_commit(bavc, rootKey, iv, params);
 
   uint8_t* ui = malloc(tau * ellhat_bytes);
@@ -176,13 +179,21 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     sd_i += lambda_bytes * bavc_max_node_index(i, tau_1, k);
   }
 
+  printf("%d \n", ell);
+
+  print_u8_array(bavc->com, 5);
+
   // line 7
   memcpy(u, ui, ell_bytes);
+
+  print_u8_array(u, 5);
 
   // line 8-9
   for (unsigned int i = 1; i < tau; i++) {
     xor_u8_array(u, ui + i * ellhat_bytes, c + (i - 1) * ell_bytes, ell_bytes);
   }
+
+  print_u8_array(c, 5);
 
   // line 11
   uint8_t* A = malloc((lambda - w_grind) * lambda_bytes);
@@ -312,6 +323,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
     }
   }
+
+  print_u8_array_bits(c_mult, 5);
 
   // line 29-30
   for (unsigned int m = 0; m < n_mask; m++) {

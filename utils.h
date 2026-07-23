@@ -12,6 +12,7 @@
 #include "compat.h"
 #include "macros.h"
 #include "instances.h"
+#include <stdio.h>
 
 FAEST_BEGIN_C_DECL
 
@@ -27,6 +28,23 @@ static inline void masked_xor_u8_array(const uint8_t* a, const uint8_t* b, uint8
   for (size_t i = 0; i < len; i++) {
     out[i] = a[i] ^ (b[i] & mask);
   }
+}
+
+static inline void print_u8_array(const uint8_t *arr, size_t m) {
+    for (size_t i = 0; i < m; i++) {
+        printf("%02x ", arr[i]);
+    }
+    printf("\n");
+}
+
+static inline void print_u8_array_bits(const uint8_t *arr, size_t m) {
+    for (size_t i = 0; i < m; i++) {
+        for (int b = 0; b < 8; b++) {
+          printf("%u", (arr[i] >> b) & 1u);
+        }
+        printf(" ");
+    }
+    printf("\n");
 }
 
 #define get_bit(value, index) (((value) >> (index)) & 1)
