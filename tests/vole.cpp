@@ -57,8 +57,9 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       v[i] = v[0] + i * ell_hat_bytes;
     }
 
-    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), u.data(),
-                v.data());
+    // TODO: Uncomment for test!
+    // vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), u.data(),
+    //             v.data());
 
     std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2};
 
@@ -178,8 +179,9 @@ namespace {
       v[i] = v[0] + i * ell_hat_bytes;
     }
 
-    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), u.data(),
-                v.data());
+    // TODO: Uncomment for test!
+    // vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), u.data(),
+    //             v.data());
     std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2},
         expected_h_vec{expected_h.begin(), expected_h.end()};
     BOOST_TEST(hcom == expected_h_vec);

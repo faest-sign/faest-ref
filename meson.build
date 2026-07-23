@@ -590,6 +590,7 @@ faest_sources = files(
   'universal_hashing.c',
   'utils.c',
   'vole.c',
+  'tables/tables_128f.c'
 ) + [
   config_header,
   parameters_header,

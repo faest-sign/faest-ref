@@ -147,7 +147,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   const unsigned int lambda       = params->lambda;
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int ellhat_bytes = (ellhat + 7) / 8;
-  const unsigned int ell_bytes    = (params->ell + 7) / 8;
+  const unsigned int ell          = params->ell;
+  const unsigned int ell_bytes    = (ell + 7) / 8;
   const unsigned int tau          = params->tau;
   const unsigned int tau_0        = params->tau0;
   const unsigned int tau_1        = params->tau1;
@@ -158,6 +159,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   const unsigned int n_mult       = params->n_mult;
   const unsigned int w_grind      = params->w_grind;
   const unsigned int w_grind_bytes = (w_grind + 7) / 8;
+  const unsigned int lambda_minus_w_grind = lambda - w_grind;
   const unsigned int lambda_minus_w_grind_bytes = ((lambda - w_grind) + 7 ) / 8;
 
   bavc_commit(bavc, rootKey, iv, params);
@@ -197,13 +199,12 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   // line 14
   uint8_t* u_hi_bytes = malloc(n_mask * w_grind_bytes);
-  prg(rootKey, iv, (2 << 30) - 1, u_hi_bytes, lambda, n_mask * (w_grind + 7) / 8);  // NOTE: I think this takes in bytes
+  prg(rootKey, iv, (2 << 30) - 1, u_hi_bytes, lambda, n_mask * (w_grind + 7) / 8);
 
   // line 15
   uint8_t* u_low_bytes = malloc(n_mask * lambda_bytes);
   memset(u_low_bytes, 0, n_mask * lambda_bytes);
-  // NOTE: The largest tree mod is 2 bytes
-  // TODO: Generalize this for all parameter settings, is max 2 for all?
+
   uint8_t* r_tilde = malloc(n_mask * lambda_minus_w_grind_bytes);
   for (unsigned m = 0; m < n_mask; m++) {
 
@@ -233,14 +234,14 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     }
     uint8_t* second_prod = malloc(lambda_bytes);
     for (unsigned int c = 0; c < lambda; c++) {
-      gf2_poly_mul_ct(FAEST_128F_M_TREE, lambda - w_grind, u_hi_bytes[m], w_grind, second_prod);
+      gf2_poly_mul_ct((uint8_t*)FAEST_128F_M_TREE, lambda - w_grind, (uint8_t*)u_hi_bytes[m], w_grind, second_prod);
     }
     for (unsigned int i = 0; i < lambda_bytes; i++) {
       u_dash_m[i] = first_prod[i] ^ second_prod[i];
     }
 
     // line 18
-    unsigned bit_idx = 0;
+    bit_idx = 0;
     for (unsigned i = 0; i < tau; i++) {
 
       uint8_t* sum_holder = malloc((bavc_max_node_depth(i, tau_1, k) + 7) / 8);
@@ -251,7 +252,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
       uint8_t* reduced_out = malloc((bavc_max_node_depth(i, tau_1, k) + 7) / 8);
       unsigned int highest_bit_pos = highest_set_bit_pos_u64(FAEST_128F_TREE_MODULI[i]);
-      gf2_poly_reduce_ct(sum_holder, bavc_max_node_depth(i, tau_1, k), FAEST_128F_TREE_MODULI[i], 
+      gf2_poly_reduce_ct(sum_holder, bavc_max_node_depth(i, tau_1, k), (uint8_t*)FAEST_128F_TREE_MODULI[i], 
                 highest_bit_pos, reduced_out);
       for (unsigned int b = 0; b < highest_bit_pos - 1; b++) {
         r_tilde[m * lambda_minus_w_grind_bytes + bit_idx / 8] |= ((reduced_out[b/8] >> b%8) & 1u) << bit_idx%8;
@@ -259,122 +260,114 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       bit_idx++;
 
     }
+  }
 
 
-    // line 22
-    uint8_t* L_e_zero = malloc(lambda_bytes);
-    memset(L_e_zero, 0, lambda_bytes);
-    uint8_t* L_e_one = malloc(lambda_bytes);
-    // line 24
-    memcpy(L_e_one, u, lambda_bytes);
-    uint8_t* h_e_zero = malloc(n_mult * n_mask_bytes);
-    uint8_t* h_e_one = malloc(n_mult * n_mask_bytes);
-    for (unsigned e = 0; e < n_mult; e++) {
+  // line 22
+  uint8_t* L_e_zero = malloc(lambda_bytes);
+  memset(L_e_zero, 0, lambda_bytes);
+  uint8_t* L_e_one = malloc(lambda_bytes);
+  // line 24
+  memcpy(L_e_one, u, lambda_bytes);
+  uint8_t* h_e_zero = malloc(n_mult * n_mask_bytes);
+  uint8_t* h_e_one = malloc(n_mult * n_mask_bytes);
+  for (unsigned e = 0; e < n_mult; e++) {
 
-      for (unsigned j = 0; j < (lambda - params->w_grind); j++) {
-        for (unsigned b = 0; b < lambda_bytes; b++) {
-          L_e_zero[b] ^= A[j * lambda_bytes + b];
-        }
-      }
+    for (unsigned j = 0; j < (lambda - params->w_grind); j++) {
       for (unsigned b = 0; b < lambda_bytes; b++) {
-        L_e_one[b] ^= L_e_zero[b];
-      }
-
-      // line 25
-      H5(iv, e, L_e_zero, h_e_zero + e * n_mask_bytes, lambda_bytes, n_mask_bytes, lambda);
-      H5(iv, e, L_e_one, h_e_one + e * n_mask_bytes, lambda_bytes, n_mask_bytes, lambda);
-
-      // line 26
-      for (unsigned m = 0; m < n_mask; m++) {
-
-        uint8_t dot_product_bit = 0;
-        for (unsigned i = 0; i < lambda; i++) {
-          dot_product_bit ^= ((FAEST_128F_F[e][i / 64] >> i%64) & 1u) & ((u_dash_m[i / 8] >> i%8) & 1u);
-        }
-
-        c_mult[e * n_mask_bytes + (m + 7) / 8] |= (h_e_zero[e * n_mask_bytes + (m + 7) / 8] >> m%8)
-                                                    ^ (h_e_one[e * n_mask_bytes + (m + 7) / 8] >> m%8)
-                                                    ^ dot_product_bit; 
+        L_e_zero[b] ^= A[j * lambda_bytes + b];
       }
     }
-
-    // line 29-30
-    for (unsigned int m = 0; m < n_mask; m++) {
-      
-      uint8_t* first_prod = malloc(lambda_bytes);
-      memset(first_prod, 0, lambda_bytes);
-      for (unsigned int r = 0; r < lambda; r++) {
-        for (unsigned int c = 0; c < lambda_minus_w_grind_bytes; c++) {
-          first_prod[r/8] ^= 
-          ((FAEST_128F_W_TREE[r][c / 64] >> (c % 64) & 1u)
-          & ((r_tilde[m * lambda_minus_w_grind_bytes + c/8] >> c%8) & 1u))
-          << r%8;
-        }
-      }
-
-      uint8_t* second_prod = malloc(lambda_bytes);
-      memset(second_prod, 0, lambda_bytes);
-
-      for (unsigned int r = 0; r < lambda; r++) {
-
-        for (unsigned int c = 0; c < n_mult; c++) {        
-
-          first_prod[r/8] ^=
-           
-          ((FAEST_128F_W_GATE[r][c / 64] >> (c % 64) & 1u)
-
-          & ((h_e_zero[(c * n_mask_bytes + (m + 7) / 8)] >> m%8) & 1u))   // TODO: I think we do not need to do the + m, n_mask is always 5 it seems, change once the parameters are final
-
-          << r%8;
-
-        }
-      }
-
-      for (unsigned int i = 0; i < lambda_bytes; i++) {
-        v_dash[i] = first_prod[i] ^ second_prod[i];
-      }
-
+    for (unsigned b = 0; b < lambda_bytes; b++) {
+      L_e_one[b] ^= L_e_zero[b];
     }
 
-    // line 31
-    uint8_t* v_row_maj_combined = malloc(tau * ell_bytes);
-    for (unsigned int i = 0; i < tau; i++) {
-        memcpy(v_row_maj_combined + i * ell_bytes, v_row_maj[i], ell_bytes);
+    // line 25
+    H5(iv, e, L_e_zero, h_e_zero + e * n_mask_bytes, lambda_bytes, n_mask_bytes, lambda);
+    H5(iv, e, L_e_one, h_e_one + e * n_mask_bytes, lambda_bytes, n_mask_bytes, lambda);
+
+    // line 26
+    for (unsigned m = 0; m < n_mask; m++) {
+
+      uint8_t dot_product_bit = 0;
+      for (unsigned i = 0; i < lambda; i++) {
+        dot_product_bit ^= ((FAEST_128F_F[e][i / 64] >> i%64) & 1u) & ((u_dash_m[i / 8] >> i%8) & 1u);
+      }
+
+      c_mult[e * n_mask_bytes + (m + 7) / 8] |= (h_e_zero[e * n_mask_bytes + (m + 7) / 8] >> m%8)
+                                                  ^ (h_e_one[e * n_mask_bytes + (m + 7) / 8] >> m%8)
+                                                  ^ dot_product_bit; 
     }
+  }
 
-    memset(v, 0, ell_bytes * lambda_minus_w_grind_bytes);
-
-    for (unsigned int r = 0; r < lambda_minus_w_grind_bytes; r++) {
-
-      for (unsigned int c = 0; c < ell_bytes; c++) {
-
-        v[r][c] ^= 
-
-        v_row_maj_combined[i * ell_bytes]
-
+  // line 29-30
+  for (unsigned int m = 0; m < n_mask; m++) {
+    
+    uint8_t* first_prod = malloc(lambda_bytes);
+    memset(first_prod, 0, lambda_bytes);
+    for (unsigned int r = 0; r < lambda; r++) {
+      for (unsigned int c = 0; c < lambda_minus_w_grind_bytes; c++) {
+        first_prod[r/8] ^= 
         ((FAEST_128F_W_TREE[r][c / 64] >> (c % 64) & 1u)
-
         & ((r_tilde[m * lambda_minus_w_grind_bytes + c/8] >> c%8) & 1u))
+        << r%8;
+      }
+    }
+
+    uint8_t* second_prod = malloc(lambda_bytes);
+    memset(second_prod, 0, lambda_bytes);
+
+    for (unsigned int r = 0; r < lambda; r++) {
+
+      for (unsigned int c = 0; c < n_mult; c++) {        
+
+        first_prod[r/8] ^=
+          
+        ((FAEST_128F_W_GATE[r][c / 64] >> (c % 64) & 1u)
+
+        & ((h_e_zero[(c * n_mask_bytes + (m + 7) / 8)] >> m%8) & 1u))   // TODO: I think we do not need to do the + m, n_mask is always 5 it seems, change once the parameters are final
 
         << r%8;
 
-        // TODO: clarify
-
       }
     }
 
-    free(ui);
-    free(r_tilde);
-    free(L_e_zero);
-    free(L_e_one);
-    free(h_e_zero);
-    free(h_e_one);
+    for (unsigned int i = 0; i < lambda_bytes; i++) {
+      v_dash[i] = first_prod[i] ^ second_prod[i];
+    }
 
-  }  
+  }
 
-  free(A);
-  free(u_hi);
-  free(u_low);
+  // line 31
+  uint8_t* v_row_maj_combined = malloc(ell_bytes * lambda_minus_w_grind_bytes);
+  unsigned int bit_idx = 0;
+  for (unsigned int tau_idx = 0; tau_idx < tau; tau_idx++) {
+    for (unsigned int k_idx = 0; k_idx < bavc_max_node_depth(tau_idx, tau_1, k); k_idx++) {
+      for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
+        set_bit_to_pt(v_row_maj_combined, bit_idx, get_bit_from_pt(v_row_maj[tau_idx], k_idx * ell + ell_idx));
+        bit_idx++;
+      }
+    }
+  }
+
+  for (unsigned int i = 0; i < lambda_minus_w_grind; i++) {
+    memset(v[i], 0, ell_bytes);
+  }
+
+  for (unsigned int c = 0; c < lambda_minus_w_grind; c++) {
+
+    for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
+  
+      for (unsigned int r = 0; r < lambda_minus_w_grind; r++) {
+
+        uint8_t tmp = get_bit_from_pt(v_row_maj_combined, ell_idx * lambda_minus_w_grind + r) 
+          & get_bit_from_pt((uint8_t*)&FAEST_128F_W_CRT[r][c/64], c%64);
+
+        v[c][ell_idx / 8] ^= tmp << ell_idx%8;
+
+      }
+    }
+  } 
   
 }
 

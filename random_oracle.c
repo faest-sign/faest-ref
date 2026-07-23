@@ -144,7 +144,7 @@ void H5(const uint8_t* iv, uint16_t e, const uint8_t* L_e, uint8_t* digest,
   hash_context ctx;
   hash_init(&ctx, security_params);
   hash_update(&ctx, iv, IV_SIZE);
-  hash_update(&ctx, &e, 2);
+  hash_update(&ctx, (uint8_t*)&e, 2);
   hash_update(&ctx, L_e, L_e_len);
   hash_final(&ctx);
   hash_squeeze(&ctx, digest, digest_len);

@@ -14,7 +14,7 @@ if boost_test.found()
     'prg.cpp',
     'universal_hashing.cpp',
     'utils.cpp',
-    'vole.cpp',
+    'vole.cpp'
   )
   test_deps = []
   test_defines = ['-DBOOST_TEST_DYN_LINK', '-DFAEST_TESTS']
