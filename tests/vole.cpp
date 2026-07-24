@@ -15,10 +15,11 @@
 #include <vector>
 
 namespace {
-  constexpr std::array<uint8_t, 32> rootKey{
+  constexpr std::array<uint8_t, 16> rootKey{
       0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
-      0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
-      0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+      0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+      //, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+      //0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
   };
   constexpr std::array<uint8_t, 16> iv{};
 
@@ -41,13 +42,13 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, c_mult, u, u_dash, v_dash, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult, u, u_bar, v_bar, q_storage, v_storage;
     chal.resize(lambda_bytes);
     c.resize((params->tau - 1) * ell_hat_bytes);
     c_mult.resize(n_mult * n_mask_bytes);
     u.resize(ell_hat_bytes * params->tau);
-    u_dash.resize(lambda_bytes);
-    v_dash.resize(lambda_bytes);
+    u_bar.resize(n_mask * lambda_bytes);
+    v_bar.resize(lambda_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
@@ -65,7 +66,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
     // TODO: Uncomment for test!
     vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), c_mult.data(),
-                u.data(), v.data(), u_dash.data(), v_dash.data());
+                u.data(), v.data(), u_bar.data(), v_bar.data());
 
     // std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2};
 
