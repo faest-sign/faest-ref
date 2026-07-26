@@ -160,4 +160,6 @@ void H5(const uint8_t* iv, uint32_t e, const uint8_t* L_e, uint8_t* digest,
     set_bit_to_pt(digest_masked, i, get_bit_from_pt(digest, i));
   }
   memcpy(digest, digest_masked, digest_byte);
+  
+  free(digest_masked);
 }
