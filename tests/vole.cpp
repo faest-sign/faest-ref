@@ -48,7 +48,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     c_mult.resize(n_mult * n_mask_bytes);
     u.resize(ell_hat_bytes * params->tau);
     u_bar.resize(n_mask * lambda_bytes);
-    v_bar.resize(lambda_bytes);
+    v_bar.resize(n_mask * lambda_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);

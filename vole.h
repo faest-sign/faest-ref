@@ -15,6 +15,16 @@ FAEST_BEGIN_C_DECL
 //                  const faest_paramset_t* params, bavc_t* vecCom, uint8_t* c, uint8_t* u,
 //                  uint8_t** v);
 
+// TODO: For now putting this here
+static inline uint8_t get_bit_from_pt(const uint8_t *p, size_t i) {
+    return (uint8_t)((p[i / 8] >> (i % 8)) & 1u);
+}
+static inline void set_bit_to_pt(uint8_t *p, size_t i, uint8_t v) {
+    size_t byte = i / 8;
+    uint8_t bit = (uint8_t)(1u << (i % 8));
+    p[byte] = (uint8_t)((p[byte] & ~bit) | (bit & (uint8_t)(0u - v)));
+}
+
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* c_mult,
                  uint8_t* u, uint8_t** v, uint8_t* u_dash_m, uint8_t* v_dash);

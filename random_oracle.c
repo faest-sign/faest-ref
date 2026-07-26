@@ -10,6 +10,7 @@
 
 #include "random_oracle.h"
 #include "instances.h"
+#include "vole.h"
 
 // H_0
 void H0_init(H0_context_t* ctx, unsigned int security_param) {
@@ -139,14 +140,24 @@ void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params) {
 }
 
 // H5
-void H5(const uint8_t* iv, uint16_t e, const uint8_t* L_e, uint8_t* digest, 
-        unsigned int L_e_len, unsigned int digest_len, unsigned int security_params) {
+void H5(const uint8_t* iv, uint32_t e, const uint8_t* L_e, uint8_t* digest, 
+        unsigned int L_e_len, unsigned int digest_bit_len, unsigned int security_params) {
+  const uint8_t a = 0x05;
+  unsigned int digest_byte = (digest_bit_len + 7) / 8;
+  uint8_t* digest_masked = malloc(digest_byte);
+  memset(digest_masked, 0, digest_byte);
   hash_context ctx;
   hash_init(&ctx, security_params);
   hash_update(&ctx, iv, IV_SIZE);
-  hash_update(&ctx, (uint8_t*)&e, 2);
+  hash_update(&ctx, (uint8_t*)&e, 4);
   hash_update(&ctx, L_e, L_e_len);
+  hash_update(&ctx, (uint8_t*)&a, 1);
   hash_final(&ctx);
-  hash_squeeze(&ctx, digest, digest_len);
+  hash_squeeze(&ctx, digest, digest_byte);
   hash_clear(&ctx);
+
+  for (unsigned int i = 0; i < digest_bit_len; i++) {
+    set_bit_to_pt(digest_masked, i, get_bit_from_pt(digest, i));
+  }
+  memcpy(digest, digest_masked, digest_byte);
 }
