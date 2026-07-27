@@ -31,6 +31,12 @@ ninja
 ninja test
 ```
 
+```
+meson configure -Dtv-generators=disabled
+./tv_binary
+```
+
+
 ## Notes on Benchmarking
 
 This implementation represents the reference implementation of FAEST. While it aims to be as

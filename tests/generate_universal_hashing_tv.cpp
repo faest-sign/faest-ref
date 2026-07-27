@@ -33,7 +33,15 @@ int main() {
     std::generate(uhash.begin(), uhash.end(), [&rd, &distrib] { return distrib(rd); });
     std::generate(x.begin(), x.end(), [&rd, &distrib] { return distrib(rd); });
 
-    leaf_hash(output.data(), uhash.data(), x.data(), lambda);
+    if (lambda == 256) {
+      leaf_hash_256(output.data(), uhash.data(), x.data());
+    }
+    else if (lambda == 192) {
+      leaf_hash_192(output.data(), uhash.data(), x.data());
+    }
+    else {
+      leaf_hash_128(output.data(), uhash.data(), x.data());
+    }
 
     std::cout << "namespace leaf_hash_" << lambda << " {";
     print_named_array("uhash", "uint8_t", uhash);

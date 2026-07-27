@@ -39,24 +39,33 @@ int main() {
     const auto params                = *faest_get_paramset(param_id);
     const unsigned int lambda        = params.lambda;
     const unsigned int lambda_bytes  = lambda / 8;
-    const unsigned int ell_hat       = params.l + params.lambda * 3 + UNIVERSAL_HASH_B_BITS;
-    const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
+    const unsigned int ell            = params.ell;
+    const unsigned int ell_bytes      = (ell + 7) / 8;
+    const unsigned int ell_hat        = params.ell + params.n_mask * params.k;    // TODO: ell_hat value is wrong, it should be lambda - w_grind
+    const unsigned int ell_hat_bytes  = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
+    const auto n_mask                 = params.n_mask;
+    const auto n_mask_bytes           = (n_mask + 7) / 8;
+    const auto n_mult                 = params.n_mult;
 
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, decom_i, u, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult, decom_i, u, u_bar, v_bar, q_bar, q_storage, v_storage;
     chal.resize(lambda_bytes);
-    c.resize((params.tau - 1) * ell_hat_bytes);
+    c.resize((params.tau - 1) * ell_bytes);
+    c_mult.resize(n_mult * n_mask_bytes);
     decom_i.resize(com_size * params.tau + params.T_open * lambda_bytes);
-    u.resize(ell_hat_bytes);
+    u.resize(ell_bytes);
+    u_bar.resize(n_mask * lambda_bytes);
+    v_bar.resize(n_mask * lambda_bytes);
+    q_bar.resize(n_mask * lambda_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
     v.resize(lambda);
 
     q_storage.resize(lambda * ell_hat_bytes);
-    v_storage.resize(lambda * ell_hat_bytes);
+    v_storage.resize(lambda * ell_hat_bytes);   // v should be lambda * ell_bytes
 
     q[0] = q_storage.data();
     v[0] = v_storage.data();
@@ -67,31 +76,99 @@ int main() {
 
     std::cout << "namespace " << faest_get_param_name(param_id) << "{\n";
 
-    vole_commit(root_key.data(), iv.data(), ell_hat, &params, &bavc_com, c.data(), u.data(),
-                v.data());
+    // TODO: Remove
+    // NOTE: Just for debugging with the faest-128f chall TV instead of the random chall above
+    static const char* chall_hex = "7155b8f0de65bed193b8615bcde68900";
+    for (unsigned int i = 0; i < lambda_bytes; ++i) {
+      unsigned int byte;
+      std::sscanf(chall_hex + 2 * i, "%2x", &byte);
+      chal[i] = static_cast<uint8_t>(byte);
+    }
+    print_named_array("chall", "uint8_t", chal);
+
+    vole_commit(root_key.data(), iv.data(), ell_hat, &params, &bavc_com, c.data(), c_mult.data(),
+                u.data(), v.data(), u_bar.data(), v_bar.data());
+
     print_named_array("h", "uint8_t", bavc_com.h, 2 * lambda_bytes);
-    print_named_array("hashed_c", "uint8_t", hash_array(c));
     print_named_array("hashed_u", "uint8_t", hash_array(u));
-    print_named_array("hashed_v", "uint8_t", hash_array(v_storage));
+    // NOTE: *** Claude GENERATED CODE
+    // This alligns the c_mult to how it is in the python code (swapping the rows and the bits) for the matching TVs
+    size_t nb        = (n_mult + 7) / 8;      // 40, matches Python
+    size_t packed_len = n_mask * nb;          // 360
+    std::vector<uint8_t> c_mult_packed(packed_len, 0);
+    for (size_t i = 0; i < n_mask; ++i) {
+        for (size_t j = 0; j < n_mult; ++j) {
+          uint16_t word = c_mult[j*2] | (uint16_t)(c_mult[j*2 + 1] << 8);
+          uint8_t  bit  = (word >> i) & 1u;      // bit i of gate j's word
+          size_t   pos  = i * nb * 8 + j;        // dst: row byte-aligned, bit j LSB-first
+          c_mult_packed[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+        }
+    }
+    // ***
+    print_named_array("hash_c_mult", "uint8_t", hash_array(c_mult_packed));
+
+    // NOTE: *** Claude GENERATED CODE
+    // This does the row_to_coloumn_major transformation
+    size_t ncols        = ell;
+    // size_t lambda_bytes = lambda / 8;
+    std::vector<uint8_t> mV_bytes(ncols * lambda_bytes, 0);
+    for (size_t c = 0; c < ncols; ++c) {
+      for (size_t r = 0; r < lambda; ++r) {
+          const uint8_t* srow = v_storage.data() + r * ell_hat_bytes;
+          uint8_t bit = (srow[c >> 3] >> (c & 7)) & 1u;
+          size_t  pos = c * lambda + r;
+          mV_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+      }
+    }
+    // fprintf(stderr, "cc len: %zu\n", mV_bytes.size());
+    // for (size_t k = 0; k < 32; ++k) fprintf(stderr, "%02x", mV_bytes[k]);
+    // fprintf(stderr, "\n... tail: ");
+    // for (size_t k = mV_bytes.size()-32; k < mV_bytes.size(); ++k) fprintf(stderr, "%02x", mV_bytes[k]);
+    // fprintf(stderr, "\n");
+    // print_named_array("v_storage", "uint8_t", mV_bytes.data(), 32);
+    // ***
+
+    print_named_array("hashed_v", "uint8_t", hash_array(mV_bytes));
+
+    print_named_array("hashed_barU", "uint8_t", hash_array(u_bar));
+    print_named_array("hashed_barV", "uint8_t", hash_array(v_bar));
 
     while (true) {
-      std::generate(chal.begin(), chal.end(), [&mt, &dist] { return dist(mt); });
-      for (unsigned int i = lambda - params.w_grind; i != lambda; ++i) {
-        ptr_set_bit(chal.data(), i, 0);
-      }
+      // std::generate(chal.begin(), chal.end(), [&mt, &dist] { return dist(mt); });
+      // for (unsigned int i = lambda - params.w_grind; i != lambda; ++i) {
+      //   ptr_set_bit(chal.data(), i, 0);
+      // }
 
       uint16_t i_delta[MAX_TAU];
       decode_all_chall_3(i_delta, chal.data(), &params);
       if (!bavc_open(decom_i.data(), &bavc_com, i_delta, &params)) {
         continue;
       }
-      print_named_array("chall", "uint8_t", chal);
+      // print_named_array("chall", "uint8_t", chal);
 
       std::vector<uint8_t> hcom_rec;
       hcom_rec.resize(lambda_bytes * 2);
-      vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(), c.data(),
-                       ell_hat, &params);
-      print_named_array("hashed_q", "uint8_t", hash_array(q_storage));
+      vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
+                                  c.data(), c_mult.data(), q_bar.data(), ell_hat, &params);
+
+
+      size_t ncols        = ell;
+      // size_t lambda_bytes = lambda / 8;
+      std::vector<uint8_t> mQ_bytes(ncols * lambda_bytes, 0);
+      for (size_t c = 0; c < ncols; ++c) {
+        for (size_t r = 0; r < lambda; ++r) {
+            const uint8_t* srow = q_storage.data() + r * ell_hat_bytes;
+            uint8_t bit = (srow[c >> 3] >> (c & 7)) & 1u;
+            size_t  pos = c * lambda + r;
+            mQ_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+        }
+      }
+
+      print_named_array("hashed_q", "uint8_t", hash_array(mQ_bytes));
+
+      print_named_array("q_bar", "uint8_t", q_bar.data(), 32);
+      print_named_array("hashed_barQ", "uint8_t", hash_array(q_bar));
+
       break;
     }
     bavc_clear(&bavc_com);

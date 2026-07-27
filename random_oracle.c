@@ -143,6 +143,7 @@ void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params) {
 void H5(const uint8_t* iv, uint32_t e, const uint8_t* L_e, uint8_t* digest, 
         unsigned int L_e_len, unsigned int digest_bit_len, unsigned int security_params) {
   const uint8_t a = 0x05;
+  // TODO: clean this
   unsigned int digest_byte = (digest_bit_len + 7) / 8;
   uint8_t* digest_masked = malloc(digest_byte);
   memset(digest_masked, 0, digest_byte);
@@ -156,6 +157,7 @@ void H5(const uint8_t* iv, uint32_t e, const uint8_t* L_e, uint8_t* digest,
   hash_squeeze(&ctx, digest, digest_byte);
   hash_clear(&ctx);
 
+  // TODO: clean this
   for (unsigned int i = 0; i < digest_bit_len; i++) {
     set_bit_to_pt(digest_masked, i, get_bit_from_pt(digest, i));
   }
