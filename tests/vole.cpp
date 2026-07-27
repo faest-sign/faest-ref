@@ -15,11 +15,10 @@
 #include <vector>
 
 namespace {
-  constexpr std::array<uint8_t, 16> rootKey{
+  constexpr std::array<uint8_t, 32> rootKey{
       0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
-      0x0b, 0x0c, 0x0d, 0x0e, 0x0f
-      //, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
-      //0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+      0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+      0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
   };
   constexpr std::array<uint8_t, 16> iv{};
 
@@ -75,20 +74,18 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     bool tested = false;
     for (unsigned int tries = 0; !tested && tries != max_tries; ++tries) {
 
-      // TODO: Uncomment
-      // rand_bytes(chal.data(), chal.size());
-      // for (unsigned int i = lambda - params->w_grind; i != lambda; ++i) {
-      //   ptr_set_bit(chal.data(), i, 0);
-      // }
-
-      // TODO: Remove
-      // NOTE: Just for debugging
-      static const char* chall_hex = "7155b8f0de65bed193b8615bcde68900";
-      for (unsigned int i = 0; i < lambda_bytes; ++i) {
-        unsigned int byte;
-        std::sscanf(chall_hex + 2 * i, "%2x", &byte);
-        chal[i] = static_cast<uint8_t>(byte);
+      rand_bytes(chal.data(), chal.size());
+      for (unsigned int i = lambda - params->w_grind; i != lambda; ++i) {
+        ptr_set_bit(chal.data(), i, 0);
       }
+      // TODO: Remove
+      // NOTE: Just for debugging with the faest-128f chall TV instead of the random chall above
+      // static const char* chall_hex = "7155b8f0de65bed193b8615bcde68900";
+      // for (unsigned int i = 0; i < lambda_bytes; ++i) {
+      //   unsigned int byte;
+      //   std::sscanf(chall_hex + 2 * i, "%2x", &byte);
+      //   chal[i] = static_cast<uint8_t>(byte);
+      // }
 
       std::vector<uint16_t> i_delta;
       i_delta.resize(params->tau);
@@ -113,15 +110,16 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
   }
 }
-/* 
+
 BOOST_DATA_TEST_CASE(test_convert_to_vole, all_parameters, param_id) {
   std::mt19937_64 rd;
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const faest_paramset_t params    = *faest_get_paramset(param_id);
     const unsigned int lambda        = params.lambda;
     const unsigned int lambda_bytes  = lambda / 8;
-    const unsigned int ell_hat_bytes = 16;
-    const unsigned int max_depth     = params.k;
+    const unsigned int k             = params.k;
+    const unsigned int ell_hat_bytes = ((params.ell + params.n_mask * k) + 7) / 8;
+    const unsigned int max_depth     = k;
     const unsigned int max_nodes     = 1 << max_depth;
     const unsigned int tau           = params.tau;
 
@@ -174,17 +172,26 @@ namespace {
                const std::array<uint8_t, 64>& expected_hashed_q) {
     const unsigned int lambda        = params->lambda;
     const unsigned int lambda_bytes  = lambda / 8;
-    const unsigned int ell_hat       = params->ell + params->lambda * 3 + UNIVERSAL_HASH_B_BITS;
+    const unsigned int ell            = params->ell;
+    const unsigned int ell_bytes      = (ell + 7) / 8;
+    const unsigned int ell_hat        = params->ell + params->n_mask * params->k;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
+    const auto n_mask                 = params->n_mask;
+    const auto n_mask_bytes           = (n_mask + 7) / 8;
+    const auto n_mult                 = params->n_mult;
 
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, decom_i, u, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult, decom_i, u, u_bar, v_bar, q_bar, q_storage, v_storage;
     chal.resize(lambda_bytes);
     c.resize((params->tau - 1) * ell_hat_bytes);
+    c_mult.resize(n_mult * n_mask_bytes);
     decom_i.resize(com_size * params->tau + params->T_open * lambda_bytes);
     u.resize(ell_hat_bytes * params->tau);
+    u_bar.resize(n_mask * lambda_bytes);
+    v_bar.resize(n_mask * lambda_bytes);
+    q_bar.resize(n_mask * lambda_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
@@ -200,9 +207,9 @@ namespace {
       v[i] = v[0] + i * ell_hat_bytes;
     }
 
-    // TODO: Uncomment for test!
-    // vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), u.data(),
-    //             v.data());
+    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), c_mult.data(),
+                u.data(), v.data(), u_bar.data(), v_bar.data());
+
     std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2},
         expected_h_vec{expected_h.begin(), expected_h.end()};
     BOOST_TEST(hcom == expected_h_vec);
@@ -218,7 +225,7 @@ namespace {
     std::vector<uint8_t> hcom_rec;
     hcom_rec.resize(lambda_bytes * 2);
     BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
-                                c.data(), ell_hat, params));
+                                  c.data(), c_mult.data(), q_bar.data(), ell_hat, params));
     BOOST_TEST(hcom_rec == expected_h_vec);
     BOOST_TEST(expected_hashed_q == hash_array(q_storage));
     bavc_clear(&bavc_com);
@@ -245,5 +252,5 @@ namespace {
     }
   }
 } // namespace
- */
+
 BOOST_AUTO_TEST_SUITE_END()
