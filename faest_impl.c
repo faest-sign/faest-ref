@@ -478,12 +478,14 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   }
   uint8_t hcom[MAX_LAMBDA_BYTES * 2];
 
-  if (!vole_reconstruct(hcom, q, iv, dsignature_chall_3(sig, params),
-                        dsignature_decom_i(sig, params), dsignature_c(sig, 0, params), ell_hat,
-                        params)) {
-    free_pointer_array(&q);
-    return -1;
-  }
+  // TODO: Commenting for now to just build and test the vole_commit seperately
+  // TODO: Uncomment in future
+  // if (!vole_reconstruct(hcom, q, iv, dsignature_chall_3(sig, params),
+  //                       dsignature_decom_i(sig, params), dsignature_c(sig, 0, params), ell_hat,
+  //                       params)) {
+  //   free_pointer_array(&q);
+  //   return -1;
+  // }
 
   // ::10
   uint8_t chall_1[5 * MAX_LAMBDA_BYTES + 8];

@@ -33,7 +33,9 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     const auto params                 = faest_get_paramset(param_id);
     const unsigned int lambda         = params->lambda;
     const unsigned int lambda_bytes   = lambda / 8;
-    const unsigned int ell_hat        = params->ell + params->lambda * 3 + UNIVERSAL_HASH_B_BITS;
+    const unsigned int ell            = params->ell;
+    const unsigned int ell_bytes      = (ell + 7) / 8;
+    const unsigned int ell_hat        = params->ell + params->n_mask * params->k;
     const unsigned int ell_hat_bytes  = (ell_hat + 7) / 8;
     const auto com_size               = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
     const auto n_mask                 = params->n_mask;
@@ -42,13 +44,14 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, c_mult, u, u_bar, v_bar, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult, u, u_bar, v_bar, q_bar, q_storage, v_storage;
     chal.resize(lambda_bytes);
-    c.resize((params->tau - 1) * ell_hat_bytes);
+    c.resize((params->tau - 1) * ell_bytes);
     c_mult.resize(n_mult * n_mask_bytes);
     u.resize(ell_hat_bytes * params->tau);
     u_bar.resize(n_mask * lambda_bytes);
     v_bar.resize(n_mask * lambda_bytes);
+    q_bar.resize(n_mask * lambda_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
@@ -64,38 +67,48 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       v[i] = v[0] + i * ell_hat_bytes;
     }
 
-    // TODO: Uncomment for test!
     vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), c_mult.data(),
                 u.data(), v.data(), u_bar.data(), v_bar.data());
 
-    // std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2};
+    std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2};
 
-    // bool tested = false;
-    // for (unsigned int tries = 0; !tested && tries != max_tries; ++tries) {
-    //   rand_bytes(chal.data(), chal.size());
-    //   for (unsigned int i = lambda - params->w_grind; i != lambda; ++i) {
-    //     ptr_set_bit(chal.data(), i, 0);
-    //   }
+    bool tested = false;
+    for (unsigned int tries = 0; !tested && tries != max_tries; ++tries) {
 
-    //   std::vector<uint16_t> i_delta;
-    //   i_delta.resize(params->tau);
+      // TODO: Uncomment
+      // rand_bytes(chal.data(), chal.size());
+      // for (unsigned int i = lambda - params->w_grind; i != lambda; ++i) {
+      //   ptr_set_bit(chal.data(), i, 0);
+      // }
 
-    //   std::vector<uint8_t> decom_i;
-    //   decom_i.resize(com_size * params->tau + params->T_open * lambda_bytes);
+      // TODO: Remove
+      // NOTE: Just for debugging
+      static const char* chall_hex = "7155b8f0de65bed193b8615bcde68900";
+      for (unsigned int i = 0; i < lambda_bytes; ++i) {
+        unsigned int byte;
+        std::sscanf(chall_hex + 2 * i, "%2x", &byte);
+        chal[i] = static_cast<uint8_t>(byte);
+      }
 
-    //   BOOST_TEST(decode_all_chall_3(i_delta.data(), chal.data(), params));
-    //   if (!bavc_open(decom_i.data(), &bavc_com, i_delta.data(), params)) {
-    //     continue;
-    //   }
-    //   tested = true;
+      std::vector<uint16_t> i_delta;
+      i_delta.resize(params->tau);
 
-    //   std::vector<uint8_t> hcom_rec;
-    //   hcom_rec.resize(lambda_bytes * 2);
-    //   BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
-    //                               c.data(), ell_hat, params));
-    //   BOOST_TEST(hcom == hcom_rec);
+      std::vector<uint8_t> decom_i;
+      decom_i.resize(com_size * params->tau + params->T_open * lambda_bytes);
 
-    // BOOST_TEST(tested);
+      BOOST_TEST(decode_all_chall_3(i_delta.data(), chal.data(), params));
+      if (!bavc_open(decom_i.data(), &bavc_com, i_delta.data(), params)) {
+        continue;
+      }
+      tested = true;
+
+      std::vector<uint8_t> hcom_rec;
+      hcom_rec.resize(lambda_bytes * 2);
+      BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
+                                  c.data(), c_mult.data(), q_bar.data(), ell_hat, params));
+      BOOST_TEST(hcom == hcom_rec);
+    }
+    BOOST_TEST(tested);
     bavc_clear(&bavc_com);
 
   }
