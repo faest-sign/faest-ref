@@ -25,6 +25,22 @@ static inline void set_bit_to_pt(uint8_t *p, size_t i, uint8_t v) {
     p[byte] = (uint8_t)((p[byte] & ~bit) | (bit & (uint8_t)(0u - v)));
 }
 
+static inline void column_to_row_major_V(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len, unsigned int v_col_bits_len) {
+
+  for (unsigned int row = 0; row < v_row_bits_len; row++) {
+    for (unsigned int col = 0; col < v_col_bits_len; col++) {
+        uint8_t bit = (v[row][col / 8] >> (col % 8)) & 1u;
+        v_row_maj[col][row / 8] |= (uint8_t)(bit << (row % 8));
+    }
+  }
+
+  for (unsigned int row = 0; row < v_row_bits_len; row++) {
+    for (unsigned int col = 0; col < v_col_bits_len; col++) {
+      assert(get_bit_from_pt(v[row], col) == get_bit_from_pt(v_row_maj[col], row));
+    }
+  }
+}
+
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* c_mult,
                  uint8_t* u, uint8_t** v, uint8_t* u_dash_m, uint8_t* v_dash);

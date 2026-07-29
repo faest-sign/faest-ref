@@ -90,7 +90,9 @@ int main() {
                 u.data(), v.data(), u_bar.data(), v_bar.data());
 
     print_named_array("h", "uint8_t", bavc_com.h, 2 * lambda_bytes);
+    print_named_array("hashed_c", "uint8_t", hash_array(c));
     print_named_array("hashed_u", "uint8_t", hash_array(u));
+
     // NOTE: *** Claude GENERATED CODE
     // This alligns the c_mult to how it is in the python code (swapping the rows and the bits) for the matching TVs
     size_t nb        = (n_mult + 7) / 8;      // 40, matches Python
@@ -152,6 +154,7 @@ int main() {
                                   c.data(), c_mult.data(), q_bar.data(), ell_hat, &params);
 
 
+      // NOTE: *** Claude GENERATED CODE
       size_t ncols        = ell;
       // size_t lambda_bytes = lambda / 8;
       std::vector<uint8_t> mQ_bytes(ncols * lambda_bytes, 0);
@@ -163,7 +166,7 @@ int main() {
             mQ_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
         }
       }
-
+      // ***
       print_named_array("hashed_q", "uint8_t", hash_array(mQ_bytes));
 
       print_named_array("q_bar", "uint8_t", q_bar.data(), 32);

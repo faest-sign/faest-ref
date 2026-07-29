@@ -165,12 +165,13 @@ BOOST_DATA_TEST_CASE(test_convert_to_vole, all_parameters, param_id) {
 
 namespace {
   template <std::size_t HSize, std::size_t CSize>
-  void test_tv(const faest_paramset_t* params, const std::array<uint8_t, CSize>& challenge,
-               const std::array<uint8_t, HSize>& expected_h,
-               const std::array<uint8_t, 64>& expected_hashed_c,
-               const std::array<uint8_t, 64>& expected_hashed_u,
-               const std::array<uint8_t, 64>& expected_hashed_v,
-               const std::array<uint8_t, 64>& expected_hashed_q) {
+  void test_tv(const faest_paramset_t* params, 
+              const std::array<uint8_t, CSize>& challenge,
+              const std::array<uint8_t, HSize>& expected_h,
+              const std::array<uint8_t, 64>& expected_hashed_c,
+              const std::array<uint8_t, 64>& expected_hashed_u,
+              const std::array<uint8_t, 64>& expected_hashed_v,
+              const std::array<uint8_t, 64>& expected_hashed_q) {
     const unsigned int lambda        = params->lambda;
     const unsigned int lambda_bytes  = lambda / 8;
     const unsigned int ell            = params->ell;
@@ -181,6 +182,10 @@ namespace {
     const auto n_mask                 = params->n_mask;
     const auto n_mask_bytes           = (n_mask + 7) / 8;
     const auto n_mult                 = params->n_mult;
+    const unsigned int w_grind      = params->w_grind;
+    const unsigned int w_grind_bytes = (w_grind + 7) / 8;
+    const unsigned int lambda_minus_w_grind = lambda - w_grind;
+    const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7 ) / 8;
 
     bavc_t bavc_com;
 
@@ -189,7 +194,7 @@ namespace {
     c.resize((params->tau - 1) * ell_bytes);
     c_mult.resize(n_mult * n_mask_bytes);
     decom_i.resize(com_size * params->tau + params->T_open * lambda_bytes);
-    u.resize(ell_bytes * params->tau);
+    u.resize(ell_bytes);
     u_bar.resize(n_mask * lambda_bytes);
     v_bar.resize(n_mask * lambda_bytes);
     q_bar.resize(n_mask * lambda_bytes);
@@ -214,43 +219,179 @@ namespace {
     std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2},
         expected_h_vec{expected_h.begin(), expected_h.end()};
     BOOST_TEST(hcom == expected_h_vec);
+
+    // print_named_array("challenge", "uint8_t", challenge.data(), challenge.size());
+
+    // print_named_array("c", "uint8_t", hash_array(c));
+    // print_named_array("expected_hashed_c", "uint8_t", expected_hashed_c.data(), expected_hashed_c.size());
     BOOST_TEST(expected_hashed_c == hash_array(c));
+
+    // print_named_array("u", "uint8_t", hash_array(u));
+    // print_named_array("expected_hashed_u", "uint8_t", expected_hashed_u.data(), expected_hashed_u.size());
     BOOST_TEST(expected_hashed_u == hash_array(u));
-    BOOST_TEST(expected_hashed_v == hash_array(v_storage));
 
-    // std::vector<uint16_t> i_delta;
-    // i_delta.resize(params->tau);
-    // BOOST_TEST(decode_all_chall_3(i_delta.data(), challenge.data(), params));
-    // BOOST_TEST(bavc_open(decom_i.data(), &bavc_com, i_delta.data(), params));
+    // NOTE: *** Claude GENERATED CODE
+    // This does the row_to_coloumn_major transformation
+    size_t ncols        = ell;
+    // size_t lambda_bytes = lambda / 8;
+    std::vector<uint8_t> mV_bytes(ncols * lambda_bytes, 0);
+    for (size_t c = 0; c < ncols; ++c) {
+      for (size_t r = 0; r < lambda; ++r) {
+          const uint8_t* srow = v_storage.data() + r * ell_hat_bytes;
+          uint8_t bit = (srow[c >> 3] >> (c & 7)) & 1u;
+          size_t  pos = c * lambda + r;
+          mV_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+      }
+    }
+    // fprintf(stderr, "cc len: %zu\n", mV_bytes.size());
+    // for (size_t k = 0; k < 32; ++k) fprintf(stderr, "%02x", mV_bytes[k]);
+    // fprintf(stderr, "\n... tail: ");
+    // for (size_t k = mV_bytes.size()-32; k < mV_bytes.size(); ++k) fprintf(stderr, "%02x", mV_bytes[k]);
+    // fprintf(stderr, "\n");
+    // print_named_array("v_storage", "uint8_t", mV_bytes.data(), 32);
+    print_named_array("v_storage", "uint8_t", mV_bytes.data(), 140);
+    // ***
+    // print_named_array("v_storage", "uint8_t", hash_array(mV_bytes));
+    // print_named_array("expected_hashed_v", "uint8_t", expected_hashed_v.data(), expected_hashed_v.size());
+    BOOST_TEST(expected_hashed_v == hash_array(mV_bytes));
 
-    // std::vector<uint8_t> hcom_rec;
-    // hcom_rec.resize(lambda_bytes * 2);
-    // BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
-    //                               c.data(), c_mult.data(), q_bar.data(), ell_hat, params));
-    // BOOST_TEST(hcom_rec == expected_h_vec);
-    // BOOST_TEST(expected_hashed_q == hash_array(q_storage));
-    // bavc_clear(&bavc_com);
+    std::vector<uint16_t> i_delta;
+    i_delta.resize(params->tau);
+    BOOST_TEST(decode_all_chall_3(i_delta.data(), challenge.data(), params));
+    BOOST_TEST(bavc_open(decom_i.data(), &bavc_com, i_delta.data(), params));
 
-    // for (unsigned int i = 0, running_idx = 0; i < params->tau; ++i) {
-    //   const uint32_t depth = bavc_max_node_depth(i, params->tau1, params->k);
-    //   const auto delta     = i_delta[i];
+    std::vector<uint8_t> hcom_rec;
+    hcom_rec.resize(lambda_bytes * 2);
+    BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), challenge.data(), decom_i.data(),
+                                  c.data(), c_mult.data(), q_bar.data(), ell_hat, params));
+    BOOST_TEST(hcom_rec == expected_h_vec);
 
-    //   for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
-    //     for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
-    //       if ((delta >> j) & 1) {
-    //         // need to correct the vole correlation
-    //         if (i > 0) {
-    //           BOOST_TEST((q[(running_idx)][inner] ^ c[(i - 1) * ell_hat_bytes + inner] ^
-    //                       u[inner]) == v[(running_idx)][inner]);
-    //         } else {
-    //           BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
-    //         }
-    //       } else {
-    //         BOOST_TEST(q[(running_idx)][inner] == v[(running_idx)][inner]);
-    //       }
-    //     }
-    //   }
+    // NOTE: *** Claude GENERATED CODE
+    ncols        = ell;
+    // size_t lambda_bytes = lambda / 8;
+    std::vector<uint8_t> mQ_bytes(ncols * lambda_bytes, 0);
+    for (size_t c = 0; c < ncols; ++c) {
+      for (size_t r = 0; r < lambda; ++r) {
+          const uint8_t* srow = q_storage.data() + r * ell_hat_bytes;
+          uint8_t bit = (srow[c >> 3] >> (c & 7)) & 1u;
+          size_t  pos = c * lambda + r;
+          mQ_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+      }
+    }
+    print_named_array("q_storage", "uint8_t", mQ_bytes.data(), 140);
+    // ***
+    BOOST_TEST(expected_hashed_q == hash_array(mQ_bytes));
+
+    bavc_clear(&bavc_com);
+
+
+    // uint8_t** mQ_byte_new = (uint8_t**)malloc(lambda * sizeof(uint8_t*));
+    // for (size_t r = 0; r < lambda; ++r) {
+    //     mQ_byte_new[r] = (uint8_t*)calloc(ell_bytes, 1);   // zeroed
     // }
+    // for (size_t r = 0; r < lambda; ++r) {
+    //     const uint8_t* srow = q_storage.data() + r * ell_hat_bytes;
+    //     for (size_t c = 0; c < ell; ++c) {
+    //         uint8_t bit = (srow[c >> 3] >> (c & 7)) & 1u;
+    //         mQ_byte_new[r][c >> 3] |= (uint8_t)(bit << (c & 7));
+    //     }
+    // }
+
+    // uint8_t** mV_byte_new = (uint8_t**)malloc(lambda * sizeof(uint8_t*));
+    // for (size_t r = 0; r < lambda; ++r) {
+    //     mV_byte_new[r] = (uint8_t*)calloc(ell_bytes, 1);   // zeroed
+    // }
+    // for (size_t r = 0; r < lambda; ++r) {
+    //     const uint8_t* srow = v_storage.data() + r * ell_hat_bytes;
+    //     for (size_t c = 0; c < ell; ++c) {
+    //         uint8_t bit = (srow[c >> 3] >> (c & 7)) & 1u;
+    //         mV_byte_new[r][c >> 3] |= (uint8_t)(bit << (c & 7));
+    //     }
+    // }
+
+    // // Switching from coloumn major to row major order
+    // uint8_t** v_row_maj = (uint8_t**)malloc(ell * sizeof(uint8_t*));
+    // for (unsigned i = 0; i < ell; i++) {
+    //   v_row_maj[i] = (uint8_t*)calloc(lambda_minus_w_grind_bytes, 1);
+    // }
+    // column_to_row_major_V(v.data(), v_row_maj, lambda_minus_w_grind, ell_hat);
+
+    // // Switching from coloumn major to row major order
+    // uint8_t** q_row_maj = (uint8_t**)malloc(ell * sizeof(uint8_t*));
+    // for (unsigned i = 0; i < ell; i++) {
+    //   q_row_maj[i] = (uint8_t*)calloc(lambda_minus_w_grind_bytes, 1);
+    // }
+    // column_to_row_major_V(q.data(), q_row_maj, lambda_minus_w_grind, ell_hat);
+
+
+
+    unsigned int total = 0;
+    unsigned int flag = 0;
+
+    for (unsigned int inner = 0, running_idx = 0; inner != ell; ++inner) {
+
+      for (unsigned int i = 0; i < params->tau; ++i) {
+        const uint32_t depth = bavc_max_node_depth(i, params->tau1, params->k);
+        const auto delta     = i_delta[running_idx / depth];
+
+        print_u8_array_bits("i_delta[i]", (uint8_t*)&i_delta[0], 2);
+        print_u8_array_bits("i_delta[i]", (uint8_t*)&i_delta[1], 2);
+        print_u8_array_bits("i_delta[i]", (uint8_t*)&i_delta[2], 2);
+        print_u8_array_bits("i_delta[i]", (uint8_t*)&i_delta[3], 2);
+        print_u8_array_bits("i_delta[i]", (uint8_t*)&i_delta[4], 2);
+        print_u8_array_bits("i_delta[i]", (uint8_t*)&i_delta[5], 2);
+        print_u8_array_bits("i_delta[i]", (uint8_t*)&i_delta[6], 2);
+
+        printf("Depth %d\n", depth);
+        for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
+          if (get_bit_from_pt((uint8_t*)&delta, running_idx/lambda_bytes)) {
+            // need to correct the vole correlation
+            if (i > 0) {
+              // BOOST_TEST((q[(running_idx)][inner] ^ c[(i - 1) * ell_bytes + inner] ^
+              //             u[inner]) == v[(running_idx)][inner]);
+              printf("IFFFF \n");
+              print_named_array("q[(running_idx)][inner]", "uint8_t", &mQ_bytes[inner * lambda + running_idx], 1);
+              print_named_array("v[(running_idx)][inner]", "uint8_t", &mV_bytes[inner * lambda + running_idx], 1);
+              print_u8_array("tau index", (uint8_t*)&i, 1);
+              print_u8_array("running index", (uint8_t*)&running_idx, 1);
+              print_u8_array("j index", (uint8_t*)&j, 1);
+              printf("inner index %d \n", inner / depth);
+              if ((mQ_bytes[inner * lambda + running_idx] ^ c[(i - 1) * ell_bytes + inner / depth] ^ u[inner / depth]) != mV_bytes[inner * lambda + running_idx]) {
+                return;
+              }
+            } else {
+              printf("ELSE \n");
+              // BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
+              print_named_array("q[(running_idx)][inner]", "uint8_t", &mQ_bytes[inner * lambda + running_idx], 1);
+              print_named_array("v[(running_idx)][inner]", "uint8_t", &mQ_bytes[inner * lambda + running_idx], 1);
+              print_u8_array("u[inner] ", (uint8_t*)&u[inner], 1);
+              print_u8_array("tau index", (uint8_t*)&i, 1);
+              print_u8_array("running index", (uint8_t*)&running_idx, 1);
+              print_u8_array("j index", (uint8_t*)&j, 1);
+              printf("inner index %d \n", inner / depth);
+              if ((mQ_bytes[inner * lambda + running_idx] ^ u[inner / depth]) != mV_bytes[inner * lambda + running_idx]) {
+                return;
+              }
+            }
+          } else {
+            printf("DELTA ELSE \n");
+            // BOOST_TEST(q[(running_idx)][inner] == v[(running_idx)][inner]);
+            print_named_array("q[(running_idx)][inner]", "uint8_t", &mQ_bytes[inner * lambda + running_idx], 1);
+            print_named_array("v[(running_idx)][inner]", "uint8_t", &mV_bytes[inner * lambda + running_idx], 1);
+            print_u8_array("u[inner] ", (uint8_t*)&u[inner], 1);
+            print_u8_array("tau index", (uint8_t*)&i, 1);
+            print_u8_array("running index", (uint8_t*)&running_idx, 1);
+            print_u8_array("j index", (uint8_t*)&j, 1);
+            printf("inner index %d \n", inner / depth);
+            if (mQ_bytes[inner * lambda + running_idx] != mV_bytes[inner * lambda + running_idx]) {
+              return;
+            }
+          }
+        }
+      }
+    }
+    printf("flag %d", flag);
+    printf("total %d", total);
   }
 } // namespace
 
