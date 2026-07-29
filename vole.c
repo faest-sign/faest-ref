@@ -18,10 +18,7 @@
 static const uint32_t TWEAK_OFFSET = UINT32_C(0x80000000); // 2^31
 
 // TODO: For now putting this here
-static inline void xor_bit_to_pt(uint8_t *p, size_t i, uint8_t v) {
-    size_t byte = i / 8;
-    p[byte] ^= (uint8_t)((v & 1u) << (i % 8));
-}
+
 void gf2_poly_mul_ct(const uint8_t *a, size_t a_bits,
                      const uint8_t *b, size_t b_bits,
                      uint8_t *out) {
@@ -445,15 +442,15 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   }
 
-  for (unsigned int ell_idx = 0; ell_idx < 20; ell_idx++) {
-    print_u8_array("v_row_maj_new[col]", v_row_maj_new[ell_idx], lambda_minus_w_grind_bytes);
-  }
+  // for (unsigned int ell_idx = 0; ell_idx < 20; ell_idx++) {
+  //   print_u8_array("v_row_maj_new[col]", v_row_maj_new[ell_idx], lambda_minus_w_grind_bytes);
+  // }
 
   column_to_row_major_V(v_row_maj_new, v, ell, lambda_minus_w_grind); 
 
-  for (unsigned int ell_idx = 0; ell_idx < 20; ell_idx++) {
-    print_u8_array("v[col]", v[ell_idx], lambda_minus_w_grind_bytes);
-  }
+  // for (unsigned int ell_idx = 0; ell_idx < 20; ell_idx++) {
+  //   print_u8_array("v[col]", v[ell_idx], lambda_minus_w_grind_bytes);
+  // }
 
   // print_u8_array_bits("v[col]", v[0], 1);
   // print_u8_array_bits("v[col]", v[1], 1);
@@ -763,15 +760,15 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
     // print_u8_array("tmp",q_row_maj[ell_idx], lambda_minus_w_grind_bytes);
   }
 
-  for (unsigned int ell_idx = 0; ell_idx < 20; ell_idx++) {
-    print_u8_array("q_row_maj_new[col]", q_row_maj_new[ell_idx], lambda_minus_w_grind_bytes);
-  }
+  // for (unsigned int ell_idx = 0; ell_idx < 20; ell_idx++) {
+  //   print_u8_array("q_row_maj_new[col]", q_row_maj_new[ell_idx], lambda_minus_w_grind_bytes);
+  // }
 
   column_to_row_major_V(q_row_maj_new, q, ell, lambda_minus_w_grind); 
 
-  for (unsigned int ell_idx = 0; ell_idx < 20; ell_idx++) {
-    print_u8_array("q[col]", q[ell_idx], lambda_minus_w_grind_bytes);
-  }
+  // for (unsigned int ell_idx = 0; ell_idx < 20; ell_idx++) {
+  //   print_u8_array("q[col]", q[ell_idx], lambda_minus_w_grind_bytes);
+  // }
 
   // print_u8_array_bits("v[col]", v[0], 1);
   // print_u8_array_bits("v[col]", v[1], 1);

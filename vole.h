@@ -16,6 +16,10 @@ FAEST_BEGIN_C_DECL
 //                  uint8_t** v);
 
 // TODO: For now putting this here
+static inline void xor_bit_to_pt(uint8_t *p, size_t i, uint8_t v) {
+    size_t byte = i / 8;
+    p[byte] ^= (uint8_t)((v & 1u) << (i % 8));
+}
 static inline uint8_t get_bit_from_pt(const uint8_t *p, size_t i) {
     return (uint8_t)((p[i / 8] >> (i % 8)) & 1u);
 }
