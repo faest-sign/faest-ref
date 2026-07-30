@@ -16,8 +16,8 @@ if boost_test.found()
     'utils.cpp',
     'vole.cpp',
     '../tables/tables.c',
-    '../tables/tables_128f.c',
-    '../tables/tables_128s.c',
+    # '../tables/tables_128f.c',
+    # '../tables/tables_128s.c',
   )
   test_deps = []
   test_defines = ['-DBOOST_TEST_DYN_LINK', '-DFAEST_TESTS']

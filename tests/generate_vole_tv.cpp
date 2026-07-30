@@ -41,7 +41,7 @@ int main() {
     const unsigned int lambda_bytes  = lambda / 8;
     const unsigned int ell            = params.ell;
     const unsigned int ell_bytes      = (ell + 7) / 8;
-    const unsigned int ell_hat        = params.ell + params.n_mask * params.k;    // TODO: ell_hat value is wrong, it should be lambda - w_grind
+    const unsigned int ell_hat        = params.ell + params.n_mask * params.k;
     const unsigned int ell_hat_bytes  = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
     const auto n_mask                 = params.n_mask;
@@ -78,7 +78,7 @@ int main() {
 
     // TODO: Remove
     // NOTE: Just for debugging with the faest-128f chall TV instead of the random chall above
-    static const char* chall_hex = "48b0cd3a0376847be0cd11b27d440d01";
+    static const char* chall_hex = "49d91c112872024170cb793722cd1580e4e91d5cb5930300";
     for (unsigned int i = 0; i < lambda_bytes; ++i) {
       unsigned int byte;
       std::sscanf(chall_hex + 2 * i, "%2x", &byte);

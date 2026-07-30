@@ -11,8 +11,8 @@
 #include "utils.h"
 #include "random_oracle.h"
 #include "tables/tables.h"
-#include "tables/tables_128f.h"
-#include "tables/tables_128s.h"
+// #include "tables/tables_128f.h"
+// #include "tables/tables_128s.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -20,7 +20,6 @@
 static const uint32_t TWEAK_OFFSET = UINT32_C(0x80000000); // 2^31
 
 // TODO: For now putting this here
-
 void gf2_poly_mul_ct(const uint8_t *a, size_t a_bits,
                      const uint8_t *b, size_t b_bits,
                      uint8_t *out) {

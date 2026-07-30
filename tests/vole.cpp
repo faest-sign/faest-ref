@@ -367,6 +367,20 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(vole_tv)
 
+BOOST_AUTO_TEST_CASE(vole_tv_128f) {
+  vole::test_tv(faest_get_paramset(FAEST_128F),
+          vole_tvs::FAEST_128F::chall,
+          vole_tvs::FAEST_128F::h,
+          vole_tvs::FAEST_128F::hashed_c,
+          vole_tvs::FAEST_128F::hashed_u,
+          vole_tvs::FAEST_128F::hashed_c_mult,
+          vole_tvs::FAEST_128F::hashed_v,
+          vole_tvs::FAEST_128F::hashed_barU,
+          vole_tvs::FAEST_128F::hashed_barV,
+          vole_tvs::FAEST_128F::hashed_q,
+          vole_tvs::FAEST_128F::hashed_barQ);
+}
+
 BOOST_AUTO_TEST_CASE(vole_tv_128s) {
   vole::test_tv(faest_get_paramset(FAEST_128S),
           vole_tvs::FAEST_128S::chall,
@@ -381,18 +395,32 @@ BOOST_AUTO_TEST_CASE(vole_tv_128s) {
           vole_tvs::FAEST_128S::hashed_barQ);
 }
 
-BOOST_AUTO_TEST_CASE(vole_tv_128f) {
-  vole::test_tv(faest_get_paramset(FAEST_128F),
-          vole_tvs::FAEST_128F::chall,
-          vole_tvs::FAEST_128F::h,
-          vole_tvs::FAEST_128F::hashed_c,
-          vole_tvs::FAEST_128F::hashed_u,
-          vole_tvs::FAEST_128F::hashed_c_mult,
-          vole_tvs::FAEST_128F::hashed_v,
-          vole_tvs::FAEST_128F::hashed_barU,
-          vole_tvs::FAEST_128F::hashed_barV,
-          vole_tvs::FAEST_128F::hashed_q,
-          vole_tvs::FAEST_128F::hashed_barQ);
+BOOST_AUTO_TEST_CASE(vole_tv_192f) {
+  vole::test_tv(faest_get_paramset(FAEST_192F),
+          vole_tvs::FAEST_192F::chall,
+          vole_tvs::FAEST_192F::h,
+          vole_tvs::FAEST_192F::hashed_c,
+          vole_tvs::FAEST_192F::hashed_u,
+          vole_tvs::FAEST_192F::hashed_c_mult,
+          vole_tvs::FAEST_192F::hashed_v,
+          vole_tvs::FAEST_192F::hashed_barU,
+          vole_tvs::FAEST_192F::hashed_barV,
+          vole_tvs::FAEST_192F::hashed_q,
+          vole_tvs::FAEST_192F::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_192s) {
+  vole::test_tv(faest_get_paramset(FAEST_192S),
+          vole_tvs::FAEST_192S::chall,
+          vole_tvs::FAEST_192S::h,
+          vole_tvs::FAEST_192S::hashed_c,
+          vole_tvs::FAEST_192S::hashed_u,
+          vole_tvs::FAEST_192S::hashed_c_mult,
+          vole_tvs::FAEST_192S::hashed_v,
+          vole_tvs::FAEST_192S::hashed_barU,
+          vole_tvs::FAEST_192S::hashed_barV,
+          vole_tvs::FAEST_192S::hashed_q,
+          vole_tvs::FAEST_192S::hashed_barQ);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

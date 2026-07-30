@@ -1,6 +1,10 @@
 #include "tables.h"
 #include "tables_128s.h"
 #include "tables_128f.h"
+#include "tables_192s.h"
+#include "tables_192f.h"
+#include "tables_256s.h"
+#include "tables_256f.h"
 
 #define TABLES(name)                                                 \
   {                                                                  \
@@ -17,8 +21,12 @@
 
 const faest_tables_t* faest_get_tables(faest_paramid_t paramid) {
   switch (paramid) {
-    CASE_TABLES(FAEST_128S)
     CASE_TABLES(FAEST_128F)
+    CASE_TABLES(FAEST_128S)
+    CASE_TABLES(FAEST_192F)
+    CASE_TABLES(FAEST_192S)
+    // CASE_TABLES(FAEST_256F)
+    // CASE_TABLES(FAEST_256S)
     default: return NULL;
   }
 }
