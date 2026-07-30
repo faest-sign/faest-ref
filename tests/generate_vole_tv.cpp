@@ -78,7 +78,7 @@ int main() {
 
     // TODO: Remove
     // NOTE: Just for debugging with the faest-128f chall TV instead of the random chall above
-    static const char* chall_hex = "49d91c112872024170cb793722cd1580e4e91d5cb5930300";
+    static const char* chall_hex = "927891f759af417a0f7d3b16a5a7b037b545845e0e50a4353b0656df9877b802";
     for (unsigned int i = 0; i < lambda_bytes; ++i) {
       unsigned int byte;
       std::sscanf(chall_hex + 2 * i, "%2x", &byte);

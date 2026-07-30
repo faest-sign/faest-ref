@@ -396,7 +396,7 @@ param_256s.set('Ske', 52)
 param_256s.set('R', 14)
 param_256s.set('Senc', 224)
 param_256s.set('BETA', 2)
-param_256s.set('ELL', 3104)
+param_256s.set('ELL', 2208)
 param_256s.set('Lke', 672)
 param_256s.set('Lenc', 1216)
 param_256s.set('TAU', 22)
@@ -408,7 +408,7 @@ param_256s.set('SK_SIZE', 48)
 param_256s.set('OWF_INPUT_SIZE', 16)
 param_256s.set('OWF_OUTPUT_SIZE', 32)
 param_256s.set('D_ZK', 3)
-param_256s.set('N_MASK', 5)
+param_256s.set('N_MASK', 9)
 param_256s.set('N_MULT', 698)
 parameter_sets += param_256s
 
@@ -422,7 +422,7 @@ param_256f.set('Ske', 52)
 param_256f.set('R', 14)
 param_256f.set('Senc', 224)
 param_256f.set('BETA', 2)
-param_256f.set('ELL', 3104)
+param_256f.set('ELL', 2208)
 param_256f.set('Lke', 672)
 param_256f.set('Lenc', 1216)
 param_256f.set('TAU', 32)
@@ -434,7 +434,7 @@ param_256f.set('SK_SIZE', 48)
 param_256f.set('OWF_INPUT_SIZE', 16)
 param_256f.set('OWF_OUTPUT_SIZE', 32)
 param_256f.set('D_ZK', 3)
-param_256f.set('N_MASK', 5)
+param_256f.set('N_MASK', 9)
 param_256f.set('N_MULT', 714)
 parameter_sets += param_256f
 
@@ -594,7 +594,9 @@ faest_sources = files(
   'tables/tables_128f.c',
   'tables/tables_128s.c',
   'tables/tables_192f.c',
-  'tables/tables_192s.c'
+  'tables/tables_192s.c',
+  'tables/tables_256f.c',
+  'tables/tables_256s.c',
 ) + [
   config_header,
   parameters_header,

@@ -423,4 +423,32 @@ BOOST_AUTO_TEST_CASE(vole_tv_192s) {
           vole_tvs::FAEST_192S::hashed_barQ);
 }
 
+BOOST_AUTO_TEST_CASE(vole_tv_256f) {
+  vole::test_tv(faest_get_paramset(FAEST_256F),
+          vole_tvs::FAEST_256F::chall,
+          vole_tvs::FAEST_256F::h,
+          vole_tvs::FAEST_256F::hashed_c,
+          vole_tvs::FAEST_256F::hashed_u,
+          vole_tvs::FAEST_256F::hashed_c_mult,
+          vole_tvs::FAEST_256F::hashed_v,
+          vole_tvs::FAEST_256F::hashed_barU,
+          vole_tvs::FAEST_256F::hashed_barV,
+          vole_tvs::FAEST_256F::hashed_q,
+          vole_tvs::FAEST_256F::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_256s) {
+  vole::test_tv(faest_get_paramset(FAEST_256S),
+          vole_tvs::FAEST_256S::chall,
+          vole_tvs::FAEST_256S::h,
+          vole_tvs::FAEST_256S::hashed_c,
+          vole_tvs::FAEST_256S::hashed_u,
+          vole_tvs::FAEST_256S::hashed_c_mult,
+          vole_tvs::FAEST_256S::hashed_v,
+          vole_tvs::FAEST_256S::hashed_barU,
+          vole_tvs::FAEST_256S::hashed_barV,
+          vole_tvs::FAEST_256S::hashed_q,
+          vole_tvs::FAEST_256S::hashed_barQ);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

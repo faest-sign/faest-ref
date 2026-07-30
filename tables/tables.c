@@ -25,8 +25,8 @@ const faest_tables_t* faest_get_tables(faest_paramid_t paramid) {
     CASE_TABLES(FAEST_128S)
     CASE_TABLES(FAEST_192F)
     CASE_TABLES(FAEST_192S)
-    // CASE_TABLES(FAEST_256F)
-    // CASE_TABLES(FAEST_256S)
+    CASE_TABLES(FAEST_256F)
+    CASE_TABLES(FAEST_256S)
     default: return NULL;
   }
 }
