@@ -14,7 +14,10 @@ if boost_test.found()
     'prg.cpp',
     'universal_hashing.cpp',
     'utils.cpp',
-    'vole.cpp'
+    'vole.cpp',
+    '../tables/tables.c',
+    '../tables/tables_128f.c',
+    '../tables/tables_128s.c',
   )
   test_deps = []
   test_defines = ['-DBOOST_TEST_DYN_LINK', '-DFAEST_TESTS']

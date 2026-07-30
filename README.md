@@ -32,8 +32,9 @@ ninja test
 ```
 
 ```
+meson configure -Dtv-generators=enabled
 meson configure -Dtv-generators=disabled
-./tv_binary
+./tv_binary_name
 ```
 
 

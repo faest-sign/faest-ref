@@ -78,7 +78,7 @@ int main() {
 
     // TODO: Remove
     // NOTE: Just for debugging with the faest-128f chall TV instead of the random chall above
-    static const char* chall_hex = "7155b8f0de65bed193b8615bcde68900";
+    static const char* chall_hex = "48b0cd3a0376847be0cd11b27d440d01";
     for (unsigned int i = 0; i < lambda_bytes; ++i) {
       unsigned int byte;
       std::sscanf(chall_hex + 2 * i, "%2x", &byte);
@@ -90,6 +90,7 @@ int main() {
                 u.data(), v.data(), u_bar.data(), v_bar.data());
 
     print_named_array("h", "uint8_t", bavc_com.h, 2 * lambda_bytes);
+    // print_named_array("c", "uint8_t", c);
     print_named_array("hashed_c", "uint8_t", hash_array(c));
     print_named_array("hashed_u", "uint8_t", hash_array(u));
 
@@ -107,7 +108,9 @@ int main() {
         }
     }
     // ***
-    print_named_array("hash_c_mult", "uint8_t", hash_array(c_mult_packed));
+    // print_u8_array_bits("c_mult", c_mult_packed.data(), 8);
+    // print_named_array("c_mult", "uint8_t", c_mult_packed);
+    print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult_packed));
 
     // NOTE: *** Claude GENERATED CODE
     // This does the row_to_coloumn_major transformation
@@ -169,7 +172,7 @@ int main() {
       // ***
       print_named_array("hashed_q", "uint8_t", hash_array(mQ_bytes));
 
-      print_named_array("q_bar", "uint8_t", q_bar.data(), 32);
+      // print_named_array("q_bar", "uint8_t", q_bar.data(), 32);
       print_named_array("hashed_barQ", "uint8_t", hash_array(q_bar));
 
       break;

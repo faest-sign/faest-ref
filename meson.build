@@ -200,7 +200,7 @@ param_128s.set('SK_SIZE', 32)
 param_128s.set('OWF_INPUT_SIZE', 16)
 param_128s.set('OWF_OUTPUT_SIZE', 16)
 param_128s.set('D_ZK', 3)
-param_128s.set('N_MASK', 5)
+param_128s.set('N_MASK', 9)
 param_128s.set('N_MULT', 314)
 parameter_sets += param_128s
 
@@ -590,7 +590,9 @@ faest_sources = files(
   'universal_hashing.c',
   'utils.c',
   'vole.c',
-  'tables/tables_128f.c'
+  'tables/tables.c',
+  'tables/tables_128f.c',
+  'tables/tables_128s.c'
 ) + [
   config_header,
   parameters_header,

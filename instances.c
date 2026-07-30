@@ -50,6 +50,7 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
 
 #define PARAMS(name)                                                                               \
   {                                                                                                \
+      name,                                                                                        \
       name##_LAMBDA,                                                                               \
       name##_TAU,                                                                                  \
       name##_W_GRIND,                                                                              \

@@ -8,7 +8,10 @@
 #include "universal_hashing.h"
 #include "utils.hpp"
 #include "vole_tvs.hpp"
-#include "tables/tables_128f.h"
+
+#include "tables/tables.h"
+// #include "tables/tables_128s.h"
+// #include "tables/tables_128f.h"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
@@ -171,8 +174,12 @@ namespace {
               const std::array<uint8_t, HSize>& expected_h,
               const std::array<uint8_t, 64>& expected_hashed_c,
               const std::array<uint8_t, 64>& expected_hashed_u,
+              const std::array<uint8_t, 64>& expected_hashed_c_mult,
               const std::array<uint8_t, 64>& expected_hashed_v,
-              const std::array<uint8_t, 64>& expected_hashed_q) {
+              const std::array<uint8_t, 64>& expected_hashed_barU,
+              const std::array<uint8_t, 64>& expected_hashed_barV,
+              const std::array<uint8_t, 64>& expected_hashed_q,
+              const std::array<uint8_t, 64>& expected_hashed_barQ) {
     const unsigned int lambda        = params->lambda;
     const unsigned int lambda_bytes  = lambda / 8;
     const unsigned int ell            = params->ell;
@@ -190,6 +197,8 @@ namespace {
     const unsigned int w_grind_bytes = (w_grind + 7) / 8;
     const unsigned int lambda_minus_w_grind = lambda - w_grind;
     const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7 ) / 8;
+
+    const faest_tables_t* T = faest_get_tables(params->id);
 
     bavc_t bavc_com;
 
@@ -233,6 +242,27 @@ namespace {
     // print_named_array("u", "uint8_t", hash_array(u));
     // print_named_array("expected_hashed_u", "uint8_t", expected_hashed_u.data(), expected_hashed_u.size());
     BOOST_TEST(expected_hashed_u == hash_array(u));
+
+    BOOST_TEST(expected_hashed_barU == hash_array(u_bar));
+    BOOST_TEST(expected_hashed_barV == hash_array(v_bar));
+
+    // NOTE: *** Claude GENERATED CODE
+    // This alligns the c_mult to how it is in the python code (swapping the rows and the bits) for the matching TVs
+    size_t nb        = (n_mult + 7) / 8;      // 40, matches Python
+    size_t packed_len = n_mask * nb;          // 360
+    std::vector<uint8_t> c_mult_packed(packed_len, 0);
+    for (size_t i = 0; i < n_mask; ++i) {
+        for (size_t j = 0; j < n_mult; ++j) {
+          uint16_t word = c_mult[j*2] | (uint16_t)(c_mult[j*2 + 1] << 8);
+          uint8_t  bit  = (word >> i) & 1u;      // bit i of gate j's word
+          size_t   pos  = i * nb * 8 + j;        // dst: row byte-aligned, bit j LSB-first
+          c_mult_packed[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+        }
+    }
+    // ***
+
+    // print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult_packed));
+    BOOST_TEST(expected_hashed_c_mult == hash_array(c_mult_packed));
 
     // NOTE: *** Claude GENERATED CODE
     // This does the row_to_coloumn_major transformation
@@ -286,6 +316,8 @@ namespace {
     // ***
     BOOST_TEST(expected_hashed_q == hash_array(mQ_bytes));
 
+    BOOST_TEST(expected_hashed_barQ == hash_array(q_bar));
+
     bavc_clear(&bavc_com);
 
     uint8_t* Dp = (uint8_t*)malloc(lambda_minus_w_grind_bytes);
@@ -310,7 +342,8 @@ namespace {
       uint8_t acc = 0;
       for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) {   // Dp has n_delta bits
         acc ^= get_bit_from_pt(Dp, row)
-            & get_bit_from_pt((uint8_t*)&FAEST_128F_W_CRT[col][row / 64], row % 64);
+            // & get_bit_from_pt((uint8_t*)&FAEST_128S_W_CRT[col][row / 64], row % 64);
+            & get_bit_from_pt((uint8_t*)&TBL_U8(T->W_CRT, T->w_crt_words, col)[row / 64], row % 64);
       }
       xor_bit_to_pt(Delta, col, acc);
     }
@@ -334,14 +367,32 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(vole_tv)
 
+BOOST_AUTO_TEST_CASE(vole_tv_128s) {
+  vole::test_tv(faest_get_paramset(FAEST_128S),
+          vole_tvs::FAEST_128S::chall,
+          vole_tvs::FAEST_128S::h,
+          vole_tvs::FAEST_128S::hashed_c,
+          vole_tvs::FAEST_128S::hashed_u,
+          vole_tvs::FAEST_128S::hashed_c_mult,
+          vole_tvs::FAEST_128S::hashed_v,
+          vole_tvs::FAEST_128S::hashed_barU,
+          vole_tvs::FAEST_128S::hashed_barV,
+          vole_tvs::FAEST_128S::hashed_q,
+          vole_tvs::FAEST_128S::hashed_barQ);
+}
+
 BOOST_AUTO_TEST_CASE(vole_tv_128f) {
   vole::test_tv(faest_get_paramset(FAEST_128F),
           vole_tvs::FAEST_128F::chall,
           vole_tvs::FAEST_128F::h,
           vole_tvs::FAEST_128F::hashed_c,
           vole_tvs::FAEST_128F::hashed_u,
+          vole_tvs::FAEST_128F::hashed_c_mult,
           vole_tvs::FAEST_128F::hashed_v,
-          vole_tvs::FAEST_128F::hashed_q);
+          vole_tvs::FAEST_128F::hashed_barU,
+          vole_tvs::FAEST_128F::hashed_barV,
+          vole_tvs::FAEST_128F::hashed_q,
+          vole_tvs::FAEST_128F::hashed_barQ);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -41,6 +41,7 @@ typedef enum faest_paramid_t {
 
 typedef struct faest_paramset_t {
   // main parameters
+  faest_paramid_t id;
   uint16_t lambda;
   uint8_t tau;
   uint8_t w_grind;
