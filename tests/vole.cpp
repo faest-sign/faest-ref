@@ -341,9 +341,9 @@ namespace {
     for (unsigned int col = 0; col < lambda; ++col) {          // Delta has lambda output bits
       uint8_t acc = 0;
       for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) {   // Dp has n_delta bits
-        acc ^= get_bit_from_pt(Dp, row)
-            // & get_bit_from_pt((uint8_t*)&FAEST_128S_W_CRT[col][row / 64], row % 64);
-            & get_bit_from_pt((uint8_t*)&TBL_U8(T->W_CRT, T->w_crt_words, col)[row / 64], row % 64);
+        acc ^= ptr_get_bit(Dp, row)
+            // & ptr_get_bit((uint8_t*)&FAEST_128S_W_CRT[col][row / 64], row % 64);
+            & ptr_get_bit((uint8_t*)&TBL_U8(T->W_CRT, T->w_crt_words, col)[row / 64], row % 64);
       }
       xor_bit_to_pt(Delta, col, acc);
     }
@@ -354,7 +354,7 @@ namespace {
       // rhs = mV[row] ^ (Delta if (u>>row)&1 else 0)
       for (unsigned int b = 0; b < lambda_bytes; ++b) {
         uint8_t rhs_b = mV_bytes[row * lambda_bytes + b];                           // however mV rows are laid out
-        if ((get_bit_from_pt(u.data(), row)))                        // (u >> row) & 1
+        if ((ptr_get_bit(u.data(), row)))                        // (u >> row) & 1
           rhs_b ^= Delta[b];
         BOOST_TEST(mQ_bytes[row * lambda_bytes + b] == rhs_b);
       }
@@ -395,6 +395,34 @@ BOOST_AUTO_TEST_CASE(vole_tv_128s) {
           vole_tvs::FAEST_128S::hashed_barQ);
 }
 
+BOOST_AUTO_TEST_CASE(vole_tv_em_128f) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_128F),
+          vole_tvs::FAEST_EM_128F::chall,
+          vole_tvs::FAEST_EM_128F::h,
+          vole_tvs::FAEST_EM_128F::hashed_c,
+          vole_tvs::FAEST_EM_128F::hashed_u,
+          vole_tvs::FAEST_EM_128F::hashed_c_mult,
+          vole_tvs::FAEST_EM_128F::hashed_v,
+          vole_tvs::FAEST_EM_128F::hashed_barU,
+          vole_tvs::FAEST_EM_128F::hashed_barV,
+          vole_tvs::FAEST_EM_128F::hashed_q,
+          vole_tvs::FAEST_EM_128F::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_em_128s) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_128S),
+          vole_tvs::FAEST_EM_128S::chall,
+          vole_tvs::FAEST_EM_128S::h,
+          vole_tvs::FAEST_EM_128S::hashed_c,
+          vole_tvs::FAEST_EM_128S::hashed_u,
+          vole_tvs::FAEST_EM_128S::hashed_c_mult,
+          vole_tvs::FAEST_EM_128S::hashed_v,
+          vole_tvs::FAEST_EM_128S::hashed_barU,
+          vole_tvs::FAEST_EM_128S::hashed_barV,
+          vole_tvs::FAEST_EM_128S::hashed_q,
+          vole_tvs::FAEST_EM_128S::hashed_barQ);
+}
+
 BOOST_AUTO_TEST_CASE(vole_tv_192f) {
   vole::test_tv(faest_get_paramset(FAEST_192F),
           vole_tvs::FAEST_192F::chall,
@@ -423,6 +451,34 @@ BOOST_AUTO_TEST_CASE(vole_tv_192s) {
           vole_tvs::FAEST_192S::hashed_barQ);
 }
 
+BOOST_AUTO_TEST_CASE(vole_tv_em_192f) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_192F),
+          vole_tvs::FAEST_EM_192F::chall,
+          vole_tvs::FAEST_EM_192F::h,
+          vole_tvs::FAEST_EM_192F::hashed_c,
+          vole_tvs::FAEST_EM_192F::hashed_u,
+          vole_tvs::FAEST_EM_192F::hashed_c_mult,
+          vole_tvs::FAEST_EM_192F::hashed_v,
+          vole_tvs::FAEST_EM_192F::hashed_barU,
+          vole_tvs::FAEST_EM_192F::hashed_barV,
+          vole_tvs::FAEST_EM_192F::hashed_q,
+          vole_tvs::FAEST_EM_192F::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_em_192s) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_192S),
+          vole_tvs::FAEST_EM_192S::chall,
+          vole_tvs::FAEST_EM_192S::h,
+          vole_tvs::FAEST_EM_192S::hashed_c,
+          vole_tvs::FAEST_EM_192S::hashed_u,
+          vole_tvs::FAEST_EM_192S::hashed_c_mult,
+          vole_tvs::FAEST_EM_192S::hashed_v,
+          vole_tvs::FAEST_EM_192S::hashed_barU,
+          vole_tvs::FAEST_EM_192S::hashed_barV,
+          vole_tvs::FAEST_EM_192S::hashed_q,
+          vole_tvs::FAEST_EM_192S::hashed_barQ);
+}
+
 BOOST_AUTO_TEST_CASE(vole_tv_256f) {
   vole::test_tv(faest_get_paramset(FAEST_256F),
           vole_tvs::FAEST_256F::chall,
@@ -449,6 +505,34 @@ BOOST_AUTO_TEST_CASE(vole_tv_256s) {
           vole_tvs::FAEST_256S::hashed_barV,
           vole_tvs::FAEST_256S::hashed_q,
           vole_tvs::FAEST_256S::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_em_256f) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_256F),
+          vole_tvs::FAEST_EM_256F::chall,
+          vole_tvs::FAEST_EM_256F::h,
+          vole_tvs::FAEST_EM_256F::hashed_c,
+          vole_tvs::FAEST_EM_256F::hashed_u,
+          vole_tvs::FAEST_EM_256F::hashed_c_mult,
+          vole_tvs::FAEST_EM_256F::hashed_v,
+          vole_tvs::FAEST_EM_256F::hashed_barU,
+          vole_tvs::FAEST_EM_256F::hashed_barV,
+          vole_tvs::FAEST_EM_256F::hashed_q,
+          vole_tvs::FAEST_EM_256F::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_em_256s) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_256S),
+          vole_tvs::FAEST_EM_256S::chall,
+          vole_tvs::FAEST_EM_256S::h,
+          vole_tvs::FAEST_EM_256S::hashed_c,
+          vole_tvs::FAEST_EM_256S::hashed_u,
+          vole_tvs::FAEST_EM_256S::hashed_c_mult,
+          vole_tvs::FAEST_EM_256S::hashed_v,
+          vole_tvs::FAEST_EM_256S::hashed_barU,
+          vole_tvs::FAEST_EM_256S::hashed_barV,
+          vole_tvs::FAEST_EM_256S::hashed_q,
+          vole_tvs::FAEST_EM_256S::hashed_barQ);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

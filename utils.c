@@ -58,3 +58,116 @@ bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
   }
   return true;
 }
+
+
+void xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, size_t len) {
+  for (size_t i = 0; i < len; i++) {
+    out[i] = a[i] ^ b[i];
+  }
+}
+
+void xor_bit_to_pt(uint8_t *p, size_t i, uint8_t v) {
+    size_t byte = i / 8;
+    p[byte] ^= (uint8_t)((v & 1u) << (i % 8));
+}
+
+void masked_xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out,
+                                       uint8_t mask_bit, size_t len) {
+  uint8_t mask = -(mask_bit & 1);
+  for (size_t i = 0; i < len; i++) {
+    out[i] = a[i] ^ (b[i] & mask);
+  }
+}
+
+void print_u8_array(const char *label, const uint8_t *arr, size_t m) {
+    printf("%s: ", label);
+    for (size_t i = 0; i < m; i++) {
+        printf("%02x ", arr[i]);
+    }
+    printf("\n");
+}
+
+void print_u8_array_bits(const char *label, const uint8_t *arr, size_t m) {
+    printf("%s: ", label);
+    for (size_t i = 0; i < m; i++) {
+        for (int b = 0; b < 8; b++) {
+          printf("%u", (arr[i] >> b) & 1u);
+        }
+        printf(" ");
+    }
+    printf("\n");
+}
+
+// NOTE: --- Possibly Claude generated code, don't remeber anymore
+void column_to_row_major(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len, unsigned int v_col_bits_len) {
+
+  for (unsigned int row = 0; row < v_row_bits_len; row++) {
+    for (unsigned int col = 0; col < v_col_bits_len; col++) {
+        uint8_t bit = (v[row][col / 8] >> (col % 8)) & 1u;
+        v_row_maj[col][row / 8] |= (uint8_t)(bit << (row % 8));
+    }
+  }
+
+  for (unsigned int row = 0; row < v_row_bits_len; row++) {
+    for (unsigned int col = 0; col < v_col_bits_len; col++) {
+      assert(ptr_get_bit(v[row], col) == ptr_get_bit(v_row_maj[col], row));
+    }
+  }
+}
+// ---
+// NOTE: --- Possibly Claude generated code, don't remeber anymore
+void gf2_poly_mul_ct(const uint8_t *a, size_t a_bits,
+                     const uint8_t *b, size_t b_bits,
+                     uint8_t *out) {
+    size_t out_bits  = a_bits + b_bits - 1;
+    size_t out_bytes = (out_bits + 7) / 8;
+    memset(out, 0, out_bytes);
+    for (size_t i = 0; i < a_bits; i++) {
+        uint8_t ai = ptr_get_bit(a, i);
+        uint8_t mask = (uint8_t)(0u - ai);
+        for (size_t j = 0; j < b_bits; j++) {
+            uint8_t bj = ptr_get_bit(b, j);
+            size_t  k  = i + j;
+            out[k / 8] ^= (uint8_t)((bj & mask) << (k % 8));
+        }
+    }
+}
+// ---
+// NOTE: --- Possibly Claude generated code, don't remeber anymore
+void gf2_poly_reduce_ct(const uint8_t *a, size_t a_bits,
+                        const uint8_t *m, size_t m_bits,
+                        uint8_t *out) {
+  size_t a_bytes = (a_bits + 7) / 8;
+  size_t out_bytes = (m_bits + 7) / 8;
+
+  memcpy(out, a, a_bytes);
+
+  size_t top_pad = out_bytes * 8;
+  for (size_t i = a_bits; i < top_pad; i++) {
+    ptr_set_bit(out, i, 0);
+  }
+
+  size_t mdeg = m_bits - 1;
+
+  for (size_t i = a_bits; i-- > mdeg;) {
+      uint8_t lead = ptr_get_bit(out, i);
+      uint8_t mask = (uint8_t)(0u - lead);
+
+      size_t shift = i - mdeg;
+
+      for (size_t j = 0; j < m_bits; j++) {
+          uint8_t mj = ptr_get_bit(m, j);
+          size_t  k  = shift + j;
+          out[k / 8] ^= (uint8_t)((mj & mask) << (k % 8));
+      }
+
+      if (i == 0) break;
+  }
+}
+// ----
+
+int highest_set_bit_pos_u64(uint64_t x) {
+    int pos = 0;
+    while (x) { pos++; x >>= 1; }
+    return pos;
+}

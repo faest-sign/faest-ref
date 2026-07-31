@@ -8,6 +8,7 @@
 extern "C" {
 #endif
 
+// NOTE: Claude generated ---
 typedef struct {
   const uint64_t* F;
   const uint64_t* G;
@@ -25,6 +26,7 @@ typedef struct {
 } faest_tables_t;
 
 const faest_tables_t* faest_get_tables(faest_paramid_t paramid);
+// ---
 
 #if defined(__cplusplus)
 }

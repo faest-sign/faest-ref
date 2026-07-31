@@ -178,6 +178,7 @@ conf_data.set(
 # After changing the parameter sets, be sure to run crypto_sign_generator.py to create the corresponding meson files.
 parameter_sets = []
 
+# TODO: Recheck the parameters again
 # parameter set: FAEST-128s
 param_128s = configuration_data()
 param_128s.set('PARAM', '128S')
@@ -240,7 +241,7 @@ param_em_128s.set('Ske', 0)
 param_em_128s.set('R', 10)
 param_em_128s.set('Senc', 160)
 param_em_128s.set('BETA', 1)
-param_em_128s.set('ELL', 960)
+param_em_128s.set('ELL', 640)
 param_em_128s.set('Lke', 128)
 param_em_128s.set('Lenc', 832)
 param_em_128s.set('TAU', 11)
@@ -252,7 +253,7 @@ param_em_128s.set('SK_SIZE', 32)
 param_em_128s.set('OWF_INPUT_SIZE', 16)
 param_em_128s.set('OWF_OUTPUT_SIZE', 16)
 param_em_128s.set('D_ZK', 3)
-param_em_128s.set('N_MASK', 5)
+param_em_128s.set('N_MASK', 9)
 param_em_128s.set('N_MULT', 314)
 parameter_sets += param_em_128s
 
@@ -266,7 +267,7 @@ param_em_128f.set('Ske', 0)
 param_em_128f.set('R', 10)
 param_em_128f.set('Senc', 160)
 param_em_128f.set('BETA', 1)
-param_em_128f.set('ELL', 960)
+param_em_128f.set('ELL', 640)
 param_em_128f.set('Lke', 128)
 param_em_128f.set('Lenc', 832)
 param_em_128f.set('TAU', 16)
@@ -278,7 +279,7 @@ param_em_128f.set('SK_SIZE', 32)
 param_em_128f.set('OWF_INPUT_SIZE', 16)
 param_em_128f.set('OWF_OUTPUT_SIZE', 16)
 param_em_128f.set('D_ZK', 3)
-param_em_128f.set('N_MASK', 5)
+param_em_128f.set('N_MASK', 9)
 param_em_128f.set('N_MULT', 314)
 parameter_sets += param_em_128f
 
@@ -344,7 +345,7 @@ param_em_192s.set('Ske', 0)
 param_em_192s.set('R', 12)
 param_em_192s.set('Senc', 288)
 param_em_192s.set('BETA', 1)
-param_em_192s.set('ELL', 1728)
+param_em_192s.set('ELL', 1152)
 param_em_192s.set('Lke', 192)
 param_em_192s.set('Lenc', 1536)
 param_em_192s.set('TAU', 16)
@@ -356,7 +357,7 @@ param_em_192s.set('SK_SIZE', 48)
 param_em_192s.set('OWF_INPUT_SIZE', 24)
 param_em_192s.set('OWF_OUTPUT_SIZE', 24)
 param_em_192s.set('D_ZK', 3)
-param_em_192s.set('N_MASK', 5)
+param_em_192s.set('N_MASK', 9)
 param_em_192s.set('N_MULT', 506)
 parameter_sets += param_em_192s
 
@@ -370,7 +371,7 @@ param_em_192f.set('Ske', 0)
 param_em_192f.set('R', 12)
 param_em_192f.set('Senc', 288)
 param_em_192f.set('BETA', 1)
-param_em_192f.set('ELL', 1728)
+param_em_192f.set('ELL', 1152)
 param_em_192f.set('Lke', 192)
 param_em_192f.set('Lenc', 1536)
 param_em_192f.set('TAU', 24)
@@ -382,7 +383,7 @@ param_em_192f.set('SK_SIZE', 48)
 param_em_192f.set('OWF_INPUT_SIZE', 24)
 param_em_192f.set('OWF_OUTPUT_SIZE', 24)
 param_em_192f.set('D_ZK', 3)
-param_em_192f.set('N_MASK', 5)
+param_em_192f.set('N_MASK', 9)
 param_em_192f.set('N_MULT', 506)
 parameter_sets += param_em_192f
 
@@ -448,7 +449,7 @@ param_em_256s.set('Ske', 0)
 param_em_256s.set('R', 14)
 param_em_256s.set('Senc', 448)
 param_em_256s.set('BETA', 1)
-param_em_256s.set('ELL', 2688)
+param_em_256s.set('ELL', 1792)
 param_em_256s.set('Lke', 256)
 param_em_256s.set('Lenc', 2432)
 param_em_256s.set('TAU', 22)
@@ -460,7 +461,7 @@ param_em_256s.set('SK_SIZE', 64)
 param_em_256s.set('OWF_INPUT_SIZE', 32)
 param_em_256s.set('OWF_OUTPUT_SIZE', 32)
 param_em_256s.set('D_ZK', 3)
-param_em_256s.set('N_MASK', 5)
+param_em_256s.set('N_MASK', 9)
 param_em_256s.set('N_MULT', 698)
 parameter_sets += param_em_256s
 
@@ -474,7 +475,7 @@ param_em_256f.set('Ske', 0)
 param_em_256f.set('R', 14)
 param_em_256f.set('Senc', 448)
 param_em_256f.set('BETA', 1)
-param_em_256f.set('ELL', 2688)
+param_em_256f.set('ELL', 1792)
 param_em_256f.set('Lke', 256)
 param_em_256f.set('Lenc', 2432)
 param_em_256f.set('TAU', 32)
@@ -486,7 +487,7 @@ param_em_256f.set('SK_SIZE', 64)
 param_em_256f.set('OWF_INPUT_SIZE', 32)
 param_em_256f.set('OWF_OUTPUT_SIZE', 32)
 param_em_256f.set('D_ZK', 3)
-param_em_256f.set('N_MASK', 5)
+param_em_256f.set('N_MASK', 9)
 param_em_256f.set('N_MULT', 714)
 parameter_sets += param_em_256f
 
@@ -595,6 +596,7 @@ faest_sources = files(
   'tables/tables_128s.c',
   'tables/tables_192f.c',
   'tables/tables_192s.c',
+  'tables/tables_em_192s.c',
   'tables/tables_256f.c',
   'tables/tables_256s.c',
 ) + [
