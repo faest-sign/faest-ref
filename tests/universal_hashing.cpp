@@ -7,11 +7,16 @@
 #include "fields.hpp"
 #include "randomness.h"
 #include "universal_hashing_tvs.hpp"
+#include "utils.hpp"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <array>
 #include <vector>
+
+using namespace universal_hashing_tvs::vole_hash_128;
+using namespace universal_hashing_tvs::vole_hash_192;
+using namespace universal_hashing_tvs::vole_hash_256;
 
 namespace {
   void zk_hash_128(uint8_t* h, const uint8_t* sd, const bf128_t* x, unsigned int ell) {
@@ -43,6 +48,7 @@ namespace {
 
   static constexpr size_t xs        = 8;
   static constexpr unsigned int ell = 32;
+  static constexpr unsigned int d_zk = 3;
 } // namespace
 
 BOOST_AUTO_TEST_SUITE(universal_hashing)
@@ -60,6 +66,21 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_128) {
   BOOST_TEST(digest != decltype(digest){});
 }
 
+BOOST_AUTO_TEST_CASE(test_vole_hash_new_128) {
+  const unsigned int lambda = 128;
+  const unsigned int lambda_bytes = lambda / 8;
+  std::array<uint8_t, (6 * lambda + 64) / 8> sd{};
+  rand_bytes(sd.data(), sd.size());
+
+  std::vector<uint8_t> x;
+  x.resize((ell + (d_zk - 1) + 3) * lambda_bytes);
+  rand_bytes(x.data(), x.size());
+
+  std::array<uint8_t, 3 * lambda_bytes> digest{};
+  vole_hash_new_128(digest.data(), sd.data(), x.data(), ell, d_zk);
+  BOOST_TEST(digest != decltype(digest){});
+}
+
 BOOST_AUTO_TEST_CASE(test_vole_hash_192) {
   std::array<uint8_t, (5 * 192 + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
@@ -73,6 +94,21 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_192) {
   BOOST_TEST(digest != decltype(digest){});
 }
 
+BOOST_AUTO_TEST_CASE(test_vole_hash_new_192) {
+  const unsigned int lambda = 192;
+  const unsigned int lambda_bytes = lambda / 8;
+  std::array<uint8_t, (6 * lambda + 64) / 8> sd{};
+  rand_bytes(sd.data(), sd.size());
+
+  std::vector<uint8_t> x;
+  x.resize((ell + (d_zk - 1) + 3) * lambda_bytes);
+  rand_bytes(x.data(), x.size());
+
+  std::array<uint8_t, 3 * lambda_bytes> digest{};
+  vole_hash_new_128(digest.data(), sd.data(), x.data(), ell, d_zk);
+  BOOST_TEST(digest != decltype(digest){});
+}
+
 BOOST_AUTO_TEST_CASE(test_vole_hash_256) {
   std::array<uint8_t, (5 * 256 + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
@@ -83,6 +119,21 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_256) {
 
   std::array<uint8_t, (256 + UNIVERSAL_HASH_B_BITS) / 8> digest{};
   vole_hash_256(digest.data(), sd.data(), x.data(), ell);
+  BOOST_TEST(digest != decltype(digest){});
+}
+
+BOOST_AUTO_TEST_CASE(test_vole_hash_new_256) {
+  const unsigned int lambda = 256;
+  const unsigned int lambda_bytes = lambda / 8;
+  std::array<uint8_t, (6 * lambda + 64) / 8> sd{};
+  rand_bytes(sd.data(), sd.size());
+
+  std::vector<uint8_t> x;
+  x.resize((ell + (d_zk - 1) + 3) * lambda_bytes);
+  rand_bytes(x.data(), x.size());
+
+  std::array<uint8_t, 3 * lambda_bytes> digest{};
+  vole_hash_new_128(digest.data(), sd.data(), x.data(), ell, d_zk);
   BOOST_TEST(digest != decltype(digest){});
 }
 
@@ -632,6 +683,16 @@ BOOST_DATA_TEST_CASE(test_vole_hash_128_tv, xrange(TEST_VECTORS), i) {
   BOOST_TEST(digest == expected_digest);
 }
 
+BOOST_DATA_TEST_CASE(test_vole_hash_new_128_tv, xrange(1), i) {
+  // TODO: generate new vectors with longer input
+  std::array<uint8_t, 3 * sizeof(bf128::bytes)> digest, expected_digest;
+  vole_hash_new_128(
+      digest.data(), vole_hash_new_128_sd.data() + i * (6 * sizeof(bf128::bytes) + 8),
+      vole_hash_new_128_xs.data() + i * (sizeof(bf128::bytes) * (ell + (d_zk - 1) + 3)), ell, d_zk);
+  memcpy(expected_digest.data(), vole_hash_new_128_digest.data(), 3 * sizeof(bf128::bytes));
+  BOOST_TEST(digest == expected_digest);
+}
+
 BOOST_DATA_TEST_CASE(test_vole_hash_192_tv, xrange(TEST_VECTORS), i) {
   // TODO: generate new vectors with longer input
   return;
@@ -645,6 +706,16 @@ BOOST_DATA_TEST_CASE(test_vole_hash_192_tv, xrange(TEST_VECTORS), i) {
   BOOST_TEST(digest == expected_digest);
 }
 
+BOOST_DATA_TEST_CASE(test_vole_hash_new_192_tv, xrange(1), i) {
+  // TODO: generate new vectors with longer input
+  std::array<uint8_t, 3 * sizeof(bf192::bytes)> digest, expected_digest;
+  vole_hash_new_192(
+      digest.data(), vole_hash_new_192_sd.data() + i * (6 * sizeof(bf192::bytes) + 8),
+      vole_hash_new_192_xs.data() + i * (sizeof(bf192::bytes) * (ell + (d_zk - 1) + 3)), ell, d_zk);
+  memcpy(expected_digest.data(), vole_hash_new_192_digest.data(), 3 * sizeof(bf192::bytes));
+  BOOST_TEST(digest == expected_digest);
+}
+
 BOOST_DATA_TEST_CASE(test_vole_hash_256_tv, xrange(TEST_VECTORS), i) {
   // TODO: generate new vectors with longer input
   return;
@@ -655,6 +726,16 @@ BOOST_DATA_TEST_CASE(test_vole_hash_256_tv, xrange(TEST_VECTORS), i) {
   std::copy(vole_hash_256_digest.data() + i * expected_digest.size(),
             vole_hash_256_digest.data() + (i + 1) * expected_digest.size(),
             expected_digest.begin());
+  BOOST_TEST(digest == expected_digest);
+}
+
+BOOST_DATA_TEST_CASE(test_vole_hash_new_256_tv, xrange(1), i) {
+  // TODO: generate new vectors with longer input
+  std::array<uint8_t, 3 * sizeof(bf256::bytes)> digest, expected_digest;
+  vole_hash_new_256(
+      digest.data(), vole_hash_new_256_sd.data() + i * (6 * sizeof(bf256::bytes) + 8),
+      vole_hash_new_256_xs.data() + i * (sizeof(bf256::bytes) * (ell + (d_zk - 1) + 3)), ell, d_zk);
+  memcpy(expected_digest.data(), vole_hash_new_256_digest.data(), 3 * sizeof(bf256::bytes));
   BOOST_TEST(digest == expected_digest);
 }
 

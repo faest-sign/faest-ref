@@ -17,6 +17,11 @@ void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
 void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell);
 void vole_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, uint32_t lambda);
 
+void vole_hash_new_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, unsigned int d_zk);
+void vole_hash_new_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, unsigned int d_zk);
+void vole_hash_new_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, unsigned int d_zk);
+void vole_hash_new(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, unsigned int d_zk, uint32_t lambda);
+
 typedef struct {
   bf128_t h0;
   bf128_t h1;
