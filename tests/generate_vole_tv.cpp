@@ -41,10 +41,13 @@ int main() {
     const unsigned int lambda_bytes  = lambda / 8;
     const unsigned int ell            = params.ell;
     const unsigned int ell_bytes      = (ell + 7) / 8;
-    const unsigned int ell_hat        = params.ell + params.n_mask * params.k;
-    const unsigned int ell_hat_bytes  = (ell_hat + 7) / 8;
+    const unsigned int k              = params.k;
+    const unsigned int tau1           = params.tau1;
+    const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
+    const unsigned int n_mask        = params.n_mask;
+    const unsigned int ell_hat       = ell + n_mask * d0;
+    const unsigned int ell_hat_bytes = (ell_hat +7) / 8;
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
-    const auto n_mask                 = params.n_mask;
     const auto n_mask_bytes           = (n_mask + 7) / 8;
     const auto n_mult                 = params.n_mult;
 

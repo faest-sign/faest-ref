@@ -157,7 +157,7 @@ static bf256_t* column_to_row_major_and_shrink_V_256(uint8_t** v, unsigned int e
 }
 
 BOOST_AUTO_TEST_SUITE(test_aes_prove)
-/*
+
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const faest_paramset_t* params = faest_get_paramset(param_id);
@@ -165,8 +165,12 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     const unsigned int lambda      = params->faest_param.lambda;
     const unsigned int lambdaBytes = lambda / 8;
     const unsigned int ell = params->faest_param.l;
-    const unsigned int ell_hat =
-        params->faest_param.ell + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
+    const unsigned int tau           = params->tau;
+    const unsigned int k              = params->k;
+    const unsigned int tau1           = params->tau1;
+    const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
+    const unsigned int n_mask        = params->n_mask;
+    const unsigned int ell_hat       = ell + n_mask * d0;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const unsigned int ell_bytes = (params->faest_param.ell + 7) / 8;
 
@@ -291,9 +295,9 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     free(q);
   }
 }
- */
 
-/*
+
+
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
     const faest_paramset_t* params = faest_get_paramset(param_id);
@@ -301,8 +305,12 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     const unsigned int lambda      = params->faest_param.lambda;
     const unsigned int lambdaBytes = lambda / 8;
     const unsigned int ell = params->faest_param.l;
-    const unsigned int ell_hat =
-        params->faest_param.ell + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
+    const unsigned int tau           = params->tau;
+    const unsigned int k              = params->k;
+    const unsigned int tau1           = params->tau1;
+    const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
+    const unsigned int n_mask        = params->n_mask;
+    const unsigned int ell_hat       = ell + n_mask * d0;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const unsigned int ell_bytes = (params->faest_param.ell + 7) / 8;
 
@@ -427,7 +435,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     free(q);
   }
 }
- */
+
 
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
@@ -436,8 +444,12 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     const unsigned int lambda      = params->faest_param.lambda;
     const unsigned int lambdaBytes = lambda / 8;
     const unsigned int ell         = params->faest_param.l;
-    const unsigned int ell_hat =
-        params->faest_param.ell + params->faest_param.lambda * 3 + UNIVERSAL_HASH_B_BITS;
+    const unsigned int tau           = params->tau;
+    const unsigned int k              = params->k;
+    const unsigned int tau1           = params->tau1;
+    const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
+    const unsigned int n_mask        = params->n_mask;
+    const unsigned int ell_hat       = ell + n_mask * d0;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const unsigned int ell_bytes     = (params->faest_param.ell + 7) / 8;
 

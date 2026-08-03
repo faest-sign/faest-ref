@@ -39,10 +39,14 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     const unsigned int lambda_bytes   = lambda / 8;
     const unsigned int ell            = params->ell;
     const unsigned int ell_bytes      = (ell + 7) / 8;
-    const unsigned int ell_hat        = params->ell + params->n_mask * params->k;
+    const unsigned int tau           = params->tau;
+    const unsigned int k              = params->k;
+    const unsigned int tau1           = params->tau1;
+    const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
+    const unsigned int n_mask        = params->n_mask;
+    const unsigned int ell_hat       = ell + n_mask * d0;
     const unsigned int ell_hat_bytes  = (ell_hat + 7) / 8;
     const auto com_size               = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
-    const auto n_mask                 = params->n_mask;
     const auto n_mask_bytes           = (n_mask + 7) / 8;
     const auto n_mult                 = params->n_mult;
 
@@ -122,11 +126,16 @@ BOOST_DATA_TEST_CASE(test_convert_to_vole, all_parameters, param_id) {
     const faest_paramset_t params    = *faest_get_paramset(param_id);
     const unsigned int lambda        = params.lambda;
     const unsigned int lambda_bytes  = lambda / 8;
-    const unsigned int k             = params.k;
-    const unsigned int ell_hat_bytes = ((params.ell + params.n_mask * k) + 7) / 8;
+    const unsigned int tau           = params.tau;
+    const unsigned int k              = params.k;
+    const unsigned int tau1           = params.tau1;
+    const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
+    const unsigned int n_mask        = params.n_mask;
+    const unsigned int ell           = params.ell;
+    const unsigned int ell_hat       = ell + n_mask * d0;
+    const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const unsigned int max_depth     = k;
     const unsigned int max_nodes     = 1 << max_depth;
-    const unsigned int tau           = params.tau;
 
     std::vector<uint8_t> sd, u, v, q;
     sd.resize(max_nodes * lambda_bytes);
@@ -184,13 +193,14 @@ namespace {
     const unsigned int lambda_bytes  = lambda / 8;
     const unsigned int ell            = params->ell;
     const unsigned int ell_bytes      = (ell + 7) / 8;
-    const unsigned int ell_hat        = params->ell + params->n_mask * params->k;
+    const unsigned int tau           = params->tau;
+    const unsigned int k              = params->k;
+    const unsigned int tau1           = params->tau1;
+    const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
+    const unsigned int n_mask        = params->n_mask;
+    const unsigned int ell_hat       = ell + n_mask * d0;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-    const unsigned int tau          = params->tau;
-    const unsigned int tau1        = params->tau1;
-    const unsigned int k            = params->k;
     const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
-    const auto n_mask                 = params->n_mask;
     const auto n_mask_bytes           = (n_mask + 7) / 8;
     const auto n_mult                 = params->n_mult;
     const unsigned int w_grind      = params->w_grind;
