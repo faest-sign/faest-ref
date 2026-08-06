@@ -19,7 +19,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
 bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_t* chall_3,
                       const uint8_t* decom_i, const uint8_t* c, uint8_t* c_mult,
-                      uint8_t* q_bar, unsigned int ellhat, const faest_paramset_t* params);
+                      uint8_t* q_bar, uint8_t* Delta, unsigned int ellhat, const faest_paramset_t* params);
 
 #if defined(FAEST_TESTS)
 unsigned int convert_to_vole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,

@@ -52,7 +52,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, c_mult, u, u_bar, v_bar, q_bar, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult, u, u_bar, v_bar, q_bar, delta_prime, q_storage, v_storage;
     chal.resize(lambda_bytes);
     c.resize((params->tau - 1) * ell_bytes);
     c_mult.resize(n_mult * n_mask_bytes);
@@ -60,6 +60,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     u_bar.resize(n_mask * lambda_bytes);
     v_bar.resize(n_mask * lambda_bytes);
     q_bar.resize(n_mask * lambda_bytes);
+    delta_prime.resize(lambda_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
@@ -111,7 +112,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       std::vector<uint8_t> hcom_rec;
       hcom_rec.resize(lambda_bytes * 2);
       BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
-                                  c.data(), c_mult.data(), q_bar.data(), ell_hat, params));
+                                  c.data(), c_mult.data(), q_bar.data(), delta_prime.data(), ell_hat, params));
       BOOST_TEST(hcom == hcom_rec);
     }
     BOOST_TEST(tested);
@@ -210,9 +211,26 @@ namespace {
 
     const faest_tables_t* T = faest_get_tables(params->id);
 
+    // NOTE: This TV only works for the deg-7 vole commit implementation with the below parameters
+    switch (lambda) {
+    case 256:
+      assert(ell == 2208 || ell == 1792);
+      assert(n_mask == 9);
+      break;
+    case 192:
+      assert(ell == 1728 || ell == 1152);
+      assert(n_mask == 9);
+      break;
+    default:
+      assert(ell == 960 || ell == 640);
+      assert(n_mask == 9);
+      break;
+    }
+    
+
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, c_mult, decom_i, u, u_bar, v_bar, q_bar, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult, decom_i, u, u_bar, v_bar, q_bar, delta_prime, q_storage, v_storage;
     chal.resize(lambda_bytes);
     c.resize((params->tau - 1) * ell_bytes);
     c_mult.resize(n_mult * n_mask_bytes);
@@ -221,6 +239,7 @@ namespace {
     u_bar.resize(n_mask * lambda_bytes);
     v_bar.resize(n_mask * lambda_bytes);
     q_bar.resize(n_mask * lambda_bytes);
+    delta_prime.resize(lambda_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
@@ -245,11 +264,11 @@ namespace {
 
     // print_named_array("challenge", "uint8_t", challenge.data(), challenge.size());
 
-    // print_named_array("c", "uint8_t", hash_array(c));
+    // print_named_array("c", "uint8_t", c);
     // print_named_array("expected_hashed_c", "uint8_t", expected_hashed_c.data(), expected_hashed_c.size());
     BOOST_TEST(expected_hashed_c == hash_array(c));
 
-    // print_named_array("u", "uint8_t", hash_array(u));
+    // print_named_array("u", "uint8_t", u);
     // print_named_array("expected_hashed_u", "uint8_t", expected_hashed_u.data(), expected_hashed_u.size());
     BOOST_TEST(expected_hashed_u == hash_array(u));
 
@@ -307,7 +326,7 @@ namespace {
     std::vector<uint8_t> hcom_rec;
     hcom_rec.resize(lambda_bytes * 2);
     BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), challenge.data(), decom_i.data(),
-                                  c.data(), c_mult.data(), q_bar.data(), ell_hat, params));
+                                  c.data(), c_mult.data(), q_bar.data(), delta_prime.data(), ell_hat, params));
     BOOST_TEST(hcom_rec == expected_h_vec);
 
     // NOTE: *** Claude GENERATED CODE

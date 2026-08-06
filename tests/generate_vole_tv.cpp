@@ -53,7 +53,7 @@ int main() {
 
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, c_mult, decom_i, u, u_bar, v_bar, q_bar, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult, decom_i, u, u_bar, v_bar, q_bar, delta_prime, q_storage, v_storage;
     chal.resize(lambda_bytes);
     c.resize((params.tau - 1) * ell_bytes);
     c_mult.resize(n_mult * n_mask_bytes);
@@ -62,6 +62,7 @@ int main() {
     u_bar.resize(n_mask * lambda_bytes);
     v_bar.resize(n_mask * lambda_bytes);
     q_bar.resize(n_mask * lambda_bytes);
+    delta_prime.resize(lambda_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
@@ -145,7 +146,7 @@ int main() {
       std::vector<uint8_t> hcom_rec;
       hcom_rec.resize(lambda_bytes * 2);
       vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
-                                  c.data(), c_mult.data(), q_bar.data(), ell_hat, &params);
+                                  c.data(), c_mult.data(), q_bar.data(), delta_prime.data(), ell_hat, &params);
 
       // NOTE: --- Claude generated code 
       // This arranges the q_storage into the required ordering similar to pyfaest implementation and its TVs

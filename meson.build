@@ -178,7 +178,7 @@ conf_data.set(
 # After changing the parameter sets, be sure to run crypto_sign_generator.py to create the corresponding meson files.
 parameter_sets = []
 
-# TODO: Recheck the parameters again
+# TODO: Recheck the parameters again after switching to deg-7
 # parameter set: FAEST-128s
 param_128s = configuration_data()
 param_128s.set('PARAM', '128S')
@@ -189,19 +189,21 @@ param_128s.set('Ske', 40)
 param_128s.set('R', 10)
 param_128s.set('Senc', 160)
 param_128s.set('BETA', 1)
-param_128s.set('ELL', 960)
+# param_128s.set('ELL', 960)
+param_128s.set('ELL', 1280)
 param_128s.set('Lke', 448)
 param_128s.set('Lenc', 832)
 param_128s.set('TAU', 11)
 param_128s.set('W_GRIND', 7)
 param_128s.set('T_OPEN', 102)
-param_128s.set('SIG_SIZE', 4506)
+param_128s.set('SIG_SIZE', 4233)
 param_128s.set('PK_SIZE', 32)
 param_128s.set('SK_SIZE', 32)
 param_128s.set('OWF_INPUT_SIZE', 16)
 param_128s.set('OWF_OUTPUT_SIZE', 16)
 param_128s.set('D_ZK', 3)
-param_128s.set('N_MASK', 9)
+# param_128s.set('N_MASK', 9)
+param_128s.set('N_MASK', 5)
 param_128s.set('N_MULT', 314)
 parameter_sets += param_128s
 
@@ -215,19 +217,21 @@ param_128f.set('Ske', 40)
 param_128f.set('R', 10)
 param_128f.set('Senc', 160)
 param_128f.set('BETA', 1)
-param_128f.set('ELL', 960)
+# param_128f.set('ELL', 960)
+param_128f.set('ELL', 1280)
 param_128f.set('Lke', 448)
 param_128f.set('Lenc', 832)
 param_128f.set('TAU', 16)
 param_128f.set('W_GRIND', 8)
 param_128f.set('T_OPEN', 110)
-param_128f.set('SIG_SIZE', 5924)
+param_128f.set('SIG_SIZE', 4982)
 param_128f.set('PK_SIZE', 32)
 param_128f.set('SK_SIZE', 32)
 param_128f.set('OWF_INPUT_SIZE', 16)
 param_128f.set('OWF_OUTPUT_SIZE', 16)
 param_128f.set('D_ZK', 3)
-param_128f.set('N_MASK', 9)
+# param_128f.set('N_MASK', 9)
+param_128f.set('N_MASK', 5)
 param_128f.set('N_MULT', 314)
 parameter_sets += param_128f
 
