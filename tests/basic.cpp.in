@@ -58,8 +58,8 @@ BOOST_AUTO_TEST_CASE(test_sign) {
   BOOST_TEST(faest_@PARAM_L@_sign(sk.data(), msg.data(), msg.size(), sig.data(), &sig_size) == 0);
   // faest_@PARAM_L@_sign(sk.data(), msg.data(), msg.size(), sig.data(), &sig_size);
   BOOST_TEST(sig_size == signature_size);
-  faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size());
-  // BOOST_TEST(faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size()) == 0);
+  // faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size());
+  BOOST_TEST(faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size()) == 0);
   // clang-format on
 }
 

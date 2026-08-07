@@ -213,9 +213,9 @@ void vole_hash_new_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned
   bf192_add_inplace(&bf_h[2], &bf_y[3]);
 
   bf192_t bf_x1[3];
-  bf192_load(&bf_x1[0], x + ell_prime * BF192_NUM_BYTES);
-  bf192_load(&bf_x1[1], x + ell_prime + 1 * BF192_NUM_BYTES);
-  bf192_load(&bf_x1[2], x + ell_prime + 2 * BF192_NUM_BYTES);
+  bf192_load(&bf_x1[0], x + (ell_prime + 0) * BF192_NUM_BYTES);
+  bf192_load(&bf_x1[1], x + (ell_prime + 1) * BF192_NUM_BYTES);
+  bf192_load(&bf_x1[2], x + (ell_prime + 2) * BF192_NUM_BYTES);
 
   bf192_add_inplace(&bf_h[0], &bf_x1[0]);
   bf192_add_inplace(&bf_h[1], &bf_x1[1]);
@@ -334,9 +334,9 @@ void vole_hash_new_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned
   bf256_add_inplace(&bf_h[2], &bf_y[3]);
 
   bf256_t bf_x1[3];
-  bf256_load(&bf_x1[0], x + ell_prime * BF256_NUM_BYTES);
-  bf256_load(&bf_x1[1], x + ell_prime + 1 * BF256_NUM_BYTES);
-  bf256_load(&bf_x1[2], x + ell_prime + 2 * BF256_NUM_BYTES);
+  bf256_load(&bf_x1[0], x + (ell_prime + 0) * BF256_NUM_BYTES);
+  bf256_load(&bf_x1[1], x + (ell_prime + 1) * BF256_NUM_BYTES);
+  bf256_load(&bf_x1[2], x + (ell_prime + 2) * BF256_NUM_BYTES);
 
   bf256_add_inplace(&bf_h[0], &bf_x1[0]);
   bf256_add_inplace(&bf_h[1], &bf_x1[1]);

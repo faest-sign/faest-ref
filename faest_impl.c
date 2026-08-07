@@ -480,7 +480,7 @@ static void hash_challenge_3_init(H2_context_t* h2_ctx, const uint8_t* chall_2,
 
   H2_update(h2_ctx, a0_tilde, lambda_bytes);
 
-  for (unsigned int ai_tilde_idx = 1; ai_tilde_idx < d_zk; ai_tilde_idx++) {
+  for (unsigned int ai_tilde_idx = 0; ai_tilde_idx < d_zk - 1; ai_tilde_idx++) {
     H2_update(h2_ctx, a1toi_tilde + ai_tilde_idx * lambda_bytes, lambda_bytes);
   }
 }
@@ -790,6 +790,10 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     free(u);
     u = NULL;
 
+    print_u8_array("sign a0_tilde", a0_tilde, lambda_bytes);
+    print_u8_array("sign a1_tilde", signature_a1toi_tilde(sig, params), lambda_bytes);
+    print_u8_array("sign a2_tilde", signature_a1toi_tilde(sig, params) + lambda_bytes, lambda_bytes);
+
     // line 24
     hash_challenge_3_init(&h2_ctx, chall_2, a0_tilde, signature_a1toi_tilde(sig, params), lambda, d_zk);
 
@@ -799,10 +803,6 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   uint32_t ctr = 0;
   for (; true; ++ctr) {
     uint8_t* chall_3 = signature_chall_3(sig, params);
-    
-    // TODO: UNCOMMENT!!!
-    // memset(chall_3, 1, 1);
-    // memset(chall_3 + 1, 0, lambda_bytes - 1);
     hash_challenge_3_final(chall_3, &h2_ctx, ctr, lambda);
     
     
@@ -833,6 +833,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   }
   hash_clear(&h2_ctx);
   bavc_clear(&bavc);
+
+  print_u8_array("sign chall_3", signature_chall_3(sig, params), lambda_bytes);
 
   // copy counter to signature
   ctr = htole32(ctr);
@@ -982,15 +984,20 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   print_u8_array("verify chall_2", chall_2, 3 * lambda_bytes + 8);
 
-  // // line 17
-  // const uint8_t* d = dsignature_d(sig, params);
-  // uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  // aes_verify(a0_tilde, d, (const uint8_t**)Q, q_bar, owf_input, owf_output, chall_2, dsignature_chall_3(sig, params), dsignature_a1toi_tilde(sig, params), params);
+  // line 17
+  uint8_t a0_tilde[MAX_LAMBDA_BYTES];
+  aes_verify(a0_tilde, dsignature_d(sig, params), (const uint8_t**)Q, q_bar, owf_input, owf_output, chall_2, Delta, dsignature_a1toi_tilde(sig, params), params);
   free_pointer_array(&Q);
 
-  // // line 18
-  // uint8_t chall_3[MAX_LAMBDA_BYTES];
-  // hash_challenge_3(chall_3, chall_2, a0_tilde, dsignature_a1toi_tilde(sig, params), dsignature_ctr(sig, params), lambda, d_zk);
+  print_u8_array("verify a0_tilde", a0_tilde, lambda_bytes);
+  print_u8_array("verify a1_tilde", dsignature_a1toi_tilde(sig, params), lambda_bytes);
+  print_u8_array("verify a2_tilde", dsignature_a1toi_tilde(sig, params) + lambda_bytes, lambda_bytes);
+
+  // line 18
+  uint8_t chall_3[MAX_LAMBDA_BYTES];
+  hash_challenge_3(chall_3, chall_2, a0_tilde, dsignature_a1toi_tilde(sig, params), dsignature_ctr(sig, params), lambda, d_zk);
+
+  print_u8_array("verify chall_3", chall_3, lambda_bytes);
 
   free(Q_row[0]);
   free(Q_row); 
@@ -998,6 +1005,6 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   free(q_bar);
   free(c_mult_as_n_mask_bytes);
 
-  // // Step 21
-  // return memcmp(chall_3, dsignature_chall_3(sig, params), lambda_bytes) == 0 ? 0 : -1;
+  // Step 21
+  return memcmp(chall_3, dsignature_chall_3(sig, params), lambda_bytes) == 0 ? 0 : -1;
 }
