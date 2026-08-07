@@ -48,17 +48,13 @@ BOOST_AUTO_TEST_CASE(test_sign) {
   size_t sig_size = signature_size;
   sig.resize(signature_size);
 
-  // TODO: Uncomment this, commented for debugging
-  std::vector<uint8_t> msg(1024, 0);
-  // std::vector<uint8_t> msg;
-  // msg.resize(1024);
-  // rand_bytes(msg.data(), msg.size());
+  std::vector<uint8_t> msg;
+  msg.resize(1024);
+  rand_bytes(msg.data(), msg.size());
 
   // clang-format off
   BOOST_TEST(faest_@PARAM_L@_sign(sk.data(), msg.data(), msg.size(), sig.data(), &sig_size) == 0);
-  // faest_@PARAM_L@_sign(sk.data(), msg.data(), msg.size(), sig.data(), &sig_size);
   BOOST_TEST(sig_size == signature_size);
-  // faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size());
   BOOST_TEST(faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size()) == 0);
   // clang-format on
 }

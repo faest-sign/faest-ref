@@ -1675,69 +1675,30 @@ static void aes_SSS_constraints_verifier(zk_hash_SSS_ctx* hasher, const bfSSS_t*
 
 // OWF PROVER
 // clang-format off
-// void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w, uint8_t** V, 
-//                        const uint8_t* u_bar, const uint8_t* v_bar, const uint8_t* owf_in, 
-//                        const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params) {
-//   // clang-format on
-//   const unsigned int d_zk = params->d_zk;
-//   const unsigned int ell = params->ell;
-//   const unsigned int lambda = params->lambda;
-//   const unsigned int lambda_bytes = (lambda + 7) / 8;
-
-//   // TODO: Chnage it to the deg-7
-//   // NOTE: Right now we just check with the old deg-3 method
-//   assert(d_zk == 3);
-
-//   // line 3
-//   bfSSS_t* w_tag = column_to_row_major_and_shrink_V_SSS(V, ell); // This is the tag for w
-
-//   // line 6
-//   zk_hash_SSS_3_ctx hasher;
-//   zk_hash_SSS_3_init(&hasher, chall_2); 
-//   aes_SSS_constraints_prover(&hasher, w, w_tag, owf_in, owf_out, params);
-//   // line 11
-//   bfSSS_t* bf_u_bar = malloc((d_zk - 1) * sizeof(bfSSS_t));
-//   bfSSS_t* bf_v_bar = malloc((d_zk - 1) * sizeof(bfSSS_t));
-
-//   bfSSS_load(&bf_v_bar[0], v_bar);
-//   for (unsigned int j = 1; j <= d_zk - 2; j++) {
-//     bfSSS_load(&bf_u_bar[j - 1], u_bar + (j - 1) * lambda_bytes);
-//     bfSSS_load(&bf_v_bar[j], v_bar + j * lambda_bytes);
-//     bfSSS_add_inplace(&bf_u_bar[j - 1], &bf_v_bar[j]);
-//   }
-//   bfSSS_load(&bf_u_bar[d_zk - 2], u_bar + (d_zk - 2) * lambda_bytes);
-
-//   // line 10,12,13
-//   zk_hash_SSS_3_finalize(a0_tilde, &a1toi_tilde[0], &a1toi_tilde[1], &hasher, &bf_v_bar[0], &bf_u_bar[0],
-//                          &bf_u_bar[1]);
-
-//   faest_aligned_free(w_tag);
-
-//   free(bf_u_bar);
-//   free(bf_v_bar);
-// }
-
 void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w, uint8_t** V, 
                       const uint8_t* u_bar, const uint8_t* v_bar, const uint8_t* owf_in, 
                       const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params) {
   // clang-format on
   const unsigned int ell = params->ell;
+  const unsigned int lambda = params->lambda;
+  const unsigned int lambda_bytes = lambda / 8;
+  const unsigned int d_zk = params->d_zk;
 
   // ::1-5
   // V becomes the w_tag: ell + 2*lambda field elements
   bfSSS_t* w_tag = column_to_row_major_and_shrink_V_SSS(V, ell); // This is the tag for w
 
   // ::6-7 embed VOLE masks
-  bfSSS_t bf_u_star_0;
-  bfSSS_sum_poly_bits(&bf_u_star_0, u_bar);
-  bfSSS_t bf_u_star_1;
-  bfSSS_sum_poly_bits(&bf_u_star_1, u_bar + FAEST_SSS_LAMBDA / 8);
+  bfSSS_t* bf_u_star = malloc((d_zk - 1) * sizeof(bfSSS_t));
+  for (unsigned int j = 0; j < d_zk - 1; j++) {
+    bfSSS_sum_poly_bits(&bf_u_star[j], u_bar + j * lambda_bytes);
+  }
 
   // ::8-9
-  bfSSS_t bf_v_star_0;
-  bfSSS_sum_poly_bits(&bf_v_star_0, v_bar);
-  bfSSS_t bf_v_star_1;
-  bfSSS_sum_poly_bits(&bf_v_star_1, v_bar + FAEST_SSS_LAMBDA / 8);
+  bfSSS_t* bf_v_star = malloc((d_zk - 1) * sizeof(bfSSS_t));
+  for (unsigned int j = 0; j < d_zk - 1; j++) {
+    bfSSS_sum_poly_bits(&bf_v_star[j], v_bar + j * lambda_bytes);
+  }
 
   // Step: 13-18
   zk_hash_SSS_3_ctx hasher;
@@ -1745,157 +1706,80 @@ void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w,
 
   aes_SSS_constraints_prover(&hasher, w, w_tag, owf_in, owf_out, params);
 
-  bfSSS_add_inplace(&bf_u_star_0, &bf_v_star_1);
-  zk_hash_SSS_3_finalize(a0_tilde, a1toi_tilde, a1toi_tilde + FAEST_SSS_LAMBDA / 8, &hasher, &bf_v_star_0, &bf_u_star_0,
-                         &bf_u_star_1);
+  for (unsigned int j = 1; j <= d_zk - 2; j++) {
+    bfSSS_add_inplace(&bf_u_star[j - 1], &bf_v_star[j]);
+  }
+
+  zk_hash_SSS_3_finalize(a0_tilde, a1toi_tilde, a1toi_tilde + lambda_bytes, &hasher, &bf_v_star[0], &bf_u_star[0],
+                         &bf_u_star[1]);
 
   faest_aligned_free(w_tag);
 }
 
 // OWF VERIFIER
 // clang-format off
-// void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, const uint8_t** Q,
-//                               const uint8_t* q_bar, const uint8_t* owf_in, const uint8_t* owf_out,
-//                               const uint8_t* chall_2, const uint8_t* chall_3, const uint8_t* a1toi_tilde, const faest_paramset_t* params) {
-//   // clang-format on
-//   const unsigned int d_zk = params->d_zk;
-//   const unsigned int ell = params->ell;
-//   const unsigned int lambda = params->lambda;
-//   const unsigned int lambda_bytes = (lambda + 7) / 8;
-
-//   // TODO: CHnage it to the deg-7
-//   // NOTE: Right now we just check with the old deg-3 method
-//   assert(d_zk == 3);
-
-//   // line 2
-//   bfSSS_t bf_delta;
-//   bfSSS_load(&bf_delta, chall_3);
-
-//   bfSSS_t* bf_delta_exp = malloc((d_zk - 2) * sizeof(bfSSS_t));
-//   bf_delta_exp[0] = bf_delta;                          // delta^1      
-//   for (unsigned int i = 1; i <= d_zk - 2; i++) {
-//     bfSSS_mul(&bf_delta_exp[i], &bf_delta_exp[i-1], &bf_delta);        // delta^(1+i)
-//   }
-
-//   // line 3
-//   bfSSS_t* q_key = column_to_row_major_and_shrink_V_SSS((uint8_t**)Q, ell);
-
-//   for (unsigned int i = 0; i < ell; i++) {
-//     bfSSS_t bf_d;
-//     bfSSS_load(&bf_d, d + i * lambda_bytes);
-//     bfSSS_mul_inplace(&bf_d, &bf_delta);
-//     bfSSS_add_inplace(&q_key[i], &bf_d);
-//   }
-
-//   // line 5
-//   bfSSS_t bf_q_star;
-//   bfSSS_t* bf_q_bar = malloc((d_zk - 1) * sizeof(bfSSS_t));
-
-//   bfSSS_load(&bf_q_bar[0], q_bar);
-//   bf_q_star = bf_q_bar[0];
-
-//   for (unsigned int i = 1; i <= d_zk - 2; i++) {
-//     bfSSS_load(&bf_q_bar[i], q_bar + lambda_bytes);
-//     bfSSS_mul_inplace(&bf_q_bar[i], &bf_delta_exp[i-1]);
-//     bfSSS_add_inplace(&bf_q_star, &bf_q_bar[i]);
-//   }
-
-//   zk_hash_SSS_ctx b_ctx;
-//   zk_hash_SSS_init(&b_ctx, chall_2);
-
-//   // line 7
-//   aes_SSS_constraints_verifier(&b_ctx, q_key, owf_in, owf_out, &bf_delta_exp[0], &bf_delta_exp[1], params);
-
-//   uint8_t q_tilde[FAEST_SSS_LAMBDA / 8];
-//   zk_hash_SSS_finalize(q_tilde, &b_ctx, &bf_q_star);
-
-
-//   // line 12
-//   bfSSS_t bf_a_tilde_sum;
-//   bfSSS_t* bf_a_tilde = malloc((d_zk - 1) * sizeof(bfSSS_t));
-
-//   bfSSS_load(&bf_a_tilde[0], a1toi_tilde);
-//   bfSSS_mul_inplace(&bf_a_tilde[0], &bf_delta_exp[0]);
-//   bf_a_tilde_sum = bf_a_tilde[0];
-
-//   for (unsigned int j = 2; j <=  d_zk - 1; j++) {
-
-//     bfSSS_load(&bf_a_tilde[j - 1], a1toi_tilde + (j - 1) * lambda_bytes);
-
-//     bfSSS_mul_inplace(&bf_a_tilde[j - 1], &bf_delta_exp[j - 1]);
-
-//     bfSSS_add_inplace(&bf_a_tilde_sum, &bf_a_tilde[j - 1]);
-
-//   }
-
-//   bfSSS_t bf_q_tilde;
-//   bfSSS_load(&bf_q_tilde, q_tilde);
-//   bfSSS_add_inplace(&bf_q_tilde, &bf_a_tilde_sum);
-
-//   bfSSS_store(a0_tilde, &bf_q_tilde);
-
-//   faest_aligned_free(q_key);
-
-//   free(bf_delta_exp);
-//   free(bf_q_bar);
-//   free(bf_a_tilde);
-  
-// }
-
-
 void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, const uint8_t** Q,
                           const uint8_t* q_bar, const uint8_t* owf_in, const uint8_t* owf_out,
                           const uint8_t* chall_2, const uint8_t* Delta, const uint8_t* a1toi_tilde, const faest_paramset_t* params) {
   // clang-format on
+  const unsigned int d_zk = params->d_zk;
   const unsigned int ell = params->ell;
+  const unsigned int lambda = params->lambda;
+  const unsigned int lambda_bytes = (lambda + 7) / 8;
 
-  // ::1
-  bfSSS_t bf_delta;
-  bfSSS_load(&bf_delta, Delta);
+  // line 5,12
+  bfSSS_t* bf_delta = malloc((d_zk - 1) * sizeof(bfSSS_t));
+  bfSSS_load(&bf_delta[0], Delta);
+  for (unsigned int j = 1; j <= d_zk - 2; j++) {
+    bfSSS_mul(&bf_delta[j], &bf_delta[j - 1], &bf_delta[0]);
+  }
 
-  bfSSS_t bf_delta_sq;
-  bfSSS_mul(&bf_delta_sq, &bf_delta, &bf_delta);
-
-  // ::2-6
+  // line 3
   bfSSS_t* q_key = column_to_row_major_and_shrink_V_SSS((uint8_t**)Q, ell);
 
-  // ::7-9
+  // line 5
   bfSSS_t q_star;
   bfSSS_sum_poly_bits(&q_star, q_bar);
   bfSSS_t tmp1;
-  bfSSS_sum_poly_bits(&tmp1, q_bar + FAEST_SSS_LAMBDA / 8);
+  for (unsigned int j = 1; j <= d_zk - 2; j++) {
+    bfSSS_sum_poly_bits(&tmp1, q_bar + j * lambda_bytes);
+    bfSSS_mul_inplace(&tmp1, &bf_delta[j - 1]);
+    bfSSS_add_inplace(&q_star, &tmp1);
+  }
 
-  // ::10
-  bfSSS_mul_inplace(&tmp1, &bf_delta);
-  bfSSS_add_inplace(&q_star, &tmp1);
-
-  // ::13-14
+  // line 10
   zk_hash_SSS_ctx b_ctx;
   zk_hash_SSS_init(&b_ctx, chall_2);
 
+  // line 3
   for (unsigned int i = 0; i < ell; i++) {
-    bfSSS_mul_bit(&tmp1, &bf_delta, ptr_get_bit(d, i));
+    bfSSS_mul_bit(&tmp1, &bf_delta[0], ptr_get_bit(d, i));
     bfSSS_add_inplace(&q_key[i], &tmp1);
   }
 
-  // ::11-12
-  aes_SSS_constraints_verifier(&b_ctx, q_key, owf_in, owf_out, &bf_delta, &bf_delta_sq, params);
+  // line 7
+  aes_SSS_constraints_verifier(&b_ctx, q_key, owf_in, owf_out, &bf_delta[0], &bf_delta[1], params);
   faest_aligned_free(q_key);
 
-  // ::13-14
+  // line 10
   uint8_t q_tilde[FAEST_SSS_LAMBDA / 8];
   zk_hash_SSS_finalize(q_tilde, &b_ctx, &q_star);
 
-  // ::16
-  bfSSS_load(&tmp1, a1toi_tilde);
-  bfSSS_mul_inplace(&tmp1, &bf_delta);
-
+  // line 12
+  bfSSS_t acc;
+  bfSSS_load(&acc, a1toi_tilde);
+  bfSSS_mul_inplace(&acc, &bf_delta[0]);
+  for (unsigned int j = 2; j <= d_zk - 1; j++) {
+    bfSSS_load(&tmp1, a1toi_tilde + (j - 1) * lambda_bytes);
+    bfSSS_mul_inplace(&tmp1, &bf_delta[j - 1]);
+    bfSSS_add_inplace(&acc, &tmp1);
+  }
   bfSSS_t tmp2;
-  bfSSS_load(&tmp2, a1toi_tilde + FAEST_SSS_LAMBDA / 8);
-  bfSSS_mul_inplace(&tmp2, &bf_delta_sq);
-  bfSSS_add_inplace(&tmp1, &tmp2);
-
   bfSSS_load(&tmp2, q_tilde);
-  bfSSS_add_inplace(&tmp1, &tmp2);
-  bfSSS_store(a0_tilde, &tmp1);
+  bfSSS_add_inplace(&acc, &tmp2);
+  bfSSS_store(a0_tilde, &acc);
+
+  free(bf_delta);
+  
 }
+

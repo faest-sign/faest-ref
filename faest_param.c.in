@@ -37,15 +37,11 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_keygen(uint8_t* pk, uint8_t* sk) {
 
   bool done = false;
   while (!done) {
-    // TODO: Uncomment this, commented for debugging
-    memset(SK_KEY(sk), 0, @LAMBDA@  / 8);
-    // rand_bytes(SK_KEY(sk), @LAMBDA@  / 8);;
+    rand_bytes(SK_KEY(sk), @LAMBDA@  / 8);;
     done = (ptr_get_bit(SK_KEY(sk), 0) & ptr_get_bit(SK_KEY(sk), 1)) == 0;
     faest_declassify(&done, sizeof(done));
   }
-  // TODO: Uncomment this, commented for debugging
-  memset(SK_INPUT(sk), 0, @OWF_INPUT_SIZE@);
-  // rand_bytes(SK_INPUT(sk), @OWF_INPUT_SIZE@);
+  rand_bytes(SK_INPUT(sk), @OWF_INPUT_SIZE@);
   // declassify OWF input
   faest_declassify(SK_INPUT(sk), @OWF_INPUT_SIZE@);
   faest_@PARAM_L@_owf(SK_KEY(sk), SK_INPUT(sk), PK_OUTPUT(pk));
@@ -113,9 +109,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_sign(const uint8_t* sk, const uint8
   }
 
   uint8_t rho[FAEST_@PARAM@_LAMBDA / 8];
-  // TODO: Uncomment this, commented for debugging
-  memset(rho, 0, FAEST_@PARAM@_LAMBDA / 8);
-  // rand_bytes(rho, sizeof(rho));
+  rand_bytes(rho, sizeof(rho));
 
   return faest_@PARAM_L@_sign_with_randomness(sk, message, message_len, rho, sizeof(rho), signature, signature_len);
 }
@@ -126,9 +120,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpacked_sign(const faest_@PARAM_L@
   }
 
   uint8_t rho[FAEST_@PARAM@_LAMBDA / 8];
-  // TODO: Uncomment this, commented for debugging
-  memset(rho, 0, FAEST_@PARAM@_LAMBDA / 8);
-  // rand_bytes(rho, sizeof(rho));
+  rand_bytes(rho, sizeof(rho));
 
   return faest_@PARAM_L@_unpacked_sign_with_randomness(sk, message, message_len, rho, sizeof(rho), signature, signature_len);
 }

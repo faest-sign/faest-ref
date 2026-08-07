@@ -133,9 +133,9 @@ int main() {
     while (true) {
       // TODO: Uncomment to get the random chall
       std::generate(chal.begin(), chal.end(), [&mt, &dist] { return dist(mt); });
-      for (unsigned int i = lambda - params.w_grind; i != lambda; ++i) {
-        ptr_set_bit(chal.data(), i, 0);
-      }
+      // for (unsigned int i = lambda - params.w_grind; i != lambda; ++i) {
+      //   ptr_set_bit(chal.data(), i, 0);
+      // }
 
       uint16_t i_delta[MAX_TAU];
       decode_all_chall_3(i_delta, chal.data(), &params);
