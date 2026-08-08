@@ -695,7 +695,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     memset(chall_1, 0, (6 * MAX_LAMBDA_BYTES) + 8);
     hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), c_mult_as_n_mask_bytes, iv, lambda, ell, tau, c_mult_bytes);
 
-    print_u8_array("sign chall_1", chall_1, (6 * MAX_LAMBDA_BYTES) + 8);
+    // print_u8_array("sign chall_1", chall_1, (6 * MAX_LAMBDA_BYTES) + 8);
 
     // line 9
     uint8_t* uh_0 = malloc(lambda_bytes * (ell + d_zk - 1));
@@ -737,7 +737,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     // To save memory consumption, the chall_2 is computed in an
     // Init-Update-Finalize style as V_tilde is only fed into to the hash and not
     // used elsewhere.
-    print_u8_array("sign signature_u_tilde", signature_u_tilde(sig, params), 3 * lambda_bytes);
+    // print_u8_array("sign signature_u_tilde", signature_u_tilde(sig, params), 3 * lambda_bytes);
     
     hash_challenge_2_init(&h2_ctx, chall_1, signature_u_tilde(sig, params), lambda);
     {
@@ -749,7 +749,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
       memcpy(vh + lambda_bytes * (ell + d_zk - 1), vh_1, lambda_bytes * 3);
       vole_hash_new(V_tilde, chall_1, vh, ell, d_zk, lambda);
 
-      print_u8_array("sign V_tilde", V_tilde, lambda_bytes * 3);
+      // print_u8_array("sign V_tilde", V_tilde, lambda_bytes * 3);
 
 
       // line 18
@@ -774,13 +774,13 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   xor_u8_array(witness, u, signature_d(sig, params), ell_bytes);
 
   {
-    print_u8_array("sign signature_d", signature_d(sig, params), ell_bytes);
+    // print_u8_array("sign signature_d", signature_d(sig, params), ell_bytes);
 
     // line 18
     uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
     hash_challenge_2_finalize(chall_2, &h2_ctx, signature_d(sig, params), lambda, ell);
 
-    print_u8_array("sign chall_2", chall_2, 3 * lambda_bytes + 8);
+    // print_u8_array("sign chall_2", chall_2, 3 * lambda_bytes + 8);
 
     // line 20
     uint8_t* a0_tilde = malloc(lambda_bytes);
@@ -790,9 +790,9 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     free(u);
     u = NULL;
 
-    print_u8_array("sign a0_tilde", a0_tilde, lambda_bytes);
-    print_u8_array("sign a1_tilde", signature_a1toi_tilde(sig, params), lambda_bytes);
-    print_u8_array("sign a2_tilde", signature_a1toi_tilde(sig, params) + lambda_bytes, lambda_bytes);
+    // print_u8_array("sign a0_tilde", a0_tilde, lambda_bytes);
+    // print_u8_array("sign a1_tilde", signature_a1toi_tilde(sig, params), lambda_bytes);
+    // print_u8_array("sign a2_tilde", signature_a1toi_tilde(sig, params) + lambda_bytes, lambda_bytes);
 
     // line 24
     hash_challenge_3_init(&h2_ctx, chall_2, a0_tilde, signature_a1toi_tilde(sig, params), lambda, d_zk);
@@ -814,11 +814,11 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
       continue;
     }
 
-    size_t fwd_end = (signature_decom_i(sig,params) - sig)
-               + (lambda_bytes * 2)*tau + params->T_open*lambda_bytes;
-    size_t bwd_start = params->sig_size - sizeof(uint32_t) - IV_SIZE - lambda_bytes;
-    fprintf(stderr, "decom_i end=%zu, chall_3 start=%zu, sig_size=%u\n",
-            fwd_end, bwd_start, params->sig_size);
+    // size_t fwd_end = (signature_decom_i(sig,params) - sig)
+    //            + (lambda_bytes * 2)*tau + params->T_open*lambda_bytes;
+    // size_t bwd_start = params->sig_size - sizeof(uint32_t) - IV_SIZE - lambda_bytes;
+    // fprintf(stderr, "decom_i end=%zu, chall_3 start=%zu, sig_size=%u\n",
+    //         fwd_end, bwd_start, params->sig_size);
 
     // line 27
     uint16_t decoded_chall_3[MAX_TAU];
@@ -834,7 +834,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   hash_clear(&h2_ctx);
   bavc_clear(&bavc);
 
-  print_u8_array("sign chall_3", signature_chall_3(sig, params), lambda_bytes);
+  // print_u8_array("sign chall_3", signature_chall_3(sig, params), lambda_bytes);
 
   // copy counter to signature
   ctr = htole32(ctr);
@@ -934,10 +934,10 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   memset(chall_1, 0, (6 * MAX_LAMBDA_BYTES) + 8);
   hash_challenge_1(chall_1, mu, hcom, dsignature_c(sig, 0, params), c_mult_as_n_mask_bytes, iv, lambda, ell, tau, c_mult_bytes);
 
-  print_u8_array("verify chall_1", chall_1, 6 * MAX_LAMBDA_BYTES + 8);
+  // print_u8_array("verify chall_1", chall_1, 6 * MAX_LAMBDA_BYTES + 8);
 
   // line 10
-  print_u8_array("verify dsignature_u_tilde", dsignature_u_tilde(sig, params), 3 * lambda_bytes);
+  // print_u8_array("verify dsignature_u_tilde", dsignature_u_tilde(sig, params), 3 * lambda_bytes);
 
   H2_context_t chall_2_ctx;
   hash_challenge_2_init(&chall_2_ctx, chall_1, dsignature_u_tilde(sig, params), lambda);
@@ -966,38 +966,38 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
     vole_hash_new(Q_tilde, chall_1, qh, ell, d_zk, lambda);
 
-    print_u8_array("delta_prime", Delta, 16);
+    // print_u8_array("delta_prime", Delta, 16);
 
     compute_D(Q_tilde, Q_tilde, Delta, dsignature_u_tilde(sig, params), params);
 
-    print_u8_array("verify Q_tilde", Q_tilde, lambda_bytes * 3);
+    // print_u8_array("verify Q_tilde", Q_tilde, lambda_bytes * 3);
 
     // line 15
     hash_challenge_2_update_v_tilde(&chall_2_ctx, Q_tilde, lambda);
   }
 
-  print_u8_array("verify dsignature_d", dsignature_d(sig, params), ell_bytes);
+  // print_u8_array("verify dsignature_d", dsignature_d(sig, params), ell_bytes);
 
   // line 15
   uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
   hash_challenge_2_finalize(chall_2, &chall_2_ctx, dsignature_d(sig, params), lambda, ell);
 
-  print_u8_array("verify chall_2", chall_2, 3 * lambda_bytes + 8);
+  // print_u8_array("verify chall_2", chall_2, 3 * lambda_bytes + 8);
 
   // line 17
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
   aes_verify(a0_tilde, dsignature_d(sig, params), (const uint8_t**)Q, q_bar, owf_input, owf_output, chall_2, Delta, dsignature_a1toi_tilde(sig, params), params);
   free_pointer_array(&Q);
 
-  print_u8_array("verify a0_tilde", a0_tilde, lambda_bytes);
-  print_u8_array("verify a1_tilde", dsignature_a1toi_tilde(sig, params), lambda_bytes);
-  print_u8_array("verify a2_tilde", dsignature_a1toi_tilde(sig, params) + lambda_bytes, lambda_bytes);
+  // print_u8_array("verify a0_tilde", a0_tilde, lambda_bytes);
+  // print_u8_array("verify a1_tilde", dsignature_a1toi_tilde(sig, params), lambda_bytes);
+  // print_u8_array("verify a2_tilde", dsignature_a1toi_tilde(sig, params) + lambda_bytes, lambda_bytes);
 
   // line 18
   uint8_t chall_3[MAX_LAMBDA_BYTES];
   hash_challenge_3(chall_3, chall_2, a0_tilde, dsignature_a1toi_tilde(sig, params), dsignature_ctr(sig, params), lambda, d_zk);
 
-  print_u8_array("verify chall_3", chall_3, lambda_bytes);
+  // print_u8_array("verify chall_3", chall_3, lambda_bytes);
 
   free(Q_row[0]);
   free(Q_row); 
