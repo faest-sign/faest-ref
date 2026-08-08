@@ -814,11 +814,11 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
       continue;
     }
 
-    // size_t fwd_end = (signature_decom_i(sig,params) - sig)
-    //            + (lambda_bytes * 2)*tau + params->T_open*lambda_bytes;
-    // size_t bwd_start = params->sig_size - sizeof(uint32_t) - IV_SIZE - lambda_bytes;
-    // fprintf(stderr, "decom_i end=%zu, chall_3 start=%zu, sig_size=%u\n",
-    //         fwd_end, bwd_start, params->sig_size);
+    size_t fwd_end = (signature_decom_i(sig,params) - sig)
+               + (lambda_bytes * 2)*tau + params->T_open*lambda_bytes;
+    size_t bwd_start = params->sig_size - sizeof(uint32_t) - IV_SIZE - lambda_bytes;
+    fprintf(stderr, "decom_i end=%zu, chall_3 start=%zu, sig_size=%u\n",
+            fwd_end, bwd_start, params->sig_size);
 
     // line 27
     uint16_t decoded_chall_3[MAX_TAU];
