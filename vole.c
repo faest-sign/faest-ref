@@ -146,7 +146,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       }
     }
 
-    // line 15
+    // line 14
     uint8_t* first_prod = malloc(lambda_bytes);
     memset(first_prod, 0, lambda_bytes);
     for (unsigned int col = 0; col < lambda; col++) {
