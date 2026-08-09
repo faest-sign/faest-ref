@@ -68,7 +68,7 @@ static
 
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* c_mult,
-                 uint8_t* u, uint8_t** v, uint8_t* u_bar, uint8_t* v_bar) {
+                 uint8_t* u, uint8_t** V, uint8_t* u_bar, uint8_t* v_bar) {
   const unsigned int lambda       = params->lambda;
   const unsigned int lambda_bytes = lambda / 8;
   const unsigned int ell_hat_bytes = (ellhat + 7) / 8;
@@ -87,22 +87,23 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   const faest_tables_t* T = faest_get_tables(params->id);
 
+  // line 1
   bavc_commit(bavc, rootKey, iv, params);
 
   uint8_t* ui = malloc(tau * ell_hat_bytes);
   assert(ui);
 
-  // line 4
+  // line 3
   unsigned int v_idx = 0;
   uint8_t* sd_i      = bavc->sd;
   for (unsigned int i = 0; i < tau; ++i) {
 
     v_idx +=
-        convert_to_vole(iv, sd_i, false, i, ell_hat_bytes, ui + i * ell_hat_bytes, v[v_idx], params);
+        convert_to_vole(iv, sd_i, false, i, ell_hat_bytes, ui + i * ell_hat_bytes, V[v_idx], params);
     sd_i += lambda_bytes * bavc_max_node_index(i, tau_1, k);
   }
 
-  // line 7
+  // line 6
   memcpy(u, ui, ell_bytes);
 
   // line 8
@@ -114,9 +115,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   for (unsigned i = 0; i < ellhat; i++) {
     v_row_maj[i] = calloc(lambda_minus_w_grind_bytes, 1);
   }
-  column_to_row_major(v, v_row_maj, lambda_minus_w_grind, ellhat);
+  column_to_row_major(V, v_row_maj, lambda_minus_w_grind, ellhat);
 
-  // line 11
+  // line 10
   uint8_t* u_hi_all = malloc((n_mask * w_grind + 7) / 8);
   uint8_t* u_hi = malloc(n_mask * w_grind_bytes);
   memset(u_hi, 0, n_mask * w_grind_bytes);
@@ -128,7 +129,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     }
   }
 
-  // line 14
+  // line 11
   uint8_t* u_low = malloc(n_mask * lambda_bytes);
   memset(u_low, 0, n_mask * lambda_bytes);
 
@@ -139,6 +140,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     unsigned int ell_m = ell + m * bavc_max_node_depth(0, tau_1, k);
     unsigned int bit_idx = 0;
 
+    // line 13
     for (unsigned t = 0; t < tau; t++) {
       for (unsigned b = 0; b < bavc_max_node_depth(t, tau_1, k); b++) {
         ptr_set_bit(u_low, m * lambda + bit_idx, ptr_get_bit(ui + t * ell_hat_bytes, ell_m + b));
@@ -167,7 +169,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       u_bar[m * lambda_bytes + i] = first_prod[i] ^ second_prod[i];
     }
 
-    // line 18
+    // line 17
     bit_idx = 0;
     v_idx = 0;
     for (unsigned tau_idx = 0; tau_idx < tau; tau_idx++) {
@@ -203,13 +205,13 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     free(first_prod);
   }
 
-  // line 20
+  // line 19
   uint8_t* a = malloc(lambda_minus_w_grind * lambda_bytes);
   for (unsigned int i = 0; i < lambda_minus_w_grind; i++) {
-    memcpy(a + i * lambda_bytes, v[i], lambda_bytes);
+    memcpy(a + i * lambda_bytes, V[i], lambda_bytes);
   }
 
-  // line 22
+  // line 21
   uint8_t* v_tilde = malloc(n_mult * n_mask_bytes);
   for (unsigned e = 0; e < n_mult; e++) {
 
@@ -231,11 +233,11 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       L_e_one[b] ^= L_e_zero[b];
     }
 
-    // line 24
+    // line 23
     H5(iv, e, L_e_zero, h_e_zero, lambda_bytes, n_mask, lambda);
     H5(iv, e, L_e_one, h_e_one, lambda_bytes, n_mask, lambda);
 
-    // line 27
+    // line 26
     for (unsigned m = 0; m < n_mask; m++) {
 
       uint8_t dot_product_bit = 0;
@@ -260,7 +262,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     free(h_e_one);
   }
 
-  // line 30
+  // line 29
   for (unsigned int m = 0; m < n_mask; m++) {
     
     uint8_t* first_prod = malloc(lambda_bytes);
@@ -299,9 +301,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   }
 
-  // line 32
+  // line 30
   for (unsigned int i = 0; i < lambda_minus_w_grind; i++) {
-    memset(v[i], 0, ell_hat_bytes);
+    memset(V[i], 0, ell_hat_bytes); // clearing the previous stuff
   }
   uint8_t** v_row_maj_new = malloc(ell * sizeof(uint8_t*));
   for (unsigned i = 0; i < ell; i++) {
@@ -327,7 +329,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   }
 
 
-  column_to_row_major(v_row_maj_new, v, ell, lambda_minus_w_grind); 
+  column_to_row_major(v_row_maj_new, V, ell, lambda_minus_w_grind); 
 
 
   free(ui);
@@ -344,7 +346,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   
 }
 
-bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_t* chall_3,
+bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_t* chall_3,
                       const uint8_t* decom_i, const uint8_t* c, uint8_t* c_mult,
                       uint8_t* q_bar, uint8_t* Delta, unsigned int ellhat, const faest_paramset_t* params) {
   const unsigned int lambda       = params->lambda;
@@ -383,6 +385,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
     }
     off += deg;
   }
+  // line 14
   // --- Delta = W_crt * Dp  (crt_lift), same matvec pattern as your v_row_maj example ---
   // uint8_t* Delta = (uint8_t*)malloc(lambda_bytes);
   // memset(Delta, 0, lambda_bytes);
@@ -425,25 +428,25 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
       }
     }
 
-    // line 7
+    // line 8
     const unsigned int ki = convert_to_vole(iv, sd, true, i, ellhat_bytes, NULL, qtmp, params);
 
     if (i == 0) {
-      memcpy(q[q_idx], qtmp, ellhat_bytes * ki);
+      memcpy(Q[q_idx], qtmp, ellhat_bytes * ki);
       q_idx += ki;
     } else {
       for (unsigned int d = 0; d < ki; ++d, ++q_idx) {
 
-        memcpy(q[q_idx], qtmp + d * ellhat_bytes, ellhat_bytes);
+        memcpy(Q[q_idx], qtmp + d * ellhat_bytes, ellhat_bytes);
 
-        masked_xor_u8_array(q[q_idx], c + (i - 1) * ell_bytes, q[q_idx],
+        masked_xor_u8_array(Q[q_idx], c + (i - 1) * ell_bytes, Q[q_idx],
                             (i_delta[i] >> d) & 1, ell_bytes);
       }
     }
     sd_i += lambda_bytes * (Ni - 1);
   }
 
-  // line 12
+  // line 13
   uint8_t* delta_prime = malloc(lambda_bytes);
   memset(delta_prime, 0, lambda_bytes);
   unsigned int delta_prime_idx = 0;
@@ -464,9 +467,9 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
   for (unsigned i = 0; i < ellhat; i++) {
     q_row_maj[i] = calloc(lambda_minus_w_grind_bytes, 1);
   }
-  column_to_row_major(q, q_row_maj, lambda_minus_w_grind, ellhat);
+  column_to_row_major(Q, q_row_maj, lambda_minus_w_grind, ellhat);
 
-  // line 14
+  // line 19
   uint8_t* r_tilde_prime = malloc(n_mask * lambda_minus_w_grind_bytes);
   memset(r_tilde_prime, 0, n_mask * lambda_minus_w_grind_bytes);
   for (unsigned int m = 0; m < n_mask; m++) {
@@ -492,7 +495,6 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
       }
       q_idx += deg;
 
-      // line 17
       uint8_t* reduced_out = malloc((deg*2 + 7) / 8);
       gf2_poly_reduce_ct(acc, deg*2, (const uint8_t*)&T->TREE_MODULI[tau_idx], 
                 deg + 1, reduced_out);
@@ -508,13 +510,12 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
     }
   }
 
-  // line 19
-  uint8_t* a = malloc(lambda_minus_w_grind * lambda_bytes);
+  // line 21
+  uint8_t* a_prime = malloc(lambda_minus_w_grind * lambda_bytes);
   for (unsigned int i = 0; i < lambda_minus_w_grind; i++) {
-    memcpy(a + i * lambda_bytes, q[i], lambda_bytes);
+    memcpy(a_prime + i * lambda_bytes, Q[i], lambda_bytes);
   }
 
-  // line 21
   uint8_t* q_tilde = malloc(n_mult * n_mask_bytes);
   memset(q_tilde, 0, n_mult * n_mask_bytes);
   for (unsigned e = 0; e < n_mult; e++) {
@@ -523,6 +524,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
     memset(L_e_prime, 0, lambda_bytes);
     uint8_t* h_e = malloc(n_mask_bytes);
 
+    // line 24
     uint8_t gamma_e = 0;
     for (unsigned j = 0; j < lambda_minus_w_grind; j++) {
       gamma_e ^= ptr_get_bit((uint8_t*)&TBL_U8(T->G, T->g_words, e)[j/64], j%64) 
@@ -530,15 +532,15 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
 
       if (ptr_get_bit((uint8_t*)&TBL_U8(T->G, T->g_words, e)[j/64], j%64) == 1) {
         for (unsigned b = 0; b < lambda_bytes; b++) {
-          L_e_prime[b] ^= a[j * lambda_bytes + b];
+          L_e_prime[b] ^= a_prime[j * lambda_bytes + b];
         }
       }
     }
 
-    // line 23
+    // line 25
     H5(iv, e, L_e_prime, h_e, lambda_bytes, n_mask, lambda);
     
-    // line 25
+    // line 27
     for (unsigned m = 0; m < n_mask; m++) {
         
       uint8_t sum = ptr_get_bit(h_e, m) ^ (gamma_e & ptr_get_bit(c_mult + e * n_mask_bytes, m));
@@ -549,7 +551,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
     free(h_e);
   }
 
-  // line 28
+  // line 30
   for (unsigned int m = 0; m < n_mask; m++) {
     
     uint8_t* first_prod = malloc(lambda_bytes);
@@ -589,7 +591,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
   }
 
   for (unsigned int i = 0; i < lambda_minus_w_grind; i++) {
-    memset(q[i], 0, ellhat_bytes);
+    memset(Q[i], 0, ellhat_bytes);    // resetting the bits for output
   }
   uint8_t** q_row_maj_new = malloc(ell * sizeof(uint8_t*));
   for (unsigned i = 0; i < ell; i++) {
@@ -597,7 +599,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
     memset(q_row_maj_new[i], 0, lambda_minus_w_grind_bytes);
   }
 
-  // line 29
+  // line 31
   for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
 
     for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
@@ -614,8 +616,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
     }
   }
 
-  column_to_row_major(q_row_maj_new, q, ell, lambda_minus_w_grind); 
-
+  column_to_row_major(q_row_maj_new, Q, ell, lambda_minus_w_grind); 
 
   free(qtmp);
   free(sd);
@@ -623,7 +624,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
   for (unsigned i = 0; i < ellhat; i++) { free(q_row_maj[i]); }
   free(q_row_maj);  
   free(r_tilde_prime);
-  free(a);
+  free(a_prime);
   free(q_tilde);
   for (unsigned i = 0; i < ell; i++) { free(q_row_maj_new[i]); }
   free(q_row_maj_new); 
@@ -631,3 +632,4 @@ bool vole_reconstruct(uint8_t* com, uint8_t** q, const uint8_t* iv, const uint8_
 
   return true;
 }
+

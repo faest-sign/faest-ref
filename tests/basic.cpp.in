@@ -29,14 +29,14 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(faest_@PARAM_L@)
 
-// BOOST_AUTO_TEST_CASE(test_keygen) {
-//   pk_t pk;
-//   sk_t sk;
-//   // clang-format off
-//   BOOST_TEST(faest_@PARAM_L@_keygen(pk.data(), sk.data()) == 0);
-//   BOOST_TEST(faest_@PARAM_L@_validate_keypair(pk.data(), sk.data()) == 0);
-//   // clang-format on
-// }
+BOOST_AUTO_TEST_CASE(test_keygen) {
+  pk_t pk;
+  sk_t sk;
+  // clang-format off
+  BOOST_TEST(faest_@PARAM_L@_keygen(pk.data(), sk.data()) == 0);
+  BOOST_TEST(faest_@PARAM_L@_validate_keypair(pk.data(), sk.data()) == 0);
+  // clang-format on
+}
 
 BOOST_AUTO_TEST_CASE(test_sign) {
   pk_t pk;
@@ -127,7 +127,6 @@ BOOST_AUTO_TEST_CASE(test_sign_tv) {
              message.data(), message.size(), sig.data(), sig.size()) == 0);
   // for (unsigned int i = 0; i < signature_size; i++) {
   //   printf("0x%02x, ", sig[i]);
-  //   // std::cout << std::hex << sig[i] << ", ";
   //   if ((i + 1) % 16 == 0) {
   //     std::cout << "\n";
   //   }

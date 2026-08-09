@@ -39,7 +39,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     const unsigned int lambda_bytes   = lambda / 8;
     const unsigned int ell            = params->ell;
     const unsigned int ell_bytes      = (ell + 7) / 8;
-    const unsigned int tau           = params->tau;
+    // const unsigned int tau           = params->tau;
     const unsigned int k              = params->k;
     const unsigned int tau1           = params->tau1;
     const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
@@ -298,11 +298,11 @@ namespace {
     size_t ncols        = ell;
     // size_t lambda_bytes = lambda / 8;
     std::vector<uint8_t> mV_bytes(ncols * lambda_bytes, 0);
-    for (size_t c = 0; c < ncols; ++c) {
+    for (size_t ncols_idx = 0; ncols_idx < ncols; ++ncols_idx) {
       for (size_t r = 0; r < lambda; ++r) {
           const uint8_t* srow = v_storage.data() + r * ell_hat_bytes;
-          uint8_t bit = (srow[c >> 3] >> (c & 7)) & 1u;
-          size_t  pos = c * lambda + r;
+          uint8_t bit = (srow[ncols_idx >> 3] >> (ncols_idx & 7)) & 1u;
+          size_t  pos = ncols_idx * lambda + r;
           mV_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
       }
     }
@@ -333,11 +333,11 @@ namespace {
     ncols        = ell;
     // size_t lambda_bytes = lambda / 8;
     std::vector<uint8_t> mQ_bytes(ncols * lambda_bytes, 0);
-    for (size_t c = 0; c < ncols; ++c) {
+    for (size_t ncols_idx = 0; ncols_idx < ncols; ++ncols_idx) {
       for (size_t r = 0; r < lambda; ++r) {
           const uint8_t* srow = q_storage.data() + r * ell_hat_bytes;
-          uint8_t bit = (srow[c >> 3] >> (c & 7)) & 1u;
-          size_t  pos = c * lambda + r;
+          uint8_t bit = (srow[ncols_idx >> 3] >> (ncols_idx & 7)) & 1u;
+          size_t  pos = ncols_idx * lambda + r;
           mQ_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
       }
     }
