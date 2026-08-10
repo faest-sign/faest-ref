@@ -49,13 +49,14 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     const auto com_size               = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
     const auto n_mask_bytes           = (n_mask + 7) / 8;
     const auto n_mult                 = params->n_mult;
+    const auto n_mult_bytes           = (n_mult + 7) / 8 ;
 
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, c_mult, u, u_bar, v_bar, q_bar, delta_prime, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult_packed, u, u_bar, v_bar, q_bar, delta_prime, q_storage, v_storage;
     chal.resize(lambda_bytes);
     c.resize((params->tau - 1) * ell_bytes);
-    c_mult.resize(n_mult * n_mask_bytes);
+    c_mult_packed.resize(n_mult_bytes * n_mask);
     u.resize(ell_bytes * params->tau);
     u_bar.resize(n_mask * lambda_bytes);
     v_bar.resize(n_mask * lambda_bytes);
@@ -76,7 +77,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       v[i] = v[0] + i * ell_hat_bytes;
     }
 
-    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), c_mult.data(),
+    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), c_mult_packed.data(),
                 u.data(), v.data(), u_bar.data(), v_bar.data());
 
     std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2};
@@ -112,7 +113,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       std::vector<uint8_t> hcom_rec;
       hcom_rec.resize(lambda_bytes * 2);
       BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
-                                  c.data(), c_mult.data(), q_bar.data(), delta_prime.data(), ell_hat, params));
+                                  c.data(), c_mult_packed.data(), q_bar.data(), delta_prime.data(), ell_hat, params));
       BOOST_TEST(hcom == hcom_rec);
     }
     BOOST_TEST(tested);
@@ -204,6 +205,7 @@ namespace {
     const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
     const auto n_mask_bytes           = (n_mask + 7) / 8;
     const auto n_mult                 = params->n_mult;
+    const auto n_mult_bytes         = (params->n_mult + 7) / 8;
     const unsigned int w_grind      = params->w_grind;
     const unsigned int w_grind_bytes = (w_grind + 7) / 8;
     const unsigned int lambda_minus_w_grind = lambda - w_grind;
@@ -230,10 +232,10 @@ namespace {
 
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, c_mult, decom_i, u, u_bar, v_bar, q_bar, delta_prime, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult_packed, decom_i, u, u_bar, v_bar, q_bar, delta_prime, q_storage, v_storage;
     chal.resize(lambda_bytes);
     c.resize((params->tau - 1) * ell_bytes);
-    c_mult.resize(n_mult * n_mask_bytes);
+    c_mult_packed.resize(n_mult_bytes * n_mask);
     decom_i.resize(com_size * params->tau + params->T_open * lambda_bytes);
     u.resize(ell_bytes);
     u_bar.resize(n_mask * lambda_bytes);
@@ -255,7 +257,7 @@ namespace {
       v[i] = v[0] + i * ell_hat_bytes;
     }
 
-    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), c_mult.data(),
+    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), c_mult_packed.data(),
                 u.data(), v.data(), u_bar.data(), v_bar.data());
 
     std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2},
@@ -274,21 +276,6 @@ namespace {
 
     BOOST_TEST(expected_hashed_barU == hash_array(u_bar));
     BOOST_TEST(expected_hashed_barV == hash_array(v_bar));
-
-    // NOTE: *** Claude GENERATED CODE
-    // This alligns the c_mult to how it is in the python code (swapping the rows and the bits) for the matching TVs
-    size_t nb        = (n_mult + 7) / 8;      // 40, matches Python
-    size_t packed_len = n_mask * nb;          // 360
-    std::vector<uint8_t> c_mult_packed(packed_len, 0);
-    for (size_t i = 0; i < n_mask; ++i) {
-        for (size_t j = 0; j < n_mult; ++j) {
-          uint16_t word = c_mult[j*2] | (uint16_t)(c_mult[j*2 + 1] << 8);
-          uint8_t  bit  = (word >> i) & 1u;      // bit i of gate j's word
-          size_t   pos  = i * nb * 8 + j;        // dst: row byte-aligned, bit j LSB-first
-          c_mult_packed[pos >> 3] |= (uint8_t)(bit << (pos & 7));
-        }
-    }
-    // ***
 
     // print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult_packed));
     BOOST_TEST(expected_hashed_c_mult == hash_array(c_mult_packed));
@@ -326,7 +313,7 @@ namespace {
     std::vector<uint8_t> hcom_rec;
     hcom_rec.resize(lambda_bytes * 2);
     BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), challenge.data(), decom_i.data(),
-                                  c.data(), c_mult.data(), q_bar.data(), delta_prime.data(), ell_hat, params));
+                                  c.data(), c_mult_packed.data(), q_bar.data(), delta_prime.data(), ell_hat, params));
     BOOST_TEST(hcom_rec == expected_h_vec);
 
     // NOTE: *** Claude GENERATED CODE

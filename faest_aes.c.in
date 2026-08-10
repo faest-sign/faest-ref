@@ -1714,6 +1714,8 @@ void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w,
                          &bf_u_star[1]);
 
   faest_aligned_free(w_tag);
+  free(bf_u_star);
+  free(bf_v_star);
 }
 
 // OWF VERIFIER

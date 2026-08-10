@@ -428,7 +428,7 @@ static void hash_r_iv(uint8_t* root_key, uint8_t* iv_pre, uint8_t* iv, const uin
 }
 
 static void hash_challenge_1(uint8_t* chall_1, const uint8_t* mu, const uint8_t* hcom,
-                             const uint8_t* c, const uint8_t* c_mult, const uint8_t* iv, unsigned int lambda,
+                             const uint8_t* c, const uint8_t* c_mult_packed, const uint8_t* iv, unsigned int lambda,
                              unsigned int ell, unsigned int tau, unsigned int c_mult_size_bytes) {
   const unsigned int lambda_bytes  = lambda / 8;
   const unsigned int ell_bytes     = (ell + 7) / 8;
@@ -438,7 +438,7 @@ static void hash_challenge_1(uint8_t* chall_1, const uint8_t* mu, const uint8_t*
   H2_update(&h2_ctx, mu, lambda_bytes * 2);
   H2_update(&h2_ctx, hcom, lambda_bytes * 2);
   H2_update(&h2_ctx, c, ell_bytes * (tau - 1));
-  H2_update(&h2_ctx, c_mult, c_mult_size_bytes);
+  H2_update(&h2_ctx, c_mult_packed, c_mult_size_bytes);
   H2_update(&h2_ctx, iv, IV_SIZE);
   H2_1_final(&h2_ctx, chall_1, 8 * lambda_bytes + 8);
 }
@@ -625,12 +625,13 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   const unsigned int tau1            = params->tau1;
   const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
   const unsigned int n_mult        = params->n_mult;
+  const unsigned int n_mult_bytes        = (n_mult + 7) / 8;
   const unsigned int n_mask        = params->n_mask;
   const unsigned int n_mask_bytes  = (n_mask + 7) / 8;
   const unsigned int ell_hat       = ell + n_mask * d0;
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
   const unsigned int w_grind       = params->w_grind;
-  const unsigned int c_mult_bytes   = n_mult * n_mask_bytes;
+  const unsigned int c_mult_bytes   = n_mask * n_mult_bytes;
 
   // line 2
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
@@ -656,26 +657,26 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   uint8_t* u_bar = malloc(n_mask * lambda_bytes);
   uint8_t* v_bar = malloc(n_mask * lambda_bytes);
 
-  uint8_t* c_mult_as_n_mask_bytes = malloc(c_mult_bytes);
-  memset(c_mult_as_n_mask_bytes, 0, c_mult_bytes);
+  uint8_t* c_mult_packed = malloc(c_mult_bytes);
+  memset(c_mult_packed, 0, c_mult_bytes);
 
-  vole_commit(rootkey, iv, ell_hat, params, &bavc, signature_c(sig, 0, params), c_mult_as_n_mask_bytes, u, V, u_bar, v_bar);
+  vole_commit(rootkey, iv, ell_hat, params, &bavc, signature_c(sig, 0, params), c_mult_packed, u, V, u_bar, v_bar);
 
   unsigned int c_mult_idx = 0;
   uint8_t* c_mult_ptr = signature_c_mult(sig, params);
-  for (unsigned int n_mult_idx = 0; n_mult_idx < n_mult; n_mult_idx++) {
-    for (unsigned int n_mask_idx = 0; n_mask_idx < n_mask; n_mask_idx++) {
-
+  memset(c_mult_ptr, 0, (n_mask * n_mult + 7) / 8);
+  for (unsigned int n_mask_idx = 0; n_mask_idx < n_mask; n_mask_idx++) {
+    for (unsigned int n_mult_idx = 0; n_mult_idx < n_mult; n_mult_idx++) {
       ptr_set_bit(c_mult_ptr, 
                   c_mult_idx, 
-                  ptr_get_bit(c_mult_as_n_mask_bytes + n_mult_idx * n_mask_bytes, n_mask_idx));
+                  ptr_get_bit(c_mult_packed + n_mask_idx * n_mult_bytes, n_mult_idx));
 
       c_mult_idx++;
     }
   }
 
   // print_u8_array("c_mult_ptr", c_mult_ptr, 8);
-  // print_u8_array("c_mult_as_n_mask_bytes", c_mult_as_n_mask_bytes, 8);
+  // print_u8_array("c_mult_packed", c_mult_packed, 8);
 
   uint8_t** V_row = malloc(ell * sizeof(uint8_t*));                        // it is actually lambda - w_grind but keeping it lambda
   assert(V_row);
@@ -693,7 +694,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     // line 7
     uint8_t chall_1[(8 * MAX_LAMBDA_BYTES) + 8];
     memset(chall_1, 0, (8 * MAX_LAMBDA_BYTES) + 8);
-    hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), c_mult_as_n_mask_bytes, iv, lambda, ell, tau, c_mult_bytes);
+    hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), c_mult_packed, iv, lambda, ell, tau, c_mult_bytes);
 
     // print_u8_array("sign chall_1", chall_1, (8 * lambda_bytes) + 8);
 
@@ -760,7 +761,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
       free(vh);
     }
 
-    free(c_mult_as_n_mask_bytes);
+    free(c_mult_packed);
 
     free(V_row[0]);
     free(V_row);  
@@ -816,12 +817,6 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
       continue;
     }
 
-    // size_t fwd_end = (signature_decom_i(sig,params) - sig)
-    //            + (lambda_bytes * 2)*tau + params->T_open*lambda_bytes;
-    // size_t bwd_start = params->sig_size - sizeof(uint32_t) - IV_SIZE - lambda_bytes;
-    // fprintf(stderr, "decom_i end=%zu, chall_3 start=%zu, sig_size=%u\n",
-    //         fwd_end, bwd_start, params->sig_size);
-
     // line 29
     uint16_t decoded_chall_3[MAX_TAU];
     if (!decode_all_chall_3(decoded_chall_3, chall_3, params)) {
@@ -833,6 +828,13 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
       break;
     }
   }
+
+  // size_t fwd_end = (signature_decom_i(sig,params) - sig)
+  //         + (lambda_bytes * 2)*tau + params->T_open*lambda_bytes;
+  // size_t bwd_start = params->sig_size - sizeof(uint32_t) - IV_SIZE - lambda_bytes;
+  // fprintf(stderr, "decom_i end=%zu, chall_3 start=%zu, sig_size=%u\n",
+  //         fwd_end, bwd_start, params->sig_size);
+
   hash_clear(&h2_ctx);
   bavc_clear(&bavc);
 
@@ -845,7 +847,45 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   free(u_bar);
   free(v_bar);
 
-  printf("\n\n\n");
+  const unsigned int n_leafcom              = faest_is_em(params) ? 2 : 3;
+  const unsigned int t_open         = params->T_open;
+  const unsigned int hcom_size      = lambda_bytes * n_leafcom;
+
+  // // NOTE: Claude debug code ----
+  // const size_t needed = 
+  //       ((params->tau - 1) * ell_bytes)
+  //       + c_mult_bytes
+  //       + lambda_bytes * 4
+  //       + ell_bytes
+  //       + (d_zk - 1) * lambda_bytes
+  //       + hcom_size * tau + (t_open * lambda_bytes)
+  //       + lambda_bytes
+  //       + IV_SIZE
+  //       + sizeof(uint32_t);
+  // printf("\nsig_size=%u needed=%zu diff=%td\n",
+  //      params->sig_size, needed, (ptrdiff_t)params->sig_size - (ptrdiff_t)needed);
+
+  // const size_t decom_i_end = (size_t)(signature_decom_i(sig, params) - sig)
+  //                        + 2u * tau * lambda_bytes + params->T_open * lambda_bytes;
+  // const size_t tail_start  = (size_t)(signature_chall_3(sig, params) - sig);
+  // assert(decom_i_end <= tail_start);
+
+  // printf("hcom_size=%u  2*lambda_bytes=%u  tau=%u t_open=%u\n",
+  //      hcom_size, 2*lambda_bytes, params->tau, t_open);
+  // // ----
+
+  
+
+  // assert(sig - (((params->tau - 1) * ell_bytes)
+  //         + c_mult_bytes
+  //         + lambda_bytes * 4
+  //         + ell_bytes
+  //         + (d_zk - 1) * lambda_bytes
+  //         + hcom_size * tau + (t_open * lambda_bytes)
+  //         + lambda_bytes
+  //         + IV_SIZE
+  //         + sizeof(uint32_t)) == 0);
+
 }
 
 int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,
@@ -860,12 +900,13 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   const unsigned int tau1           = params->tau1;
   const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
   const unsigned int n_mult        = params->n_mult;
+  const unsigned int n_mult_bytes        = (n_mult + 7) / 8;
   const unsigned int n_mask        = params->n_mask;
   const unsigned int n_mask_bytes  = (n_mask + 7) / 8;
   const unsigned int ell_hat       = ell + n_mask * d0;
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
   const unsigned int utilde_bytes  = lambda_bytes * 4;
-  const unsigned int c_mult_bytes   = n_mult * n_mask_bytes;
+  const unsigned int c_mult_bytes   = n_mask * n_mult_bytes;
   const unsigned int w_grind      = params->w_grind;
   const unsigned int lambda_minus_w_grind = lambda - w_grind;
   const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7 ) / 8;
@@ -884,14 +925,14 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   uint8_t iv[IV_SIZE];
   hash_iv(iv, dsignature_iv_pre(sig, params), lambda);
 
-  uint8_t* c_mult_as_n_mask_bytes = malloc(c_mult_bytes);
-  memset(c_mult_as_n_mask_bytes, 0, c_mult_bytes);
+  uint8_t* c_mult_packed = malloc(c_mult_bytes);
+  memset(c_mult_packed, 0, c_mult_bytes);
   unsigned int c_mult_idx = 0;
   const uint8_t* c_mult_ptr = dsignature_c_mult(sig, params);
-  for (unsigned int n_mult_idx = 0; n_mult_idx < n_mult; n_mult_idx++) {
-    for (unsigned int n_mask_idx = 0; n_mask_idx < n_mask; n_mask_idx++) {
-      ptr_set_bit(c_mult_as_n_mask_bytes + n_mult_idx * n_mask_bytes, 
-                  n_mask_idx, 
+  for (unsigned int n_mask_idx = 0; n_mask_idx < n_mask; n_mask_idx++) {
+    for (unsigned int n_mult_idx = 0; n_mult_idx < n_mult; n_mult_idx++) {
+      ptr_set_bit(c_mult_packed + n_mask_idx * n_mult_bytes, 
+                  n_mult_idx, 
                   ptr_get_bit(c_mult_ptr, c_mult_idx));
 
       c_mult_idx++;
@@ -915,7 +956,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   uint8_t* Delta = malloc(lambda_bytes);
   memset(Delta, 0, lambda_bytes);
   if (!vole_reconstruct(hcom, Q, iv, dsignature_chall_3(sig, params),
-                        dsignature_decom_i(sig, params), dsignature_c(sig, 0, params), c_mult_as_n_mask_bytes, 
+                        dsignature_decom_i(sig, params), dsignature_c(sig, 0, params), c_mult_packed, 
                         q_bar, Delta, ell_hat, params)) {
     free_pointer_array(&Q);
     return -1;
@@ -934,7 +975,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   // line 9
   uint8_t chall_1[(8 * MAX_LAMBDA_BYTES) + 8];
   memset(chall_1, 0, (8 * MAX_LAMBDA_BYTES) + 8);
-  hash_challenge_1(chall_1, mu, hcom, dsignature_c(sig, 0, params), c_mult_as_n_mask_bytes, iv, lambda, ell, tau, c_mult_bytes);
+  hash_challenge_1(chall_1, mu, hcom, dsignature_c(sig, 0, params), c_mult_packed, iv, lambda, ell, tau, c_mult_bytes);
 
   // print_u8_array("verify chall_1", chall_1, 8 * lambda_bytes + 8);
 
@@ -977,6 +1018,10 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
     // line 15
     hash_challenge_2_update_v_tilde(&chall_2_ctx, Q_tilde, lambda);
+
+    free(qh);
+    free(qh_0);
+    free(qh_1);
   }
 
   // print_u8_array("verify dsignature_d", dsignature_d(sig, params), ell_bytes);
@@ -1004,9 +1049,9 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   free(Q_row[0]);
   free(Q_row); 
-
   free(q_bar);
-  free(c_mult_as_n_mask_bytes);
+  free(c_mult_packed);
+  free(Delta);
 
   // Step 21
   return memcmp(chall_3_prime, dsignature_chall_3(sig, params), lambda_bytes) == 0 ? 0 : -1;
