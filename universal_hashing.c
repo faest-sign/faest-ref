@@ -119,7 +119,7 @@ void vole_hash_new_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned
   bf128_store(h + 3 * BF128_NUM_BYTES, &bf_h[3]);
 
   free(t_zero_padd);
-  
+
 }
 
 void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
@@ -513,7 +513,6 @@ void zk_hash_128_finalize(uint8_t* h, zk_hash_128_ctx* ctx, const bf128_t* x1) {
   bf128_add_inplace(&r0, x1);
   bf128_store(h, &r0);
 }
-
 
 void zk_hash_128_3_init(zk_hash_128_3_ctx* ctx, const uint8_t* sd) {
   const uint8_t* s = sd + 2 * BF128_NUM_BYTES;

@@ -449,7 +449,7 @@ static void hash_challenge_2_init(H2_context_t* h2_ctx, const uint8_t* chall_1,
   const unsigned int u_tilde_bytes = lambda_bytes * 4;
 
   H2_init(h2_ctx, lambda);
-  H2_update(h2_ctx, chall_1, 6 * lambda_bytes + 8);
+  H2_update(h2_ctx, chall_1, 8 * lambda_bytes + 8);
   H2_update(h2_ctx, u_tilde, u_tilde_bytes);
 }
 
