@@ -916,6 +916,148 @@ void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
   generic_prg(key, internal_iv, out, seclvl, seclvl * 4 / 8);
 }
 
+
+void aes_extend_witness_new(uint8_t* w, const uint8_t* key, const uint8_t* in,
+                        const faest_paramset_t* params) {
+  const unsigned int lambda      = params->lambda;
+  const unsigned int num_rounds  = params->R;
+  const unsigned int blocksize   = 32 * params->Nst;
+  const unsigned int beta        = (lambda + blocksize - 1) / blocksize;
+  const unsigned int block_words = blocksize / 32;
+  const bool is_em               = faest_is_em(params);
+
+#if !defined(NDEBUG)
+  uint8_t* const w_out = w;
+#endif
+
+  if (is_em) {
+    // switch input and key for EM
+    const uint8_t* tmp = key;
+    key                = in;
+    in                 = tmp;
+  }
+
+  // line 6
+  aes_round_keys_t round_keys;
+  switch (lambda) {
+  case 256:
+    if (is_em) {
+      // for scan-build
+      assert(block_words == RIJNDAEL_BLOCK_WORDS_256);
+      rijndael256_init_round_keys(&round_keys, key);
+    } else {
+      aes256_init_round_keys(&round_keys, key);
+    }
+    break;
+  case 192:
+    if (is_em) {
+      // for scan-build
+      assert(block_words == RIJNDAEL_BLOCK_WORDS_192);
+      rijndael192_init_round_keys(&round_keys, key);
+    } else {
+      aes192_init_round_keys(&round_keys, key);
+    }
+    break;
+  default:
+    aes128_init_round_keys(&round_keys, key);
+    break;
+  }
+
+  // line 7,8
+  if (!is_em) {
+    const unsigned int nk = lambda / 32;
+
+    // Key schedule constraints only needed for normal AES, not EM variant.
+    for (unsigned int i = 0; i != nk; ++i) {
+      memcpy(w, round_keys.round_keys[i / 4][i % 4], sizeof(aes_word_t));
+      w += sizeof(aes_word_t);
+    }
+
+    const unsigned int S_ke = params->Ske;
+    for (unsigned int j = 0, ik = nk; j < S_ke / 4; ++j) {
+      memcpy(w, round_keys.round_keys[ik / 4][ik % 4], sizeof(aes_word_t));
+      w += sizeof(aes_word_t);
+      ik += lambda == 192 ? 6 : 4;
+    }
+  } else {
+    const unsigned int lambda_bytes = lambda / 8;
+
+    // saving the OWF key to the extended witness
+    w = faest_mempcpy(w, in, lambda_bytes);
+  }
+
+  assert(w - w_out == params->Lke / 8);
+
+  // line 14
+  // common part for AES-128, EM-128, EM-192, EM-256, first part for AES-192 and AES-256
+  {
+    // line 16
+    aes_block_t state;
+    load_state(state, in, block_words);
+
+    // line 17
+    add_round_key(0, state, &round_keys, block_words);
+
+    for (unsigned int round = 1; round < num_rounds; ++round) {
+      // if (round % 2 == 1) {
+      //   // save inverse norm of the S-box inputs, in coloumn major order
+      //   w = store_invnorm_state(w, state, block_words);
+      // }
+      // line 20
+      sub_bytes(state, block_words);
+      // line 21
+      shift_row(state, block_words);
+      if (round % 2 == 0) {
+        // line 23
+        w = store_state(w, state, block_words);
+      }
+      // line 24
+      mix_column(state, block_words);
+      // line 25
+      add_round_key(round, state, &round_keys, block_words);
+    }
+    // last round is not commited to, so not computed
+  }
+
+  // line 14
+  if (beta == 2) {
+    // AES-192 and AES-256
+    uint8_t buf[16];
+    memcpy(buf, in, sizeof(buf));
+    buf[0] ^= 0x1;
+
+    // line 16
+    aes_block_t state;
+    load_state(state, buf, block_words);
+
+    // line 17
+    add_round_key(0, state, &round_keys, block_words);
+
+    for (unsigned int round = 1; round < num_rounds; ++round) {
+      // if (round % 2 == 1) {
+      //   // save inverse norm of the S-box inputs, in coloumn major order
+      //   w = store_invnorm_state(w, state, block_words);
+      // }
+      // line 20
+      sub_bytes(state, block_words);
+      // line 21
+      shift_row(state, block_words);
+      if (round % 2 == 0) {
+        // line 23
+        w = store_state(w, state, block_words);
+      }
+      // line 24
+      mix_column(state, block_words);
+      // line 25
+      add_round_key(round, state, &round_keys, block_words);
+    }
+    // last round is not commited to, so not computed
+  }
+
+  assert(w - w_out == params->ell / 8);
+}
+
+
 void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
                         const faest_paramset_t* params) {
   const unsigned int lambda      = params->lambda;
