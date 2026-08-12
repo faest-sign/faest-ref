@@ -27,6 +27,10 @@ FAEST_BEGIN_C_DECL
                          ((value) << ptr_set_bit_index_mod_8);                                     \
   } while (0)
 
+void unpack_uint8(uint8_t* unpacked, const uint8_t* packed, unsigned int row_bits, unsigned int col_bits);
+
+void pack_uint8(uint8_t* packed, const uint8_t* unpacked, unsigned int row_bits, unsigned int col_bits);
+
 // DecodeAllChall_3
 bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
                         const faest_paramset_t* params);

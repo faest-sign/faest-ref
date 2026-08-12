@@ -67,7 +67,7 @@ static
 }
 
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
-                 const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* c_mult_packed,
+                 const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* c_mult,
                  uint8_t* u, uint8_t** V, uint8_t* u_bar, uint8_t* v_bar) {
   const unsigned int lambda       = params->lambda;
   const unsigned int lambda_bytes = lambda / 8;
@@ -80,6 +80,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   const unsigned int n_mask       = params->n_mask;
   const unsigned int n_mask_bytes = (n_mask + 7) / 8;
   const unsigned int n_mult       = params->n_mult;
+  const unsigned int n_mult_bytes = (n_mult + 7) / 8;
   const unsigned int w_grind      = params->w_grind;
   const unsigned int w_grind_bytes = (w_grind + 7) / 8;
   const unsigned int lambda_minus_w_grind = lambda - w_grind;
@@ -213,8 +214,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   // line 21
   uint8_t* v_tilde = malloc(n_mult * n_mask_bytes);
-  uint8_t* c_mult = malloc(n_mult * n_mask_bytes);
-  memset(c_mult, 0, n_mult * n_mask_bytes);
+  // uint8_t* c_mult = malloc(n_mult * n_mask_bytes);
+  // memset(c_mult, 0, n_mult * n_mask_bytes);
   for (unsigned e = 0; e < n_mult; e++) {
 
     uint8_t* L_e_zero = malloc(lambda_bytes);
@@ -255,7 +256,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       uint8_t bit_a = ptr_get_bit(v_tilde + e * n_mask_bytes, m);
       uint8_t bit_b = ptr_get_bit(h_e_one, m);
 
-      ptr_set_bit(c_mult + e * n_mask_bytes, m, bit_a ^ bit_b ^ dot_product_bit);
+      ptr_set_bit(c_mult + m * n_mult_bytes, e, bit_a ^ bit_b ^ dot_product_bit);
     }
 
     free(L_e_zero);
@@ -333,21 +334,21 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   column_to_row_major(v_row_maj_new, V, ell, lambda_minus_w_grind); 
 
-  // NOTE: *** Claude GENERATED CODE
-  // This alligns the c_mult to how it is in the python code (swapping the rows and the bits) for the matching TVs
-  size_t nb        = (n_mult + 7) / 8;
-  size_t packed_len = n_mask * nb;
-  for (size_t i = 0; i < n_mask; ++i) {
-      for (size_t j = 0; j < n_mult; ++j) {
-          const uint8_t* src = c_mult + j * n_mask_bytes;   // this gate's slot
-          uint8_t  bit  = (src[i >> 3] >> (i & 7)) & 1u;    // bit i of gate j
-          size_t   pos  = i * nb * 8 + j;                   // dst: row byte-aligned, bit j LSB-first
-          c_mult_packed[pos >> 3] |= (uint8_t)(bit << (pos & 7));
-      }
-  }
-  // ***
+  // // NOTE: *** Claude GENERATED CODE
+  // // This alligns the c_mult to how it is in the python code (swapping the rows and the bits) for the matching TVs
+  // size_t nb        = (n_mult + 7) / 8;
+  // size_t packed_len = n_mask * nb;
+  // for (size_t i = 0; i < n_mask; ++i) {
+  //     for (size_t j = 0; j < n_mult; ++j) {
+  //         const uint8_t* src = c_mult + j * n_mask_bytes;   // this gate's slot
+  //         uint8_t  bit  = (src[i >> 3] >> (i & 7)) & 1u;    // bit i of gate j
+  //         size_t   pos  = i * nb * 8 + j;                   // dst: row byte-aligned, bit j LSB-first
+  //         c_mult[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+  //     }
+  // }
+  // // ***
 
-  free(c_mult);
+  // free(c_mult);
   free(ui);
   free(a);
   for (unsigned i = 0; i < ellhat; i++) { free(v_row_maj[i]); }
@@ -363,7 +364,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 }
 
 bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_t* chall_3,
-                      const uint8_t* decom_i, const uint8_t* c, uint8_t* c_mult_packed,
+                      const uint8_t* decom_i, const uint8_t* c, uint8_t* c_mult,
                       uint8_t* q_bar, uint8_t* Delta, unsigned int ellhat, const faest_paramset_t* params) {
   const unsigned int lambda       = params->lambda;
   const unsigned int lambda_bytes = lambda / 8;
@@ -377,6 +378,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
   const unsigned int n_mask       = params->n_mask;
   const unsigned int n_mask_bytes = (n_mask + 7) / 8;
   const unsigned int n_mult       = params->n_mult;
+  const unsigned int n_mult_bytes = (n_mult + 7) / 8;
   const unsigned int w_grind      = params->w_grind;
   const unsigned int lambda_minus_w_grind = lambda - w_grind;
   const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7 ) / 8;
@@ -532,20 +534,20 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
     memcpy(a_prime + i * lambda_bytes, Q[i], lambda_bytes);
   }
 
-  uint8_t* c_mult = malloc(n_mult * n_mask_bytes);
-  memset(c_mult, 0, n_mult * n_mask_bytes);
-  // NOTE: *** Claude GENERATED CODE
-  // This alligns the c_mult_packed to how the vole_reconstruct takes in
-  size_t nb = (n_mult + 7) / 8;
-  for (size_t j = 0; j < n_mult; ++j) {
-      uint8_t* dst = c_mult + j * n_mask_bytes;   // this gate's slot
-      for (size_t i = 0; i < n_mask; ++i) {
-          size_t  pos = i * nb * 8 + j;
-          uint8_t bit = (c_mult_packed[pos >> 3] >> (pos & 7)) & 1u;
-          dst[i >> 3] |= (uint8_t)(bit << (i & 7));  // set bit i within the slot
-      }
-  }
-  // ***
+  // uint8_t* c_mult = malloc(n_mult * n_mask_bytes);
+  // memset(c_mult, 0, n_mult * n_mask_bytes);
+  // // NOTE: *** Claude GENERATED CODE
+  // // This alligns the c_mult_packed to how the vole_reconstruct takes in
+  // size_t nb = (n_mult + 7) / 8;
+  // for (size_t j = 0; j < n_mult; ++j) {
+  //     uint8_t* dst = c_mult + j * n_mask_bytes;   // this gate's slot
+  //     for (size_t i = 0; i < n_mask; ++i) {
+  //         size_t  pos = i * nb * 8 + j;
+  //         uint8_t bit = (c_mult[pos >> 3] >> (pos & 7)) & 1u;
+  //         dst[i >> 3] |= (uint8_t)(bit << (i & 7));  // set bit i within the slot
+  //     }
+  // }
+  // // ***
 
   uint8_t* q_tilde = malloc(n_mult * n_mask_bytes);
   memset(q_tilde, 0, n_mult * n_mask_bytes);
@@ -574,7 +576,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
     // line 27
     for (unsigned m = 0; m < n_mask; m++) {
         
-      uint8_t sum = ptr_get_bit(h_e, m) ^ (gamma_e & ptr_get_bit(c_mult + e * n_mask_bytes, m));
+      uint8_t sum = ptr_get_bit(h_e, m) ^ (gamma_e & ptr_get_bit(c_mult + m * n_mult_bytes, e));
       ptr_set_bit(q_tilde + e * n_mask_bytes, m, sum);
     }
 
@@ -651,7 +653,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
 
   free(delta_prime);
   free(Dp);
-  free(c_mult);
+  // free(c_mult);
   free(qtmp);
   free(sd);
   free(bavc_rec.s);
