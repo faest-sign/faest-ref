@@ -707,7 +707,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     unsigned int uh_1_bytes = lambda_bytes * 4;
     uint8_t* uh_1 = malloc(uh_1_bytes);
     memset(uh_1, 0, uh_1_bytes);
-    memcpy(uh_1, u_bar + ((d_zk - 2) * lambda_bytes), uh_1_bytes);
+    memcpy(uh_1, u_bar + ((d_zk - 1) * lambda_bytes), uh_1_bytes);
 
     // line 11
     unsigned int vh_0_bytes = lambda_bytes * (ell + d_zk - 1);
@@ -723,7 +723,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     unsigned int vh_1_bytes = lambda_bytes * 4;
     uint8_t* vh_1 = malloc(vh_1_bytes);
     memset(vh_1, 0, vh_1_bytes);
-    memcpy(vh_1, v_bar + ((d_zk - 2) * lambda_bytes), vh_1_bytes);
+    memcpy(vh_1, v_bar + ((d_zk - 1) * lambda_bytes), vh_1_bytes);
 
     // line 13
     uint8_t* uh = malloc(uh_0_bytes + uh_1_bytes);
@@ -993,7 +993,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     unsigned int qh_1_bytes = lambda_bytes * 4;
     uint8_t* qh_1 = malloc(qh_1_bytes);
     memset(qh_1, 0, qh_1_bytes);
-    memcpy(qh_1, q_bar + ((d_zk - 2) * lambda_bytes), qh_1_bytes);
+    memcpy(qh_1, q_bar + ((d_zk - 1) * lambda_bytes), qh_1_bytes);
     
 
     // line 13
