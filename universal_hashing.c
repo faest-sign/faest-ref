@@ -573,9 +573,9 @@ void zk_hash_128_3_update(zk_hash_128_3_ctx* ctx, const bf128_t* v_0, const bf12
   bf128_add_inplace(&ctx->h1[2], v_2);
 }
 
-void zk_hash_128_7_update(zk_hash_128_7_ctx* ctx, const bf128_t* v_i, unsigned int max_deg) {
+void zk_hash_128_7_update(zk_hash_128_7_ctx* ctx, const bf128_t* v_i, unsigned int max_coeff) {
 
-  for (unsigned int deg_idx = 0; deg_idx < max_deg; deg_idx++) {
+  for (unsigned int deg_idx = 0; deg_idx < max_coeff; deg_idx++) {
 
     bf128_mul_inplace(&ctx->h0[deg_idx], &ctx->s);
     bf128_add_inplace(&ctx->h0[deg_idx], v_i + deg_idx);

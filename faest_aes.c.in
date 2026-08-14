@@ -980,18 +980,17 @@ static void aes_SSS_add_round_key_bytes_prover_degree_1(bfSSS_t* y_deg0, bfSSS_t
   memcpy(y_deg0, in_deg0, sizeof(bfSSS_t) * Nstbytes);
 }
 
-// TODO: This feels wrong...
+// TODO: Re-check for correctness
 static void aes_SSS_add_round_key_bytes_prover_degree_7(bfSSS_t** y_deg, const bfSSS_t** in_deg,
                                                         const bfSSS_t** k_deg, unsigned int Nst) {
   const unsigned int Nstbytes = Nst * 4;
 
-  // TODO: I don't think we need a degree-7 here like above its done for deg-2?
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    // bfSSS_add(&y_deg2[i], &in_deg2[i], &k_deg2[i]);
+    bfSSS_add(&y_deg[0][i], &in_deg[0][i], &k_deg[0][i]);
     bfSSS_add(&y_deg[1][i], &in_deg[1][i], &k_deg[1][i]);
 
   }
-  memcpy(&y_deg[0], &in_deg[0], sizeof(bfSSS_t) * Nstbytes);
+  memcpy(&y_deg[2], &in_deg[2], sizeof(bfSSS_t) * Nstbytes);
 }
 
 // Use shift_tag if key is degree-1 instead of degree-2
@@ -1189,6 +1188,50 @@ static void aes_SSS_inverse_affine_prover(uint8_t* y, bfSSS_t* y_tag, const uint
   for (unsigned int i = 0; i < Nstbytes; i++) {
     aes_SSS_inverse_affine_byte_prover(y + i, y_tag + i * 8, x[i], x_tag + i * 8);
   }
+}
+
+static void aes_SSS_inverse_sbox_eval_prover(bfSSS_t** b_deg, const uint8_t* s_dash_dash,
+                                          const bfSSS_t* s_dash_dash_tag, unsigned int Nst) {
+
+  const unsigned int Nstbytes = Nst * 4;
+
+  uint8_t* s               = malloc(Nstbytes);
+  bfSSS_t* s_tag           = malloc(Nstbytes * sizeof(bfSSS_t));
+  aes_SSS_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag, Nst);
+
+  bfSSS_t* state_conj     = malloc(Nstbytes * 8 * sizeof(bfSSS_t));
+  bfSSS_t* state_conj_tag = malloc(Nstbytes * 8 * sizeof(bfSSS_t));
+  
+  aes_SSS_f256_f2_conjugates_1(state_conj, s, Nst);
+  aes_SSS_f256_f2_conjugates_SSS(state_conj_tag, s_tag, Nst);
+
+  // bfSSS_t* b_deg = malloc(8 * sizeof(bfSSS_t*));
+  // for (unsigned int m = 0; m <= 7 ; m++) {
+  //   b_deg[m] = malloc(Nstbytes * sizeof(bfSSS_t));
+  // }
+
+  for (unsigned int j = 0; j < Nstbytes; j++) {
+
+    b_deg[0][j] = state_conj_tag[j * 8 + 1];
+    b_deg[1][j] = state_conj[j * 8 + 1];
+
+    for (unsigned int i = 2; i <= 7; i++) {
+
+      for (unsigned int m = 0; m < i; m++) {
+
+        bfSSS_t tmp;
+        bfSSS_mul(&tmp, &b_deg[m][j], &state_conj_tag[j * 8 + i]);     // deg-n * deg-0 -> deg-n
+        bfSSS_add_inplace(&b_deg[m][j], &tmp);
+
+        bfSSS_mul(&tmp, &b_deg[m][j], &state_conj[j * 8 + i]);          // deg-n * deg-1 -> deg-n+1
+        bfSSS_add_inplace(&b_deg[m+1][j], &tmp);
+
+      }
+
+    }
+
+  } 
+
 }
 
 static void aes_SSS_inverse_affine_byte_verifier(bfSSS_t* y_bits_key, const bfSSS_t* x_bits_key,
@@ -1789,8 +1832,13 @@ static void aes_SSS_enc_constraints_prover_new(zk_hash_SSS_7_ctx* hasher, const 
   bfSSS_t* s_tilde_tag     = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes];
   uint8_t* s_dash_dash     = &state_bits[2 * Nstbytes];
   bfSSS_t* s_dash_dash_tag = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes + Nstbits];
-  uint8_t* s               = &state_bits[3 * Nstbytes];
-  bfSSS_t* s_tag           = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
+
+  bfSSS_t** b_deg = malloc(8 * sizeof(bfSSS_t*));
+  for (unsigned int m = 0; m <= 7; m++) {
+    b_deg[m] = malloc(Nstbytes * sizeof(bfSSS_t));
+  }
+  // uint8_t* s               = &state_bits[3 * Nstbytes];
+  // bfSSS_t* s_tag           = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
 
   // line 2
   for (unsigned int r = 0; r < FAEST_SSS_R / 2; r++) {
@@ -1831,85 +1879,46 @@ static void aes_SSS_enc_constraints_prover_new(zk_hash_SSS_7_ctx* hasher, const 
                                   
     aes_SSS_add_round_key_bytes_prover_degree_7(state_deg7_tmp, (const bfSSS_t**)state_deg7, (const bfSSS_t**)k_deg, Nst);
 
-    // // line 10
-    // if (r == FAEST_SSS_R / 2 - 1) {
-    //   // ::25
-    //   aes_SSS_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag,
-    //                                k + FAEST_SSS_R * Nstbytes, k_tag + FAEST_SSS_R * Nstbits, Nst);
-    // } else {
-    //   // line 11
-    //   memcpy(s_tilde, &w[((Nstbits / 2) + (Nstbits / 2) * 3 * r) / 8], Nstbytes);
-    //   memcpy(s_tilde_tag, &w_tag[((Nstbits / 2) + (Nstbits / 2) * 3 * r)],
-    //          Nstbits * sizeof(bfSSS_t));
-    // }
+    // line 10
+    if (r == FAEST_SSS_R / 2 - 1) {
 
-    // // line 15
-    // aes_SSS_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, Nst);
-    // // line 16
-    // aes_SSS_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag, Nst);
+      aes_SSS_add_round_key_prover(s_tilde, s_tilde_tag, owf_out, owf_out_tag,
+                                   k + FAEST_SSS_R * Nstbytes, k_tag + FAEST_SSS_R * Nstbits, Nst);
+    } else {
+      // line 11
+      memcpy(s_tilde, &w[(Nstbits * r) / 8], Nstbytes);
+      memcpy(s_tilde_tag, &w_tag[(Nstbits * r)],
+             Nstbits * sizeof(bfSSS_t));
+    }
 
-    // // line 17
-    // for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
-    //   // // ::32
-    //   // bfSSS_t s_deg1;
-    //   // bfSSS_byte_combine_bits(&s_deg1, s[byte_i]);
-    //   // bfSSS_t s_deg0;
-    //   // bfSSS_byte_combine(&s_deg0, s_tag + 8 * byte_i);
-    //   // // ::33
-    //   // bfSSS_t s_sq_deg1;
-    //   // bfSSS_byte_combine_bits_sq(&s_sq_deg1, s[byte_i]);
-    //   // bfSSS_t s_sq_deg0;
-    //   // bfSSS_byte_combine_sq(&s_sq_deg0, s_tag + 8 * byte_i);
+    // line 15
+    aes_SSS_inverse_shiftrows_prover(s_dash_dash, s_dash_dash_tag, s_tilde, s_tilde_tag, Nst);
+    // line 16
+    aes_SSS_inverse_sbox_eval_prover(b_deg, s_dash_dash, s_dash_dash_tag, Nst);
 
-    //   // // ::36
-    //   // // compute <s^sq>^1 * <st_{0,i}>^2 - <s>^1
-    //   // //    deg0: s_sq[0] * st[0]
-    //   // //    deg1: s_sq[0] * st[1] + s_sq[1] * st[0]
-    //   // //    deg2: s_sq[0] * st[2] + s_sq[1] * st[1] + s[0]
-    //   // //
-    //   // bfSSS_t v1;
-    //   // bfSSS_t tmp;
-    //   // bfSSS_mul(&v1, &s_sq_deg0, &st_b_deg1[0][byte_i]);
-    //   // bfSSS_mul(&tmp, &s_sq_deg1, &st_b_deg0[0][byte_i]);
-    //   // bfSSS_add_inplace(&v1, &tmp);
+    // line 17
+    for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
 
-    //   // bfSSS_t v2;
-    //   // bfSSS_mul(&v2, &s_sq_deg0, &st_b_deg2[0][byte_i]);
-    //   // bfSSS_mul(&tmp, &s_sq_deg1, &st_b_deg1[0][byte_i]);
-    //   // bfSSS_add_inplace(&v2, &tmp);
-    //   // bfSSS_add_inplace(&v2, &s_deg0);
+      bfSSS_t* tmp = malloc(8 * sizeof(bfSSS_t));
 
-    //   // bfSSS_mul(&tmp, &s_sq_deg0, &st_b_deg0[0][byte_i]);
-    //   // zk_hash_SSS_3_update(hasher, &tmp, &v1, &v2);
+      for (unsigned int m = 0; m <= 7; m++) {
 
-    //   // // ::37
-    //   // // compute <s>^1 * <st_{1,i}>^2 - <st_{0,i}>^2
-    //   // //    deg0: s[0] * st_{1,i}[0]
-    //   // //    deg1: s[0] * st_{1,i}[1] + s[1] * st_{1,i}[0] + st_{0,i}[0]
-    //   // //    deg2: s[0] * st_{1,i}[2] + s[1] * st_{1,i}[1] + st_{0,i}[1]
-    //   // //
-    //   // bfSSS_mul(&v1, &s_deg0, &st_b_deg1[1][byte_i]);
-    //   // bfSSS_mul(&tmp, &s_deg1, &st_b_deg0[1][byte_i]);
-    //   // bfSSS_add_inplace(&v1, &tmp);
-    //   // bfSSS_add_inplace(&v1, &st_b_deg0[0][byte_i]);
+        bfSSS_add(&tmp[m], &b_deg[m][byte_i], &state_deg7_tmp[m][byte_i]);
 
-    //   // bfSSS_mul(&v2, &s_deg0, &st_b_deg2[1][byte_i]);
-    //   // bfSSS_mul(&tmp, &s_deg1, &st_b_deg1[1][byte_i]);
-    //   // bfSSS_add_inplace(&v2, &tmp);
-    //   // bfSSS_add_inplace(&v2, &st_b_deg1[0][byte_i]);
+      }
+      // NOTE: getting the z's
+      zk_hash_SSS_7_update(hasher, tmp, 8);
+      
+    }
 
-    //   // bfSSS_mul(&tmp, &s_deg0, &st_b_deg0[1][byte_i]);
-    //   // zk_hash_SSS_3_update(hasher, &tmp, &v1, &v2);
-    // }
-
-    // // line 21
-    // if (r != (FAEST_SSS_R / 2) - 1) {
-    //   uint8_t* tmp_state     = s;
-    //   bfSSS_t* tmp_state_tag = s_tag;
-    //   aes_SSS_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, Nst);
-    //   aes_SSS_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag,
-    //                                k + (2 * r + 2) * Nstbytes, k_tag + (2 * r + 2) * Nstbits, Nst);
-    // }
+    // line 21
+    if (r != (FAEST_SSS_R / 2) - 1) {
+      uint8_t* tmp_state     = s_tilde;
+      bfSSS_t* tmp_state_tag = s_tilde_tag;
+      aes_SSS_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, Nst);
+      aes_SSS_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag,
+                                   k + (2 * r + 2) * Nstbytes, k_tag + (2 * r + 2) * Nstbits, Nst);
+    }
   }
 
   faest_aligned_free(state_bits_tag);
