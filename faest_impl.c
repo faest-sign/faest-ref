@@ -671,6 +671,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // print_u8_array("c_mult_ptr", c_mult_ptr, 8);
   // print_u8_array("c_mult_packed", c_mult_packed, 8);
 
+  free(c_mult);
+
   uint8_t** V_row = malloc(ell * sizeof(uint8_t*));                        // it is actually lambda - w_grind but keeping it lambda
   assert(V_row);
   V_row[0] = calloc(ell, lambda_bytes);
@@ -957,6 +959,8 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     free_pointer_array(&Q);
     return -1;
   }
+
+  free(c_mult);
 
   uint8_t** Q_row = malloc(ell * sizeof(uint8_t*));                        // it is actually lambda - w_grind but keeping it lambda
   assert(Q_row);

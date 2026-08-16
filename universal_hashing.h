@@ -60,7 +60,7 @@ void zk_hash_128_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_12
 void zk_hash_128_7_init(zk_hash_128_7_ctx* ctx, const uint8_t* sd);
 void zk_hash_128_7_update(zk_hash_128_7_ctx* ctx, const bf128_t* v_i, unsigned int max_deg);
 void zk_hash_128_7_raise_and_update(zk_hash_128_7_ctx* ctx, const bf128_t* v_1, const bf128_t* v_2);
-void zk_hash_128_7_finalize(uint8_t* h_i, zk_hash_128_7_ctx* ctx, const bf128_t* x1_i);
+void zk_hash_128_7_finalize(uint8_t* a0, uint8_t* a1toi, zk_hash_128_7_ctx* ctx, const bf128_t* x1_i);
 
 typedef struct {
   bf192_t h0;
@@ -100,7 +100,7 @@ void zk_hash_192_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_19
 void zk_hash_192_7_init(zk_hash_192_7_ctx* ctx, const uint8_t* sd);
 void zk_hash_192_7_update(zk_hash_192_7_ctx* ctx, const bf192_t* v_i, unsigned int max_deg);
 void zk_hash_192_7_raise_and_update(zk_hash_192_7_ctx* ctx, const bf192_t* v_1, const bf192_t* v_2);
-void zk_hash_192_7_finalize(uint8_t* h_i, zk_hash_192_7_ctx* ctx, const bf192_t* x1_i);
+void zk_hash_192_7_finalize(uint8_t* a0, uint8_t* a1toi, zk_hash_192_7_ctx* ctx, const bf192_t* x1_i);
 
 typedef struct {
   bf256_t h0;
@@ -140,7 +140,7 @@ void zk_hash_256_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_25
 void zk_hash_256_7_init(zk_hash_256_7_ctx* ctx, const uint8_t* sd);
 void zk_hash_256_7_update(zk_hash_256_7_ctx* ctx, const bf256_t* v_i, unsigned int max_deg);
 void zk_hash_256_7_raise_and_update(zk_hash_256_7_ctx* ctx, const bf256_t* v_1, const bf256_t* v_2);
-void zk_hash_256_7_finalize(uint8_t* h_i, zk_hash_256_7_ctx* ctx, const bf256_t* x1_i);
+void zk_hash_256_7_finalize(uint8_t* a0, uint8_t* a1toi, zk_hash_256_7_ctx* ctx, const bf256_t* x1_i);
 
 void leaf_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x);
 void leaf_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x);
