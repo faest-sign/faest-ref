@@ -592,7 +592,7 @@ static inline void compute_D(uint8_t* D, const uint8_t* Q_tilde, const uint8_t* 
     }
     break;
   }
-  default:
+  default: {
     bf128_t bf_D[4];
     bf128_t bf_Q_tilde[4];
     bf128_t bf_delta;
@@ -608,6 +608,7 @@ static inline void compute_D(uint8_t* D, const uint8_t* Q_tilde, const uint8_t* 
 
       bf128_store(D + i * lambda_bytes, &bf_D[i]);
     }
+  }
   }
 }
 
