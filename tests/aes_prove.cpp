@@ -206,7 +206,12 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
       return;
     }
 
-    uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
+    if (params->d_zk == 3) {
+      uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
+    }
+    else {
+      uint8_t* w = aes_extend_witness_new(in.data(), out.data(), params);
+    }
     std::vector<uint8_t> w_bits(ell, 0x00);  // 1 bit in per uint8_t
     for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
       w_bits[bit_i] = (w[bit_i/8] >> bit_i%8) & 1;
@@ -346,7 +351,12 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
       return;
     }
 
-    uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
+    if (params->d_zk == 3) {
+      uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
+    }
+    else {
+      uint8_t* w = aes_extend_witness_new(in.data(), out.data(), params);
+    }
     std::vector<uint8_t> w_bits(ell, 0x00);  // 1 bit in per uint8_t
     for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
       w_bits[bit_i] = (w[bit_i/8] >> bit_i%8) & 1;
@@ -484,7 +494,12 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
       return;
     }
 
-    uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
+    if (params->d_zk == 3) {
+      uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
+    }
+    else {
+      uint8_t* w = aes_extend_witness_new(in.data(), out.data(), params);
+    }
     std::vector<uint8_t> w_bits(ell, 0x00); // 1 bit in per uint8_t
     for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
       w_bits[bit_i] = (w[bit_i / 8] >> bit_i % 8) & 1;

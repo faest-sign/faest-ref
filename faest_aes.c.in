@@ -534,7 +534,7 @@ static void aes_SS_sbox_eval_prover(bfSSS_t** state_deg7, const uint8_t* state_b
         for (unsigned int n = 0; n <= 2; n++) {
           bfSSS_t tmp;
           bfSSS_mul(&tmp, &p1_deg[m][2*i], &p1_deg[n][2*i + 1]);
-          bfSSS_add_inplace(&p2_deg[m + n][i], &tmp);
+          p2_deg[m + n][i] = tmp;
         }
       }
 
@@ -543,7 +543,7 @@ static void aes_SS_sbox_eval_prover(bfSSS_t** state_deg7, const uint8_t* state_b
       for (unsigned int m = 0; m <= 1; m++) {
         for (unsigned int n = 0; n <= 2; n++) {
           bfSSS_mul(&tmp, &f1_deg[m][2*i], &p1_deg[n][2*i + 1]);
-          bfSSS_add_inplace(&f2_deg[m + n][i], &tmp);
+          f2_deg[m + n][i] = tmp;
         }
       }
 
@@ -551,7 +551,7 @@ static void aes_SS_sbox_eval_prover(bfSSS_t** state_deg7, const uint8_t* state_b
       for (unsigned int m = 0; m <= 1; m++) {
         for (unsigned int n = 0; n <= 2; n++) {
           bfSSS_mul(&tmp, &f1_deg[m][2*i + 1], &p1_deg[n][2*i]);
-          bfSSS_add_inplace(&f2_deg[m + n][i], &tmp);
+          f2_deg[m + n][i] = tmp;
         }
       }
 
@@ -562,7 +562,7 @@ static void aes_SS_sbox_eval_prover(bfSSS_t** state_deg7, const uint8_t* state_b
     for (unsigned int m = 0; m <= 3; m++) {
       for (unsigned int n = 0; n <= 4; n++) {
         bfSSS_mul(&tmp, &f2_deg[m][0], &p2_deg[n][1]);
-        bfSSS_add_inplace(&state_deg7[n + m][j], &tmp);
+        state_deg7[n + m][j] = tmp;
       }
     }
 
@@ -570,7 +570,7 @@ static void aes_SS_sbox_eval_prover(bfSSS_t** state_deg7, const uint8_t* state_b
     for (unsigned int m = 0; m <= 3; m++) {
       for (unsigned int n = 0; n <= 4; n++) {
         bfSSS_mul(&tmp, &f2_deg[m][1], &p2_deg[n][0]);
-        bfSSS_add_inplace(&state_deg7[n + m][j], &tmp);
+        state_deg7[n + m][j] = tmp;
       }
     }
 
@@ -1789,6 +1789,9 @@ static void aes_SSS_enc_constraints_prover_new(zk_hash_SSS_7_ctx* hasher, const 
   bfSSS_t** b_deg = malloc(8 * sizeof(bfSSS_t*));
   for (unsigned int m = 0; m <= 7; m++) {
     b_deg[m] = malloc(Nstbytes * sizeof(bfSSS_t));
+    for (unsigned n = 0; n < Nstbytes; n++) {
+      b_deg[m][n] = bfSSS_zero();
+    }
   }
   uint8_t* s               = &state_bits[3 * Nstbytes];
   bfSSS_t* s_tag           = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
@@ -1800,6 +1803,7 @@ static void aes_SSS_enc_constraints_prover_new(zk_hash_SSS_7_ctx* hasher, const 
     bfSSS_t** state_deg7 = malloc(8 * sizeof(bfSSS_t*));
     for (unsigned int m = 0; m <= 7; m++) {
       state_deg7[m] = malloc(Nstbytes * sizeof(bfSSS_t));
+
     }
 
     // line 4
@@ -1852,7 +1856,7 @@ static void aes_SSS_enc_constraints_prover_new(zk_hash_SSS_7_ctx* hasher, const 
 
       }
       // NOTE: getting the z's
-      zk_hash_SSS_7_update(hasher, tmp, 8);
+      zk_hash_SSS_7_update(hasher, tmp);
 
       free(tmp);
       
@@ -2257,77 +2261,82 @@ void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w,
   // V becomes the w_tag: ell + 2*lambda field elements
   bfSSS_t* w_tag = column_to_row_major_and_shrink_V_SSS(V, ell); // This is the tag for w
 
-  // line 7 deg-3
-  zk_hash_SSS_3_ctx hasher3;
-  zk_hash_SSS_3_init(&hasher3, chall_2);
+  if (params->d_zk == 3) {
+    // line 7 deg-3
+    zk_hash_SSS_3_ctx hasher3;
+    zk_hash_SSS_3_init(&hasher3, chall_2);
 
-  // line 7 deg-7
-  zk_hash_SSS_7_ctx hasher7;
-  zk_hash_SSS_7_init(&hasher7, chall_2);
+    // line 9 deg-3
+    aes_SSS_constraints_prover(&hasher3, w, w_tag, owf_in, owf_out, params);
 
-  uint8_t* one_minus_w = malloc(ell_bytes);
-  for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
+    bfSSS_t* bf_u_star = malloc((d_zk - 1) * sizeof(bfSSS_t));
+    for (unsigned int j = 0; j < d_zk - 1; j++) {
+      bfSSS_sum_poly_bits(&bf_u_star[j], u_bar + j * lambda_bytes);
+    }
 
-    ptr_set_bit(one_minus_w, ell_idx, 1 ^ ptr_get_bit(w, ell_idx));
-    // deg 1 of bf_one is 0, adding with w is not required
-    bfSSS_t bf_deg_1[2];
-    bfSSS_t bf_deg_0;
-    bfSSS_mul_bit(&bf_deg_1[0], &w_tag[ell_idx], ptr_get_bit(one_minus_w, ell_idx)); // deg-0 * deg-1 // TODO: one_minus_w should have the same tag as w?
-    bfSSS_mul_bit(&bf_deg_1[1], &w_tag[ell_idx], ptr_get_bit(w, ell_idx));            // deg-0 * deg-1
-    bfSSS_add_inplace(&bf_deg_1[0], &bf_deg_1[1]);              // adding deg-1s
-    bfSSS_mul(&bf_deg_0, &w_tag[ell_idx], &w_tag[ell_idx]);   // deg-0 * deg-0
+    // line 8-9 deg-3
+    bfSSS_t* bf_v_star = malloc((d_zk - 1) * sizeof(bfSSS_t));
+    for (unsigned int j = 0; j < d_zk - 1; j++) {
+      bfSSS_sum_poly_bits(&bf_v_star[j], v_bar + j * lambda_bytes);
+    }
 
-    zk_hash_SSS_7_raise_and_update(&hasher7, &bf_deg_0, bf_deg_1);
+    // line 13-18 deg-3
+    for (unsigned int j = 1; j <= d_zk - 2; j++) {
+      bfSSS_add_inplace(&bf_u_star[j - 1], &bf_v_star[j]);
+    }
+
+    // deg-3
+    zk_hash_SSS_3_finalize(a0_tilde, a1toi_tilde, a1toi_tilde + lambda_bytes, &hasher3, &bf_v_star[0], &bf_u_star[0],
+                           &bf_u_star[1]);
+
+    free(bf_u_star);
+    free(bf_v_star);
+
+  } else {
+    // line 7 deg-7
+    zk_hash_SSS_7_ctx hasher7;
+    zk_hash_SSS_7_init(&hasher7, chall_2);
+
+    uint8_t* one_minus_w = malloc(ell_bytes);
+    for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
+
+      ptr_set_bit(one_minus_w, ell_idx, 1 ^ ptr_get_bit(w, ell_idx));
+      // deg 1 of bf_one is 0, adding with w is not required
+      bfSSS_t bf_deg_1[2];
+      bfSSS_t bf_deg_0;
+      bfSSS_mul_bit(&bf_deg_1[0], &w_tag[ell_idx], ptr_get_bit(one_minus_w, ell_idx)); // deg-0 * deg-1 // TODO: one_minus_w should have the same tag as w?
+      bfSSS_mul_bit(&bf_deg_1[1], &w_tag[ell_idx], ptr_get_bit(w, ell_idx));            // deg-0 * deg-1
+      bfSSS_add_inplace(&bf_deg_1[0], &bf_deg_1[1]);              // adding deg-1s
+      bfSSS_mul(&bf_deg_0, &w_tag[ell_idx], &w_tag[ell_idx]);   // deg-0 * deg-0
+
+      zk_hash_SSS_7_raise_and_update(&hasher7, &bf_deg_0, bf_deg_1);
+    }
+    free(one_minus_w);
+
+    // line 9 deg-7
+    aes_SSS_constraints_prover_new(&hasher7, w, w_tag, owf_in, owf_out, params);
+
+    // line 13 deg-7
+    bfSSS_t* x1_sum = malloc(7 * sizeof(bfSSS_t));
+    bfSSS_sum_poly_bits(&x1_sum[0], (const uint8_t*)v_bar);
+    for (unsigned int j = 1; j <= d_zk - 2; j++) {
+      bfSSS_t tmp1;
+      bfSSS_t tmp2;
+      bfSSS_sum_poly_bits(&tmp1, (const uint8_t*)u_bar + (j - 1) * lambda_bytes);
+      bfSSS_sum_poly_bits(&tmp2, (const uint8_t*)v_bar + j * lambda_bytes);
+
+      bfSSS_add(&x1_sum[j], &tmp1, &tmp2);
+    }
+    bfSSS_sum_poly_bits(&x1_sum[d_zk - 1], (const uint8_t*)u_bar + (d_zk - 2) * lambda_bytes);
+
+    // deg-7
+    zk_hash_SSS_7_finalize(a0_tilde, a1toi_tilde, &hasher7, x1_sum);
+
+    free(x1_sum);
   }
-  free(one_minus_w);
-
-  // line 9 deg-3
-  aes_SSS_constraints_prover(&hasher3, w, w_tag, owf_in, owf_out, params);
-
-  // line 9 deg-7
-  aes_SSS_constraints_prover_new(&hasher7, w, w_tag, owf_in, owf_out, params);
-
-  
-  bfSSS_t* bf_u_star = malloc((d_zk - 1) * sizeof(bfSSS_t));
-  for (unsigned int j = 0; j < d_zk - 1; j++) {
-    bfSSS_sum_poly_bits(&bf_u_star[j], u_bar + j * lambda_bytes);
-  }
-
-  // line 8-9 deg-3
-  bfSSS_t* bf_v_star = malloc((d_zk - 1) * sizeof(bfSSS_t));
-  for (unsigned int j = 0; j < d_zk - 1; j++) {
-    bfSSS_sum_poly_bits(&bf_v_star[j], v_bar + j * lambda_bytes);
-  }
-
-  // line 13-18 deg-3
-  for (unsigned int j = 1; j <= d_zk - 2; j++) {
-    bfSSS_add_inplace(&bf_u_star[j - 1], &bf_v_star[j]);
-  }
-
-  // line 13 deg-7
-  bfSSS_t* x1_sum = malloc(7 * sizeof(bfSSS_t));
-  bfSSS_sum_poly_bits(&x1_sum[0], (const uint8_t*)v_bar);
-  for (unsigned int j = 1; j <= d_zk - 2; j++) {
-    bfSSS_t tmp1;
-    bfSSS_t tmp2;
-    bfSSS_sum_poly_bits(&tmp1, (const uint8_t*)u_bar + (j - 1) * lambda_bytes);
-    bfSSS_sum_poly_bits(&tmp2, (const uint8_t*)v_bar + j * lambda_bytes);
-
-    bfSSS_add(&x1_sum[j], &tmp1, &tmp2);
-  }
-  bfSSS_sum_poly_bits(&x1_sum[d_zk - 1], (const uint8_t*)u_bar + (d_zk - 2) * lambda_bytes);
-
-  // deg-3
-  // zk_hash_SSS_3_finalize(a0_tilde, a1toi_tilde, a1toi_tilde + lambda_bytes, &hasher3, &bf_v_star[0], &bf_u_star[0],
-  //                        &bf_u_star[1]);
-
-  // deg-7
-  zk_hash_SSS_7_finalize(a0_tilde, a1toi_tilde, &hasher7, x1_sum);
 
   faest_aligned_free(w_tag);
-  free(bf_u_star);
-  free(bf_v_star);
-  free(x1_sum);
+
 }
 
 // OWF VERIFIER

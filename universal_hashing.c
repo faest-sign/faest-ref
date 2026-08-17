@@ -573,9 +573,9 @@ void zk_hash_128_3_update(zk_hash_128_3_ctx* ctx, const bf128_t* v_0, const bf12
   bf128_add_inplace(&ctx->h1[2], v_2);
 }
 
-void zk_hash_128_7_update(zk_hash_128_7_ctx* ctx, const bf128_t* v_i, unsigned int max_coeff) {
+void zk_hash_128_7_update(zk_hash_128_7_ctx* ctx, const bf128_t* v_i) {
 
-  for (unsigned int deg_idx = 0; deg_idx < max_coeff; deg_idx++) {
+  for (unsigned int deg_idx = 0; deg_idx < 7; deg_idx++) {
 
     bf128_mul_inplace(&ctx->h0[deg_idx], &ctx->s);
     bf128_add_inplace(&ctx->h0[deg_idx], v_i + deg_idx);
@@ -594,12 +594,16 @@ void zk_hash_128_3_raise_and_update(zk_hash_128_3_ctx* ctx, const bf128_t* v_1,
 
 void zk_hash_128_7_raise_and_update(zk_hash_128_7_ctx* ctx, const bf128_t* v_1, const bf128_t* v_2) {
 
-  bf128_t bf_packed_voles_with_zeros[3];    // one in the begining, rest at the end higher degrees
+  bf128_t bf_packed_voles_with_zeros[7];
   bf_packed_voles_with_zeros[0] = bf128_zero();
-  bf_packed_voles_with_zeros[1] = *v_1;
-  bf_packed_voles_with_zeros[2] = *v_2;
+  bf_packed_voles_with_zeros[1] = bf128_zero();
+  bf_packed_voles_with_zeros[2] = bf128_zero();
+  bf_packed_voles_with_zeros[3] = bf128_zero();
+  bf_packed_voles_with_zeros[4] = bf128_zero();
+  bf_packed_voles_with_zeros[5] = *v_1;
+  bf_packed_voles_with_zeros[6] = *v_2;
 
-  zk_hash_128_7_update(ctx, bf_packed_voles_with_zeros, 3);
+  zk_hash_128_7_update(ctx, bf_packed_voles_with_zeros);
 }
 
 void zk_hash_128_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_128_3_ctx* ctx,
@@ -652,7 +656,7 @@ void zk_hash_128_7_finalize(uint8_t* a0, uint8_t* a1toi, zk_hash_128_7_ctx* ctx,
     bf128_add_inplace(&t0, &x1_i[i]);
     bf128_store(a1toi + (i-1) * BF128_NUM_BYTES, &t0);
 
-  };
+  }
 
 }
 
@@ -747,9 +751,9 @@ void zk_hash_192_3_update(zk_hash_192_3_ctx* ctx, const bf192_t* v_0, const bf19
   bf192_add_inplace(&ctx->h1[2], v_2);
 }
 
-void zk_hash_192_7_update(zk_hash_192_7_ctx* ctx, const bf192_t* v_i, unsigned int max_deg) {
+void zk_hash_192_7_update(zk_hash_192_7_ctx* ctx, const bf192_t* v_i) {
 
-  for (unsigned int deg_idx = 0; deg_idx < max_deg; deg_idx++) {
+  for (unsigned int deg_idx = 0; deg_idx < 7; deg_idx++) {
 
     bf192_mul_inplace(&ctx->h0[deg_idx], &ctx->s);
     bf192_add_inplace(&ctx->h0[deg_idx], v_i + deg_idx);
@@ -770,10 +774,14 @@ void zk_hash_192_7_raise_and_update(zk_hash_192_7_ctx* ctx, const bf192_t* v_1, 
 
   bf192_t bf_packed_voles_with_zeros[3];    // one in the begining, rest at the end higher degrees
   bf_packed_voles_with_zeros[0] = bf192_zero();
-  bf_packed_voles_with_zeros[1] = *v_1;
-  bf_packed_voles_with_zeros[2] = *v_2;
+  bf_packed_voles_with_zeros[1] = bf192_zero();
+  bf_packed_voles_with_zeros[2] = bf192_zero();
+  bf_packed_voles_with_zeros[3] = bf192_zero();
+  bf_packed_voles_with_zeros[4] = bf192_zero();
+  bf_packed_voles_with_zeros[5] = *v_1;
+  bf_packed_voles_with_zeros[6] = *v_2;
 
-  zk_hash_192_7_update(ctx, bf_packed_voles_with_zeros, 3);
+  zk_hash_192_7_update(ctx, bf_packed_voles_with_zeros);
 }
 
 void zk_hash_192_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_192_3_ctx* ctx,
@@ -920,9 +928,9 @@ void zk_hash_256_3_update(zk_hash_256_3_ctx* ctx, const bf256_t* v_0, const bf25
   bf256_add_inplace(&ctx->h1[2], v_2);
 }
 
-void zk_hash_256_7_update(zk_hash_256_7_ctx* ctx, const bf256_t* v_i, unsigned int max_deg) {
+void zk_hash_256_7_update(zk_hash_256_7_ctx* ctx, const bf256_t* v_i) {
 
-  for (unsigned int deg_idx = 0; deg_idx < max_deg; deg_idx++) {
+  for (unsigned int deg_idx = 0; deg_idx < 7; deg_idx++) {
 
     bf256_mul_inplace(&ctx->h0[deg_idx], &ctx->s);
     bf256_add_inplace(&ctx->h0[deg_idx], v_i + deg_idx);
@@ -941,12 +949,16 @@ void zk_hash_256_3_raise_and_update(zk_hash_256_3_ctx* ctx, const bf256_t* v_1,
 
 void zk_hash_256_7_raise_and_update(zk_hash_256_7_ctx* ctx, const bf256_t* v_1, const bf256_t* v_2) {
 
-  bf256_t bf_packed_voles_with_zeros[3];    // one in the begining, rest at the end higher degrees
+  bf256_t bf_packed_voles_with_zeros[7];    // one in the begining, rest at the end higher degrees
   bf_packed_voles_with_zeros[0] = bf256_zero();
-  bf_packed_voles_with_zeros[1] = *v_1;
-  bf_packed_voles_with_zeros[2] = *v_2;
+  bf_packed_voles_with_zeros[1] = bf256_zero();
+  bf_packed_voles_with_zeros[2] = bf256_zero();
+  bf_packed_voles_with_zeros[3] = bf256_zero();
+  bf_packed_voles_with_zeros[4] = bf256_zero();
+  bf_packed_voles_with_zeros[5] = *v_1;
+  bf_packed_voles_with_zeros[6] = *v_2;
 
-  zk_hash_256_7_update(ctx, bf_packed_voles_with_zeros, 3);
+  zk_hash_256_7_update(ctx, bf_packed_voles_with_zeros);
 }
 
 void zk_hash_256_3_finalize(uint8_t* h_0, uint8_t* h_1, uint8_t* h_2, zk_hash_256_3_ctx* ctx,
