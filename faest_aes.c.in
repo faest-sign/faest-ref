@@ -2318,11 +2318,11 @@ void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w,
   bfSSS_sum_poly_bits(&x1_sum[d_zk - 1], (const uint8_t*)u_bar + (d_zk - 2) * lambda_bytes);
 
   // deg-3
-  zk_hash_SSS_3_finalize(a0_tilde, a1toi_tilde, a1toi_tilde + lambda_bytes, &hasher3, &bf_v_star[0], &bf_u_star[0],
-                         &bf_u_star[1]);
+  // zk_hash_SSS_3_finalize(a0_tilde, a1toi_tilde, a1toi_tilde + lambda_bytes, &hasher3, &bf_v_star[0], &bf_u_star[0],
+  //                        &bf_u_star[1]);
 
   // deg-7
-  // zk_hash_SSS_7_finalize(a0_tilde, a1toi_tilde, &hasher7, x1_sum);
+  zk_hash_SSS_7_finalize(a0_tilde, a1toi_tilde, &hasher7, x1_sum);
 
   faest_aligned_free(w_tag);
   free(bf_u_star);
