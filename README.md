@@ -31,6 +31,8 @@ ninja
 ninja test
 ```
 
+Toggle is isDEG3 to have the deg-3/7 signature
+
 ```
 meson configure -Dtv-generators=enabled
 meson configure -Dtv-generators=disabled
