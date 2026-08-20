@@ -355,18 +355,18 @@ namespace {
 
   std::vector<unsigned int> f4_pmod(const std::vector<unsigned int>& a,
                                     const std::vector<unsigned int>& q) {
-    const int dq                   = static_cast<int>(q.size()) - 1;
+    const int dq                   = q.size() - 1;
     std::vector<unsigned int> work = a;
-    for (int i = static_cast<int>(work.size()) - 1; i >= dq; --i) {
-      const int c = work[static_cast<std::size_t>(i)];
+    for (int i = work.size() - 1; i >= dq; --i) {
+      const auto c = work[i];
       if (c == 0) {
         continue;
       }
-      for (int j = 0; j <= dq; ++j) {
-        work[static_cast<std::size_t>(i - dq + j)] ^= f4_mul(c, q[static_cast<std::size_t>(j)]);
+      for (unsigned int j = 0; (int)j <= dq; ++j) {
+        work[i - dq + j] ^= f4_mul(c, q[j]);
       }
     }
-    work.resize(static_cast<std::size_t>(std::max(dq, 0)), 0);
+    work.resize(dq, 0);
     return work;
   }
 
@@ -701,7 +701,7 @@ namespace {
       power = tmul(power, *rho);
     }
 
-    std::vector<Int> mrows(static_cast<std::size_t>(d), 0);
+    std::vector<Int> mrows(d, 0);
     for (unsigned int r = 0; r < d; ++r) {
       Int row = 0;
       for (unsigned int i = 0; i < d; ++i) {
@@ -872,7 +872,7 @@ namespace {
         for (unsigned int t = 1; t <= maxt; ++t) {
           std::vector<Place> picks;
           for (unsigned int i = 0; i < t; ++i) {
-            picks.push_back({Place::Kind::Irr, pool[static_cast<std::size_t>(i)], 1});
+            picks.push_back({Place::Kind::Irr, pool[i], 1});
           }
           opts.push_back({t * d, t * per, std::move(picks)});
         }
