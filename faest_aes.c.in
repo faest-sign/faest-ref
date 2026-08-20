@@ -480,19 +480,19 @@ static void aes_SS_sbox_eval_prover(bfSSS_t** state_deg7, const uint8_t* state_b
   const unsigned int Nstbits  = 32 * Nst;
   const unsigned int Nstbytes = Nstbits / 8;
 
-  bfSSS_t* state_conj     = &state_bits_tag[Nstbits];
-  bfSSS_t* state_conj_tag = &state_bits_tag[Nstbits + 8 * Nstbytes];
+  bfSSS_t* state_conj     = malloc(Nstbits * sizeof(bfSSS_t));
+  bfSSS_t* state_conj_tag = malloc(Nstbits * sizeof(bfSSS_t));
   
   aes_SSS_f256_f2_conjugates_1(state_conj, state_bits, Nst);
   aes_SSS_f256_f2_conjugates_SSS(state_conj_tag, state_bits_tag, Nst);
 
   // line 3
   uint8_t phi[9] = {0x05, 0x09, 0xf9, 0x25, 0xf4, 0x01, 0xb5, 0x8f, 0x63};
-  bfSSS_t chi[9];
+  bfSSS_t zeta[9];
 
   // line 5
   for (unsigned int i = 0; i <= 8; i++) {
-    bfSSS_byte_combine_bits(&chi[i], phi[i]);
+    bfSSS_byte_combine_bits(&zeta[i], phi[i]);
   }
 
   for (unsigned int j = 0; j < Nstbytes; j++) {
@@ -523,21 +523,23 @@ static void aes_SS_sbox_eval_prover(bfSSS_t** state_deg7, const uint8_t* state_b
       }
     }
 
+    // line 8
     for (unsigned int i = 0; i < 4; i++) {
 
-
       bfSSS_mul(&p1_deg[0][i], &state_conj_tag[j * 8 + i * 2], &state_conj_tag[j * 8 + (i * 2 + 1)]);    // deg-0 * deg-0
+
       bfSSS_t tmp;
       bfSSS_mul(&tmp, &state_conj[j * 8 + i * 2], &state_conj_tag[j * 8 + (i * 2 + 1)]);                // deg-1 * deg-0
       bfSSS_mul(&p1_deg[1][i], &state_conj_tag[j * 8 + i * 2], &state_conj[j * 8 + (i * 2 + 1)]);        // deg-0 * deg-1
       bfSSS_add(&p1_deg[1][i], &p1_deg[1][i], &tmp);
+
       bfSSS_mul(&p1_deg[2][i], &state_conj[j * 8 + i * 2], &state_conj[j * 8 + (i * 2 + 1)]);            // deg-1 * deg-1
 
       bfSSS_t prod_1_deg[2], prod_2_deg[2];
-      bfSSS_mul(&prod_1_deg[0], &chi[i * 2], &state_conj_tag[j * 8 + (i * 2 + 1)]);                                  // deg-0 * deg-0
-      bfSSS_mul(&prod_2_deg[0], &chi[i * 2 + 1], &state_conj_tag[j * 8 + (i * 2)]);                                  // deg-0 * deg-0
-      bfSSS_mul(&prod_1_deg[1], &chi[i * 2], &state_conj[j * 8 + (i * 2 + 1)]);                                  // deg-0 * deg-1
-      bfSSS_mul(&prod_2_deg[1], &chi[i * 2 + 1], &state_conj[j * 8 + (i * 2)]);                                  // deg-0 * deg-1
+      bfSSS_mul(&prod_1_deg[0], &zeta[i * 2], &state_conj_tag[j * 8 + (i * 2 + 1)]);                                  // deg-0 * deg-0
+      bfSSS_mul(&prod_2_deg[0], &zeta[i * 2 + 1], &state_conj_tag[j * 8 + (i * 2)]);                                  // deg-0 * deg-0
+      bfSSS_mul(&prod_1_deg[1], &zeta[i * 2], &state_conj[j * 8 + (i * 2 + 1)]);                                  // deg-0 * deg-1
+      bfSSS_mul(&prod_2_deg[1], &zeta[i * 2 + 1], &state_conj[j * 8 + (i * 2)]);                                  // deg-0 * deg-1
       
       bfSSS_add(&f1_deg[0][i], &prod_1_deg[0], &prod_2_deg[0]);                                // deg-0
       bfSSS_add(&f1_deg[1][i], &prod_1_deg[1], &prod_2_deg[1]);                                        // deg-1
@@ -593,8 +595,7 @@ static void aes_SS_sbox_eval_prover(bfSSS_t** state_deg7, const uint8_t* state_b
       }
     }
 
-    bfSSS_add_inplace(&state_deg7[7][j], &chi[8]);
-
+    bfSSS_add_inplace(&state_deg7[7][j], &zeta[8]);
 
     for (unsigned int i = 0; i <= 2; i++) {
     free(p1_deg[i]);
@@ -615,6 +616,8 @@ static void aes_SS_sbox_eval_prover(bfSSS_t** state_deg7, const uint8_t* state_b
 
   }
 
+  free(state_conj);
+  free(state_conj_tag);
 }
 
 static void aes_SSS_sbox_affine_verifier(bfSSS_t* out_deg1, const bfSSS_t* in_deg1,
@@ -670,14 +673,14 @@ static void aes_SS_sbox_eval_verifier(bfSSS_t* state_key, const bfSSS_t* state_b
     for (unsigned int i = 0; i < 4; i++) {
 
       // line 9
-      bfSSS_mul(&p1_key[i], &state_conj_key[j * 8 + i * 2], &state_conj_key[j * 8 + (i * 2 + 1)]);    // deg-0 * deg-0
+      bfSSS_mul(&p1_key[i], &state_conj_key[j * 8 + i * 2], &state_conj_key[j * 8 + (i * 2 + 1)]);                // deg-1 * deg-1
 
       // line 10
       bfSSS_t prod_1_key, prod_2_key;
-      bfSSS_mul(&prod_1_key, &zeta[i * 2], &state_conj_key[j * 8 + (i * 2 + 1)]);                                  // deg-0 * deg-0
-      bfSSS_mul(&prod_2_key, &zeta[i * 2 + 1], &state_conj_key[j * 8 + (i * 2)]);                                  // deg-0 * deg-0
+      bfSSS_mul(&prod_1_key, &zeta[i * 2], &state_conj_key[j * 8 + (i * 2 + 1)]);                                  // deg-0 * deg-1
+      bfSSS_mul(&prod_2_key, &zeta[i * 2 + 1], &state_conj_key[j * 8 + (i * 2)]);                                  // deg-0 * deg-1
       
-      bfSSS_add(&f1_key[i], &prod_1_key, &prod_2_key);                                         // deg-0
+      bfSSS_add(&f1_key[i], &prod_1_key, &prod_2_key);                                                            // deg-1
 
     }
 
@@ -685,27 +688,26 @@ static void aes_SS_sbox_eval_verifier(bfSSS_t* state_key, const bfSSS_t* state_b
     for (unsigned int i = 0; i < 2; i++) {
 
       // line 12
-      bfSSS_mul(&p2_key[i], &p1_key[2*i], &p1_key[2*i + 1]);
+      bfSSS_mul(&p2_key[i], &p1_key[2*i], &p1_key[2*i + 1]);        // deg-2 * deg-2
 
       // line 13
       // first product
-      bfSSS_mul(&f2_key[i], &f1_key[2*i], &p1_key[2*i + 1]);
+      bfSSS_mul(&f2_key[i], &f1_key[2*i], &p1_key[2*i + 1]);        // deg-1 * deg-2
       // second product
       bfSSS_t tmp;
-      bfSSS_mul(&tmp, &f1_key[2*i + 1], &p1_key[2*i]);
-      bfSSS_add_inplace(&f2_key[i], &tmp);
+      bfSSS_mul(&tmp, &f1_key[2*i + 1], &p1_key[2*i]);              // deg-1 * deg-2
+      bfSSS_add_inplace(&f2_key[i], &tmp);                          // deg-3
 
     }
 
     // line 14
     // first product
-    
-    bfSSS_mul(&state_key[j], &f2_key[0], &p2_key[1]);
+    bfSSS_mul(&state_key[j], &f2_key[0], &p2_key[1]);               // deg-3 * deg-4
 
     // second product
     bfSSS_t tmp;
-    bfSSS_mul(&tmp, &f2_key[1], &p2_key[0]);
-    bfSSS_add_inplace(&state_key[j], &tmp);
+    bfSSS_mul(&tmp, &f2_key[1], &p2_key[0]);                        // deg-3 * deg-4
+    bfSSS_add_inplace(&state_key[j], &tmp);                         // deg-7
 
     bfSSS_add_inplace(&state_key[j], &zeta[8]);
 
@@ -923,10 +925,8 @@ static void aes_SSS_mix_columns_prover_new(bfSSS_t** y_deg, const bfSSS_t** in_d
     const unsigned int i2 = 4 * c + 2;
     const unsigned int i3 = 4 * c + 3;
 
-    
     bfSSS_t tmp1;
     bfSSS_t tmp2;
-
     // line 7
     for (int m = 0; m <= 7; m++) {
       bfSSS_mul(&tmp1, &in_deg[m][i0], v2);
@@ -1092,15 +1092,10 @@ static void aes_SSS_add_round_key_bytes_prover_degree_7(bfSSS_t** out_deg, const
     memcpy(out_deg[m], in_deg[m], sizeof(bfSSS_t) * Nstbytes);
   }
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    bfSSS_add(&out_deg[6][i], &in_deg[6][i], &k_deg[0][i]);
     bfSSS_add(&out_deg[7][i], &in_deg[7][i], &k_deg[1][i]);
+    bfSSS_add(&out_deg[6][i], &in_deg[6][i], &k_deg[0][i]);
   }
 
-  // for (unsigned int i = 0; i < Nstbytes; i++) {
-  //   bfSSS_add(&out_deg[0][i], &in_deg[0][i], &k_deg[0][i]);
-  //   bfSSS_add(&out_deg[1][i], &in_deg[1][i], &k_deg[1][i]);
-  // }
-  // memcpy(out_deg[2], in_deg[2], sizeof(bfSSS_t) * Nstbytes);
 }
 
 // Use shift_tag if key is degree-1 instead of degree-2
@@ -1328,11 +1323,6 @@ static void aes_SSS_inverse_sbox_eval_prover(bfSSS_t** b_deg, const uint8_t* s_d
   aes_SSS_f256_f2_conjugates_1(state_conj, s, Nst);
   aes_SSS_f256_f2_conjugates_SSS(state_conj_tag, s_tag, Nst);
 
-  // bfSSS_t* b_deg = malloc(8 * sizeof(bfSSS_t*));
-  // for (unsigned int m = 0; m <= 7 ; m++) {
-  //   b_deg[m] = malloc(Nstbytes * sizeof(bfSSS_t));
-  // }
-
   for (unsigned int j = 0; j < Nstbytes; j++) {
 
     b_deg[0][j] = state_conj_tag[j * 8 + 1];
@@ -1346,16 +1336,25 @@ static void aes_SSS_inverse_sbox_eval_prover(bfSSS_t** b_deg, const uint8_t* s_d
       const bfSSS_t* t = &state_conj_tag[j * 8 + i];
       const bfSSS_t* v = &state_conj[j * 8 + i];
 
-      for (unsigned int m = i; m >= 1; m--) {        
-        
-        bfSSS_t tmp_a, tmp_b;
-        bfSSS_mul(&tmp_a, &b_deg[m][j], t);
-        bfSSS_mul(&tmp_b, &b_deg[m - 1][j], v);
-                                                  //      3                               2
-        bfSSS_add(&b_deg[m][j], &tmp_a, &tmp_b);  // [deg-(2-1) * deg-1], [deg-(2-1) * deg-0 + deg-(2-2) * deg-1],
-
+      // Temporary holder
+      bfSSS_t* b_deg_tmp_v = malloc(8 * sizeof(bfSSS_t));
+      bfSSS_t* b_deg_tmp_tag = malloc(8 * sizeof(bfSSS_t));
+      for (unsigned int m = 0; m <= 7; m++) {
+        b_deg_tmp_v[m] = bfSSS_zero();
+        b_deg_tmp_tag[m] = bfSSS_zero();
       }
-      bfSSS_mul(&b_deg[0][j], &b_deg[0][j], t);
+
+      for (unsigned int m = 0; m < i; m++) {
+        bfSSS_mul(&b_deg_tmp_tag[m], &b_deg[m][j], t);           // deg-n * deg-0  -> deg-n
+        bfSSS_mul(&b_deg_tmp_v[m + 1], &b_deg[m][j], v);         // deg-n * deg-1  -> deg-n+1
+      }
+      for (unsigned int m = 0; m <= 7; m++) {
+        bfSSS_add(&b_deg[m][j], &b_deg_tmp_tag[m], &b_deg_tmp_v[m]);
+        // bfSSS_add_inplace(&b_deg[m][j], &b_deg_tmp_tag[m]);
+        // bfSSS_add_inplace(&b_deg[m][j], &b_deg_tmp_v[m]);
+      }
+      free(b_deg_tmp_v);
+      free(b_deg_tmp_tag);
 
     }
 
@@ -1394,7 +1393,7 @@ static void aes_SSS_inverse_sbox_eval_verifier(bfSSS_t* b_key, const bfSSS_t* s_
   const unsigned int Nstbytes = Nst * 4;
 
   bfSSS_t* s_tag           = malloc(Nstbytes * 8 * sizeof(bfSSS_t));
-  aes_SSS_inverse_affine_verifier(s_tag, s_dash_dash_tag, delta_i, Nst);
+  aes_SSS_inverse_affine_verifier(s_tag, s_dash_dash_tag, &delta_i[1], Nst);
 
   bfSSS_t* state_conj_tag = malloc(Nstbytes * 8 * sizeof(bfSSS_t));
   
@@ -1402,11 +1401,9 @@ static void aes_SSS_inverse_sbox_eval_verifier(bfSSS_t* b_key, const bfSSS_t* s_
 
   for (unsigned int j = 0; j < Nstbytes; j++) {
 
-    for (unsigned int j = 0; j < Nstbytes; j++) {
-      b_key[j] = state_conj_tag[j * 8 + 1];
-      for (unsigned int i = 2; i <= 7; i++) {
-        bfSSS_mul_inplace(&b_key[j], &state_conj_tag[j * 8 + i]);
-      }
+    b_key[j] = state_conj_tag[j * 8 + 1];
+    for (unsigned int i = 2; i <= 7; i++) {
+      bfSSS_mul_inplace(&b_key[j], &state_conj_tag[j * 8 + i]);
     }
 
   }
@@ -2043,11 +2040,6 @@ static void aes_SSS_enc_constraints_prover_new(zk_hash_SSS_7_ctx* hasher, const 
 
   aes_SSS_add_round_key_prover(state_bits, state_bits_tag, owf_in, owf_in_tag, k, k_tag, Nst);
 
-  // for conjugates of state and s-box outputs
-  // bfSSS_t* st_dash_deg2   = &state_bits_tag[Nstbits + 2 * 8 * Nstbytes];
-  // bfSSS_t* st_dash_deg1   = &state_bits_tag[Nstbits + 3 * 8 * Nstbytes];
-  // bfSSS_t* st_dash_deg0   = &state_bits_tag[Nstbits + 4 * 8 * Nstbytes];
-
   uint8_t* s_tilde         = &state_bits[Nstbytes];
   bfSSS_t* s_tilde_tag     = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes];
   uint8_t* s_dash_dash     = &state_bits[2 * Nstbytes];
@@ -2060,8 +2052,8 @@ static void aes_SSS_enc_constraints_prover_new(zk_hash_SSS_7_ctx* hasher, const 
       b_deg[m][n] = bfSSS_zero();
     }
   }
-  // uint8_t* s               = &state_bits[3 * Nstbytes];
-  // bfSSS_t* s_tag           = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
+  uint8_t* s               = &state_bits[3 * Nstbytes];
+  bfSSS_t* s_tag           = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
 
   // line 2
   for (unsigned int r = 0; r < FAEST_SSS_R / 2; r++) {
@@ -2141,8 +2133,8 @@ static void aes_SSS_enc_constraints_prover_new(zk_hash_SSS_7_ctx* hasher, const 
 
     // line 21
     if (r != (FAEST_SSS_R / 2) - 1) {
-      uint8_t* tmp_state     = s_tilde;
-      bfSSS_t* tmp_state_tag = s_tilde_tag;
+      uint8_t* tmp_state     = s;
+      bfSSS_t* tmp_state_tag = s_tag;
       aes_SSS_bitwise_mix_column_prover(tmp_state, tmp_state_tag, s_tilde, s_tilde_tag, Nst);
       aes_SSS_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag,
                                    k + (2 * r + 2) * Nstbytes, k_tag + (2 * r + 2) * Nstbits, Nst);
@@ -2298,18 +2290,11 @@ static void aes_SSS_enc_constraints_verifier_new(zk_hash_SSS_ctx* hasher, const 
 
   aes_SSS_add_round_key_verifier(state_bits_key, owf_in_key, rkeys_key, Nst);
 
-  // for conjugates of state and s-box outputs
-  // bfSSS_t* st_dash_deg2   = &state_bits_tag[Nstbits + 2 * 8 * Nstbytes];
-  // bfSSS_t* st_dash_deg1   = &state_bits_tag[Nstbits + 3 * 8 * Nstbytes];
-  // bfSSS_t* st_dash_deg0   = &state_bits_tag[Nstbits + 4 * 8 * Nstbytes];
-
   bfSSS_t* s_tilde_key     = &state_bits_key[Nstbits + 5 * 8 * Nstbytes];
   bfSSS_t* s_dash_dash_key = &state_bits_key[Nstbits + 5 * 8 * Nstbytes + Nstbits];
 
   bfSSS_t* b_key = malloc(Nstbytes * sizeof(bfSSS_t));
-
-  // uint8_t* s               = &state_bits[3 * Nstbytes];
-  // bfSSS_t* s_tag           = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
+  bfSSS_t* s_key           = &state_bits_key[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
 
   // line 2
   for (unsigned int r = 0; r < FAEST_SSS_R / 2; r++) {
@@ -2366,7 +2351,7 @@ static void aes_SSS_enc_constraints_verifier_new(zk_hash_SSS_ctx* hasher, const 
 
     // line 21
     if (r != (FAEST_SSS_R / 2) - 1) {
-      bfSSS_t* tmp_state_key = s_tilde_key;
+      bfSSS_t* tmp_state_key = s_key;
       aes_SSS_bitwise_mix_column_verifier(tmp_state_key, s_tilde_key, Nst);
       aes_SSS_add_round_key_verifier(state_bits_key, tmp_state_key, rkeys_key + (2 * r + 2) * Nstbits, Nst);
     }
@@ -2523,9 +2508,9 @@ static void aes_SSS_constraints_prover_new(zk_hash_SSS_7_ctx* hasher, const uint
       in[0] = in[0] ^ 0x01;
     }
     // line 21
-    // aes_SSS_enc_constraints_prover_new(hasher, in, in_tag, out + b * blocksize / 8,
-    //                                out_tag + b * blocksize, w + (Lke + b * Lenc) / 8,
-    //                                w_tag + Lke + b * Lenc, rkeys, rkeys_tag, Nst);
+    aes_SSS_enc_constraints_prover_new(hasher, in, in_tag, out + b * blocksize / 8,
+                                   out_tag + b * blocksize, w + (Lke + b * Lenc) / 8,
+                                   w_tag + Lke + b * Lenc, rkeys, rkeys_tag, Nst);
   }
 
   faest_aligned_free(in_tag);
@@ -2661,8 +2646,8 @@ static void aes_SSS_constraints_verifier_new(zk_hash_SSS_ctx* hasher, const bfSS
     if (b == 1) {
       bfSSS_add_inplace(&in_key[0], &delta_i[1]); // adding one and multiplying with delta
     }
-    // aes_SSS_enc_constraints_verifier_new(hasher, in_key, out_key + b * blocksize,
-    //                                  w_key + Lke + b * Lenc, rkeys_key, delta_i, Nst);
+    aes_SSS_enc_constraints_verifier_new(hasher, in_key, out_key + b * blocksize,
+                                     w_key + Lke + b * Lenc, rkeys_key, delta_i, Nst);
   }
 
   faest_aligned_free(rkeys_key);
@@ -2736,21 +2721,21 @@ void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w,
     zk_hash_SSS_7_ctx hasher7;
     zk_hash_SSS_7_init(&hasher7, chall_2);
 
-    uint8_t* one_minus_w = malloc(ell_bytes);
     for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
 
-      ptr_set_bit(one_minus_w, ell_idx, 1 ^ ptr_get_bit(w, ell_idx));
-      // deg 1 of bf_one is 0, adding with w is not required
+      uint8_t one_minus_w = 0;
+      ptr_set_bit(&one_minus_w, 0, 1 ^ ptr_get_bit(w, ell_idx));
+
       bfSSS_t bf_deg_1[2];
       bfSSS_t bf_deg_0;
-      bfSSS_mul_bit(&bf_deg_1[0], &w_tag[ell_idx], ptr_get_bit(one_minus_w, ell_idx)); // deg-0 * deg-1 // TODO: one_minus_w should have the same tag as w?
-      bfSSS_mul_bit(&bf_deg_1[1], &w_tag[ell_idx], ptr_get_bit(w, ell_idx));            // deg-0 * deg-1
-      bfSSS_add_inplace(&bf_deg_1[0], &bf_deg_1[1]);              // adding deg-1s
-      bfSSS_mul(&bf_deg_0, &w_tag[ell_idx], &w_tag[ell_idx]);   // deg-0 * deg-0
+      bfSSS_mul(&bf_deg_0, &w_tag[ell_idx], &w_tag[ell_idx]);                    // deg-0 * deg-0    // one_minus_w has same w_tag
 
+      bfSSS_mul_bit(&bf_deg_1[0], &w_tag[ell_idx], one_minus_w);                   // deg-0 * deg-1
+      bfSSS_mul_bit(&bf_deg_1[1], &w_tag[ell_idx], ptr_get_bit(w, ell_idx));        // deg-1 * deg-0
+      bfSSS_add_inplace(&bf_deg_1[0], &bf_deg_1[1]);                                // adding deg-1s
+    
       zk_hash_SSS_7_raise_and_update(&hasher7, &bf_deg_0, bf_deg_1);
     }
-    free(one_minus_w);
 
     // line 9 deg-7
     aes_SSS_constraints_prover_new(&hasher7, w, w_tag, owf_in, owf_out, params);
