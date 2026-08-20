@@ -2,7 +2,7 @@ project(
   'faest-ref',
   ['c', 'cpp'],
   version: '2.0.5',
-  meson_version: '>=0.59',
+  meson_version: '>=0.64',
   default_options: [
     'c_std=c11',
     'cpp_std=c++17',
@@ -581,14 +581,9 @@ faest_aes_256 = configure_file(
 include_directories = [include_directories('.')]
 
 # source files
+subdir('tables')
+
 faest_sources = files(
-  'tables/tables_128f.c',
-  'tables/tables_128s.c',
-  'tables/tables_192f.c',
-  'tables/tables_192s.c',
-  'tables/tables_256f.c',
-  'tables/tables_256s.c',
-  'tables/tables_em_192s.c',
   'aes.c',
   'bavc.c',
   'compat.c',
@@ -602,10 +597,11 @@ faest_sources = files(
   'vole.c',
 ) + [
   config_header,
-  parameters_header,
   faest_aes_128,
   faest_aes_192,
   faest_aes_256,
+  parameters_header,
+  tables,
 ]
 
 if has_usable_builtin == false
