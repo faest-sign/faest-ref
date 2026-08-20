@@ -772,7 +772,7 @@ void zk_hash_192_3_raise_and_update(zk_hash_192_3_ctx* ctx, const bf192_t* v_1,
 
 void zk_hash_192_7_raise_and_update(zk_hash_192_7_ctx* ctx, const bf192_t* v_1, const bf192_t* v_2) {
 
-  bf192_t bf_packed_voles_with_zeros[3];    // one in the begining, rest at the end higher degrees
+  bf192_t bf_packed_voles_with_zeros[7];    // one in the begining, rest at the end higher degrees
   bf_packed_voles_with_zeros[0] = bf192_zero();
   bf_packed_voles_with_zeros[1] = bf192_zero();
   bf_packed_voles_with_zeros[2] = bf192_zero();
