@@ -197,7 +197,7 @@ param_128s.set('Lenc', 832)
 param_128s.set('TAU', 11)
 param_128s.set('W_GRIND', 7)
 param_128s.set('T_OPEN', 102)
-param_128s.set('SIG_SIZE', isDEG3 ? 4249+40 : 4069)
+param_128s.set('SIG_SIZE', isDEG3 ? 4249 + 40 : 4069)
 param_128s.set('PK_SIZE', 32)
 param_128s.set('SK_SIZE', 32)
 param_128s.set('OWF_INPUT_SIZE', 16)
@@ -223,7 +223,7 @@ param_128f.set('Lenc', 832)
 param_128f.set('TAU', 16)
 param_128f.set('W_GRIND', 8)
 param_128f.set('T_OPEN', 110)
-param_128f.set('SIG_SIZE', isDEG3 ? 5417+40 : 5037)
+param_128f.set('SIG_SIZE', isDEG3 ? 5417 + 40 : 5037)
 param_128f.set('PK_SIZE', 32)
 param_128f.set('SK_SIZE', 32)
 param_128f.set('OWF_INPUT_SIZE', 16)
@@ -249,7 +249,7 @@ param_em_128s.set('Lenc', 832)
 param_em_128s.set('TAU', 11)
 param_em_128s.set('W_GRIND', 7)
 param_em_128s.set('T_OPEN', 103)
-param_em_128s.set('SIG_SIZE', isDEG3 ? 3649+40 : 3469)
+param_em_128s.set('SIG_SIZE', isDEG3 ? 3649 + 40 : 3469)
 param_em_128s.set('PK_SIZE', 32)
 param_em_128s.set('SK_SIZE', 32)
 param_em_128s.set('OWF_INPUT_SIZE', 16)
@@ -275,7 +275,7 @@ param_em_128f.set('Lenc', 832)
 param_em_128f.set('TAU', 16)
 param_em_128f.set('W_GRIND', 8)
 param_em_128f.set('T_OPEN', 112)
-param_em_128f.set('SIG_SIZE', isDEG3 ? 4553+40 : 4173)
+param_em_128f.set('SIG_SIZE', isDEG3 ? 4553 + 40 : 4173)
 param_em_128f.set('PK_SIZE', 32)
 param_em_128f.set('SK_SIZE', 32)
 param_em_128f.set('OWF_INPUT_SIZE', 16)
@@ -301,7 +301,7 @@ param_192s.set('Lenc', 1024)
 param_192s.set('TAU', 16)
 param_192s.set('W_GRIND', 12)
 param_192s.set('T_OPEN', 162)
-param_192s.set('SIG_SIZE', isDEG3 ? 10537+64 : 9413)
+param_192s.set('SIG_SIZE', isDEG3 ? 10537 + 64 : 9413)
 param_192s.set('PK_SIZE', 48)
 param_192s.set('SK_SIZE', 40)
 param_192s.set('OWF_INPUT_SIZE', 16)
@@ -327,7 +327,7 @@ param_192f.set('Lenc', 1024)
 param_192f.set('TAU', 24)
 param_192f.set('W_GRIND', 8)
 param_192f.set('T_OPEN', 163)
-param_192f.set('SIG_SIZE', isDEG3 ? 13633+64 : 11741)
+param_192f.set('SIG_SIZE', isDEG3 ? 13633 + 64 : 11741)
 param_192f.set('PK_SIZE', 48)
 param_192f.set('SK_SIZE', 40)
 param_192f.set('OWF_INPUT_SIZE', 16)
@@ -353,7 +353,7 @@ param_em_192s.set('Lenc', 1536)
 param_em_192s.set('TAU', 16)
 param_em_192s.set('W_GRIND', 8)
 param_em_192s.set('T_OPEN', 162)
-param_em_192s.set('SIG_SIZE', isDEG3 ? 8617+64 : 7877)
+param_em_192s.set('SIG_SIZE', isDEG3 ? 8617 + 64 : 7877)
 param_em_192s.set('PK_SIZE', 48)
 param_em_192s.set('SK_SIZE', 48)
 param_em_192s.set('OWF_INPUT_SIZE', 24)
@@ -379,7 +379,7 @@ param_em_192f.set('Lenc', 1536)
 param_em_192f.set('TAU', 24)
 param_em_192f.set('W_GRIND', 8)
 param_em_192f.set('T_OPEN', 176)
-param_em_192f.set('SIG_SIZE', isDEG3 ? 11065+64 : 9749)
+param_em_192f.set('SIG_SIZE', isDEG3 ? 11065 + 64 : 9749)
 param_em_192f.set('PK_SIZE', 48)
 param_em_192f.set('SK_SIZE', 48)
 param_em_192f.set('OWF_INPUT_SIZE', 24)
@@ -405,7 +405,7 @@ param_256s.set('Lenc', 1216)
 param_256s.set('TAU', 22)
 param_256s.set('W_GRIND', 6)
 param_256s.set('T_OPEN', 245)
-param_256s.set('SIG_SIZE', isDEG3 ? 19169+88 : 17269)
+param_256s.set('SIG_SIZE', isDEG3 ? 19169 + 88 : 17269)
 param_256s.set('PK_SIZE', 48)
 param_256s.set('SK_SIZE', 48)
 param_256s.set('OWF_INPUT_SIZE', 16)
@@ -431,7 +431,7 @@ param_256f.set('Lenc', 1216)
 param_256f.set('TAU', 32)
 param_256f.set('W_GRIND', 8)
 param_256f.set('T_OPEN', 246)
-param_256f.set('SIG_SIZE', isDEG3 ? 24051+90 : 21041)
+param_256f.set('SIG_SIZE', isDEG3 ? 24051 + 90 : 21041)
 param_256f.set('PK_SIZE', 48)
 param_256f.set('SK_SIZE', 48)
 param_256f.set('OWF_INPUT_SIZE', 16)
@@ -457,7 +457,7 @@ param_em_256s.set('Lenc', 2432)
 param_em_256s.set('TAU', 22)
 param_em_256s.set('W_GRIND', 6)
 param_em_256s.set('T_OPEN', 218)
-param_em_256s.set('SIG_SIZE', isDEG3 ? 16457+88 : 14557)
+param_em_256s.set('SIG_SIZE', isDEG3 ? 16457 + 88 : 14557)
 param_em_256s.set('PK_SIZE', 64)
 param_em_256s.set('SK_SIZE', 64)
 param_em_256s.set('OWF_INPUT_SIZE', 32)
@@ -483,7 +483,7 @@ param_em_256f.set('Lenc', 2432)
 param_em_256f.set('TAU', 32)
 param_em_256f.set('W_GRIND', 8)
 param_em_256f.set('T_OPEN', 234)
-param_em_256f.set('SIG_SIZE', isDEG3 ? 20979+90 : 17969)
+param_em_256f.set('SIG_SIZE', isDEG3 ? 20979 + 90 : 17969)
 param_em_256f.set('PK_SIZE', 64)
 param_em_256f.set('SK_SIZE', 64)
 param_em_256f.set('OWF_INPUT_SIZE', 32)
@@ -582,6 +582,13 @@ include_directories = [include_directories('.')]
 
 # source files
 faest_sources = files(
+  'tables/tables_128f.c',
+  'tables/tables_128s.c',
+  'tables/tables_192f.c',
+  'tables/tables_192s.c',
+  'tables/tables_256f.c',
+  'tables/tables_256s.c',
+  'tables/tables_em_192s.c',
   'aes.c',
   'bavc.c',
   'compat.c',
@@ -593,14 +600,6 @@ faest_sources = files(
   'universal_hashing.c',
   'utils.c',
   'vole.c',
-  'tables/tables.c',
-  'tables/tables_128f.c',
-  'tables/tables_128s.c',
-  'tables/tables_192f.c',
-  'tables/tables_192s.c',
-  'tables/tables_em_192s.c',
-  'tables/tables_256f.c',
-  'tables/tables_256s.c',
 ) + [
   config_header,
   parameters_header,

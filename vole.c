@@ -10,20 +10,20 @@
 #include "aes.h"
 #include "utils.h"
 #include "random_oracle.h"
-#include "tables/tables.h"
 
 #include <stdbool.h>
 #include <string.h>
 
 static const uint32_t TWEAK_OFFSET = UINT32_C(0x80000000); // 2^31
 
+#define TBL_U8(base, words, i) ((base) + (size_t)(i) * (words))
 
 #if !defined(FAEST_TESTS)
 static
 #endif
-    unsigned int
-    convert_to_vole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,
-                    unsigned int outlen, uint8_t* u, uint8_t* v, const faest_paramset_t* params) {
+    unsigned int convert_to_vole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,
+                                 unsigned int outlen, uint8_t* u, uint8_t* v,
+                                 const faest_paramset_t* params) {
   const unsigned int lambda        = params->lambda;
   const unsigned int tau_1         = params->tau1;
   const unsigned int k             = params->k;
@@ -69,24 +69,22 @@ static
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* c_mult,
                  uint8_t* u, uint8_t** V, uint8_t* u_bar, uint8_t* v_bar) {
-  const unsigned int lambda       = params->lambda;
-  const unsigned int lambda_bytes = lambda / 8;
-  const unsigned int ell_hat_bytes = (ellhat + 7) / 8;
-  const unsigned int ell          = params->ell;
-  const unsigned int ell_bytes    = (ell + 7) / 8;
-  const unsigned int tau          = params->tau;
-  const unsigned int tau_1        = params->tau1;
-  const unsigned int k            = params->k;
-  const unsigned int n_mask       = params->n_mask;
-  const unsigned int n_mask_bytes = (n_mask + 7) / 8;
-  const unsigned int n_mult       = params->n_mult;
-  const unsigned int n_mult_bytes = (n_mult + 7) / 8;
-  const unsigned int w_grind      = params->w_grind;
-  const unsigned int w_grind_bytes = (w_grind + 7) / 8;
-  const unsigned int lambda_minus_w_grind = lambda - w_grind;
-  const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7 ) / 8;
-
-  const faest_tables_t* T = faest_get_tables(params->id);
+  const unsigned int lambda                     = params->lambda;
+  const unsigned int lambda_bytes               = lambda / 8;
+  const unsigned int ell_hat_bytes              = (ellhat + 7) / 8;
+  const unsigned int ell                        = params->ell;
+  const unsigned int ell_bytes                  = (ell + 7) / 8;
+  const unsigned int tau                        = params->tau;
+  const unsigned int tau_1                      = params->tau1;
+  const unsigned int k                          = params->k;
+  const unsigned int n_mask                     = params->n_mask;
+  const unsigned int n_mask_bytes               = (n_mask + 7) / 8;
+  const unsigned int n_mult                     = params->n_mult;
+  const unsigned int n_mult_bytes               = (n_mult + 7) / 8;
+  const unsigned int w_grind                    = params->w_grind;
+  const unsigned int w_grind_bytes              = (w_grind + 7) / 8;
+  const unsigned int lambda_minus_w_grind       = lambda - w_grind;
+  const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7) / 8;
 
   // line 1
   bavc_commit(bavc, rootKey, iv, params);
@@ -99,8 +97,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   uint8_t* sd_i      = bavc->sd;
   for (unsigned int i = 0; i < tau; ++i) {
 
-    v_idx +=
-        convert_to_vole(iv, sd_i, false, i, ell_hat_bytes, ui + i * ell_hat_bytes, V[v_idx], params);
+    v_idx += convert_to_vole(iv, sd_i, false, i, ell_hat_bytes, ui + i * ell_hat_bytes, V[v_idx],
+                             params);
     sd_i += lambda_bytes * bavc_max_node_index(i, tau_1, k);
   }
 
@@ -120,13 +118,14 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   // line 10
   uint8_t* u_hi_all = malloc((n_mask * w_grind + 7) / 8);
-  uint8_t* u_hi = malloc(n_mask * w_grind_bytes);
+  uint8_t* u_hi     = malloc(n_mask * w_grind_bytes);
   memset(u_hi, 0, n_mask * w_grind_bytes);
   prg(rootKey, iv, ((unsigned int)2 << 30) - 1, u_hi_all, lambda, (n_mask * w_grind + 7) / 8);
 
   for (unsigned n_mask_idx = 0; n_mask_idx < n_mask; n_mask_idx++) {
     for (unsigned w_grind_idx = 0; w_grind_idx < w_grind; w_grind_idx++) {
-      ptr_set_bit(u_hi + n_mask_idx * w_grind_bytes, w_grind_idx, ptr_get_bit(u_hi_all, n_mask_idx * w_grind + w_grind_idx));
+      ptr_set_bit(u_hi + n_mask_idx * w_grind_bytes, w_grind_idx,
+                  ptr_get_bit(u_hi_all, n_mask_idx * w_grind + w_grind_idx));
     }
   }
 
@@ -138,7 +137,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   memset(r_tilde, 0, n_mask * lambda_minus_w_grind_bytes);
   for (unsigned m = 0; m < n_mask; m++) {
 
-    unsigned int ell_m = ell + m * bavc_max_node_depth(0, tau_1, k);
+    unsigned int ell_m   = ell + m * bavc_max_node_depth(0, tau_1, k);
     unsigned int bit_idx = 0;
 
     // line 13
@@ -153,35 +152,35 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     uint8_t* first_prod = malloc(lambda_bytes);
     memset(first_prod, 0, lambda_bytes);
     for (unsigned int col = 0; col < lambda; col++) {
-      uint8_t sum = 0; 
+      uint8_t sum = 0;
       for (unsigned int row = 0; row < lambda; row++) {
-        uint8_t bit_a = ptr_get_bit((uint8_t*)&TBL_U8(T->W_CRT, T->w_crt_words, col)[row / 64], row%64);
+        uint8_t bit_a = ptr_get_bit(
+            (const uint8_t*)&TBL_U8(params->W_CRT, params->w_crt_words, col)[row / 64], row % 64);
         uint8_t bit_b = ptr_get_bit(u_low, m * lambda + row);
         sum ^= bit_a & bit_b;
-
       }
       ptr_set_bit(first_prod, col, sum);
     }
     uint8_t* second_prod = malloc(lambda_bytes);
-    gf2_poly_mul_ct((uint8_t*)&T->M_TREE[0], lambda_minus_w_grind + 1, (uint8_t*)&u_hi[m * w_grind_bytes], 
-                        w_grind, second_prod);
-    
+    gf2_poly_mul_ct((uint8_t*)&params->M_TREE[0], lambda_minus_w_grind + 1,
+                    (uint8_t*)&u_hi[m * w_grind_bytes], w_grind, second_prod);
+
     for (unsigned int i = 0; i < lambda_bytes; i++) {
       u_bar[m * lambda_bytes + i] = first_prod[i] ^ second_prod[i];
     }
 
     // line 17
     bit_idx = 0;
-    v_idx = 0;
+    v_idx   = 0;
     for (unsigned tau_idx = 0; tau_idx < tau; tau_idx++) {
       uint8_t deg = bavc_max_node_depth(tau_idx, tau_1, k);
 
-      uint8_t* acc = malloc((deg*2 + 7) / 8);
-      memset(acc, 0, (deg*2 + 7) / 8);
+      uint8_t* acc = malloc((deg * 2 + 7) / 8);
+      memset(acc, 0, (deg * 2 + 7) / 8);
 
       for (unsigned d = 0; d < deg; d++) {
         for (unsigned t = 0; t < deg; t++) {
-          uint8_t bit = ptr_get_bit(v_row_maj[ell_m + d], v_idx); 
+          uint8_t bit = ptr_get_bit(v_row_maj[ell_m + d], v_idx);
           xor_bit_to_pt(acc, t + d, bit);
           v_idx++;
         }
@@ -189,9 +188,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       }
       v_idx += deg;
 
-      uint8_t* reduced_out = malloc((deg*2 + 7) / 8);
-      gf2_poly_reduce_ct(acc, deg*2, (const uint8_t*)&T->TREE_MODULI[tau_idx],
-                deg + 1, reduced_out);
+      uint8_t* reduced_out = malloc((deg * 2 + 7) / 8);
+      gf2_poly_reduce_ct(acc, deg * 2, (const uint8_t*)&params->TREE_MODULI[tau_idx], deg + 1,
+                         reduced_out);
 
       for (unsigned int b = 0; b < deg; b++) {
         ptr_set_bit(r_tilde + m * lambda_minus_w_grind_bytes, bit_idx, ptr_get_bit(reduced_out, b));
@@ -201,7 +200,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       free(acc);
       free(reduced_out);
     }
-  
+
     free(second_prod);
     free(first_prod);
   }
@@ -219,14 +218,15 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   for (unsigned e = 0; e < n_mult; e++) {
 
     uint8_t* L_e_zero = malloc(lambda_bytes);
-    uint8_t* L_e_one = malloc(lambda_bytes);
+    uint8_t* L_e_one  = malloc(lambda_bytes);
     uint8_t* h_e_zero = malloc(n_mask_bytes);
-    uint8_t* h_e_one = malloc(n_mask_bytes);
+    uint8_t* h_e_one  = malloc(n_mask_bytes);
 
     memset(L_e_zero, 0, lambda_bytes);
     memcpy(L_e_one, u, lambda_bytes);
     for (unsigned j = 0; j < lambda_minus_w_grind; j++) {
-      if (ptr_get_bit((const uint8_t*)&TBL_U8(T->G, T->g_words, e)[j/64], j%64) == 1) {
+      if (ptr_get_bit((const uint8_t*)&TBL_U8(params->G, params->g_words, e)[j / 64], j % 64) ==
+          1) {
         for (unsigned b = 0; b < lambda_bytes; b++) {
           L_e_zero[b] ^= a[j * lambda_bytes + b];
         }
@@ -245,8 +245,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
       uint8_t dot_product_bit = 0;
       for (unsigned i = 0; i < lambda; i++) {
-        
-        uint8_t bit_a = ptr_get_bit((uint8_t*)&TBL_U8(T->F, T->f_words, e)[i / 64], i%64);
+
+        uint8_t bit_a =
+            ptr_get_bit((const uint8_t*)&TBL_U8(params->F, params->f_words, e)[i / 64], i % 64);
         uint8_t bit_b = ptr_get_bit(u_bar + m * lambda_bytes, i);
 
         dot_product_bit ^= bit_a & bit_b;
@@ -267,17 +268,17 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   // line 29
   for (unsigned int m = 0; m < n_mask; m++) {
-    
+
     uint8_t* first_prod = malloc(lambda_bytes);
     memset(first_prod, 0, lambda_bytes);
     for (unsigned int row = 0; row < lambda; row++) {
       for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
 
-        uint8_t bit_a = ptr_get_bit((uint8_t*)&TBL_U8(T->W_TREE, T->w_tree_words, row)[col / 64], col%64);
+        uint8_t bit_a = ptr_get_bit(
+            (const uint8_t*)&TBL_U8(params->W_TREE, params->w_tree_words, row)[col / 64], col % 64);
         uint8_t bit_b = ptr_get_bit(r_tilde + m * lambda_minus_w_grind_bytes, col);
 
         xor_bit_to_pt(first_prod, row, bit_a & bit_b);
-
       }
     }
 
@@ -285,13 +286,13 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     memset(second_prod, 0, lambda_bytes);
 
     for (unsigned int row = 0; row < lambda; row++) {
-      for (unsigned int col = 0; col < n_mult; col++) {   
-        
-        uint8_t bit_a = ptr_get_bit((uint8_t*)&TBL_U8(T->W_GATE, T->w_gate_words, row)[col / 64], col % 64);
+      for (unsigned int col = 0; col < n_mult; col++) {
+
+        uint8_t bit_a = ptr_get_bit(
+            (const uint8_t*)&TBL_U8(params->W_GATE, params->w_gate_words, row)[col / 64], col % 64);
         uint8_t bit_b = ptr_get_bit(v_tilde + col * n_mask_bytes, m);
 
         xor_bit_to_pt(second_prod, row, bit_a & bit_b);
-
       }
     }
 
@@ -301,7 +302,6 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
     free(first_prod);
     free(second_prod);
-
   }
 
   // line 30
@@ -321,29 +321,27 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       uint8_t acc = 0;
       for (unsigned int row = 0; row < lambda_minus_w_grind; row++) {
 
-        acc ^= ptr_get_bit(v_row_maj[ell_idx], row) 
-          & ptr_get_bit((uint8_t*)&TBL_U8(T->W_CRT, T->w_crt_words, col)[row / 64], row % 64);
-
+        acc ^=
+            ptr_get_bit(v_row_maj[ell_idx], row) &
+            ptr_get_bit((const uint8_t*)&TBL_U8(params->W_CRT, params->w_crt_words, col)[row / 64],
+                        row % 64);
       }
 
       xor_bit_to_pt(v_row_maj_new[ell_idx], col, acc);
     }
-
   }
 
-
-  column_to_row_major(v_row_maj_new, V, ell, lambda_minus_w_grind); 
+  column_to_row_major(v_row_maj_new, V, ell, lambda_minus_w_grind);
 
   // // NOTE: *** Claude GENERATED CODE
-  // // This alligns the c_mult to how it is in the python code (swapping the rows and the bits) for the matching TVs
-  // size_t nb        = (n_mult + 7) / 8;
-  // size_t packed_len = n_mask * nb;
-  // for (size_t i = 0; i < n_mask; ++i) {
+  // // This alligns the c_mult to how it is in the python code (swapping the rows and the bits) for
+  // the matching TVs size_t nb        = (n_mult + 7) / 8; size_t packed_len = n_mask * nb; for
+  // (size_t i = 0; i < n_mask; ++i) {
   //     for (size_t j = 0; j < n_mult; ++j) {
   //         const uint8_t* src = c_mult + j * n_mask_bytes;   // this gate's slot
   //         uint8_t  bit  = (src[i >> 3] >> (i & 7)) & 1u;    // bit i of gate j
-  //         size_t   pos  = i * nb * 8 + j;                   // dst: row byte-aligned, bit j LSB-first
-  //         c_mult[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+  //         size_t   pos  = i * nb * 8 + j;                   // dst: row byte-aligned, bit j
+  //         LSB-first c_mult[pos >> 3] |= (uint8_t)(bit << (pos & 7));
   //     }
   // }
   // // ***
@@ -351,39 +349,40 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   // free(c_mult);
   free(ui);
   free(a);
-  for (unsigned i = 0; i < ellhat; i++) { free(v_row_maj[i]); }
-  free(v_row_maj); 
+  for (unsigned i = 0; i < ellhat; i++) {
+    free(v_row_maj[i]);
+  }
+  free(v_row_maj);
   free(u_hi_all);
   free(u_hi);
   free(u_low);
   free(r_tilde);
   free(v_tilde);
-  for (unsigned i = 0; i < ell; i++) { free(v_row_maj_new[i]); }
-  free(v_row_maj_new);  
-  
+  for (unsigned i = 0; i < ell; i++) {
+    free(v_row_maj_new[i]);
+  }
+  free(v_row_maj_new);
 }
 
 bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_t* chall_3,
-                      const uint8_t* decom_i, const uint8_t* c, uint8_t* c_mult,
-                      uint8_t* q_bar, uint8_t* Delta, unsigned int ellhat, const faest_paramset_t* params) {
-  const unsigned int lambda       = params->lambda;
-  const unsigned int lambda_bytes = lambda / 8;
-  const unsigned int ellhat_bytes = (ellhat + 7) / 8;
-  const unsigned int ell          = params->ell;
-  const unsigned int ell_bytes    = (ell + 7) / 8;
-  const unsigned int tau          = params->tau;
-  const unsigned int tau_1        = params->tau1;
-  const unsigned int L            = params->L;
-  const unsigned int k            = params->k;
-  const unsigned int n_mask       = params->n_mask;
-  const unsigned int n_mask_bytes = (n_mask + 7) / 8;
-  const unsigned int n_mult       = params->n_mult;
-  const unsigned int n_mult_bytes = (n_mult + 7) / 8;
-  const unsigned int w_grind      = params->w_grind;
-  const unsigned int lambda_minus_w_grind = lambda - w_grind;
-  const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7 ) / 8;
-
-  const faest_tables_t* T = faest_get_tables(params->id);
+                      const uint8_t* decom_i, const uint8_t* c, uint8_t* c_mult, uint8_t* q_bar,
+                      uint8_t* Delta, unsigned int ellhat, const faest_paramset_t* params) {
+  const unsigned int lambda                     = params->lambda;
+  const unsigned int lambda_bytes               = lambda / 8;
+  const unsigned int ellhat_bytes               = (ellhat + 7) / 8;
+  const unsigned int ell                        = params->ell;
+  const unsigned int ell_bytes                  = (ell + 7) / 8;
+  const unsigned int tau                        = params->tau;
+  const unsigned int tau_1                      = params->tau1;
+  const unsigned int L                          = params->L;
+  const unsigned int k                          = params->k;
+  const unsigned int n_mask                     = params->n_mask;
+  const unsigned int n_mask_bytes               = (n_mask + 7) / 8;
+  const unsigned int n_mult                     = params->n_mult;
+  const unsigned int n_mult_bytes               = (n_mult + 7) / 8;
+  const unsigned int w_grind                    = params->w_grind;
+  const unsigned int lambda_minus_w_grind       = lambda - w_grind;
+  const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7) / 8;
 
   // line 1
   uint16_t i_delta[MAX_TAU];
@@ -395,11 +394,10 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
   memset(Dp, 0, lambda_minus_w_grind_bytes);
   unsigned int off = 0;
   for (unsigned int i = 0; i < tau; ++i) {
-    const uint32_t deg =
-        bavc_max_node_depth(i, tau_1, k); // == tree_deg[i]
-    const uint16_t delta = i_delta[i];                          // == I[i]
+    const uint32_t deg   = bavc_max_node_depth(i, tau_1, k); // == tree_deg[i]
+    const uint16_t delta = i_delta[i];                       // == I[i]
     for (unsigned int t = 0; t < deg; ++t) {
-      xor_bit_to_pt(Dp, off + t, (delta >> t) & 1);         // Dp |= ((I[i]>>t)&1) << (off+t)
+      xor_bit_to_pt(Dp, off + t, (delta >> t) & 1); // Dp |= ((I[i]>>t)&1) << (off+t)
     }
     off += deg;
   }
@@ -407,12 +405,12 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
   // --- Delta = W_crt * Dp  (crt_lift), same matvec pattern as your v_row_maj example ---
   // uint8_t* Delta = (uint8_t*)malloc(lambda_bytes);
   // memset(Delta, 0, lambda_bytes);
-  for (unsigned int col = 0; col < lambda; ++col) {          // Delta has lambda output bits
+  for (unsigned int col = 0; col < lambda; ++col) { // Delta has lambda output bits
     uint8_t acc = 0;
-    for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) {   // Dp has n_delta bits
-      acc ^= ptr_get_bit(Dp, row)
-          // & ptr_get_bit((uint8_t*)&FAEST_128S_W_CRT[col][row / 64], row % 64);
-          & ptr_get_bit((uint8_t*)&TBL_U8(T->W_CRT, T->w_crt_words, col)[row / 64], row % 64);
+    for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) { // Dp has n_delta bits
+      acc ^= ptr_get_bit(Dp, row) &
+             ptr_get_bit((const uint8_t*)&TBL_U8(params->W_CRT, params->w_crt_words, col)[row / 64],
+                         row % 64);
     }
     xor_bit_to_pt(Delta, col, acc);
   }
@@ -457,8 +455,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
 
         memcpy(Q[q_idx], qtmp + d * ellhat_bytes, ellhat_bytes);
 
-        masked_xor_u8_array(Q[q_idx], c + (i - 1) * ell_bytes, Q[q_idx],
-                            (i_delta[i] >> d) & 1, ell_bytes);
+        masked_xor_u8_array(Q[q_idx], c + (i - 1) * ell_bytes, Q[q_idx], (i_delta[i] >> d) & 1,
+                            ell_bytes);
       }
     }
     sd_i += lambda_bytes * (Ni - 1);
@@ -495,13 +493,13 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
     unsigned int ell_m = ell + m * bavc_max_node_depth(0, tau_1, k);
 
     unsigned int bit_idx = 0;
-    q_idx = 0;
+    q_idx                = 0;
     for (unsigned tau_idx = 0; tau_idx < tau; tau_idx++) {
 
       uint8_t deg = bavc_max_node_depth(tau_idx, tau_1, k);
 
-      uint8_t* acc = malloc((deg*2 + 7) / 8);
-      memset(acc, 0, (deg*2 + 7) / 8);
+      uint8_t* acc = malloc((deg * 2 + 7) / 8);
+      memset(acc, 0, (deg * 2 + 7) / 8);
 
       for (unsigned d = 0; d < deg; d++) {
         for (unsigned t = 0; t < deg; t++) {
@@ -513,18 +511,18 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
       }
       q_idx += deg;
 
-      uint8_t* reduced_out = malloc((deg*2 + 7) / 8);
-      gf2_poly_reduce_ct(acc, deg*2, (const uint8_t*)&T->TREE_MODULI[tau_idx], 
-                deg + 1, reduced_out);
+      uint8_t* reduced_out = malloc((deg * 2 + 7) / 8);
+      gf2_poly_reduce_ct(acc, deg * 2, (const uint8_t*)&params->TREE_MODULI[tau_idx], deg + 1,
+                         reduced_out);
 
       for (unsigned int b = 0; b < deg; b++) {
-        ptr_set_bit(r_tilde_prime + m * lambda_minus_w_grind_bytes, bit_idx, ptr_get_bit(reduced_out, b));
+        ptr_set_bit(r_tilde_prime + m * lambda_minus_w_grind_bytes, bit_idx,
+                    ptr_get_bit(reduced_out, b));
         bit_idx++;
       }
 
       free(acc);
       free(reduced_out);
-
     }
   }
 
@@ -560,10 +558,12 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
     // line 24
     uint8_t gamma_e = 0;
     for (unsigned j = 0; j < lambda_minus_w_grind; j++) {
-      gamma_e ^= ptr_get_bit((uint8_t*)&TBL_U8(T->G, T->g_words, e)[j/64], j%64) 
-              & ptr_get_bit(delta_prime, j); 
+      gamma_e ^=
+          ptr_get_bit((const uint8_t*)&TBL_U8(params->G, params->g_words, e)[j / 64], j % 64) &
+          ptr_get_bit(delta_prime, j);
 
-      if (ptr_get_bit((uint8_t*)&TBL_U8(T->G, T->g_words, e)[j/64], j%64) == 1) {
+      if (ptr_get_bit((const uint8_t*)&TBL_U8(params->G, params->g_words, e)[j / 64], j % 64) ==
+          1) {
         for (unsigned b = 0; b < lambda_bytes; b++) {
           L_e_prime[b] ^= a_prime[j * lambda_bytes + b];
         }
@@ -572,10 +572,10 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
 
     // line 25
     H5(iv, e, L_e_prime, h_e, lambda_bytes, n_mask, lambda);
-    
+
     // line 27
     for (unsigned m = 0; m < n_mask; m++) {
-        
+
       uint8_t sum = ptr_get_bit(h_e, m) ^ (gamma_e & ptr_get_bit(c_mult + m * n_mult_bytes, e));
       ptr_set_bit(q_tilde + e * n_mask_bytes, m, sum);
     }
@@ -586,17 +586,17 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
 
   // line 30
   for (unsigned int m = 0; m < n_mask; m++) {
-    
+
     uint8_t* first_prod = malloc(lambda_bytes);
     memset(first_prod, 0, lambda_bytes);
     for (unsigned int row = 0; row < lambda; row++) {
       for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
 
-        uint8_t bit_a = ptr_get_bit((uint8_t*)&TBL_U8(T->W_TREE, T->w_tree_words, row)[col / 64], col%64);
+        uint8_t bit_a = ptr_get_bit(
+            (const uint8_t*)&TBL_U8(params->W_TREE, params->w_tree_words, row)[col / 64], col % 64);
         uint8_t bit_b = ptr_get_bit(r_tilde_prime + m * lambda_minus_w_grind_bytes, col);
 
         xor_bit_to_pt(first_prod, row, bit_a & bit_b);
-
       }
     }
 
@@ -604,13 +604,13 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
     memset(second_prod, 0, lambda_bytes);
 
     for (unsigned int row = 0; row < lambda; row++) {
-      for (unsigned int col = 0; col < n_mult; col++) {   
-        
-        uint8_t bit_a = ptr_get_bit((uint8_t*)&TBL_U8(T->W_GATE, T->w_gate_words, row)[col / 64], col % 64);
+      for (unsigned int col = 0; col < n_mult; col++) {
+
+        uint8_t bit_a = ptr_get_bit(
+            (const uint8_t*)&TBL_U8(params->W_GATE, params->w_gate_words, row)[col / 64], col % 64);
         uint8_t bit_b = ptr_get_bit(q_tilde + col * n_mask_bytes, m);
 
         xor_bit_to_pt(second_prod, row, bit_a & bit_b);
-
       }
     }
 
@@ -620,11 +620,10 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
 
     free(first_prod);
     free(second_prod);
-
   }
 
   for (unsigned int i = 0; i < lambda_minus_w_grind; i++) {
-    memset(Q[i], 0, ellhat_bytes);    // resetting the bits for output
+    memset(Q[i], 0, ellhat_bytes); // resetting the bits for output
   }
   uint8_t** q_row_maj_new = malloc(ell * sizeof(uint8_t*));
   for (unsigned i = 0; i < ell; i++) {
@@ -640,16 +639,17 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
       uint8_t acc = 0;
       for (unsigned int row = 0; row < lambda_minus_w_grind; row++) {
 
-        acc ^= ptr_get_bit(q_row_maj[ell_idx], row) 
-          & ptr_get_bit((uint8_t*)&TBL_U8(T->W_CRT, T->w_crt_words, col)[row / 64], row % 64);
-
+        acc ^=
+            ptr_get_bit(q_row_maj[ell_idx], row) &
+            ptr_get_bit((const uint8_t*)&TBL_U8(params->W_CRT, params->w_crt_words, col)[row / 64],
+                        row % 64);
       }
 
       xor_bit_to_pt(q_row_maj_new[ell_idx], col, acc);
     }
   }
 
-  column_to_row_major(q_row_maj_new, Q, ell, lambda_minus_w_grind); 
+  column_to_row_major(q_row_maj_new, Q, ell, lambda_minus_w_grind);
 
   free(delta_prime);
   free(Dp);
@@ -657,15 +657,17 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
   free(qtmp);
   free(sd);
   free(bavc_rec.s);
-  for (unsigned i = 0; i < ellhat; i++) { free(q_row_maj[i]); }
-  free(q_row_maj);  
+  for (unsigned i = 0; i < ellhat; i++) {
+    free(q_row_maj[i]);
+  }
+  free(q_row_maj);
   free(r_tilde_prime);
   free(a_prime);
   free(q_tilde);
-  for (unsigned i = 0; i < ell; i++) { free(q_row_maj_new[i]); }
-  free(q_row_maj_new); 
-
+  for (unsigned i = 0; i < ell; i++) {
+    free(q_row_maj_new[i]);
+  }
+  free(q_row_maj_new);
 
   return true;
 }
-
