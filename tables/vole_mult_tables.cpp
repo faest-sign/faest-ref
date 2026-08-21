@@ -1568,10 +1568,8 @@ namespace {
                const std::vector<std::pair<unsigned int, unsigned int>>& tree_spec,
                const Args& args, const std::string& c_path) {
     unsigned int tree_sum = 0;
-    unsigned int tau      = 0;
     for (const auto& [d, c] : tree_spec) {
       tree_sum += d * c;
-      tau += c;
     }
     check(tree_sum == lam - wgrind,
           "tree degrees sum to " + std::to_string(tree_sum) +
