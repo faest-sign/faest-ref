@@ -47,7 +47,6 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
     const auto n_mult                = params->n_mult;
     const auto n_mult_bytes          = (n_mult + 7) / 8;
-    const auto c_mult_bytes          = (n_mult * n_mask + 7) / 8;
 
     bavc_t bavc_com;
 
@@ -55,7 +54,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
         v_storage;
     chal.resize(lambda_bytes);
     c.resize((params->tau - 1) * ell_bytes);
-    c_mult_packed.resize(c_mult_bytes);
+    c_mult_packed.resize(n_mult_bytes * n_mask);
     u.resize(ell_bytes * params->tau);
     u_bar.resize(n_mask * lambda_bytes);
     v_bar.resize(n_mask * lambda_bytes);
@@ -205,7 +204,6 @@ namespace {
     const unsigned int w_grind                    = params->w_grind;
     const unsigned int lambda_minus_w_grind       = lambda - w_grind;
     const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7) / 8;
-    const auto c_mult_bytes                       = (params->n_mult * params->n_mask + 7) / 8;
 
     // NOTE: This TV only works for the deg-7 vole commit implementation with the below parameters
     switch (lambda) {
@@ -229,7 +227,7 @@ namespace {
         q_storage, v_storage;
     chal.resize(lambda_bytes);
     c.resize((params->tau - 1) * ell_bytes);
-    c_mult_packed.resize(c_mult_bytes);
+    c_mult_packed.resize(n_mult_bytes * n_mask);
     decom_i.resize(com_size * params->tau + params->T_open * lambda_bytes);
     u.resize(ell_bytes);
     u_bar.resize(n_mask * lambda_bytes);

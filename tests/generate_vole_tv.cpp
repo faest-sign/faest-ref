@@ -50,8 +50,6 @@ int main() {
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
     const auto n_mask_bytes           = (n_mask + 7) / 8;
     const auto n_mult                 = params.n_mult;
-    const auto n_mult_bytes           = (n_mult + 7) / 8;
-    const auto c_mult_bytes           = (n_mult * n_mask + 7) / 8;
 
     bavc_t bavc_com;
 
@@ -98,22 +96,20 @@ int main() {
     print_named_array("hashed_c", "uint8_t", hash_array(c));
     print_named_array("hashed_u", "uint8_t", hash_array(u));
 
-    // // NOTE: --- Claude generated code 
-    // // This arranges the c_mult into the required ordering similar to pyfaest implementation and its TVs 
-    // size_t nb        = (n_mult + 7) / 8;
-    // size_t packed_len = n_mask * nb;
-    // std::vector<uint8_t> c_mult_packed(packed_len, 0);
-    // for (size_t i = 0; i < n_mask; ++i) {
-    //     for (size_t j = 0; j < n_mult; ++j) {
-    //       uint16_t word = c_mult[j*2] | (uint16_t)(c_mult[j*2 + 1] << 8);
-    //       uint8_t  bit  = (word >> i) & 1u;
-    //       size_t   pos  = i * nb * 8 + j;
-    //       c_mult_packed[pos >> 3] |= (uint8_t)(bit << (pos & 7));
-    //     }
-    // }
-    // // ----
-    std::vector<uint8_t> c_mult_packed(c_mult_bytes, 0);
-    pack_uint8(c_mult_packed.data(), c_mult.data(), n_mult, n_mask);
+    // NOTE: --- Claude generated code 
+    // This arranges the c_mult into the required ordering similar to pyfaest implementation and its TVs 
+    size_t nb        = (n_mult + 7) / 8;
+    size_t packed_len = n_mask * nb;
+    std::vector<uint8_t> c_mult_packed(packed_len, 0);
+    for (size_t i = 0; i < n_mask; ++i) {
+        for (size_t j = 0; j < n_mult; ++j) {
+          uint16_t word = c_mult[j*2] | (uint16_t)(c_mult[j*2 + 1] << 8);
+          uint8_t  bit  = (word >> i) & 1u;
+          size_t   pos  = i * nb * 8 + j;
+          c_mult_packed[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+        }
+    }
+    // ----
     print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult_packed));
 
     // NOTE: --- Claude generated code 

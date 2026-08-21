@@ -257,7 +257,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       uint8_t bit_a = ptr_get_bit(v_tilde + e * n_mask_bytes, m);
       uint8_t bit_b = ptr_get_bit(h_e_one, m);
 
-      ptr_set_bit(c_mult + e * n_mask_bytes, m, bit_a ^ bit_b ^ dot_product_bit);
+      ptr_set_bit(c_mult + m * n_mult_bytes, e, bit_a ^ bit_b ^ dot_product_bit);
     }
 
     free(L_e_zero);
@@ -576,7 +576,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
     // line 27
     for (unsigned m = 0; m < n_mask; m++) {
 
-      uint8_t sum = ptr_get_bit(h_e, m) ^ (gamma_e & ptr_get_bit(c_mult + e * n_mask_bytes, m));
+      uint8_t sum = ptr_get_bit(h_e, m) ^ (gamma_e & ptr_get_bit(c_mult + m * n_mult_bytes, e));
       ptr_set_bit(q_tilde + e * n_mask_bytes, m, sum);
     }
 
