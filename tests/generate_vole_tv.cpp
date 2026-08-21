@@ -50,13 +50,14 @@ int main() {
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
     const auto n_mask_bytes           = (n_mask + 7) / 8;
     const auto n_mult                 = params.n_mult;
+    const auto n_mult_bytes           = (n_mult + 7) / 8;
 
     bavc_t bavc_com;
 
     std::vector<uint8_t> chal, c, c_mult, decom_i, u, u_bar, v_bar, q_bar, delta_prime, q_storage, v_storage;
     chal.resize(lambda_bytes);
     c.resize((params.tau - 1) * ell_bytes);
-    c_mult.resize(n_mult * n_mask_bytes);
+    c_mult.resize(n_mask * n_mult_bytes);
     decom_i.resize(com_size * params.tau + params.T_open * lambda_bytes);
     u.resize(ell_bytes);
     u_bar.resize(n_mask * lambda_bytes);
@@ -98,19 +99,20 @@ int main() {
 
     // NOTE: --- Claude generated code 
     // This arranges the c_mult into the required ordering similar to pyfaest implementation and its TVs 
-    size_t nb        = (n_mult + 7) / 8;
-    size_t packed_len = n_mask * nb;
-    std::vector<uint8_t> c_mult_packed(packed_len, 0);
-    for (size_t i = 0; i < n_mask; ++i) {
-        for (size_t j = 0; j < n_mult; ++j) {
-          uint16_t word = c_mult[j*2] | (uint16_t)(c_mult[j*2 + 1] << 8);
-          uint8_t  bit  = (word >> i) & 1u;
-          size_t   pos  = i * nb * 8 + j;
-          c_mult_packed[pos >> 3] |= (uint8_t)(bit << (pos & 7));
-        }
-    }
+    // size_t nb        = (n_mult + 7) / 8;
+    // size_t packed_len = n_mask * nb;
+    // std::vector<uint8_t> c_mult_packed(packed_len, 0);
+    // for (size_t i = 0; i < n_mask; ++i) {
+    //     for (size_t j = 0; j < n_mult; ++j) {
+    //       uint16_t word = c_mult[j*2] | (uint16_t)(c_mult[j*2 + 1] << 8);
+    //       uint8_t  bit  = (word >> i) & 1u;
+    //       size_t   pos  = i * nb * 8 + j;
+    //       c_mult_packed[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+    //     }
+    // }
     // ----
-    print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult_packed));
+    // print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult_packed));
+    print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult));
 
     // NOTE: --- Claude generated code 
     // This arranges the v_storage into the required ordering similar to pyfaest implementation and its TVs 

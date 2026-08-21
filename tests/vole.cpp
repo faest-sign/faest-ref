@@ -54,7 +54,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
         v_storage;
     chal.resize(lambda_bytes);
     c.resize((params->tau - 1) * ell_bytes);
-    c_mult_packed.resize(n_mult_bytes * n_mask);
+    c_mult_packed.resize(n_mask * n_mult_bytes);
     u.resize(ell_bytes * params->tau);
     u_bar.resize(n_mask * lambda_bytes);
     v_bar.resize(n_mask * lambda_bytes);
@@ -227,7 +227,7 @@ namespace {
         q_storage, v_storage;
     chal.resize(lambda_bytes);
     c.resize((params->tau - 1) * ell_bytes);
-    c_mult_packed.resize(n_mult_bytes * n_mask);
+    c_mult_packed.resize(n_mask * n_mult_bytes);
     decom_i.resize(com_size * params->tau + params->T_open * lambda_bytes);
     u.resize(ell_bytes);
     u_bar.resize(n_mask * lambda_bytes);
