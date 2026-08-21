@@ -231,7 +231,6 @@ void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
 
 void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
                    unsigned int d_zk) {
-
   const unsigned int ell_prime = ell + d_zk - 1;
   const unsigned int deg_max   = ell_prime - 1;
 
@@ -314,7 +313,6 @@ void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
 
 void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
                    unsigned int d_zk) {
-
   const unsigned int ell_prime = ell + d_zk - 1;
   const unsigned int deg_max   = ell_prime - 1;
 
