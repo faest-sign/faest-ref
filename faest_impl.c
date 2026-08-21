@@ -732,7 +732,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     uint8_t* uh = malloc(uh_0_bytes + uh_1_bytes);
     memcpy(uh, uh_0, uh_0_bytes);
     memcpy(uh + uh_0_bytes, uh_1, uh_1_bytes);
-    vole_hash_new(signature_u_tilde(sig, params), chall_1, uh, ell, d_zk, lambda);
+    vole_hash(signature_u_tilde(sig, params), chall_1, uh, ell, d_zk, lambda);
 
     // To save memory consumption, the chall_2 is computed in an
     // Init-Update-Finalize style as V_tilde is only fed into to the hash and not
@@ -747,7 +747,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
       uint8_t* vh = malloc(vh_0_bytes + vh_1_bytes);
       memcpy(vh, vh_0, vh_0_bytes);
       memcpy(vh + vh_0_bytes, vh_1, vh_1_bytes);
-      vole_hash_new(V_tilde, chall_1, vh, ell, d_zk, lambda);
+      vole_hash(V_tilde, chall_1, vh, ell, d_zk, lambda);
 
       print_u8_array("sign V_tilde", V_tilde, lambda_bytes * 4);
 

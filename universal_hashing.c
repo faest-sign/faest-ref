@@ -37,8 +37,8 @@ static bf64_t compute_h1(const uint8_t* t, const uint8_t* x, unsigned int lambda
   return h1;
 }
 
-void vole_hash_new_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
-                       unsigned int d_zk) {
+void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
+                   unsigned int d_zk) {
   const unsigned int ell_prime = ell + d_zk - 1;
   const unsigned int deg_max   = ell_prime - 1;
 
@@ -119,7 +119,8 @@ void vole_hash_new_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned
   bf128_store(h + 3 * BF128_NUM_BYTES, &bf_h[3]);
 }
 
-void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
+#if 0
+void vole_hash_128_old(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
   const uint8_t* r0 = sd;
   const uint8_t* r1 = sd + 1 * BF128_NUM_BYTES;
   const uint8_t* r2 = sd + 2 * BF128_NUM_BYTES;
@@ -172,9 +173,10 @@ void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   memcpy(h + BF128_NUM_BYTES, tmp, UNIVERSAL_HASH_B);
   xor_u8_array(h, x1, h, BF128_NUM_BYTES + UNIVERSAL_HASH_B);
 }
+#endif
 
-void vole_hash_new_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
-                       unsigned int d_zk) {
+void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
+                   unsigned int d_zk) {
 
   const unsigned int ell_prime = ell + d_zk - 1;
   const unsigned int deg_max   = ell_prime - 1;
@@ -256,7 +258,8 @@ void vole_hash_new_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned
   bf192_store(h + 3 * BF192_NUM_BYTES, &bf_h[3]);
 }
 
-void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
+#if 0
+void vole_hash_192_old(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
   const uint8_t* r0 = sd;
   const uint8_t* r1 = sd + 1 * BF192_NUM_BYTES;
   const uint8_t* r2 = sd + 2 * BF192_NUM_BYTES;
@@ -309,9 +312,10 @@ void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   memcpy(h + BF192_NUM_BYTES, tmp, UNIVERSAL_HASH_B);
   xor_u8_array(h, x1, h, BF192_NUM_BYTES + UNIVERSAL_HASH_B);
 }
+#endif
 
-void vole_hash_new_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
-                       unsigned int d_zk) {
+void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
+                   unsigned int d_zk) {
 
   const unsigned int ell_prime = ell + d_zk - 1;
   const unsigned int deg_max   = ell_prime - 1;
@@ -393,7 +397,8 @@ void vole_hash_new_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned
   bf256_store(h + 3 * BF256_NUM_BYTES, &bf_h[3]);
 }
 
-void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
+#if 0
+void vole_hash_256_old(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
   const uint8_t* r0 = sd;
   const uint8_t* r1 = sd + 1 * BF256_NUM_BYTES;
   const uint8_t* r2 = sd + 2 * BF256_NUM_BYTES;
@@ -446,35 +451,39 @@ void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   memcpy(h + BF256_NUM_BYTES, tmp, UNIVERSAL_HASH_B);
   xor_u8_array(h, x1, h, BF256_NUM_BYTES + UNIVERSAL_HASH_B);
 }
+#endif
 
-void vole_hash_new(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
-                   unsigned int d_zk, uint32_t lambda) {
+void vole_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, unsigned int d_zk,
+               uint32_t lambda) {
   switch (lambda) {
   case 256:
-    vole_hash_new_256(h, sd, x, ell, d_zk);
+    vole_hash_256(h, sd, x, ell, d_zk);
     break;
   case 192:
-    vole_hash_new_192(h, sd, x, ell, d_zk);
+    vole_hash_192(h, sd, x, ell, d_zk);
     break;
   default:
-    vole_hash_new_128(h, sd, x, ell, d_zk);
+    vole_hash_128(h, sd, x, ell, d_zk);
     break;
   }
 }
 
-void vole_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, uint32_t lambda) {
+#if 0
+void vole_hash_old(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
+                   uint32_t lambda) {
   switch (lambda) {
   case 256:
-    vole_hash_256(h, sd, x, ell);
+    vole_hash_256_old(h, sd, x, ell);
     break;
   case 192:
-    vole_hash_192(h, sd, x, ell);
+    vole_hash_192_old(h, sd, x, ell);
     break;
   default:
-    vole_hash_128(h, sd, x, ell);
+    vole_hash_128_old(h, sd, x, ell);
     break;
   }
 }
+#endif
 
 void zk_hash_128_init(zk_hash_128_ctx* ctx, const uint8_t* sd) {
   const uint8_t* s = sd + 2 * BF128_NUM_BYTES;

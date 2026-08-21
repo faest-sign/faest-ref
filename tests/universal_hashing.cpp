@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_128) {
   rand_bytes(x.data(), x.size());
 
   std::array<uint8_t, 3 * lambda_bytes> digest{};
-  vole_hash_new_128(digest.data(), sd.data(), x.data(), ell, d_zk);
+  vole_hash_128(digest.data(), sd.data(), x.data(), ell, d_zk);
   BOOST_TEST(digest != decltype(digest){});
 }
 
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_192) {
   rand_bytes(x.data(), x.size());
 
   std::array<uint8_t, 3 * lambda_bytes> digest{};
-  vole_hash_new_128(digest.data(), sd.data(), x.data(), ell, d_zk);
+  vole_hash_128(digest.data(), sd.data(), x.data(), ell, d_zk);
   BOOST_TEST(digest != decltype(digest){});
 }
 
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_256) {
   rand_bytes(x.data(), x.size());
 
   std::array<uint8_t, 3 * lambda_bytes> digest{};
-  vole_hash_new_128(digest.data(), sd.data(), x.data(), ell, d_zk);
+  vole_hash_128(digest.data(), sd.data(), x.data(), ell, d_zk);
   BOOST_TEST(digest != decltype(digest){});
 }
 
@@ -430,7 +430,7 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_128_3_tv) {
   namespace tv = universal_hashing_tvs::vole_hash_128_3_tv;
 
   std::array<uint8_t, 4 * sizeof(bf128::bytes)> digest;
-  vole_hash_new_128(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
+  vole_hash_128(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
   BOOST_TEST(digest == tv::digest);
 }
 
@@ -438,7 +438,7 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_128_7_tv) {
   namespace tv = universal_hashing_tvs::vole_hash_128_7_tv;
 
   std::array<uint8_t, 4 * sizeof(bf128::bytes)> digest;
-  vole_hash_new_128(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
+  vole_hash_128(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
   BOOST_TEST(digest == tv::digest);
 }
 
@@ -446,7 +446,7 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_192_3_tv) {
   namespace tv = universal_hashing_tvs::vole_hash_192_3_tv;
 
   std::array<uint8_t, 4 * sizeof(bf192::bytes)> digest;
-  vole_hash_new_192(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
+  vole_hash_192(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
   BOOST_TEST(digest == tv::digest);
 }
 
@@ -454,7 +454,7 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_192_7_tv) {
   namespace tv = universal_hashing_tvs::vole_hash_192_7_tv;
 
   std::array<uint8_t, 4 * sizeof(bf192::bytes)> digest;
-  vole_hash_new_192(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
+  vole_hash_192(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
   BOOST_TEST(digest == tv::digest);
 }
 
@@ -462,7 +462,7 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_256_3_tv) {
   namespace tv = universal_hashing_tvs::vole_hash_256_3_tv;
 
   std::array<uint8_t, 4 * sizeof(bf256::bytes)> digest;
-  vole_hash_new_256(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
+  vole_hash_256(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
   BOOST_TEST(digest == tv::digest);
 }
 
@@ -470,7 +470,7 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_256_7_tv) {
   namespace tv = universal_hashing_tvs::vole_hash_256_7_tv;
 
   std::array<uint8_t, 4 * sizeof(bf256::bytes)> digest;
-  vole_hash_new_256(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
+  vole_hash_256(digest.data(), tv::sd.data(), tv::x.data(), tv::ell, tv::d_zk);
   BOOST_TEST(digest == tv::digest);
 }
 
