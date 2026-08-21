@@ -2470,24 +2470,24 @@ static void aes_SSS_constraints_prover_new(zk_hash_SSS_7_ctx* hasher, const uint
   assert(in_tag);
 
   if (faest_is_em(params)) {
-  //   aes_round_keys_t round_keys;
-  //   expand_key(&round_keys, owf_in, FAEST_SSS_NK, FAEST_SSS_NK, FAEST_SSS_R);
+    aes_round_keys_t round_keys;
+    expand_key(&round_keys, owf_in, FAEST_SSS_NK, FAEST_SSS_NK, FAEST_SSS_R);
 
-  //   for (unsigned int r = 0, idx = 0; r < FAEST_SSS_R + 1; r++) {
-  //     for (unsigned int n = 0; n < Nst; n++) {
-  //       for (unsigned int i = 0; i < 4; ++i, ++idx) {
-  //         rkeys[idx] = round_keys.round_keys[r][n][i];
-  //       }
-  //     }
-  //   }
-  //   memset(rkeys_tag, 0, sizeof(bfSSS_t) * (FAEST_SSS_R + 1) * Nst * 4 * 8);
+    for (unsigned int r = 0, idx = 0; r < FAEST_SSS_R + 1; r++) {
+      for (unsigned int n = 0; n < Nst; n++) {
+        for (unsigned int i = 0; i < 4; ++i, ++idx) {
+          rkeys[idx] = round_keys.round_keys[r][n][i];
+        }
+      }
+    }
+    memset(rkeys_tag, 0, sizeof(bfSSS_t) * (FAEST_SSS_R + 1) * Nst * 4 * 8);
 
-  //   // line 10
-  //   memcpy(in, w, blocksize / 8);
-  //   memcpy(in_tag, w_tag, blocksize * sizeof(bfSSS_t));
-  //   // line 11
-  //   xor_u8_array(w, owf_out, out, blocksize / 8);
-  //   memcpy(out_tag, w_tag, blocksize * sizeof(bfSSS_t));
+    // line 10
+    memcpy(in, w, blocksize / 8);
+    memcpy(in_tag, w_tag, blocksize * sizeof(bfSSS_t));
+    // line 11
+    xor_u8_array(w, owf_out, out, blocksize / 8);
+    memcpy(out_tag, w_tag, blocksize * sizeof(bfSSS_t));
   } else {
     // line 13
     memcpy(in, owf_in, blocksize / 8);
@@ -2609,26 +2609,26 @@ static void aes_SSS_constraints_verifier_new(zk_hash_SSS_ctx* hasher, const bfSS
   assert(rkeys_key);
 
   if (faest_is_em(params)) {
-  //   aes_round_keys_t round_keys;
-  //   expand_key(&round_keys, owf_in, FAEST_SSS_NK, FAEST_SSS_NK, FAEST_SSS_R);
+    aes_round_keys_t round_keys;
+    expand_key(&round_keys, owf_in, FAEST_SSS_NK, FAEST_SSS_NK, FAEST_SSS_R);
 
-  //   unsigned int idx = 0;
-  //   for (unsigned int r = 0; r < FAEST_SSS_R + 1; ++r) {
-  //     for (unsigned int n = 0; n < Nst; ++n) {
-  //       for (unsigned int i = 0; i < 4; ++i) {
-  //         uint8_t rk_byte = round_keys.round_keys[r][n][i];
-  //         for (unsigned int j = 0; j < 8; ++j, ++idx) {
-  //           bfSSS_mul_bit(&rkeys_key[idx], &delta_i[delta_deg1_idx], get_bit(rk_byte, j));
-  //         }
-  //       }
-  //     }
-  //   }
-  //   // ::10-11
-  //   memcpy(in_key, w_key, blocksize * sizeof(bfSSS_t));
-  //   for (unsigned int i = 0; i < blocksize; i++) {
-  //     bfSSS_mul_bit(&out_key[i], &delta_i[delta_deg1_idx], ptr_get_bit(owf_out, i));
-  //     bfSSS_add_inplace(&out_key[i], &w_key[i]);
-  //   }
+    unsigned int idx = 0;
+    for (unsigned int r = 0; r < FAEST_SSS_R + 1; ++r) {
+      for (unsigned int n = 0; n < Nst; ++n) {
+        for (unsigned int i = 0; i < 4; ++i) {
+          uint8_t rk_byte = round_keys.round_keys[r][n][i];
+          for (unsigned int j = 0; j < 8; ++j, ++idx) {
+            bfSSS_mul_bit(&rkeys_key[idx], &delta_i[1], get_bit(rk_byte, j));
+          }
+        }
+      }
+    }
+    // ::10-11
+    memcpy(in_key, w_key, blocksize * sizeof(bfSSS_t));
+    for (unsigned int i = 0; i < blocksize; i++) {
+      bfSSS_mul_bit(&out_key[i], &delta_i[1], ptr_get_bit(owf_out, i));
+      bfSSS_add_inplace(&out_key[i], &w_key[i]);
+    }
   } else {
     // line 13
     constant_to_vole_SSS_verifier(in_key, owf_in, &delta_i[1], blocksize);
