@@ -7,7 +7,6 @@
 #include "fields.hpp"
 #include "randomness.h"
 #include "universal_hashing_tvs.hpp"
-#include "utils.hpp"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
@@ -46,29 +45,16 @@ namespace {
     zk_hash_256_finalize(h, &ctx, &x[ell]);
   }
 
-  static constexpr size_t xs        = 8;
-  static constexpr unsigned int ell = 32;
+  static constexpr size_t xs         = 8;
+  static constexpr unsigned int ell  = 32;
   static constexpr unsigned int d_zk = 3;
 } // namespace
 
 BOOST_AUTO_TEST_SUITE(universal_hashing)
 
 BOOST_AUTO_TEST_CASE(test_vole_hash_128) {
-  std::array<uint8_t, (5 * 128 + 64) / 8> sd{};
-  rand_bytes(sd.data(), sd.size());
-
-  std::vector<uint8_t> x;
-  x.resize((ell + 3 * 128 + UNIVERSAL_HASH_B_BITS) / 8);
-  rand_bytes(x.data(), x.size());
-
-  std::array<uint8_t, (128 + UNIVERSAL_HASH_B_BITS) / 8> digest{};
-  vole_hash_128(digest.data(), sd.data(), x.data(), ell);
-  BOOST_TEST(digest != decltype(digest){});
-}
-
-BOOST_AUTO_TEST_CASE(test_vole_hash_new_128) {
-  const unsigned int lambda = 128;
-  const unsigned int lambda_bytes = lambda / 8;
+  constexpr unsigned int lambda       = 128;
+  constexpr unsigned int lambda_bytes = lambda / 8;
   std::array<uint8_t, (6 * lambda + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
@@ -82,21 +68,8 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_new_128) {
 }
 
 BOOST_AUTO_TEST_CASE(test_vole_hash_192) {
-  std::array<uint8_t, (5 * 192 + 64) / 8> sd{};
-  rand_bytes(sd.data(), sd.size());
-
-  std::vector<uint8_t> x;
-  x.resize((ell + 3 * 192 + UNIVERSAL_HASH_B_BITS) / 8);
-  rand_bytes(x.data(), x.size());
-
-  std::array<uint8_t, (192 + UNIVERSAL_HASH_B_BITS) / 8> digest{};
-  vole_hash_192(digest.data(), sd.data(), x.data(), ell);
-  BOOST_TEST(digest != decltype(digest){});
-}
-
-BOOST_AUTO_TEST_CASE(test_vole_hash_new_192) {
-  const unsigned int lambda = 192;
-  const unsigned int lambda_bytes = lambda / 8;
+  constexpr unsigned int lambda       = 192;
+  constexpr unsigned int lambda_bytes = lambda / 8;
   std::array<uint8_t, (6 * lambda + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
@@ -110,21 +83,8 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_new_192) {
 }
 
 BOOST_AUTO_TEST_CASE(test_vole_hash_256) {
-  std::array<uint8_t, (5 * 256 + 64) / 8> sd{};
-  rand_bytes(sd.data(), sd.size());
-
-  std::vector<uint8_t> x;
-  x.resize((ell + 3 * 256 + UNIVERSAL_HASH_B_BITS) / 8);
-  rand_bytes(x.data(), x.size());
-
-  std::array<uint8_t, (256 + UNIVERSAL_HASH_B_BITS) / 8> digest{};
-  vole_hash_256(digest.data(), sd.data(), x.data(), ell);
-  BOOST_TEST(digest != decltype(digest){});
-}
-
-BOOST_AUTO_TEST_CASE(test_vole_hash_new_256) {
-  const unsigned int lambda = 256;
-  const unsigned int lambda_bytes = lambda / 8;
+  constexpr unsigned int lambda       = 256;
+  constexpr unsigned int lambda_bytes = lambda / 8;
   std::array<uint8_t, (6 * lambda + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
