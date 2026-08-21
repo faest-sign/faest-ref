@@ -632,7 +632,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   const unsigned int ell_hat       = ell + n_mask * d0;
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
   const unsigned int w_grind       = params->w_grind;
-  const unsigned int c_mult_bytes   = n_mask * n_mult_bytes;
+  const unsigned int c_mult_bytes   = n_mult * n_mask_bytes;
 
   // line 2
   uint8_t mu[MAX_LAMBDA_BYTES * 2];
@@ -665,9 +665,9 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   unsigned int c_mult_idx = 0;
   uint8_t* c_mult_packed = signature_c_mult(sig, params);
-  unsigned int c_mult_packed_bytes = (n_mask * n_mult + 7) / 8;
+  unsigned int c_mult_packed_bytes = (n_mult * n_mask + 7) / 8;
   memset(c_mult_packed, 0, c_mult_packed_bytes);
-  pack_uint8(c_mult_packed, c_mult, n_mask, n_mult);
+  pack_uint8(c_mult_packed, c_mult, n_mult, n_mask);
 
   // print_u8_array("c_mult_ptr", c_mult_ptr, 8);
   // print_u8_array("c_mult_packed", c_mult_packed, 8);
@@ -905,7 +905,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   const unsigned int ell_hat       = ell + n_mask * d0;
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
   const unsigned int utilde_bytes  = lambda_bytes * 4;
-  const unsigned int c_mult_bytes   = n_mask * n_mult_bytes;
+  const unsigned int c_mult_bytes   = n_mult * n_mask_bytes;
   const unsigned int w_grind      = params->w_grind;
   const unsigned int lambda_minus_w_grind = lambda - w_grind;
   const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7 ) / 8;
@@ -925,9 +925,9 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   hash_iv(iv, dsignature_iv_pre(sig, params), lambda);
 
   uint8_t* c_mult = malloc(c_mult_bytes);
-  unsigned int c_mult_packed_bytes = (n_mask * n_mult + 7) / 8;
+  unsigned int c_mult_packed_bytes = (n_mult * n_mask + 7) / 8;
   uint8_t* c_mult_packed = dsignature_c_mult(sig, params);
-  unpack_uint8(c_mult, c_mult_packed, n_mask, n_mult);
+  unpack_uint8(c_mult, c_mult_packed, n_mult, n_mask);
 
   // unsigned int c_mult_idx = 0;
   // const uint8_t* c_mult_ptr = dsignature_c_mult(sig, params);
