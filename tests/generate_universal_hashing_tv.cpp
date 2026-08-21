@@ -36,35 +36,10 @@ int main() {
 
     if (lambda == 256) {
       leaf_hash_256(output.data(), uhash.data(), x.data());
-    }
-    else if (lambda == 192) {
+    } else if (lambda == 192) {
       leaf_hash_192(output.data(), uhash.data(), x.data());
-    }
-    else {
+    } else {
       leaf_hash_128(output.data(), uhash.data(), x.data());
-    }
-
-    
-    const unsigned int ell = 32;
-    const unsigned int d_zk = 3;
-    const unsigned int lambda_bytes = lambda / 8;
-
-    std::vector<uint8_t> uhash_sd, uhash_x, uhash_output;
-    uhash_sd.resize(lambda_bytes * 6 + 8);
-    uhash_x.resize((ell + (d_zk - 1) + 3) * lambda_bytes);
-    uhash_output.resize(lambda_bytes * 3, 0);
-
-    std::generate(uhash_sd.begin(), uhash_sd.end(), [&rd, &distrib] { return distrib(rd); });
-    std::generate(uhash_x.begin(), uhash_x.end(), [&rd, &distrib] { return distrib(rd); });
-
-    if (lambda == 256) {
-      vole_hash_new_256(uhash_output.data(), uhash_sd.data(), uhash_x.data(), ell, d_zk);
-    }
-    else if (lambda == 192) {
-      vole_hash_new_192(uhash_output.data(), uhash_sd.data(), uhash_x.data(), ell, d_zk);
-    }
-    else {
-      vole_hash_new_128(uhash_output.data(), uhash_sd.data(), uhash_x.data(), ell, d_zk);
     }
 
     std::cout << "namespace leaf_hash_" << lambda << " {";
@@ -73,14 +48,36 @@ int main() {
     print_named_array("expected_h", "uint8_t", output);
     std::cout << "}\n";
 
-    std::cout << "namespace vole_hash_" << lambda << " {";
-    print_named_array(("vole_hash_new_" + to_string(lambda) + "_sd").c_str(), "uint8_t", uhash_sd);
-    print_named_array(("vole_hash_new_" + to_string(lambda) + "_xs").c_str(), "uint8_t", uhash_x);
-    print_named_array(("vole_hash_new_" + to_string(lambda) + "_digest").c_str(), "uint8_t", uhash_output);
-    std::cout << "}\n";
+    constexpr unsigned int ell      = 5;
+    const unsigned int lambda_bytes = lambda / 8;
 
+    std::vector<uint8_t> uhash_sd;
+    uhash_sd.resize(lambda_bytes * 8 + 8);
+    std::generate(uhash_sd.begin(), uhash_sd.end(), [&rd, &distrib] { return distrib(rd); });
 
-    
+    for (const auto d_zk : {3, 7}) {
+      std::vector<uint8_t> uhash_x, uhash_output;
+
+      uhash_x.resize((ell + d_zk - 1 + 4) * lambda_bytes);
+      uhash_output.resize(lambda_bytes * 4, 0);
+
+      std::generate(uhash_x.begin(), uhash_x.end(), [&rd, &distrib] { return distrib(rd); });
+      vole_hash(uhash_output.data(), uhash_sd.data(), uhash_x.data(), ell, d_zk, lambda);
+
+      std::cout << "namespace vole_hash_" << lambda << "_" << d_zk << "_tv {";
+      std::cout << "constexpr unsigned int ell = " << ell << ";\n";
+      std::cout << "constexpr unsigned int d_zk = " << d_zk << ";\n";
+      std::cout << "constexpr unsigned int ell_prime = ell + d_zk - 1;\n\n";
+
+      if (d_zk == 7) {
+        std::cout << "using vole_hash_" << lambda << "_3_tv::sd;\n";
+      } else {
+        print_named_array("sd", "uint8_t", uhash_sd);
+      }
+      print_named_array("x", "uint8_t", uhash_x);
+      print_named_array("digest", "uint8_t", uhash_output);
+      std::cout << "}\n";
+    }
   }
   std::cout << "}\n\n#endif" << std::endl;
 }
