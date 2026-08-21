@@ -692,7 +692,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     uint8_t chall_1[(8 * MAX_LAMBDA_BYTES) + 8];
     memset(chall_1, 0, (8 * MAX_LAMBDA_BYTES) + 8);
     // hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), c_mult_packed, iv, lambda, ell, tau, c_mult_packed_bytes);
-    hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), signature_c_mult(sig, params), iv, lambda, ell, tau, c_mult_bytes);
+    hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params), signature_c_mult(sig, params), signature_iv_pre(sig, params), lambda, ell, tau, c_mult_bytes);
 
     print_u8_array("sign chall_1", chall_1, (8 * lambda_bytes) + 8);
 
@@ -981,7 +981,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   // line 9
   uint8_t chall_1[(8 * MAX_LAMBDA_BYTES) + 8];
   memset(chall_1, 0, (8 * MAX_LAMBDA_BYTES) + 8);
-  hash_challenge_1(chall_1, mu, hcom, dsignature_c(sig, 0, params), dsignature_c_mult(sig, params), iv, lambda, ell, tau, c_mult_bytes);
+  hash_challenge_1(chall_1, mu, hcom, dsignature_c(sig, 0, params), dsignature_c_mult(sig, params), dsignature_iv_pre(sig, params), lambda, ell, tau, c_mult_bytes);
 
   print_u8_array("verify chall_1", chall_1, 8 * lambda_bytes + 8);
 
