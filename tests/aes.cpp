@@ -136,9 +136,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_aes128) {
 
   aes_extend_witness_new(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
 
-  // NOTE: The TVs work for deg-7 only 
-  assert(params->n_mask == 9);
-
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   BOOST_TEST(expected_witness == witness);
 }
@@ -166,9 +163,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_aes192) {
   witness.resize(params->ell / 8);
 
   aes_extend_witness_new(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
-
-  // NOTE: The TVs work for deg-7 only 
-  assert(params->n_mask == 9);
 
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   BOOST_TEST(expected_witness == witness);
@@ -198,9 +192,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_aes256) {
 
   aes_extend_witness_new(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
 
-  // NOTE: The TVs work for deg-7 only 
-  assert(params->n_mask == 9);
-
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   BOOST_TEST(expected_witness == witness);
 }
@@ -228,9 +219,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_em128) {
   witness.resize(params->ell / 8);
 
   aes_extend_witness_new(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
-
-  // NOTE: The TVs work for deg-7 only 
-  assert(params->n_mask == 9);
 
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   BOOST_TEST(expected_witness == witness);
@@ -260,9 +248,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_em192) {
 
   aes_extend_witness_new(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
 
-  // NOTE: The TVs work for deg-7 only 
-  assert(params->n_mask == 9);
-
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   BOOST_TEST(expected_witness == witness);
 }
@@ -290,9 +275,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_em256) {
   witness.resize(params->ell / 8);
 
   aes_extend_witness_new(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(), params);
-
-  // NOTE: The TVs work for deg-7 only 
-  assert(params->n_mask == 9);
 
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   BOOST_TEST(expected_witness == witness);

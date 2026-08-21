@@ -51,14 +51,14 @@ BOOST_AUTO_TEST_SUITE(universal_hashing)
 BOOST_AUTO_TEST_CASE(test_vole_hash_128) {
   constexpr unsigned int lambda       = 128;
   constexpr unsigned int lambda_bytes = lambda / 8;
-  std::array<uint8_t, (6 * lambda + 64) / 8> sd{};
+  std::array<uint8_t, (8 * lambda + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
   std::vector<uint8_t> x;
-  x.resize((ell + (d_zk - 1) + 3) * lambda_bytes);
+  x.resize((ell + (d_zk - 1) + 4) * lambda_bytes);
   rand_bytes(x.data(), x.size());
 
-  std::array<uint8_t, 3 * lambda_bytes> digest{};
+  std::array<uint8_t, 4 * lambda_bytes> digest{};
   vole_hash_128(digest.data(), sd.data(), x.data(), ell, d_zk);
   BOOST_TEST(digest != decltype(digest){});
 }
@@ -66,14 +66,14 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_128) {
 BOOST_AUTO_TEST_CASE(test_vole_hash_192) {
   constexpr unsigned int lambda       = 192;
   constexpr unsigned int lambda_bytes = lambda / 8;
-  std::array<uint8_t, (6 * lambda + 64) / 8> sd{};
+  std::array<uint8_t, (8 * lambda + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
   std::vector<uint8_t> x;
-  x.resize((ell + (d_zk - 1) + 3) * lambda_bytes);
+  x.resize((ell + (d_zk - 1) + 4) * lambda_bytes);
   rand_bytes(x.data(), x.size());
 
-  std::array<uint8_t, 3 * lambda_bytes> digest{};
+  std::array<uint8_t, 4 * lambda_bytes> digest{};
   vole_hash_128(digest.data(), sd.data(), x.data(), ell, d_zk);
   BOOST_TEST(digest != decltype(digest){});
 }
@@ -81,14 +81,14 @@ BOOST_AUTO_TEST_CASE(test_vole_hash_192) {
 BOOST_AUTO_TEST_CASE(test_vole_hash_256) {
   constexpr unsigned int lambda       = 256;
   constexpr unsigned int lambda_bytes = lambda / 8;
-  std::array<uint8_t, (6 * lambda + 64) / 8> sd{};
+  std::array<uint8_t, (8 * lambda + 64) / 8> sd{};
   rand_bytes(sd.data(), sd.size());
 
   std::vector<uint8_t> x;
-  x.resize((ell + (d_zk - 1) + 3) * lambda_bytes);
+  x.resize((ell + (d_zk - 1) + 4) * lambda_bytes);
   rand_bytes(x.data(), x.size());
 
-  std::array<uint8_t, 3 * lambda_bytes> digest{};
+  std::array<uint8_t, 4 * lambda_bytes> digest{};
   vole_hash_128(digest.data(), sd.data(), x.data(), ell, d_zk);
   BOOST_TEST(digest != decltype(digest){});
 }
