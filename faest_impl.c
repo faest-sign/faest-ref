@@ -779,8 +779,6 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     return -1;
   }
 
-  // free(c_mult);
-
   uint8_t** Q_row =
       malloc(ell * sizeof(uint8_t*)); // it is actually lambda - w_grind but keeping it lambda
   assert(Q_row);
