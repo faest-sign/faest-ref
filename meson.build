@@ -765,7 +765,6 @@ run_target(
     ]
     + all_names,
   ],
-
 )
 
 subdir('doc')
