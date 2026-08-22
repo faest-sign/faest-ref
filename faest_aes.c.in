@@ -312,14 +312,6 @@ static void aes_SSS_state_to_bytes_verifier(bfSSS_t* out_key, const bfSSS_t* k_k
   }
 }
 
-static void aes_SSS_state_to_bytes_verifier_new(bfSSS_t** out_key, const bfSSS_t* k_key,
-                                            unsigned int Nst) {
-  const unsigned int Nst_bytes = Nst * 4;
-  for (unsigned int i = 0; i < Nst_bytes; i++) {
-    bfSSS_byte_combine(&out_key[0][i], k_key + i * 8);
-  }
-}
-
 static void aes_SSS_state_to_bytes_prover(bfSSS_t* out, bfSSS_t* out_tag, const uint8_t* k,
                                           const bfSSS_t* k_tag, unsigned int Nst) {
   const unsigned int Nst_bytes = Nst * 4;
@@ -331,14 +323,12 @@ static void aes_SSS_state_to_bytes_prover(bfSSS_t* out, bfSSS_t* out_tag, const 
 }
 
 static void aes_SSS_state_to_bytes_prover_new(bfSSS_t** out_deg, const uint8_t* k, const bfSSS_t* k_tag, unsigned int Nst) {
-  
   const unsigned int Nst_bytes = Nst * 4;
   for (unsigned int i = 0; i < Nst_bytes; i++) {
     bfSSS_byte_combine_bits(&out_deg[1][i], k[i]);
   }
 
   aes_SSS_state_to_bytes_verifier(out_deg[0], k_tag, Nst);
-  
 }
 
 // SBOX AFFINE
@@ -2219,40 +2209,36 @@ static void aes_SSS_enc_constraints_verifier_new(zk_hash_SSS_ctx* hasher, const 
 
   /// line 1
   bfSSS_t* state_bits_key = BFSSS_ALLOC(Nstbits + 5 * 8 * Nstbytes + 3 * Nstbits);
-  assert(state_bits_key);
-
   aes_SSS_add_round_key_verifier(state_bits_key, owf_in_key, rkeys_key, Nst);
 
   bfSSS_t* s_tilde_key     = &state_bits_key[Nstbits + 5 * 8 * Nstbytes];
   bfSSS_t* s_dash_dash_key = &state_bits_key[Nstbits + 5 * 8 * Nstbytes + Nstbits];
 
-  bfSSS_t* b_key = malloc(Nstbytes * sizeof(bfSSS_t));
+  bfSSS_t* b_key = BFSSS_ALLOC(Nstbytes);
   bfSSS_t* s_key           = &state_bits_key[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
 
   // line 2
   for (unsigned int r = 0; r < FAEST_SSS_R / 2; r++) {
-
     // line 3
-    bfSSS_t* state_key = malloc(Nstbytes * sizeof(bfSSS_t));
+    bfSSS_t* state_key = BFSSS_ALLOC(Nstbytes);
 
     // line 4
     aes_SS_sbox_eval_verifier(state_key, state_bits_key, delta_i, Nst);
     
     // line 5
-    bfSSS_t* state_key_tmp = malloc(Nstbytes * sizeof(bfSSS_t));
+    bfSSS_t* state_key_tmp = BFSSS_ALLOC(Nstbytes);
     aes_SSS_shiftrows_verifier_new(state_key_tmp, state_key, Nst);
 
     // line 6
     aes_SSS_mix_columns_verifier_new(state_key, state_key_tmp, Nst);
 
     // line 7
-    bfSSS_t* k_key = malloc(Nstbytes * sizeof(bfSSS_t));
+    bfSSS_t* k_key = BFSSS_ALLOC(Nstbytes);
     aes_SSS_state_to_bytes_verifier(k_key, rkeys_key + (2 * r + 1) * Nstbits, Nst);              
     aes_SSS_add_round_key_bytes_verifier_deg_7(state_key_tmp, state_key, k_key, delta_i, Nst);
 
     // line 10
     if (r == FAEST_SSS_R / 2 - 1) {
-
       aes_SSS_add_round_key_verifier(s_tilde_key, owf_out_key,
                                    rkeys_key + FAEST_SSS_R * Nstbits, Nst);
     } else {
@@ -2272,15 +2258,13 @@ static void aes_SSS_enc_constraints_verifier_new(zk_hash_SSS_ctx* hasher, const 
     // line 17
     bfSSS_t tmp;
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
-
       bfSSS_add(&tmp, &b_key[byte_i], &state_key_tmp[byte_i]);
       zk_hash_SSS_update(hasher, &tmp);
-
     }
 
-    free(state_key_tmp);
-    free(state_key);
-    free(k_key);
+    faest_aligned_free(state_key_tmp);
+    faest_aligned_free(state_key);
+    faest_aligned_free(k_key);
 
     // line 21
     if (r != (FAEST_SSS_R / 2) - 1) {
@@ -2290,10 +2274,8 @@ static void aes_SSS_enc_constraints_verifier_new(zk_hash_SSS_ctx* hasher, const 
     }
   }
 
-  free(b_key);
-  
+  faest_aligned_free(b_key);
   faest_aligned_free(state_bits_key);
-
 }
 
 // OWF CONSTRAINTS
@@ -2626,13 +2608,13 @@ void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w,
     // line 9 deg-3
     aes_SSS_constraints_prover(&hasher3, w, w_tag, owf_in, owf_out, params);
 
-    bfSSS_t* bf_u_star = malloc((d_zk - 1) * sizeof(bfSSS_t));
+    bfSSS_t* bf_u_star = BFSSS_ALLOC(d_zk - 1);
     for (unsigned int j = 0; j < d_zk - 1; j++) {
       bfSSS_sum_poly_bits(&bf_u_star[j], u_bar + j * lambda_bytes);
     }
 
     // line 8-9 deg-3
-    bfSSS_t* bf_v_star = malloc((d_zk - 1) * sizeof(bfSSS_t));
+    bfSSS_t* bf_v_star = BFSSS_ALLOC(d_zk - 1);
     for (unsigned int j = 0; j < d_zk - 1; j++) {
       bfSSS_sum_poly_bits(&bf_v_star[j], v_bar + j * lambda_bytes);
     }
@@ -2646,9 +2628,8 @@ void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w,
     zk_hash_SSS_3_finalize(a0_tilde, a1toi_tilde, a1toi_tilde + lambda_bytes, &hasher3, &bf_v_star[0], &bf_u_star[0],
                            &bf_u_star[1]);
 
-    free(bf_u_star);
-    free(bf_v_star);
-
+    faest_aligned_free(bf_u_star);
+    faest_aligned_free(bf_v_star);
   } else {
     // line 7 deg-7
     zk_hash_SSS_7_ctx hasher7;
