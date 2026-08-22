@@ -119,7 +119,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   uint8_t* u_hi_all = malloc((n_mask * w_grind + 7) / 8);
   uint8_t* u_hi     = malloc(n_mask * w_grind_bytes);
   memset(u_hi, 0, n_mask * w_grind_bytes);
-  prg(rootKey, iv, ((unsigned int)2 << 30) - 1, u_hi_all, lambda, (n_mask * w_grind + 7) / 8);
+  prg(rootKey, iv, TWEAK_OFFSET - 1, u_hi_all, lambda, (n_mask * w_grind + 7) / 8);
 
   for (unsigned n_mask_idx = 0; n_mask_idx < n_mask; n_mask_idx++) {
     for (unsigned w_grind_idx = 0; w_grind_idx < w_grind; w_grind_idx++) {
