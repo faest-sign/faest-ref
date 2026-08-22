@@ -751,6 +751,7 @@ run_target(
     ]
     + all_names,
   ],
+  depends: tables,
 )
 
 subdir('doc')
