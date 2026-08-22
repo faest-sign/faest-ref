@@ -915,8 +915,8 @@ void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
   generic_prg(key, internal_iv, out, seclvl, seclvl * 4 / 8);
 }
 
-void aes_extend_witness_new(uint8_t* w, const uint8_t* key, const uint8_t* in,
-                            const faest_paramset_t* params) {
+void aes_extend_witness_7(uint8_t* w, const uint8_t* key, const uint8_t* in,
+                          const faest_paramset_t* params) {
   const unsigned int lambda      = params->lambda;
   const unsigned int num_rounds  = params->R;
   const unsigned int blocksize   = 32 * params->Nst;

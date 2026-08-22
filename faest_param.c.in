@@ -68,7 +68,7 @@ int FAEST_CALLING_CONVENTION faest_@PARAM_L@_unpack_private_key(faest_@PARAM_L@_
   if (params->d_zk == 3) {
     aes_extend_witness(unpacked_sk->witness, unpacked_sk->owf_key, unpacked_sk->owf_input, params);
   } else {
-    aes_extend_witness_new(unpacked_sk->witness, unpacked_sk->owf_key, unpacked_sk->owf_input, params);
+    aes_extend_witness_7(unpacked_sk->witness, unpacked_sk->owf_key, unpacked_sk->owf_input, params);
   }
 
   return 0;
