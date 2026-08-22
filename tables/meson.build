@@ -34,11 +34,11 @@ else
     src = 'tables_@0@.c'.format(preset)
     tables += fs.copyfile(
       join_paths(meson.current_source_dir(), 'pregenerated', header),
-      join_paths(header),
+      header,
     )
     tables += fs.copyfile(
       join_paths(meson.current_source_dir(), 'pregenerated', src),
-      join_paths(src),
+      src,
     )
   endforeach
 endif

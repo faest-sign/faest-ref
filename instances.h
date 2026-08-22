@@ -19,6 +19,7 @@
 #define UNIVERSAL_HASH_B (UNIVERSAL_HASH_B_BITS / 8)
 #define AES_BLOCK_SIZE 16
 #define IV_SIZE AES_BLOCK_SIZE
+#define D_ZK 7
 
 FAEST_BEGIN_C_DECL
 
@@ -68,7 +69,6 @@ typedef struct faest_paramset_t {
   uint8_t owf_output_size;
 
   // new round 3 params
-  uint16_t d_zk;   // maximum degree used in Quicksilver
   uint16_t n_mask; // number of masks that are generated, d_zk + 2
   uint16_t n_mult; // number of AND gates in the F_2^lambda multiplication circuit
 

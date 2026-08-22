@@ -141,22 +141,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_aes128) {
   BOOST_TEST(expected_witness == witness);
 }
 
-BOOST_AUTO_TEST_CASE(test_extend_witness_aes128) {
-  namespace tv = faest_tvs::faest_128s;
-  auto params  = faest_get_paramset(FAEST_128S);
-
-  if (params->d_zk == 3) {
-    std::vector<uint8_t> witness;
-    witness.resize(params->ell / 8);
-
-    aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(),
-                       params);
-
-    std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
-    BOOST_TEST(expected_witness == witness);
-  }
-}
-
 BOOST_AUTO_TEST_CASE(test_extend_witness_new_aes192) {
   namespace tv = faest_tvs::faest_192s;
   auto params  = faest_get_paramset(FAEST_192S);
@@ -169,22 +153,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_aes192) {
 
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   BOOST_TEST(expected_witness == witness);
-}
-
-BOOST_AUTO_TEST_CASE(test_extend_witness_aes192) {
-  namespace tv = faest_tvs::faest_192s;
-  auto params  = faest_get_paramset(FAEST_192S);
-
-  if (params->d_zk == 3) {
-    std::vector<uint8_t> witness;
-    witness.resize(params->ell / 8);
-
-    aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(),
-                       params);
-
-    std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
-    BOOST_TEST(expected_witness == witness);
-  }
 }
 
 BOOST_AUTO_TEST_CASE(test_extend_witness_new_aes256) {
@@ -201,22 +169,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_aes256) {
   BOOST_TEST(expected_witness == witness);
 }
 
-BOOST_AUTO_TEST_CASE(test_extend_witness_aes256) {
-  namespace tv = faest_tvs::faest_256s;
-  auto params  = faest_get_paramset(FAEST_256S);
-
-  if (params->d_zk == 3) {
-    std::vector<uint8_t> witness;
-    witness.resize(params->ell / 8);
-
-    aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(),
-                       params);
-
-    std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
-    BOOST_TEST(expected_witness == witness);
-  }
-}
-
 BOOST_AUTO_TEST_CASE(test_extend_witness_new_em128) {
   namespace tv = faest_tvs::faest_em_128s;
   auto params  = faest_get_paramset(FAEST_EM_128S);
@@ -229,22 +181,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_em128) {
 
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   BOOST_TEST(expected_witness == witness);
-}
-
-BOOST_AUTO_TEST_CASE(test_extend_witness_em128) {
-  namespace tv = faest_tvs::faest_em_128s;
-  auto params  = faest_get_paramset(FAEST_EM_128S);
-
-  if (params->d_zk == 3) {
-    std::vector<uint8_t> witness;
-    witness.resize(params->ell / 8);
-
-    aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(),
-                       params);
-
-    std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
-    BOOST_TEST(expected_witness == witness);
-  }
 }
 
 BOOST_AUTO_TEST_CASE(test_extend_witness_new_em192) {
@@ -261,22 +197,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_em192) {
   BOOST_TEST(expected_witness == witness);
 }
 
-BOOST_AUTO_TEST_CASE(test_extend_witness_em192) {
-  namespace tv = faest_tvs::faest_em_192s;
-  auto params  = faest_get_paramset(FAEST_EM_192S);
-
-  if (params->d_zk == 3) {
-    std::vector<uint8_t> witness;
-    witness.resize(params->ell / 8);
-
-    aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(),
-                       params);
-
-    std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
-    BOOST_TEST(expected_witness == witness);
-  }
-}
-
 BOOST_AUTO_TEST_CASE(test_extend_witness_new_em256) {
   namespace tv = faest_tvs::faest_em_256s;
   auto params  = faest_get_paramset(FAEST_EM_256S);
@@ -289,30 +209,6 @@ BOOST_AUTO_TEST_CASE(test_extend_witness_new_em256) {
 
   std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
   BOOST_TEST(expected_witness == witness);
-}
-
-BOOST_AUTO_TEST_CASE(test_extend_witness_em256) {
-  namespace tv = faest_tvs::faest_em_256s;
-  auto params  = faest_get_paramset(FAEST_EM_256S);
-
-  if (params->d_zk == 3) {
-    std::vector<uint8_t> witness;
-    witness.resize(params->ell / 8);
-
-    aes_extend_witness(witness.data(), tv::sk.data() + params->owf_input_size, tv::sk.data(),
-                       params);
-
-    std::vector<uint8_t> expected_witness{tv::witness.begin(), tv::witness.end()};
-    BOOST_TEST(expected_witness == witness);
-  }
-}
-
-BOOST_AUTO_TEST_CASE(test_invnorm) {
-  BOOST_TEST(invnorm(0x00) == 0);
-  BOOST_TEST(invnorm(0x01) == 1);
-  BOOST_TEST(invnorm(0x02) == (1 << 3 | 1 << 2 | 1));
-  BOOST_TEST(invnorm(0x80) == (1 << 3 | 1 << 2 | 1));
-  BOOST_TEST(invnorm(0x88) == (1 << 2 | 1));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

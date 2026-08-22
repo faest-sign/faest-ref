@@ -76,7 +76,6 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
       name##_SIG_SIZE,                                                                             \
       name##_OWF_INPUT_SIZE,                                                                       \
       name##_OWF_OUTPUT_SIZE,                                                                      \
-      name##_D_ZK,                                                                                 \
       name##_N_MASK,                                                                               \
       name##_N_MULT,                                                                               \
       &other_name##_F[0][0],                                                                       \

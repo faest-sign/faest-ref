@@ -287,6 +287,7 @@ static inline void bf128_dbl_inplace(bf128_t* lhs) {
   BF_VALUE(*lhs, 0) ^= (mask & bf128_modulus);
 }
 
+#if defined(FAEST_TESTS)
 void bf128_sum_poly(bf128_t* dst, const bf128_t* xs) {
   *dst = xs[128 - 1];
   for (size_t i = 1; i < 128; ++i) {
@@ -294,6 +295,7 @@ void bf128_sum_poly(bf128_t* dst, const bf128_t* xs) {
     bf128_add_inplace(dst, &xs[128 - 1 - i]);
   }
 }
+#endif
 
 void bf128_sum_poly_bits(bf128_t* dst, const uint8_t* xs) {
   *dst = bf128_from_bit(ptr_get_bit(xs, 128 - 1));
@@ -512,6 +514,7 @@ static inline void bf192_dbl_inplace(bf192_t* lhs) {
   BF_VALUE(*lhs, 0) ^= (mask & bf192_modulus);
 }
 
+#if defined(FAEST_TESTS)
 void bf192_sum_poly(bf192_t* dst, const bf192_t* xs) {
   *dst = xs[192 - 1];
   for (size_t i = 1; i < 192; ++i) {
@@ -519,6 +522,7 @@ void bf192_sum_poly(bf192_t* dst, const bf192_t* xs) {
     bf192_add_inplace(dst, &xs[192 - 1 - i]);
   }
 }
+#endif
 
 void bf192_sum_poly_bits(bf192_t* dst, const uint8_t* xs) {
   *dst = bf192_from_bit(ptr_get_bit(xs, 192 - 1));
@@ -769,6 +773,7 @@ static inline void bf256_dbl_inplace(bf256_t* lhs) {
 #endif
 }
 
+#if defined(FAEST_TESTS)
 void bf256_sum_poly(bf256_t* dst, const bf256_t* xs) {
   *dst = xs[256 - 1];
   for (size_t i = 1; i < 256; ++i) {
@@ -776,6 +781,7 @@ void bf256_sum_poly(bf256_t* dst, const bf256_t* xs) {
     bf256_add_inplace(dst, &xs[256 - 1 - i]);
   }
 }
+#endif
 
 void bf256_sum_poly_bits(bf256_t* dst, const uint8_t* xs) {
   *dst = bf256_from_bit(ptr_get_bit(xs, 256 - 1));

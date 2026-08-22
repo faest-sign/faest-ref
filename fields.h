@@ -291,7 +291,9 @@ bf128_mul_bit(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
 #else
 void bf128_mul_bit(bf128_t* dst, const bf128_t* lhs, uint8_t rhs);
 #endif
+#if defined(FAEST_TESTS)
 void bf128_sum_poly(bf128_t* dst, const bf128_t* xs);
+#endif
 void bf128_sum_poly_bits(bf128_t* dst, const uint8_t* xs);
 
 // GF(2^192) implemenation
@@ -385,7 +387,9 @@ bf192_mul_bit(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
 #else
 void bf192_mul_bit(bf192_t* dst, const bf192_t* lhs, uint8_t rhs);
 #endif
+#if defined(FAEST_TESTS)
 void bf192_sum_poly(bf192_t* dst, const bf192_t* xs);
+#endif
 void bf192_sum_poly_bits(bf192_t* dst, const uint8_t* xs);
 
 // GF(2^256) implementation
@@ -476,7 +480,9 @@ bf256_mul_bit(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
 #else
 void bf256_mul_bit(bf256_t* dst, const bf256_t* lhs, uint8_t rhs);
 #endif
+#if defined(FAEST_TESTS)
 void bf256_sum_poly(bf256_t* dst, const bf256_t* xs);
+#endif
 void bf256_sum_poly_bits(bf256_t* dst, const uint8_t* xs);
 
 // GF(2^384) implementation
