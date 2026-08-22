@@ -143,53 +143,42 @@ void column_to_row_major(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bi
     }
   }
 }
-// ---
-// NOTE: --- Possibly Claude generated code, don't remeber anymore
+
 void gf2_poly_mul_ct(const uint8_t* a, size_t a_bits, const uint8_t* b, size_t b_bits,
                      uint8_t* out) {
   size_t out_bits  = a_bits + b_bits - 1;
   size_t out_bytes = (out_bits + 7) / 8;
   memset(out, 0, out_bytes);
+
   for (size_t i = 0; i < a_bits; i++) {
-    uint8_t ai   = ptr_get_bit(a, i);
-    uint8_t mask = (uint8_t)(0u - ai);
+    uint8_t mask = -ptr_get_bit(a, i);
     for (size_t j = 0; j < b_bits; j++) {
       uint8_t bj = ptr_get_bit(b, j);
-      size_t k   = i + j;
-      out[k / 8] ^= (uint8_t)((bj & mask) << (k % 8));
+      ptr_xor_bit(out, i + j, bj & mask);
     }
   }
 }
-// ---
-// NOTE: --- Possibly Claude generated code, don't remeber anymore
+
 void gf2_poly_reduce_ct(const uint8_t* a, size_t a_bits, const uint8_t* m, size_t m_bits,
                         uint8_t* out) {
   size_t a_bytes   = (a_bits + 7) / 8;
   size_t out_bytes = (m_bits + 7) / 8;
 
+  memset(out, 0, out_bytes);
   memcpy(out, a, a_bytes);
 
-  size_t top_pad = out_bytes * 8;
-  for (size_t i = a_bits; i < top_pad; i++) {
-    ptr_set_bit(out, i, 0);
-  }
-
   size_t mdeg = m_bits - 1;
-
   for (size_t i = a_bits; i-- > mdeg;) {
-    uint8_t lead = ptr_get_bit(out, i);
-    uint8_t mask = (uint8_t)(0u - lead);
-
+    uint8_t mask = -ptr_get_bit(out, i);
     size_t shift = i - mdeg;
 
     for (size_t j = 0; j < m_bits; j++) {
       uint8_t mj = ptr_get_bit(m, j);
-      size_t k   = shift + j;
-      out[k / 8] ^= (uint8_t)((mj & mask) << (k % 8));
+      ptr_xor_bit(out, shift + j, mj & mask);
     }
 
-    if (i == 0)
+    if (i == 0) {
       break;
+    }
   }
 }
-// ----
