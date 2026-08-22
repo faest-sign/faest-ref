@@ -140,16 +140,16 @@ void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params) {
 }
 
 // H5
-void H5(const uint8_t* iv, uint32_t e, const uint8_t* L_e, uint8_t* digest, 
-        unsigned int L_e_len, unsigned int digest_bit_len, unsigned int security_params) {
-  
+void H5(const uint8_t* iv, uint32_t e, const uint8_t* L_e, uint8_t* digest, unsigned int L_e_len,
+        unsigned int digest_bit_len, unsigned int security_params) {
+
   const uint8_t a = 0x05;
   // NOTE: We use digest_masked because the hash returns bytewise, with the not
   // needed bits also set to something. In the test cases, the non-required bits are
   // expected to be zero, thus padding with zeros in digest_masked and copying the
   // required bits
   unsigned int digest_byte = (digest_bit_len + 7) / 8;
-  uint8_t* digest_masked = malloc(digest_byte);
+  uint8_t* digest_masked   = malloc(digest_byte);
   memset(digest_masked, 0, digest_byte);
 
   hash_context ctx;
@@ -167,5 +167,4 @@ void H5(const uint8_t* iv, uint32_t e, const uint8_t* L_e, uint8_t* digest,
   }
   memcpy(digest, digest_masked, digest_byte);
   free(digest_masked);
-
 }

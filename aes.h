@@ -65,7 +65,7 @@ void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
                         const faest_paramset_t* params);
 
 void aes_extend_witness_new(uint8_t* w, const uint8_t* key, const uint8_t* in,
-                        const faest_paramset_t* params);
+                            const faest_paramset_t* params);
 
 void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
                 unsigned int block_words, unsigned int num_rounds);

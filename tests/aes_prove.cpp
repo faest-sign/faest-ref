@@ -160,67 +160,65 @@ BOOST_AUTO_TEST_SUITE(test_aes_prove)
 
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const faest_paramset_t* params = faest_get_paramset(param_id);
-    const bool is_em               = faest_is_em(params);
-    const unsigned int lambda      = params->faest_param.lambda;
-    const unsigned int lambdaBytes = lambda / 8;
-    const unsigned int ell = params->faest_param.l;
+    const faest_paramset_t* params   = faest_get_paramset(param_id);
+    const bool is_em                 = faest_is_em(params);
+    const unsigned int lambda        = params->faest_param.lambda;
+    const unsigned int lambdaBytes   = lambda / 8;
+    const unsigned int ell           = params->faest_param.l;
     const unsigned int tau           = params->tau;
-    const unsigned int k              = params->k;
-    const unsigned int tau1           = params->tau1;
+    const unsigned int k             = params->k;
+    const unsigned int tau1          = params->tau1;
     const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
     const unsigned int n_mask        = params->n_mask;
     const unsigned int ell_hat       = ell + n_mask * d0;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-    const unsigned int ell_bytes = (params->faest_param.ell + 7) / 8;
+    const unsigned int ell_bytes     = (params->faest_param.ell + 7) / 8;
 
     // extended witness
-    //std::vector<uint8_t> w;
+    // std::vector<uint8_t> w;
     std::vector<uint8_t> in;
     std::vector<uint8_t> out;
 
     if (lambda == 256 && !is_em) {
       for (const auto byte : aes_ctr_256_tv::in) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              in.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          in.push_back((byte >> bit_i) & 1);
+        }
       }
       for (const auto byte : aes_ctr_256_tv::out) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              out.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          out.push_back((byte >> bit_i) & 1);
+        }
       }
     } else if (lambda == 256 && is_em) {
       for (const auto byte : rijndael_em_256_tv::in) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              in.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          in.push_back((byte >> bit_i) & 1);
+        }
       }
       for (const auto byte : rijndael_em_256_tv::out) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              out.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          out.push_back((byte >> bit_i) & 1);
+        }
       }
-    }
-    else {
+    } else {
       return;
     }
 
     if (params->d_zk == 3) {
       uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
-    }
-    else {
+    } else {
       uint8_t* w = aes_extend_witness_new(in.data(), out.data(), params);
     }
-    std::vector<uint8_t> w_bits(ell, 0x00);  // 1 bit in per uint8_t
+    std::vector<uint8_t> w_bits(ell, 0x00); // 1 bit in per uint8_t
     for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
-      w_bits[bit_i] = (w[bit_i/8] >> bit_i%8) & 1;
+      w_bits[bit_i] = (w[bit_i / 8] >> bit_i % 8) & 1;
     }
 
     // prepare vole correlation
     std::vector<uint8_t> delta(lambda / 8, 0);
     for (size_t i = 0; i < lambda / 8; ++i) {
-      delta[i] = (uint8_t) i;
+      delta[i] = (uint8_t)i;
     }
     std::vector<uint8_t> u(ell_hat_bytes, 0x13);
     std::vector<uint8_t> vs(ell_hat_bytes * lambda, 0x37);
@@ -259,16 +257,16 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     std::vector<uint8_t> a2_tilde(lambda / 8, 0);
 
     bf256_t bf_delta = bf256_load(delta.data());
-    bf256_t* q = column_to_row_major_and_shrink_V_256(Q.data(), ell);
+    bf256_t* q       = column_to_row_major_and_shrink_V_256(Q.data(), ell);
 
-    bf256_t* w_tag = column_to_row_major_and_shrink_V_256(V.data(), ell);
-    bf256_t* bf_u_bits = (bf256_t*) malloc(2*lambda * sizeof(bf256_t));
+    bf256_t* w_tag     = column_to_row_major_and_shrink_V_256(V.data(), ell);
+    bf256_t* bf_u_bits = (bf256_t*)malloc(2 * lambda * sizeof(bf256_t));
 
-    for (unsigned int bit_i = 0; bit_i < 2*lambda; bit_i++) {
-      u_bits[bit_i] = (u[(ell + bit_i)/8] >> (ell + bit_i)%8) & 1;
+    for (unsigned int bit_i = 0; bit_i < 2 * lambda; bit_i++) {
+      u_bits[bit_i]    = (u[(ell + bit_i) / 8] >> (ell + bit_i) % 8) & 1;
       bf_u_bits[bit_i] = bf256_from_bit(u_bits[bit_i]);
     }
-    bf256_t q_star_0 = bf256_sum_poly(q + ell);
+    bf256_t q_star_0    = bf256_sum_poly(q + ell);
     bf256_t bf_u_star_0 = bf256_sum_poly(bf_u_bits);
     bf256_t bf_v_star_0 = bf256_sum_poly(w_tag + ell);
 
@@ -301,71 +299,67 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   }
 }
 
-
-
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const faest_paramset_t* params = faest_get_paramset(param_id);
-    const bool is_em               = faest_is_em(params);
-    const unsigned int lambda      = params->faest_param.lambda;
-    const unsigned int lambdaBytes = lambda / 8;
-    const unsigned int ell = params->faest_param.l;
+    const faest_paramset_t* params   = faest_get_paramset(param_id);
+    const bool is_em                 = faest_is_em(params);
+    const unsigned int lambda        = params->faest_param.lambda;
+    const unsigned int lambdaBytes   = lambda / 8;
+    const unsigned int ell           = params->faest_param.l;
     const unsigned int tau           = params->tau;
-    const unsigned int k              = params->k;
-    const unsigned int tau1           = params->tau1;
+    const unsigned int k             = params->k;
+    const unsigned int tau1          = params->tau1;
     const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
     const unsigned int n_mask        = params->n_mask;
     const unsigned int ell_hat       = ell + n_mask * d0;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-    const unsigned int ell_bytes = (params->faest_param.ell + 7) / 8;
+    const unsigned int ell_bytes     = (params->faest_param.ell + 7) / 8;
 
     // extended witness
-    //std::vector<uint8_t> w;
+    // std::vector<uint8_t> w;
     std::vector<uint8_t> in;
     std::vector<uint8_t> out;
 
     if (lambda == 192 && !is_em) {
       for (const auto byte : aes_ctr_192_tv::in) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              in.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          in.push_back((byte >> bit_i) & 1);
+        }
       }
       for (const auto byte : aes_ctr_192_tv::out) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              out.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          out.push_back((byte >> bit_i) & 1);
+        }
       }
     } else if (lambda == 192 && is_em) {
       for (const auto byte : rijndael_em_192_tv::in) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              in.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          in.push_back((byte >> bit_i) & 1);
+        }
       }
       for (const auto byte : rijndael_em_192_tv::out) {
-          for (size_t bit_i = 0; bit_i < ell; bit_i++) {
-              out.push_back((byte >> bit_i) & 1);
-          }
+        for (size_t bit_i = 0; bit_i < ell; bit_i++) {
+          out.push_back((byte >> bit_i) & 1);
+        }
       }
-    }
-    else {
+    } else {
       return;
     }
 
     if (params->d_zk == 3) {
       uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
-    }
-    else {
+    } else {
       uint8_t* w = aes_extend_witness_new(in.data(), out.data(), params);
     }
-    std::vector<uint8_t> w_bits(ell, 0x00);  // 1 bit in per uint8_t
+    std::vector<uint8_t> w_bits(ell, 0x00); // 1 bit in per uint8_t
     for (unsigned int bit_i = 0; bit_i < ell; bit_i++) {
-      w_bits[bit_i] = (w[bit_i/8] >> bit_i%8) & 1;
+      w_bits[bit_i] = (w[bit_i / 8] >> bit_i % 8) & 1;
     }
 
     // prepare vole correlation
     std::vector<uint8_t> delta(lambda / 8, 0);
     for (size_t i = 0; i < lambda / 8; ++i) {
-      delta[i] = (uint8_t) i;
+      delta[i] = (uint8_t)i;
     }
     std::vector<uint8_t> u(ell_hat_bytes, 0x13);
     std::vector<uint8_t> vs(ell_hat_bytes * lambda, 0x37);
@@ -404,16 +398,16 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
     std::vector<uint8_t> a2_tilde(lambda / 8, 0);
 
     bf192_t bf_delta = bf192_load(delta.data());
-    bf192_t* q = column_to_row_major_and_shrink_V_192(Q.data(), ell);
+    bf192_t* q       = column_to_row_major_and_shrink_V_192(Q.data(), ell);
 
-    bf192_t* w_tag = column_to_row_major_and_shrink_V_192(V.data(), ell);
-    bf192_t* bf_u_bits = (bf192_t*) malloc(2*lambda * sizeof(bf192_t));
+    bf192_t* w_tag     = column_to_row_major_and_shrink_V_192(V.data(), ell);
+    bf192_t* bf_u_bits = (bf192_t*)malloc(2 * lambda * sizeof(bf192_t));
 
-    for (unsigned int bit_i = 0; bit_i < 2*lambda; bit_i++) {
-      u_bits[bit_i] = (u[(ell + bit_i)/8] >> (ell + bit_i)%8) & 1;
+    for (unsigned int bit_i = 0; bit_i < 2 * lambda; bit_i++) {
+      u_bits[bit_i]    = (u[(ell + bit_i) / 8] >> (ell + bit_i) % 8) & 1;
       bf_u_bits[bit_i] = bf192_from_bit(u_bits[bit_i]);
     }
-    bf192_t q_star_0 = bf192_sum_poly(q + ell);
+    bf192_t q_star_0    = bf192_sum_poly(q + ell);
     bf192_t bf_u_star_0 = bf192_sum_poly(bf_u_bits);
     bf192_t bf_v_star_0 = bf192_sum_poly(w_tag + ell);
 
@@ -446,17 +440,16 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   }
 }
 
-
 BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
   BOOST_TEST_CONTEXT("Parameter set: " << faest_get_param_name(param_id)) {
-    const faest_paramset_t* params = faest_get_paramset(param_id);
-    const bool is_em               = faest_is_em(params);
-    const unsigned int lambda      = params->faest_param.lambda;
-    const unsigned int lambdaBytes = lambda / 8;
-    const unsigned int ell         = params->faest_param.l;
+    const faest_paramset_t* params   = faest_get_paramset(param_id);
+    const bool is_em                 = faest_is_em(params);
+    const unsigned int lambda        = params->faest_param.lambda;
+    const unsigned int lambdaBytes   = lambda / 8;
+    const unsigned int ell           = params->faest_param.l;
     const unsigned int tau           = params->tau;
-    const unsigned int k              = params->k;
-    const unsigned int tau1           = params->tau1;
+    const unsigned int k             = params->k;
+    const unsigned int tau1          = params->tau1;
     const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
     const unsigned int n_mask        = params->n_mask;
     const unsigned int ell_hat       = ell + n_mask * d0;
@@ -496,8 +489,7 @@ BOOST_DATA_TEST_CASE(aes_prove_verify, all_parameters, param_id) {
 
     if (params->d_zk == 3) {
       uint8_t* w = aes_extend_witness(in.data(), out.data(), params);
-    }
-    else {
+    } else {
       uint8_t* w = aes_extend_witness_new(in.data(), out.data(), params);
     }
     std::vector<uint8_t> w_bits(ell, 0x00); // 1 bit in per uint8_t

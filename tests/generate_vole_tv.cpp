@@ -39,22 +39,23 @@ int main() {
     const auto params                = *faest_get_paramset(param_id);
     const unsigned int lambda        = params.lambda;
     const unsigned int lambda_bytes  = lambda / 8;
-    const unsigned int ell            = params.ell;
-    const unsigned int ell_bytes      = (ell + 7) / 8;
-    const unsigned int k              = params.k;
-    const unsigned int tau1           = params.tau1;
+    const unsigned int ell           = params.ell;
+    const unsigned int ell_bytes     = (ell + 7) / 8;
+    const unsigned int k             = params.k;
+    const unsigned int tau1          = params.tau1;
     const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
     const unsigned int n_mask        = params.n_mask;
     const unsigned int ell_hat       = ell + n_mask * d0;
-    const unsigned int ell_hat_bytes = (ell_hat +7) / 8;
+    const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
-    const auto n_mask_bytes           = (n_mask + 7) / 8;
-    const auto n_mult                 = params.n_mult;
-    const auto n_mult_bytes           = (n_mult + 7) / 8;
+    const auto n_mask_bytes          = (n_mask + 7) / 8;
+    const auto n_mult                = params.n_mult;
+    const auto n_mult_bytes          = (n_mult + 7) / 8;
 
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, c_mult, decom_i, u, u_bar, v_bar, q_bar, delta_prime, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult, decom_i, u, u_bar, v_bar, q_bar, delta_prime, q_storage,
+        v_storage;
     chal.resize(lambda_bytes);
     c.resize((params.tau - 1) * ell_bytes);
     c_mult.resize(n_mask * n_mult_bytes);
@@ -97,10 +98,9 @@ int main() {
     print_named_array("hashed_c", "uint8_t", hash_array(c));
     print_named_array("hashed_u", "uint8_t", hash_array(u));
 
-    // NOTE: --- Claude generated code 
-    // This arranges the c_mult into the required ordering similar to pyfaest implementation and its TVs 
-    // size_t nb        = (n_mult + 7) / 8;
-    // size_t packed_len = n_mask * nb;
+    // NOTE: --- Claude generated code
+    // This arranges the c_mult into the required ordering similar to pyfaest implementation and its
+    // TVs size_t nb        = (n_mult + 7) / 8; size_t packed_len = n_mask * nb;
     // std::vector<uint8_t> c_mult_packed(packed_len, 0);
     // for (size_t i = 0; i < n_mask; ++i) {
     //     for (size_t j = 0; j < n_mult; ++j) {
@@ -114,16 +114,17 @@ int main() {
     // print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult_packed));
     print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult));
 
-    // NOTE: --- Claude generated code 
-    // This arranges the v_storage into the required ordering similar to pyfaest implementation and its TVs 
-    size_t ncols        = ell;
+    // NOTE: --- Claude generated code
+    // This arranges the v_storage into the required ordering similar to pyfaest implementation and
+    // its TVs
+    size_t ncols = ell;
     std::vector<uint8_t> mV_bytes(ncols * lambda_bytes, 0);
     for (size_t ncols_idx = 0; ncols_idx < ncols; ++ncols_idx) {
       for (size_t r = 0; r < lambda; ++r) {
-          const uint8_t* srow = v_storage.data() + r * ell_hat_bytes;
-          uint8_t bit = (srow[ncols_idx >> 3] >> (ncols_idx & 7)) & 1u;
-          size_t  pos = ncols_idx * lambda + r;
-          mV_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+        const uint8_t* srow = v_storage.data() + r * ell_hat_bytes;
+        uint8_t bit         = (srow[ncols_idx >> 3] >> (ncols_idx & 7)) & 1u;
+        size_t pos          = ncols_idx * lambda + r;
+        mV_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
       }
     }
     // ---
@@ -147,18 +148,19 @@ int main() {
 
       std::vector<uint8_t> hcom_rec;
       hcom_rec.resize(lambda_bytes * 2);
-      vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
-                                  c.data(), c_mult.data(), q_bar.data(), delta_prime.data(), ell_hat, &params);
+      vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(), c.data(),
+                       c_mult.data(), q_bar.data(), delta_prime.data(), ell_hat, &params);
 
-      // NOTE: --- Claude generated code 
-      // This arranges the q_storage into the required ordering similar to pyfaest implementation and its TVs
+      // NOTE: --- Claude generated code
+      // This arranges the q_storage into the required ordering similar to pyfaest implementation
+      // and its TVs
       std::vector<uint8_t> mQ_bytes(ncols * lambda_bytes, 0);
       for (size_t ncols_idx = 0; ncols_idx < ncols; ++ncols_idx) {
         for (size_t r = 0; r < lambda; ++r) {
-            const uint8_t* srow = q_storage.data() + r * ell_hat_bytes;
-            uint8_t bit = (srow[ncols_idx >> 3] >> (ncols_idx & 7)) & 1u;
-            size_t  pos = ncols_idx * lambda + r;
-            mQ_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+          const uint8_t* srow = q_storage.data() + r * ell_hat_bytes;
+          uint8_t bit         = (srow[ncols_idx >> 3] >> (ncols_idx & 7)) & 1u;
+          size_t pos          = ncols_idx * lambda + r;
+          mQ_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
         }
       }
       // ----
@@ -167,14 +169,12 @@ int main() {
 
       break;
     }
-    
+
     print_named_array("chall", "uint8_t", chal);
 
     bavc_clear(&bavc_com);
     std::cout << "}\n";
   }
-
-
 
   std::cout << "}\n\n#endif" << std::endl;
 }

@@ -222,8 +222,7 @@ ATTR_CONST static bf8_t bf_exp_238(bf8_t x) {
 #if !defined(FAEST_TESTS)
 static
 #endif
-    uint8_t
-    invnorm(uint8_t in) {
+    uint8_t invnorm(uint8_t in) {
   // instead of computing in^(-17), we calculate in^238
   in = bf_exp_238(in);
   return set_bit(get_bit(in, 0), 0) ^ set_bit(get_bit(in, 6), 1) ^ set_bit(get_bit(in, 7), 2) ^
@@ -916,9 +915,8 @@ void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
   generic_prg(key, internal_iv, out, seclvl, seclvl * 4 / 8);
 }
 
-
 void aes_extend_witness_new(uint8_t* w, const uint8_t* key, const uint8_t* in,
-                        const faest_paramset_t* params) {
+                            const faest_paramset_t* params) {
   const unsigned int lambda      = params->lambda;
   const unsigned int num_rounds  = params->R;
   const unsigned int blocksize   = 32 * params->Nst;
@@ -1058,8 +1056,7 @@ void aes_extend_witness_new(uint8_t* w, const uint8_t* key, const uint8_t* in,
   // assert(w - w_out == params->ell / 8);
 
   // TODO: commit this
-  switch (lambda)
-  {
+  switch (lambda) {
   case 256:
     if (params->ell == 2208 && params->ell == 1792) {
       assert(w - w_out == params->ell / 8);
@@ -1069,16 +1066,14 @@ void aes_extend_witness_new(uint8_t* w, const uint8_t* key, const uint8_t* in,
     if (params->ell == 1728 && params->ell == 1152) {
       assert(w - w_out == params->ell / 8);
     }
-    break;  
+    break;
   default:
     if ((!is_em && params->ell == 960) || params->ell == 640) {
       assert(w - w_out == params->ell / 8);
     }
     break;
   }
-  
 }
-
 
 void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
                         const faest_paramset_t* params) {

@@ -20,7 +20,7 @@
 #else
 #define FAEST_SA_CONCAT_(a, b) a##b
 #define FAEST_SA_CONCAT(a, b) FAEST_SA_CONCAT_(a, b)
-#define FAEST_STATIC_ASSERT(c, m) \
+#define FAEST_STATIC_ASSERT(c, m)                                                                  \
   typedef char FAEST_SA_CONCAT(faest_static_assert_, __LINE__)[(c) ? 1 : -1]
 #endif
 #endif
