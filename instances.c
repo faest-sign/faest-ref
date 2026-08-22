@@ -16,6 +16,7 @@
 #include "tables/tables_256s.h"
 #include "tables/tables_256f.h"
 
+#if defined(FAEST_TESTS)
 const char* faest_get_param_name(faest_paramid_t paramid) {
   switch (paramid) {
   case PARAMETER_SET_INVALID:
@@ -48,6 +49,7 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
     return "PARAMETER_SET_MAX_INDEX";
   }
 }
+#endif
 
 #define CALC_TAU1(name) ((name##_LAMBDA - name##_W_GRIND) % name##_TAU)
 #define CALC_TAU0(name) (name##_TAU - CALC_TAU1(name))

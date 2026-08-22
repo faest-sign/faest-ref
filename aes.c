@@ -228,6 +228,7 @@ static void aes_encrypt(const aes_round_keys_t* keys, aes_block_t state, unsigne
   add_round_key(num_rounds, state, keys, block_words);
 }
 
+#if defined(FAEST_TESTS)
 void aes128_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext) {
   aes_block_t state;
@@ -251,6 +252,7 @@ void aes256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
   aes_encrypt(key, state, AES_BLOCK_WORDS, AES_ROUNDS_256);
   store_state(ciphertext, state, AES_BLOCK_WORDS);
 }
+#endif
 
 void rijndael192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                                uint8_t* ciphertext) {

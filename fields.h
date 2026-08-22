@@ -197,7 +197,9 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_add(bf64
   return lhs ^ rhs;
 }
 
+#if defined(FAEST_TESTS)
 ATTR_CONST bf64_t bf64_mul(bf64_t lhs, bf64_t rhs);
+#endif
 
 ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit(uint8_t bit) {
   return bit & 1;

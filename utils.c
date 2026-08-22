@@ -17,41 +17,6 @@ static inline uint16_t num_rec_2(const uint8_t* v) {
   return le16toh(r);
 }
 
-void unpack_uint8(uint8_t* unpacked, const uint8_t* packed, unsigned int row_bits,
-                  unsigned int col_bits) {
-
-  unsigned int unpacked_bit_idx = 0;
-  unsigned int unpacked_bytes   = row_bits * ((col_bits + 7) / 8);
-  memset(unpacked, 0, unpacked_bytes);
-
-  unsigned int col_bits_bytes = (col_bits + 7) / 8;
-
-  for (unsigned int row_bit_idx = 0; row_bit_idx < row_bits; row_bit_idx++) {
-    for (unsigned int col_bit_idx = 0; col_bit_idx < col_bits; col_bit_idx++) {
-
-      ptr_set_bit(unpacked + row_bit_idx * col_bits_bytes, col_bit_idx,
-                  ptr_get_bit(packed, unpacked_bit_idx));
-
-      unpacked_bit_idx++;
-    }
-  }
-}
-
-void pack_uint8(uint8_t* packed, const uint8_t* unpacked, unsigned int row_bits,
-                unsigned int col_bits) {
-
-  unsigned int packed_bit_idx = 0;
-  unsigned int col_bits_bytes = (col_bits + 7) / 8;
-  for (unsigned int row_bit_idx = 0; row_bit_idx < row_bits; row_bit_idx++) {
-    for (unsigned int col_bit_idx = 0; col_bit_idx < col_bits; col_bit_idx++) {
-      ptr_set_bit(packed, packed_bit_idx,
-                  ptr_get_bit(unpacked + row_bit_idx * col_bits_bytes, col_bit_idx));
-
-      packed_bit_idx++;
-    }
-  }
-}
-
 // DecodeChall_3
 static bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigned int i,
                            const faest_paramset_t* params) {
@@ -108,6 +73,7 @@ void masked_xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, uint8
   }
 }
 
+#if 0
 void print_u8_array(const char* label, const uint8_t* arr, size_t m) {
   printf("%s: ", label);
   for (size_t i = 0; i < m; i++) {
@@ -126,6 +92,7 @@ void print_u8_array_bits(const char* label, const uint8_t* arr, size_t m) {
   }
   printf("\n");
 }
+#endif
 
 void column_to_row_major(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
                          unsigned int v_col_bits_len) {

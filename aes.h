@@ -45,12 +45,14 @@ void aes256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key);
 void rijndael192_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key);
 void rijndael256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key);
 
+#if defined(FAEST_TESTS)
 void aes128_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext);
 void aes192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext);
 void aes256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext);
+#endif
 void rijndael192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                                uint8_t* ciphertext);
 void rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,

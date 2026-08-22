@@ -8,12 +8,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "compat.h"
 #include "macros.h"
 #include "instances.h"
-#include <stdio.h>
-#include <assert.h>
 
 FAEST_BEGIN_C_DECL
 
@@ -29,12 +28,6 @@ FAEST_BEGIN_C_DECL
 
 #define ptr_xor_bit(dst, index, value) (dst)[(index) / 8] ^= ((value) & 1u) << ((index) % 8)
 
-void unpack_uint8(uint8_t* unpacked, const uint8_t* packed, unsigned int row_bits,
-                  unsigned int col_bits);
-
-void pack_uint8(uint8_t* packed, const uint8_t* unpacked, unsigned int row_bits,
-                unsigned int col_bits);
-
 // DecodeAllChall_3
 bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
                         const faest_paramset_t* params);
@@ -44,9 +37,11 @@ void xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, size_t len);
 void masked_xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, uint8_t mask_bit,
                          size_t len);
 
+#if 0
 void print_u8_array(const char* label, const uint8_t* arr, size_t m);
 
 void print_u8_array_bits(const char* label, const uint8_t* arr, size_t m);
+#endif
 
 void column_to_row_major(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
                          unsigned int v_col_bits_len);

@@ -92,7 +92,9 @@ typedef struct faest_paramset_t {
   unsigned int m_tree_words;
 } faest_paramset_t;
 
+#if defined(FAEST_TESTS)
 ATTR_CONST const char* faest_get_param_name(faest_paramid_t paramid);
+#endif
 ATTR_CONST const faest_paramset_t* faest_get_paramset(faest_paramid_t paramid);
 
 ATTR_PURE ATTR_ALWAYS_INLINE static inline bool faest_is_em(const faest_paramset_t* params) {

@@ -79,6 +79,7 @@ bf8_t bf8_inv(bf8_t in) {
 
 // GF(2^64) implementation
 
+#if defined(FAEST_TESTS)
 bf64_t bf64_mul(bf64_t lhs, bf64_t rhs) {
   bf64_t result = (-(rhs & 1)) & lhs;
   for (unsigned int idx = 1; idx != 64; ++idx) {
@@ -88,6 +89,7 @@ bf64_t bf64_mul(bf64_t lhs, bf64_t rhs) {
   }
   return result;
 }
+#endif
 
 #define bf64_bit_to_mask(value, bit) -((((uint64_t)(value)) >> (bit)) & 1)
 
