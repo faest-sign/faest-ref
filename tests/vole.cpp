@@ -339,7 +339,7 @@ namespace {
       const uint32_t deg = bavc_max_node_depth(i, tau1, k); // == tree_deg[i]
       const auto delta   = i_delta[i];                      // == I[i]
       for (unsigned int t = 0; t < deg; ++t) {
-        xor_bit_to_pt(Dp, off + t, (delta >> t) & 1); // Dp |= ((I[i]>>t)&1) << (off+t)
+        ptr_xor_bit(Dp, off + t, delta >> t); // Dp |= ((I[i]>>t)&1) << (off+t)
       }
       off += deg;
     }
@@ -355,7 +355,7 @@ namespace {
                ptr_get_bit((uint8_t*)&TBL_U8(params->W_CRT, params->w_crt_words, col)[row / 64],
                            row % 64);
       }
-      xor_bit_to_pt(Delta, col, acc);
+      ptr_xor_bit(Delta, col, acc);
     }
 
     assert(off == lambda_minus_w_grind);

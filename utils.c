@@ -100,11 +100,6 @@ void xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, size_t len) 
   }
 }
 
-void xor_bit_to_pt(uint8_t* p, size_t i, uint8_t v) {
-  size_t byte = i / 8;
-  p[byte] ^= (uint8_t)((v & 1u) << (i % 8));
-}
-
 void masked_xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, uint8_t mask_bit,
                          size_t len) {
   uint8_t mask = -(mask_bit & 1);

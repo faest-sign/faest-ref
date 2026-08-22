@@ -27,6 +27,8 @@ FAEST_BEGIN_C_DECL
                          ((value) << ptr_set_bit_index_mod_8);                                     \
   } while (0)
 
+#define ptr_xor_bit(dst, index, value) (dst)[(index) / 8] ^= ((value) & 1u) << ((index) % 8)
+
 void unpack_uint8(uint8_t* unpacked, const uint8_t* packed, unsigned int row_bits,
                   unsigned int col_bits);
 
@@ -38,8 +40,6 @@ bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
                         const faest_paramset_t* params);
 
 void xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, size_t len);
-
-void xor_bit_to_pt(uint8_t* p, size_t i, uint8_t v);
 
 void masked_xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, uint8_t mask_bit,
                          size_t len);
