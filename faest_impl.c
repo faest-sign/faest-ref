@@ -226,9 +226,8 @@ ATTR_PURE static inline const uint8_t* dsignature_d(const uint8_t* base_ptr,
   return base_ptr + (params->tau - 1) * ell_bytes + c_mult_bytes + utilde_bytes;
 }
 
-// We do not need to store a0_tilde in the signature
-ATTR_PURE static inline uint8_t* dsignature_a1toi_tilde(uint8_t* base_ptr,
-                                                        const faest_paramset_t* params) {
+ATTR_PURE static inline const uint8_t* dsignature_a1toi_tilde(const uint8_t* base_ptr,
+                                                              const faest_paramset_t* params) {
   const unsigned int lambda_bytes = params->lambda / 8;
   const unsigned int ell          = params->ell;
   const unsigned int ell_bytes    = (ell + 7) / 8;
@@ -503,7 +502,7 @@ static inline void aes_verify(uint8_t* a0_tilde, const uint8_t* d, const uint8_t
 }
 
 static inline void compute_D(uint8_t* D, const uint8_t* Q_tilde, const uint8_t* delta,
-                             uint8_t* u_tilde, const faest_paramset_t* params) {
+                             const uint8_t* u_tilde, const faest_paramset_t* params) {
   unsigned int lambda_bytes = params->lambda / 8;
   switch (params->lambda) {
   case 256: {
@@ -578,7 +577,6 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   const unsigned int n_mult        = params->n_mult;
   const unsigned int n_mult_bytes  = (n_mult + 7) / 8;
   const unsigned int n_mask        = params->n_mask;
-  const unsigned int n_mask_bytes  = (n_mask + 7) / 8;
   const unsigned int ell_hat       = ell + n_mask * d0;
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
   const unsigned int w_grind       = params->w_grind;
@@ -845,26 +843,20 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
 int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,
                  const uint8_t* owf_output, const faest_paramset_t* params) {
-  const unsigned int ell                        = params->ell;
-  const unsigned int ell_bytes                  = (ell + 7) / 8;
-  const unsigned int lambda                     = params->lambda;
-  const unsigned int lambda_bytes               = lambda / 8;
-  const unsigned int d_zk                       = params->d_zk;
-  const unsigned int tau                        = params->tau;
-  const unsigned int k                          = params->k;
-  const unsigned int tau1                       = params->tau1;
-  const unsigned int d0                         = bavc_max_node_depth(0, tau1, k);
-  const unsigned int n_mult                     = params->n_mult;
-  const unsigned int n_mult_bytes               = (n_mult + 7) / 8;
-  const unsigned int n_mask                     = params->n_mask;
-  const unsigned int n_mask_bytes               = (n_mask + 7) / 8;
-  const unsigned int ell_hat                    = ell + n_mask * d0;
-  const unsigned int ell_hat_bytes              = (ell_hat + 7) / 8;
-  const unsigned int utilde_bytes               = lambda_bytes * 4;
-  const unsigned int c_mult_bytes               = n_mask * n_mult_bytes;
-  const unsigned int w_grind                    = params->w_grind;
-  const unsigned int lambda_minus_w_grind       = lambda - w_grind;
-  const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7) / 8;
+  const unsigned int ell           = params->ell;
+  const unsigned int lambda        = params->lambda;
+  const unsigned int lambda_bytes  = lambda / 8;
+  const unsigned int d_zk          = params->d_zk;
+  const unsigned int tau           = params->tau;
+  const unsigned int k             = params->k;
+  const unsigned int tau1          = params->tau1;
+  const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
+  const unsigned int n_mult        = params->n_mult;
+  const unsigned int n_mult_bytes  = (n_mult + 7) / 8;
+  const unsigned int n_mask        = params->n_mask;
+  const unsigned int ell_hat       = ell + n_mask * d0;
+  const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
+  const unsigned int c_mult_bytes  = n_mask * n_mult_bytes;
 
   // line 3
   if (!check_challenge_3(dsignature_chall_3(sig, params), lambda - params->w_grind, lambda)) {
