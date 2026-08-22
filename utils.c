@@ -132,7 +132,6 @@ void print_u8_array_bits(const char* label, const uint8_t* arr, size_t m) {
   printf("\n");
 }
 
-// NOTE: --- Possibly Claude generated code, don't remeber anymore
 void column_to_row_major(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
                          unsigned int v_col_bits_len) {
 
@@ -199,12 +198,3 @@ void gf2_poly_reduce_ct(const uint8_t* a, size_t a_bits, const uint8_t* m, size_
   }
 }
 // ----
-
-int highest_set_bit_pos_u64(uint64_t x) {
-  int pos = 0;
-  while (x) {
-    pos++;
-    x >>= 1;
-  }
-  return pos;
-}

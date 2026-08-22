@@ -57,8 +57,6 @@ void gf2_poly_mul_ct(const uint8_t* a, size_t a_bits, const uint8_t* b, size_t b
 void gf2_poly_reduce_ct(const uint8_t* a, size_t a_bits, const uint8_t* m, size_t m_bits,
                         uint8_t* out);
 
-int highest_set_bit_pos_u64(uint64_t x);
-
 FAEST_END_C_DECL
 
 #endif
