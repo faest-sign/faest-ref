@@ -423,6 +423,18 @@ static inline bool check_challenge_3(const uint8_t* chall_3, unsigned int start,
   return !res;
 }
 
+static inline uint8_t** alloc_pointer_array(size_t rows, size_t columns) {
+  uint8_t** array = malloc(rows * sizeof(uint8_t*));
+  assert(array);
+  array[0] = calloc(rows, columns);
+  assert(array[0]);
+  for (unsigned int i = 1; i < rows; ++i) {
+    array[i] = array[0] + i * columns;
+  }
+
+  return array;
+}
+
 static inline void free_pointer_array(uint8_t*** ptr) {
   free((*ptr)[0]);
   free(*ptr);
@@ -545,30 +557,18 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   uint8_t* u = malloc(ell_bytes);
   assert(u);
   // v has \hat \ell rows, \lambda columns, storing in column-major order
-  uint8_t** V =
-      malloc(lambda * sizeof(uint8_t*)); // it is actually lambda - w_grind but keeping it lambda
-  assert(V);
-  V[0] = calloc(lambda, ell_hat_bytes);
-  assert(V[0]);
-  for (unsigned int i = 1; i < lambda; ++i) {
-    V[i] = V[0] + i * ell_hat_bytes;
-  }
+  // it is actually lambda - w_grind but keeping it lambda
+  uint8_t** V    = alloc_pointer_array(lambda, ell_hat_bytes);
   uint8_t* u_bar = malloc(n_mask * lambda_bytes);
   uint8_t* v_bar = malloc(n_mask * lambda_bytes);
 
   vole_commit(rootkey, iv, ell_hat, params, &bavc, signature_c(sig, 0, params),
               signature_c_mult(sig, params), u, V, u_bar, v_bar);
 
-  uint8_t** V_row =
-      malloc(ell * sizeof(uint8_t*)); // it is actually lambda - w_grind but keeping it lambda
-  assert(V_row);
-  V_row[0] = calloc(ell, lambda_bytes);
-  assert(V_row[0]);
-  for (unsigned int i = 1; i < ell; ++i) {
-    V_row[i] = V_row[0] + i * lambda_bytes;
-  }
-
+  // it is actually lambda - w_grind but keeping it lambda
+  uint8_t** V_row = alloc_pointer_array(ell, lambda_bytes);
   column_to_row_major(V, V_row, lambda, ell);
+  free_pointer_array(&V);
 
   H2_context_t h2_ctx;
   {
@@ -636,8 +636,6 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
       hash_challenge_2_update_v_tilde(&h2_ctx, V_tilde, lambda);
     }
 
-    free(V_row[0]);
-    free(V_row);
     free(vh);
   }
 
@@ -651,10 +649,10 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
     // line 22
     uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-    aes_prove(a0_tilde, signature_a1toi_tilde(sig, params), witness, V, u_bar, v_bar, owf_input,
+    aes_prove(a0_tilde, signature_a1toi_tilde(sig, params), witness, V_row, u_bar, v_bar, owf_input,
               owf_output, chall_2, params);
 
-    free_pointer_array(&V);
+    free_pointer_array(&V_row);
     free(u);
     u = NULL;
 
@@ -730,13 +728,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // line 6
   // q is a \hat \ell \times \lambda matrix
-  uint8_t** Q = malloc(lambda * sizeof(uint8_t*));
-  assert(Q);
-  Q[0] = calloc(lambda, ell_hat_bytes);
-  assert(Q[0]);
-  for (unsigned int i = 1; i < lambda; ++i) {
-    Q[i] = Q[0] + i * ell_hat_bytes;
-  }
+  uint8_t** Q = alloc_pointer_array(lambda, ell_hat_bytes);
   uint8_t hcom[MAX_LAMBDA_BYTES * 2];
   uint8_t* q_bar                  = malloc(n_mask * lambda_bytes);
   uint8_t Delta[MAX_LAMBDA_BYTES] = {0};
@@ -747,16 +739,10 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     return -1;
   }
 
-  uint8_t** Q_row =
-      malloc(ell * sizeof(uint8_t*)); // it is actually lambda - w_grind but keeping it lambda
-  assert(Q_row);
-  Q_row[0] = calloc(ell, lambda_bytes);
-  assert(Q_row[0]);
-  for (unsigned int i = 1; i < ell; ++i) {
-    Q_row[i] = Q_row[0] + i * lambda_bytes;
-  }
-
+  // it is actually lambda - w_grind but keeping it lambda
+  uint8_t** Q_row = alloc_pointer_array(ell, lambda_bytes);
   column_to_row_major(Q, Q_row, lambda, ell);
+  free_pointer_array(&Q);
 
   // line 9
   uint8_t chall_1[(8 * MAX_LAMBDA_BYTES) + 8] = {0};
@@ -773,6 +759,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     uint8_t* qh   = malloc(qh_0_bytes + qh_1_bytes);
     uint8_t* qh_0 = qh;
     uint8_t* qh_1 = qh + qh_0_bytes;
+
     for (unsigned int q_idx = 0; q_idx < ell; q_idx++) {
       memcpy(qh_0 + q_idx * lambda_bytes, Q_row[q_idx], lambda_bytes);
     }
@@ -799,17 +786,15 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // line 18
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  aes_verify(a0_tilde, dsignature_d(sig, params), (const uint8_t**)Q, q_bar, owf_input, owf_output,
-             chall_2, Delta, dsignature_a1toi_tilde(sig, params), params);
-  free_pointer_array(&Q);
+  aes_verify(a0_tilde, dsignature_d(sig, params), (const uint8_t**)Q_row, q_bar, owf_input,
+             owf_output, chall_2, Delta, dsignature_a1toi_tilde(sig, params), params);
+  free_pointer_array(&Q_row);
 
   // line 19
   uint8_t chall_3_prime[MAX_LAMBDA_BYTES];
   hash_challenge_3(chall_3_prime, chall_2, a0_tilde, dsignature_a1toi_tilde(sig, params),
                    dsignature_ctr(sig, params), lambda);
 
-  free(Q_row[0]);
-  free(Q_row);
   free(q_bar);
 
   // Step 21

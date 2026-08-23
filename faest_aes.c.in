@@ -803,19 +803,12 @@ static void aes_SSS_inverse_sbox_eval_verifier(bfSSS_t* b_key, const bfSSS_t* s_
 
 // EncSctrnts internal functions end!!
 
-// COLOUM TO ROW MAJOR
-static bfSSS_t* column_to_row_major_and_shrink_V_SSS(uint8_t** v, unsigned int ell) {
-  // V is \hat \ell times \lambda matrix over F_2
-  // v has \hat \ell rows, \lambda columns, storing in column-major order, new_v has \ell + 2
-  // \lambda rows and \lambda columns storing in row-major order
+static bfSSS_t* shrink_V_SSS(uint8_t** v, unsigned int ell) {
+  // v was already transposed in calling code, so just load the values
   bfSSS_t* new_v = BFSSS_ALLOC(ell);
   assert(new_v);
   for (unsigned int row = 0; row != ell; ++row) {
-    uint8_t new_row[BFSSS_NUM_BYTES] = {0};
-    for (unsigned int column = 0; column != FAEST_SSS_LAMBDA; ++column) {
-      ptr_set_bit(new_row, column, ptr_get_bit(v[column], row));
-    }
-    bfSSS_load(&new_v[row], new_row);
+    bfSSS_load(&new_v[row], v[row]);
   }
   return new_v;
 }
@@ -1429,7 +1422,7 @@ void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w,
 
   // line 3
   // V becomes the w_tag: ell + 2*lambda field elements
-  bfSSS_t* w_tag = column_to_row_major_and_shrink_V_SSS(V, ell); // This is the tag for w
+  bfSSS_t* w_tag = shrink_V_SSS(V, ell); // This is the tag for w
 
   // line 7 deg-7
   zk_hash_SSS_7_ctx hasher7;
@@ -1485,7 +1478,7 @@ void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, const uint8_t** Q,
   const unsigned int lambda_bytes = (lambda + 7) / 8;
 
   // line 3
-  bfSSS_t* Q_key = column_to_row_major_and_shrink_V_SSS((uint8_t**)Q, ell);
+  bfSSS_t* Q_key = shrink_V_SSS((uint8_t**)Q, ell);
 
   // line 12
   zk_hash_SSS_ctx b_ctx;

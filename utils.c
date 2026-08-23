@@ -97,18 +97,19 @@ void print_u8_array_bits(const char* label, const uint8_t* arr, size_t m) {
 void column_to_row_major(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
                          unsigned int v_col_bits_len) {
 
-  for (unsigned int row = 0; row < v_row_bits_len; row++) {
-    for (unsigned int col = 0; col < v_col_bits_len; col++) {
-      uint8_t bit = (v[row][col / 8] >> (col % 8)) & 1u;
-      v_row_maj[col][row / 8] |= (uint8_t)(bit << (row % 8));
+  for (unsigned int row = 0; row < v_row_bits_len; ++row) {
+    for (unsigned int col = 0; col < v_col_bits_len; ++col) {
+      ptr_set_bit(v_row_maj[col], row, ptr_get_bit(v[row], col));
     }
   }
 
+#if !defined(NDEBUG)
   for (unsigned int row = 0; row < v_row_bits_len; row++) {
     for (unsigned int col = 0; col < v_col_bits_len; col++) {
       assert(ptr_get_bit(v[row], col) == ptr_get_bit(v_row_maj[col], row));
     }
   }
+#endif
 }
 
 void gf2_poly_mul_ct(const uint8_t* a, size_t a_bits, const uint8_t* b, size_t b_bits,
