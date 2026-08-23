@@ -376,6 +376,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
 
   // line 3
   if (!bavc_reconstruct(&bavc_rec, decom_i, i_delta, iv, params)) {
+    free(Dp);
     free(bavc_rec.s);
     return false;
   }
@@ -427,9 +428,13 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
     }
   }
 
+#if !defined(NDEBUG)
   for (unsigned r = 0; r < lambda_minus_w_grind; ++r) {
     assert(ptr_get_bit(Dp, r) == ptr_get_bit(delta_prime, r));
   }
+#endif
+  free(Dp);
+  Dp = NULL;
 
   // Switching from coloumn major to row major order
   uint8_t** q_row_maj = malloc(ellhat * sizeof(uint8_t*));
@@ -565,7 +570,6 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
 
   column_to_row_major(q_row_maj_new, Q, ell, lambda_minus_w_grind);
 
-  free(Dp);
   free(qtmp);
   free(sd);
   free(bavc_rec.s);
