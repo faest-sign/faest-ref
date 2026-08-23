@@ -1,4 +1,4 @@
-boost_test = dependency('boost', required: false, modules: ['unit_test_framework'])
+boost_test = dependency('boost', required: false, modules: ['unit_test_framework'], static: false)
 ntl = cc.find_library('ntl', required: false, has_headers: ['NTL/version.h'])
 
 if boost_test.found()
