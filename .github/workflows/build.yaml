@@ -10,7 +10,7 @@ env:
 jobs:
   build-base:
     name: Test on Ubuntu with gcc
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
     - uses: actions/checkout@v7
       with:
@@ -29,7 +29,7 @@ jobs:
   build-base-i386:
     name: Test on Ubuntu with gcc (32 bit)
     needs: [build-base]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
     - uses: actions/checkout@v7
       with:
@@ -161,7 +161,7 @@ jobs:
   build-scan-build:
     name: Test on Ubuntu with scan-build
     needs: [build-base]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
     - uses: actions/checkout@v7
       with:
@@ -216,7 +216,7 @@ jobs:
   build-aes-implementations:
     name: Test with flag ${{ matrix.flag }}
     needs: [build-base]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
