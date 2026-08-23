@@ -348,10 +348,9 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   bavc_rec_t bavc_rec;
   bavc_rec.h = com;
   bavc_rec.s = malloc((L - tau) * lambda_bytes);
-  assert(bavc_rec.s);
 
   // line 3
-  if (!bavc_reconstruct(&bavc_rec, decom_i, i_delta, iv, params)) {
+  if (!bavc_rec.s || !bavc_reconstruct(&bavc_rec, decom_i, i_delta, iv, params)) {
     free(Dp);
     free(bavc_rec.s);
     return false;
@@ -394,6 +393,12 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     }
     sd_i += lambda_bytes * (Ni - 1);
   }
+  free(sd);
+  sd = NULL;
+  free(bavc_rec.s);
+  bavc_rec.s = sd_i = NULL;
+  free(qtmp);
+  qtmp = NULL;
 
   // line 13
   uint8_t delta_prime[MAX_LAMBDA_BYTES] = {0};
@@ -415,8 +420,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   Dp = NULL;
 
   // line 19
-  uint8_t* r_tilde_prime = malloc(n_mask * lambda_minus_w_grind_bytes);
-  memset(r_tilde_prime, 0, n_mask * lambda_minus_w_grind_bytes);
+  uint8_t* r_tilde_prime = calloc(n_mask, lambda_minus_w_grind_bytes);
   for (unsigned int m = 0; m < n_mask; m++) {
     unsigned int ell_m   = ell + m * bavc_max_node_depth(0, tau_1, k);
     unsigned int bit_idx = 0;
@@ -511,6 +515,10 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
 
     xor_u8_array(first_prod, second_prod, q_bar + m * lambda_bytes, lambda_bytes);
   }
+  free(r_tilde_prime);
+  r_tilde_prime = NULL;
+  free(q_tilde);
+  q_tilde = NULL;
 
   // line 31
   for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
@@ -528,11 +536,5 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   }
 
   free_pointer_array(&Q);
-  free(qtmp);
-  free(sd);
-  free(bavc_rec.s);
-  free(r_tilde_prime);
-  free(q_tilde);
-
   return true;
 }
