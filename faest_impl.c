@@ -764,21 +764,21 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   }
 
   // line 16
-  uint8_t chall_2[3 * MAX_LAMBDA_BYTES + 8];
-  hash_challenge_2_finalize(chall_2, &chall_2_ctx, dsignature_d(sig, params), lambda, ell);
+  // chall_1 is no longer needed, so reuse it as chall_2
+  hash_challenge_2_finalize(chall_1, &chall_2_ctx, dsignature_d(sig, params), lambda, ell);
 
   // line 18
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
   aes_verify(a0_tilde, dsignature_d(sig, params), (const uint8_t**)Q_row, q_bar, owf_input,
-             owf_output, chall_2, Delta, dsignature_a1toi_tilde(sig, params), params);
+             owf_output, chall_1, Delta, dsignature_a1toi_tilde(sig, params), params);
   free(q_bar);
   free_pointer_array(&Q_row);
 
   // line 19
-  uint8_t chall_3_prime[MAX_LAMBDA_BYTES];
-  hash_challenge_3(chall_3_prime, chall_2, a0_tilde, dsignature_a1toi_tilde(sig, params),
+  // chall_1 is no longer needed, re reuse it as chall_3
+  hash_challenge_3(chall_1, chall_1, a0_tilde, dsignature_a1toi_tilde(sig, params),
                    dsignature_ctr(sig, params), lambda);
 
   // Step 21
-  return memcmp(chall_3_prime, dsignature_chall_3(sig, params), lambda_bytes) == 0 ? 0 : -1;
+  return memcmp(chall_1, dsignature_chall_3(sig, params), lambda_bytes) == 0 ? 0 : -1;
 }
