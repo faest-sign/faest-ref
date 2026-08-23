@@ -31,15 +31,6 @@ ninja
 ninja test
 ```
 
-Toggle is isDEG3 to have the deg-3/7 signature
-
-```
-meson configure -Dtv-generators=enabled
-meson configure -Dtv-generators=disabled
-./tv_binary_name
-```
-
-
 ## Notes on Benchmarking
 
 This implementation represents the reference implementation of FAEST. While it aims to be as
