@@ -343,16 +343,15 @@ void zk_hash_128_7_update(zk_hash_128_7_ctx* ctx, const bf128_t* v_i) {
 
 void zk_hash_128_7_raise_and_update(zk_hash_128_7_ctx* ctx, const bf128_t* v_1,
                                     const bf128_t* v_2) {
-  bf128_t bf_packed_voles_with_zeros[7];
-  bf_packed_voles_with_zeros[0] = bf128_zero();
-  bf_packed_voles_with_zeros[1] = bf128_zero();
-  bf_packed_voles_with_zeros[2] = bf128_zero();
-  bf_packed_voles_with_zeros[3] = bf128_zero();
-  bf_packed_voles_with_zeros[4] = bf128_zero();
-  bf_packed_voles_with_zeros[5] = *v_1;
-  bf_packed_voles_with_zeros[6] = *v_2;
+  for (unsigned int deg_idx = 0; deg_idx < 7; deg_idx++) {
+    bf128_mul_inplace(&ctx->h0[deg_idx], &ctx->s);
+    bf128_mul_64_inplace(&ctx->h1[deg_idx], ctx->t);
+  }
 
-  zk_hash_128_7_update(ctx, bf_packed_voles_with_zeros);
+  bf128_add_inplace(&ctx->h0[5], v_1);
+  bf128_add_inplace(&ctx->h1[5], v_1);
+  bf128_add_inplace(&ctx->h0[6], v_2);
+  bf128_add_inplace(&ctx->h1[6], v_2);
 }
 
 void zk_hash_128_7_finalize(uint8_t* a0, uint8_t* a1toi, zk_hash_128_7_ctx* ctx,
@@ -364,7 +363,6 @@ void zk_hash_128_7_finalize(uint8_t* a0, uint8_t* a1toi, zk_hash_128_7_ctx* ctx,
 
   bf128_t t0;
   bf128_t t1;
-
   bf128_mul(&t0, &r0, &ctx->h0[0]);
   bf128_mul(&t1, &r1, &ctx->h1[0]);
   bf128_add_inplace(&t0, &t1);
@@ -449,22 +447,19 @@ void zk_hash_192_7_update(zk_hash_192_7_ctx* ctx, const bf192_t* v_i) {
 
 void zk_hash_192_7_raise_and_update(zk_hash_192_7_ctx* ctx, const bf192_t* v_1,
                                     const bf192_t* v_2) {
+  for (unsigned int deg_idx = 0; deg_idx < 7; deg_idx++) {
+    bf192_mul_inplace(&ctx->h0[deg_idx], &ctx->s);
+    bf192_mul_64_inplace(&ctx->h1[deg_idx], ctx->t);
+  }
 
-  bf192_t bf_packed_voles_with_zeros[7]; // one in the begining, rest at the end higher degrees
-  bf_packed_voles_with_zeros[0] = bf192_zero();
-  bf_packed_voles_with_zeros[1] = bf192_zero();
-  bf_packed_voles_with_zeros[2] = bf192_zero();
-  bf_packed_voles_with_zeros[3] = bf192_zero();
-  bf_packed_voles_with_zeros[4] = bf192_zero();
-  bf_packed_voles_with_zeros[5] = *v_1;
-  bf_packed_voles_with_zeros[6] = *v_2;
-
-  zk_hash_192_7_update(ctx, bf_packed_voles_with_zeros);
+  bf192_add_inplace(&ctx->h0[5], v_1);
+  bf192_add_inplace(&ctx->h1[5], v_1);
+  bf192_add_inplace(&ctx->h0[6], v_2);
+  bf192_add_inplace(&ctx->h1[6], v_2);
 }
 
 void zk_hash_192_7_finalize(uint8_t* a0, uint8_t* a1toi, zk_hash_192_7_ctx* ctx,
                             const bf192_t* x1_i) {
-
   bf192_t r0;
   bf192_t r1;
   bf192_load(&r0, ctx->sd);
@@ -556,17 +551,15 @@ void zk_hash_256_7_update(zk_hash_256_7_ctx* ctx, const bf256_t* v_i) {
 
 void zk_hash_256_7_raise_and_update(zk_hash_256_7_ctx* ctx, const bf256_t* v_1,
                                     const bf256_t* v_2) {
+  for (unsigned int deg_idx = 0; deg_idx < 7; deg_idx++) {
+    bf256_mul_inplace(&ctx->h0[deg_idx], &ctx->s);
+    bf256_mul_64_inplace(&ctx->h1[deg_idx], ctx->t);
+  }
 
-  bf256_t bf_packed_voles_with_zeros[7]; // one in the begining, rest at the end higher degrees
-  bf_packed_voles_with_zeros[0] = bf256_zero();
-  bf_packed_voles_with_zeros[1] = bf256_zero();
-  bf_packed_voles_with_zeros[2] = bf256_zero();
-  bf_packed_voles_with_zeros[3] = bf256_zero();
-  bf_packed_voles_with_zeros[4] = bf256_zero();
-  bf_packed_voles_with_zeros[5] = *v_1;
-  bf_packed_voles_with_zeros[6] = *v_2;
-
-  zk_hash_256_7_update(ctx, bf_packed_voles_with_zeros);
+  bf256_add_inplace(&ctx->h0[5], v_1);
+  bf256_add_inplace(&ctx->h1[5], v_1);
+  bf256_add_inplace(&ctx->h0[6], v_2);
+  bf256_add_inplace(&ctx->h1[6], v_2);
 }
 
 void zk_hash_256_7_finalize(uint8_t* a0, uint8_t* a1toi, zk_hash_256_7_ctx* ctx,
