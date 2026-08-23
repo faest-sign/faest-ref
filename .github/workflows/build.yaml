@@ -198,7 +198,7 @@ jobs:
         continue-on-error: true
         with:
           arch: ${{ matrix.cfg.arch }}
-          distro: ubuntu22.04
+          distro: ubuntu24.04
           githubToken: ${{ github.token }}
           install: |
             apt-get -q update
