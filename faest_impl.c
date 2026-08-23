@@ -467,57 +467,46 @@ static inline void compute_D(uint8_t* D, const uint8_t* Q_tilde, const uint8_t* 
   unsigned int lambda_bytes = params->lambda / 8;
   switch (params->lambda) {
   case 256: {
-    bf256_t bf_D[4];
-    bf256_t bf_Q_tilde[4];
     bf256_t bf_delta;
     bf256_load(&bf_delta, delta);
-    bf256_t bf_u_tilde[4];
     for (unsigned int i = 0; i < 4; i++) {
-      bf256_load(&bf_Q_tilde[i], Q_tilde + i * lambda_bytes);
-      bf256_load(&bf_u_tilde[i], u_tilde + i * lambda_bytes);
-
-      bf256_mul_inplace(&bf_u_tilde[i], &bf_delta);
-
-      bf256_add(&bf_D[i], &bf_Q_tilde[i], &bf_u_tilde[i]);
-
-      bf256_store(D + i * lambda_bytes, &bf_D[i]);
+      bf256_t bf_Q_tilde;
+      bf256_t bf_u_tilde;
+      bf256_load(&bf_Q_tilde, Q_tilde + i * lambda_bytes);
+      bf256_load(&bf_u_tilde, u_tilde + i * lambda_bytes);
+      bf256_mul_inplace(&bf_u_tilde, &bf_delta);
+      bf256_add_inplace(&bf_Q_tilde, &bf_u_tilde);
+      bf256_store(D + i * lambda_bytes, &bf_Q_tilde);
     }
     break;
   }
   case 192: {
-    bf192_t bf_D[4];
-    bf192_t bf_Q_tilde[4];
     bf192_t bf_delta;
     bf192_load(&bf_delta, delta);
-    bf192_t bf_u_tilde[4];
     for (unsigned int i = 0; i < 4; i++) {
-      bf192_load(&bf_Q_tilde[i], Q_tilde + i * lambda_bytes);
-      bf192_load(&bf_u_tilde[i], u_tilde + i * lambda_bytes);
-
-      bf192_mul_inplace(&bf_u_tilde[i], &bf_delta);
-
-      bf192_add(&bf_D[i], &bf_Q_tilde[i], &bf_u_tilde[i]);
-
-      bf192_store(D + i * lambda_bytes, &bf_D[i]);
+      bf192_t bf_Q_tilde;
+      bf192_t bf_u_tilde;
+      bf192_load(&bf_Q_tilde, Q_tilde + i * lambda_bytes);
+      bf192_load(&bf_u_tilde, u_tilde + i * lambda_bytes);
+      bf192_mul_inplace(&bf_u_tilde, &bf_delta);
+      bf192_add_inplace(&bf_Q_tilde, &bf_u_tilde);
+      bf192_store(D + i * lambda_bytes, &bf_Q_tilde);
     }
     break;
   }
   default: {
-    bf128_t bf_D[4];
-    bf128_t bf_Q_tilde[4];
     bf128_t bf_delta;
     bf128_load(&bf_delta, delta);
-    bf128_t bf_u_tilde[4];
     for (unsigned int i = 0; i < 4; i++) {
-      bf128_load(&bf_Q_tilde[i], Q_tilde + i * lambda_bytes);
-      bf128_load(&bf_u_tilde[i], u_tilde + i * lambda_bytes);
-
-      bf128_mul_inplace(&bf_u_tilde[i], &bf_delta);
-
-      bf128_add(&bf_D[i], &bf_Q_tilde[i], &bf_u_tilde[i]);
-
-      bf128_store(D + i * lambda_bytes, &bf_D[i]);
+      bf128_t bf_Q_tilde;
+      bf128_t bf_u_tilde;
+      bf128_load(&bf_Q_tilde, Q_tilde + i * lambda_bytes);
+      bf128_load(&bf_u_tilde, u_tilde + i * lambda_bytes);
+      bf128_mul_inplace(&bf_u_tilde, &bf_delta);
+      bf128_add_inplace(&bf_Q_tilde, &bf_u_tilde);
+      bf128_store(D + i * lambda_bytes, &bf_Q_tilde);
     }
+    break;
   }
   }
 }
