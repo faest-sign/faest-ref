@@ -161,7 +161,7 @@ jobs:
   build-scan-build:
     name: Test on Ubuntu with scan-build
     needs: [build-base]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v7
       with:
