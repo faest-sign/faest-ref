@@ -423,24 +423,6 @@ static inline bool check_challenge_3(const uint8_t* chall_3, unsigned int start,
   return !res;
 }
 
-static inline uint8_t** alloc_pointer_array(size_t rows, size_t columns) {
-  uint8_t** array = malloc(rows * sizeof(uint8_t*));
-  assert(array);
-  array[0] = calloc(rows, columns);
-  assert(array[0]);
-  for (unsigned int i = 1; i < rows; ++i) {
-    array[i] = array[0] + i * columns;
-  }
-
-  return array;
-}
-
-static inline void free_pointer_array(uint8_t*** ptr) {
-  free((*ptr)[0]);
-  free(*ptr);
-  *ptr = NULL;
-}
-
 // AES(-EM) OWF dispatchers
 static inline void aes_prove(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w, uint8_t** V,
                              const uint8_t* u_bar, const uint8_t* v_bar, const uint8_t* owf_in,

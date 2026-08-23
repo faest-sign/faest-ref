@@ -150,3 +150,21 @@ void gf2_poly_reduce_ct(const uint8_t* a, size_t a_bits, const uint8_t* m, size_
     }
   }
 }
+
+uint8_t** alloc_pointer_array(size_t rows, size_t columns) {
+  uint8_t** array = malloc(rows * sizeof(uint8_t*));
+  assert(array);
+  array[0] = calloc(rows, columns);
+  assert(array[0]);
+  for (unsigned int i = 1; i < rows; ++i) {
+    array[i] = array[0] + i * columns;
+  }
+
+  return array;
+}
+
+void free_pointer_array(uint8_t*** ptr) {
+  free((*ptr)[0]);
+  free(*ptr);
+  *ptr = NULL;
+}

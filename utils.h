@@ -52,6 +52,9 @@ void gf2_poly_mul_ct(const uint8_t* a, size_t a_bits, const uint8_t* b, size_t b
 void gf2_poly_reduce_ct(const uint8_t* a, size_t a_bits, const uint8_t* m, size_t m_bits,
                         uint8_t* out);
 
+uint8_t** alloc_pointer_array(size_t rows, size_t columns);
+void free_pointer_array(uint8_t*** ptr);
+
 FAEST_END_C_DECL
 
 #endif
