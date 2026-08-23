@@ -33,7 +33,6 @@ BOOST_DATA_TEST_CASE(instance_parameters, all_parameters, param_id) {
     BOOST_TEST(faest_param.k <= sizeof(uint16_t) * 8);
     BOOST_TEST(faest_param.k <= MAX_DEPTH);
     BOOST_TEST(faest_param.tau <= MAX_TAU);
-    BOOST_TEST(faest_param.n_mask == 10);
 
     const auto ell_bytes         = (faest_param.ell + 7) / 8;
     const auto lambda_bytes      = faest_param.lambda / 8;
@@ -41,9 +40,8 @@ BOOST_DATA_TEST_CASE(instance_parameters, all_parameters, param_id) {
     const unsigned int hcom_size = lambda_bytes * n_leafcom;
 
     const auto sig_size =
-        (((faest_param.tau - 1) * ell_bytes) +
-         (faest_param.n_mask * ((faest_param.n_mult + 7) / 8)) + lambda_bytes * 4 + ell_bytes +
-         (D_ZK - 1) * lambda_bytes + hcom_size * faest_param.tau +
+        (((faest_param.tau - 1) * ell_bytes) + (N_MASK * ((faest_param.n_mult + 7) / 8)) +
+         lambda_bytes * 4 + ell_bytes + (D_ZK - 1) * lambda_bytes + hcom_size * faest_param.tau +
          (faest_param.T_open * lambda_bytes) + lambda_bytes + IV_SIZE + sizeof(uint32_t));
     BOOST_TEST(sig_size == faest_param.sig_size);
 

@@ -41,7 +41,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     const unsigned int k             = params->k;
     const unsigned int tau1          = params->tau1;
     const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
-    const unsigned int n_mask        = params->n_mask;
+    const unsigned int n_mask        = N_MASK;
     const unsigned int ell_hat       = ell + n_mask * d0;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
@@ -130,7 +130,7 @@ BOOST_DATA_TEST_CASE(test_convert_to_vole, all_parameters, param_id) {
     const unsigned int k             = params.k;
     const unsigned int tau1          = params.tau1;
     const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
-    const unsigned int n_mask        = params.n_mask;
+    const unsigned int n_mask        = N_MASK;
     const unsigned int ell           = params.ell;
     const unsigned int ell_hat       = ell + n_mask * d0;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
@@ -196,7 +196,7 @@ namespace {
     const unsigned int k                          = params->k;
     const unsigned int tau1                       = params->tau1;
     const unsigned int d0                         = bavc_max_node_depth(0, tau1, k);
-    const unsigned int n_mask                     = params->n_mask;
+    const unsigned int n_mask                     = N_MASK;
     const unsigned int ell_hat                    = ell + n_mask * d0;
     const unsigned int ell_hat_bytes              = (ell_hat + 7) / 8;
     const auto com_size                           = (faest_is_em(params) ? 2 : 3) * lambda_bytes;

@@ -80,8 +80,6 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   const unsigned int tau                        = params->tau;
   const unsigned int tau_1                      = params->tau1;
   const unsigned int k                          = params->k;
-  const unsigned int n_mask                     = params->n_mask;
-  const unsigned int n_mask_bytes               = (n_mask + 7) / 8;
   const unsigned int n_mult                     = params->n_mult;
   const unsigned int n_mult_bytes               = (n_mult + 7) / 8;
   const unsigned int w_grind                    = params->w_grind;
@@ -115,12 +113,11 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   }
 
   // line 10
-  uint8_t* u_hi_all = malloc((n_mask * w_grind + 7) / 8);
-  uint8_t* u_hi     = malloc(n_mask * w_grind_bytes);
-  memset(u_hi, 0, n_mask * w_grind_bytes);
-  prg(rootKey, iv, TWEAK_OFFSET - 1, u_hi_all, lambda, (n_mask * w_grind + 7) / 8);
+  uint8_t* u_hi_all = malloc((N_MASK * w_grind + 7) / 8);
+  uint8_t* u_hi     = calloc(N_MASK, w_grind_bytes);
+  prg(rootKey, iv, TWEAK_OFFSET - 1, u_hi_all, lambda, (N_MASK * w_grind + 7) / 8);
 
-  for (unsigned n_mask_idx = 0; n_mask_idx < n_mask; n_mask_idx++) {
+  for (unsigned n_mask_idx = 0; n_mask_idx < N_MASK; n_mask_idx++) {
     for (unsigned w_grind_idx = 0; w_grind_idx < w_grind; w_grind_idx++) {
       ptr_set_bit(u_hi + n_mask_idx * w_grind_bytes, w_grind_idx,
                   ptr_get_bit(u_hi_all, n_mask_idx * w_grind + w_grind_idx));
@@ -128,9 +125,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   }
 
   // line 11
-  uint8_t* u_low   = calloc(n_mask, lambda_bytes);
-  uint8_t* r_tilde = calloc(n_mask, lambda_minus_w_grind_bytes);
-  for (unsigned m = 0; m < n_mask; ++m) {
+  uint8_t* u_low   = calloc(N_MASK, lambda_bytes);
+  uint8_t* r_tilde = calloc(N_MASK, lambda_minus_w_grind_bytes);
+  for (unsigned m = 0; m < N_MASK; ++m) {
     unsigned int ell_m   = ell + m * bavc_max_node_depth(0, tau_1, k);
     unsigned int bit_idx = 0;
 
@@ -194,12 +191,12 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   // a is a copy of V, so directly access V
 
   // line 21
-  uint8_t* v_tilde = malloc(n_mult * n_mask_bytes);
+  uint8_t* v_tilde = malloc(n_mult * N_MASK_BYTES);
   for (unsigned e = 0; e < n_mult; e++) {
     uint8_t L_e_zero[MAX_LAMBDA_BYTES] = {0};
     uint8_t L_e_one[MAX_LAMBDA_BYTES];
-    uint8_t* h_e_zero = malloc(n_mask_bytes);
-    uint8_t* h_e_one  = malloc(n_mask_bytes);
+    uint8_t h_e_zero[N_MASK_BYTES];
+    uint8_t h_e_one[N_MASK_BYTES];
 
     memcpy(L_e_one, u, lambda_bytes);
     for (unsigned j = 0; j < lambda_minus_w_grind; j++) {
@@ -214,11 +211,11 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     }
 
     // line 23
-    H5(iv, e, L_e_zero, h_e_zero, lambda_bytes, n_mask, lambda);
-    H5(iv, e, L_e_one, h_e_one, lambda_bytes, n_mask, lambda);
+    H5(iv, e, L_e_zero, h_e_zero, lambda_bytes, N_MASK, lambda);
+    H5(iv, e, L_e_one, h_e_one, lambda_bytes, N_MASK, lambda);
 
     // line 26
-    for (unsigned m = 0; m < n_mask; m++) {
+    for (unsigned m = 0; m < N_MASK; m++) {
       uint8_t dot_product_bit = 0;
       for (unsigned i = 0; i < lambda; i++) {
         uint8_t bit_a = ptr_u64_get_bit(TBL(params->F, params->f_words, e), i);
@@ -227,19 +224,16 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
         dot_product_bit ^= bit_a & bit_b;
       }
 
-      ptr_set_bit(v_tilde + e * n_mask_bytes, m, ptr_get_bit(h_e_zero, m));
-      uint8_t bit_a = ptr_get_bit(v_tilde + e * n_mask_bytes, m);
+      ptr_set_bit(v_tilde + e * N_MASK_BYTES, m, ptr_get_bit(h_e_zero, m));
+      uint8_t bit_a = ptr_get_bit(v_tilde + e * N_MASK_BYTES, m);
       uint8_t bit_b = ptr_get_bit(h_e_one, m);
 
       ptr_set_bit(c_mult + m * n_mult_bytes, e, bit_a ^ bit_b ^ dot_product_bit);
     }
-
-    free(h_e_zero);
-    free(h_e_one);
   }
 
   // line 29
-  for (unsigned int m = 0; m < n_mask; m++) {
+  for (unsigned int m = 0; m < N_MASK; m++) {
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
     for (unsigned int row = 0; row < lambda; row++) {
       for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
@@ -254,7 +248,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     for (unsigned int row = 0; row < lambda; row++) {
       for (unsigned int col = 0; col < n_mult; col++) {
         uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_GATE, params->w_gate_words, row), col);
-        uint8_t bit_b = ptr_get_bit(v_tilde + col * n_mask_bytes, m);
+        uint8_t bit_b = ptr_get_bit(v_tilde + col * N_MASK_BYTES, m);
 
         ptr_xor_bit(second_prod, row, bit_a & bit_b);
       }
@@ -300,8 +294,6 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   const unsigned int tau_1                      = params->tau1;
   const unsigned int L                          = params->L;
   const unsigned int k                          = params->k;
-  const unsigned int n_mask                     = params->n_mask;
-  const unsigned int n_mask_bytes               = (n_mask + 7) / 8;
   const unsigned int n_mult                     = params->n_mult;
   const unsigned int n_mult_bytes               = (n_mult + 7) / 8;
   const unsigned int w_grind                    = params->w_grind;
@@ -384,8 +376,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   // delta_prime can be directly read from chall_3
 
   // line 19
-  uint8_t* r_tilde_prime = calloc(n_mask, lambda_minus_w_grind_bytes);
-  for (unsigned int m = 0; m < n_mask; m++) {
+  uint8_t* r_tilde_prime = calloc(N_MASK, lambda_minus_w_grind_bytes);
+  for (unsigned int m = 0; m < N_MASK; m++) {
     unsigned int ell_m   = ell + m * bavc_max_node_depth(0, tau_1, k);
     unsigned int bit_idx = 0;
     q_idx                = 0;
@@ -421,10 +413,10 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   // line 21
   // a_prime is a direct copy of Q, so use Q instead
 
-  uint8_t* q_tilde = calloc(n_mult, n_mask_bytes);
+  uint8_t* q_tilde = calloc(n_mult, N_MASK_BYTES);
   for (unsigned e = 0; e < n_mult; e++) {
     uint8_t L_e_prime[MAX_LAMBDA_BYTES] = {0};
-    uint8_t* h_e                        = malloc(n_mask_bytes);
+    uint8_t h_e[N_MASK_BYTES];
 
     // line 24
     uint8_t gamma_e = 0;
@@ -439,19 +431,17 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     }
 
     // line 25
-    H5(iv, e, L_e_prime, h_e, lambda_bytes, n_mask, lambda);
+    H5(iv, e, L_e_prime, h_e, lambda_bytes, N_MASK, lambda);
 
     // line 27
-    for (unsigned m = 0; m < n_mask; m++) {
+    for (unsigned m = 0; m < N_MASK; m++) {
       uint8_t sum = ptr_get_bit(h_e, m) ^ (gamma_e & ptr_get_bit(c_mult + m * n_mult_bytes, e));
-      ptr_set_bit(q_tilde + e * n_mask_bytes, m, sum);
+      ptr_set_bit(q_tilde + e * N_MASK_BYTES, m, sum);
     }
-
-    free(h_e);
   }
 
   // line 30
-  for (unsigned int m = 0; m < n_mask; m++) {
+  for (unsigned int m = 0; m < N_MASK; m++) {
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
     for (unsigned int row = 0; row < lambda; row++) {
       for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
@@ -466,7 +456,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     for (unsigned int row = 0; row < lambda; row++) {
       for (unsigned int col = 0; col < n_mult; col++) {
         uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_GATE, params->w_gate_words, row), col);
-        uint8_t bit_b = ptr_get_bit(q_tilde + col * n_mask_bytes, m);
+        uint8_t bit_b = ptr_get_bit(q_tilde + col * N_MASK_BYTES, m);
 
         ptr_xor_bit(second_prod, row, bit_a & bit_b);
       }

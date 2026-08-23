@@ -200,7 +200,6 @@ param_128s.set('PK_SIZE', 32)
 param_128s.set('SK_SIZE', 32)
 param_128s.set('OWF_INPUT_SIZE', 16)
 param_128s.set('OWF_OUTPUT_SIZE', 16)
-param_128s.set('N_MASK', 10)
 param_128s.set('N_MULT', 314)
 parameter_sets += param_128s
 
@@ -225,7 +224,6 @@ param_128f.set('PK_SIZE', 32)
 param_128f.set('SK_SIZE', 32)
 param_128f.set('OWF_INPUT_SIZE', 16)
 param_128f.set('OWF_OUTPUT_SIZE', 16)
-param_128f.set('N_MASK', 10)
 param_128f.set('N_MULT', 314)
 parameter_sets += param_128f
 
@@ -250,7 +248,6 @@ param_em_128s.set('PK_SIZE', 32)
 param_em_128s.set('SK_SIZE', 32)
 param_em_128s.set('OWF_INPUT_SIZE', 16)
 param_em_128s.set('OWF_OUTPUT_SIZE', 16)
-param_em_128s.set('N_MASK', 10)
 param_em_128s.set('N_MULT', 314)
 parameter_sets += param_em_128s
 
@@ -275,7 +272,6 @@ param_em_128f.set('PK_SIZE', 32)
 param_em_128f.set('SK_SIZE', 32)
 param_em_128f.set('OWF_INPUT_SIZE', 16)
 param_em_128f.set('OWF_OUTPUT_SIZE', 16)
-param_em_128f.set('N_MASK', 10)
 param_em_128f.set('N_MULT', 314)
 parameter_sets += param_em_128f
 
@@ -300,7 +296,6 @@ param_192s.set('PK_SIZE', 48)
 param_192s.set('SK_SIZE', 40)
 param_192s.set('OWF_INPUT_SIZE', 16)
 param_192s.set('OWF_OUTPUT_SIZE', 32)
-param_192s.set('N_MASK', 10)
 param_192s.set('N_MULT', 506)
 parameter_sets += param_192s
 
@@ -325,7 +320,6 @@ param_192f.set('PK_SIZE', 48)
 param_192f.set('SK_SIZE', 40)
 param_192f.set('OWF_INPUT_SIZE', 16)
 param_192f.set('OWF_OUTPUT_SIZE', 32)
-param_192f.set('N_MASK', 10)
 param_192f.set('N_MULT', 506)
 parameter_sets += param_192f
 
@@ -350,7 +344,6 @@ param_em_192s.set('PK_SIZE', 48)
 param_em_192s.set('SK_SIZE', 48)
 param_em_192s.set('OWF_INPUT_SIZE', 24)
 param_em_192s.set('OWF_OUTPUT_SIZE', 24)
-param_em_192s.set('N_MASK', 10)
 param_em_192s.set('N_MULT', 506)
 parameter_sets += param_em_192s
 
@@ -375,7 +368,6 @@ param_em_192f.set('PK_SIZE', 48)
 param_em_192f.set('SK_SIZE', 48)
 param_em_192f.set('OWF_INPUT_SIZE', 24)
 param_em_192f.set('OWF_OUTPUT_SIZE', 24)
-param_em_192f.set('N_MASK', 10)
 param_em_192f.set('N_MULT', 506)
 parameter_sets += param_em_192f
 
@@ -400,7 +392,6 @@ param_256s.set('PK_SIZE', 48)
 param_256s.set('SK_SIZE', 48)
 param_256s.set('OWF_INPUT_SIZE', 16)
 param_256s.set('OWF_OUTPUT_SIZE', 32)
-param_256s.set('N_MASK', 10)
 param_256s.set('N_MULT', 698)
 parameter_sets += param_256s
 
@@ -425,7 +416,6 @@ param_256f.set('PK_SIZE', 48)
 param_256f.set('SK_SIZE', 48)
 param_256f.set('OWF_INPUT_SIZE', 16)
 param_256f.set('OWF_OUTPUT_SIZE', 32)
-param_256f.set('N_MASK', 10)
 param_256f.set('N_MULT', 714)
 parameter_sets += param_256f
 
@@ -450,7 +440,6 @@ param_em_256s.set('PK_SIZE', 64)
 param_em_256s.set('SK_SIZE', 64)
 param_em_256s.set('OWF_INPUT_SIZE', 32)
 param_em_256s.set('OWF_OUTPUT_SIZE', 32)
-param_em_256s.set('N_MASK', 10)
 param_em_256s.set('N_MULT', 698)
 parameter_sets += param_em_256s
 
@@ -475,7 +464,6 @@ param_em_256f.set('PK_SIZE', 64)
 param_em_256f.set('SK_SIZE', 64)
 param_em_256f.set('OWF_INPUT_SIZE', 32)
 param_em_256f.set('OWF_OUTPUT_SIZE', 32)
-param_em_256f.set('N_MASK', 10)
 param_em_256f.set('N_MULT', 714)
 parameter_sets += param_em_256f
 

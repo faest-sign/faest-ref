@@ -44,7 +44,7 @@ int main() {
     const unsigned int k             = params.k;
     const unsigned int tau1          = params.tau1;
     const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
-    const unsigned int n_mask        = params.n_mask;
+    const unsigned int n_mask        = N_MASK;
     const unsigned int ell_hat       = ell + n_mask * d0;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(&params) ? 2 : 3) * lambda_bytes;
@@ -81,15 +81,6 @@ int main() {
 
     std::cout << "namespace " << faest_get_param_name(param_id) << "{\n";
 
-    // TODO: Remove
-    // NOTE: Just for debugging with a chall TV instead of the random chall from above
-    // static const char* chall_hex = "c3810c22de83098321348f823551318d7b22fc5e63c48700";
-    // for (unsigned int i = 0; i < lambda_bytes; ++i) {
-    //   unsigned int byte;
-    //   std::sscanf(chall_hex + 2 * i, "%2x", &byte);
-    //   chal[i] = static_cast<uint8_t>(byte);
-    // }
-
     vole_commit(root_key.data(), iv.data(), ell_hat, &params, &bavc_com, c.data(), c_mult.data(),
                 u.data(), v.data(), u_bar.data(), v_bar.data());
 
@@ -97,47 +88,25 @@ int main() {
     print_named_array("hashed_c", "uint8_t", hash_array(c));
     print_named_array("hashed_u", "uint8_t", hash_array(u));
 
-    // NOTE: --- Claude generated code
-    // This arranges the c_mult into the required ordering similar to pyfaest implementation and its
-    // TVs size_t nb        = (n_mult + 7) / 8; size_t packed_len = n_mask * nb;
-    // std::vector<uint8_t> c_mult_packed(packed_len, 0);
-    // for (size_t i = 0; i < n_mask; ++i) {
-    //     for (size_t j = 0; j < n_mult; ++j) {
-    //       uint16_t word = c_mult[j*2] | (uint16_t)(c_mult[j*2 + 1] << 8);
-    //       uint8_t  bit  = (word >> i) & 1u;
-    //       size_t   pos  = i * nb * 8 + j;
-    //       c_mult_packed[pos >> 3] |= (uint8_t)(bit << (pos & 7));
-    //     }
-    // }
-    // ----
-    // print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult_packed));
     print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult));
 
-    // NOTE: --- Claude generated code
-    // This arranges the v_storage into the required ordering similar to pyfaest implementation and
-    // its TVs
     size_t ncols = ell;
     std::vector<uint8_t> mV_bytes(ncols * lambda_bytes, 0);
     for (size_t ncols_idx = 0; ncols_idx < ncols; ++ncols_idx) {
       for (size_t r = 0; r < lambda; ++r) {
         const uint8_t* srow = v_storage.data() + r * ell_hat_bytes;
-        uint8_t bit         = (srow[ncols_idx >> 3] >> (ncols_idx & 7)) & 1u;
+        uint8_t bit         = ptr_get_bit(srow, ncols_idx);
         size_t pos          = ncols_idx * lambda + r;
-        mV_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+        ptr_set_bit(mV_bytes, pos, bit);
       }
     }
-    // ---
 
     print_named_array("hashed_v", "uint8_t", hash_array(mV_bytes));
     print_named_array("hashed_barU", "uint8_t", hash_array(u_bar));
     print_named_array("hashed_barV", "uint8_t", hash_array(v_bar));
 
     while (true) {
-      // TODO: Uncomment to get the random chall
       std::generate(chal.begin(), chal.end(), [&mt, &dist] { return dist(mt); });
-      // for (unsigned int i = lambda - params.w_grind; i != lambda; ++i) {
-      //   ptr_set_bit(chal.data(), i, 0);
-      // }
 
       uint16_t i_delta[MAX_TAU];
       decode_all_chall_3(i_delta, chal.data(), &params);
@@ -150,19 +119,15 @@ int main() {
       vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(), c.data(),
                        c_mult.data(), q_bar.data(), delta_prime.data(), ell_hat, &params);
 
-      // NOTE: --- Claude generated code
-      // This arranges the q_storage into the required ordering similar to pyfaest implementation
-      // and its TVs
       std::vector<uint8_t> mQ_bytes(ncols * lambda_bytes, 0);
       for (size_t ncols_idx = 0; ncols_idx < ncols; ++ncols_idx) {
         for (size_t r = 0; r < lambda; ++r) {
           const uint8_t* srow = q_storage.data() + r * ell_hat_bytes;
-          uint8_t bit         = (srow[ncols_idx >> 3] >> (ncols_idx & 7)) & 1u;
+          uint8_t bit         = ptr_get_bit(srow, ncols_idx);
           size_t pos          = ncols_idx * lambda + r;
-          mQ_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+          ptr_set_bit(mQ_bytes, pos, bit);
         }
       }
-      // ----
       print_named_array("hashed_q", "uint8_t", hash_array(mQ_bytes));
       print_named_array("hashed_barQ", "uint8_t", hash_array(q_bar));
 
