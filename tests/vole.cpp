@@ -205,22 +205,6 @@ namespace {
     const unsigned int lambda_minus_w_grind       = lambda - w_grind;
     const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7) / 8;
 
-    // NOTE: This TV only works for the deg-7 vole commit implementation with the below parameters
-    switch (lambda) {
-    case 256:
-      assert(ell == 2208 || ell == 1792);
-      assert(n_mask == 9);
-      break;
-    case 192:
-      assert(ell == 1728 || ell == 1152);
-      assert(n_mask == 9);
-      break;
-    default:
-      assert(ell == 960 || ell == 640);
-      assert(n_mask == 9);
-      break;
-    }
-
     bavc_t bavc_com;
 
     std::vector<uint8_t> chal, c, c_mult_packed, decom_i, u, u_bar, v_bar, q_bar, delta_prime,
@@ -256,47 +240,23 @@ namespace {
         expected_h_vec{expected_h.begin(), expected_h.end()};
     BOOST_TEST(hcom == expected_h_vec);
 
-    // print_named_array("challenge", "uint8_t", challenge.data(), challenge.size());
-
-    // print_named_array("c", "uint8_t", c);
-    // print_named_array("expected_hashed_c", "uint8_t", expected_hashed_c.data(),
-    // expected_hashed_c.size());
     BOOST_TEST(expected_hashed_c == hash_array(c));
-
-    // print_named_array("u", "uint8_t", u);
-    // print_named_array("expected_hashed_u", "uint8_t", expected_hashed_u.data(),
-    // expected_hashed_u.size());
     BOOST_TEST(expected_hashed_u == hash_array(u));
-
     BOOST_TEST(expected_hashed_barU == hash_array(u_bar));
     BOOST_TEST(expected_hashed_barV == hash_array(v_bar));
-
-    // print_named_array("hashed_c_mult", "uint8_t", hash_array(c_mult_packed));
     BOOST_TEST(expected_hashed_c_mult == hash_array(c_mult_packed));
 
-    // NOTE: *** Claude GENERATED CODE
-    // This does the row_to_coloumn_major transformation
     size_t ncols = ell;
-    // size_t lambda_bytes = lambda / 8;
     std::vector<uint8_t> mV_bytes(ncols * lambda_bytes, 0);
     for (size_t ncols_idx = 0; ncols_idx < ncols; ++ncols_idx) {
       for (size_t r = 0; r < lambda; ++r) {
         const uint8_t* srow = v_storage.data() + r * ell_hat_bytes;
-        uint8_t bit         = (srow[ncols_idx >> 3] >> (ncols_idx & 7)) & 1u;
+        uint8_t bit         = ptr_get_bit(srow, ncols_idx);
         size_t pos          = ncols_idx * lambda + r;
-        mV_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+        ptr_set_bit(mV_bytes, pos, bit);
       }
     }
-    // fprintf(stderr, "cc len: %zu\n", mV_bytes.size());
-    // for (size_t k = 0; k < 32; ++k) fprintf(stderr, "%02x", mV_bytes[k]);
-    // fprintf(stderr, "\n... tail: ");
-    // for (size_t k = mV_bytes.size()-32; k < mV_bytes.size(); ++k) fprintf(stderr, "%02x",
-    // mV_bytes[k]); fprintf(stderr, "\n"); print_named_array("v_storage", "uint8_t",
-    // mV_bytes.data(), 32); print_named_array("v_storage", "uint8_t", mV_bytes.data(), 140);
-    // ***
-    // print_named_array("v_storage", "uint8_t", hash_array(mV_bytes));
-    // print_named_array("expected_hashed_v", "uint8_t", expected_hashed_v.data(),
-    // expected_hashed_v.size());
+
     BOOST_TEST(expected_hashed_v == hash_array(mV_bytes));
 
     std::vector<uint16_t> i_delta;
@@ -311,28 +271,22 @@ namespace {
                                 delta_prime.data(), ell_hat, params));
     BOOST_TEST(hcom_rec == expected_h_vec);
 
-    // NOTE: *** Claude GENERATED CODE
     ncols = ell;
-    // size_t lambda_bytes = lambda / 8;
     std::vector<uint8_t> mQ_bytes(ncols * lambda_bytes, 0);
     for (size_t ncols_idx = 0; ncols_idx < ncols; ++ncols_idx) {
       for (size_t r = 0; r < lambda; ++r) {
         const uint8_t* srow = q_storage.data() + r * ell_hat_bytes;
-        uint8_t bit         = (srow[ncols_idx >> 3] >> (ncols_idx & 7)) & 1u;
+        uint8_t bit         = ptr_get_bit(srow, ncols_idx);
         size_t pos          = ncols_idx * lambda + r;
-        mQ_bytes[pos >> 3] |= (uint8_t)(bit << (pos & 7));
+        ptr_set_bit(mQ_bytes, pos, bit);
       }
     }
-    // print_named_array("q_storage", "uint8_t", mQ_bytes.data(), 140);
-    // ***
     BOOST_TEST(expected_hashed_q == hash_array(mQ_bytes));
-
     BOOST_TEST(expected_hashed_barQ == hash_array(q_bar));
 
     bavc_clear(&bavc_com);
 
-    uint8_t* Dp = (uint8_t*)malloc(lambda_minus_w_grind_bytes);
-    memset(Dp, 0, lambda_minus_w_grind_bytes);
+    std::vector<uint8_t> Dp(lambda_minus_w_grind_bytes, 0);
 
     unsigned int off = 0;
     for (unsigned int i = 0; i < tau; ++i) {
@@ -343,38 +297,30 @@ namespace {
       }
       off += deg;
     }
+    BOOST_TEST(off == lambda_minus_w_grind);
 
-    // --- Delta = W_crt * Dp  (crt_lift), same matvec pattern as your v_row_maj example ---
-    uint8_t* Delta = (uint8_t*)malloc(lambda_bytes);
-    memset(Delta, 0, lambda_bytes);
-
+    std::vector<uint8_t> Delta(lambda_bytes, 0);
     for (unsigned int col = 0; col < lambda; ++col) { // Delta has lambda output bits
       uint8_t acc = 0;
       for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) { // Dp has n_delta bits
         acc ^= ptr_get_bit(Dp, row) &
-               ptr_get_bit((uint8_t*)&TBL_U8(params->W_CRT, params->w_crt_words, col)[row / 64],
-                           row % 64);
+               ptr_u64_get_bit(TBL_U8(params->W_CRT, params->w_crt_words, col), row);
       }
       ptr_xor_bit(Delta, col, acc);
     }
-
-    assert(off == lambda_minus_w_grind);
 
     for (unsigned int row = 0; row < ell; ++row) { // Python: for j in range(ell)
       // rhs = mV[row] ^ (Delta if (u>>row)&1 else 0)
       for (unsigned int b = 0; b < lambda_bytes; ++b) {
         uint8_t rhs_b = mV_bytes[row * lambda_bytes + b]; // however mV rows are laid out
-        if ((ptr_get_bit(u.data(), row)))                 // (u >> row) & 1
+        if ((ptr_get_bit(u.data(), row))) {
           rhs_b ^= Delta[b];
+        }
         BOOST_TEST(mQ_bytes[row * lambda_bytes + b] == rhs_b);
       }
     }
   }
 } // namespace
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE(vole_tv)
 
 BOOST_AUTO_TEST_CASE(vole_tv_128f) {
   vole::test_tv(faest_get_paramset(FAEST_128F), vole_tvs::FAEST_128F::chall,
