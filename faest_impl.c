@@ -579,19 +579,21 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
                      c_mult_bytes);
 
     // line 9
-    unsigned int uh_0_bytes = lambda_bytes * (ell + D_ZK - 1);
-    unsigned int uh_1_bytes = lambda_bytes * 4;
+    const unsigned int uh_0_bytes = lambda_bytes * (ell + D_ZK - 1);
+    const unsigned int uh_1_bytes = lambda_bytes * 4;
+    // for scan-build
+    assert(uh_0_bytes + uh_1_bytes > 0);
 
-    uint8_t* uh   = calloc(uh_0_bytes + uh_1_bytes, 1);
+    uint8_t* uh   = malloc(uh_0_bytes + uh_1_bytes);
     uint8_t* uh_0 = uh;
     uint8_t* uh_1 = uh + uh_0_bytes;
 
-    for (unsigned int bit_idx = 0; bit_idx < ell; bit_idx++) {
-      ptr_set_bit(uh_0, bit_idx * lambda,
-                  ptr_get_bit(u, bit_idx)); // [u[0],..0 lambda times, u[1], 0 lambda times, ...]
+    memset(uh_0, 0, uh_0_bytes);
+    for (unsigned int bit_idx = 0; bit_idx < ell; ++bit_idx) {
+      // [u[0],..0 lambda times, u[1], 0 lambda times, ...]
+      ptr_set_bit(uh_0, bit_idx * lambda, ptr_get_bit(u, bit_idx));
     }
-
-    for (unsigned int u_bar_idx = 0; u_bar_idx <= D_ZK - 2; u_bar_idx++) {
+    for (unsigned int u_bar_idx = 0; u_bar_idx < D_ZK - 1; ++u_bar_idx) {
       memcpy(uh_0 + (lambda_bytes * ell) + (u_bar_idx * lambda_bytes),
              u_bar + (u_bar_idx * lambda_bytes), lambda_bytes);
     }
@@ -607,7 +609,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     unsigned int vh_0_bytes = lambda_bytes * (ell + D_ZK - 1);
     unsigned int vh_1_bytes = lambda_bytes * 4;
 
-    uint8_t* vh   = calloc(vh_0_bytes + vh_1_bytes, 1);
+    uint8_t* vh   = malloc(vh_0_bytes + vh_1_bytes);
     uint8_t* vh_0 = vh;
     uint8_t* vh_1 = vh + vh_0_bytes;
 

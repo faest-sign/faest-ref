@@ -1010,25 +1010,6 @@ void aes_extend_witness_7(uint8_t* w, const uint8_t* key, const uint8_t* in,
     }
     // last round is not commited to, so not computed
   }
-
-  // TODO: commit this
-  switch (lambda) {
-  case 256:
-    if (params->ell == 2208 && params->ell == 1792) {
-      assert(w - w_out == params->ell / 8);
-    }
-    break;
-  case 192:
-    if (params->ell == 1728 && params->ell == 1152) {
-      assert(w - w_out == params->ell / 8);
-    }
-    break;
-  default:
-    if ((!is_em && params->ell == 960) || params->ell == 640) {
-      assert(w - w_out == params->ell / 8);
-    }
-    break;
-  }
 }
 
 #if defined(HAVE_OPENSSL)
