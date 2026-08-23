@@ -16,7 +16,7 @@
 
 static const uint32_t TWEAK_OFFSET = UINT32_C(0x80000000); // 2^31
 
-#define TBL_U8(base, words, i) ((base) + (size_t)(i) * (words))
+#define TBL(base, words, i) ((base) + (size_t)(i) * (words))
 
 #if !defined(FAEST_TESTS)
 static
@@ -147,8 +147,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     for (unsigned int col = 0; col < lambda; col++) {
       uint8_t sum = 0;
       for (unsigned int row = 0; row < lambda; row++) {
-        uint8_t bit_a = ptr_get_bit(
-            (const uint8_t*)&TBL_U8(params->W_CRT, params->w_crt_words, col)[row / 64], row % 64);
+        uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_CRT, params->w_crt_words, col), row);
         uint8_t bit_b = ptr_get_bit(u_low, m * lambda + row);
         sum ^= bit_a & bit_b;
       }
@@ -204,8 +203,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
     memcpy(L_e_one, u, lambda_bytes);
     for (unsigned j = 0; j < lambda_minus_w_grind; j++) {
-      if (ptr_get_bit((const uint8_t*)&TBL_U8(params->G, params->g_words, e)[j / 64], j % 64) ==
-          1) {
+      if (ptr_u64_get_bit(TBL(params->G, params->g_words, e), j) == 1) {
         for (unsigned b = 0; b < lambda_bytes; b++) {
           L_e_zero[b] ^= V[j][b];
         }
@@ -223,8 +221,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     for (unsigned m = 0; m < n_mask; m++) {
       uint8_t dot_product_bit = 0;
       for (unsigned i = 0; i < lambda; i++) {
-        uint8_t bit_a =
-            ptr_get_bit((const uint8_t*)&TBL_U8(params->F, params->f_words, e)[i / 64], i % 64);
+        uint8_t bit_a = ptr_u64_get_bit(TBL(params->F, params->f_words, e), i);
         uint8_t bit_b = ptr_get_bit(u_bar + m * lambda_bytes, i);
 
         dot_product_bit ^= bit_a & bit_b;
@@ -246,8 +243,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
     for (unsigned int row = 0; row < lambda; row++) {
       for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
-        uint8_t bit_a = ptr_get_bit(
-            (const uint8_t*)&TBL_U8(params->W_TREE, params->w_tree_words, row)[col / 64], col % 64);
+        uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_TREE, params->w_tree_words, row), col);
         uint8_t bit_b = ptr_get_bit(r_tilde + m * lambda_minus_w_grind_bytes, col);
 
         ptr_xor_bit(first_prod, row, bit_a & bit_b);
@@ -257,8 +253,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
     for (unsigned int row = 0; row < lambda; row++) {
       for (unsigned int col = 0; col < n_mult; col++) {
-        uint8_t bit_a = ptr_get_bit(
-            (const uint8_t*)&TBL_U8(params->W_GATE, params->w_gate_words, row)[col / 64], col % 64);
+        uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_GATE, params->w_gate_words, row), col);
         uint8_t bit_b = ptr_get_bit(v_tilde + col * n_mask_bytes, m);
 
         ptr_xor_bit(second_prod, row, bit_a & bit_b);
@@ -275,10 +270,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
       uint8_t acc = 0;
       for (unsigned int row = 0; row < lambda_minus_w_grind; row++) {
-        acc ^=
-            ptr_get_bit(V[row], ell_idx) &
-            ptr_get_bit((const uint8_t*)&TBL_U8(params->W_CRT, params->w_crt_words, col)[row / 64],
-                        row % 64);
+        acc ^= ptr_get_bit(V[row], ell_idx) &
+               ptr_u64_get_bit(TBL(params->W_CRT, params->w_crt_words, col), row);
       }
 
       ptr_xor_bit(V_dest[col], ell_idx, acc);
@@ -321,26 +314,14 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     return false;
   }
 
-  uint8_t* Dp = malloc(lambda_minus_w_grind_bytes);
-  memset(Dp, 0, lambda_minus_w_grind_bytes);
-  unsigned int off = 0;
-  for (unsigned int i = 0; i < tau; ++i) {
-    const uint32_t deg   = bavc_max_node_depth(i, tau_1, k); // == tree_deg[i]
-    const uint16_t delta = i_delta[i];                       // == I[i]
-    for (unsigned int t = 0; t < deg; ++t) {
-      ptr_xor_bit(Dp, off + t, delta >> t); // Dp |= ((I[i]>>t)&1) << (off+t)
-    }
-    off += deg;
-  }
   // line 14
   // Delta = W_crt * Dp
   // Delta has lambda output bits
   for (unsigned int col = 0; col < lambda; ++col) {
     uint8_t acc = 0;
     for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) { // Dp has n_delta bits
-      acc ^= ptr_get_bit(Dp, row) &
-             ptr_get_bit((const uint8_t*)&TBL_U8(params->W_CRT, params->w_crt_words, col)[row / 64],
-                         row % 64);
+      acc ^= ptr_get_bit(chall_3, row) &
+             ptr_u64_get_bit(TBL(params->W_CRT, params->w_crt_words, col), row);
     }
     ptr_xor_bit(Delta, col, acc);
   }
@@ -351,7 +332,6 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
 
   // line 3
   if (!bavc_rec.s || !bavc_reconstruct(&bavc_rec, decom_i, i_delta, iv, params)) {
-    free(Dp);
     free(bavc_rec.s);
     return false;
   }
@@ -401,23 +381,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   qtmp = NULL;
 
   // line 13
-  uint8_t delta_prime[MAX_LAMBDA_BYTES] = {0};
-  unsigned int delta_prime_idx          = 0;
-  for (unsigned int tau_idx = 0; tau_idx < tau; tau_idx++) {
-    uint8_t deg = bavc_max_node_depth(tau_idx, tau_1, k);
-    for (unsigned d = 0; d < deg; d++) {
-      ptr_set_bit(delta_prime, delta_prime_idx, ptr_get_bit((uint8_t*)&i_delta[tau_idx], d));
-      delta_prime_idx++;
-    }
-  }
-
-#if !defined(NDEBUG)
-  for (unsigned r = 0; r < lambda_minus_w_grind; ++r) {
-    assert(ptr_get_bit(Dp, r) == ptr_get_bit(delta_prime, r));
-  }
-#endif
-  free(Dp);
-  Dp = NULL;
+  // delta_prime can be directly read from chall_3
 
   // line 19
   uint8_t* r_tilde_prime = calloc(n_mask, lambda_minus_w_grind_bytes);
@@ -465,12 +429,9 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     // line 24
     uint8_t gamma_e = 0;
     for (unsigned j = 0; j < lambda_minus_w_grind; j++) {
-      gamma_e ^=
-          ptr_get_bit((const uint8_t*)&TBL_U8(params->G, params->g_words, e)[j / 64], j % 64) &
-          ptr_get_bit(delta_prime, j);
+      gamma_e ^= ptr_u64_get_bit(TBL(params->G, params->g_words, e), j) & ptr_get_bit(chall_3, j);
 
-      if (ptr_get_bit((const uint8_t*)&TBL_U8(params->G, params->g_words, e)[j / 64], j % 64) ==
-          1) {
+      if (ptr_u64_get_bit(TBL(params->G, params->g_words, e), j) == 1) {
         for (unsigned b = 0; b < lambda_bytes; b++) {
           L_e_prime[b] ^= Q[j][b];
         }
@@ -494,8 +455,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
     for (unsigned int row = 0; row < lambda; row++) {
       for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
-        uint8_t bit_a = ptr_get_bit(
-            (const uint8_t*)&TBL_U8(params->W_TREE, params->w_tree_words, row)[col / 64], col % 64);
+        uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_TREE, params->w_tree_words, row), col);
         uint8_t bit_b = ptr_get_bit(r_tilde_prime + m * lambda_minus_w_grind_bytes, col);
 
         ptr_xor_bit(first_prod, row, bit_a & bit_b);
@@ -505,8 +465,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
     for (unsigned int row = 0; row < lambda; row++) {
       for (unsigned int col = 0; col < n_mult; col++) {
-        uint8_t bit_a = ptr_get_bit(
-            (const uint8_t*)&TBL_U8(params->W_GATE, params->w_gate_words, row)[col / 64], col % 64);
+        uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_GATE, params->w_gate_words, row), col);
         uint8_t bit_b = ptr_get_bit(q_tilde + col * n_mask_bytes, m);
 
         ptr_xor_bit(second_prod, row, bit_a & bit_b);
@@ -525,10 +484,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
       uint8_t acc = 0;
       for (unsigned int row = 0; row < lambda_minus_w_grind; row++) {
-        acc ^=
-            ptr_get_bit(Q[row], ell_idx) &
-            ptr_get_bit((const uint8_t*)&TBL_U8(params->W_CRT, params->w_crt_words, col)[row / 64],
-                        row % 64);
+        acc ^= ptr_get_bit(Q[row], ell_idx) &
+               ptr_u64_get_bit(TBL(params->W_CRT, params->w_crt_words, col), row);
       }
 
       ptr_xor_bit(Q_dest[col], ell_idx, acc);

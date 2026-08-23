@@ -25,8 +25,10 @@ FAEST_BEGIN_C_DECL
     (dst)[(index) / 8] = ((dst)[(index) / 8] & ~(1 << ptr_set_bit_index_mod_8)) |                  \
                          ((value) << ptr_set_bit_index_mod_8);                                     \
   } while (0)
-
 #define ptr_xor_bit(dst, index, value) (dst)[(index) / 8] ^= ((value) & 1u) << ((index) % 8)
+
+#define ptr_u16_get_bit(value, index) ((uint8_t)(((value)[(index) / 16] >> ((index) % 16)) & 1))
+#define ptr_u64_get_bit(value, index) ((uint8_t)(((value)[(index) / 64] >> ((index) % 64)) & 1))
 
 // DecodeAllChall_3
 bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
