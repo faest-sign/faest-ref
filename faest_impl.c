@@ -717,6 +717,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   if (!vole_reconstruct(hcom, Q, iv, dsignature_chall_3(sig, params),
                         dsignature_decom_i(sig, params), dsignature_c(sig, 0, params),
                         dsignature_c_mult(sig, params), q_bar, Delta, ell_hat, params)) {
+    free(q_bar);
     free_pointer_array(&Q);
     return -1;
   }
@@ -770,14 +771,13 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
   aes_verify(a0_tilde, dsignature_d(sig, params), (const uint8_t**)Q_row, q_bar, owf_input,
              owf_output, chall_2, Delta, dsignature_a1toi_tilde(sig, params), params);
+  free(q_bar);
   free_pointer_array(&Q_row);
 
   // line 19
   uint8_t chall_3_prime[MAX_LAMBDA_BYTES];
   hash_challenge_3(chall_3_prime, chall_2, a0_tilde, dsignature_a1toi_tilde(sig, params),
                    dsignature_ctr(sig, params), lambda);
-
-  free(q_bar);
 
   // Step 21
   return memcmp(chall_3_prime, dsignature_chall_3(sig, params), lambda_bytes) == 0 ? 0 : -1;
