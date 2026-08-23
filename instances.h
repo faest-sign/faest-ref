@@ -73,23 +73,19 @@ typedef struct faest_paramset_t {
   uint16_t n_mult; // number of AND gates in the F_2^lambda multiplication circuit
 
   // tables
-  const uint64_t* F;
-  const uint64_t* G;
-  const uint64_t* W_TREE;
-  const uint64_t* W_GATE;
-  const uint64_t* W_CRT;
-  const uint64_t* TREE_MODULI;
-  const uint64_t* M_TREE;
+  const uint64_t* const F;
+  const uint64_t* const G;
+  const uint64_t* const W_TREE;
+  const uint64_t* const W_GATE;
+  const uint64_t* const W_CRT;
+  const uint64_t* const TREE_MODULI;
+  const uint64_t* const M_TREE;
 
-  unsigned int ngates;
-  unsigned int ndelta_bits;
-  unsigned int ntree_bits;
   unsigned int f_words;
   unsigned int g_words;
   unsigned int w_tree_words;
   unsigned int w_gate_words;
   unsigned int w_crt_words;
-  unsigned int m_tree_words;
 } faest_paramset_t;
 
 #if defined(FAEST_TESTS)
