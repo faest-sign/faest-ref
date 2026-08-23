@@ -346,7 +346,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
     return false;
   }
 
-  uint8_t* Dp = (uint8_t*)malloc(lambda_minus_w_grind_bytes);
+  uint8_t* Dp = malloc(lambda_minus_w_grind_bytes);
   memset(Dp, 0, lambda_minus_w_grind_bytes);
   unsigned int off = 0;
   for (unsigned int i = 0; i < tau; ++i) {
@@ -359,8 +359,6 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
   }
   // line 14
   // --- Delta = W_crt * Dp  (crt_lift), same matvec pattern as your v_row_maj example ---
-  // uint8_t* Delta = (uint8_t*)malloc(lambda_bytes);
-  // memset(Delta, 0, lambda_bytes);
   for (unsigned int col = 0; col < lambda; ++col) { // Delta has lambda output bits
     uint8_t acc = 0;
     for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) { // Dp has n_delta bits
@@ -419,9 +417,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
   }
 
   // line 13
-  uint8_t* delta_prime = malloc(lambda_bytes);
-  memset(delta_prime, 0, lambda_bytes);
-  unsigned int delta_prime_idx = 0;
+  uint8_t delta_prime[MAX_LAMBDA_BYTES] = {0};
+  unsigned int delta_prime_idx          = 0;
   for (unsigned int tau_idx = 0; tau_idx < tau; tau_idx++) {
     uint8_t deg = bavc_max_node_depth(tau_idx, tau_1, k);
     for (unsigned d = 0; d < deg; d++) {
@@ -445,23 +442,19 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
   uint8_t* r_tilde_prime = malloc(n_mask * lambda_minus_w_grind_bytes);
   memset(r_tilde_prime, 0, n_mask * lambda_minus_w_grind_bytes);
   for (unsigned int m = 0; m < n_mask; m++) {
-
-    unsigned int ell_m = ell + m * bavc_max_node_depth(0, tau_1, k);
-
+    unsigned int ell_m   = ell + m * bavc_max_node_depth(0, tau_1, k);
     unsigned int bit_idx = 0;
     q_idx                = 0;
     for (unsigned tau_idx = 0; tau_idx < tau; tau_idx++) {
-
       uint8_t deg = bavc_max_node_depth(tau_idx, tau_1, k);
 
       uint8_t* acc = malloc((deg * 2 + 7) / 8);
       memset(acc, 0, (deg * 2 + 7) / 8);
 
       for (unsigned d = 0; d < deg; d++) {
-        for (unsigned t = 0; t < deg; t++) {
+        for (unsigned t = 0; t < deg; t++, ++q_idx) {
           uint8_t bit = ptr_get_bit(q_row_maj[ell_m + d], q_idx);
           ptr_xor_bit(acc, t + d, bit);
-          q_idx++;
         }
         q_idx -= deg;
       }
@@ -471,10 +464,9 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
       gf2_poly_reduce_ct(acc, deg * 2, (const uint8_t*)&params->TREE_MODULI[tau_idx], deg + 1,
                          reduced_out);
 
-      for (unsigned int b = 0; b < deg; b++) {
+      for (unsigned int b = 0; b < deg; ++b, ++bit_idx) {
         ptr_set_bit(r_tilde_prime + m * lambda_minus_w_grind_bytes, bit_idx,
                     ptr_get_bit(reduced_out, b));
-        bit_idx++;
       }
 
       free(acc);
@@ -573,9 +565,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q, const uint8_t* iv, const uint8_
 
   column_to_row_major(q_row_maj_new, Q, ell, lambda_minus_w_grind);
 
-  free(delta_prime);
   free(Dp);
-  // free(c_mult);
   free(qtmp);
   free(sd);
   free(bavc_rec.s);
