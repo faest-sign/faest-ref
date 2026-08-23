@@ -66,6 +66,9 @@ static
   return depth;
 }
 
+#undef R
+#undef V
+
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* c_mult,
                  uint8_t* u, uint8_t** V, uint8_t* u_bar, uint8_t* v_bar) {
