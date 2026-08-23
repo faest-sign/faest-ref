@@ -377,6 +377,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
 
   // line 19
   uint8_t* r_tilde_prime = calloc(N_MASK, lambda_minus_w_grind_bytes);
+  // for scan-build
+  assert(lambda_minus_w_grind_bytes > 0);
   for (unsigned int m = 0; m < N_MASK; m++) {
     unsigned int ell_m   = ell + m * bavc_max_node_depth(0, tau_1, k);
     unsigned int bit_idx = 0;
