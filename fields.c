@@ -1115,23 +1115,12 @@ static inline uint64_t load_src_word(const uint8_t* src, size_t word_idx, size_t
   uint64_t ret = 0;
   if (remaining_bits >= 64) {
     memcpy(&ret, src_word, sizeof(ret));
-  } else {
-    const size_t remaining_bytes = (remaining_bits + 7) / 8;
-    memcpy(&ret, src_word, remaining_bytes);
+    return le64toh(ret);
   }
 
-#if defined(FAEST_IS_BIG_ENDIAN)
-  ret = le64toh(ret);
-#endif
-  if (remaining_bits < 64) {
-    ret &= bit_word_mask(remaining_bits);
-  }
-  return ret;
-}
-
-static inline uint64_t load_table_word(const uint64_t* table, size_t word_idx, size_t table_bits) {
-  const size_t remaining_bits = table_bits - word_idx * 64;
-  return table[word_idx] & bit_word_mask(remaining_bits);
+  const size_t remaining_bytes = (remaining_bits + 7) / 8;
+  memcpy(&ret, src_word, remaining_bytes);
+  return le64toh(ret) & bit_word_mask(remaining_bits);
 }
 
 static inline void xor_dst_word(uint8_t* dst, size_t word_idx, size_t dst_bits, uint64_t value) {
@@ -1178,7 +1167,7 @@ static inline void xor_shifted_table(uint8_t* dst, size_t dst_bits, const uint64
 
   uint64_t carry = 0;
   for (size_t table_word_idx = 0; table_word_idx < table_words; ++table_word_idx) {
-    const uint64_t table_word = load_table_word(table, table_word_idx, table_bits);
+    const uint64_t table_word = table[table_word_idx];
     uint64_t shifted          = table_word;
     if (dst_bit_offset != 0) {
       shifted = (table_word << dst_bit_offset) | carry;
