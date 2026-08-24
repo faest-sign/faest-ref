@@ -145,8 +145,7 @@ void H5(uint8_t* digest, const uint8_t* iv, uint32_t e, const uint8_t* L_e,
   hash_squeeze(&ctx, digest, N_MASK_BYTES);
   hash_clear(&ctx);
 
-  // TODO: bit slice
-  for (size_t i = N_MASK; i < N_MASK_BYTES * 8; ++i) {
-    ptr_set_bit(digest, i, 0);
-  }
+#if N_MASK % 8
+  digest[N_MASK_BYTES - 1] &= (UINT8_C(1) << (N_MASK % 8)) - UINT8_C(1);
+#endif
 }
