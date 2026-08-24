@@ -199,8 +199,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     xor_u8_array(L_e_zero, u, L_e_one, lambda_bytes);
 
     // line 23
-    H5(iv, e, L_e_zero, h_e_zero, lambda_bytes, N_MASK, lambda);
-    H5(iv, e, L_e_one, h_e_one, lambda_bytes, N_MASK, lambda);
+    H5(h_e_zero, iv, e, L_e_zero, lambda);
+    H5(h_e_one, iv, e, L_e_one, lambda);
 
     // line 26
     for (unsigned m = 0; m < N_MASK; m++) {
@@ -403,7 +403,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     }
 
     // line 25
-    H5(iv, e, L_e_prime, h_e, lambda_bytes, N_MASK, lambda);
+    H5(h_e, iv, e, L_e_prime, lambda);
 
     // line 27
     for (unsigned m = 0; m < N_MASK; m++) {

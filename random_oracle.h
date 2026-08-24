@@ -56,8 +56,8 @@ void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params);
 
 // implementation for H_5
 
-void H5(const uint8_t* iv, uint32_t e, const uint8_t* L_e, uint8_t* digest, unsigned int L_e_len,
-        unsigned int digest_bit_len, unsigned int security_params);
+void H5(uint8_t* digest, const uint8_t* iv, uint32_t e, const uint8_t* L_e,
+        unsigned int security_params);
 
 FAEST_END_C_DECL
 

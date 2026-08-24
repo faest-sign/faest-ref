@@ -132,23 +132,21 @@ void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params) {
 }
 
 // H5
-void H5(const uint8_t* iv, uint32_t e, const uint8_t* L_e, uint8_t* digest, unsigned int L_e_len,
-        unsigned int digest_bit_len, unsigned int security_params) {
-  unsigned int digest_byte = (digest_bit_len + 7) / 8;
-
+void H5(uint8_t* digest, const uint8_t* iv, uint32_t e, const uint8_t* L_e,
+        unsigned int security_params) {
   hash_context ctx;
   hash_init(&ctx, security_params);
   hash_update(&ctx, iv, IV_SIZE);
   hash_update_uint32_le(&ctx, e);
-  hash_update(&ctx, L_e, L_e_len);
+  hash_update(&ctx, L_e, security_params / 8);
   const uint8_t domain_sep_H5 = 5;
   hash_update(&ctx, &domain_sep_H5, sizeof(domain_sep_H5));
   hash_final(&ctx);
-  hash_squeeze(&ctx, digest, digest_byte);
+  hash_squeeze(&ctx, digest, N_MASK_BYTES);
   hash_clear(&ctx);
 
   // TODO: bit slice
-  for (unsigned int i = digest_bit_len; i < digest_byte * 8; ++i) {
+  for (size_t i = N_MASK; i < N_MASK_BYTES * 8; ++i) {
     ptr_set_bit(digest, i, 0);
   }
 }
