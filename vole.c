@@ -197,6 +197,14 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   // a is a copy of V, so directly access V
 
   // line 21
+  for (unsigned m = 0; m < N_MASK; m++) {
+    uint8_t* c_mult_m = c_mult + m * n_mult_bytes;
+    // check if this memset is needed
+    memset(c_mult_m, 0, n_mult_bytes);
+    bf2_matrix_mul_tbl(c_mult_m, u_bar + m * lambda_bytes, params->F, lambda, n_mult,
+                       params->f_words);
+  }
+
   uint8_t* v_tilde = malloc(n_mult * N_MASK_BYTES);
   for (unsigned e = 0; e < n_mult; e++) {
     uint8_t L_e_zero[MAX_LAMBDA_BYTES] = {0};
@@ -217,19 +225,11 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
     // line 26
     for (unsigned m = 0; m < N_MASK; m++) {
-      uint8_t dot_product_bit = 0;
-      for (unsigned i = 0; i < lambda; i++) {
-        uint8_t bit_a = ptr_u64_get_bit(TBL(params->F, params->f_words, e), i);
-        uint8_t bit_b = ptr_get_bit(u_bar + m * lambda_bytes, i);
-
-        dot_product_bit ^= bit_a & bit_b;
-      }
-
       ptr_set_bit(v_tilde + e * N_MASK_BYTES, m, ptr_get_bit(h_e_zero, m));
       uint8_t bit_a = ptr_get_bit(v_tilde + e * N_MASK_BYTES, m);
       uint8_t bit_b = ptr_get_bit(h_e_one, m);
 
-      ptr_set_bit(c_mult + m * n_mult_bytes, e, bit_a ^ bit_b ^ dot_product_bit);
+      ptr_xor_bit(c_mult + m * n_mult_bytes, e, bit_a ^ bit_b);
     }
   }
 
