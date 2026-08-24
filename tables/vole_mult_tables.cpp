@@ -1438,12 +1438,10 @@ namespace {
         << " */\n";
     out << "#ifndef " << guard << "\n#define " << guard << "\n\n";
     out << "#include <stdint.h>\n\n";
-    out << "#define " << pfx << "_LAMBDA " << lam << "\n";
     out << "#define " << pfx << "_NGATES " << ng << "\n";
     out << "#define " << pfx << "_WGRIND " << wgrind << "\n";
     out << "#define " << pfx << "_NDELTA_BITS " << nb << "\n";
     out << "#define " << pfx << "_NTREE_BITS " << ntree << "\n";
-    out << "#define " << pfx << "_TAU " << tau << "\n\n";
     out << "#define " << pfx << "_F_WORDS " << w_f << "\n";
     out << "#define " << pfx << "_G_WORDS " << w_g << "\n";
     out << "#define " << pfx << "_W_TREE_WORDS " << w_wt << "\n";
