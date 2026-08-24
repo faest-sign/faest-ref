@@ -61,7 +61,6 @@ typedef struct faest_paramset_t {
   uint16_t Nst;
   uint16_t Ske;
   uint16_t R;
-  uint16_t Senc;
   uint16_t Lke;
   uint16_t Lenc;
 

@@ -72,7 +72,6 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
       name##_Nst,                                                                                  \
       name##_Ske,                                                                                  \
       name##_R,                                                                                    \
-      name##_Senc,                                                                                 \
       name##_Lke,                                                                                  \
       name##_Lenc,                                                                                 \
       name##_SIG_SIZE,                                                                             \
