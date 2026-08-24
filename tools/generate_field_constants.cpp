@@ -146,10 +146,9 @@ int main() {
   }
 
   {
-    std::array<bf128_t, 9> c_squares, c;
-    for (unsigned i = 0; i < 9; i++) {
+    std::array<bf128_t, 9> c;
+    for (unsigned int i = 0; i < 9; i++) {
       bf128_byte_combine_bits(&c[i], sbox_x[i]);
-      bf128_byte_combine_bits(&c_squares[i], sbox_x_sq[i]);
     }
 
     std::cout << "static const bf128_t bf128_c[9] = {\n";
@@ -158,19 +157,12 @@ int main() {
       std::cout << ", \n";
     }
     std::cout << "};\n";
-    std::cout << "static const bf128_t bf128_c_squares[9] = {\n";
-    for (auto v : c_squares) {
-      print_bf128(v);
-      std::cout << ", \n";
-    }
-    std::cout << "};\n";
   }
 
   {
-    std::array<bf192_t, 9> c_squares, c;
-    for (unsigned i = 0; i < 9; i++) {
+    std::array<bf192_t, 9> c;
+    for (unsigned int i = 0; i < 9; i++) {
       bf192_byte_combine_bits(&c[i], sbox_x[i]);
-      bf192_byte_combine_bits(&c_squares[i], sbox_x_sq[i]);
     }
 
     std::cout << "static const bf192_t bf192_c[9] = {\n";
@@ -179,29 +171,16 @@ int main() {
       std::cout << ", \n";
     }
     std::cout << "};\n";
-    std::cout << "static const bf192_t bf192_c_squares[9] = {\n";
-    for (auto v : c_squares) {
-      print_bf192(v);
-      std::cout << ", \n";
-    }
-    std::cout << "};\n";
   }
 
   {
-    std::array<bf256_t, 9> c_squares, c;
-    for (unsigned i = 0; i < 9; i++) {
+    std::array<bf256_t, 9> c;
+    for (unsigned int i = 0; i < 9; i++) {
       bf256_byte_combine_bits(&c[i], sbox_x[i]);
-      bf256_byte_combine_bits(&c_squares[i], sbox_x_sq[i]);
     }
 
     std::cout << "static const bf256_t bf256_c[9] = {\n";
     for (auto v : c) {
-      print_bf256(v);
-      std::cout << ", \n";
-    }
-    std::cout << "};\n";
-    std::cout << "static const bf256_t bf256_c_squares[9] = {\n";
-    for (auto v : c_squares) {
       print_bf256(v);
       std::cout << ", \n";
     }
@@ -221,19 +200,6 @@ int main() {
     std::cout << "static const bf128_t bf128_bc_3 = ";
     print_bf128(v3);
     std::cout << ";\n";
-
-    auto tmp = v2;
-    bf128_mul(&v2, &tmp, &tmp);
-    tmp = v3;
-    bf128_mul(&v3, &tmp, &tmp);
-
-    std::cout << "static const bf128_t bf128_bc_2_sq = ";
-    print_bf128(v2);
-    std::cout << ";\n";
-
-    std::cout << "static const bf128_t bf128_bc_3_sq = ";
-    print_bf128(v3);
-    std::cout << ";\n";
   }
 
   {
@@ -249,19 +215,6 @@ int main() {
     std::cout << "static const bf192_t bf192_bc_3 = ";
     print_bf192(v3);
     std::cout << ";\n";
-
-    auto tmp = v2;
-    bf192_mul(&v2, &tmp, &tmp);
-    tmp = v3;
-    bf192_mul(&v3, &tmp, &tmp);
-
-    std::cout << "static const bf192_t bf192_bc_2_sq = ";
-    print_bf192(v2);
-    std::cout << ";\n";
-
-    std::cout << "static const bf192_t bf192_bc_3_sq = ";
-    print_bf192(v3);
-    std::cout << ";\n";
   }
 
   {
@@ -275,19 +228,6 @@ int main() {
     std::cout << ";\n";
 
     std::cout << "static const bf256_t bf256_bc_3 = ";
-    print_bf256(v3);
-    std::cout << ";\n";
-
-    auto tmp = v2;
-    bf256_mul(&v2, &tmp, &tmp);
-    tmp = v3;
-    bf256_mul(&v3, &tmp, &tmp);
-
-    std::cout << "static const bf256_t bf256_bc_2_sq = ";
-    print_bf256(v2);
-    std::cout << ";\n";
-
-    std::cout << "static const bf256_t bf256_bc_3_sq = ";
     print_bf256(v3);
     std::cout << ";\n";
   }
