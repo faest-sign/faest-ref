@@ -27,6 +27,18 @@ static void pack_n_mask_bits(uint8_t* dst, const uint8_t* src, size_t bits, unsi
   }
 }
 
+static void pack_column_bits(uint8_t* dst, uint8_t** src, size_t bits, unsigned int col) {
+  for (size_t bit = 0; bit < bits; ++bit) {
+    ptr_set_bit(dst, bit, ptr_get_bit(src[bit], col));
+  }
+}
+
+static void xor_column_bits(uint8_t** dst, const uint8_t* src, size_t bits, unsigned int col) {
+  for (size_t bit = 0; bit < bits; ++bit) {
+    ptr_xor_bit(dst[bit], col, ptr_get_bit(src, bit));
+  }
+}
+
 #if !defined(FAEST_TESTS)
 static
 #endif
@@ -237,15 +249,13 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   // line 30
   for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
-    for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
-      uint8_t acc = 0;
-      for (unsigned int row = 0; row < lambda_minus_w_grind; row++) {
-        acc ^= ptr_get_bit(V[row], ell_idx) &
-               ptr_u64_get_bit(TBL(params->W_CRT, params->w_crt_words, col), row);
-      }
+    uint8_t crt_input[MAX_LAMBDA_BYTES]  = {0};
+    uint8_t crt_output[MAX_LAMBDA_BYTES] = {0};
 
-      ptr_xor_bit(V_dest[col], ell_idx, acc);
-    }
+    pack_column_bits(crt_input, V, lambda_minus_w_grind, ell_idx);
+    bf2_matrix_mul_tbl(crt_output, crt_input, params->W_CRT, lambda_minus_w_grind,
+                       lambda_minus_w_grind, params->w_crt_words);
+    xor_column_bits(V_dest, crt_output, lambda_minus_w_grind, ell_idx);
   }
   free(gate_input);
   free_pointer_array(&V);
@@ -424,17 +434,14 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   q_tilde = NULL;
 
   // line 31
-  // TODO refactor this
   for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
-    for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
-      uint8_t acc = 0;
-      for (unsigned int row = 0; row < lambda_minus_w_grind; row++) {
-        acc ^= ptr_get_bit(Q[row], ell_idx) &
-               ptr_u64_get_bit(TBL(params->W_CRT, params->w_crt_words, col), row);
-      }
+    uint8_t crt_input[MAX_LAMBDA_BYTES]  = {0};
+    uint8_t crt_output[MAX_LAMBDA_BYTES] = {0};
 
-      ptr_xor_bit(Q_dest[col], ell_idx, acc);
-    }
+    pack_column_bits(crt_input, Q, lambda_minus_w_grind, ell_idx);
+    bf2_matrix_mul_tbl(crt_output, crt_input, params->W_CRT, lambda_minus_w_grind,
+                       lambda_minus_w_grind, params->w_crt_words);
+    xor_column_bits(Q_dest, crt_output, lambda_minus_w_grind, ell_idx);
   }
 
   free_pointer_array(&Q);
