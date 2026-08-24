@@ -19,6 +19,14 @@ static const uint32_t TWEAK_OFFSET = UINT32_C(0x80000000); // 2^31
 
 #define TBL(base, words, i) ((base) + (size_t)(i) * (words))
 
+// to pack bits the way bf2_matrix_mul_tbl expects them to be
+static void pack_n_mask_bits(uint8_t* dst, const uint8_t* src, size_t bits, unsigned int mask_idx) {
+  memset(dst, 0, (bits + 7) / 8);
+  for (size_t bit = 0; bit < bits; ++bit) {
+    ptr_set_bit(dst, bit, ptr_get_bit(src + bit * N_MASK_BYTES, mask_idx));
+  }
+}
+
 #if !defined(FAEST_TESTS)
 static
 #endif
@@ -142,8 +150,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
     // line 14
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
-    bf2_matrix_mul_tbl(first_prod, u_low + m * lambda_bytes, params->W_CRT,
-                       lambda_minus_w_grind, lambda, params->w_crt_words);
+    bf2_matrix_mul_tbl(first_prod, u_low + m * lambda_bytes, params->W_CRT, lambda_minus_w_grind,
+                       lambda, params->w_crt_words);
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
     bf2_poly_mul(second_prod, &u_hi[m * w_grind_bytes], w_grind, params->M_TREE,
                  lambda_minus_w_grind + 1);
@@ -214,21 +222,16 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   }
 
   // line 29
+  uint8_t* gate_input = malloc(n_mult_bytes);
   for (unsigned int m = 0; m < N_MASK; m++) {
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
     bf2_matrix_mul_tbl(first_prod, r_tilde + m * lambda_minus_w_grind_bytes, params->W_TREE,
                        lambda_minus_w_grind, lambda, params->w_tree_words);
 
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
-    for (unsigned int row = 0; row < lambda; row++) {
-      for (unsigned int col = 0; col < n_mult; col++) {
-        uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_GATE, params->w_gate_words, row), col);
-        uint8_t bit_b = ptr_get_bit(v_tilde + col * N_MASK_BYTES, m);
-
-        ptr_xor_bit(second_prod, row, bit_a & bit_b);
-      }
-    }
-
+    pack_n_mask_bits(gate_input, v_tilde, n_mult, m);
+    bf2_matrix_mul_tbl(second_prod, gate_input, params->W_GATE, n_mult, lambda,
+                       params->w_gate_words);
     xor_u8_array(first_prod, second_prod, v_bar + m * lambda_bytes, lambda_bytes);
   }
 
@@ -244,6 +247,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       ptr_xor_bit(V_dest[col], ell_idx, acc);
     }
   }
+  free(gate_input);
   free_pointer_array(&V);
 
   free(ui);
@@ -400,24 +404,20 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   }
 
   // line 30
+  uint8_t* gate_input = malloc(n_mult_bytes);
   for (unsigned int m = 0; m < N_MASK; m++) {
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
     bf2_matrix_mul_tbl(first_prod, r_tilde_prime + m * lambda_minus_w_grind_bytes, params->W_TREE,
                        lambda_minus_w_grind, lambda, params->w_tree_words);
 
-    // TODO: refactor this
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
-    for (unsigned int row = 0; row < lambda; row++) {
-      for (unsigned int col = 0; col < n_mult; col++) {
-        uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_GATE, params->w_gate_words, row), col);
-        uint8_t bit_b = ptr_get_bit(q_tilde + col * N_MASK_BYTES, m);
-
-        ptr_xor_bit(second_prod, row, bit_a & bit_b);
-      }
-    }
-
+    pack_n_mask_bits(gate_input, q_tilde, n_mult, m);
+    bf2_matrix_mul_tbl(second_prod, gate_input, params->W_GATE, n_mult, lambda,
+                       params->w_gate_words);
     xor_u8_array(first_prod, second_prod, q_bar + m * lambda_bytes, lambda_bytes);
   }
+  free(gate_input);
+  gate_input = NULL;
   free(r_tilde_prime);
   r_tilde_prime = NULL;
   free(q_tilde);
