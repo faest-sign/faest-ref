@@ -1103,6 +1103,10 @@ void bf768_mul_256_inplace(bf768_t* lhs, const bf256_t* rhs) {
   }
 }
 
+ATTR_CONST static inline uint64_t bit_word_mask(size_t bits) {
+  return bits >= 64 ? UINT64_MAX : ((UINT64_C(1) << bits) - 1);
+}
+
 static inline uint64_t load_src_word(const uint8_t* src, size_t word_idx, size_t rows) {
   const size_t word_bit_offset = word_idx * 64;
   const size_t remaining_bits  = rows - word_bit_offset;
@@ -1120,9 +1124,37 @@ static inline uint64_t load_src_word(const uint8_t* src, size_t word_idx, size_t
   ret = le64toh(ret);
 #endif
   if (remaining_bits < 64) {
-    ret &= (UINT64_C(1) << remaining_bits) - 1;
+    ret &= bit_word_mask(remaining_bits);
   }
   return ret;
+}
+
+static inline uint64_t load_table_word(const uint64_t* table, size_t word_idx, size_t table_bits) {
+  const size_t remaining_bits = table_bits - word_idx * 64;
+  return table[word_idx] & bit_word_mask(remaining_bits);
+}
+
+static inline void xor_dst_word(uint8_t* dst, size_t word_idx, size_t dst_bits, uint64_t value) {
+  const size_t word_bit_offset = word_idx * 64;
+  if (word_bit_offset >= dst_bits) {
+    return;
+  }
+
+  const size_t remaining_bits = dst_bits - word_bit_offset;
+  const size_t word_bits      = remaining_bits < 64 ? remaining_bits : 64;
+  const size_t word_bytes     = (word_bits + 7) / 8;
+  uint8_t* dst_word           = dst + word_idx * sizeof(uint64_t);
+  uint64_t ret                = 0;
+
+  memcpy(&ret, dst_word, word_bytes);
+#if defined(FAEST_IS_BIG_ENDIAN)
+  ret = le64toh(ret);
+#endif
+  ret ^= value & bit_word_mask(word_bits);
+#if defined(FAEST_IS_BIG_ENDIAN)
+  ret = htole64(ret);
+#endif
+  memcpy(dst_word, &ret, word_bytes);
 }
 
 void bf2_matrix_mul_tbl(uint8_t* dst, const uint8_t* src, const uint64_t* table, size_t rows,
@@ -1138,13 +1170,43 @@ void bf2_matrix_mul_tbl(uint8_t* dst, const uint8_t* src, const uint64_t* table,
   }
 }
 
+static inline void xor_shifted_table(uint8_t* dst, size_t dst_bits, const uint64_t* table,
+                                     size_t table_bits, size_t shift, uint64_t mask) {
+  const size_t table_words    = (table_bits + 63) / 64;
+  const size_t dst_word_idx   = shift / 64;
+  const size_t dst_bit_offset = shift % 64;
+
+  uint64_t carry = 0;
+  for (size_t table_word_idx = 0; table_word_idx < table_words; ++table_word_idx) {
+    const uint64_t table_word = load_table_word(table, table_word_idx, table_bits);
+    uint64_t shifted          = table_word;
+    if (dst_bit_offset != 0) {
+      shifted = (table_word << dst_bit_offset) | carry;
+      carry   = table_word >> (64 - dst_bit_offset);
+    }
+    xor_dst_word(dst, dst_word_idx + table_word_idx, dst_bits, shifted & mask);
+  }
+
+  if (dst_bit_offset != 0) {
+    xor_dst_word(dst, dst_word_idx + table_words, dst_bits, carry & mask);
+  }
+}
+
 void bf2_poly_mul(uint8_t* dst, const uint8_t* src, size_t src_bits, const uint64_t* table,
                   size_t table_bits) {
-  for (size_t i = 0; i < src_bits; i++) {
-    uint8_t mask = ptr_get_bit(src, i);
-    for (size_t j = 0; j < table_bits; j++) {
-      uint8_t bj = ptr_u64_get_bit(table, j);
-      ptr_xor_bit(dst, i + j, bj & mask);
+  const size_t src_words = (src_bits + 63) / 64;
+  const size_t dst_bits  = src_bits + table_bits - 1;
+
+  for (size_t src_word_idx = 0; src_word_idx < src_words; ++src_word_idx) {
+    const uint64_t src_word      = load_src_word(src, src_word_idx, src_bits);
+    const size_t remaining_bits  = src_bits - src_word_idx * 64;
+    const size_t src_word_bits   = MIN(remaining_bits, 64);
+    const size_t dst_word_offset = src_word_idx;
+
+    for (size_t src_bit_idx = 0; src_bit_idx < src_word_bits; ++src_bit_idx) {
+      const uint64_t src_mask = -((src_word >> src_bit_idx) & 1);
+      xor_shifted_table(dst, dst_bits, table, table_bits, dst_word_offset * 64 + src_bit_idx,
+                        src_mask);
     }
   }
 }
@@ -1154,14 +1216,9 @@ void bf2_poly_reduce(uint8_t* dst, const uint8_t* src, size_t src_bits, const ui
   size_t src_bytes = (src_bits + 7) / 8;
   memcpy(dst, src, src_bytes);
 
-  size_t mdeg = table_bits - 1;
-  for (size_t i = src_bits; i > mdeg; --i) {
-    uint8_t mask = ptr_get_bit(dst, i - 1);
-    size_t shift = i - 1 - mdeg;
-
-    for (size_t j = 0; j < table_bits; ++j) {
-      uint8_t mj = ptr_u64_get_bit(table, j);
-      ptr_xor_bit(dst, shift + j, mj & mask);
-    }
+  for (size_t i = src_bits; i >= table_bits; --i) {
+    const uint64_t mask = -((uint64_t)ptr_get_bit(dst, i - 1));
+    const size_t shift  = i - table_bits;
+    xor_shifted_table(dst, src_bits, table, table_bits, shift, mask);
   }
 }
