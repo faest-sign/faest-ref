@@ -152,9 +152,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       ptr_set_bit(first_prod, col, sum);
     }
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
-    gf2_poly_mul_ct((uint8_t*)&params->M_TREE[0], lambda_minus_w_grind + 1,
-                    (uint8_t*)&u_hi[m * w_grind_bytes], w_grind, second_prod);
-
+    bf2_poly_mul(second_prod, &u_hi[m * w_grind_bytes], w_grind, params->M_TREE,
+                 lambda_minus_w_grind + 1);
     xor_u8_array(first_prod, second_prod, u_bar + m * lambda_bytes, lambda_bytes);
 
     // line 17
@@ -168,23 +167,22 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
       for (unsigned int d = 0; d < deg; ++d) {
         for (unsigned int t = 0; t < deg; ++t, ++v_idx) {
-          uint8_t bit = ptr_get_bit(V[v_idx], ell_m + d);
-          ptr_xor_bit(acc, t + d, bit);
+          ptr_xor_bit(acc, t + d, ptr_get_bit(V[v_idx], ell_m + d));
         }
         v_idx -= deg;
       }
       v_idx += deg;
 
       uint8_t* reduced_out = malloc((deg * 2 + 7) / 8);
-      gf2_poly_reduce_ct(acc, deg * 2, (const uint8_t*)&params->TREE_MODULI[tau_idx], deg + 1,
-                         reduced_out);
+      memset(reduced_out, 0, (deg * 2 + 7) / 8);
+      bf2_poly_reduce(reduced_out, acc, deg * 2, &params->TREE_MODULI[tau_idx], deg + 1);
 
       for (unsigned int b = 0; b < deg; ++b, ++bit_idx) {
         ptr_set_bit(r_tilde + m * lambda_minus_w_grind_bytes, bit_idx, ptr_get_bit(reduced_out, b));
       }
 
-      free(acc);
       free(reduced_out);
+      free(acc);
     }
   }
 
@@ -350,7 +348,6 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
       q_idx += ki;
     } else {
       for (unsigned int d = 0; d < ki; ++d, ++q_idx) {
-
         memcpy(Q[q_idx], qtmp + d * ellhat_bytes, ellhat_bytes);
 
         masked_xor_u8_array(Q[q_idx], c + (i - 1) * ell_bytes, Q[q_idx], (i_delta[i] >> d) & 1,
@@ -393,16 +390,16 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
       q_idx += deg;
 
       uint8_t* reduced_out = malloc((deg * 2 + 7) / 8);
-      gf2_poly_reduce_ct(acc, deg * 2, (const uint8_t*)&params->TREE_MODULI[tau_idx], deg + 1,
-                         reduced_out);
+      memset(reduced_out, 0, (deg * 2 + 7) / 8);
+      bf2_poly_reduce(reduced_out, acc, deg * 2, &params->TREE_MODULI[tau_idx], deg + 1);
 
       for (unsigned int b = 0; b < deg; ++b, ++bit_idx) {
         ptr_set_bit(r_tilde_prime + m * lambda_minus_w_grind_bytes, bit_idx,
                     ptr_get_bit(reduced_out, b));
       }
 
-      free(acc);
       free(reduced_out);
+      free(acc);
     }
   }
 

@@ -48,12 +48,6 @@ void print_u8_array_bits(const char* label, const uint8_t* arr, size_t m);
 void column_to_row_major(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
                          unsigned int v_col_bits_len);
 
-void gf2_poly_mul_ct(const uint8_t* a, size_t a_bits, const uint8_t* b, size_t b_bits,
-                     uint8_t* out);
-
-void gf2_poly_reduce_ct(const uint8_t* a, size_t a_bits, const uint8_t* m, size_t m_bits,
-                        uint8_t* out);
-
 uint8_t** alloc_pointer_array(size_t rows, size_t columns);
 void free_pointer_array(uint8_t*** ptr);
 

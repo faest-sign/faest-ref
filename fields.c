@@ -1113,3 +1113,31 @@ void bf2_matrix_mul_tbl(uint8_t* dst, const uint8_t* src, const uint64_t* table,
     ptr_xor_bit(dst, col, acc);
   }
 }
+
+void bf2_poly_mul(uint8_t* dst, const uint8_t* src, size_t src_bits, const uint64_t* table,
+                  size_t table_bits) {
+  for (size_t i = 0; i < src_bits; i++) {
+    uint8_t mask = ptr_get_bit(src, i);
+    for (size_t j = 0; j < table_bits; j++) {
+      uint8_t bj = ptr_u64_get_bit(table, j);
+      ptr_xor_bit(dst, i + j, bj & mask);
+    }
+  }
+}
+
+void bf2_poly_reduce(uint8_t* dst, const uint8_t* src, size_t src_bits, const uint64_t* table,
+                     size_t table_bits) {
+  size_t src_bytes = (src_bits + 7) / 8;
+  memcpy(dst, src, src_bytes);
+
+  size_t mdeg = table_bits - 1;
+  for (size_t i = src_bits; i > mdeg; --i) {
+    uint8_t mask = ptr_get_bit(dst, i - 1);
+    size_t shift = i - 1 - mdeg;
+
+    for (size_t j = 0; j < table_bits; ++j) {
+      uint8_t mj = ptr_u64_get_bit(table, j);
+      ptr_xor_bit(dst, shift + j, mj & mask);
+    }
+  }
+}

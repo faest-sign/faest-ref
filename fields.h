@@ -712,6 +712,11 @@ void bf768_mul_256_inplace(bf768_t* lhs, const bf256_t* rhs);
 void bf2_matrix_mul_tbl(uint8_t* dst, const uint8_t* src, const uint64_t* table, size_t rows,
                         size_t columns, size_t table_words);
 
+void bf2_poly_mul(uint8_t* dst, const uint8_t* src, size_t src_bits, const uint64_t* table,
+                  size_t table_bits);
+void bf2_poly_reduce(uint8_t* dst, const uint8_t* src, size_t src_bits, const uint64_t* table,
+                     size_t table_bits);
+
 FAEST_END_C_DECL
 
 #endif
