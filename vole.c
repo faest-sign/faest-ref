@@ -191,17 +191,12 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     uint8_t h_e_zero[N_MASK_BYTES];
     uint8_t h_e_one[N_MASK_BYTES];
 
-    memcpy(L_e_one, u, lambda_bytes);
     for (unsigned j = 0; j < lambda_minus_w_grind; j++) {
       if (ptr_u64_get_bit(TBL(params->G, params->g_words, e), j) == 1) {
-        for (unsigned b = 0; b < lambda_bytes; b++) {
-          L_e_zero[b] ^= V[j][b];
-        }
+        xor_u8_array(L_e_zero, V[j], L_e_zero, lambda_bytes);
       }
     }
-    for (unsigned b = 0; b < lambda_bytes; b++) {
-      L_e_one[b] ^= L_e_zero[b];
-    }
+    xor_u8_array(L_e_zero, u, L_e_one, lambda_bytes);
 
     // line 23
     H5(iv, e, L_e_zero, h_e_zero, lambda_bytes, N_MASK, lambda);
@@ -247,9 +242,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       }
     }
 
-    for (unsigned int i = 0; i < lambda_bytes; i++) {
-      v_bar[m * lambda_bytes + i] = first_prod[i] ^ second_prod[i];
-    }
+    xor_u8_array(first_prod, second_prod, v_bar + m * lambda_bytes, lambda_bytes);
   }
 
   // line 30
