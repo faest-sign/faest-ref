@@ -1103,14 +1103,38 @@ void bf768_mul_256_inplace(bf768_t* lhs, const bf256_t* rhs) {
   }
 }
 
+static inline uint64_t load_src_word(const uint8_t* src, size_t word_idx, size_t rows) {
+  const size_t word_bit_offset = word_idx * 64;
+  const size_t remaining_bits  = rows - word_bit_offset;
+  const uint8_t* src_word      = src + word_idx * sizeof(uint64_t);
+
+  uint64_t ret = 0;
+  if (remaining_bits >= 64) {
+    memcpy(&ret, src_word, sizeof(ret));
+  } else {
+    const size_t remaining_bytes = (remaining_bits + 7) / 8;
+    memcpy(&ret, src_word, remaining_bytes);
+  }
+
+#if defined(FAEST_IS_BIG_ENDIAN)
+  ret = le64toh(ret);
+#endif
+  if (remaining_bits < 64) {
+    ret &= (UINT64_C(1) << remaining_bits) - 1;
+  }
+  return ret;
+}
+
 void bf2_matrix_mul_tbl(uint8_t* dst, const uint8_t* src, const uint64_t* table, size_t rows,
                         size_t columns, size_t table_words) {
-  for (unsigned int col = 0; col < columns; ++col) {
-    uint8_t acc = 0;
-    for (unsigned int row = 0; row < rows; ++row) {
-      acc ^= ptr_get_bit(src, row) & ptr_u64_get_bit(&table[col * table_words], row);
+  const size_t row_words = (rows + 63) / 64;
+
+  for (size_t col = 0; col < columns; ++col) {
+    uint64_t acc = 0;
+    for (size_t word = 0; word < row_words; ++word) {
+      acc ^= load_src_word(src, word, rows) & table[col * table_words + word];
     }
-    ptr_xor_bit(dst, col, acc);
+    ptr_set_bit(dst, col, parity64(acc));
   }
 }
 
