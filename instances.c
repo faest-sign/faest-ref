@@ -89,7 +89,6 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
       other_name##_W_TREE_WORDS,                                                                   \
       other_name##_W_GATE_WORDS,                                                                   \
       other_name##_W_CRT_WORDS,                                                                    \
-      name,                                                                                        \
   }
 
 #define FAEST_128S_PARAMS PARAMS(FAEST_128S, FAEST_128S)

@@ -84,8 +84,6 @@ typedef struct faest_paramset_t {
   uint8_t w_tree_words;
   uint8_t w_gate_words;
   uint8_t w_crt_words;
-
-  faest_paramid_t id;
 } faest_paramset_t;
 
 #if defined(FAEST_TESTS)
