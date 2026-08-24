@@ -420,9 +420,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
       gamma_e ^= ptr_u64_get_bit(TBL(params->G, params->g_words, e), j) & ptr_get_bit(chall_3, j);
 
       if (ptr_u64_get_bit(TBL(params->G, params->g_words, e), j) == 1) {
-        for (unsigned b = 0; b < lambda_bytes; b++) {
-          L_e_prime[b] ^= Q[j][b];
-        }
+        xor_u8_array(L_e_prime, Q[j], L_e_prime, lambda_bytes);
       }
     }
 
@@ -439,15 +437,10 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   // line 30
   for (unsigned int m = 0; m < N_MASK; m++) {
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
-    for (unsigned int row = 0; row < lambda; row++) {
-      for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
-        uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_TREE, params->w_tree_words, row), col);
-        uint8_t bit_b = ptr_get_bit(r_tilde_prime + m * lambda_minus_w_grind_bytes, col);
+    bf2_matrix_mul_tbl(first_prod, r_tilde_prime + m * lambda_minus_w_grind_bytes, params->W_TREE,
+                       lambda_minus_w_grind, lambda, params->w_tree_words);
 
-        ptr_xor_bit(first_prod, row, bit_a & bit_b);
-      }
-    }
-
+    // TODO: refactor this
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
     for (unsigned int row = 0; row < lambda; row++) {
       for (unsigned int col = 0; col < n_mult; col++) {
@@ -466,6 +459,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   q_tilde = NULL;
 
   // line 31
+  // TODO refactor this
   for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
     for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
       uint8_t acc = 0;
