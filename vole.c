@@ -162,9 +162,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     for (unsigned int tau_idx = 0; tau_idx < tau; tau_idx++) {
       uint8_t deg = bavc_max_node_depth(tau_idx, tau_1, k);
 
-      uint8_t* acc = malloc((deg * 2 + 7) / 8);
-      memset(acc, 0, (deg * 2 + 7) / 8);
-
+      uint8_t acc[(MAX_DEPTH * 2 + 7) / 8] = {0};
       for (unsigned int d = 0; d < deg; ++d) {
         for (unsigned int t = 0; t < deg; ++t, ++v_idx) {
           ptr_xor_bit(acc, t + d, ptr_get_bit(V[v_idx], ell_m + d));
@@ -173,16 +171,12 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       }
       v_idx += deg;
 
-      uint8_t* reduced_out = malloc((deg * 2 + 7) / 8);
-      memset(reduced_out, 0, (deg * 2 + 7) / 8);
+      uint8_t reduced_out[(MAX_DEPTH * 2 + 7) / 8] = {0};
       bf2_poly_reduce(reduced_out, acc, deg * 2, &params->TREE_MODULI[tau_idx], deg + 1);
 
       for (unsigned int b = 0; b < deg; ++b, ++bit_idx) {
         ptr_set_bit(r_tilde + m * lambda_minus_w_grind_bytes, bit_idx, ptr_get_bit(reduced_out, b));
       }
-
-      free(reduced_out);
-      free(acc);
     }
   }
 
@@ -375,11 +369,9 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     unsigned int bit_idx = 0;
     q_idx                = 0;
     for (unsigned tau_idx = 0; tau_idx < tau; tau_idx++) {
-      uint8_t deg = bavc_max_node_depth(tau_idx, tau_1, k);
+      const uint8_t deg = bavc_max_node_depth(tau_idx, tau_1, k);
 
-      uint8_t* acc = malloc((deg * 2 + 7) / 8);
-      memset(acc, 0, (deg * 2 + 7) / 8);
-
+      uint8_t acc[(MAX_DEPTH * 2 + 7) / 8] = {0};
       for (unsigned d = 0; d < deg; d++) {
         for (unsigned t = 0; t < deg; t++, ++q_idx) {
           uint8_t bit = ptr_get_bit(Q[q_idx], ell_m + d);
@@ -389,17 +381,13 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
       }
       q_idx += deg;
 
-      uint8_t* reduced_out = malloc((deg * 2 + 7) / 8);
-      memset(reduced_out, 0, (deg * 2 + 7) / 8);
+      uint8_t reduced_out[(MAX_DEPTH * 2 + 7) / 8] = {0};
       bf2_poly_reduce(reduced_out, acc, deg * 2, &params->TREE_MODULI[tau_idx], deg + 1);
 
       for (unsigned int b = 0; b < deg; ++b, ++bit_idx) {
         ptr_set_bit(r_tilde_prime + m * lambda_minus_w_grind_bytes, bit_idx,
                     ptr_get_bit(reduced_out, b));
       }
-
-      free(reduced_out);
-      free(acc);
     }
   }
 
