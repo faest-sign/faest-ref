@@ -407,11 +407,11 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   bavc_t bavc;
   uint8_t* u = malloc(ell_bytes);
   assert(u);
-  // v has \hat \ell rows, \lambda columns, storing in column-major order
-  // it is actually lambda - w_grind but keeping it lambda
-  uint8_t** V    = alloc_pointer_array(lambda, ell_hat_bytes);
   uint8_t* u_bar = malloc(N_MASK * lambda_bytes);
   uint8_t* v_bar = malloc(N_MASK * lambda_bytes);
+  // v has \hat \ell rows, \lambda columns, storing in column-major order
+  // it is actually lambda - w_grind but keeping it lambda
+  uint8_t** V = alloc_pointer_array(lambda, ell_hat_bytes);
 
   vole_commit(rootkey, iv, ell_hat, params, &bavc, signature_c(sig, 0, params),
               signature_c_mult(sig, params), u, V, u_bar, v_bar);
@@ -497,8 +497,10 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
               owf_output, chall_2, params);
 
     free_pointer_array(&V_row);
+    free(v_bar);
+    free(u_bar);
     free(u);
-    u = NULL;
+    v_bar = u_bar = u = NULL;
 
     // line 26
     hash_challenge_3_init(&h2_ctx, chall_2, a0_tilde, signature_a1toi_tilde(sig, params), lambda);
@@ -535,9 +537,6 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   // copy counter to signature
   ctr = htole32(ctr);
   memcpy(signature_ctr(sig, params), &ctr, sizeof(ctr));
-
-  free(u_bar);
-  free(v_bar);
 }
 
 int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const uint8_t* owf_input,
