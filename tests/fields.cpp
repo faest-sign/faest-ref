@@ -10,6 +10,7 @@
 #include "randomness.h"
 #include "utils.h"
 #include "crt_vole_commit_tvs.hpp"
+#include "field_tvs.hpp"
 
 #include <boost/test/unit_test.hpp>
 
@@ -2087,6 +2088,198 @@ BOOST_AUTO_TEST_CASE(test_bf2_matrix_mul_tbl_em_256s) {
   bf2_matrix_mul_tbl(delta.data(), tv::delta_bytes.data(), params.W_CRT,
                      params.lambda - params.w_grind, params.lambda, params.w_crt_words);
   BOOST_TEST(delta == tv::expected_crt_delta_bytes);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_128f) {
+  namespace tv = field_tvs::FAEST_128F;
+
+  const auto& params = *faest_get_paramset(FAEST_128F);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_128s) {
+  namespace tv = field_tvs::FAEST_128S;
+
+  const auto& params = *faest_get_paramset(FAEST_128S);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_192f) {
+  namespace tv = field_tvs::FAEST_192F;
+
+  const auto& params = *faest_get_paramset(FAEST_192F);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_192s) {
+  namespace tv = field_tvs::FAEST_192S;
+
+  const auto& params = *faest_get_paramset(FAEST_192S);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_256f) {
+  namespace tv = field_tvs::FAEST_256F;
+
+  const auto& params = *faest_get_paramset(FAEST_256F);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_256s) {
+  namespace tv = field_tvs::FAEST_256S;
+
+  const auto& params = *faest_get_paramset(FAEST_256S);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_128f) {
+  namespace tv = field_tvs::FAEST_EM_128F;
+
+  const auto& params = *faest_get_paramset(FAEST_EM_128F);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_128s) {
+  namespace tv = field_tvs::FAEST_EM_128S;
+
+  const auto& params = *faest_get_paramset(FAEST_EM_128S);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_192f) {
+  namespace tv = field_tvs::FAEST_EM_192F;
+
+  const auto& params = *faest_get_paramset(FAEST_EM_192F);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_192s) {
+  namespace tv = field_tvs::FAEST_EM_192S;
+
+  const auto& params = *faest_get_paramset(FAEST_EM_192S);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_256f) {
+  namespace tv = field_tvs::FAEST_EM_256F;
+
+  const auto& params = *faest_get_paramset(FAEST_EM_256F);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
+}
+
+BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_256s) {
+  namespace tv = field_tvs::FAEST_EM_256S;
+
+  const auto& params = *faest_get_paramset(FAEST_EM_256S);
+
+  auto res = decltype(tv::res){0};
+  bf2_poly_mul(res.data(), tv::lhs.data(), params.w_grind, params.M_TREE,
+               params.lambda - params.w_grind + 1);
+  BOOST_TEST(res == tv::res);
+
+  auto reduced = decltype(tv::reduced){0};
+  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, &params.TREE_MODULI[0],
+                  tv::deg + 1);
+  BOOST_TEST(reduced == tv::reduced);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
