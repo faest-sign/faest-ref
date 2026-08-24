@@ -21,7 +21,6 @@ if boost.found()
       ],
       output: [
         'tables_@0@.h'.format(preset),
-        'tables_@0@.c'.format(preset),
       ],
       console: false,
     )
@@ -31,14 +30,9 @@ else
 
   foreach preset : presets
     header = 'tables_@0@.h'.format(preset)
-    src = 'tables_@0@.c'.format(preset)
     tables += fs.copyfile(
       join_paths(meson.current_source_dir(), 'pregenerated', header),
       header,
-    )
-    tables += fs.copyfile(
-      join_paths(meson.current_source_dir(), 'pregenerated', src),
-      src,
     )
   endforeach
 endif
