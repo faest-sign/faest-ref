@@ -1102,3 +1102,14 @@ void bf768_mul_256_inplace(bf768_t* lhs, const bf256_t* rhs) {
     bf768_add_inplace(lhs, &tmp1);
   }
 }
+
+void bf2_matrix_mul_tbl(uint8_t* dst, const uint8_t* src, const uint64_t* table, size_t rows,
+                        size_t columns, size_t table_words) {
+  for (unsigned int col = 0; col < columns; ++col) {
+    uint8_t acc = 0;
+    for (unsigned int row = 0; row < rows; ++row) {
+      acc ^= ptr_get_bit(src, row) & ptr_u64_get_bit(&table[col * table_words], row);
+    }
+    ptr_xor_bit(dst, col, acc);
+  }
+}

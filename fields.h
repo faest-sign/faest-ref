@@ -709,6 +709,9 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf768_add_inplace(bf768_t*
 
 void bf768_mul_256_inplace(bf768_t* lhs, const bf256_t* rhs);
 
+void bf2_matrix_mul_tbl(uint8_t* dst, const uint8_t* src, const uint64_t* table, size_t rows,
+                        size_t columns, size_t table_words);
+
 FAEST_END_C_DECL
 
 #endif

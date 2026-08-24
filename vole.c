@@ -10,6 +10,7 @@
 #include "aes.h"
 #include "utils.h"
 #include "random_oracle.h"
+#include "fields.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -309,15 +310,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   // line 14
   // Delta = W_crt * Dp
   // Delta has lambda output bits
-  for (unsigned int col = 0; col < lambda; ++col) {
-    uint8_t acc = 0;
-    for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) { // Dp has n_delta bits
-      acc ^= ptr_get_bit(chall_3, row) &
-             ptr_u64_get_bit(TBL(params->W_CRT, params->w_crt_words, col), row);
-    }
-    ptr_xor_bit(Delta, col, acc);
-  }
-
+  bf2_matrix_mul_tbl(Delta, chall_3, params->W_CRT, lambda_minus_w_grind, lambda,
+                     params->w_crt_words);
   bavc_rec_t bavc_rec;
   bavc_rec.h = com;
   bavc_rec.s = malloc((L - tau) * lambda_bytes);

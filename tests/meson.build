@@ -8,6 +8,7 @@ if boost_test.found()
     'bavc.cpp',
     'extended_tests.cpp',
     'fields.cpp',
+    'gf2_poly.cpp',
     'hash_shake.cpp',
     'instances.cpp',
     'owf.cpp',
@@ -117,6 +118,7 @@ if boost_test.found()
       timeout: 6000,
     )
   endforeach
+  test('GF2 Poly', extended_tests, args: ['-t', 'gf2_poly'], timeout: 6000)
 endif
 
 if get_option('tv-generators').enabled()
