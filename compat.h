@@ -186,14 +186,24 @@ ATTR_CONST static inline uint32_t rotr32(uint32_t n, unsigned int c) {
  * set */
 #if __has_builtin(__builtin_parity)
 #define parity8 __builtin_parity
+#define parity64 __builtin_parity
 #elif __has_builtin(__builtin_popcount)
 #define parity8(x) (__builtin_popcount(x) & 0x1)
+#define parity64(x) (__builtin_popcount(x) & 0x1)
 #else
 ATTR_CONST ATTR_ARTIFICIAL static inline uint8_t parity8(uint8_t n) {
   n ^= n >> 4;
   n ^= n >> 2;
   n ^= n >> 1;
   return !((~n) & 1);
+}
+
+/* byte parity from: https://graphics.stanford.edu/~seander/bithacks.html#ParityWith64Bits */
+ATTR_CONST ATTR_ARTIFICIAL static inline uint64_t parity64(uint64_t in) {
+  in ^= in >> 1;
+  in ^= in >> 2;
+  in = (in & 0x1111111111111111) * 0x1111111111111111;
+  return (in >> 60) & 1;
 }
 #endif
 
