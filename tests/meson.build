@@ -118,7 +118,7 @@ if boost_test.found()
       timeout: 6000,
     )
   endforeach
-  test('GF2 Poly', extended_tests, args: ['-t', 'gf2_poly'], timeout: 6000)
+  test('BF2 Matrix', extended_tests, args: ['-t', 'bf2_matrix'], timeout: 6000)
 endif
 
 if get_option('tv-generators').enabled()

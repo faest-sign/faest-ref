@@ -11,7 +11,7 @@
 #include <array>
 #include <vector>
 
-BOOST_AUTO_TEST_SUITE(bf2_matrix_mul_tbl)
+BOOST_AUTO_TEST_SUITE(bf2_matrix)
 
 BOOST_AUTO_TEST_CASE(test_bf2_matrix_mul_tbl_128f) {
   namespace tv = crt_tvs_128f;
