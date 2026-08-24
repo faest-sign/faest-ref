@@ -186,7 +186,7 @@ ATTR_CONST static inline uint32_t rotr32(uint32_t n, unsigned int c) {
  * set */
 #if __has_builtin(__builtin_parity)
 #define parity8 __builtin_parity
-#define parity64 __builtin_parity
+#define parity64 __builtin_parityl
 #elif __has_builtin(__builtin_popcount)
 #define parity8(x) (__builtin_popcount(x) & 0x1)
 #define parity64(x) (__builtin_popcount(x) & 0x1)
