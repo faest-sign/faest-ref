@@ -134,29 +134,21 @@ void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params) {
 // H5
 void H5(const uint8_t* iv, uint32_t e, const uint8_t* L_e, uint8_t* digest, unsigned int L_e_len,
         unsigned int digest_bit_len, unsigned int security_params) {
-
-  const uint8_t a = 0x05;
-  // NOTE: We use digest_masked because the hash returns bytewise, with the not
-  // needed bits also set to something. In the test cases, the non-required bits are
-  // expected to be zero, thus padding with zeros in digest_masked and copying the
-  // required bits
   unsigned int digest_byte = (digest_bit_len + 7) / 8;
-  uint8_t* digest_masked   = malloc(digest_byte);
-  memset(digest_masked, 0, digest_byte);
 
   hash_context ctx;
   hash_init(&ctx, security_params);
   hash_update(&ctx, iv, IV_SIZE);
-  hash_update(&ctx, (uint8_t*)&e, 4);
+  hash_update_uint32_le(&ctx, e);
   hash_update(&ctx, L_e, L_e_len);
-  hash_update(&ctx, (uint8_t*)&a, 1);
+  const uint8_t domain_sep_H5 = 5;
+  hash_update(&ctx, &domain_sep_H5, sizeof(domain_sep_H5));
   hash_final(&ctx);
   hash_squeeze(&ctx, digest, digest_byte);
   hash_clear(&ctx);
 
-  for (unsigned int i = 0; i < digest_bit_len; i++) {
-    ptr_set_bit(digest_masked, i, ptr_get_bit(digest, i));
+  // TODO: bit slice
+  for (unsigned int i = digest_bit_len; i < digest_byte * 8; ++i) {
+    ptr_set_bit(digest, i, 0);
   }
-  memcpy(digest, digest_masked, digest_byte);
-  free(digest_masked);
 }
