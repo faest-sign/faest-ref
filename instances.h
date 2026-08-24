@@ -44,7 +44,6 @@ typedef enum faest_paramid_t {
 
 typedef struct faest_paramset_t {
   // main parameters
-  faest_paramid_t id;
   uint16_t lambda;
   uint8_t tau;
   uint8_t w_grind;
@@ -80,12 +79,13 @@ typedef struct faest_paramset_t {
   const uint64_t* const W_CRT;
   const uint64_t* const TREE_MODULI;
   const uint64_t* const M_TREE;
+  uint8_t f_words;
+  uint8_t g_words;
+  uint8_t w_tree_words;
+  uint8_t w_gate_words;
+  uint8_t w_crt_words;
 
-  unsigned int f_words;
-  unsigned int g_words;
-  unsigned int w_tree_words;
-  unsigned int w_gate_words;
-  unsigned int w_crt_words;
+  faest_paramid_t id;
 } faest_paramset_t;
 
 #if defined(FAEST_TESTS)
