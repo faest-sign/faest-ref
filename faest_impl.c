@@ -380,18 +380,12 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
                 const uint8_t* owf_input, const uint8_t* owf_output, const uint8_t* witness,
                 const uint8_t* rho, size_t rholen, const faest_paramset_t* params) {
   const unsigned int ell           = params->ell;
-  const unsigned int ell_bytes     = (ell + 7) / 8;
+  const unsigned int ell_bytes     = (params->ell + 7) / 8;
   const unsigned int lambda        = params->lambda;
   const unsigned int lambda_bytes  = lambda / 8;
-  const unsigned int tau           = params->tau;
-  const unsigned int k             = params->k;
-  const unsigned int tau1          = params->tau1;
-  const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
-  const unsigned int n_mult        = params->n_mult;
-  const unsigned int n_mult_bytes  = (n_mult + 7) / 8;
-  const unsigned int ell_hat       = ell + N_MASK * d0;
+  const unsigned int n_mult_bytes  = (params->n_mult + 7) / 8;
+  const unsigned int ell_hat       = ell + N_MASK * bavc_max_node_depth(0, params->tau1, params->k);
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-  const unsigned int w_grind       = params->w_grind;
   const unsigned int c_mult_bytes  = N_MASK * n_mult_bytes;
 
   // line 2
@@ -426,8 +420,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     // line 7
     uint8_t chall_1[(8 * MAX_LAMBDA_BYTES) + 8] = {0};
     hash_challenge_1(chall_1, mu, bavc.h, signature_c(sig, 0, params),
-                     signature_c_mult(sig, params), signature_iv_pre(sig, params), lambda, ell, tau,
-                     c_mult_bytes);
+                     signature_c_mult(sig, params), signature_iv_pre(sig, params), lambda, ell,
+                     params->tau, c_mult_bytes);
 
     // line 9
     const unsigned int uh_0_bytes = lambda_bytes * (ell + D_ZK - 1);
@@ -515,7 +509,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     faest_declassify(chall_3, lambda / 8);
 
     // line 27
-    if (!check_challenge_3(chall_3, lambda - w_grind, lambda)) {
+    if (!check_challenge_3(chall_3, lambda - params->w_grind, lambda)) {
       continue;
     }
 
@@ -544,13 +538,8 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   const unsigned int ell           = params->ell;
   const unsigned int lambda        = params->lambda;
   const unsigned int lambda_bytes  = lambda / 8;
-  const unsigned int tau           = params->tau;
-  const unsigned int k             = params->k;
-  const unsigned int tau1          = params->tau1;
-  const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
-  const unsigned int n_mult        = params->n_mult;
-  const unsigned int n_mult_bytes  = (n_mult + 7) / 8;
-  const unsigned int ell_hat       = ell + N_MASK * d0;
+  const unsigned int n_mult_bytes  = (params->n_mult + 7) / 8;
+  const unsigned int ell_hat       = ell + N_MASK * bavc_max_node_depth(0, params->tau1, params->k);
   const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
   const unsigned int c_mult_bytes  = N_MASK * n_mult_bytes;
 
@@ -590,7 +579,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   // line 9
   uint8_t chall_1[(8 * MAX_LAMBDA_BYTES) + 8] = {0};
   hash_challenge_1(chall_1, mu, hcom, dsignature_c(sig, 0, params), dsignature_c_mult(sig, params),
-                   dsignature_iv_pre(sig, params), lambda, ell, tau, c_mult_bytes);
+                   dsignature_iv_pre(sig, params), lambda, ell, params->tau, c_mult_bytes);
 
   // line 10
   H2_context_t chall_2_ctx;
