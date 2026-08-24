@@ -142,15 +142,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
     // line 14
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
-    for (unsigned int col = 0; col < lambda; col++) {
-      uint8_t sum = 0;
-      for (unsigned int row = 0; row < lambda; row++) {
-        uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_CRT, params->w_crt_words, col), row);
-        uint8_t bit_b = ptr_get_bit(u_low, m * lambda + row);
-        sum ^= bit_a & bit_b;
-      }
-      ptr_set_bit(first_prod, col, sum);
-    }
+    bf2_matrix_mul_tbl(first_prod, u_low + m * lambda_bytes, params->W_CRT,
+                       lambda_minus_w_grind, lambda, params->w_crt_words);
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
     bf2_poly_mul(second_prod, &u_hi[m * w_grind_bytes], w_grind, params->M_TREE,
                  lambda_minus_w_grind + 1);
@@ -223,14 +216,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   // line 29
   for (unsigned int m = 0; m < N_MASK; m++) {
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
-    for (unsigned int row = 0; row < lambda; row++) {
-      for (unsigned int col = 0; col < lambda_minus_w_grind; col++) {
-        uint8_t bit_a = ptr_u64_get_bit(TBL(params->W_TREE, params->w_tree_words, row), col);
-        uint8_t bit_b = ptr_get_bit(r_tilde + m * lambda_minus_w_grind_bytes, col);
-
-        ptr_xor_bit(first_prod, row, bit_a & bit_b);
-      }
-    }
+    bf2_matrix_mul_tbl(first_prod, r_tilde + m * lambda_minus_w_grind_bytes, params->W_TREE,
+                       lambda_minus_w_grind, lambda, params->w_tree_words);
 
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
     for (unsigned int row = 0; row < lambda; row++) {
