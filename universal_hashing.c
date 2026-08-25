@@ -16,27 +16,17 @@
 void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
                    unsigned int d_zk) {
   const unsigned int ell_prime = ell + d_zk - 1;
-  const unsigned int deg_max   = ell_prime - 1;
-
-  // line 3
-  const uint8_t* r0 = sd;
-  const uint8_t* r1 = sd + 1 * BF128_NUM_BYTES;
-  const uint8_t* r2 = sd + 2 * BF128_NUM_BYTES;
-  const uint8_t* r3 = sd + 3 * BF128_NUM_BYTES;
-  const uint8_t* s0 = sd + 4 * BF128_NUM_BYTES;
-  const uint8_t* s1 = sd + 5 * BF128_NUM_BYTES;
-  const uint8_t* s2 = sd + 6 * BF128_NUM_BYTES;
-  const uint8_t* s3 = sd + 7 * BF128_NUM_BYTES;
-  const uint8_t* t  = sd + 8 * BF128_NUM_BYTES;
 
   bf128_t bf_y[5];
   {
+    const uint8_t* s0 = sd + 4 * BF128_NUM_BYTES;
+    const uint8_t* t  = sd + 8 * BF128_NUM_BYTES;
+
     // line 5
     bf128_t bf_s[5];
-    bf128_load(&bf_s[0], s0);
-    bf128_load(&bf_s[1], s1);
-    bf128_load(&bf_s[2], s2);
-    bf128_load(&bf_s[3], s3);
+    for (unsigned int i = 0; i != 4; ++i) {
+      bf128_load(&bf_s[i], s0 + i * BF128_NUM_BYTES);
+    }
 
     // line 6
     {
@@ -50,6 +40,7 @@ void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
       bf128_load(&bf_y[j], x);
     }
 
+    const unsigned int deg_max = ell_prime - 1;
     for (unsigned int i = 1; i <= deg_max; ++i) {
       bf128_t bf_x0;
       bf128_load(&bf_x0, x + i * BF128_NUM_BYTES);
@@ -61,65 +52,36 @@ void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   }
 
   // line 4
-  bf128_t bf_h[4];
-  bf128_load(&bf_h[0], r0);
-  bf128_load(&bf_h[1], r1);
-  bf128_load(&bf_h[2], r2);
-  bf128_load(&bf_h[3], r3);
+  for (unsigned int i = 0; i != 4; ++i) {
+    bf128_t bf_h;
+    bf128_load(&bf_h, sd + i * BF128_NUM_BYTES);
 
-  // line 8
-  bf128_mul_inplace(&bf_h[0], &bf_y[0]);
-  bf128_add_inplace(&bf_h[0], &bf_y[1]);
+    // line 8
+    bf128_mul_inplace(&bf_h, &bf_y[0]);
+    bf128_add_inplace(&bf_h, &bf_y[i + 1]);
 
-  bf128_mul_inplace(&bf_h[1], &bf_y[0]);
-  bf128_add_inplace(&bf_h[1], &bf_y[2]);
+    bf128_t x1i;
+    bf128_load(&x1i, x + (ell_prime + i) * BF128_NUM_BYTES);
+    bf128_add_inplace(&bf_h, &x1i);
 
-  bf128_mul_inplace(&bf_h[2], &bf_y[0]);
-  bf128_add_inplace(&bf_h[2], &bf_y[3]);
-
-  bf128_mul_inplace(&bf_h[3], &bf_y[0]);
-  bf128_add_inplace(&bf_h[3], &bf_y[4]);
-
-  bf128_t x1i;
-  bf128_load(&x1i, x + (ell_prime + 0) * BF128_NUM_BYTES);
-  bf128_add_inplace(&bf_h[0], &x1i);
-  bf128_load(&x1i, x + (ell_prime + 1) * BF128_NUM_BYTES);
-  bf128_add_inplace(&bf_h[1], &x1i);
-  bf128_load(&x1i, x + (ell_prime + 2) * BF128_NUM_BYTES);
-  bf128_add_inplace(&bf_h[2], &x1i);
-  bf128_load(&x1i, x + (ell_prime + 3) * BF128_NUM_BYTES);
-  bf128_add_inplace(&bf_h[3], &x1i);
-
-  bf128_store(h, &bf_h[0]);
-  bf128_store(h + 1 * BF128_NUM_BYTES, &bf_h[1]);
-  bf128_store(h + 2 * BF128_NUM_BYTES, &bf_h[2]);
-  bf128_store(h + 3 * BF128_NUM_BYTES, &bf_h[3]);
+    bf128_store(h + i * BF128_NUM_BYTES, &bf_h);
+  }
 }
 
 void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
                    unsigned int d_zk) {
   const unsigned int ell_prime = ell + d_zk - 1;
-  const unsigned int deg_max   = ell_prime - 1;
-
-  // line 3
-  const uint8_t* r0 = sd;
-  const uint8_t* r1 = sd + 1 * BF192_NUM_BYTES;
-  const uint8_t* r2 = sd + 2 * BF192_NUM_BYTES;
-  const uint8_t* r3 = sd + 3 * BF192_NUM_BYTES;
-  const uint8_t* s0 = sd + 4 * BF192_NUM_BYTES;
-  const uint8_t* s1 = sd + 5 * BF192_NUM_BYTES;
-  const uint8_t* s2 = sd + 6 * BF192_NUM_BYTES;
-  const uint8_t* s3 = sd + 7 * BF192_NUM_BYTES;
-  const uint8_t* t  = sd + 8 * BF192_NUM_BYTES;
 
   bf192_t bf_y[5];
   {
+    const uint8_t* s0 = sd + 4 * BF192_NUM_BYTES;
+    const uint8_t* t  = sd + 8 * BF192_NUM_BYTES;
+
     // line 5
     bf192_t bf_s[5];
-    bf192_load(&bf_s[0], s0);
-    bf192_load(&bf_s[1], s1);
-    bf192_load(&bf_s[2], s2);
-    bf192_load(&bf_s[3], s3);
+    for (unsigned int i = 0; i != 4; ++i) {
+      bf192_load(&bf_s[i], s0 + i * BF192_NUM_BYTES);
+    }
 
     // line 6
     {
@@ -133,6 +95,7 @@ void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
       bf192_load(&bf_y[j], x);
     }
 
+    const unsigned int deg_max = ell_prime - 1;
     for (unsigned int i = 1; i <= deg_max; ++i) {
       bf192_t bf_x0;
       bf192_load(&bf_x0, x + i * BF192_NUM_BYTES);
@@ -144,65 +107,36 @@ void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   }
 
   // line 4
-  bf192_t bf_h[4];
-  bf192_load(&bf_h[0], r0);
-  bf192_load(&bf_h[1], r1);
-  bf192_load(&bf_h[2], r2);
-  bf192_load(&bf_h[3], r3);
+  for (unsigned int i = 0; i != 4; ++i) {
+    bf192_t bf_h;
+    bf192_load(&bf_h, sd + i * BF192_NUM_BYTES);
 
-  // line 8
-  bf192_mul_inplace(&bf_h[0], &bf_y[0]);
-  bf192_add_inplace(&bf_h[0], &bf_y[1]);
+    // line 8
+    bf192_mul_inplace(&bf_h, &bf_y[0]);
+    bf192_add_inplace(&bf_h, &bf_y[i + 1]);
 
-  bf192_mul_inplace(&bf_h[1], &bf_y[0]);
-  bf192_add_inplace(&bf_h[1], &bf_y[2]);
+    bf192_t x1i;
+    bf192_load(&x1i, x + (ell_prime + i) * BF192_NUM_BYTES);
+    bf192_add_inplace(&bf_h, &x1i);
 
-  bf192_mul_inplace(&bf_h[2], &bf_y[0]);
-  bf192_add_inplace(&bf_h[2], &bf_y[3]);
-
-  bf192_mul_inplace(&bf_h[3], &bf_y[0]);
-  bf192_add_inplace(&bf_h[3], &bf_y[4]);
-
-  bf192_t x1i;
-  bf192_load(&x1i, x + (ell_prime + 0) * BF192_NUM_BYTES);
-  bf192_add_inplace(&bf_h[0], &x1i);
-  bf192_load(&x1i, x + (ell_prime + 1) * BF192_NUM_BYTES);
-  bf192_add_inplace(&bf_h[1], &x1i);
-  bf192_load(&x1i, x + (ell_prime + 2) * BF192_NUM_BYTES);
-  bf192_add_inplace(&bf_h[2], &x1i);
-  bf192_load(&x1i, x + (ell_prime + 3) * BF192_NUM_BYTES);
-  bf192_add_inplace(&bf_h[3], &x1i);
-
-  bf192_store(h, &bf_h[0]);
-  bf192_store(h + 1 * BF192_NUM_BYTES, &bf_h[1]);
-  bf192_store(h + 2 * BF192_NUM_BYTES, &bf_h[2]);
-  bf192_store(h + 3 * BF192_NUM_BYTES, &bf_h[3]);
+    bf192_store(h + i * BF192_NUM_BYTES, &bf_h);
+  }
 }
 
 void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
                    unsigned int d_zk) {
   const unsigned int ell_prime = ell + d_zk - 1;
-  const unsigned int deg_max   = ell_prime - 1;
-
-  // line 3
-  const uint8_t* r0 = sd;
-  const uint8_t* r1 = sd + 1 * BF256_NUM_BYTES;
-  const uint8_t* r2 = sd + 2 * BF256_NUM_BYTES;
-  const uint8_t* r3 = sd + 3 * BF256_NUM_BYTES;
-  const uint8_t* s0 = sd + 4 * BF256_NUM_BYTES;
-  const uint8_t* s1 = sd + 5 * BF256_NUM_BYTES;
-  const uint8_t* s2 = sd + 6 * BF256_NUM_BYTES;
-  const uint8_t* s3 = sd + 7 * BF256_NUM_BYTES;
-  const uint8_t* t  = sd + 8 * BF256_NUM_BYTES;
 
   bf256_t bf_y[5];
   {
+    const uint8_t* s0 = sd + 4 * BF256_NUM_BYTES;
+    const uint8_t* t  = sd + 8 * BF256_NUM_BYTES;
+
     // line 5
     bf256_t bf_s[5];
-    bf256_load(&bf_s[0], s0);
-    bf256_load(&bf_s[1], s1);
-    bf256_load(&bf_s[2], s2);
-    bf256_load(&bf_s[3], s3);
+    for (unsigned int i = 0; i != 4; ++i) {
+      bf256_load(&bf_s[i], s0 + i * BF256_NUM_BYTES);
+    }
 
     // line 6
     {
@@ -216,6 +150,7 @@ void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
       bf256_load(&bf_y[j], x);
     }
 
+    const unsigned int deg_max = ell_prime - 1;
     for (unsigned int i = 1; i <= deg_max; ++i) {
       bf256_t bf_x0;
       bf256_load(&bf_x0, x + i * BF256_NUM_BYTES);
@@ -227,39 +162,20 @@ void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   }
 
   // line 4
-  bf256_t bf_h[4];
-  bf256_load(&bf_h[0], r0);
-  bf256_load(&bf_h[1], r1);
-  bf256_load(&bf_h[2], r2);
-  bf256_load(&bf_h[3], r3);
+  for (unsigned int i = 0; i != 4; ++i) {
+    bf256_t bf_h;
+    bf256_load(&bf_h, sd + i * BF256_NUM_BYTES);
 
-  // line 8
-  bf256_mul_inplace(&bf_h[0], &bf_y[0]);
-  bf256_add_inplace(&bf_h[0], &bf_y[1]);
+    // line 8
+    bf256_mul_inplace(&bf_h, &bf_y[0]);
+    bf256_add_inplace(&bf_h, &bf_y[i + 1]);
 
-  bf256_mul_inplace(&bf_h[1], &bf_y[0]);
-  bf256_add_inplace(&bf_h[1], &bf_y[2]);
+    bf256_t x1i;
+    bf256_load(&x1i, x + (ell_prime + i) * BF256_NUM_BYTES);
+    bf256_add_inplace(&bf_h, &x1i);
 
-  bf256_mul_inplace(&bf_h[2], &bf_y[0]);
-  bf256_add_inplace(&bf_h[2], &bf_y[3]);
-
-  bf256_mul_inplace(&bf_h[3], &bf_y[0]);
-  bf256_add_inplace(&bf_h[3], &bf_y[4]);
-
-  bf256_t x1i;
-  bf256_load(&x1i, x + (ell_prime + 0) * BF256_NUM_BYTES);
-  bf256_add_inplace(&bf_h[0], &x1i);
-  bf256_load(&x1i, x + (ell_prime + 1) * BF256_NUM_BYTES);
-  bf256_add_inplace(&bf_h[1], &x1i);
-  bf256_load(&x1i, x + (ell_prime + 2) * BF256_NUM_BYTES);
-  bf256_add_inplace(&bf_h[2], &x1i);
-  bf256_load(&x1i, x + (ell_prime + 3) * BF256_NUM_BYTES);
-  bf256_add_inplace(&bf_h[3], &x1i);
-
-  bf256_store(h, &bf_h[0]);
-  bf256_store(h + 1 * BF256_NUM_BYTES, &bf_h[1]);
-  bf256_store(h + 2 * BF256_NUM_BYTES, &bf_h[2]);
-  bf256_store(h + 3 * BF256_NUM_BYTES, &bf_h[3]);
+    bf256_store(h + i * BF256_NUM_BYTES, &bf_h);
+  }
 }
 
 void vole_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, unsigned int d_zk,
