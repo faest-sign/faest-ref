@@ -451,8 +451,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     H5(h_e, iv, e, L_e_prime, lambda);
 
     // line 27
-    const uint8_t gamma_mask = -((uint64_t)(gamma_e));
-    masked_xor_u8_array(h_e, c_mult_by_e[e], q_tilde[e], gamma_mask, N_MASK_BYTES);
+    masked_xor_u8_array(h_e, c_mult_by_e[e], q_tilde[e], gamma_e, N_MASK_BYTES);
   }
   free_pointer_array(&Q);
   free_pointer_array(&c_mult_by_e);
