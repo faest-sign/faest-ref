@@ -19,6 +19,29 @@ static const uint32_t TWEAK_OFFSET = UINT32_C(0x80000000); // 2^31
 
 #define TBL(base, words, i) ((base) + (size_t)(i) * (words))
 
+static void insert_bit_slice(uint8_t* dst, unsigned int offset, uint16_t value, unsigned int bits) {
+  const unsigned int bit_offset = offset & 7;
+  const unsigned int byte_idx   = offset >> 3;
+  const uint32_t shifted        = (uint32_t)value << bit_offset;
+  assert(bits > 0 && bits <= 16);
+
+  dst[byte_idx] |= (uint8_t)shifted;
+  if (bit_offset + bits > 8) {
+    dst[byte_idx + 1] |= (uint8_t)(shifted >> 8);
+  }
+  if (bit_offset + bits > 16) {
+    dst[byte_idx + 2] |= (uint8_t)(shifted >> 16);
+  }
+}
+
+static inline uint64_t load_bit_word(const uint8_t* src, unsigned int bits) {
+  assert(bits > 0 && bits <= 64);
+
+  uint64_t value = 0;
+  memcpy(&value, src, (bits + 7) / 8);
+  return le64toh(value) & bit_word_mask(bits);
+}
+
 static void transpose_bit_matrix(uint8_t** dst, const uint8_t* src, unsigned int rows,
                                  unsigned int cols) {
   const unsigned int src_row_bytes = (cols + 7) / 8;
@@ -30,18 +53,6 @@ static void transpose_bit_matrix(uint8_t** dst, const uint8_t* src, unsigned int
 
   transpose_matrix(src_rows, dst, rows, cols);
   free(src_rows);
-}
-
-static void pack_column_bits(uint8_t* dst, uint8_t** src, size_t bits, unsigned int col) {
-  for (size_t bit = 0; bit < bits; ++bit) {
-    ptr_set_bit(dst, bit, ptr_get_bit(src[bit], col));
-  }
-}
-
-static void xor_column_bits(uint8_t** dst, const uint8_t* src, size_t bits, unsigned int col) {
-  for (size_t bit = 0; bit < bits; ++bit) {
-    ptr_xor_bit(dst[bit], col, ptr_get_bit(src, bit));
-  }
 }
 
 #if !defined(FAEST_TESTS)
@@ -130,6 +141,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     sd_i += lambda_bytes * bavc_max_node_index(i, tau_1, k);
   }
 
+  uint8_t** V_columns = alloc_pointer_array(ellhat, lambda_minus_w_grind_bytes);
+  transpose_matrix(V, V_columns, lambda_minus_w_grind, ellhat);
+
   // line 6
   memcpy(u, ui, ell_bytes);
 
@@ -143,11 +157,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   uint8_t* u_hi     = calloc(N_MASK, w_grind_bytes);
   prg(rootKey, iv, TWEAK_OFFSET - 1, u_hi_all, lambda, (N_MASK * w_grind + 7) / 8);
 
-  for (unsigned n_mask_idx = 0; n_mask_idx < N_MASK; n_mask_idx++) {
-    for (unsigned w_grind_idx = 0; w_grind_idx < w_grind; w_grind_idx++) {
-      ptr_set_bit(u_hi + n_mask_idx * w_grind_bytes, w_grind_idx,
-                  ptr_get_bit(u_hi_all, n_mask_idx * w_grind + w_grind_idx));
-    }
+  for (unsigned int n_mask_idx = 0; n_mask_idx < N_MASK; ++n_mask_idx) {
+    insert_bit_slice(u_hi + n_mask_idx * w_grind_bytes, 0,
+                     extract_bit_slice(u_hi_all, n_mask_idx * w_grind, w_grind), w_grind);
   }
 
   // line 11
@@ -160,9 +172,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     // line 13
     for (unsigned t = 0; t < tau; t++) {
       const unsigned int depth = bavc_max_node_depth(t, tau_1, k);
-      for (unsigned int b = 0; b < depth; ++b, ++bit_idx) {
-        ptr_set_bit(u_low, m * lambda + bit_idx, ptr_get_bit(ui + t * ell_hat_bytes, ell_m + b));
-      }
+      insert_bit_slice(u_low + m * lambda_bytes, bit_idx,
+                       extract_bit_slice(ui + t * ell_hat_bytes, ell_m, depth), depth);
+      bit_idx += depth;
     }
 
     // line 14
@@ -180,21 +192,23 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     for (unsigned int tau_idx = 0; tau_idx < tau; tau_idx++) {
       uint8_t deg = bavc_max_node_depth(tau_idx, tau_1, k);
 
-      uint8_t acc[(MAX_DEPTH * 2 + 7) / 8] = {0};
+      uint32_t acc_value = 0;
       for (unsigned int d = 0; d < deg; ++d) {
-        for (unsigned int t = 0; t < deg; ++t, ++v_idx) {
-          ptr_xor_bit(acc, t + d, ptr_get_bit(V[v_idx], ell_m + d));
-        }
-        v_idx -= deg;
+        acc_value ^= (uint32_t)extract_bit_slice(V_columns[ell_m + d], v_idx, deg) << d;
       }
       v_idx += deg;
+
+      uint8_t acc[(MAX_DEPTH * 2 + 7) / 8];
+      for (unsigned int byte = 0; byte < sizeof(acc); ++byte) {
+        acc[byte] = (uint8_t)(acc_value >> (8 * byte));
+      }
 
       uint8_t reduced_out[(MAX_DEPTH * 2 + 7) / 8] = {0};
       bf2_poly_reduce(reduced_out, acc, deg * 2, &params->TREE_MODULI[tau_idx], deg + 1);
 
-      for (unsigned int b = 0; b < deg; ++b, ++bit_idx) {
-        ptr_set_bit(r_tilde + m * lambda_minus_w_grind_bytes, bit_idx, ptr_get_bit(reduced_out, b));
-      }
+      insert_bit_slice(r_tilde + m * lambda_minus_w_grind_bytes, bit_idx,
+                       extract_bit_slice(reduced_out, 0, deg), deg);
+      bit_idx += deg;
     }
   }
 
@@ -215,24 +229,30 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   for (unsigned e = 0; e < n_mult; e++) {
     uint8_t L_e_zero[MAX_LAMBDA_BYTES] = {0};
     uint8_t L_e_one[MAX_LAMBDA_BYTES];
-    uint8_t h_e_zero[N_MASK_BYTES];
     uint8_t h_e_one[N_MASK_BYTES];
 
-    for (unsigned j = 0; j < lambda_minus_w_grind; j++) {
-      if (ptr_u64_get_bit(TBL(params->G, params->g_words, e), j) == 1) {
-        xor_u8_array(L_e_zero, V[j], L_e_zero, lambda_bytes);
+    const uint64_t* G_e = TBL(params->G, params->g_words, e);
+    for (unsigned int word_idx = 0; word_idx < params->g_words; ++word_idx) {
+      const unsigned int row_offset = word_idx * 64;
+      const unsigned int word_bits  = MIN(lambda_minus_w_grind - row_offset, 64);
+
+      uint64_t coefficients = G_e[word_idx] & bit_word_mask(word_bits);
+      for (unsigned int bit = 0; coefficients != 0; ++bit, coefficients >>= 1) {
+        if (coefficients & 1) {
+          xor_u8_array(L_e_zero, V[row_offset + bit], L_e_zero, lambda_bytes);
+        }
       }
     }
     xor_u8_array(L_e_zero, u, L_e_one, lambda_bytes);
 
     // line 23
-    H5(h_e_zero, iv, e, L_e_zero, lambda);
+    H5(v_tilde[e], iv, e, L_e_zero, lambda);
     H5(h_e_one, iv, e, L_e_one, lambda);
 
     // line 26
-    memcpy(v_tilde[e], h_e_zero, N_MASK_BYTES);
-    xor_u8_array(h_e_zero, h_e_one, c_mult_diff[e], N_MASK_BYTES);
+    xor_u8_array(v_tilde[e], h_e_one, c_mult_diff[e], N_MASK_BYTES);
   }
+  free_pointer_array(&V);
 
   // bit-packed version of line 26
   uint8_t** gate_inputs = alloc_pointer_array(N_MASK, n_mult_bytes);
@@ -259,15 +279,19 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   // line 30
   for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
-    uint8_t crt_input[MAX_LAMBDA_BYTES]  = {0};
     uint8_t crt_output[MAX_LAMBDA_BYTES] = {0};
-
-    pack_column_bits(crt_input, V, lambda_minus_w_grind, ell_idx);
-    bf2_matrix_mul_tbl(crt_output, crt_input, params->W_CRT, lambda_minus_w_grind,
+    bf2_matrix_mul_tbl(crt_output, V_columns[ell_idx], params->W_CRT, lambda_minus_w_grind,
                        lambda_minus_w_grind, params->w_crt_words);
-    xor_column_bits(V_dest, crt_output, lambda_minus_w_grind, ell_idx);
+    memcpy(V_columns[ell_idx], crt_output, lambda_minus_w_grind_bytes);
   }
-  free_pointer_array(&V);
+
+  uint8_t** V_delta = alloc_pointer_array(lambda_minus_w_grind, ell_bytes);
+  transpose_matrix(V_columns, V_delta, ell, lambda_minus_w_grind);
+  for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) {
+    xor_u8_array(V_dest[row], V_delta[row], V_dest[row], ell_bytes);
+  }
+  free_pointer_array(&V_delta);
+  free_pointer_array(&V_columns);
 
   free(ui);
   free(u_hi_all);
@@ -359,6 +383,9 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   free(qtmp);
   qtmp = NULL;
 
+  uint8_t** Q_columns = alloc_pointer_array(ellhat, lambda_minus_w_grind_bytes);
+  transpose_matrix(Q, Q_columns, lambda_minus_w_grind, ellhat);
+
   // line 13
   // delta_prime can be directly read from chall_3
 
@@ -373,23 +400,23 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     for (unsigned tau_idx = 0; tau_idx < tau; tau_idx++) {
       const uint8_t deg = bavc_max_node_depth(tau_idx, tau_1, k);
 
-      uint8_t acc[(MAX_DEPTH * 2 + 7) / 8] = {0};
+      uint32_t acc_value = 0;
       for (unsigned d = 0; d < deg; d++) {
-        for (unsigned t = 0; t < deg; t++, ++q_idx) {
-          uint8_t bit = ptr_get_bit(Q[q_idx], ell_m + d);
-          ptr_xor_bit(acc, t + d, bit);
-        }
-        q_idx -= deg;
+        acc_value ^= (uint32_t)extract_bit_slice(Q_columns[ell_m + d], q_idx, deg) << d;
       }
       q_idx += deg;
+
+      uint8_t acc[(MAX_DEPTH * 2 + 7) / 8];
+      for (unsigned int byte = 0; byte < sizeof(acc); ++byte) {
+        acc[byte] = (uint8_t)(acc_value >> (8 * byte));
+      }
 
       uint8_t reduced_out[(MAX_DEPTH * 2 + 7) / 8] = {0};
       bf2_poly_reduce(reduced_out, acc, deg * 2, &params->TREE_MODULI[tau_idx], deg + 1);
 
-      for (unsigned int b = 0; b < deg; ++b, ++bit_idx) {
-        ptr_set_bit(r_tilde_prime + m * lambda_minus_w_grind_bytes, bit_idx,
-                    ptr_get_bit(reduced_out, b));
-      }
+      insert_bit_slice(r_tilde_prime + m * lambda_minus_w_grind_bytes, bit_idx,
+                       extract_bit_slice(reduced_out, 0, deg), deg);
+      bit_idx += deg;
     }
   }
 
@@ -404,12 +431,19 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     uint8_t h_e[N_MASK_BYTES];
 
     // line 24
-    uint8_t gamma_e = 0;
-    for (unsigned j = 0; j < lambda_minus_w_grind; j++) {
-      gamma_e ^= ptr_u64_get_bit(TBL(params->G, params->g_words, e), j) & ptr_get_bit(chall_3, j);
+    uint8_t gamma_e     = 0;
+    const uint64_t* G_e = TBL(params->G, params->g_words, e);
+    for (unsigned int word_idx = 0; word_idx < params->g_words; ++word_idx) {
+      const unsigned int row_offset = word_idx * 64;
+      const unsigned int word_bits  = MIN(lambda_minus_w_grind - row_offset, 64);
 
-      if (ptr_u64_get_bit(TBL(params->G, params->g_words, e), j) == 1) {
-        xor_u8_array(L_e_prime, Q[j], L_e_prime, lambda_bytes);
+      uint64_t coefficients = G_e[word_idx] & bit_word_mask(word_bits);
+      gamma_e ^= parity64(coefficients & load_bit_word(chall_3 + word_idx * 8, word_bits));
+
+      for (unsigned int bit = 0; coefficients != 0; ++bit, coefficients >>= 1) {
+        if (coefficients & 1) {
+          xor_u8_array(L_e_prime, Q[row_offset + bit], L_e_prime, lambda_bytes);
+        }
       }
     }
 
@@ -417,9 +451,10 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     H5(h_e, iv, e, L_e_prime, lambda);
 
     // line 27
-    const uint8_t gamma_mask = -(gamma_e & 1);
+    const uint8_t gamma_mask = -((uint64_t)(gamma_e));
     masked_xor_u8_array(h_e, c_mult_by_e[e], q_tilde[e], gamma_mask, N_MASK_BYTES);
   }
+  free_pointer_array(&Q);
   free_pointer_array(&c_mult_by_e);
 
   // line 30
@@ -443,15 +478,18 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
 
   // line 31
   for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
-    uint8_t crt_input[MAX_LAMBDA_BYTES]  = {0};
     uint8_t crt_output[MAX_LAMBDA_BYTES] = {0};
-
-    pack_column_bits(crt_input, Q, lambda_minus_w_grind, ell_idx);
-    bf2_matrix_mul_tbl(crt_output, crt_input, params->W_CRT, lambda_minus_w_grind,
+    bf2_matrix_mul_tbl(crt_output, Q_columns[ell_idx], params->W_CRT, lambda_minus_w_grind,
                        lambda_minus_w_grind, params->w_crt_words);
-    xor_column_bits(Q_dest, crt_output, lambda_minus_w_grind, ell_idx);
+    memcpy(Q_columns[ell_idx], crt_output, lambda_minus_w_grind_bytes);
   }
 
-  free_pointer_array(&Q);
+  uint8_t** Q_delta = alloc_pointer_array(lambda_minus_w_grind, ell_bytes);
+  transpose_matrix(Q_columns, Q_delta, ell, lambda_minus_w_grind);
+  for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) {
+    xor_u8_array(Q_dest[row], Q_delta[row], Q_dest[row], ell_bytes);
+  }
+  free_pointer_array(&Q_delta);
+  free_pointer_array(&Q_columns);
   return true;
 }
