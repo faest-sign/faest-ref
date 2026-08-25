@@ -83,8 +83,7 @@ static_assert(FAEST_EM_@SSS@F_LAMBDA * (FAEST_EM_@SSS@F_R + 1) / 8 ==
 // clang-format on
 
 /* pad sizes to multiples of some value; assumes that a is a power of 2 */
-#define PAD_TO(s, a) (((s) + (a) - 1) & ~((a) - 1))
-#define BFSSS_ALLOC(s) faest_aligned_alloc(BFSSS_ALIGN, PAD_TO((s) * sizeof(bfSSS_t), BFSSS_ALIGN))
+#define BFSSS_ALLOC(s) faest_aligned_alloc(BFSSS_ALIGN, ALIGN_TO((s) * sizeof(bfSSS_t), BFSSS_ALIGN))
 
 #define RCON_EVERY (4 * (FAEST_SSS_LAMBDA / 128))
 
