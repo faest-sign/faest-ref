@@ -20,14 +20,8 @@
 #include <assert.h>
 #include <string.h>
 
-static inline uint16_t num_rec_2(const uint8_t* v) {
-  uint16_t r;
-  memcpy(&r, v, sizeof(r));
-  return le16toh(r);
-}
-
 // DecodeChall_3
-static bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigned int i,
+static bool decode_chall_3(uint16_t* decoded_chall, const uint8_t* chall, unsigned int i,
                            const faest_paramset_t* params) {
   if (i >= params->tau) {
     return false;
@@ -48,22 +42,32 @@ static bool decode_chall_3(uint8_t* decoded_chall, const uint8_t* chall, unsigne
     hi = (t1 * k) + ((t + 1) * (k - 1));
   }
 
-  assert(hi - lo == k || hi - lo == k - 1);
-  // TODO: this could be implemented more efficiently using bit shifts
-  for (unsigned int j = lo; j < hi; ++j) {
-    ptr_set_bit(decoded_chall, j - lo, ptr_get_bit(chall, j));
+  const unsigned int bits       = hi - lo;
+  const unsigned int bit_offset = lo & 7;
+  const unsigned int byte_idx   = lo >> 3;
+  assert(bits == k || bits == k - 1);
+  assert(bits <= 16);
+
+  // bit sliced version of a ptr_get_bit / ptr_set_bit loop; the maximum of 12 bits per challenge
+  // can span at most 3 consecutive bytes
+  uint32_t value = chall[byte_idx] >> bit_offset;
+  if (bit_offset + bits > 8) {
+    value |= (uint32_t)chall[byte_idx + 1] << (8 - bit_offset);
   }
+  if (bit_offset + bits > 16) {
+    value |= (uint32_t)chall[byte_idx + 2] << (16 - bit_offset);
+  }
+
+  *decoded_chall = (uint16_t)(value & ((UINT32_C(1) << bits) - 1));
   return true;
 }
 
 bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
                         const faest_paramset_t* params) {
   for (unsigned int i = 0; i != params->tau; ++i) {
-    uint8_t tmp[2] = {0};
-    if (!decode_chall_3(tmp, chall, i, params)) {
+    if (!decode_chall_3(&decoded_chall[i], chall, i, params)) {
       return false;
     }
-    decoded_chall[i] = num_rec_2(tmp);
   }
   return true;
 }
