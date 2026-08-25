@@ -226,8 +226,8 @@ static void aes_SSS_sbox_eval_prover(bfSSS_t** state_deg7, const uint8_t* state_
   const unsigned int Nstbits  = 32 * Nst;
   const unsigned int Nstbytes = Nstbits / 8;
 
-  bfSSS_t* state_conj     = BFSSS_ALLOC(Nstbits);
-  bfSSS_t* state_conj_tag = BFSSS_ALLOC(Nstbits);
+  bfSSS_t* state_conj     = BFSSS_ALLOC(2 * Nstbits);
+  bfSSS_t* state_conj_tag = state_conj + Nstbits;
 
   aes_SSS_f256_f2_conjugates_1(state_conj, state_bits, Nst);
   aes_SSS_f256_f2_conjugates_SSS(state_conj_tag, state_bits_tag, Nst);
@@ -329,7 +329,6 @@ static void aes_SSS_sbox_eval_prover(bfSSS_t** state_deg7, const uint8_t* state_
   }
 
   faest_aligned_free(state_conj);
-  faest_aligned_free(state_conj_tag);
 }
 
 static void aes_SSS_sbox_eval_verifier(bfSSS_t* state_key, const bfSSS_t* state_bits_key,
@@ -647,13 +646,14 @@ static void aes_SSS_inverse_sbox_eval_prover(bfSSS_t** b_deg, const uint8_t* s_d
   const unsigned int Nstbytes = Nst * 4;
 
   uint8_t* s     = malloc(Nstbytes);
-  bfSSS_t* s_tag = BFSSS_ALLOC(Nstbytes * 8);
+  bfSSS_t* s_tag = BFSSS_ALLOC(Nstbytes * 8 * 3);
   aes_SSS_inverse_affine_prover(s, s_tag, s_dash_dash, s_dash_dash_tag, Nst);
 
-  bfSSS_t* state_conj     = BFSSS_ALLOC(Nstbytes * 8);
-  bfSSS_t* state_conj_tag = BFSSS_ALLOC(Nstbytes * 8);
+  bfSSS_t* state_conj     = s_tag + Nstbytes * 8;
+  bfSSS_t* state_conj_tag = state_conj + Nstbytes * 8;
 
   aes_SSS_f256_f2_conjugates_1(state_conj, s, Nst);
+  free(s);
   aes_SSS_f256_f2_conjugates_SSS(state_conj_tag, s_tag, Nst);
 
   for (unsigned int j = 0; j < Nstbytes; j++) {
@@ -685,10 +685,7 @@ static void aes_SSS_inverse_sbox_eval_prover(bfSSS_t** b_deg, const uint8_t* s_d
     }
   }
 
-  free(s);
   faest_aligned_free(s_tag);
-  faest_aligned_free(state_conj);
-  faest_aligned_free(state_conj_tag);
 }
 
 static void aes_SSS_inverse_affine_byte_verifier(bfSSS_t* y_bits_key, const bfSSS_t* x_bits_key,
@@ -717,10 +714,10 @@ static void aes_SSS_inverse_sbox_eval_verifier(bfSSS_t* b_key, const bfSSS_t* s_
 
   const unsigned int Nstbytes = Nst * 4;
 
-  bfSSS_t* s_tag = BFSSS_ALLOC(Nstbytes * 8);
+  bfSSS_t* s_tag = BFSSS_ALLOC(Nstbytes * 8 * 2);
   aes_SSS_inverse_affine_verifier(s_tag, s_dash_dash_tag, &delta_i[1], Nst);
 
-  bfSSS_t* state_conj_tag = BFSSS_ALLOC(Nstbytes * 8);
+  bfSSS_t* state_conj_tag = s_tag + Nstbytes * 8;
   aes_SSS_f256_f2_conjugates_SSS(state_conj_tag, s_tag, Nst);
 
   for (unsigned int j = 0; j < Nstbytes; j++) {
@@ -731,7 +728,6 @@ static void aes_SSS_inverse_sbox_eval_verifier(bfSSS_t* b_key, const bfSSS_t* s_
   }
 
   faest_aligned_free(s_tag);
-  faest_aligned_free(state_conj_tag);
 }
 
 // EncSctrnts internal functions end!!
@@ -1016,8 +1012,9 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_7_ctx* hasher, const uint
   const unsigned int Nstbytes = Nstbits / 8;
 
   /// line 1
-  uint8_t* state_bits     = malloc(4 * Nstbytes);
-  bfSSS_t* state_bits_tag = BFSSS_ALLOC(Nstbits + 5 * 8 * Nstbytes + 3 * Nstbits);
+  uint8_t* state_bits = malloc(4 * Nstbytes);
+  bfSSS_t* state_bits_tag =
+      BFSSS_ALLOC(Nstbits + 5 * 8 * Nstbytes + 3 * Nstbits + 8 * Nstbytes + 18 * Nstbytes);
   assert(state_bits);
   assert(state_bits_tag);
 
@@ -1027,23 +1024,26 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_7_ctx* hasher, const uint
   bfSSS_t* s_tilde_tag     = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes];
   uint8_t* s_dash_dash     = &state_bits[2 * Nstbytes];
   bfSSS_t* s_dash_dash_tag = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes + Nstbits];
+  uint8_t* s               = &state_bits[3 * Nstbytes];
+  bfSSS_t* s_tag           = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
 
   bfSSS_t* b_deg[8];
+  b_deg[0] = &s_tag[Nstbits];
   for (unsigned int m = 0; m < 8; m++) {
-    b_deg[m] = BFSSS_ALLOC(Nstbytes);
+    if (m) {
+      b_deg[m] = b_deg[0] + m * Nstbytes;
+    }
     for (unsigned n = 0; n < Nstbytes; n++) {
       b_deg[m][n] = bfSSS_zero();
     }
   }
-  uint8_t* s     = &state_bits[3 * Nstbytes];
-  bfSSS_t* s_tag = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
 
   // line 2
   for (unsigned int r = 0; r < FAEST_SSS_R / 2; r++) {
     // line 3
     bfSSS_t* state_deg7[8];
     for (unsigned int m = 0; m < 8; m++) {
-      state_deg7[m] = BFSSS_ALLOC(Nstbytes);
+      state_deg7[m] = &b_deg[7][Nstbytes] + m * Nstbytes;
     }
 
     // line 4
@@ -1052,7 +1052,7 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_7_ctx* hasher, const uint
     // line 5
     bfSSS_t* state_deg7_tmp[8];
     for (unsigned int m = 0; m < 8; m++) {
-      state_deg7_tmp[m] = BFSSS_ALLOC(Nstbytes);
+      state_deg7_tmp[m] = &state_deg7[7][Nstbytes] + m * Nstbytes;
     }
     aes_SSS_shiftrows_prover(state_deg7_tmp, (const bfSSS_t**)state_deg7, Nst);
 
@@ -1062,7 +1062,7 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_7_ctx* hasher, const uint
     // line 7
     bfSSS_t* k_deg[2];
     for (unsigned int m = 0; m < 2; m++) {
-      k_deg[m] = BFSSS_ALLOC(Nstbytes);
+      k_deg[m] = &state_deg7_tmp[7][Nstbytes] + m * Nstbytes;
     }
     aes_SSS_state_to_bytes_prover(k_deg, k + (2 * r + 1) * Nstbytes, k_tag + (2 * r + 1) * Nstbits,
                                   Nst);
@@ -1094,16 +1094,6 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_7_ctx* hasher, const uint
       zk_hash_SSS_7_update(hasher, tmp);
     }
 
-    for (unsigned int m = 0; m < 8; m++) {
-      faest_aligned_free(state_deg7_tmp[m]);
-    }
-    for (unsigned int m = 0; m < 8; m++) {
-      faest_aligned_free(state_deg7[m]);
-    }
-    for (unsigned int m = 0; m < 2; m++) {
-      faest_aligned_free(k_deg[m]);
-    }
-
     // line 21
     if (r != (FAEST_SSS_R / 2) - 1) {
       uint8_t* tmp_state     = s;
@@ -1112,10 +1102,6 @@ static void aes_SSS_enc_constraints_prover(zk_hash_SSS_7_ctx* hasher, const uint
       aes_SSS_add_round_key_prover(state_bits, state_bits_tag, tmp_state, tmp_state_tag,
                                    k + (2 * r + 2) * Nstbytes, k_tag + (2 * r + 2) * Nstbits, Nst);
     }
-  }
-
-  for (unsigned int m = 0; m < 8; m++) {
-    faest_aligned_free(b_deg[m]);
   }
 
   faest_aligned_free(state_bits_tag);
@@ -1130,32 +1116,32 @@ static void aes_SSS_enc_constraints_verifier(zk_hash_SSS_ctx* hasher, const bfSS
   const unsigned int Nstbytes = Nstbits / 8;
 
   /// line 1
-  bfSSS_t* state_bits_key = BFSSS_ALLOC(Nstbits + 5 * 8 * Nstbytes + 3 * Nstbits);
+  bfSSS_t* state_bits_key = BFSSS_ALLOC(Nstbits + 5 * 8 * Nstbytes + 3 * Nstbits + 4 * Nstbytes);
   aes_SSS_add_round_key_verifier(state_bits_key, owf_in_key, rkeys_key, Nst);
 
   bfSSS_t* s_tilde_key     = &state_bits_key[Nstbits + 5 * 8 * Nstbytes];
   bfSSS_t* s_dash_dash_key = &state_bits_key[Nstbits + 5 * 8 * Nstbytes + Nstbits];
 
-  bfSSS_t* b_key = BFSSS_ALLOC(Nstbytes);
   bfSSS_t* s_key = &state_bits_key[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
+  bfSSS_t* b_key = s_key + Nstbits; // Nstbytes
 
   // line 2
   for (unsigned int r = 0; r < FAEST_SSS_R / 2; r++) {
     // line 3
-    bfSSS_t* state_key = BFSSS_ALLOC(Nstbytes);
+    bfSSS_t* state_key = b_key + Nstbytes; // Nstbytes
 
     // line 4
     aes_SSS_sbox_eval_verifier(state_key, state_bits_key, delta_i, Nst);
 
     // line 5
-    bfSSS_t* state_key_tmp = BFSSS_ALLOC(Nstbytes);
+    bfSSS_t* state_key_tmp = state_key + Nstbytes; // Nstbytes
     aes_SSS_shiftrows_verifier(state_key_tmp, state_key, Nst);
 
     // line 6
     aes_SSS_mix_columns_verifier(state_key, state_key_tmp, Nst);
 
     // line 7
-    bfSSS_t* k_key = BFSSS_ALLOC(Nstbytes);
+    bfSSS_t* k_key = state_key_tmp + Nstbytes; // Nstbytes
     aes_SSS_state_to_bytes_verifier(k_key, rkeys_key + (2 * r + 1) * Nstbits, Nst);
     aes_SSS_add_round_key_bytes_verifier(state_key_tmp, state_key, k_key, delta_i, Nst);
 
@@ -1165,7 +1151,7 @@ static void aes_SSS_enc_constraints_verifier(zk_hash_SSS_ctx* hasher, const bfSS
                                      Nst);
     } else {
       // line 11
-      memcpy(s_tilde_key, &w_key[(Nstbits * r)], Nstbits * sizeof(bfSSS_t));
+      memcpy(s_tilde_key, &w_key[Nstbits * r], Nstbits * sizeof(bfSSS_t));
     }
 
     // line 15
@@ -1183,10 +1169,6 @@ static void aes_SSS_enc_constraints_verifier(zk_hash_SSS_ctx* hasher, const bfSS
       zk_hash_SSS_update(hasher, &tmp);
     }
 
-    faest_aligned_free(state_key_tmp);
-    faest_aligned_free(state_key);
-    faest_aligned_free(k_key);
-
     // line 21
     if (r != (FAEST_SSS_R / 2) - 1) {
       bfSSS_t* tmp_state_key = s_key;
@@ -1196,7 +1178,6 @@ static void aes_SSS_enc_constraints_verifier(zk_hash_SSS_ctx* hasher, const bfSS
     }
   }
 
-  faest_aligned_free(b_key);
   faest_aligned_free(state_bits_key);
 }
 
