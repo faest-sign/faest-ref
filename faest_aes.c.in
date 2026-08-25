@@ -578,13 +578,8 @@ static void aes_SSS_bitwise_mix_column_prover(uint8_t* out, bfSSS_t* out_tag, co
     // ::1
     for (unsigned int r = 0; r < 4; r++) {
       // :5
-      b_bits[r] = set_bit(get_bit(a_bits[r], 7), 0) ^
-                  set_bit(get_bit(a_bits[r], 0) ^ get_bit(a_bits[r], 7), 1) ^
-                  set_bit(get_bit(a_bits[r], 1), 2) ^
-                  set_bit(get_bit(a_bits[r], 2) ^ get_bit(a_bits[r], 7), 3) ^
-                  set_bit(get_bit(a_bits[r], 3) ^ get_bit(a_bits[r], 7), 4) ^
-                  set_bit(get_bit(a_bits[r], 4), 5) ^ set_bit(get_bit(a_bits[r], 5), 6) ^
-                  set_bit(get_bit(a_bits[r], 6), 7);
+      const uint8_t high_bit_mask = -(a_bits[r] >> 7);
+      b_bits[r]                   = (a_bits[r] << 1) ^ (high_bit_mask & UINT8_C(0x1b));
 
       b_bits_tag[r * 8 + 0] = a_bits_tag[r * 8 + 7];
       bfSSS_add(&b_bits_tag[r * 8 + 1], &a_bits_tag[r * 8 + 0], &a_bits_tag[r * 8 + 7]);
