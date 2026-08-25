@@ -246,8 +246,8 @@ void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_
     const unsigned int first_col = row < full_rows_128 ? full_cols_128 : 0;
     for (unsigned int col = first_col; col < full_cols_64; col += 64) {
       const unsigned int src_byte = col / 8;
-      uint64_t block[64];
 
+      uint64_t block[64];
       for (unsigned int idx = 0; idx < 64; ++idx) {
         memcpy(&block[idx], v[row + idx] + src_byte, sizeof(block[idx]));
         block[idx] = le64toh(block[idx]);
