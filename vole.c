@@ -19,12 +19,17 @@ static const uint32_t TWEAK_OFFSET = UINT32_C(0x80000000); // 2^31
 
 #define TBL(base, words, i) ((base) + (size_t)(i) * (words))
 
-// to pack bits the way bf2_matrix_mul_tbl expects them to be
-static void pack_n_mask_bits(uint8_t* dst, const uint8_t* src, size_t bits, unsigned int mask_idx) {
-  memset(dst, 0, (bits + 7) / 8);
-  for (size_t bit = 0; bit < bits; ++bit) {
-    ptr_set_bit(dst, bit, ptr_get_bit(src + bit * N_MASK_BYTES, mask_idx));
+static void transpose_bit_matrix(uint8_t** dst, const uint8_t* src, unsigned int rows,
+                                 unsigned int cols) {
+  const unsigned int src_row_bytes = (cols + 7) / 8;
+
+  uint8_t** src_rows = malloc(rows * sizeof(*src_rows));
+  for (unsigned int row = 0; row < rows; ++row) {
+    src_rows[row] = (uint8_t*)src + row * src_row_bytes;
   }
+
+  transpose_matrix(src_rows, dst, rows, cols);
+  free(src_rows);
 }
 
 static void pack_column_bits(uint8_t* dst, uint8_t** src, size_t bits, unsigned int col) {
@@ -205,7 +210,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                        params->f_words);
   }
 
-  uint8_t* v_tilde = malloc(n_mult * N_MASK_BYTES);
+  uint8_t** v_tilde     = alloc_pointer_array(n_mult, N_MASK_BYTES);
+  uint8_t** c_mult_diff = alloc_pointer_array(n_mult, N_MASK_BYTES);
   for (unsigned e = 0; e < n_mult; e++) {
     uint8_t L_e_zero[MAX_LAMBDA_BYTES] = {0};
     uint8_t L_e_one[MAX_LAMBDA_BYTES];
@@ -224,28 +230,32 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     H5(h_e_one, iv, e, L_e_one, lambda);
 
     // line 26
-    for (unsigned m = 0; m < N_MASK; m++) {
-      ptr_set_bit(v_tilde + e * N_MASK_BYTES, m, ptr_get_bit(h_e_zero, m));
-      uint8_t bit_a = ptr_get_bit(v_tilde + e * N_MASK_BYTES, m);
-      uint8_t bit_b = ptr_get_bit(h_e_one, m);
-
-      ptr_xor_bit(c_mult + m * n_mult_bytes, e, bit_a ^ bit_b);
-    }
+    memcpy(v_tilde[e], h_e_zero, N_MASK_BYTES);
+    xor_u8_array(h_e_zero, h_e_one, c_mult_diff[e], N_MASK_BYTES);
   }
 
+  // bit-packed version of line 26
+  uint8_t** gate_inputs = alloc_pointer_array(N_MASK, n_mult_bytes);
+  assert(gate_inputs);
+  transpose_matrix(c_mult_diff, gate_inputs, n_mult, N_MASK);
+  xor_u8_array(c_mult, gate_inputs[0], c_mult, N_MASK * n_mult_bytes);
+  free_pointer_array(&c_mult_diff);
+
+  transpose_matrix(v_tilde, gate_inputs, n_mult, N_MASK);
+  free_pointer_array(&v_tilde);
+
   // line 29
-  uint8_t* gate_input = malloc(n_mult_bytes);
   for (unsigned int m = 0; m < N_MASK; m++) {
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
     bf2_matrix_mul_tbl(first_prod, r_tilde + m * lambda_minus_w_grind_bytes, params->W_TREE,
                        lambda_minus_w_grind, lambda, params->w_tree_words);
 
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
-    pack_n_mask_bits(gate_input, v_tilde, n_mult, m);
-    bf2_matrix_mul_tbl(second_prod, gate_input, params->W_GATE, n_mult, lambda,
+    bf2_matrix_mul_tbl(second_prod, gate_inputs[m], params->W_GATE, n_mult, lambda,
                        params->w_gate_words);
     xor_u8_array(first_prod, second_prod, v_bar + m * lambda_bytes, lambda_bytes);
   }
+  free_pointer_array(&gate_inputs);
 
   // line 30
   for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
@@ -257,7 +267,6 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                        lambda_minus_w_grind, params->w_crt_words);
     xor_column_bits(V_dest, crt_output, lambda_minus_w_grind, ell_idx);
   }
-  free(gate_input);
   free_pointer_array(&V);
 
   free(ui);
@@ -265,7 +274,6 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   free(u_hi);
   free(u_low);
   free(r_tilde);
-  free(v_tilde);
 }
 
 bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const uint8_t* chall_3,
@@ -388,7 +396,9 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   // line 21
   // a_prime is a direct copy of Q, so use Q instead
 
-  uint8_t* q_tilde = calloc(n_mult, N_MASK_BYTES);
+  uint8_t** c_mult_by_e = alloc_pointer_array(n_mult, N_MASK_BYTES);
+  uint8_t** q_tilde     = alloc_pointer_array(n_mult, N_MASK_BYTES);
+  transpose_bit_matrix(c_mult_by_e, c_mult, N_MASK, n_mult);
   for (unsigned e = 0; e < n_mult; e++) {
     uint8_t L_e_prime[MAX_LAMBDA_BYTES] = {0};
     uint8_t h_e[N_MASK_BYTES];
@@ -407,31 +417,29 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     H5(h_e, iv, e, L_e_prime, lambda);
 
     // line 27
-    for (unsigned m = 0; m < N_MASK; m++) {
-      uint8_t sum = ptr_get_bit(h_e, m) ^ (gamma_e & ptr_get_bit(c_mult + m * n_mult_bytes, e));
-      ptr_set_bit(q_tilde + e * N_MASK_BYTES, m, sum);
-    }
+    const uint8_t gamma_mask = -(gamma_e & 1);
+    masked_xor_u8_array(h_e, c_mult_by_e[e], q_tilde[e], gamma_mask, N_MASK_BYTES);
   }
+  free_pointer_array(&c_mult_by_e);
 
   // line 30
-  uint8_t* gate_input = malloc(n_mult_bytes);
+  uint8_t** gate_inputs = alloc_pointer_array(N_MASK, n_mult_bytes);
+  transpose_matrix(q_tilde, gate_inputs, n_mult, N_MASK);
+  free_pointer_array(&q_tilde);
+
   for (unsigned int m = 0; m < N_MASK; m++) {
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
     bf2_matrix_mul_tbl(first_prod, r_tilde_prime + m * lambda_minus_w_grind_bytes, params->W_TREE,
                        lambda_minus_w_grind, lambda, params->w_tree_words);
 
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
-    pack_n_mask_bits(gate_input, q_tilde, n_mult, m);
-    bf2_matrix_mul_tbl(second_prod, gate_input, params->W_GATE, n_mult, lambda,
+    bf2_matrix_mul_tbl(second_prod, gate_inputs[m], params->W_GATE, n_mult, lambda,
                        params->w_gate_words);
     xor_u8_array(first_prod, second_prod, q_bar + m * lambda_bytes, lambda_bytes);
   }
-  free(gate_input);
-  gate_input = NULL;
+  free_pointer_array(&gate_inputs);
   free(r_tilde_prime);
   r_tilde_prime = NULL;
-  free(q_tilde);
-  q_tilde = NULL;
 
   // line 31
   for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
