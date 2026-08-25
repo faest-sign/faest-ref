@@ -50,6 +50,9 @@
 #if __has_include(<wmmintrin.h>)
 #define HAVE_AESNI
 #endif
+#if __has_include(<emmintrin.h>)
+#define HAVE_SSE2
+#endif
 #if __has_include(<immintrin.h>)
 #define HAVE_AVX2
 #endif

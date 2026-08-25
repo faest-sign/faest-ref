@@ -98,6 +98,21 @@ conf_data.set(
   get_option('aesni').require(supports_aesni, error_message: 'AES ISA support enabled but not available').allowed(),
 )
 
+sse2_flag = cc.get_supported_arguments('-msse2')
+supports_sse2 = cc.links(
+  '''
+#include <emmintrin.h>
+
+int main() {
+  __m128i value = _mm_setzero_si128();
+  return _mm_cvtsi128_si32(_mm_xor_si128(value, value));
+}
+''',
+  name: 'compiler supports SSE2',
+  args: [sse2_flag],
+)
+conf_data.set('HAVE_SSE2', supports_sse2)
+
 # check compiler if compiler supports AVX2
 avx2_flag = cc.get_supported_arguments(['-mavx2', '-mbmi2'])
 supports_avx2 = cc.links(
@@ -113,7 +128,6 @@ int main() {
 )
 conf_data.set('HAVE_AVX2', supports_avx2)
 
-sse2_flag = cc.get_supported_arguments('-msse2')
 supports_loadu_si64 = cc.links(
   '''
 #include <immintrin.h>

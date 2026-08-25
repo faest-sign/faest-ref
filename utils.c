@@ -8,6 +8,15 @@
 
 #include "utils.h"
 
+#if defined(HAVE_AVX2) || defined(HAVE_SSE2)
+#include "cpu.h"
+#endif
+#if defined(HAVE_AVX2)
+#include <immintrin.h>
+#elif defined(HAVE_SSE2)
+#include <emmintrin.h>
+#endif
+
 #include <assert.h>
 #include <string.h>
 
@@ -94,15 +103,126 @@ void print_u8_array_bits(const char* label, const uint8_t* arr, size_t m) {
 }
 #endif
 
+// Based on Henry S. Warren, Jr., Hacker's Delight, "Transposing a Bit Matrix":
+// https://github.com/hcs0/Hackers-Delight/blob/master/transpose8.c.txt
+static inline uint64_t transpose_8x8(uint64_t value) {
+  uint64_t tmp = (value ^ (value >> 7)) & UINT64_C(0x00aa00aa00aa00aa);
+  value ^= tmp ^ (tmp << 7);
+  tmp = (value ^ (value >> 14)) & UINT64_C(0x0000cccc0000cccc);
+  value ^= tmp ^ (tmp << 14);
+  tmp = (value ^ (value >> 28)) & UINT64_C(0x00000000f0f0f0f0);
+  return value ^ tmp ^ (tmp << 28);
+}
+
+// 64-bit generalization of the recursive 32x32 mask-and-swap transpose
+// https://github.com/hcs0/Hackers-Delight/blob/master/transpose32.c.txt
+static void transpose_64x64(uint64_t* value) {
+  uint64_t mask = UINT64_C(0x00000000ffffffff);
+  for (unsigned int shift = 32; shift != 0;) {
+    for (unsigned int idx = 0; idx < 64; idx = (idx + shift + 1) & ~shift) {
+      const uint64_t tmp = ((value[idx] >> shift) ^ value[idx + shift]) & mask;
+      value[idx] ^= tmp << shift;
+      value[idx + shift] ^= tmp;
+    }
+    shift >>= 1;
+    mask ^= mask << shift;
+  }
+}
+
+#if defined(HAVE_SSE2)
+// Compose 16x8 SSE2 transposes into a 128x128 transpose.
+// https://mischasan.wordpress.com/2011/10/03/the-full-sse2-bit-matrix-transpose-routine/
+ATTR_TARGET_SSE2 static void transpose_128x128(uint8_t** v, uint8_t** v_row_maj, unsigned int row,
+                                               unsigned int col) {
+  for (unsigned int row_offset = 0; row_offset < 128; row_offset += 16) {
+    const unsigned int dst_byte = (row + row_offset) / 8;
+    for (unsigned int col_offset = 0; col_offset < 128; col_offset += 8) {
+      const unsigned int src_byte = (col + col_offset) / 8;
+
+      ATTR_ALIGNED(16) uint8_t input[16];
+      for (unsigned int idx = 0; idx < 16; ++idx) {
+        input[idx] = v[row + row_offset + idx][src_byte];
+      }
+
+      __m128i block = _mm_load_si128((const __m128i*)input);
+      for (unsigned int bit = 0; bit < 8; ++bit) {
+        const uint16_t output = _mm_movemask_epi8(block);
+        memcpy(v_row_maj[col + col_offset + 7 - bit] + dst_byte, &output, sizeof(output));
+        block = _mm_slli_epi64(block, 1);
+      }
+    }
+  }
+}
+#endif
+
+#if defined(HAVE_AVX2)
+// AVX2 extension of the 16x8 SSE2 transpose. Compose 32x8 transposes into a 256x256 transpose.
+ATTR_TARGET_AVX2 static void transpose_256x256(uint8_t** v, uint8_t** v_row_maj, unsigned int row,
+                                               unsigned int col) {
+  for (unsigned int row_offset = 0; row_offset < 256; row_offset += 32) {
+    const unsigned int dst_byte = (row + row_offset) / 8;
+    for (unsigned int col_offset = 0; col_offset < 256; col_offset += 8) {
+      const unsigned int src_byte = (col + col_offset) / 8;
+
+      ATTR_ALIGNED(32) uint8_t input[32];
+      for (unsigned int idx = 0; idx < 32; ++idx) {
+        input[idx] = v[row + row_offset + idx][src_byte];
+      }
+
+      __m256i block = _mm256_load_si256((const __m256i*)input);
+      for (unsigned int bit = 0; bit < 8; ++bit) {
+        const uint32_t output = _mm256_movemask_epi8(block);
+        memcpy(v_row_maj[col + col_offset + 7 - bit] + dst_byte, &output, sizeof(output));
+        block = _mm256_slli_epi64(block, 1);
+      }
+    }
+  }
+}
+#endif
+
 void column_to_row_major(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
                          unsigned int v_col_bits_len) {
-  // tranpose 64x64 blocks first
+  // transpose 256x256 blocks first
+  unsigned int full_rows_256 = 0;
+  unsigned int full_cols_256 = 0;
+#if defined(HAVE_AVX2)
+  if (CPU_SUPPORTS_AVX2) {
+    full_rows_256 = v_row_bits_len & ~255;
+    full_cols_256 = v_col_bits_len & ~255;
+
+    for (unsigned int row = 0; row < full_rows_256; row += 256) {
+      for (unsigned int col = 0; col < full_cols_256; col += 256) {
+        transpose_256x256(v, v_row_maj, row, col);
+      }
+    }
+  }
+#endif
+
+  // transpose 128x128 blocks next
+  unsigned int full_rows_128 = 0;
+  unsigned int full_cols_128 = 0;
+#if defined(HAVE_SSE2)
+  if (CPU_SUPPORTS_SSE2) {
+    full_rows_128 = v_row_bits_len & ~127;
+    full_cols_128 = v_col_bits_len & ~127;
+
+    for (unsigned int row = 0; row < full_rows_128; row += 128) {
+      const unsigned int first_col = row < full_rows_256 ? full_cols_256 : 0;
+      for (unsigned int col = first_col; col < full_cols_128; col += 128) {
+        transpose_128x128(v, v_row_maj, row, col);
+      }
+    }
+  }
+#endif
+
+  // transpose 64x64 blocks next
   const unsigned int full_rows_64 = v_row_bits_len & ~63;
   const unsigned int full_cols_64 = v_col_bits_len & ~63;
 
   for (unsigned int row = 0; row < full_rows_64; row += 64) {
-    const unsigned int dst_byte = row / 8;
-    for (unsigned int col = 0; col < full_cols_64; col += 64) {
+    const unsigned int dst_byte  = row / 8;
+    const unsigned int first_col = row < full_rows_128 ? full_cols_128 : 0;
+    for (unsigned int col = first_col; col < full_cols_64; col += 64) {
       const unsigned int src_byte = col / 8;
       uint64_t block[64];
 
