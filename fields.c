@@ -31,13 +31,16 @@
    (UINT64_C(x3) << 24) | (UINT64_C(x2) << 16) | (UINT64_C(x1) << 8) | UINT64_C(x0))
 
 ATTR_CONST uint8_t bits_sq(uint8_t x) {
-  return set_bit(get_bit(x, 0) ^ get_bit(x, 4) ^ get_bit(x, 6), 0) |
-         set_bit(get_bit(x, 4) ^ get_bit(x, 6) ^ get_bit(x, 7), 1) |
-         set_bit(get_bit(x, 1) ^ get_bit(x, 5), 2) |
-         set_bit(get_bit(x, 4) ^ get_bit(x, 5) ^ get_bit(x, 6) ^ get_bit(x, 7), 3) |
-         set_bit(get_bit(x, 2) ^ get_bit(x, 4) ^ get_bit(x, 7), 4) |
-         set_bit(get_bit(x, 5) ^ get_bit(x, 6), 5) | set_bit(get_bit(x, 3) ^ get_bit(x, 5), 6) |
-         set_bit(get_bit(x, 6) ^ get_bit(x, 7), 7);
+  // Interleave zero bits to square over GF(2), then reduce modulo X^8 + X^4 + X^3 + X + 1.
+  uint16_t square = x;
+  square          = (square | (square << 4)) & UINT16_C(0x0f0f);
+  square          = (square | (square << 2)) & UINT16_C(0x3333);
+  square          = (square | (square << 1)) & UINT16_C(0x5555);
+
+  const uint16_t high      = square >> 8;
+  const uint16_t reduction = high ^ (high << 1) ^ (high << 3) ^ (high << 4);
+  const uint16_t overflow  = reduction >> 8;
+  return square ^ reduction ^ overflow ^ (overflow << 1) ^ (overflow << 3) ^ (overflow << 4);
 }
 
 // GF(2^8) implementation
