@@ -283,6 +283,7 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf128_add_inplace(bf128_t*
 #endif
 
 void bf128_mul(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs);
+void bf128_square(bf128_t* dst, const bf128_t* lhs);
 void bf128_mul_inplace(bf128_t* lhs, const bf128_t* rhs);
 void bf128_mul_64_inplace(bf128_t* lhs, bf64_t rhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -379,6 +380,7 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf192_add_inplace(bf192_t*
 #endif
 
 void bf192_mul(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs);
+void bf192_square(bf192_t* dst, const bf192_t* lhs);
 void bf192_mul_inplace(bf192_t* lhs, const bf192_t* rhs);
 void bf192_mul_64_inplace(bf192_t* lhs, bf64_t rhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -472,6 +474,7 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf256_add_inplace(bf256_t*
 #endif
 
 void bf256_mul(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs);
+void bf256_square(bf256_t* dst, const bf256_t* lhs);
 void bf256_mul_inplace(bf256_t* lhs, const bf256_t* rhs);
 void bf256_mul_64_inplace(bf256_t* lhs, bf64_t rhs);
 #if defined(HAVE_ATTR_VECTOR_SIZE)

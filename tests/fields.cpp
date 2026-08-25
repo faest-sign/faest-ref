@@ -119,6 +119,14 @@ namespace {
     }
   }
 
+  template <class B>
+  void square_invariants() {
+    for (unsigned int i = 50; i; --i) {
+      auto rand = B::random();
+      BOOST_TEST(rand.square() == rand * rand);
+    }
+  }
+
 #if defined(HAVE_NTL)
   template <class B>
   void mul_random() {
@@ -206,6 +214,10 @@ BOOST_AUTO_TEST_CASE(test_bf128_mul_invariants) {
   mul_invariants<bf128>();
 }
 
+BOOST_AUTO_TEST_CASE(test_bf128_square) {
+  square_invariants<bf128>();
+}
+
 #if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf128_mul_random) {
   mul_random<bf128>();
@@ -226,6 +238,10 @@ BOOST_AUTO_TEST_CASE(test_bf192_mul_invariants) {
   mul_invariants<bf192>();
 }
 
+BOOST_AUTO_TEST_CASE(test_bf192_square) {
+  square_invariants<bf192>();
+}
+
 #if defined(HAVE_NTL)
 BOOST_AUTO_TEST_CASE(test_bf192_mul_random) {
   mul_random<bf192>();
@@ -244,6 +260,10 @@ BOOST_AUTO_TEST_CASE(test_bf256_add_random) {
 
 BOOST_AUTO_TEST_CASE(test_bf256_mul_invariants) {
   mul_invariants<bf256>();
+}
+
+BOOST_AUTO_TEST_CASE(test_bf256_square) {
+  square_invariants<bf256>();
 }
 
 #if defined(HAVE_NTL)
