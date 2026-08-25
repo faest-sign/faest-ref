@@ -300,12 +300,7 @@ void bf128_sum_poly(bf128_t* dst, const bf128_t* xs) {
 #endif
 
 void bf128_sum_poly_bits(bf128_t* dst, const uint8_t* xs) {
-  *dst = bf128_from_bit(ptr_get_bit(xs, 128 - 1));
-  for (size_t i = 1; i < 128; ++i) {
-    bf128_dbl_inplace(dst);
-    const bf128_t tmp = bf128_from_bit(ptr_get_bit(xs, 128 - 1 - i));
-    bf128_add_inplace(dst, &tmp);
-  }
+  bf128_load(dst, xs);
 }
 
 // GF(2^192) implementation
@@ -527,12 +522,7 @@ void bf192_sum_poly(bf192_t* dst, const bf192_t* xs) {
 #endif
 
 void bf192_sum_poly_bits(bf192_t* dst, const uint8_t* xs) {
-  *dst = bf192_from_bit(ptr_get_bit(xs, 192 - 1));
-  for (size_t i = 1; i < 192; ++i) {
-    bf192_dbl_inplace(dst);
-    const bf192_t tmp = bf192_from_bit(ptr_get_bit(xs, 192 - 1 - i));
-    bf192_add_inplace(dst, &tmp);
-  }
+  bf192_load(dst, xs);
 }
 
 // GF(2^256) implementation
@@ -786,12 +776,7 @@ void bf256_sum_poly(bf256_t* dst, const bf256_t* xs) {
 #endif
 
 void bf256_sum_poly_bits(bf256_t* dst, const uint8_t* xs) {
-  *dst = bf256_from_bit(ptr_get_bit(xs, 256 - 1));
-  for (size_t i = 1; i < 256; ++i) {
-    bf256_dbl_inplace(dst);
-    const bf256_t tmp = bf256_from_bit(ptr_get_bit(xs, 256 - 1 - i));
-    bf256_add_inplace(dst, &tmp);
-  }
+  bf256_load(dst, xs);
 }
 
 // GF(2^384)
