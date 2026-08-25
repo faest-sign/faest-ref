@@ -203,10 +203,14 @@ ATTR_TARGET_AVX2 static void transpose_256x256(uint8_t** v, uint8_t** v_row_maj,
 
 void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
                       unsigned int v_col_bits_len) {
-  // transpose 256x256 blocks first
+  unsigned int full_rows_128 = 0;
+  unsigned int full_cols_128 = 0;
+
+#if defined(HAVE_SSE2)
   unsigned int full_rows_256 = 0;
   unsigned int full_cols_256 = 0;
 #if defined(HAVE_AVX2)
+  // transpose 256x256 blocks first
   if (CPU_SUPPORTS_AVX2) {
     full_rows_256 = v_row_bits_len & ~255;
     full_cols_256 = v_col_bits_len & ~255;
@@ -220,9 +224,6 @@ void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_
 #endif
 
   // transpose 128x128 blocks next
-  unsigned int full_rows_128 = 0;
-  unsigned int full_cols_128 = 0;
-#if defined(HAVE_SSE2)
   if (CPU_SUPPORTS_SSE2) {
     full_rows_128 = v_row_bits_len & ~127;
     full_cols_128 = v_col_bits_len & ~127;
