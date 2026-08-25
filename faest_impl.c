@@ -258,10 +258,7 @@ static void hash_challenge_3_init(H2_context_t* h2_ctx, const uint8_t* chall_2,
   H2_update(h2_ctx, chall_2, 3 * lambda_bytes + 8);
 
   H2_update(h2_ctx, a0_tilde, lambda_bytes);
-
-  for (unsigned int ai_tilde_idx = 0; ai_tilde_idx < D_ZK - 1; ai_tilde_idx++) {
-    H2_update(h2_ctx, a1toi_tilde + ai_tilde_idx * lambda_bytes, lambda_bytes);
-  }
+  H2_update(h2_ctx, a1toi_tilde, (D_ZK - 1) * lambda_bytes);
 }
 
 static void hash_challenge_3_final(uint8_t* chall_3, const H2_context_t* ctx, uint32_t ctr,
