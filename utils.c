@@ -20,6 +20,21 @@
 #include <assert.h>
 #include <string.h>
 
+uint16_t extract_bit_slice(const uint8_t* src, unsigned int offset, unsigned int bits) {
+  const unsigned int bit_offset = offset & 7;
+  const unsigned int byte_idx   = offset >> 3;
+  assert(bits > 0 && bits <= 16);
+
+  uint32_t value = src[byte_idx] >> bit_offset;
+  if (bit_offset + bits > 8) {
+    value |= (uint32_t)src[byte_idx + 1] << (8 - bit_offset);
+  }
+  if (bit_offset + bits > 16) {
+    value |= (uint32_t)src[byte_idx + 2] << (16 - bit_offset);
+  }
+  return (uint16_t)(value & ((UINT32_C(1) << bits) - 1));
+}
+
 // DecodeChall_3
 static bool decode_chall_3(uint16_t* decoded_chall, const uint8_t* chall, unsigned int i,
                            const faest_paramset_t* params) {
@@ -42,23 +57,8 @@ static bool decode_chall_3(uint16_t* decoded_chall, const uint8_t* chall, unsign
     hi = (t1 * k) + ((t + 1) * (k - 1));
   }
 
-  const unsigned int bits       = hi - lo;
-  const unsigned int bit_offset = lo & 7;
-  const unsigned int byte_idx   = lo >> 3;
-  assert(bits == k || bits == k - 1);
-  assert(bits <= 16);
-
-  // bit sliced version of a ptr_get_bit / ptr_set_bit loop; the maximum of 12 bits per challenge
-  // can span at most 3 consecutive bytes
-  uint32_t value = chall[byte_idx] >> bit_offset;
-  if (bit_offset + bits > 8) {
-    value |= (uint32_t)chall[byte_idx + 1] << (8 - bit_offset);
-  }
-  if (bit_offset + bits > 16) {
-    value |= (uint32_t)chall[byte_idx + 2] << (16 - bit_offset);
-  }
-
-  *decoded_chall = (uint16_t)(value & ((UINT32_C(1) << bits) - 1));
+  const unsigned int bits = hi - lo;
+  *decoded_chall          = extract_bit_slice(chall, lo, bits);
   return true;
 }
 

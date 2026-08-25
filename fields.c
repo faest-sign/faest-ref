@@ -1103,10 +1103,6 @@ void bf768_mul_256_inplace(bf768_t* lhs, const bf256_t* rhs) {
   }
 }
 
-ATTR_CONST static inline uint64_t bit_word_mask(size_t bits) {
-  return bits >= 64 ? UINT64_MAX : ((UINT64_C(1) << bits) - 1);
-}
-
 static inline uint64_t load_src_word(const uint8_t* src, size_t word_idx, size_t rows) {
   const size_t word_bit_offset = word_idx * 64;
   const size_t remaining_bits  = rows - word_bit_offset;

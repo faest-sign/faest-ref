@@ -30,6 +30,12 @@ FAEST_BEGIN_C_DECL
 #define ptr_u16_get_bit(value, index) ((uint8_t)(((value)[(index) / 16] >> ((index) % 16)) & 1))
 #define ptr_u64_get_bit(value, index) ((uint8_t)(((value)[(index) / 64] >> ((index) % 64)) & 1))
 
+uint16_t extract_bit_slice(const uint8_t* src, unsigned int offset, unsigned int bits);
+
+ATTR_CONST static inline uint64_t bit_word_mask(size_t bits) {
+  return bits >= 64 ? UINT64_MAX : ((UINT64_C(1) << bits) - 1);
+}
+
 // DecodeAllChall_3
 bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
                         const faest_paramset_t* params);
