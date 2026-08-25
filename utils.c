@@ -96,10 +96,61 @@ void print_u8_array_bits(const char* label, const uint8_t* arr, size_t m) {
 
 void column_to_row_major(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
                          unsigned int v_col_bits_len) {
+  // tranpose 64x64 blocks first
+  const unsigned int full_rows_64 = v_row_bits_len & ~63;
+  const unsigned int full_cols_64 = v_col_bits_len & ~63;
 
-  for (unsigned int row = 0; row < v_row_bits_len; ++row) {
+  for (unsigned int row = 0; row < full_rows_64; row += 64) {
+    const unsigned int dst_byte = row / 8;
+    for (unsigned int col = 0; col < full_cols_64; col += 64) {
+      const unsigned int src_byte = col / 8;
+      uint64_t block[64];
+
+      for (unsigned int idx = 0; idx < 64; ++idx) {
+        memcpy(&block[idx], v[row + idx] + src_byte, sizeof(block[idx]));
+        block[idx] = le64toh(block[idx]);
+      }
+      transpose_64x64(block);
+      for (unsigned int idx = 0; idx < 64; ++idx) {
+        block[idx] = htole64(block[idx]);
+        memcpy(v_row_maj[col + idx] + dst_byte, &block[idx], sizeof(block[idx]));
+      }
+    }
+  }
+
+  // then do 8x8 blocks
+  const unsigned int full_rows_8 = v_row_bits_len & ~7;
+  for (unsigned int row = 0; row < full_rows_8; row += 8) {
+    const unsigned int dst_byte  = row / 8;
+    const unsigned int first_col = row < full_rows_64 ? full_cols_64 : 0;
+    for (unsigned int col = first_col; col < v_col_bits_len; col += 8) {
+      const unsigned int src_byte = col / 8;
+      const unsigned int columns  = MIN(v_col_bits_len - col, 8);
+      uint64_t block              = 0;
+
+      for (unsigned int bit = 0; bit < 8; ++bit) {
+        block |= (uint64_t)v[row + bit][src_byte] << (bit * 8);
+      }
+      block = transpose_8x8(block);
+
+      for (unsigned int bit = 0; bit < columns; ++bit) {
+        v_row_maj[col + bit][dst_byte] = (uint8_t)(block >> (bit * 8));
+      }
+    }
+  }
+
+  // for the rest, perform bit operations
+  const unsigned int remaining_rows = v_row_bits_len - full_rows_8;
+  if (remaining_rows != 0) {
+    const unsigned int dst_byte = full_rows_8 / 8;
+    const uint8_t mask          = (UINT8_C(1) << remaining_rows) - UINT8_C(1);
+
     for (unsigned int col = 0; col < v_col_bits_len; ++col) {
-      ptr_set_bit(v_row_maj[col], row, ptr_get_bit(v[row], col));
+      uint8_t value = 0;
+      for (unsigned int bit = 0; bit < remaining_rows; ++bit) {
+        value |= ptr_get_bit(v[full_rows_8 + bit], col) << bit;
+      }
+      v_row_maj[col][dst_byte] = (v_row_maj[col][dst_byte] & ~mask) | value;
     }
   }
 
