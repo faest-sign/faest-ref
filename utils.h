@@ -45,8 +45,8 @@ void print_u8_array(const char* label, const uint8_t* arr, size_t m);
 void print_u8_array_bits(const char* label, const uint8_t* arr, size_t m);
 #endif
 
-void column_to_row_major(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
-                         unsigned int v_col_bits_len);
+void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
+                      unsigned int v_col_bits_len);
 
 uint8_t** alloc_pointer_array(size_t rows, size_t columns);
 void free_pointer_array(uint8_t*** ptr);

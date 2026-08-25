@@ -412,7 +412,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   // it is actually lambda - w_grind but keeping it lambda
   uint8_t** V_row = alloc_pointer_array(ell, lambda_bytes);
-  column_to_row_major(V, V_row, lambda, ell);
+  transpose_matrix(V, V_row, lambda, ell);
   free_pointer_array(&V);
 
   H2_context_t h2_ctx;
@@ -573,7 +573,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // it is actually lambda - w_grind but keeping it lambda
   uint8_t** Q_row = alloc_pointer_array(ell, lambda_bytes);
-  column_to_row_major(Q, Q_row, lambda, ell);
+  transpose_matrix(Q, Q_row, lambda, ell);
   free_pointer_array(&Q);
 
   // line 9

@@ -201,8 +201,8 @@ ATTR_TARGET_AVX2 static void transpose_256x256(uint8_t** v, uint8_t** v_row_maj,
 }
 #endif
 
-void column_to_row_major(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
-                         unsigned int v_col_bits_len) {
+void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
+                      unsigned int v_col_bits_len) {
   // transpose 256x256 blocks first
   unsigned int full_rows_256 = 0;
   unsigned int full_cols_256 = 0;

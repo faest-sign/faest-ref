@@ -32,7 +32,7 @@ BOOST_DATA_TEST_CASE(faest_aligned_alloc, alignments, alignment) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(test_column_to_row_major) {
+BOOST_AUTO_TEST_CASE(test_transpose_matrix) {
   constexpr unsigned int rows     = 461;
   constexpr unsigned int columns  = 459;
   constexpr unsigned int row_size = (columns + 7) / 8;
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(test_column_to_row_major) {
     output_rows[col] = output[col].data();
   }
 
-  column_to_row_major(input_rows.data(), output_rows.data(), rows, columns);
+  transpose_matrix(input_rows.data(), output_rows.data(), rows, columns);
 
   for (unsigned int row = 0; row < rows; ++row) {
     for (unsigned int col = 0; col < columns; ++col) {
