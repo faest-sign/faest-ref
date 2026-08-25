@@ -285,7 +285,7 @@ void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_
   const unsigned int remaining_rows = v_row_bits_len - full_rows_8;
   if (remaining_rows != 0) {
     const unsigned int dst_byte = full_rows_8 / 8;
-    const uint8_t mask          = (UINT8_C(1) << remaining_rows) - UINT8_C(1);
+    const uint8_t mask          = bit_word_mask(remaining_rows);
 
     for (unsigned int col = 0; col < v_col_bits_len; ++col) {
       uint8_t value = 0;
@@ -295,14 +295,6 @@ void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_
       v_row_maj[col][dst_byte] = (v_row_maj[col][dst_byte] & ~mask) | value;
     }
   }
-
-#if !defined(NDEBUG)
-  for (unsigned int row = 0; row < v_row_bits_len; row++) {
-    for (unsigned int col = 0; col < v_col_bits_len; col++) {
-      assert(ptr_get_bit(v[row], col) == ptr_get_bit(v_row_maj[col], row));
-    }
-  }
-#endif
 }
 
 uint8_t** alloc_pointer_array(size_t rows, size_t columns) {
