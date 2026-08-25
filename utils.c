@@ -156,24 +156,41 @@ ATTR_TARGET_SSE2 static void transpose_128x128(uint8_t** v, uint8_t** v_row_maj,
 #endif
 
 #if defined(HAVE_AVX2)
-// AVX2 extension of the 16x8 SSE2 transpose. Compose 32x8 transposes into a 256x256 transpose.
+// Apply one stage of a 32x32 mask-and-swap transpose in all eight 32-bit lanes.
+#define TRANSPOSE_AVX2_32X32_STAGE(value, shift, mask_value)                                       \
+  do {                                                                                             \
+    const __m256i mask = _mm256_set1_epi32(mask_value);                                            \
+    for (unsigned int idx = 0; idx < 32; idx = (idx + (shift) + 1) & ~(shift)) {                   \
+      const __m256i tmp = _mm256_and_si256(                                                        \
+          _mm256_xor_si256(_mm256_srli_epi32((value)[idx], shift), (value)[idx + (shift)]), mask); \
+      (value)[idx]           = _mm256_xor_si256((value)[idx], _mm256_slli_epi32(tmp, shift));      \
+      (value)[idx + (shift)] = _mm256_xor_si256((value)[idx + (shift)], tmp);                      \
+    }                                                                                              \
+  } while (0)
+
+// Vectorized generalization of the recursive 32x32 transpose
 ATTR_TARGET_AVX2 static void transpose_256x256(uint8_t** v, uint8_t** v_row_maj, unsigned int row,
                                                unsigned int col) {
   for (unsigned int row_offset = 0; row_offset < 256; row_offset += 32) {
     const unsigned int dst_byte = (row + row_offset) / 8;
-    for (unsigned int col_offset = 0; col_offset < 256; col_offset += 8) {
-      const unsigned int src_byte = (col + col_offset) / 8;
+    const unsigned int src_byte = col / 8;
+    __m256i block[32];
 
-      ATTR_ALIGNED(32) uint8_t input[32];
-      for (unsigned int idx = 0; idx < 32; ++idx) {
-        input[idx] = v[row + row_offset + idx][src_byte];
-      }
+    for (unsigned int idx = 0; idx < 32; ++idx) {
+      block[idx] = _mm256_loadu_si256((const __m256i*)(v[row + row_offset + idx] + src_byte));
+    }
 
-      __m256i block = _mm256_load_si256((const __m256i*)input);
-      for (unsigned int bit = 0; bit < 8; ++bit) {
-        const uint32_t output = _mm256_movemask_epi8(block);
-        memcpy(v_row_maj[col + col_offset + 7 - bit] + dst_byte, &output, sizeof(output));
-        block = _mm256_slli_epi64(block, 1);
+    TRANSPOSE_AVX2_32X32_STAGE(block, 16, 0x0000ffff);
+    TRANSPOSE_AVX2_32X32_STAGE(block, 8, 0x00ff00ff);
+    TRANSPOSE_AVX2_32X32_STAGE(block, 4, 0x0f0f0f0f);
+    TRANSPOSE_AVX2_32X32_STAGE(block, 2, 0x33333333);
+    TRANSPOSE_AVX2_32X32_STAGE(block, 1, 0x55555555);
+
+    for (unsigned int idx = 0; idx < 32; ++idx) {
+      uint32_t output[8];
+      _mm256_storeu_si256((__m256i*)output, block[idx]);
+      for (unsigned int lane = 0; lane < 8; ++lane) {
+        memcpy(v_row_maj[col + 32 * lane + idx] + dst_byte, &output[lane], sizeof(output[lane]));
       }
     }
   }
