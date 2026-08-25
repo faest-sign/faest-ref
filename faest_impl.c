@@ -310,7 +310,7 @@ static inline void aes_prove(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint
   }
 }
 
-static inline void aes_verify(uint8_t* a0_tilde, const uint8_t* d, const uint8_t** Q,
+static inline void aes_verify(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
                               const uint8_t* q_bar, const uint8_t* owf_in, const uint8_t* owf_out,
                               const uint8_t* chall_2, const uint8_t* chall_3,
                               const uint8_t* a1toi_tilde, const faest_paramset_t* params) {
@@ -595,7 +595,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
     for (unsigned int q_idx = 0; q_idx < ell; q_idx++) {
       memcpy(qh_0 + q_idx * lambda_bytes, Q_row[q_idx], lambda_bytes);
     }
-    for (unsigned int v_idx = 0; v_idx <= D_ZK - 2; v_idx++) {
+    for (unsigned int v_idx = 0; v_idx < D_ZK - 1; v_idx++) {
       memcpy(qh_0 + (ell * lambda_bytes) + (v_idx * lambda_bytes), q_bar + v_idx * lambda_bytes,
              lambda_bytes);
     }
@@ -618,8 +618,8 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // line 18
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  aes_verify(a0_tilde, dsignature_d(sig, params), (const uint8_t**)Q_row, q_bar, owf_input,
-             owf_output, chall_1, Delta, dsignature_a1toi_tilde(sig, params), params);
+  aes_verify(a0_tilde, dsignature_d(sig, params), Q_row, q_bar, owf_input, owf_output, chall_1,
+             Delta, dsignature_a1toi_tilde(sig, params), params);
   free(q_bar);
   free_pointer_array(&Q_row);
 
