@@ -43,7 +43,6 @@
 #define bfSSS_byte_combine bf@SSS@_byte_combine
 #define bfSSS_byte_combine_bits bf@SSS@_byte_combine_bits
 #define bfSSS_byte_combine_sq bf@SSS@_byte_combine_sq
-#define bfSSS_byte_combine_bits_sq bf@SSS@_byte_combine_bits_sq
 #define bfSSS_sq_bit bf@SSS@_sq_bit
 #define bfSSS_sq_bit_inplace bf@SSS@_sq_bit_inplace
 #define bfSSS_sum_poly_bits bf@SSS@_sum_poly_bits

@@ -30,19 +30,6 @@
   ((UINT64_C(x7) << 56) | (UINT64_C(x6) << 48) | (UINT64_C(x5) << 40) | (UINT64_C(x4) << 32) |     \
    (UINT64_C(x3) << 24) | (UINT64_C(x2) << 16) | (UINT64_C(x1) << 8) | UINT64_C(x0))
 
-ATTR_CONST uint8_t bits_sq(uint8_t x) {
-  // Interleave zero bits to square over GF(2), then reduce modulo X^8 + X^4 + X^3 + X + 1.
-  uint16_t square = x;
-  square          = (square | (square << 4)) & UINT16_C(0x0f0f);
-  square          = (square | (square << 2)) & UINT16_C(0x3333);
-  square          = (square | (square << 1)) & UINT16_C(0x5555);
-
-  const uint16_t high      = square >> 8;
-  const uint16_t reduction = high ^ (high << 1) ^ (high << 3) ^ (high << 4);
-  const uint16_t overflow  = reduction >> 8;
-  return square ^ reduction ^ overflow ^ (overflow << 1) ^ (overflow << 3) ^ (overflow << 4);
-}
-
 // GF(2^8) implementation
 
 bf8_t bf8_mul(bf8_t lhs, bf8_t rhs) {
@@ -222,10 +209,6 @@ void bf128_byte_combine_bits(bf128_t* dst, uint8_t x) {
     bf128_mul_bit(&tmp, &bf128_alpha[i - 1], get_bit(x, i));
     bf128_add_inplace(dst, &tmp);
   }
-}
-
-void bf128_byte_combine_bits_sq(bf128_t* dst, uint8_t x) {
-  bf128_byte_combine_bits(dst, bits_sq(x));
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -451,10 +434,6 @@ void bf192_byte_combine_bits(bf192_t* dst, uint8_t x) {
     bf192_mul_bit(&tmp, &bf192_alpha[i - 1], get_bit(x, i));
     bf192_add_inplace(dst, &tmp);
   }
-}
-
-void bf192_byte_combine_bits_sq(bf192_t* dst, uint8_t x) {
-  bf192_byte_combine_bits(dst, bits_sq(x));
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
@@ -693,10 +672,6 @@ void bf256_byte_combine_bits(bf256_t* dst, uint8_t x) {
     bf256_mul_bit(&tmp, &bf256_alpha[i - 1], get_bit(x, i));
     bf256_add_inplace(dst, &tmp);
   }
-}
-
-void bf256_byte_combine_bits_sq(bf256_t* dst, uint8_t x) {
-  bf256_byte_combine_bits(dst, bits_sq(x));
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
