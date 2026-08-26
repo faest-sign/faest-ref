@@ -19,6 +19,7 @@ FAEST_EM_256F="faest_em_256f"
 ALL="FAEST_128S FAEST_128F FAEST_192S FAEST_192F FAEST_256S FAEST_256F FAEST_EM_128S FAEST_EM_128F FAEST_EM_192S FAEST_EM_192F FAEST_EM_256S FAEST_EM_256F"
 
 BUILD_DIR="build_release"
+JSON="ref-benchmarking-output.json"
 
 clean () {
     ninja -C "${BUILD_DIR}" clean >&2
@@ -28,8 +29,7 @@ run_make () {
     name="$1"
     setting_id="$2"
     echo "# Building: ${name} (${setting_id})" >&2
-    ninja -C "${BUILD_DIR}" "${setting_id}/${setting_id}_api_test" >&2
-    ninja -C "${BUILD_DIR}" "${setting_id}/${setting_id}_bench_c2" >&2
+    ninja -C "${BUILD_DIR}" "${setting_id}/${setting_id}_api_test" "${setting_id}/${setting_id}_bench_c2" >&2
 }
 
 run_test () {
@@ -135,7 +135,8 @@ run_bench () {
         --argjson "meta" "${meta}" \
         '$ARGS.named' \
         `"
-    echo "${json}"
+    echo "${json}" | tee -a "${JSON}"
+    echo "," >> "${JSON}"
 }
 
 bench_spec_variants () {
@@ -154,8 +155,13 @@ then
 fi
 
 mkdir -p "${BUILD_DIR}"
+
 pushd "${BUILD_DIR}"
 meson setup .. --reconfigure --buildtype release -Dbenchmarks=enabled -Dcatch2=enabled -Dmarch-native=enabled $flags >&2
 popd
 
+echo "[" > "${JSON}"
 bench_spec_variants
+# this is hack but otherwise the JSON is invalid
+echo "{}" >> "${JSON}"
+echo "]" >> "${JSON}"
