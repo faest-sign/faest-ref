@@ -285,12 +285,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     memcpy(V_columns[ell_idx], crt_output, lambda_minus_w_grind_bytes);
   }
 
-  uint8_t** V_delta = alloc_pointer_array(lambda_minus_w_grind, ell_bytes);
-  transpose_matrix(V_columns, V_delta, ell, lambda_minus_w_grind);
-  for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) {
-    xor_u8_array(V_dest[row], V_delta[row], V_dest[row], ell_bytes);
-  }
-  free_pointer_array(&V_delta);
+  transpose_matrix(V_columns, V_dest, ell, lambda_minus_w_grind);
   free_pointer_array(&V_columns);
 
   free(ui);
@@ -484,12 +479,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     memcpy(Q_columns[ell_idx], crt_output, lambda_minus_w_grind_bytes);
   }
 
-  uint8_t** Q_delta = alloc_pointer_array(lambda_minus_w_grind, ell_bytes);
-  transpose_matrix(Q_columns, Q_delta, ell, lambda_minus_w_grind);
-  for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) {
-    xor_u8_array(Q_dest[row], Q_delta[row], Q_dest[row], ell_bytes);
-  }
-  free_pointer_array(&Q_delta);
+  transpose_matrix(Q_columns, Q_dest, ell, lambda_minus_w_grind);
   free_pointer_array(&Q_columns);
+
   return true;
 }
