@@ -223,7 +223,7 @@ ATTR_CONST ATTR_ARTIFICIAL static inline uint64_t parity64(uint64_t in) {
 #endif
 #endif
 
-#if defined(HAVE_AESNI)
+#if defined(HAVE_SSE2)
 #if defined(_MSC_VER)
 // workarounds for MSVC
 #include <immintrin.h>
@@ -232,6 +232,15 @@ ATTR_CONST ATTR_ARTIFICIAL static inline uint64_t parity64(uint64_t in) {
 #elif !GNUC_CHECK(7, 0) && !CLANG_CHECK(9)
 // workaround for gcc and clang
 #define __m128i_u __m128i
+#endif
+
+#if defined(HAVE_AVX2)
+#if defined(_MSC_VER)
+// workarounds for MSVC
+#define __m256i_u __m256i
+#elif !GNUC_CHECK(7, 0) && !CLANG_CHECK(9)
+// workaround for gcc and clang
+#define __m256i_u __m256i
 #endif
 
 #if !defined(HAVE_MM_LOADU_SI64)
