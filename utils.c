@@ -76,10 +76,11 @@ bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
 ATTR_TARGET_AVX2 static inline size_t xor_u8_array_256(uint8_t* out, const uint8_t* a,
                                                        const uint8_t* b, size_t len) {
   const size_t blocks = len / sizeof(__m256i);
-  for (size_t idx = 0; idx != blocks;
-       ++idx, a += sizeof(__m256i), b += sizeof(__m256i), out += sizeof(__m256i)) {
-    _mm256_storeu_si256((__m256i_u*)out, _mm256_xor_si256(_mm256_loadu_si256((const __m256i_u*)a),
-                                                          _mm256_loadu_si256((const __m256i_u*)b)));
+  const __m256i_u* pa = (const __m256i_u*)a;
+  const __m256i_u* pb = (const __m256i_u*)b;
+  __m256i_u* pout     = (__m256i_u*)out;
+  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pb, ++pout) {
+    _mm256_storeu_si256(pout, _mm256_xor_si256(_mm256_loadu_si256(pa), _mm256_loadu_si256(pb)));
   }
   return blocks * sizeof(__m256i);
 }
@@ -87,9 +88,10 @@ ATTR_TARGET_AVX2 static inline size_t xor_u8_array_256(uint8_t* out, const uint8
 ATTR_TARGET_AVX2 static inline size_t xor_u8_array_inplace_256(uint8_t* out, const uint8_t* a,
                                                                size_t len) {
   const size_t blocks = len / sizeof(__m256i);
-  for (size_t idx = 0; idx != blocks; ++idx, a += sizeof(__m256i), out += sizeof(__m256i)) {
-    _mm256_storeu_si256((__m256i_u*)out, _mm256_xor_si256(_mm256_loadu_si256((const __m256i_u*)out),
-                                                          _mm256_loadu_si256((const __m256i_u*)a)));
+  const __m256i_u* pa = (const __m256i_u*)a;
+  __m256i_u* pout     = (__m256i_u*)out;
+  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pout) {
+    _mm256_storeu_si256(pout, _mm256_xor_si256(_mm256_loadu_si256(pout), _mm256_loadu_si256(pa)));
   }
   return blocks * sizeof(__m256i);
 }
@@ -99,10 +101,11 @@ ATTR_TARGET_AVX2 static inline size_t xor_u8_array_inplace_256(uint8_t* out, con
 ATTR_TARGET_SSE2 static inline size_t xor_u8_array_128(uint8_t* out, const uint8_t* a,
                                                        const uint8_t* b, size_t len) {
   const size_t blocks = len / sizeof(__m128i);
-  for (size_t idx = 0; idx != blocks;
-       ++idx, a += sizeof(__m128i), b += sizeof(__m128i), out += sizeof(__m128i)) {
-    _mm_storeu_si128((__m128i_u*)out, _mm_xor_si128(_mm_loadu_si128((const __m128i_u*)a),
-                                                    _mm_loadu_si128((const __m128i_u*)b)));
+  const __m128i_u* pa = (const __m128i_u*)a;
+  const __m128i_u* pb = (const __m128i_u*)b;
+  __m128i_u* pout     = (__m128i_u*)out;
+  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pb, ++pout) {
+    _mm_storeu_si128(pout, _mm_xor_si128(_mm_loadu_si128(pa), _mm_loadu_si128(pb)));
   }
   return blocks * sizeof(__m128i);
 }
@@ -110,9 +113,10 @@ ATTR_TARGET_SSE2 static inline size_t xor_u8_array_128(uint8_t* out, const uint8
 ATTR_TARGET_SSE2 static inline size_t xor_u8_array_inplace_128(uint8_t* out, const uint8_t* a,
                                                                size_t len) {
   const size_t blocks = len / sizeof(__m128i);
-  for (size_t idx = 0; idx != blocks; ++idx, a += sizeof(__m128i), out += sizeof(__m128i)) {
-    _mm_storeu_si128((__m128i_u*)out, _mm_xor_si128(_mm_loadu_si128((const __m128i_u*)out),
-                                                    _mm_loadu_si128((const __m128i_u*)a)));
+  const __m128i_u* pa = (const __m128i_u*)a;
+  __m128i_u* pout     = (__m128i_u*)out;
+  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pout) {
+    _mm_storeu_si128(pout, _mm_xor_si128(_mm_loadu_si128(pout), _mm_loadu_si128(pa)));
   }
   return blocks * sizeof(__m128i);
 }
@@ -150,13 +154,13 @@ ATTR_TARGET_AVX2 static inline size_t masked_xor_u8_array_256(uint8_t* out, cons
                                                               const uint8_t* b, uint8_t mask_bit,
                                                               size_t len) {
   const size_t blocks = len / sizeof(__m256i);
+  const __m256i_u* pa = (const __m256i_u*)a;
+  const __m256i_u* pb = (const __m256i_u*)b;
+  __m256i_u* pout     = (__m256i_u*)out;
   const __m256i mask  = _mm256_set1_epi64x(-(uint64_t)mask_bit);
-  for (size_t idx = 0; idx != blocks;
-       ++idx, a += sizeof(__m256i), b += sizeof(__m256i), out += sizeof(__m256i)) {
-    _mm256_storeu_si256(
-        (__m256i_u*)out,
-        _mm256_xor_si256(_mm256_loadu_si256((const __m256i_u*)a),
-                         _mm256_and_si256(_mm256_loadu_si256((const __m256i_u*)b), mask)));
+  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pb, ++pout) {
+    _mm256_storeu_si256(pout, _mm256_xor_si256(_mm256_loadu_si256(pa),
+                                               _mm256_and_si256(_mm256_loadu_si256(pb), mask)));
   }
   return blocks * sizeof(__m256i);
 }
@@ -167,12 +171,13 @@ ATTR_TARGET_SSE2 static inline size_t masked_xor_u8_array_128(uint8_t* out, cons
                                                               const uint8_t* b, uint8_t mask_bit,
                                                               size_t len) {
   const size_t blocks = len / sizeof(__m128i);
+  const __m128i_u* pa = (const __m128i_u*)a;
+  const __m128i_u* pb = (const __m128i_u*)b;
+  __m128i_u* pout     = (__m128i_u*)out;
   const __m128i mask  = _mm_set1_epi64x(-(uint64_t)mask_bit);
-  for (size_t idx = 0; idx != blocks;
-       ++idx, a += sizeof(__m128i), b += sizeof(__m128i), out += sizeof(__m128i)) {
-    _mm_storeu_si128((__m128i_u*)out,
-                     _mm_xor_si128(_mm_loadu_si128((const __m128i_u*)a),
-                                   _mm_and_si128(_mm_loadu_si128((const __m128i_u*)b), mask)));
+  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pb, ++pout) {
+    _mm_storeu_si128(pout,
+                     _mm_xor_si128(_mm_loadu_si128(pa), _mm_and_si128(_mm_loadu_si128(pb), mask)));
   }
   return blocks * sizeof(__m128i);
 }
