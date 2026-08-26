@@ -40,9 +40,10 @@ ATTR_CONST static inline uint64_t bit_word_mask(size_t bits) {
 bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
                         const faest_paramset_t* params);
 
-void xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, size_t len);
+void xor_u8_array(uint8_t* out, const uint8_t* a, const uint8_t* b, size_t len);
+void xor_u8_array_inplace(uint8_t* out, const uint8_t* a, size_t len);
 
-void masked_xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, uint8_t mask_bit,
+void masked_xor_u8_array(uint8_t* out, const uint8_t* a, const uint8_t* b, uint8_t mask_bit,
                          size_t len);
 
 #if 0

@@ -458,7 +458,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   }
 
   // line 19
-  xor_u8_array(witness, u, signature_d(sig, params), ell_bytes);
+  xor_u8_array(signature_d(sig, params), witness, u, ell_bytes);
 
   {
     // line 20

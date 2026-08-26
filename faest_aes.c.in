@@ -169,7 +169,7 @@ static void aes_SSS_add_round_key_prover(uint8_t* out, bfSSS_t* out_tag, const u
                                          const bfSSS_t* k_tag, unsigned int Nst) {
   const unsigned int Nstbits = Nst * 32;
 
-  xor_u8_array(in, k, out, Nstbits / 8);
+  xor_u8_array(out, in, k, Nstbits / 8);
   aes_SSS_add_round_key_verifier(out_tag, in_tag, k_tag, Nst);
 }
 
@@ -829,7 +829,7 @@ static void aes_SSS_keyexp_forward_prover(uint8_t* y, bfSSS_t* y_tag, const uint
       // ::8
     } else {
       // ::9-10
-      xor_u8_array(&y[32 * (j - FAEST_SSS_NK) / 8], &y[32 * (j - 1) / 8], &y[32 * j / 8], 32 / 8);
+      xor_u8_array(&y[32 * j / 8], &y[32 * (j - FAEST_SSS_NK) / 8], &y[32 * (j - 1) / 8], 32 / 8);
       for (unsigned int word_idx = 0; word_idx < 32; word_idx++) {
         bfSSS_add(&y_tag[32 * j + word_idx], &y_tag[32 * (j - FAEST_SSS_NK) + word_idx],
                   &y_tag[32 * (j - 1) + word_idx]);
@@ -1228,7 +1228,7 @@ static void aes_SSS_constraints_prover(zk_hash_SSS_7_ctx* hasher, const uint8_t*
     memcpy(in, w, blocksize / 8);
     memcpy(in_tag, w_tag, blocksize * sizeof(bfSSS_t));
     // line 11
-    xor_u8_array(w, owf_out, out, blocksize / 8);
+    xor_u8_array(out, w, owf_out, blocksize / 8);
     memcpy(out_tag, w_tag, blocksize * sizeof(bfSSS_t));
   } else {
     // line 13

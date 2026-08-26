@@ -256,19 +256,19 @@ void owf_em_128(const uint8_t* key, const uint8_t* input, uint8_t* output) {
 
   // same as owf_128 with swapped keys and the additional xor
   owf_128(input, key, output);
-  xor_u8_array(output, key, output, 16);
+  xor_u8_array_inplace(output, key, 16);
 }
 
 void owf_em_192(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   aes_round_keys_t round_keys;
   rijndael192_init_round_keys(&round_keys, input);
   rijndael192_encrypt_block(&round_keys, key, output);
-  xor_u8_array(output, key, output, 24);
+  xor_u8_array_inplace(output, key, 24);
 }
 
 void owf_em_256(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   aes_round_keys_t round_keys;
   rijndael256_init_round_keys(&round_keys, input);
   rijndael256_encrypt_block(&round_keys, key, output);
-  xor_u8_array(output, key, output, 32);
+  xor_u8_array_inplace(output, key, 32);
 }

@@ -91,8 +91,8 @@ static
   for (unsigned int j = 0; j < depth; j++) {
     unsigned int depthloop = num_instances >> (j + 1);
     for (unsigned int idx = 0; idx < depthloop; idx++) {
-      xor_u8_array(V(j), R(j, 2 * idx + 1), V(j), outlen);
-      xor_u8_array(R(j, 2 * idx), R(j, 2 * idx + 1), R(j + 1, idx), outlen);
+      xor_u8_array_inplace(V(j), R(j, 2 * idx + 1), outlen);
+      xor_u8_array(R(j + 1, idx), R(j, 2 * idx), R(j, 2 * idx + 1), outlen);
     }
   }
   // Step: 10
@@ -149,7 +149,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   // line 8
   for (unsigned int i = 1; i < tau; i++) {
-    xor_u8_array(u, ui + i * ell_hat_bytes, c + (i - 1) * ell_bytes, ell_bytes);
+    xor_u8_array(c + (i - 1) * ell_bytes, u, ui + i * ell_hat_bytes, ell_bytes);
   }
 
   // line 10
@@ -184,7 +184,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
     bf2_poly_mul(second_prod, &u_hi[m * w_grind_bytes], w_grind, params->M_TREE,
                  lambda_minus_w_grind + 1);
-    xor_u8_array(first_prod, second_prod, u_bar + m * lambda_bytes, lambda_bytes);
+    xor_u8_array(u_bar + m * lambda_bytes, first_prod, second_prod, lambda_bytes);
 
     // line 17
     bit_idx = 0;
@@ -239,18 +239,18 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       uint64_t coefficients = G_e[word_idx] & bit_word_mask(word_bits);
       for (unsigned int bit = 0; coefficients != 0; ++bit, coefficients >>= 1) {
         if (coefficients & 1) {
-          xor_u8_array(L_e_zero, V[row_offset + bit], L_e_zero, lambda_bytes);
+          xor_u8_array_inplace(L_e_zero, V[row_offset + bit], lambda_bytes);
         }
       }
     }
-    xor_u8_array(L_e_zero, u, L_e_one, lambda_bytes);
+    xor_u8_array(L_e_one, L_e_zero, u, lambda_bytes);
 
     // line 23
     H5(v_tilde[e], iv, e, L_e_zero, lambda);
     H5(h_e_one, iv, e, L_e_one, lambda);
 
     // line 26
-    xor_u8_array(v_tilde[e], h_e_one, c_mult_diff[e], N_MASK_BYTES);
+    xor_u8_array(c_mult_diff[e], v_tilde[e], h_e_one, N_MASK_BYTES);
   }
   free_pointer_array(&V);
 
@@ -258,7 +258,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   uint8_t** gate_inputs = alloc_pointer_array(N_MASK, n_mult_bytes);
   assert(gate_inputs);
   transpose_matrix(c_mult_diff, gate_inputs, n_mult, N_MASK);
-  xor_u8_array(c_mult, gate_inputs[0], c_mult, N_MASK * n_mult_bytes);
+  xor_u8_array_inplace(c_mult, gate_inputs[0], N_MASK * n_mult_bytes);
   free_pointer_array(&c_mult_diff);
 
   transpose_matrix(v_tilde, gate_inputs, n_mult, N_MASK);
@@ -273,7 +273,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
     bf2_matrix_mul_tbl(second_prod, gate_inputs[m], params->W_GATE, n_mult, lambda,
                        params->w_gate_words);
-    xor_u8_array(first_prod, second_prod, v_bar + m * lambda_bytes, lambda_bytes);
+    xor_u8_array(v_bar + m * lambda_bytes, first_prod, second_prod, lambda_bytes);
   }
   free_pointer_array(&gate_inputs);
 
@@ -365,7 +365,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
       for (unsigned int d = 0; d < ki; ++d, ++q_idx) {
         memcpy(Q[q_idx], qtmp + d * ellhat_bytes, ellhat_bytes);
 
-        masked_xor_u8_array(Q[q_idx], c + (i - 1) * ell_bytes, Q[q_idx], (i_delta[i] >> d) & 1,
+        masked_xor_u8_array(Q[q_idx], Q[q_idx], c + (i - 1) * ell_bytes, (i_delta[i] >> d) & 1,
                             ell_bytes);
       }
     }
@@ -437,7 +437,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
 
       for (unsigned int bit = 0; coefficients != 0; ++bit, coefficients >>= 1) {
         if (coefficients & 1) {
-          xor_u8_array(L_e_prime, Q[row_offset + bit], L_e_prime, lambda_bytes);
+          xor_u8_array_inplace(L_e_prime, Q[row_offset + bit], lambda_bytes);
         }
       }
     }
@@ -447,7 +447,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     H5(h_e, iv, e, L_e_prime, lambda);
 
     // line 27
-    masked_xor_u8_array(h_e, c_mult_by_e[e], q_tilde[e], gamma_e, N_MASK_BYTES);
+    masked_xor_u8_array(q_tilde[e], h_e, c_mult_by_e[e], gamma_e, N_MASK_BYTES);
   }
   free_pointer_array(&Q);
   free_pointer_array(&c_mult_by_e);
@@ -465,7 +465,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
     bf2_matrix_mul_tbl(second_prod, gate_inputs[m], params->W_GATE, n_mult, lambda,
                        params->w_gate_words);
-    xor_u8_array(first_prod, second_prod, q_bar + m * lambda_bytes, lambda_bytes);
+    xor_u8_array(q_bar + m * lambda_bytes, first_prod, second_prod, lambda_bytes);
   }
   free_pointer_array(&gate_inputs);
   free(r_tilde_prime);

@@ -73,35 +73,52 @@ bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
 }
 
 #if defined(HAVE_AVX2)
-ATTR_TARGET_AVX2 static inline size_t xor_u8_array_avx2(uint8_t* out, const uint8_t* a,
-                                                        const uint8_t* b, size_t len) {
+ATTR_TARGET_AVX2 static inline size_t xor_u8_array_256(uint8_t* out, const uint8_t* a,
+                                                       const uint8_t* b, size_t len) {
   const size_t blocks = len / sizeof(__m256i);
   for (size_t idx = 0; idx != blocks;
        ++idx, a += sizeof(__m256i), b += sizeof(__m256i), out += sizeof(__m256i)) {
-    const __m256i lhs = _mm256_loadu_si256((const __m256i*)a);
-    const __m256i rhs = _mm256_loadu_si256((const __m256i*)b);
-    _mm256_storeu_si256((__m256i*)out, _mm256_xor_si256(lhs, rhs));
+    _mm256_storeu_si256((__m256i*)out, _mm256_xor_si256(_mm256_loadu_si256((const __m256i*)a),
+                                                        _mm256_loadu_si256((const __m256i*)b)));
+  }
+  return blocks * sizeof(__m256i);
+}
+
+ATTR_TARGET_AVX2 static inline size_t xor_u8_array_inplace_256(uint8_t* out, const uint8_t* a,
+                                                               size_t len) {
+  const size_t blocks = len / sizeof(__m256i);
+  for (size_t idx = 0; idx != blocks; ++idx, a += sizeof(__m256i), out += sizeof(__m256i)) {
+    _mm256_storeu_si256((__m256i*)out, _mm256_xor_si256(_mm256_loadu_si256((const __m256i*)out),
+                                                        _mm256_loadu_si256((const __m256i*)a)));
   }
   return blocks * sizeof(__m256i);
 }
 #endif
 
 #if defined(HAVE_SSE2)
-ATTR_TARGET_SSE2 static inline size_t xor_u8_array_sse2(uint8_t* out, const uint8_t* a,
-                                                        const uint8_t* b, size_t len) {
+ATTR_TARGET_SSE2 static inline size_t xor_u8_array_128(uint8_t* out, const uint8_t* a,
+                                                       const uint8_t* b, size_t len) {
   const size_t blocks = len / sizeof(__m128i);
   for (size_t idx = 0; idx != blocks;
        ++idx, a += sizeof(__m128i), b += sizeof(__m128i), out += sizeof(__m128i)) {
-    const __m128i lhs = _mm_loadu_si128((const __m128i*)a);
-    const __m128i rhs = _mm_loadu_si128((const __m128i*)b);
-    _mm_storeu_si128((__m128i*)out, _mm_xor_si128(lhs, rhs));
+    _mm_storeu_si128((__m128i*)out, _mm_xor_si128(_mm_loadu_si128((const __m128i*)a),
+                                                  _mm_loadu_si128((const __m128i*)b)));
+  }
+  return blocks * sizeof(__m128i);
+}
+
+ATTR_TARGET_SSE2 static inline size_t xor_u8_array_inplace_128(uint8_t* out, const uint8_t* a,
+                                                               size_t len) {
+  const size_t blocks = len / sizeof(__m128i);
+  for (size_t idx = 0; idx != blocks; ++idx, a += sizeof(__m128i), out += sizeof(__m128i)) {
+    _mm_storeu_si128((__m128i*)out, _mm_xor_si128(_mm_loadu_si128((const __m128i*)out),
+                                                  _mm_loadu_si128((const __m128i*)a)));
   }
   return blocks * sizeof(__m128i);
 }
 #endif
 
-static inline size_t xor_u8_array_uint64(uint8_t* out, const uint8_t* a, const uint8_t* b,
-                                         size_t len) {
+static inline size_t xor_u8_array_64(uint8_t* out, const uint8_t* a, const uint8_t* b, size_t len) {
   const size_t blocks = len / sizeof(uint64_t);
   for (size_t idx = 0; idx != blocks;
        ++idx, a += sizeof(uint64_t), b += sizeof(uint64_t), out += sizeof(uint64_t)) {
@@ -115,10 +132,23 @@ static inline size_t xor_u8_array_uint64(uint8_t* out, const uint8_t* a, const u
   return blocks * sizeof(uint64_t);
 }
 
-void xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, size_t len) {
+static inline size_t xor_u8_array_inplace_64(uint8_t* out, const uint8_t* a, size_t len) {
+  const size_t blocks = len / sizeof(uint64_t);
+  for (size_t idx = 0; idx != blocks; ++idx, a += sizeof(uint64_t), out += sizeof(uint64_t)) {
+    uint64_t lhs;
+    uint64_t rhs;
+    memcpy(&lhs, out, sizeof(lhs));
+    memcpy(&rhs, a, sizeof(rhs));
+    lhs ^= rhs;
+    memcpy(out, &lhs, sizeof(lhs));
+  }
+  return blocks * sizeof(uint64_t);
+}
+
+void xor_u8_array(uint8_t* out, const uint8_t* a, const uint8_t* b, size_t len) {
 #if defined(HAVE_AVX2)
   if (len >= sizeof(__m256i) && CPU_SUPPORTS_AVX2) {
-    size_t offset = xor_u8_array_avx2(out, a, b, len);
+    size_t offset = xor_u8_array_256(out, a, b, len);
     out += offset;
     a += offset;
     b += offset;
@@ -128,7 +158,7 @@ void xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, size_t len) 
 
 #if defined(HAVE_SSE2)
   if (len >= sizeof(__m128i) && CPU_SUPPORTS_SSE2) {
-    size_t offset = xor_u8_array_sse2(out, a, b, len);
+    size_t offset = xor_u8_array_128(out, a, b, len);
     out += offset;
     a += offset;
     b += offset;
@@ -137,7 +167,7 @@ void xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, size_t len) 
 #endif
 
   if (len >= sizeof(uint64_t)) {
-    size_t offset = xor_u8_array_uint64(out, a, b, len);
+    size_t offset = xor_u8_array_64(out, a, b, len);
     out += offset;
     a += offset;
     b += offset;
@@ -149,7 +179,38 @@ void xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, size_t len) 
   }
 }
 
-void masked_xor_u8_array(const uint8_t* a, const uint8_t* b, uint8_t* out, uint8_t mask_bit,
+void xor_u8_array_inplace(uint8_t* out, const uint8_t* a, size_t len) {
+#if defined(HAVE_AVX2)
+  if (len >= sizeof(__m256i) && CPU_SUPPORTS_AVX2) {
+    size_t offset = xor_u8_array_inplace_256(out, a, len);
+    out += offset;
+    a += offset;
+    len -= offset;
+  }
+#endif
+
+#if defined(HAVE_SSE2)
+  if (len >= sizeof(__m128i) && CPU_SUPPORTS_SSE2) {
+    size_t offset = xor_u8_array_inplace_128(out, a, len);
+    out += offset;
+    a += offset;
+    len -= offset;
+  }
+#endif
+
+  if (len >= sizeof(uint64_t)) {
+    size_t offset = xor_u8_array_inplace_64(out, a, len);
+    out += offset;
+    a += offset;
+    len -= offset;
+  }
+
+  for (size_t i = 0; i < len; i++) {
+    out[i] ^= a[i];
+  }
+}
+
+void masked_xor_u8_array(uint8_t* out, const uint8_t* a, const uint8_t* b, uint8_t mask_bit,
                          size_t len) {
   uint8_t mask = -(mask_bit & 1);
   for (size_t i = 0; i < len; i++) {
