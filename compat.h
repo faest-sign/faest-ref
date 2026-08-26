@@ -242,6 +242,7 @@ ATTR_CONST ATTR_ARTIFICIAL static inline uint64_t parity64(uint64_t in) {
 // workaround for gcc and clang
 #define __m256i_u __m256i
 #endif
+#endif
 
 #if !defined(HAVE_MM_LOADU_SI64)
 #include <string.h>>
