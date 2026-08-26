@@ -120,10 +120,14 @@ void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len, uint8_t* iv) {
 }
 
 // H_4
-void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params) {
+void H4(uint8_t* iv, const uint8_t* pre_iv, const uint8_t* mu, const uint8_t* owf_input, const uint8_t* owf_output, 
+        unsigned int security_params) {
   hash_context ctx;
   hash_init(&ctx, security_params);
   hash_update(&ctx, pre_iv, IV_SIZE);
+  hash_update(&ctx, mu, (security_params * 2) / 8);
+  hash_update(&ctx, owf_input, security_params / 8);
+  hash_update(&ctx, owf_output, security_params / 8);
   const uint8_t domain_sep_H4 = 4;
   hash_update(&ctx, &domain_sep_H4, sizeof(domain_sep_H4));
   hash_final(&ctx);

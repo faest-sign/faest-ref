@@ -181,14 +181,16 @@ static void hash_mu(uint8_t* mu, const uint8_t* owf_input, size_t owf_input_size
   H2_0_final(&h1_ctx, mu, 2 * lambda / 8);
 }
 
-ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void hash_iv(uint8_t* iv, const uint8_t* iv_pre,
-                                                              unsigned int lambda) {
-  H4(iv, iv_pre, lambda);
+ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void hash_iv(uint8_t* iv, const uint8_t* iv_pre, const uint8_t* mu,
+                                                               const uint8_t* owf_input, const uint8_t* owf_output, 
+                                                               unsigned int lambda) {
+  H4(iv, iv_pre, mu, owf_input, owf_output, lambda);
 }
 
 // FAEST.Sign: line 4 + line 5
 static void hash_r_iv(uint8_t* root_key, uint8_t* iv_pre, uint8_t* iv, const uint8_t* owf_key,
-                      const uint8_t* mu, const uint8_t* rho, size_t rho_size, unsigned int lambda) {
+                      const uint8_t* mu, const uint8_t* rho, const uint8_t* owf_input, const uint8_t* owf_output, 
+                      size_t rho_size, unsigned int lambda) {
   const unsigned int lambda_bytes = lambda / 8;
 
   {
@@ -202,7 +204,7 @@ static void hash_r_iv(uint8_t* root_key, uint8_t* iv_pre, uint8_t* iv, const uin
     H3_final(&h3_ctx, root_key, lambda_bytes, iv_pre);
   }
 
-  hash_iv(iv, iv_pre, lambda);
+  hash_iv(iv, iv_pre, mu, owf_input, owf_output, lambda);
 }
 
 static void hash_challenge_1(uint8_t* chall_1, const uint8_t* mu, const uint8_t* hcom,
@@ -392,7 +394,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   // line 3
   uint8_t rootkey[MAX_LAMBDA_BYTES], iv[IV_SIZE];
-  hash_r_iv(rootkey, signature_iv_pre(sig, params), iv, owf_key, mu, rho, rholen, lambda);
+  hash_r_iv(rootkey, signature_iv_pre(sig, params), iv, owf_key, mu, rho, owf_input, owf_output, rholen, lambda);
 
   // line 6
   bavc_t bavc;
@@ -533,7 +535,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // line 2
   uint8_t iv[IV_SIZE];
-  hash_iv(iv, dsignature_iv_pre(sig, params), lambda);
+  hash_iv(iv, dsignature_iv_pre(sig, params), mu, owf_input, owf_output, lambda);
 
   // line 6
   // q is a \hat \ell \times \lambda matrix
