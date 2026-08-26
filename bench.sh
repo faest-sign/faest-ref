@@ -147,9 +147,15 @@ bench_spec_variants () {
     done
 }
 
+flags=""
+if grep -q avx2 /proc/cpuinfo
+then
+    flags="-DSHA3=avx2"
+fi
+
 mkdir -p "${BUILD_DIR}"
 pushd "${BUILD_DIR}"
-meson setup .. --buildtype release -Dbenchmarks=enabled -Dcatch2=enabled -Dmarch-native=enabled >&2
+meson setup .. --reconfigure --buildtype release -Dbenchmarks=enabled -Dcatch2=enabled -Dmarch-native=enabled $flags >&2
 popd
 
 bench_spec_variants
