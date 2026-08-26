@@ -150,7 +150,7 @@ ATTR_TARGET_AVX2 static inline size_t masked_xor_u8_array_256(uint8_t* out, cons
                                                               const uint8_t* b, uint8_t mask_bit,
                                                               size_t len) {
   const size_t blocks = len / sizeof(__m256i);
-  const __m256i mask  = _mm256_set1_epi8((char)mask_bit);
+  const __m256i mask  = _mm256_set1_epi64x(-(uint64_t)mask_bit);
   for (size_t idx = 0; idx != blocks;
        ++idx, a += sizeof(__m256i), b += sizeof(__m256i), out += sizeof(__m256i)) {
     _mm256_storeu_si256(
@@ -167,7 +167,7 @@ ATTR_TARGET_SSE2 static inline size_t masked_xor_u8_array_128(uint8_t* out, cons
                                                               const uint8_t* b, uint8_t mask_bit,
                                                               size_t len) {
   const size_t blocks = len / sizeof(__m128i);
-  const __m128i mask  = _mm_set1_epi8((char)mask_bit);
+  const __m128i mask  = _mm_set1_epi64x(-(uint64_t)mask_bit);
   for (size_t idx = 0; idx != blocks;
        ++idx, a += sizeof(__m128i), b += sizeof(__m128i), out += sizeof(__m128i)) {
     _mm_storeu_si128((__m128i_u*)out,
