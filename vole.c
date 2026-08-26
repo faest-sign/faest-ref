@@ -428,7 +428,6 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   transpose_bit_matrix(c_mult_by_e, c_mult, N_MASK, n_mult);
   for (unsigned e = 0; e < n_mult; e++) {
     uint8_t L_e_prime[MAX_LAMBDA_BYTES] = {0};
-    uint8_t h_e[N_MASK_BYTES];
 
     // line 24
     uint8_t gamma_e     = 0;
@@ -438,6 +437,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
       const unsigned int word_bits  = MIN(lambda_minus_w_grind - row_offset, 64);
 
       uint64_t coefficients = G_e[word_idx] & bit_word_mask(word_bits);
+      // TODO: check why we cannot move this parity64 call to the masked xor u8 call
       gamma_e ^= parity64(coefficients & load_bit_word(chall_3 + word_idx * 8, word_bits));
 
       for (unsigned int bit = 0; coefficients != 0; ++bit, coefficients >>= 1) {
@@ -448,6 +448,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     }
 
     // line 25
+    uint8_t h_e[N_MASK_BYTES];
     H5(h_e, iv, e, L_e_prime, lambda);
 
     // line 27
