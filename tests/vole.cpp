@@ -86,14 +86,6 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       for (unsigned int i = lambda - params->w_grind; i != lambda; ++i) {
         ptr_set_bit(chal.data(), i, 0);
       }
-      // TODO: Remove
-      // NOTE: Just for debugging with the faest-128f chall TV instead of the random chall above
-      // static const char* chall_hex = "7155b8f0de65bed193b8615bcde68900";
-      // for (unsigned int i = 0; i < lambda_bytes; ++i) {
-      //   unsigned int byte;
-      //   std::sscanf(chall_hex + 2 * i, "%2x", &byte);
-      //   chal[i] = static_cast<uint8_t>(byte);
-      // }
 
       std::vector<uint16_t> i_delta;
       i_delta.resize(params->tau);
