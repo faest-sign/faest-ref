@@ -52,6 +52,11 @@ void print_named_array(const char* name, const char* type_name, const std::array
   print_named_array(name, type_name, data.data(), data.size());
 }
 
+template <class T, size_t S>
+void print_named_array(const char* name, const char* type_name, const T (&data)[S]) {
+  print_named_array(name, type_name, &data[0], S);
+}
+
 static inline std::array<uint8_t, 64> hash_array(const uint8_t* data, size_t len) {
   hash_context ctx;
   hash_init(&ctx, 256);

@@ -174,4 +174,22 @@ if get_option('tv-generators').enabled()
     link_args: linker_flags,
     override_options: ['b_lto=false'],
   )
+
+  generate_faest_tv_sources = []
+  foreach parameter_set : parameter_sets
+    generate_faest_tv_sources += configure_file(
+      input: 'generate_faest_tv.cpp.in',
+      output: 'generate_faest_@0@_tv.cpp'.format(parameter_set.get('PARAM_L')),
+      configuration: parameter_set,
+    )
+  endforeach
+  executable(
+    'generate_faest_tvs',
+    files('generate_faest_tv.cpp') + generate_faest_tv_sources,
+    dependencies: [libfaest_static_dependency],
+    include_directories: include_directories,
+    cpp_args: defines + test_defines + cpp_flags,
+    link_args: linker_flags,
+    override_options: ['b_lto=false'],
+  )
 endif
