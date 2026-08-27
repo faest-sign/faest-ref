@@ -52,7 +52,8 @@ void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len, uint8_t* iv);
 
 // implementation for H_4
 
-void H4(uint8_t* iv, const uint8_t* pre_iv, const uint8_t* mu, const uint8_t* owf_input, const uint8_t* owf_output, 
+void H4(uint8_t* iv, const uint8_t* pre_iv, const uint8_t* mu, const uint8_t* owf_input,
+        size_t owf_input_size, const uint8_t* owf_output, size_t owf_output_size,
         unsigned int security_params);
 
 // implementation for H_5
