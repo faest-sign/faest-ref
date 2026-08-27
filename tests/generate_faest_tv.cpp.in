@@ -29,8 +29,8 @@ namespace {
 void generate_faest_@PARAM_L@_tv(const uint8_t* message, size_t message_length,
                             const uint8_t* random_seed, size_t random_seed_length) {
   // clang-format on
-  pk_t sk;
-  sk_t pk;
+  sk_t sk;
+  pk_t pk;
   // clang-format off
   faest_@PARAM_L@_keygen(pk.data(), sk.data());
   // clang-format on
