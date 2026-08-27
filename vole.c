@@ -113,7 +113,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   const unsigned int lambda_bytes               = lambda / 8;
   const unsigned int ell_hat_bytes              = (ellhat + 7) / 8;
   const unsigned int ell                        = params->ell;
-  const unsigned int ell_bytes                  = (ell + 7) / 8;
+  const unsigned int ell_bytes                  = ell / 8;
   const unsigned int tau                        = params->tau;
   const unsigned int tau_1                      = params->tau1;
   const unsigned int k                          = params->k;
@@ -303,7 +303,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   const unsigned int lambda_bytes               = lambda / 8;
   const unsigned int ellhat_bytes               = (ellhat + 7) / 8;
   const unsigned int ell                        = params->ell;
-  const unsigned int ell_bytes                  = (ell + 7) / 8;
+  const unsigned int ell_bytes                  = ell / 8;
   const unsigned int tau                        = params->tau;
   const unsigned int tau_1                      = params->tau1;
   const unsigned int L                          = params->L;

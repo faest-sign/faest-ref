@@ -21,59 +21,49 @@
 
 ATTR_PURE static inline uint8_t* signature_c(uint8_t* base_ptr, unsigned int index,
                                              const faest_paramset_t* params) {
-  const unsigned int ell_bytes = (params->ell + 7) / 8;
-
-  return base_ptr + index * ell_bytes;
+  return base_ptr + index * params->ell / 8;
 }
 
 ATTR_PURE static inline uint8_t* signature_c_mult(uint8_t* base_ptr,
                                                   const faest_paramset_t* params) {
-  const unsigned int ell_bytes = (params->ell + 7) / 8;
-
-  return base_ptr + (params->tau - 1) * ell_bytes;
+  return base_ptr + (params->tau - 1) * params->ell / 8;
 }
 
 ATTR_PURE static inline uint8_t* signature_u_tilde(uint8_t* base_ptr,
                                                    const faest_paramset_t* params) {
-  const unsigned int ell_bytes    = (params->ell + 7) / 8;
   const unsigned n_mult           = params->n_mult;
   const unsigned int c_mult_bytes = N_MASK * ((n_mult + 7) / 8);
 
-  return base_ptr + (params->tau - 1) * ell_bytes + c_mult_bytes;
+  return base_ptr + (params->tau - 1) * params->ell / 8 + c_mult_bytes;
 }
 
 ATTR_PURE static inline uint8_t* signature_d(uint8_t* base_ptr, const faest_paramset_t* params) {
   const unsigned int lambda_bytes = params->lambda / 8;
-  const unsigned int ell_bytes    = (params->ell + 7) / 8;
   const unsigned n_mult           = params->n_mult;
   const unsigned int c_mult_bytes = N_MASK * ((n_mult + 7) / 8);
   const unsigned int utilde_bytes = lambda_bytes * 4;
 
-  return base_ptr + (params->tau - 1) * ell_bytes + c_mult_bytes + utilde_bytes;
+  return base_ptr + (params->tau - 1) * params->ell / 8 + c_mult_bytes + utilde_bytes;
 }
 
-// We do not need to store a0_tilde in the signature
 ATTR_PURE static inline uint8_t* signature_a1toi_tilde(uint8_t* base_ptr,
                                                        const faest_paramset_t* params) {
   const unsigned int lambda_bytes = params->lambda / 8;
-  const unsigned int ell_bytes    = (params->ell + 7) / 8;
   const unsigned n_mult           = params->n_mult;
   const unsigned int c_mult_bytes = N_MASK * ((n_mult + 7) / 8);
   const unsigned int utilde_bytes = lambda_bytes * 4;
 
-  return base_ptr + params->tau * ell_bytes + c_mult_bytes + utilde_bytes;
+  return base_ptr + params->tau * params->ell / 8 + c_mult_bytes + utilde_bytes;
 }
 
 ATTR_PURE static inline uint8_t* signature_decom_i(uint8_t* base_ptr,
                                                    const faest_paramset_t* params) {
   const unsigned int lambda_bytes = params->lambda / 8;
-  const unsigned int ell          = params->ell;
-  const unsigned int ell_bytes    = (ell + 7) / 8;
   const unsigned n_mult           = params->n_mult;
   const unsigned int c_mult_bytes = N_MASK * ((n_mult + 7) / 8);
   const unsigned int utilde_bytes = lambda_bytes * 4;
 
-  return base_ptr + params->tau * ell_bytes + c_mult_bytes + utilde_bytes +
+  return base_ptr + params->tau * params->ell / 8 + c_mult_bytes + utilde_bytes +
          (D_ZK - 1) * lambda_bytes;
 }
 
@@ -97,58 +87,50 @@ ATTR_PURE static inline uint8_t* signature_ctr(uint8_t* base_ptr, const faest_pa
 
 ATTR_PURE static inline const uint8_t* dsignature_c(const uint8_t* base_ptr, unsigned int index,
                                                     const faest_paramset_t* params) {
-  const unsigned int ell_bytes = (params->ell + 7) / 8;
-
-  return base_ptr + index * ell_bytes;
+  return base_ptr + index * params->ell / 8;
 }
 
 ATTR_PURE static inline const uint8_t* dsignature_c_mult(const uint8_t* base_ptr,
                                                          const faest_paramset_t* params) {
-  const unsigned int ell_bytes = (params->ell + 7) / 8;
-
-  return base_ptr + (params->tau - 1) * ell_bytes;
+  return base_ptr + (params->tau - 1) * params->ell / 8;
 }
 
 ATTR_PURE static inline const uint8_t* dsignature_u_tilde(const uint8_t* base_ptr,
                                                           const faest_paramset_t* params) {
-  const unsigned int ell_bytes    = (params->ell + 7) / 8;
   const unsigned n_mult           = params->n_mult;
   const unsigned int c_mult_bytes = N_MASK * ((n_mult + 7) / 8);
 
-  return base_ptr + (params->tau - 1) * ell_bytes + c_mult_bytes;
+  return base_ptr + (params->tau - 1) * params->ell / 8 + c_mult_bytes;
 }
 
 ATTR_PURE static inline const uint8_t* dsignature_d(const uint8_t* base_ptr,
                                                     const faest_paramset_t* params) {
   const unsigned int lambda_bytes = params->lambda / 8;
-  const unsigned int ell_bytes    = (params->ell + 7) / 8;
   const unsigned n_mult           = params->n_mult;
   const unsigned int c_mult_bytes = N_MASK * ((n_mult + 7) / 8);
-  const unsigned int utilde_bytes = 4 * lambda_bytes;
+  const unsigned int utilde_bytes = lambda_bytes * 4;
 
-  return base_ptr + (params->tau - 1) * ell_bytes + c_mult_bytes + utilde_bytes;
+  return base_ptr + (params->tau - 1) * params->ell / 8 + c_mult_bytes + utilde_bytes;
 }
 
 ATTR_PURE static inline const uint8_t* dsignature_a1toi_tilde(const uint8_t* base_ptr,
                                                               const faest_paramset_t* params) {
   const unsigned int lambda_bytes = params->lambda / 8;
-  const unsigned int ell_bytes    = (params->ell + 7) / 8;
   const unsigned n_mult           = params->n_mult;
   const unsigned int c_mult_bytes = N_MASK * ((n_mult + 7) / 8);
   const unsigned int utilde_bytes = lambda_bytes * 4;
 
-  return base_ptr + params->tau * ell_bytes + c_mult_bytes + utilde_bytes;
+  return base_ptr + params->tau * params->ell / 8 + c_mult_bytes + utilde_bytes;
 }
 
 ATTR_PURE static inline const uint8_t* dsignature_decom_i(const uint8_t* base_ptr,
                                                           const faest_paramset_t* params) {
   const unsigned int lambda_bytes = params->lambda / 8;
-  const unsigned int ell_bytes    = (params->ell + 7) / 8;
   const unsigned n_mult           = params->n_mult;
   const unsigned int c_mult_bytes = N_MASK * ((n_mult + 7) / 8);
   const unsigned int utilde_bytes = lambda_bytes * 4;
 
-  return base_ptr + params->tau * ell_bytes + c_mult_bytes + utilde_bytes +
+  return base_ptr + params->tau * params->ell / 8 + c_mult_bytes + utilde_bytes +
          (D_ZK - 1) * lambda_bytes;
 }
 
@@ -210,7 +192,7 @@ static void hash_challenge_1(uint8_t* chall_1, const uint8_t* mu, const uint8_t*
                              unsigned int lambda, unsigned int ell, unsigned int tau,
                              unsigned int c_mult_size_bytes) {
   const unsigned int lambda_bytes = lambda / 8;
-  const unsigned int ell_bytes    = (ell + 7) / 8;
+  const unsigned int ell_bytes    = ell / 8;
 
   H2_context_t h2_ctx;
   H2_init(&h2_ctx, lambda);
@@ -243,7 +225,7 @@ static void hash_challenge_2_update_v_tilde(H2_context_t* h2_ctx, const uint8_t*
 static void hash_challenge_2_finalize(uint8_t* chall_2, H2_context_t* h2_ctx, const uint8_t* d,
                                       const unsigned lambda, unsigned int ell) {
   const unsigned int lambda_bytes = lambda / 8;
-  const unsigned int ell_bytes    = (ell + 7) / 8;
+  const unsigned int ell_bytes    = ell / 8;
 
   H2_update(h2_ctx, d, ell_bytes);
   H2_2_final(h2_ctx, chall_2, 3 * lambda_bytes + 8);
@@ -377,7 +359,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
                 const uint8_t* owf_input, const uint8_t* owf_output, const uint8_t* witness,
                 const uint8_t* rho, size_t rholen, const faest_paramset_t* params) {
   const unsigned int ell           = params->ell;
-  const unsigned int ell_bytes     = (params->ell + 7) / 8;
+  const unsigned int ell_bytes     = params->ell / 8;
   const unsigned int lambda        = params->lambda;
   const unsigned int lambda_bytes  = lambda / 8;
   const unsigned int n_mult_bytes  = (params->n_mult + 7) / 8;

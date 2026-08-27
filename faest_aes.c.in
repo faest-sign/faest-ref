@@ -1392,7 +1392,7 @@ void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   // clang-format on
   const unsigned int ell          = params->ell;
   const unsigned int lambda       = params->lambda;
-  const unsigned int lambda_bytes = (lambda + 7) / 8;
+  const unsigned int lambda_bytes = lambda / 8;
 
   // line 3
   bfSSS_t* Q_key = shrink_V_SSS(Q, ell);
