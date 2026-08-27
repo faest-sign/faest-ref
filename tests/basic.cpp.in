@@ -22,6 +22,8 @@ namespace {
   constexpr std::size_t private_key_size = FAEST_@PARAM@_PRIVATE_KEY_SIZE;
   constexpr std::size_t signature_size = FAEST_@PARAM@_SIGNATURE_SIZE;
 
+  typedef faest_@PARAM_L@_unpacked_private_key_t unpacked_sk_t;
+
   namespace tv = faest_tvs::faest_@PARAM_L@;
   // clang-format on
 
@@ -138,7 +140,7 @@ BOOST_AUTO_TEST_CASE(test_witness_tv) {
   // clang-format off
   BOOST_TEST(tv::witness.size() == @ELL@ / 8);
 
-  faest_@PARAM_L@_unpacked_private_key_t unpacked_sk;
+  unpacked_sk_t unpacked_sk;
   BOOST_TEST(faest_@PARAM_L@_unpack_private_key(&unpacked_sk, tv::sk.data()) == 0);
   // clang-format on
 
