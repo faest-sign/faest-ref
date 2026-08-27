@@ -21,13 +21,20 @@ namespace {
   constexpr std::size_t public_key_size = FAEST_@PARAM@_PUBLIC_KEY_SIZE;
   constexpr std::size_t private_key_size = FAEST_@PARAM@_PRIVATE_KEY_SIZE;
   constexpr std::size_t signature_size = FAEST_@PARAM@_SIGNATURE_SIZE;
+
+  namespace tv = faest_tvs::faest_@PARAM_L@;
   // clang-format on
 
   typedef std::array<uint8_t, public_key_size> pk_t;
   typedef std::array<uint8_t, private_key_size> sk_t;
-}
+} // namespace
 
+using faest_tvs::message;
+using faest_tvs::random_seed;
+
+// clang-format off
 BOOST_AUTO_TEST_SUITE(faest_@PARAM_L@)
+// clang-format on
 
 BOOST_AUTO_TEST_CASE(test_keygen) {
   pk_t pk;
@@ -106,10 +113,6 @@ BOOST_AUTO_TEST_CASE(test_rand_verify_fails) {
 }
 
 BOOST_AUTO_TEST_CASE(test_sign_tv) {
-  namespace tv = faest_tvs::faest_@PARAM_L@;
-  using faest_tvs::message;
-  using faest_tvs::random_seed;
-
   BOOST_TEST(tv::sk.size() == private_key_size);
   BOOST_TEST(tv::pk.size() == public_key_size);
   BOOST_TEST(tv::signature.size() == signature_size);
@@ -125,16 +128,23 @@ BOOST_AUTO_TEST_CASE(test_sign_tv) {
              random_seed.data(), random_seed.size(), sig.data(), &sig_size) == 0);
   BOOST_TEST(faest_@PARAM_L@_verify(tv::pk.data(),
              message.data(), message.size(), sig.data(), sig.size()) == 0);
-  // for (unsigned int i = 0; i < signature_size; i++) {
-  //   printf("0x%02x, ", sig[i]);
-  //   if ((i + 1) % 16 == 0) {
-  //     std::cout << "\n";
-  //   }
-  // }
   BOOST_TEST(sig == tv_sig);
   BOOST_TEST(faest_@PARAM_L@_verify(tv::pk.data(),
              message.data(), message.size(), tv::signature.data(), tv::signature.size()) == 0);
   // clang-format on
+}
+
+BOOST_AUTO_TEST_CASE(test_witness_tv) {
+  // clang-format off
+  BOOST_TEST(tv::witness.size() == @ELL@ / 8);
+
+  faest_@PARAM_L@_unpacked_private_key_t unpacked_sk;
+  BOOST_TEST(faest_@PARAM_L@_unpack_private_key(&unpacked_sk, tv::sk.data()) == 0);
+  // clang-format on
+
+  auto witness = decltype(tv::witness){0};
+  std::copy(unpacked_sk.witness, unpacked_sk.witness + witness.size(), witness.begin());
+  BOOST_TEST(tv::witness == witness);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
