@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(test_sign_tv) {
   BOOST_TEST(tv::signature.size() == signature_size);
 
   std::vector<uint8_t> sig, tv_sig{tv::signature.begin(), tv::signature.end()};
-  sig.resize(signature_size);
+  sig.resize(signature_size, 0xff);
 
   size_t sig_size = signature_size;
   // clang-format off
