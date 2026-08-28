@@ -9,6 +9,7 @@ if boost.found()
     native: true,
     cpp_args: cpp_flags,
     dependencies: boost,
+    override_options: ['b_lto=false'],
   )
 
   foreach preset : presets
