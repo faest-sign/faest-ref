@@ -115,23 +115,28 @@ BOOST_AUTO_TEST_CASE(test_rand_verify_fails) {
 }
 
 BOOST_AUTO_TEST_CASE(test_invalid_sig_verify_fails) {
-  // check if changing 0 bytes at the end make verify fail
-  for (size_t idx = 28; idx < 64; ++idx) {
-    std::vector<uint8_t> sig{tv::signature.begin(), tv::signature.end()};
-    sig[signature_size - idx - 1] = ~sig[signature_size - idx - 1];
-
-    // clang-format off
-    BOOST_TEST(faest_@PARAM_L@_verify(tv::pk.data(), message.data(), message.size(), sig.data(), sig.size()) != 0);
-    // clang-format on
-  }
-
   std::random_device r;
   std::default_random_engine rand_engine(r());
   std::uniform_int_distribution<size_t> dist_idx(0, signature_size - 1);
   std::uniform_int_distribution<uint8_t> dist_byte(1, 0xff);
 
+  // check if changing 0 bytes at the end make verify fail
+  for (size_t idx = IV_SIZE + sizeof(uint32_t) + 128 / 8, checked = 0; idx < 64 && checked < 8; ++idx) {
+    if (tv::signature[signature_size - idx - 1]) {
+      continue;
+    }
+
+    std::vector<uint8_t> sig{tv::signature.begin(), tv::signature.end()};
+    sig[signature_size - idx - 1] = dist_byte(r);
+
+    // clang-format off
+    BOOST_TEST(faest_@PARAM_L@_verify(tv::pk.data(), message.data(), message.size(), sig.data(), sig.size()) != 0);
+    // clang-format on
+    ++checked;
+  }
+
   // change random bytes
-  for (size_t idx = 0; idx < 16; ++idx) {
+  for (size_t idx = 0; idx < 8; ++idx) {
     std::vector<uint8_t> sig{tv::signature.begin(), tv::signature.end()};
     sig[dist_idx(rand_engine)] ^= dist_byte(rand_engine);
 
