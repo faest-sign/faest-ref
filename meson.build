@@ -753,7 +753,7 @@ run_target(
     ]
     + all_names,
   ],
-  depends: faest_sources,
+  depends: tables,
 )
 
 subdir('doc')
