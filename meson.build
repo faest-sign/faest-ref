@@ -32,7 +32,7 @@ if cc.get_id() != 'msvc'
   defines += '-D_GNU_SOURCE'
 
   if get_option('march-native').enabled()
-    flags += '-march=native'
+    flags += ['-march=native', '-O3']
   endif
 else
   warnings = []
