@@ -12,6 +12,7 @@ if boost_test.found()
     'instances.cpp',
     'owf.cpp',
     'prg.cpp',
+    'test_utils.cpp',
     'universal_hashing.cpp',
     'utils.cpp',
     'vole.cpp',
@@ -122,7 +123,7 @@ endif
 if get_option('tv-generators').enabled()
   executable(
     'generate_bavc_tv',
-    files('generate_bavc_tv.cpp'),
+    files('generate_bavc_tv.cpp', 'test_utils.cpp'),
     dependencies: [libfaest_static_dependency],
     include_directories: include_directories,
     cpp_args: defines + test_defines + cpp_flags,
@@ -149,7 +150,7 @@ if get_option('tv-generators').enabled()
   )
   executable(
     'generate_vole_tv',
-    files('generate_vole_tv.cpp'),
+    files('generate_vole_tv.cpp', 'test_utils.cpp'),
     dependencies: [libfaest_static_dependency],
     include_directories: include_directories,
     cpp_args: defines + test_defines + cpp_flags,

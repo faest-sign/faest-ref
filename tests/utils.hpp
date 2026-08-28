@@ -1,3 +1,7 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
 #ifndef TESTS_UTILS_HPP
 #define TESTS_UTILS_HPP
 
@@ -7,8 +11,6 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
-
-#include "../hash_shake.h"
 
 template <class T>
 void print_array(const T* data, size_t len) {
@@ -57,19 +59,9 @@ void print_named_array(const char* name, const char* type_name, const T (&data)[
   print_named_array(name, type_name, &data[0], S);
 }
 
-static inline std::array<uint8_t, 64> hash_array(const uint8_t* data, size_t len) {
-  hash_context ctx;
-  hash_init(&ctx, 256);
-  hash_update(&ctx, data, len);
-  hash_final(&ctx);
+std::array<uint8_t, 64> hash_array(const uint8_t* data, size_t len);
+std::array<uint8_t, 64> hash_array(const std::vector<uint8_t>& data);
 
-  std::array<uint8_t, 64> ret;
-  hash_squeeze(&ctx, ret.data(), ret.size());
-  return ret;
-}
-
-static inline std::array<uint8_t, 64> hash_array(const std::vector<uint8_t>& data) {
-  return hash_array(data.data(), data.size());
-}
+void rand_bytes(std::vector<uint8_t>& v);
 
 #endif
