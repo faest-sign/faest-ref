@@ -958,11 +958,12 @@ namespace {
     if (n == 1) {
       best = CostPlan{1, Plan{Plan::Kind::Base, 0, 0, {}}};
     } else {
-      best                 = CostPlan{full_cost(n).gates, Plan{Plan::Kind::Full, 0, 0, {}}};
-      const unsigned int m = (n + 1) / 2;
-      const unsigned int c = full_cost(m).gates + 2 * short_cost(n - m).gates;
-      if (c < best.gates) {
-        best = CostPlan{c, Plan{Plan::Kind::ShortSplit, 0, m, {}}};
+      best = CostPlan{full_cost(n).gates, Plan{Plan::Kind::Full, 0, 0, {}}};
+      for (unsigned int m = (n + 1) / 2; m != n; ++m) {
+        const unsigned int c = full_cost(m).gates + 2 * short_cost(n - m).gates;
+        if (c < best.gates) {
+          best = CostPlan{c, Plan{Plan::Kind::ShortSplit, 0, m, {}}};
+        }
       }
     }
     cache[n] = best;
