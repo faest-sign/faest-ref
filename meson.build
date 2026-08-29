@@ -41,7 +41,7 @@ if cc.get_id() != 'msvc'
     flags += ['-march=native', '-O3']
   endif
   # we need fat LTO objects for linking with the static libraries
-  if get_option('b_lto') == true
+  if get_option('b_lto') == true and host_machine.system() != 'darwin'
     flags += ['-ffat-lto-objects']
   endif
 else
