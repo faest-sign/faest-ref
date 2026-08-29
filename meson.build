@@ -34,6 +34,10 @@ if cc.get_id() != 'msvc'
   if get_option('march-native').enabled()
     flags += ['-march=native', '-O3']
   endif
+  # we need fat LTO objects for linking with the static libraries
+  if get_option('b_lto') == true
+    flags += ['-ffat-lto-objects']
+  endif
 else
   warnings = []
   # function inlining
