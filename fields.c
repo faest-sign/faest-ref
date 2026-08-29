@@ -315,13 +315,13 @@ void bf128_mul_bit(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
 }
 #endif
 
+#if defined(FAEST_TESTS)
 static inline void bf128_dbl_inplace(bf128_t* lhs) {
   uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
   *lhs          = bf128_shift_left_1(*lhs);
   BF_VALUE(*lhs, 0) ^= (mask & bf128_modulus);
 }
 
-#if defined(FAEST_TESTS)
 void bf128_sum_poly(bf128_t* dst, const bf128_t* xs) {
   *dst = xs[128 - 1];
   for (size_t i = 1; i < 128; ++i) {
@@ -546,13 +546,13 @@ void bf192_mul_bit(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
 }
 #endif
 
+#if defined(FAEST_TESTS)
 static inline void bf192_dbl_inplace(bf192_t* lhs) {
   uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
   *lhs          = bf192_shift_left_1(*lhs);
   BF_VALUE(*lhs, 0) ^= (mask & bf192_modulus);
 }
 
-#if defined(FAEST_TESTS)
 void bf192_sum_poly(bf192_t* dst, const bf192_t* xs) {
   *dst = xs[192 - 1];
   for (size_t i = 1; i < 192; ++i) {
@@ -805,6 +805,7 @@ void bf256_mul_bit(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
 }
 #endif
 
+#if defined(FAEST_TESTS)
 static inline void bf256_dbl_inplace(bf256_t* lhs) {
   uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
   *lhs          = bf256_shift_left_1(*lhs);
@@ -816,7 +817,6 @@ static inline void bf256_dbl_inplace(bf256_t* lhs) {
 #endif
 }
 
-#if defined(FAEST_TESTS)
 void bf256_sum_poly(bf256_t* dst, const bf256_t* xs) {
   *dst = xs[256 - 1];
   for (size_t i = 1; i < 256; ++i) {
