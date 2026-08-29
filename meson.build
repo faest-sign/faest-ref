@@ -16,6 +16,12 @@ cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
 conf_data = configuration_data()
 
+if cc.get_id() == 'clang' and get_option('b_sanitize') == 'address' and get_option('b_lundef') == true
+  error(
+    'Using the address sanitizier and building with clang requires \'b_lundef\' set to \'false\'. See https://mesonbuild.com/howtox.html#use-address-sanitizer',
+  )
+endif
+
 # compile flags and defines
 flags = []
 c_flags = []
