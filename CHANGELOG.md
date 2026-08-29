@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 3.0.0 -- 2026-08-XX
+
+* Update to version 3.0 of FAEST specification (#18).
+
 ## Version 2.0.5 -- 2026-07-02
 
 * Add option to use SHAKE implementation from OpenSSL.
