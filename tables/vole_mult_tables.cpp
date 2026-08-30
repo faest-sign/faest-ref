@@ -228,8 +228,8 @@ namespace {
     return inserted.first->second;
   }
 
-  Int faest_modulus(unsigned int lam) {
-    switch (lam) {
+  Int faest_modulus(unsigned int lambda) {
+    switch (lambda) {
     case 128:
       return bit(128) | bit(7) | bit(2) | bit(1) | 1;
     case 192:
@@ -1198,10 +1198,10 @@ namespace {
     std::vector<std::pair<Place, unsigned int>> report;
   };
 
-  Tables build_tables(unsigned int lam, unsigned int wgrind, const Int& p,
+  Tables build_tables(unsigned int lambda, unsigned int wgrind, const Int& p,
                       const std::vector<Int>& tree_moduli, const std::vector<Place>& picks) {
-    const unsigned int na = lam;
-    const unsigned int nb = lam - wgrind;
+    const unsigned int na = lambda;
+    const unsigned int nb = lambda - wgrind;
     unsigned int ntree    = 0;
     for (const Int& m : tree_moduli) {
       ntree += pdeg(m).value_or(0);
@@ -1231,9 +1231,9 @@ namespace {
 
     const auto x   = left_inverse(evrows, n2);
     const auto red = reduction_rows(p, n2);
-    std::vector<Int> wt(lam, 0);
-    std::vector<Int> wg(lam, 0);
-    for (unsigned int r = 0; r < lam; ++r) {
+    std::vector<Int> wt(lambda, 0);
+    std::vector<Int> wg(lambda, 0);
+    for (unsigned int r = 0; r < lambda; ++r) {
       const Int sel = combine(red[r], x);
       for_each_bit(sel, [&](unsigned long idx) {
         if (idx < ntree) {
@@ -1262,11 +1262,11 @@ namespace {
     return {std::move(f), std::move(g), std::move(wt), std::move(wg), ntree, std::move(report)};
   }
 
-  std::vector<Int> wcrt_rows(const std::vector<Int>& tree_moduli, unsigned int lam) {
+  std::vector<Int> wcrt_rows(const std::vector<Int>& tree_moduli, unsigned int lambda) {
     const auto cols = crt_lift_cols(tree_moduli);
     std::vector<Int> rows;
-    rows.reserve(lam);
-    for (unsigned int r = 0; r < lam; ++r) {
+    rows.reserve(lambda);
+    for (unsigned int r = 0; r < lambda; ++r) {
       Int row = 0;
       for (unsigned int j = 0; j < cols.size(); ++j) {
         if (test_bit(cols[j], r)) {
@@ -1397,18 +1397,18 @@ namespace {
   std::string emit_c(const std::string& path, const std::string& name, const std::vector<Int>& f,
                      const std::vector<Int>& g, const std::vector<Int>& wt,
                      const std::vector<Int>& wg, const std::vector<Int>& tree_moduli,
-                     unsigned int lam, unsigned int wgrind, unsigned int ntree) {
-    const std::vector<Int> wcrt = wcrt_rows(tree_moduli, lam);
+                     unsigned int lambda, unsigned int wgrind, unsigned int ntree) {
+    const std::vector<Int> wcrt = wcrt_rows(tree_moduli, lambda);
     const Int m_tree            = mtree_poly(tree_moduli);
     const unsigned int ng       = f.size();
-    const unsigned int nb       = lam - wgrind;
+    const unsigned int nb       = lambda - wgrind;
     const unsigned int tau      = tree_moduli.size();
     for (const Int& m : tree_moduli) {
       check(pdeg(m).has_value() && pdeg(m).value() < 64,
             "tree modulus degree >= 64 does not fit one uint64 word");
     }
 
-    const int w_f  = words_of(lam);
+    const int w_f  = words_of(lambda);
     const int w_g  = words_of(nb);
     const int w_wt = words_of(ntree);
     const int w_wg = words_of(ng);
@@ -1488,9 +1488,9 @@ namespace {
   }
 
   struct Preset {
-    unsigned int lam    = 0;
-    unsigned int tau    = 0;
-    unsigned int wgrind = 0;
+    unsigned int lambda;
+    unsigned int tau;
+    unsigned int wgrind;
   };
 
   const std::map<std::string, Preset> PRESETS = {
@@ -1505,8 +1505,8 @@ namespace {
   };
 
   std::vector<std::pair<unsigned int, unsigned int>>
-  faest_tree_spec(unsigned int lam, unsigned int tau, unsigned int wgrind) {
-    const unsigned int n    = lam - wgrind;
+  faest_tree_spec(unsigned int lambda, unsigned int tau, unsigned int wgrind) {
+    const unsigned int n    = lambda - wgrind;
     const unsigned int d1   = n / tau + 1;
     const unsigned int tau1 = n % tau;
     std::vector<std::pair<unsigned int, unsigned int>> spec;
@@ -1559,18 +1559,18 @@ namespace {
     return args;
   }
 
-  void run_set(const std::string& name, unsigned int lam, unsigned int wgrind,
+  void run_set(const std::string& name, unsigned int lambda, unsigned int wgrind,
                const std::vector<std::pair<unsigned int, unsigned int>>& tree_spec,
                const Args& args, const std::string& c_path) {
     unsigned int tree_sum = 0;
     for (const auto& [d, c] : tree_spec) {
       tree_sum += d * c;
     }
-    check(tree_sum == lam - wgrind,
+    check(tree_sum == lambda - wgrind,
           "tree degrees sum to " + std::to_string(tree_sum) +
-              ", expected lambda - wgrind = " + std::to_string(lam - wgrind));
+              ", expected lambda - wgrind = " + std::to_string(lambda - wgrind));
 
-    const unsigned int n2      = lam + (lam - wgrind) - 1;
+    const unsigned int n2      = lambda + (lambda - wgrind) - 1;
     const unsigned int deficit = n2 - tree_sum;
 
     std::vector<Int> tree_moduli;
@@ -1592,12 +1592,12 @@ namespace {
       }
     }
 
-    const Int p = faest_modulus(lam);
+    const Int p = faest_modulus(lambda);
     auto res    = crt_search(deficit, args.maxe, args.maxd, pools);
     check(res.has_value(), "portfolio search failed; raise --maxd/--maxe");
     const std::vector<Place>& picks = res->second;
 
-    Tables tables = build_tables(lam, wgrind, p, tree_moduli, picks);
+    Tables tables = build_tables(lambda, wgrind, p, tree_moduli, picks);
     prune(tables.f, tables.g, tables.w_gate);
 
     std::map<std::pair<std::string, unsigned int>, std::array<unsigned int, 3>> agg;
@@ -1618,10 +1618,10 @@ namespace {
       row[2] += gates;
     }
 
-    const std::vector<Int> wcrt = wcrt_rows(tree_moduli, lam);
+    const std::vector<Int> wcrt = wcrt_rows(tree_moduli, lambda);
 
-    emit_c(c_path, name, tables.f, tables.g, tables.w_tree, tables.w_gate, tree_moduli, lam, wgrind,
-           tables.n_tree);
+    emit_c(c_path, name, tables.f, tables.g, tables.w_tree, tables.w_gate, tree_moduli, lambda,
+           wgrind, tables.n_tree);
   }
 
 } // namespace
@@ -1638,8 +1638,8 @@ int main(int argc, char** argv) {
     if (it == PRESETS.end()) {
       fail("unknown preset: " + args.preset);
     }
-    const auto tree_spec = faest_tree_spec(it->second.lam, it->second.tau, it->second.wgrind);
-    run_set(args.preset, it->second.lam, it->second.wgrind, tree_spec, args, args.emit_c_path);
+    const auto tree_spec = faest_tree_spec(it->second.lambda, it->second.tau, it->second.wgrind);
+    run_set(args.preset, it->second.lambda, it->second.wgrind, tree_spec, args, args.emit_c_path);
     return 0;
   } catch (const std::exception& e) {
     std::cerr << "vole_mult_tables: " << e.what() << "\n";
