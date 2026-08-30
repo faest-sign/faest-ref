@@ -66,7 +66,6 @@ static_assert(FAEST_@SSS@F_Lke == FAEST_@SSS@S_Lke, "Invalid parameters");
 static_assert(FAEST_@SSS@F_Nst == FAEST_@SSS@S_Nst, "Invalid parameters");
 static_assert(FAEST_SSS_R == FAEST_@SSS@S_R, "Invalid parameters");
 static_assert(FAEST_@SSS@F_R == FAEST_@SSS@S_R, "Invalid parameters");
-static_assert(FAEST_@SSS@F_Senc == FAEST_@SSS@S_Senc, "Invalid parameters");
 static_assert(FAEST_@SSS@F_Ske == FAEST_@SSS@S_Ske, "Invalid parameters");
 
 static_assert(FAEST_SSS_LAMBDA == FAEST_EM_@SSS@S_LAMBDA, "Invalid parameters");
@@ -75,7 +74,6 @@ static_assert(FAEST_EM_@SSS@F_Lenc == FAEST_EM_@SSS@S_Lenc, "Invalid parameters"
 static_assert(FAEST_EM_@SSS@F_Nst == FAEST_EM_@SSS@S_Nst, "Invalid parameters");
 static_assert(FAEST_SSS_R == FAEST_EM_@SSS@S_R, "Invalid parameters");
 static_assert(FAEST_EM_@SSS@F_R == FAEST_EM_@SSS@S_R, "Invalid parameters");
-static_assert(FAEST_EM_@SSS@F_Senc == FAEST_EM_@SSS@S_Senc, "Invalid parameters");
 // for scan-build
 static_assert(FAEST_EM_@SSS@F_LAMBDA * (FAEST_EM_@SSS@F_R + 1) / 8 ==
                   sizeof(aes_word_t) * FAEST_EM_@SSS@F_Nst * (FAEST_EM_@SSS@F_R + 1),
