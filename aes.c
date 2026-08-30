@@ -45,16 +45,8 @@ static const bf8_t round_constants[30] = {
 };
 
 static bf8_t compute_sbox(bf8_t in) {
-  bf8_t t  = bf8_inv(in);
-  bf8_t t0 = set_bit(parity8(t & (1 | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7))), 0);
-  t0 ^= set_bit(parity8(t & (1 | (1 << 1) | (1 << 5) | (1 << 6) | (1 << 7))), 1);
-  t0 ^= set_bit(parity8(t & (1 | (1 << 1) | (1 << 2) | (1 << 6) | (1 << 7))), 2);
-  t0 ^= set_bit(parity8(t & (1 | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 7))), 3);
-  t0 ^= set_bit(parity8(t & (1 | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4))), 4);
-  t0 ^= set_bit(parity8(t & ((1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5))), 5);
-  t0 ^= set_bit(parity8(t & ((1 << 2) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6))), 6);
-  t0 ^= set_bit(parity8(t & ((1 << 3) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7))), 7);
-  return t0 ^ (1 | (1 << 1) | (1 << 5) | (1 << 6));
+  const bf8_t t = bf8_inv(in);
+  return t ^ rotl8(t, 1) ^ rotl8(t, 2) ^ rotl8(t, 3) ^ rotl8(t, 4) ^ UINT8_C(0x63);
 }
 
 #if defined(FAEST_TESTS)
@@ -74,7 +66,7 @@ static inline void aes_increment_iv(uint8_t* iv)
 static void add_round_key(unsigned int round, aes_block_t state, const aes_round_keys_t* round_key,
                           unsigned int block_words) {
   for (unsigned int c = 0; c < block_words; c++) {
-    xor_u8_array(&state[c][0], &round_key->round_keys[round][c][0], &state[c][0], AES_NR);
+    xor_u8_array_inplace(&state[c][0], &round_key->round_keys[round][c][0], AES_NR);
   }
 }
 
@@ -170,8 +162,8 @@ void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int k
     }
 
     const unsigned int m = k - key_words;
-    xor_u8_array(round_keys->round_keys[m / block_words][m % block_words], tmp,
-                 round_keys->round_keys[k / block_words][k % block_words], 4);
+    xor_u8_array(round_keys->round_keys[k / block_words][k % block_words],
+                 round_keys->round_keys[m / block_words][m % block_words], tmp, 4);
   }
 }
 
@@ -203,42 +195,6 @@ static void load_state(aes_block_t state, const uint8_t* src, unsigned int block
   }
 }
 
-ATTR_CONST static bf8_t bf_exp_238(bf8_t x) {
-  // 238 == 0b11101110
-  bf8_t y = bf8_square(x); // x^2
-  x       = bf8_square(y); // x^4
-  y       = bf8_mul(x, y);
-  x       = bf8_square(x); // x^8
-  y       = bf8_mul(x, y);
-  x       = bf8_square(x); // x^16
-  x       = bf8_square(x); // x^32
-  y       = bf8_mul(x, y);
-  x       = bf8_square(x); // x^64
-  y       = bf8_mul(x, y);
-  x       = bf8_square(x); // x^128
-  return bf8_mul(x, y);
-}
-
-#if !defined(FAEST_TESTS)
-static
-#endif
-    uint8_t
-    invnorm(uint8_t in) {
-  // instead of computing in^(-17), we calculate in^238
-  in = bf_exp_238(in);
-  return set_bit(get_bit(in, 0), 0) ^ set_bit(get_bit(in, 6), 1) ^ set_bit(get_bit(in, 7), 2) ^
-         set_bit(get_bit(in, 2), 3);
-}
-
-static uint8_t* store_invnorm_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
-  for (unsigned int i = 0; i != block_words * 4; i += 2, ++dst) {
-    uint8_t normstate_lo = invnorm(state[i / 4][i % 4]);
-    uint8_t normstate_hi = invnorm(state[i / 4][(i + 1) % 4]);
-    bf8_store(dst, (normstate_hi << 4) | normstate_lo);
-  }
-  return dst;
-}
-
 static uint8_t* store_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
   for (unsigned int i = 0; i != block_words * 4; ++i, ++dst) {
     bf8_store(dst, state[i / 4][i % 4]);
@@ -264,6 +220,7 @@ static void aes_encrypt(const aes_round_keys_t* keys, aes_block_t state, unsigne
   add_round_key(num_rounds, state, keys, block_words);
 }
 
+#if defined(FAEST_TESTS)
 void aes128_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext) {
   aes_block_t state;
@@ -287,6 +244,7 @@ void aes256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
   aes_encrypt(key, state, AES_BLOCK_WORDS, AES_ROUNDS_256);
   store_state(ciphertext, state, AES_BLOCK_WORDS);
 }
+#endif
 
 void rijndael192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                                uint8_t* ciphertext) {
@@ -916,8 +874,8 @@ void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
   generic_prg(key, internal_iv, out, seclvl, seclvl * 4 / 8);
 }
 
-void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
-                        const faest_paramset_t* params) {
+void aes_extend_witness_7(uint8_t* w, const uint8_t* key, const uint8_t* in,
+                          const faest_paramset_t* params) {
   const unsigned int lambda      = params->lambda;
   const unsigned int num_rounds  = params->R;
   const unsigned int blocksize   = 32 * params->Nst;
@@ -936,7 +894,7 @@ void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
     in                 = tmp;
   }
 
-  // Step 3
+  // line 6
   aes_round_keys_t round_keys;
   switch (lambda) {
   case 256:
@@ -962,7 +920,7 @@ void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
     break;
   }
 
-  // Step 4
+  // line 7,8
   if (!is_em) {
     const unsigned int nk = lambda / 32;
 
@@ -987,72 +945,63 @@ void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
 
   assert(w - w_out == params->Lke / 8);
 
-  // Step 10
+  // line 14
   // common part for AES-128, EM-128, EM-192, EM-256, first part for AES-192 and AES-256
   {
-    // Step 12
+    // line 16
     aes_block_t state;
     load_state(state, in, block_words);
 
-    // Step 13
+    // line 17
     add_round_key(0, state, &round_keys, block_words);
 
     for (unsigned int round = 1; round < num_rounds; ++round) {
-      if (round % 2 == 1) {
-        // save inverse norm of the S-box inputs, in coloumn major order
-        w = store_invnorm_state(w, state, block_words);
-      }
-      // Step 15
+      // line 20
       sub_bytes(state, block_words);
-      // Step 16
+      // line 21
       shift_row(state, block_words);
       if (round % 2 == 0) {
-        // Step 17
+        // line 23
         w = store_state(w, state, block_words);
       }
-      // Step 18
+      // line 24
       mix_column(state, block_words);
-      // Step 19
+      // line 25
       add_round_key(round, state, &round_keys, block_words);
     }
     // last round is not commited to, so not computed
   }
 
+  // line 14
   if (beta == 2) {
     // AES-192 and AES-256
     uint8_t buf[16];
     memcpy(buf, in, sizeof(buf));
     buf[0] ^= 0x1;
 
-    // Step 12
+    // line 16
     aes_block_t state;
     load_state(state, buf, block_words);
 
-    // Step 13
+    // line 17
     add_round_key(0, state, &round_keys, block_words);
 
     for (unsigned int round = 1; round < num_rounds; ++round) {
-      if (round % 2 == 1) {
-        // save inverse norm of the S-box inputs, in coloumn major order
-        w = store_invnorm_state(w, state, block_words);
-      }
-      // Step 15
+      // line 20
       sub_bytes(state, block_words);
-      // Step 16
+      // line 21
       shift_row(state, block_words);
       if (round % 2 == 0) {
-        // Step 17
+        // line 23
         w = store_state(w, state, block_words);
       }
-      // Step 18
+      // line 24
       mix_column(state, block_words);
-      // Step 19
+      // line 25
       add_round_key(round, state, &round_keys, block_words);
     }
     // last round is not commited to, so not computed
   }
-
-  assert(w - w_out == params->l / 8);
 }
 
 #if defined(HAVE_OPENSSL)

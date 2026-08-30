@@ -1,4 +1,4 @@
-boost_test = dependency('boost', required: false, modules: ['unit_test_framework'])
+boost_test = dependency('boost', required: false, modules: ['unit_test_framework'], static: false)
 ntl = cc.find_library('ntl', required: false, has_headers: ['NTL/version.h'])
 
 if boost_test.found()
@@ -12,6 +12,7 @@ if boost_test.found()
     'instances.cpp',
     'owf.cpp',
     'prg.cpp',
+    'test_utils.cpp',
     'universal_hashing.cpp',
     'utils.cpp',
     'vole.cpp',
@@ -122,7 +123,7 @@ endif
 if get_option('tv-generators').enabled()
   executable(
     'generate_bavc_tv',
-    files('generate_bavc_tv.cpp'),
+    files('generate_bavc_tv.cpp', 'test_utils.cpp'),
     dependencies: [libfaest_static_dependency],
     include_directories: include_directories,
     cpp_args: defines + test_defines + cpp_flags,
@@ -149,7 +150,7 @@ if get_option('tv-generators').enabled()
   )
   executable(
     'generate_vole_tv',
-    files('generate_vole_tv.cpp'),
+    files('generate_vole_tv.cpp', 'test_utils.cpp'),
     dependencies: [libfaest_static_dependency],
     include_directories: include_directories,
     cpp_args: defines + test_defines + cpp_flags,
@@ -159,6 +160,33 @@ if get_option('tv-generators').enabled()
   executable(
     'generate_universal_hashing_tv',
     files('generate_universal_hashing_tv.cpp'),
+    dependencies: [libfaest_static_dependency],
+    include_directories: include_directories,
+    cpp_args: defines + test_defines + cpp_flags,
+    link_args: linker_flags,
+    override_options: ['b_lto=false'],
+  )
+  executable(
+    'generate_field_tv',
+    files('generate_field_tvs.cpp'),
+    dependencies: [libfaest_static_dependency],
+    include_directories: include_directories,
+    cpp_args: defines + test_defines + cpp_flags,
+    link_args: linker_flags,
+    override_options: ['b_lto=false'],
+  )
+
+  generate_faest_tv_sources = []
+  foreach parameter_set : parameter_sets
+    generate_faest_tv_sources += configure_file(
+      input: 'generate_faest_tv.cpp.in',
+      output: 'generate_faest_@0@_tv.cpp'.format(parameter_set.get('PARAM_L')),
+      configuration: parameter_set,
+    )
+  endforeach
+  executable(
+    'generate_faest_tvs',
+    files('generate_faest_tv.cpp') + generate_faest_tv_sources,
     dependencies: [libfaest_static_dependency],
     include_directories: include_directories,
     cpp_args: defines + test_defines + cpp_flags,

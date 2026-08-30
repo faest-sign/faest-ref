@@ -132,8 +132,7 @@
 #endif
 
 /* round size to meet alignment requirements */
-#define ALIGNT(s, t) (((s) + sizeof(t) - 1) & ~(sizeof(t) - 1))
-#define ALIGNU64T(s) ALIGNT(s, uint64_t)
+#define ALIGN_TO(s, a) (((s) + a - 1) & ~(a - 1))
 
 /* unreachable builtin */
 #if GNUC_CHECK(4, 5) || __has_builtin(__builtin_unreachable)

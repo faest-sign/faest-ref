@@ -10,6 +10,7 @@
 
 #include "random_oracle.h"
 #include "instances.h"
+#include "vole.h"
 
 // H_0
 void H0_init(H0_context_t* ctx, unsigned int security_param) {
@@ -18,14 +19,6 @@ void H0_init(H0_context_t* ctx, unsigned int security_param) {
 
 void H0_update(H0_context_t* ctx, const uint8_t* src, size_t len) {
   hash_update(ctx, src, len);
-}
-
-void H0_final(H0_context_t* ctx, uint8_t* seed, size_t seed_len, uint8_t* commitment,
-              size_t commitment_len) {
-  H0_final_for_squeeze(ctx);
-  hash_squeeze(ctx, seed, seed_len);
-  hash_squeeze(ctx, commitment, commitment_len);
-  hash_clear(ctx);
 }
 
 void H0_final_for_squeeze(H0_context_t* ctx) {
@@ -127,13 +120,33 @@ void H3_final(H3_context_t* ctx, uint8_t* digest, size_t len, uint8_t* iv) {
 }
 
 // H_4
-void H4(uint8_t* iv, const uint8_t* pre_iv, unsigned int security_params) {
+void H4(uint8_t* iv, const uint8_t* pre_iv, const uint8_t* mu, unsigned int security_params) {
   hash_context ctx;
   hash_init(&ctx, security_params);
   hash_update(&ctx, pre_iv, IV_SIZE);
+  hash_update(&ctx, mu, (security_params * 2) / 8);
   const uint8_t domain_sep_H4 = 4;
   hash_update(&ctx, &domain_sep_H4, sizeof(domain_sep_H4));
   hash_final(&ctx);
   hash_squeeze(&ctx, iv, IV_SIZE);
   hash_clear(&ctx);
+}
+
+// H5
+void H5(uint8_t* digest, const uint8_t* iv, uint32_t e, const uint8_t* L_e,
+        unsigned int security_params) {
+  hash_context ctx;
+  hash_init(&ctx, security_params);
+  hash_update(&ctx, iv, IV_SIZE);
+  hash_update_uint32_le(&ctx, e);
+  hash_update(&ctx, L_e, security_params / 8);
+  const uint8_t domain_sep_H5 = 5;
+  hash_update(&ctx, &domain_sep_H5, sizeof(domain_sep_H5));
+  hash_final(&ctx);
+  hash_squeeze(&ctx, digest, N_MASK_BYTES);
+  hash_clear(&ctx);
+
+#if N_MASK % 8
+  digest[N_MASK_BYTES - 1] &= (UINT8_C(1) << (N_MASK % 8)) - UINT8_C(1);
+#endif
 }

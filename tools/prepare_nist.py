@@ -18,6 +18,8 @@ def generate(
     target.mkdir(parents=True, exist_ok=True)
     target_kat.mkdir(parents=True, exist_ok=True)
 
+    target_tables = target / "tables"
+    target_tables.mkdir(parents=True, exist_ok=True)
     target_sha3 = target / "sha3"
     target_sha3.mkdir(parents=True, exist_ok=True)
     target_nist_kat = target / "NIST-KATs"
@@ -28,6 +30,7 @@ def generate(
     sha3_sources = project_root / "sha3"
     test_sources = project_root / "tests"
     tools_sources = project_root / "tools"
+    table_sources = build_root / "tables"
 
     # copy FAEST implementation
     for source in project_root.glob("*.c"):
@@ -42,6 +45,8 @@ def generate(
     build_param = build_root / f"{param_name}"
     for build_source in ("crypto_sign.c", "crypto_sign.h", "api.h"):
         shutil.copy(build_param / build_source, target)
+    for table_source in table_sources.glob("*.[ch]"):
+        shutil.copy(table_source, target_tables)
 
     # copy sha3 sources
     for source in sha3_sources.glob("*.c"):

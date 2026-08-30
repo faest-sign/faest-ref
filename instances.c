@@ -8,7 +8,16 @@
 
 #include "instances.h"
 #include "parameters.h"
+#include "tables/tables_128s.h"
+#include "tables/tables_128f.h"
+#include "tables/tables_192s.h"
+#include "tables/tables_192f.h"
+#include "tables/tables_em_192s.h"
+#include "tables/tables_em_192f.h"
+#include "tables/tables_256s.h"
+#include "tables/tables_256f.h"
 
+#if defined(FAEST_TESTS)
 const char* faest_get_param_name(faest_paramid_t paramid) {
   switch (paramid) {
   case PARAMETER_SET_INVALID:
@@ -41,6 +50,7 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
     return "PARAMETER_SET_MAX_INDEX";
   }
 }
+#endif
 
 #define CALC_TAU1(name) ((name##_LAMBDA - name##_W_GRIND) % name##_TAU)
 #define CALC_TAU0(name) (name##_TAU - CALC_TAU1(name))
@@ -48,7 +58,7 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
   (CALC_TAU1(name) * (1 << CALC_K(name)) + CALC_TAU0(name) * (1 << (CALC_K(name) - 1)))
 #define CALC_K(name) (((name##_LAMBDA - name##_W_GRIND) / (name##_TAU)) + 1)
 
-#define PARAMS(name)                                                                               \
+#define PARAMS(name, other_name)                                                                   \
   {                                                                                                \
       name##_LAMBDA,                                                                               \
       name##_TAU,                                                                                  \
@@ -62,26 +72,38 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
       name##_Nst,                                                                                  \
       name##_Ske,                                                                                  \
       name##_R,                                                                                    \
-      name##_Senc,                                                                                 \
       name##_Lke,                                                                                  \
       name##_Lenc,                                                                                 \
       name##_SIG_SIZE,                                                                             \
       name##_OWF_INPUT_SIZE,                                                                       \
       name##_OWF_OUTPUT_SIZE,                                                                      \
+      name##_N_MULT,                                                                               \
+      &other_name##_F[0][0],                                                                       \
+      &other_name##_G[0][0],                                                                       \
+      &other_name##_W_TREE[0][0],                                                                  \
+      &other_name##_W_GATE[0][0],                                                                  \
+      &other_name##_W_CRT[0][0],                                                                   \
+      &other_name##_TREE_MODULI[0],                                                                \
+      &other_name##_M_TREE[0],                                                                     \
+      other_name##_F_WORDS,                                                                        \
+      other_name##_G_WORDS,                                                                        \
+      other_name##_W_TREE_WORDS,                                                                   \
+      other_name##_W_GATE_WORDS,                                                                   \
+      other_name##_W_CRT_WORDS,                                                                    \
   }
 
-#define FAEST_128S_PARAMS PARAMS(FAEST_128S)
-#define FAEST_128F_PARAMS PARAMS(FAEST_128F)
-#define FAEST_192S_PARAMS PARAMS(FAEST_192S)
-#define FAEST_192F_PARAMS PARAMS(FAEST_192F)
-#define FAEST_256S_PARAMS PARAMS(FAEST_256S)
-#define FAEST_256F_PARAMS PARAMS(FAEST_256F)
-#define FAEST_EM_128S_PARAMS PARAMS(FAEST_EM_128S)
-#define FAEST_EM_128F_PARAMS PARAMS(FAEST_EM_128F)
-#define FAEST_EM_192S_PARAMS PARAMS(FAEST_EM_192S)
-#define FAEST_EM_192F_PARAMS PARAMS(FAEST_EM_192F)
-#define FAEST_EM_256S_PARAMS PARAMS(FAEST_EM_256S)
-#define FAEST_EM_256F_PARAMS PARAMS(FAEST_EM_256F)
+#define FAEST_128S_PARAMS PARAMS(FAEST_128S, FAEST_128S)
+#define FAEST_128F_PARAMS PARAMS(FAEST_128F, FAEST_128F)
+#define FAEST_192S_PARAMS PARAMS(FAEST_192S, FAEST_192S)
+#define FAEST_192F_PARAMS PARAMS(FAEST_192F, FAEST_192F)
+#define FAEST_256S_PARAMS PARAMS(FAEST_256S, FAEST_256S)
+#define FAEST_256F_PARAMS PARAMS(FAEST_256F, FAEST_256F)
+#define FAEST_EM_128S_PARAMS PARAMS(FAEST_EM_128S, FAEST_128S)
+#define FAEST_EM_128F_PARAMS PARAMS(FAEST_EM_128F, FAEST_128F)
+#define FAEST_EM_192S_PARAMS PARAMS(FAEST_EM_192S, FAEST_EM_192S)
+#define FAEST_EM_192F_PARAMS PARAMS(FAEST_EM_192F, FAEST_EM_192F)
+#define FAEST_EM_256S_PARAMS PARAMS(FAEST_EM_256S, FAEST_256S)
+#define FAEST_EM_256F_PARAMS PARAMS(FAEST_EM_256F, FAEST_256F)
 
 #define CASE_PARAM(P)                                                                              \
   case P: {                                                                                        \

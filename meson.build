@@ -1,8 +1,8 @@
 project(
   'faest-ref',
   ['c', 'cpp'],
-  version: '2.0.5',
-  meson_version: '>=0.59',
+  version: '3.0.0',
+  meson_version: '>=0.64',
   default_options: [
     'c_std=c11',
     'cpp_std=c++17',
@@ -15,6 +15,12 @@ project(
 cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
 conf_data = configuration_data()
+
+if cc.get_id() == 'clang' and get_option('b_sanitize') == 'address' and get_option('b_lundef') == true
+  error(
+    'Using the address sanitizier and building with clang requires \'b_lundef\' set to \'false\'. See https://mesonbuild.com/howtox.html#use-address-sanitizer',
+  )
+endif
 
 # compile flags and defines
 flags = []
@@ -32,7 +38,11 @@ if cc.get_id() != 'msvc'
   defines += '-D_GNU_SOURCE'
 
   if get_option('march-native').enabled()
-    flags += '-march=native'
+    flags += ['-march=native', '-O3']
+  endif
+  # we need fat LTO objects for linking with the static libraries
+  if get_option('b_lto') == true and host_machine.system() != 'darwin'
+    flags += ['-ffat-lto-objects']
   endif
 else
   warnings = []
@@ -98,6 +108,21 @@ conf_data.set(
   get_option('aesni').require(supports_aesni, error_message: 'AES ISA support enabled but not available').allowed(),
 )
 
+sse2_flag = cc.get_supported_arguments('-msse2')
+supports_sse2 = cc.links(
+  '''
+#include <emmintrin.h>
+
+int main() {
+  __m128i value = _mm_setzero_si128();
+  return _mm_cvtsi128_si32(_mm_xor_si128(value, value));
+}
+''',
+  name: 'compiler supports SSE2',
+  args: [sse2_flag],
+)
+conf_data.set('HAVE_SSE2', supports_sse2)
+
 # check compiler if compiler supports AVX2
 avx2_flag = cc.get_supported_arguments(['-mavx2', '-mbmi2'])
 supports_avx2 = cc.links(
@@ -113,7 +138,6 @@ int main() {
 )
 conf_data.set('HAVE_AVX2', supports_avx2)
 
-sse2_flag = cc.get_supported_arguments('-msse2')
 supports_loadu_si64 = cc.links(
   '''
 #include <immintrin.h>
@@ -178,6 +202,7 @@ conf_data.set(
 # After changing the parameter sets, be sure to run crypto_sign_generator.py to create the corresponding meson files.
 parameter_sets = []
 
+# TODO: Recheck the parameters again after switching to deg-7
 # parameter set: FAEST-128s
 param_128s = configuration_data()
 param_128s.set('PARAM', '128S')
@@ -188,17 +213,18 @@ param_128s.set('Ske', 40)
 param_128s.set('R', 10)
 param_128s.set('Senc', 160)
 param_128s.set('BETA', 1)
-param_128s.set('ELL', 1280)
+param_128s.set('ELL', 960)
 param_128s.set('Lke', 448)
-param_128s.set('Lenc', 832)
+param_128s.set('Lenc', 512)
 param_128s.set('TAU', 11)
 param_128s.set('W_GRIND', 7)
 param_128s.set('T_OPEN', 102)
-param_128s.set('SIG_SIZE', 4506)
+param_128s.set('SIG_SIZE', 4066)
 param_128s.set('PK_SIZE', 32)
 param_128s.set('SK_SIZE', 32)
 param_128s.set('OWF_INPUT_SIZE', 16)
 param_128s.set('OWF_OUTPUT_SIZE', 16)
+param_128s.set('N_MULT', 312)
 parameter_sets += param_128s
 
 # parameter set: FAEST-128f
@@ -211,17 +237,18 @@ param_128f.set('Ske', 40)
 param_128f.set('R', 10)
 param_128f.set('Senc', 160)
 param_128f.set('BETA', 1)
-param_128f.set('ELL', 1280)
+param_128f.set('ELL', 960)
 param_128f.set('Lke', 448)
-param_128f.set('Lenc', 832)
-param_128f.set('TAU', 16)
+param_128f.set('Lenc', 512)
+param_128f.set('TAU', 17)
 param_128f.set('W_GRIND', 8)
-param_128f.set('T_OPEN', 110)
-param_128f.set('SIG_SIZE', 5924)
+param_128f.set('T_OPEN', 108)
+param_128f.set('SIG_SIZE', 5170)
 param_128f.set('PK_SIZE', 32)
 param_128f.set('SK_SIZE', 32)
 param_128f.set('OWF_INPUT_SIZE', 16)
 param_128f.set('OWF_OUTPUT_SIZE', 16)
+param_128f.set('N_MULT', 312)
 parameter_sets += param_128f
 
 # parameter set: FAEST-EM-128s
@@ -234,17 +261,18 @@ param_em_128s.set('Ske', 0)
 param_em_128s.set('R', 10)
 param_em_128s.set('Senc', 160)
 param_em_128s.set('BETA', 1)
-param_em_128s.set('ELL', 960)
+param_em_128s.set('ELL', 640)
 param_em_128s.set('Lke', 128)
-param_em_128s.set('Lenc', 832)
+param_em_128s.set('Lenc', 512)
 param_em_128s.set('TAU', 11)
 param_em_128s.set('W_GRIND', 7)
 param_em_128s.set('T_OPEN', 103)
-param_em_128s.set('SIG_SIZE', 3906)
+param_em_128s.set('SIG_SIZE', 3466)
 param_em_128s.set('PK_SIZE', 32)
 param_em_128s.set('SK_SIZE', 32)
 param_em_128s.set('OWF_INPUT_SIZE', 16)
 param_em_128s.set('OWF_OUTPUT_SIZE', 16)
+param_em_128s.set('N_MULT', 312)
 parameter_sets += param_em_128s
 
 # parameter set: FAEST-EM-128f
@@ -257,17 +285,18 @@ param_em_128f.set('Ske', 0)
 param_em_128f.set('R', 10)
 param_em_128f.set('Senc', 160)
 param_em_128f.set('BETA', 1)
-param_em_128f.set('ELL', 960)
+param_em_128f.set('ELL', 640)
 param_em_128f.set('Lke', 128)
-param_em_128f.set('Lenc', 832)
-param_em_128f.set('TAU', 16)
+param_em_128f.set('Lenc', 512)
+param_em_128f.set('TAU', 17)
 param_em_128f.set('W_GRIND', 8)
-param_em_128f.set('T_OPEN', 112)
-param_em_128f.set('SIG_SIZE', 5060)
+param_em_128f.set('T_OPEN', 105)
+param_em_128f.set('SIG_SIZE', 4170)
 param_em_128f.set('PK_SIZE', 32)
 param_em_128f.set('SK_SIZE', 32)
 param_em_128f.set('OWF_INPUT_SIZE', 16)
 param_em_128f.set('OWF_OUTPUT_SIZE', 16)
+param_em_128f.set('N_MULT', 312)
 parameter_sets += param_em_128f
 
 # parameter set: FAEST-192s
@@ -280,17 +309,18 @@ param_192s.set('Ske', 32)
 param_192s.set('R', 12)
 param_192s.set('Senc', 192)
 param_192s.set('BETA', 2)
-param_192s.set('ELL', 2496)
+param_192s.set('ELL', 1728)
 param_192s.set('Lke', 448)
-param_192s.set('Lenc', 1024)
+param_192s.set('Lenc', 640)
 param_192s.set('TAU', 16)
 param_192s.set('W_GRIND', 12)
 param_192s.set('T_OPEN', 162)
-param_192s.set('SIG_SIZE', 11260)
+param_192s.set('SIG_SIZE', 9410)
 param_192s.set('PK_SIZE', 48)
 param_192s.set('SK_SIZE', 40)
 param_192s.set('OWF_INPUT_SIZE', 16)
 param_192s.set('OWF_OUTPUT_SIZE', 32)
+param_192s.set('N_MULT', 504)
 parameter_sets += param_192s
 
 # parameter set: FAEST-192f
@@ -303,17 +333,18 @@ param_192f.set('Ske', 32)
 param_192f.set('R', 12)
 param_192f.set('Senc', 192)
 param_192f.set('BETA', 2)
-param_192f.set('ELL', 2496)
+param_192f.set('ELL', 1728)
 param_192f.set('Lke', 448)
-param_192f.set('Lenc', 1024)
+param_192f.set('Lenc', 640)
 param_192f.set('TAU', 24)
 param_192f.set('W_GRIND', 8)
 param_192f.set('T_OPEN', 163)
-param_192f.set('SIG_SIZE', 14948)
+param_192f.set('SIG_SIZE', 11738)
 param_192f.set('PK_SIZE', 48)
 param_192f.set('SK_SIZE', 40)
 param_192f.set('OWF_INPUT_SIZE', 16)
 param_192f.set('OWF_OUTPUT_SIZE', 32)
+param_192f.set('N_MULT', 504)
 parameter_sets += param_192f
 
 # parameter set: FAEST-EM-192s
@@ -326,17 +357,18 @@ param_em_192s.set('Ske', 0)
 param_em_192s.set('R', 12)
 param_em_192s.set('Senc', 288)
 param_em_192s.set('BETA', 1)
-param_em_192s.set('ELL', 1728)
+param_em_192s.set('ELL', 1152)
 param_em_192s.set('Lke', 192)
-param_em_192s.set('Lenc', 1536)
+param_em_192s.set('Lenc', 960)
 param_em_192s.set('TAU', 16)
 param_em_192s.set('W_GRIND', 8)
 param_em_192s.set('T_OPEN', 162)
-param_em_192s.set('SIG_SIZE', 9340)
+param_em_192s.set('SIG_SIZE', 7874)
 param_em_192s.set('PK_SIZE', 48)
 param_em_192s.set('SK_SIZE', 48)
 param_em_192s.set('OWF_INPUT_SIZE', 24)
 param_em_192s.set('OWF_OUTPUT_SIZE', 24)
+param_em_192s.set('N_MULT', 504)
 parameter_sets += param_em_192s
 
 # parameter set: FAEST-EM-192f
@@ -349,17 +381,18 @@ param_em_192f.set('Ske', 0)
 param_em_192f.set('R', 12)
 param_em_192f.set('Senc', 288)
 param_em_192f.set('BETA', 1)
-param_em_192f.set('ELL', 1728)
+param_em_192f.set('ELL', 1152)
 param_em_192f.set('Lke', 192)
-param_em_192f.set('Lenc', 1536)
-param_em_192f.set('TAU', 24)
+param_em_192f.set('Lenc', 960)
+param_em_192f.set('TAU', 25)
 param_em_192f.set('W_GRIND', 8)
-param_em_192f.set('T_OPEN', 176)
-param_em_192f.set('SIG_SIZE', 12380)
+param_em_192f.set('T_OPEN', 171)
+param_em_192f.set('SIG_SIZE', 9818)
 param_em_192f.set('PK_SIZE', 48)
 param_em_192f.set('SK_SIZE', 48)
 param_em_192f.set('OWF_INPUT_SIZE', 24)
 param_em_192f.set('OWF_OUTPUT_SIZE', 24)
+param_em_192f.set('N_MULT', 504)
 parameter_sets += param_em_192f
 
 # parameter set: FAEST-256s
@@ -372,17 +405,18 @@ param_256s.set('Ske', 52)
 param_256s.set('R', 14)
 param_256s.set('Senc', 224)
 param_256s.set('BETA', 2)
-param_256s.set('ELL', 3104)
+param_256s.set('ELL', 2208)
 param_256s.set('Lke', 672)
-param_256s.set('Lenc', 1216)
+param_256s.set('Lenc', 768)
 param_256s.set('TAU', 22)
 param_256s.set('W_GRIND', 6)
-param_256s.set('T_OPEN', 245)
-param_256s.set('SIG_SIZE', 20696)
+param_256s.set('T_OPEN', 225)
+param_256s.set('SIG_SIZE', 16626)
 param_256s.set('PK_SIZE', 48)
 param_256s.set('SK_SIZE', 48)
 param_256s.set('OWF_INPUT_SIZE', 16)
 param_256s.set('OWF_OUTPUT_SIZE', 32)
+param_256s.set('N_MULT', 696)
 parameter_sets += param_256s
 
 # parameter set: FAEST-256f
@@ -395,17 +429,18 @@ param_256f.set('Ske', 52)
 param_256f.set('R', 14)
 param_256f.set('Senc', 224)
 param_256f.set('BETA', 2)
-param_256f.set('ELL', 3104)
+param_256f.set('ELL', 2208)
 param_256f.set('Lke', 672)
-param_256f.set('Lenc', 1216)
-param_256f.set('TAU', 32)
+param_256f.set('Lenc', 768)
+param_256f.set('TAU', 33)
 param_256f.set('W_GRIND', 8)
-param_256f.set('T_OPEN', 246)
-param_256f.set('SIG_SIZE', 26548)
+param_256f.set('T_OPEN', 229)
+param_256f.set('SIG_SIZE', 20856)
 param_256f.set('PK_SIZE', 48)
 param_256f.set('SK_SIZE', 48)
 param_256f.set('OWF_INPUT_SIZE', 16)
 param_256f.set('OWF_OUTPUT_SIZE', 32)
+param_256f.set('N_MULT', 704)
 parameter_sets += param_256f
 
 # parameter set: FAEST-EM-256s
@@ -418,17 +453,18 @@ param_em_256s.set('Ske', 0)
 param_em_256s.set('R', 14)
 param_em_256s.set('Senc', 448)
 param_em_256s.set('BETA', 1)
-param_em_256s.set('ELL', 2688)
+param_em_256s.set('ELL', 1792)
 param_em_256s.set('Lke', 256)
-param_em_256s.set('Lenc', 2432)
+param_em_256s.set('Lenc', 1536)
 param_em_256s.set('TAU', 22)
 param_em_256s.set('W_GRIND', 6)
 param_em_256s.set('T_OPEN', 218)
-param_em_256s.set('SIG_SIZE', 17984)
+param_em_256s.set('SIG_SIZE', 14554)
 param_em_256s.set('PK_SIZE', 64)
 param_em_256s.set('SK_SIZE', 64)
 param_em_256s.set('OWF_INPUT_SIZE', 32)
 param_em_256s.set('OWF_OUTPUT_SIZE', 32)
+param_em_256s.set('N_MULT', 696)
 parameter_sets += param_em_256s
 
 # parameter set: FAEST-EM-256f
@@ -441,17 +477,18 @@ param_em_256f.set('Ske', 0)
 param_em_256f.set('R', 14)
 param_em_256f.set('Senc', 448)
 param_em_256f.set('BETA', 1)
-param_em_256f.set('ELL', 2688)
+param_em_256f.set('ELL', 1792)
 param_em_256f.set('Lke', 256)
-param_em_256f.set('Lenc', 2432)
-param_em_256f.set('TAU', 32)
+param_em_256f.set('Lenc', 1536)
+param_em_256f.set('TAU', 33)
 param_em_256f.set('W_GRIND', 8)
-param_em_256f.set('T_OPEN', 234)
-param_em_256f.set('SIG_SIZE', 23476)
+param_em_256f.set('T_OPEN', 229)
+param_em_256f.set('SIG_SIZE', 18084)
 param_em_256f.set('PK_SIZE', 64)
 param_em_256f.set('SK_SIZE', 64)
 param_em_256f.set('OWF_INPUT_SIZE', 32)
 param_em_256f.set('OWF_OUTPUT_SIZE', 32)
+param_em_256f.set('N_MULT', 704)
 parameter_sets += param_em_256f
 
 # also make data from all parameter sets available "globally"
@@ -542,6 +579,8 @@ faest_aes_256 = configure_file(
 include_directories = [include_directories('.')]
 
 # source files
+subdir('tables')
+
 faest_sources = files(
   'aes.c',
   'bavc.c',
@@ -556,10 +595,11 @@ faest_sources = files(
   'vole.c',
 ) + [
   config_header,
-  parameters_header,
   faest_aes_128,
   faest_aes_192,
   faest_aes_256,
+  parameters_header,
+  tables,
 ]
 
 if has_usable_builtin == false
@@ -693,7 +733,7 @@ libfaest = shared_library(
   c_args: defines + c_flags + visibility_define,
   link_args: linker_flags,
   install: true,
-  version: '1.0.0',
+  version: '2.0.0',
   gnu_symbol_visibility: 'hidden',
 )
 libfaest_dependency = declare_dependency(link_with: libfaest, include_directories: include_directories)
@@ -723,7 +763,7 @@ run_target(
     ]
     + all_names,
   ],
-
+  depends: tables,
 )
 
 subdir('doc')

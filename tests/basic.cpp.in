@@ -7,12 +7,13 @@
 #endif
 
 #include "faest_@PARAM_L@.h"
-#include "randomness.h"
 #include "faest_tvs.hpp"
-#include "utils.h"
+#include "instances.h"
+#include "utils.hpp"
 
 #include <array>
 #include <vector>
+#include <random>
 #include <boost/test/unit_test.hpp>
 
 namespace {
@@ -20,13 +21,22 @@ namespace {
   constexpr std::size_t public_key_size = FAEST_@PARAM@_PUBLIC_KEY_SIZE;
   constexpr std::size_t private_key_size = FAEST_@PARAM@_PRIVATE_KEY_SIZE;
   constexpr std::size_t signature_size = FAEST_@PARAM@_SIGNATURE_SIZE;
+
+  typedef faest_@PARAM_L@_unpacked_private_key_t unpacked_sk_t;
+
+  namespace tv = faest_tvs::faest_@PARAM_L@;
   // clang-format on
 
   typedef std::array<uint8_t, public_key_size> pk_t;
   typedef std::array<uint8_t, private_key_size> sk_t;
-}
+} // namespace
 
+using faest_tvs::message;
+using faest_tvs::random_seed;
+
+// clang-format off
 BOOST_AUTO_TEST_SUITE(faest_@PARAM_L@)
+// clang-format on
 
 BOOST_AUTO_TEST_CASE(test_keygen) {
   pk_t pk;
@@ -50,7 +60,7 @@ BOOST_AUTO_TEST_CASE(test_sign) {
 
   std::vector<uint8_t> msg;
   msg.resize(1024);
-  rand_bytes(msg.data(), msg.size());
+  rand_bytes(msg);
 
   // clang-format off
   BOOST_TEST(faest_@PARAM_L@_sign(sk.data(), msg.data(), msg.size(), sig.data(), &sig_size) == 0);
@@ -75,7 +85,7 @@ BOOST_AUTO_TEST_CASE(test_unpacked_sign) {
 
   std::vector<uint8_t> msg;
   msg.resize(1024);
-  rand_bytes(msg.data(), msg.size());
+  rand_bytes(msg);
 
   // clang-format off
   BOOST_TEST(faest_@PARAM_L@_unpacked_sign(&unpacked_sk, msg.data(), msg.size(), sig.data(), &sig_size) == 0);
@@ -93,28 +103,57 @@ BOOST_AUTO_TEST_CASE(test_rand_verify_fails) {
 
   std::vector<uint8_t> sig;
   sig.resize(signature_size);
-  rand_bytes(sig.data(), sig.size());
+  rand_bytes(sig);
 
   std::vector<uint8_t> msg;
   msg.resize(32);
-  rand_bytes(msg.data(), msg.size());
+  rand_bytes(msg);
 
   // clang-format off
   BOOST_TEST(faest_@PARAM_L@_verify(pk.data(), msg.data(), msg.size(), sig.data(), sig.size()) != 0);
   // clang-format on
 }
 
-BOOST_AUTO_TEST_CASE(test_sign_tv) {
-  namespace tv = faest_tvs::faest_@PARAM_L@;
-  using faest_tvs::message;
-  using faest_tvs::random_seed;
+BOOST_AUTO_TEST_CASE(test_invalid_sig_verify_fails) {
+  std::random_device r;
+  std::default_random_engine rand_engine(r());
+  std::uniform_int_distribution<size_t> dist_idx(0, signature_size - 1);
+  std::uniform_int_distribution<uint8_t> dist_byte(1, 0xff);
 
+  // check if changing 0 bytes at the end make verify fail
+  for (size_t idx = IV_SIZE + sizeof(uint32_t) + 128 / 8, checked = 0; idx < 64 && checked < 8;
+       ++idx) {
+    if (tv::signature[signature_size - idx - 1]) {
+      continue;
+    }
+
+    std::vector<uint8_t> sig{tv::signature.begin(), tv::signature.end()};
+    sig[signature_size - idx - 1] = dist_byte(r);
+
+    // clang-format off
+    BOOST_TEST(faest_@PARAM_L@_verify(tv::pk.data(), message.data(), message.size(), sig.data(), sig.size()) != 0);
+    // clang-format on
+    ++checked;
+  }
+
+  // change random bytes
+  for (size_t idx = 0; idx < 8; ++idx) {
+    std::vector<uint8_t> sig{tv::signature.begin(), tv::signature.end()};
+    sig[dist_idx(rand_engine)] ^= dist_byte(rand_engine);
+
+    // clang-format off
+    BOOST_TEST(faest_@PARAM_L@_verify(tv::pk.data(), message.data(), message.size(), sig.data(), sig.size()) != 0);
+    // clang-format on
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_sign_tv) {
   BOOST_TEST(tv::sk.size() == private_key_size);
   BOOST_TEST(tv::pk.size() == public_key_size);
   BOOST_TEST(tv::signature.size() == signature_size);
 
   std::vector<uint8_t> sig, tv_sig{tv::signature.begin(), tv::signature.end()};
-  sig.resize(signature_size);
+  sig.resize(signature_size, 0xff);
 
   size_t sig_size = signature_size;
   // clang-format off
@@ -128,6 +167,19 @@ BOOST_AUTO_TEST_CASE(test_sign_tv) {
   BOOST_TEST(faest_@PARAM_L@_verify(tv::pk.data(),
              message.data(), message.size(), tv::signature.data(), tv::signature.size()) == 0);
   // clang-format on
+}
+
+BOOST_AUTO_TEST_CASE(test_witness_tv) {
+  // clang-format off
+  BOOST_TEST(tv::witness.size() == @ELL@ / 8);
+
+  unpacked_sk_t unpacked_sk;
+  BOOST_TEST(faest_@PARAM_L@_unpack_private_key(&unpacked_sk, tv::sk.data()) == 0);
+  // clang-format on
+
+  auto witness = decltype(tv::witness){0};
+  std::copy(unpacked_sk.witness, unpacked_sk.witness + witness.size(), witness.begin());
+  BOOST_TEST(tv::witness == witness);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

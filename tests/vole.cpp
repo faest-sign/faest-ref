@@ -7,12 +7,15 @@
 #include "randomness.h"
 #include "universal_hashing.h"
 #include "utils.hpp"
+#include "vole_tvs.hpp"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <cmath>
 #include <array>
 #include <vector>
+
+#define TBL_U8(base, words, i) ((base) + (size_t)(i) * (words))
 
 namespace {
   constexpr std::array<uint8_t, 32> rootKey{
@@ -32,16 +35,30 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     const auto params                = faest_get_paramset(param_id);
     const unsigned int lambda        = params->lambda;
     const unsigned int lambda_bytes  = lambda / 8;
-    const unsigned int ell_hat       = params->l + params->lambda * 3 + UNIVERSAL_HASH_B_BITS;
+    const unsigned int ell           = params->ell;
+    const unsigned int ell_bytes     = ell / 8;
+    const unsigned int k             = params->k;
+    const unsigned int tau1          = params->tau1;
+    const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
+    const unsigned int n_mask        = N_MASK;
+    const unsigned int ell_hat       = ell + n_mask * d0;
     const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
     const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
+    const auto n_mult                = params->n_mult;
+    const auto n_mult_bytes          = (n_mult + 7) / 8;
 
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, u, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult_packed, u, u_bar, v_bar, q_bar, delta_prime, q_storage,
+        v_storage;
     chal.resize(lambda_bytes);
-    c.resize((params->tau - 1) * ell_hat_bytes);
-    u.resize(ell_hat_bytes * params->tau);
+    c.resize((params->tau - 1) * ell_bytes);
+    c_mult_packed.resize(n_mask * n_mult_bytes);
+    u.resize(ell_bytes * params->tau);
+    u_bar.resize(n_mask * lambda_bytes);
+    v_bar.resize(n_mask * lambda_bytes);
+    q_bar.resize(n_mask * lambda_bytes);
+    delta_prime.resize(lambda_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
@@ -57,13 +74,14 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       v[i] = v[0] + i * ell_hat_bytes;
     }
 
-    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), u.data(),
-                v.data());
+    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(),
+                c_mult_packed.data(), u.data(), v.data(), u_bar.data(), v_bar.data());
 
     std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2};
 
     bool tested = false;
     for (unsigned int tries = 0; !tested && tries != max_tries; ++tries) {
+
       rand_bytes(chal.data(), chal.size());
       for (unsigned int i = lambda - params->w_grind; i != lambda; ++i) {
         ptr_set_bit(chal.data(), i, 0);
@@ -84,7 +102,8 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       std::vector<uint8_t> hcom_rec;
       hcom_rec.resize(lambda_bytes * 2);
       BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
-                                  c.data(), ell_hat, params));
+                                  c.data(), c_mult_packed.data(), q_bar.data(), delta_prime.data(),
+                                  ell_hat, params));
       BOOST_TEST(hcom == hcom_rec);
     }
     BOOST_TEST(tested);
@@ -98,10 +117,16 @@ BOOST_DATA_TEST_CASE(test_convert_to_vole, all_parameters, param_id) {
     const faest_paramset_t params    = *faest_get_paramset(param_id);
     const unsigned int lambda        = params.lambda;
     const unsigned int lambda_bytes  = lambda / 8;
-    const unsigned int ell_hat_bytes = 16;
-    const unsigned int max_depth     = params.k;
-    const unsigned int max_nodes     = 1 << max_depth;
     const unsigned int tau           = params.tau;
+    const unsigned int k             = params.k;
+    const unsigned int tau1          = params.tau1;
+    const unsigned int d0            = bavc_max_node_depth(0, tau1, k);
+    const unsigned int n_mask        = N_MASK;
+    const unsigned int ell           = params.ell;
+    const unsigned int ell_hat       = ell + n_mask * d0;
+    const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
+    const unsigned int max_depth     = k;
+    const unsigned int max_nodes     = 1 << max_depth;
 
     std::vector<uint8_t> sd, u, v, q;
     sd.resize(max_nodes * lambda_bytes);
@@ -148,21 +173,42 @@ namespace {
                const std::array<uint8_t, HSize>& expected_h,
                const std::array<uint8_t, 64>& expected_hashed_c,
                const std::array<uint8_t, 64>& expected_hashed_u,
+               const std::array<uint8_t, 64>& expected_hashed_c_mult,
                const std::array<uint8_t, 64>& expected_hashed_v,
-               const std::array<uint8_t, 64>& expected_hashed_q) {
-    const unsigned int lambda        = params->lambda;
-    const unsigned int lambda_bytes  = lambda / 8;
-    const unsigned int ell_hat       = params->l + params->lambda * 3 + UNIVERSAL_HASH_B_BITS;
-    const unsigned int ell_hat_bytes = (ell_hat + 7) / 8;
-    const auto com_size              = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
+               const std::array<uint8_t, 64>& expected_hashed_barU,
+               const std::array<uint8_t, 64>& expected_hashed_barV,
+               const std::array<uint8_t, 64>& expected_hashed_q,
+               const std::array<uint8_t, 64>& expected_hashed_barQ) {
+    const unsigned int lambda                     = params->lambda;
+    const unsigned int lambda_bytes               = lambda / 8;
+    const unsigned int ell                        = params->ell;
+    const unsigned int ell_bytes                  = ell / 8;
+    const unsigned int tau                        = params->tau;
+    const unsigned int k                          = params->k;
+    const unsigned int tau1                       = params->tau1;
+    const unsigned int d0                         = bavc_max_node_depth(0, tau1, k);
+    const unsigned int n_mask                     = N_MASK;
+    const unsigned int ell_hat                    = ell + n_mask * d0;
+    const unsigned int ell_hat_bytes              = (ell_hat + 7) / 8;
+    const auto com_size                           = (faest_is_em(params) ? 2 : 3) * lambda_bytes;
+    const auto n_mult_bytes                       = (params->n_mult + 7) / 8;
+    const unsigned int w_grind                    = params->w_grind;
+    const unsigned int lambda_minus_w_grind       = lambda - w_grind;
+    const unsigned int lambda_minus_w_grind_bytes = ((lambda_minus_w_grind) + 7) / 8;
 
     bavc_t bavc_com;
 
-    std::vector<uint8_t> chal, c, decom_i, u, q_storage, v_storage;
+    std::vector<uint8_t> chal, c, c_mult_packed, decom_i, u, u_bar, v_bar, q_bar, delta_prime,
+        q_storage, v_storage;
     chal.resize(lambda_bytes);
-    c.resize((params->tau - 1) * ell_hat_bytes);
+    c.resize((params->tau - 1) * ell_bytes);
+    c_mult_packed.resize(n_mask * n_mult_bytes);
     decom_i.resize(com_size * params->tau + params->T_open * lambda_bytes);
-    u.resize(ell_hat_bytes * params->tau);
+    u.resize(ell_bytes);
+    u_bar.resize(n_mask * lambda_bytes);
+    v_bar.resize(n_mask * lambda_bytes);
+    q_bar.resize(n_mask * lambda_bytes);
+    delta_prime.resize(lambda_bytes);
 
     std::vector<uint8_t*> q, v;
     q.resize(lambda);
@@ -178,14 +224,31 @@ namespace {
       v[i] = v[0] + i * ell_hat_bytes;
     }
 
-    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(), u.data(),
-                v.data());
+    vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(),
+                c_mult_packed.data(), u.data(), v.data(), u_bar.data(), v_bar.data());
+
     std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2},
         expected_h_vec{expected_h.begin(), expected_h.end()};
     BOOST_TEST(hcom == expected_h_vec);
+
     BOOST_TEST(expected_hashed_c == hash_array(c));
     BOOST_TEST(expected_hashed_u == hash_array(u));
-    BOOST_TEST(expected_hashed_v == hash_array(v_storage));
+    BOOST_TEST(expected_hashed_barU == hash_array(u_bar));
+    BOOST_TEST(expected_hashed_barV == hash_array(v_bar));
+    BOOST_TEST(expected_hashed_c_mult == hash_array(c_mult_packed));
+
+    size_t ncols = ell;
+    std::vector<uint8_t> mV_bytes(ncols * lambda_bytes, 0);
+    for (size_t ncols_idx = 0; ncols_idx < ncols; ++ncols_idx) {
+      for (size_t r = 0; r < lambda; ++r) {
+        const uint8_t* srow = v_storage.data() + r * ell_hat_bytes;
+        uint8_t bit         = ptr_get_bit(srow, ncols_idx);
+        size_t pos          = ncols_idx * lambda + r;
+        ptr_set_bit(mV_bytes, pos, bit);
+      }
+    }
+
+    BOOST_TEST(expected_hashed_v == hash_array(mV_bytes));
 
     std::vector<uint16_t> i_delta;
     i_delta.resize(params->tau);
@@ -194,33 +257,168 @@ namespace {
 
     std::vector<uint8_t> hcom_rec;
     hcom_rec.resize(lambda_bytes * 2);
-    BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
-                                c.data(), ell_hat, params));
+    BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), challenge.data(),
+                                decom_i.data(), c.data(), c_mult_packed.data(), q_bar.data(),
+                                delta_prime.data(), ell_hat, params));
     BOOST_TEST(hcom_rec == expected_h_vec);
-    BOOST_TEST(expected_hashed_q == hash_array(q_storage));
+
+    ncols = ell;
+    std::vector<uint8_t> mQ_bytes(ncols * lambda_bytes, 0);
+    for (size_t ncols_idx = 0; ncols_idx < ncols; ++ncols_idx) {
+      for (size_t r = 0; r < lambda; ++r) {
+        const uint8_t* srow = q_storage.data() + r * ell_hat_bytes;
+        uint8_t bit         = ptr_get_bit(srow, ncols_idx);
+        size_t pos          = ncols_idx * lambda + r;
+        ptr_set_bit(mQ_bytes, pos, bit);
+      }
+    }
+    BOOST_TEST(expected_hashed_q == hash_array(mQ_bytes));
+    BOOST_TEST(expected_hashed_barQ == hash_array(q_bar));
+
     bavc_clear(&bavc_com);
 
-    for (unsigned int i = 0, running_idx = 0; i < params->tau; ++i) {
-      const uint32_t depth = bavc_max_node_depth(i, params->tau1, params->k);
-      const auto delta     = i_delta[i];
+    std::vector<uint8_t> Dp(lambda_minus_w_grind_bytes, 0);
 
-      for (unsigned int j = 0; j != depth; ++j, ++running_idx) {
-        for (unsigned int inner = 0; inner != ell_hat_bytes; ++inner) {
-          if ((delta >> j) & 1) {
-            // need to correct the vole correlation
-            if (i > 0) {
-              BOOST_TEST((q[(running_idx)][inner] ^ c[(i - 1) * ell_hat_bytes + inner] ^
-                          u[inner]) == v[(running_idx)][inner]);
-            } else {
-              BOOST_TEST((q[(running_idx)][inner] ^ u[inner]) == v[(running_idx)][inner]);
-            }
-          } else {
-            BOOST_TEST(q[(running_idx)][inner] == v[(running_idx)][inner]);
-          }
+    unsigned int off = 0;
+    for (unsigned int i = 0; i < tau; ++i) {
+      const uint32_t deg = bavc_max_node_depth(i, tau1, k); // == tree_deg[i]
+      const auto delta   = i_delta[i];                      // == I[i]
+      for (unsigned int t = 0; t < deg; ++t) {
+        ptr_xor_bit(Dp, off + t, delta >> t); // Dp |= ((I[i]>>t)&1) << (off+t)
+      }
+      off += deg;
+    }
+    BOOST_TEST(off == lambda_minus_w_grind);
+
+    std::vector<uint8_t> Delta(lambda_bytes, 0);
+    for (unsigned int col = 0; col < lambda; ++col) { // Delta has lambda output bits
+      uint8_t acc = 0;
+      for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) { // Dp has n_delta bits
+        acc ^= ptr_get_bit(Dp, row) &
+               ptr_u64_get_bit(TBL_U8(params->W_CRT, params->w_crt_words, col), row);
+      }
+      ptr_xor_bit(Delta, col, acc);
+    }
+
+    for (unsigned int row = 0; row < ell; ++row) { // Python: for j in range(ell)
+      // rhs = mV[row] ^ (Delta if (u>>row)&1 else 0)
+      for (unsigned int b = 0; b < lambda_bytes; ++b) {
+        uint8_t rhs_b = mV_bytes[row * lambda_bytes + b]; // however mV rows are laid out
+        if ((ptr_get_bit(u.data(), row))) {
+          rhs_b ^= Delta[b];
         }
+        BOOST_TEST(mQ_bytes[row * lambda_bytes + b] == rhs_b);
       }
     }
   }
 } // namespace
+
+BOOST_AUTO_TEST_CASE(vole_tv_128f) {
+  vole::test_tv(faest_get_paramset(FAEST_128F), vole_tvs::FAEST_128F::chall,
+                vole_tvs::FAEST_128F::h, vole_tvs::FAEST_128F::hashed_c,
+                vole_tvs::FAEST_128F::hashed_u, vole_tvs::FAEST_128F::hashed_c_mult,
+                vole_tvs::FAEST_128F::hashed_v, vole_tvs::FAEST_128F::hashed_barU,
+                vole_tvs::FAEST_128F::hashed_barV, vole_tvs::FAEST_128F::hashed_q,
+                vole_tvs::FAEST_128F::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_128s) {
+  vole::test_tv(faest_get_paramset(FAEST_128S), vole_tvs::FAEST_128S::chall,
+                vole_tvs::FAEST_128S::h, vole_tvs::FAEST_128S::hashed_c,
+                vole_tvs::FAEST_128S::hashed_u, vole_tvs::FAEST_128S::hashed_c_mult,
+                vole_tvs::FAEST_128S::hashed_v, vole_tvs::FAEST_128S::hashed_barU,
+                vole_tvs::FAEST_128S::hashed_barV, vole_tvs::FAEST_128S::hashed_q,
+                vole_tvs::FAEST_128S::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_em_128f) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_128F), vole_tvs::FAEST_EM_128F::chall,
+                vole_tvs::FAEST_EM_128F::h, vole_tvs::FAEST_EM_128F::hashed_c,
+                vole_tvs::FAEST_EM_128F::hashed_u, vole_tvs::FAEST_EM_128F::hashed_c_mult,
+                vole_tvs::FAEST_EM_128F::hashed_v, vole_tvs::FAEST_EM_128F::hashed_barU,
+                vole_tvs::FAEST_EM_128F::hashed_barV, vole_tvs::FAEST_EM_128F::hashed_q,
+                vole_tvs::FAEST_EM_128F::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_em_128s) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_128S), vole_tvs::FAEST_EM_128S::chall,
+                vole_tvs::FAEST_EM_128S::h, vole_tvs::FAEST_EM_128S::hashed_c,
+                vole_tvs::FAEST_EM_128S::hashed_u, vole_tvs::FAEST_EM_128S::hashed_c_mult,
+                vole_tvs::FAEST_EM_128S::hashed_v, vole_tvs::FAEST_EM_128S::hashed_barU,
+                vole_tvs::FAEST_EM_128S::hashed_barV, vole_tvs::FAEST_EM_128S::hashed_q,
+                vole_tvs::FAEST_EM_128S::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_192f) {
+  vole::test_tv(faest_get_paramset(FAEST_192F), vole_tvs::FAEST_192F::chall,
+                vole_tvs::FAEST_192F::h, vole_tvs::FAEST_192F::hashed_c,
+                vole_tvs::FAEST_192F::hashed_u, vole_tvs::FAEST_192F::hashed_c_mult,
+                vole_tvs::FAEST_192F::hashed_v, vole_tvs::FAEST_192F::hashed_barU,
+                vole_tvs::FAEST_192F::hashed_barV, vole_tvs::FAEST_192F::hashed_q,
+                vole_tvs::FAEST_192F::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_192s) {
+  vole::test_tv(faest_get_paramset(FAEST_192S), vole_tvs::FAEST_192S::chall,
+                vole_tvs::FAEST_192S::h, vole_tvs::FAEST_192S::hashed_c,
+                vole_tvs::FAEST_192S::hashed_u, vole_tvs::FAEST_192S::hashed_c_mult,
+                vole_tvs::FAEST_192S::hashed_v, vole_tvs::FAEST_192S::hashed_barU,
+                vole_tvs::FAEST_192S::hashed_barV, vole_tvs::FAEST_192S::hashed_q,
+                vole_tvs::FAEST_192S::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_em_192f) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_192F), vole_tvs::FAEST_EM_192F::chall,
+                vole_tvs::FAEST_EM_192F::h, vole_tvs::FAEST_EM_192F::hashed_c,
+                vole_tvs::FAEST_EM_192F::hashed_u, vole_tvs::FAEST_EM_192F::hashed_c_mult,
+                vole_tvs::FAEST_EM_192F::hashed_v, vole_tvs::FAEST_EM_192F::hashed_barU,
+                vole_tvs::FAEST_EM_192F::hashed_barV, vole_tvs::FAEST_EM_192F::hashed_q,
+                vole_tvs::FAEST_EM_192F::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_em_192s) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_192S), vole_tvs::FAEST_EM_192S::chall,
+                vole_tvs::FAEST_EM_192S::h, vole_tvs::FAEST_EM_192S::hashed_c,
+                vole_tvs::FAEST_EM_192S::hashed_u, vole_tvs::FAEST_EM_192S::hashed_c_mult,
+                vole_tvs::FAEST_EM_192S::hashed_v, vole_tvs::FAEST_EM_192S::hashed_barU,
+                vole_tvs::FAEST_EM_192S::hashed_barV, vole_tvs::FAEST_EM_192S::hashed_q,
+                vole_tvs::FAEST_EM_192S::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_256f) {
+  vole::test_tv(faest_get_paramset(FAEST_256F), vole_tvs::FAEST_256F::chall,
+                vole_tvs::FAEST_256F::h, vole_tvs::FAEST_256F::hashed_c,
+                vole_tvs::FAEST_256F::hashed_u, vole_tvs::FAEST_256F::hashed_c_mult,
+                vole_tvs::FAEST_256F::hashed_v, vole_tvs::FAEST_256F::hashed_barU,
+                vole_tvs::FAEST_256F::hashed_barV, vole_tvs::FAEST_256F::hashed_q,
+                vole_tvs::FAEST_256F::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_256s) {
+  vole::test_tv(faest_get_paramset(FAEST_256S), vole_tvs::FAEST_256S::chall,
+                vole_tvs::FAEST_256S::h, vole_tvs::FAEST_256S::hashed_c,
+                vole_tvs::FAEST_256S::hashed_u, vole_tvs::FAEST_256S::hashed_c_mult,
+                vole_tvs::FAEST_256S::hashed_v, vole_tvs::FAEST_256S::hashed_barU,
+                vole_tvs::FAEST_256S::hashed_barV, vole_tvs::FAEST_256S::hashed_q,
+                vole_tvs::FAEST_256S::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_em_256f) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_256F), vole_tvs::FAEST_EM_256F::chall,
+                vole_tvs::FAEST_EM_256F::h, vole_tvs::FAEST_EM_256F::hashed_c,
+                vole_tvs::FAEST_EM_256F::hashed_u, vole_tvs::FAEST_EM_256F::hashed_c_mult,
+                vole_tvs::FAEST_EM_256F::hashed_v, vole_tvs::FAEST_EM_256F::hashed_barU,
+                vole_tvs::FAEST_EM_256F::hashed_barV, vole_tvs::FAEST_EM_256F::hashed_q,
+                vole_tvs::FAEST_EM_256F::hashed_barQ);
+}
+
+BOOST_AUTO_TEST_CASE(vole_tv_em_256s) {
+  vole::test_tv(faest_get_paramset(FAEST_EM_256S), vole_tvs::FAEST_EM_256S::chall,
+                vole_tvs::FAEST_EM_256S::h, vole_tvs::FAEST_EM_256S::hashed_c,
+                vole_tvs::FAEST_EM_256S::hashed_u, vole_tvs::FAEST_EM_256S::hashed_c_mult,
+                vole_tvs::FAEST_EM_256S::hashed_v, vole_tvs::FAEST_EM_256S::hashed_barU,
+                vole_tvs::FAEST_EM_256S::hashed_barV, vole_tvs::FAEST_EM_256S::hashed_q,
+                vole_tvs::FAEST_EM_256S::hashed_barQ);
+}
 
 BOOST_AUTO_TEST_SUITE_END()

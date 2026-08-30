@@ -1,0 +1,56 @@
+/*
+ *  SPDX-License-Identifier: MIT
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include "faest_@PARAM_L@.h"
+#include "utils.hpp"
+
+#include <array>
+#include <vector>
+
+namespace {
+  // clang-format off
+  constexpr std::size_t public_key_size = FAEST_@PARAM@_PUBLIC_KEY_SIZE;
+  constexpr std::size_t private_key_size = FAEST_@PARAM@_PRIVATE_KEY_SIZE;
+  constexpr std::size_t signature_size = FAEST_@PARAM@_SIGNATURE_SIZE;
+
+  typedef faest_@PARAM_L@_unpacked_private_key_t unpacked_sk_t;
+  // clang-format on
+
+  typedef std::array<uint8_t, public_key_size> pk_t;
+  typedef std::array<uint8_t, private_key_size> sk_t;
+} // namespace
+
+// clang-format off
+void generate_faest_@PARAM_L@_tv(const uint8_t* message, size_t message_length,
+                            const uint8_t* random_seed, size_t random_seed_length) {
+  // clang-format on
+  sk_t sk;
+  pk_t pk;
+  // clang-format off
+  faest_@PARAM_L@_keygen(pk.data(), sk.data());
+  // clang-format on
+
+  std::vector<uint8_t> sig(signature_size, 0);
+  size_t sig_len = sig.size();
+  // clang-format off
+  faest_@PARAM_L@_sign_with_randomness(sk.data(), message, message_length, random_seed,
+                                  random_seed_length, sig.data(), &sig_len);
+  // clang-format on
+
+  unpacked_sk_t unpacked_sk;
+  // clang-format off
+  faest_@PARAM_L@_unpack_private_key(&unpacked_sk, sk.data());
+  // clang-format on
+
+  std::cout << "namespace faest_@PARAM_L@ {\n";
+  print_named_array("sk", "uint8_t", sk);
+  print_named_array("pk", "uint8_t", pk);
+  print_named_array("witness", "uint8_t", unpacked_sk.witness);
+  print_named_array("signature", "uint8_t", sig);
+  std::cout << "}\n\n";
+}

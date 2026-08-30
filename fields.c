@@ -30,16 +30,6 @@
   ((UINT64_C(x7) << 56) | (UINT64_C(x6) << 48) | (UINT64_C(x5) << 40) | (UINT64_C(x4) << 32) |     \
    (UINT64_C(x3) << 24) | (UINT64_C(x2) << 16) | (UINT64_C(x1) << 8) | UINT64_C(x0))
 
-ATTR_CONST uint8_t bits_sq(uint8_t x) {
-  return set_bit(get_bit(x, 0) ^ get_bit(x, 4) ^ get_bit(x, 6), 0) |
-         set_bit(get_bit(x, 4) ^ get_bit(x, 6) ^ get_bit(x, 7), 1) |
-         set_bit(get_bit(x, 1) ^ get_bit(x, 5), 2) |
-         set_bit(get_bit(x, 4) ^ get_bit(x, 5) ^ get_bit(x, 6) ^ get_bit(x, 7), 3) |
-         set_bit(get_bit(x, 2) ^ get_bit(x, 4) ^ get_bit(x, 7), 4) |
-         set_bit(get_bit(x, 5) ^ get_bit(x, 6), 5) | set_bit(get_bit(x, 3) ^ get_bit(x, 5), 6) |
-         set_bit(get_bit(x, 6) ^ get_bit(x, 7), 7);
-}
-
 // GF(2^8) implementation
 
 bf8_t bf8_mul(bf8_t lhs, bf8_t rhs) {
@@ -79,6 +69,7 @@ bf8_t bf8_inv(bf8_t in) {
 
 // GF(2^64) implementation
 
+#if defined(FAEST_TESTS)
 bf64_t bf64_mul(bf64_t lhs, bf64_t rhs) {
   bf64_t result = (-(rhs & 1)) & lhs;
   for (unsigned int idx = 1; idx != 64; ++idx) {
@@ -88,8 +79,43 @@ bf64_t bf64_mul(bf64_t lhs, bf64_t rhs) {
   }
   return result;
 }
+#endif
 
 #define bf64_bit_to_mask(value, bit) -((((uint64_t)(value)) >> (bit)) & 1)
+
+// Helpers for bfXXX_square implementations
+
+// Square a 32-bit polynomial over GF(2) by inserting a zero between each pair of input bits.
+static inline uint64_t bf_square_expand(uint32_t value) {
+  uint64_t expanded = value;
+  expanded          = (expanded | (expanded << 16)) & UINT64_C(0x0000ffff0000ffff);
+  expanded          = (expanded | (expanded << 8)) & UINT64_C(0x00ff00ff00ff00ff);
+  expanded          = (expanded | (expanded << 4)) & UINT64_C(0x0f0f0f0f0f0f0f0f);
+  expanded          = (expanded | (expanded << 2)) & UINT64_C(0x3333333333333333);
+  return (expanded | (expanded << 1)) & UINT64_C(0x5555555555555555);
+}
+
+// Reduce the upper half of a squared field element modulo X^(64*limbs) + X^7 + X^2 + X + 1.
+static void bf_square_reduce_7_2_1(uint64_t* square, unsigned int limbs) {
+  for (unsigned int i = 2 * limbs; i-- > limbs;) {
+    const uint64_t high    = square[i];
+    const unsigned int low = i - limbs;
+    square[i]              = 0;
+    square[low] ^= high ^ (high << 1) ^ (high << 2) ^ (high << 7);
+    square[low + 1] ^= (high >> 63) ^ (high >> 62) ^ (high >> 57);
+  }
+}
+
+// Reduce the upper half of a squared field element modulo X^(64*limbs) + X^10 + X^5 + X^2 + 1.
+static void bf_square_reduce_10_5_2(uint64_t* square, unsigned int limbs) {
+  for (unsigned int i = 2 * limbs; i-- > limbs;) {
+    const uint64_t high    = square[i];
+    const unsigned int low = i - limbs;
+    square[i]              = 0;
+    square[low] ^= high ^ (high << 2) ^ (high << 5) ^ (high << 10);
+    square[low + 1] ^= (high >> 62) ^ (high >> 59) ^ (high >> 54);
+  }
+}
 
 // GF(2^128) implementation
 
@@ -185,10 +211,6 @@ void bf128_byte_combine_bits(bf128_t* dst, uint8_t x) {
   }
 }
 
-void bf128_byte_combine_bits_sq(bf128_t* dst, uint8_t x) {
-  bf128_byte_combine_bits(dst, bits_sq(x));
-}
-
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf128_and_64(bf128_t* dst, const bf128_t* lhs,
                                                                    bf64_t rhs) {
@@ -247,6 +269,18 @@ void bf128_mul(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs) {
   }
 }
 
+void bf128_square(bf128_t* dst, const bf128_t* lhs) {
+  uint64_t square[4];
+  for (unsigned int i = 0; i != 2; ++i) {
+    square[2 * i]     = bf_square_expand(BF_VALUE(*lhs, i));
+    square[2 * i + 1] = bf_square_expand(BF_VALUE(*lhs, i) >> 32);
+  }
+  bf_square_reduce_7_2_1(square, 2);
+
+  BF_VALUE(*dst, 0) = square[0];
+  BF_VALUE(*dst, 1) = square[1];
+}
+
 void bf128_mul_inplace(bf128_t* lhs, const bf128_t* rhs) {
   bf128_t tmp = *lhs;
   bf128_and_64(lhs, lhs, bf128_bit_to_uint64_mask(rhs, 0));
@@ -281,6 +315,7 @@ void bf128_mul_bit(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
 }
 #endif
 
+#if defined(FAEST_TESTS)
 static inline void bf128_dbl_inplace(bf128_t* lhs) {
   uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
   *lhs          = bf128_shift_left_1(*lhs);
@@ -294,14 +329,10 @@ void bf128_sum_poly(bf128_t* dst, const bf128_t* xs) {
     bf128_add_inplace(dst, &xs[128 - 1 - i]);
   }
 }
+#endif
 
 void bf128_sum_poly_bits(bf128_t* dst, const uint8_t* xs) {
-  *dst = bf128_from_bit(ptr_get_bit(xs, 128 - 1));
-  for (size_t i = 1; i < 128; ++i) {
-    bf128_dbl_inplace(dst);
-    const bf128_t tmp = bf128_from_bit(ptr_get_bit(xs, 128 - 1 - i));
-    bf128_add_inplace(dst, &tmp);
-  }
+  bf128_load(dst, xs);
 }
 
 // GF(2^192) implementation
@@ -405,10 +436,6 @@ void bf192_byte_combine_bits(bf192_t* dst, uint8_t x) {
   }
 }
 
-void bf192_byte_combine_bits_sq(bf192_t* dst, uint8_t x) {
-  bf192_byte_combine_bits(dst, bits_sq(x));
-}
-
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf192_and_64(bf192_t* dst, const bf192_t* lhs,
                                                                    bf64_t rhs) {
@@ -472,6 +499,19 @@ void bf192_mul(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs) {
   }
 }
 
+void bf192_square(bf192_t* dst, const bf192_t* lhs) {
+  uint64_t square[6];
+  for (unsigned int i = 0; i != 3; ++i) {
+    square[2 * i]     = bf_square_expand(BF_VALUE(*lhs, i));
+    square[2 * i + 1] = bf_square_expand(BF_VALUE(*lhs, i) >> 32);
+  }
+  bf_square_reduce_7_2_1(square, 3);
+
+  BF_VALUE(*dst, 0) = square[0];
+  BF_VALUE(*dst, 1) = square[1];
+  BF_VALUE(*dst, 2) = square[2];
+}
+
 void bf192_mul_inplace(bf192_t* lhs, const bf192_t* rhs) {
   bf192_t tmp = *lhs;
   bf192_and_64(lhs, lhs, bf192_bit_to_uint64_mask(rhs, 0));
@@ -506,6 +546,7 @@ void bf192_mul_bit(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
 }
 #endif
 
+#if defined(FAEST_TESTS)
 static inline void bf192_dbl_inplace(bf192_t* lhs) {
   uint64_t mask = bf192_bit_to_uint64_mask(lhs, 192 - 1);
   *lhs          = bf192_shift_left_1(*lhs);
@@ -519,14 +560,10 @@ void bf192_sum_poly(bf192_t* dst, const bf192_t* xs) {
     bf192_add_inplace(dst, &xs[192 - 1 - i]);
   }
 }
+#endif
 
 void bf192_sum_poly_bits(bf192_t* dst, const uint8_t* xs) {
-  *dst = bf192_from_bit(ptr_get_bit(xs, 192 - 1));
-  for (size_t i = 1; i < 192; ++i) {
-    bf192_dbl_inplace(dst);
-    const bf192_t tmp = bf192_from_bit(ptr_get_bit(xs, 192 - 1 - i));
-    bf192_add_inplace(dst, &tmp);
-  }
+  bf192_load(dst, xs);
 }
 
 // GF(2^256) implementation
@@ -637,10 +674,6 @@ void bf256_byte_combine_bits(bf256_t* dst, uint8_t x) {
   }
 }
 
-void bf256_byte_combine_bits_sq(bf256_t* dst, uint8_t x) {
-  bf256_byte_combine_bits(dst, bits_sq(x));
-}
-
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf256_and_64(bf256_t* dst, const bf256_t* lhs,
                                                                    bf64_t rhs) {
@@ -709,6 +742,20 @@ void bf256_mul(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs) {
   }
 }
 
+void bf256_square(bf256_t* dst, const bf256_t* lhs) {
+  uint64_t square[8];
+  for (unsigned int i = 0; i != 4; ++i) {
+    square[2 * i]     = bf_square_expand(BF_VALUE(*lhs, i));
+    square[2 * i + 1] = bf_square_expand(BF_VALUE(*lhs, i) >> 32);
+  }
+  bf_square_reduce_10_5_2(square, 4);
+
+  BF_VALUE(*dst, 0) = square[0];
+  BF_VALUE(*dst, 1) = square[1];
+  BF_VALUE(*dst, 2) = square[2];
+  BF_VALUE(*dst, 3) = square[3];
+}
+
 void bf256_mul_inplace(bf256_t* lhs, const bf256_t* rhs) {
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   const bf256_t mod = BF256C(bf256_modulus, 0, 0, 0);
@@ -758,6 +805,7 @@ void bf256_mul_bit(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
 }
 #endif
 
+#if defined(FAEST_TESTS)
 static inline void bf256_dbl_inplace(bf256_t* lhs) {
   uint64_t mask = bf256_bit_to_uint64_mask(lhs, 256 - 1);
   *lhs          = bf256_shift_left_1(*lhs);
@@ -776,14 +824,10 @@ void bf256_sum_poly(bf256_t* dst, const bf256_t* xs) {
     bf256_add_inplace(dst, &xs[256 - 1 - i]);
   }
 }
+#endif
 
 void bf256_sum_poly_bits(bf256_t* dst, const uint8_t* xs) {
-  *dst = bf256_from_bit(ptr_get_bit(xs, 256 - 1));
-  for (size_t i = 1; i < 256; ++i) {
-    bf256_dbl_inplace(dst);
-    const bf256_t tmp = bf256_from_bit(ptr_get_bit(xs, 256 - 1 - i));
-    bf256_add_inplace(dst, &tmp);
-  }
+  bf256_load(dst, xs);
 }
 
 // GF(2^384)
@@ -1092,5 +1136,110 @@ void bf768_mul_256_inplace(bf768_t* lhs, const bf256_t* rhs) {
     bf768_t tmp1;
     bf768_and_64(&tmp1, &tmp, bf256_bit_to_uint64_mask(rhs, idx));
     bf768_add_inplace(lhs, &tmp1);
+  }
+}
+
+static inline uint64_t load_src_word(const uint8_t* src, size_t word_idx, size_t rows) {
+  const size_t word_bit_offset = word_idx * 64;
+  const size_t remaining_bits  = rows - word_bit_offset;
+  const uint8_t* src_word      = src + word_idx * sizeof(uint64_t);
+
+  uint64_t ret = 0;
+  if (remaining_bits >= 64) {
+    memcpy(&ret, src_word, sizeof(ret));
+    return le64toh(ret);
+  }
+
+  const size_t remaining_bytes = (remaining_bits + 7) / 8;
+  memcpy(&ret, src_word, remaining_bytes);
+  return le64toh(ret) & bit_word_mask(remaining_bits);
+}
+
+static inline void xor_dst_word(uint8_t* dst, size_t word_idx, size_t dst_bits, uint64_t value) {
+  const size_t word_bit_offset = word_idx * 64;
+  if (word_bit_offset >= dst_bits) {
+    return;
+  }
+
+  const size_t remaining_bits = dst_bits - word_bit_offset;
+  const size_t word_bits      = remaining_bits < 64 ? remaining_bits : 64;
+  const size_t word_bytes     = (word_bits + 7) / 8;
+  uint8_t* dst_word           = dst + word_idx * sizeof(uint64_t);
+  uint64_t ret                = 0;
+
+  memcpy(&ret, dst_word, word_bytes);
+#if defined(FAEST_IS_BIG_ENDIAN)
+  ret = le64toh(ret);
+#endif
+  ret ^= value & bit_word_mask(word_bits);
+#if defined(FAEST_IS_BIG_ENDIAN)
+  ret = htole64(ret);
+#endif
+  memcpy(dst_word, &ret, word_bytes);
+}
+
+void bf2_matrix_mul_tbl(uint8_t* dst, const uint8_t* src, const uint64_t* table, size_t rows,
+                        size_t columns, size_t table_words) {
+  const size_t row_words = (rows + 63) / 64;
+
+  for (size_t col = 0; col < columns; ++col) {
+    uint64_t acc = 0;
+    for (size_t word = 0; word < row_words; ++word) {
+      acc ^= load_src_word(src, word, rows) & table[col * table_words + word];
+    }
+    ptr_set_bit(dst, col, parity64(acc));
+  }
+}
+
+static inline void xor_shifted_table(uint8_t* dst, size_t dst_bits, const uint64_t* table,
+                                     size_t table_bits, size_t shift, uint64_t mask) {
+  const size_t table_words    = (table_bits + 63) / 64;
+  const size_t dst_word_idx   = shift / 64;
+  const size_t dst_bit_offset = shift % 64;
+
+  uint64_t carry = 0;
+  for (size_t table_word_idx = 0; table_word_idx < table_words; ++table_word_idx) {
+    const uint64_t table_word = table[table_word_idx];
+    uint64_t shifted          = table_word;
+    if (dst_bit_offset != 0) {
+      shifted = (table_word << dst_bit_offset) | carry;
+      carry   = table_word >> (64 - dst_bit_offset);
+    }
+    xor_dst_word(dst, dst_word_idx + table_word_idx, dst_bits, shifted & mask);
+  }
+
+  if (dst_bit_offset != 0) {
+    xor_dst_word(dst, dst_word_idx + table_words, dst_bits, carry & mask);
+  }
+}
+
+void bf2_poly_mul(uint8_t* dst, const uint8_t* src, size_t src_bits, const uint64_t* table,
+                  size_t table_bits) {
+  const size_t src_words = (src_bits + 63) / 64;
+  const size_t dst_bits  = src_bits + table_bits - 1;
+
+  for (size_t src_word_idx = 0; src_word_idx < src_words; ++src_word_idx) {
+    const uint64_t src_word      = load_src_word(src, src_word_idx, src_bits);
+    const size_t remaining_bits  = src_bits - src_word_idx * 64;
+    const size_t src_word_bits   = MIN(remaining_bits, 64);
+    const size_t dst_word_offset = src_word_idx;
+
+    for (size_t src_bit_idx = 0; src_bit_idx < src_word_bits; ++src_bit_idx) {
+      const uint64_t src_mask = -((src_word >> src_bit_idx) & 1);
+      xor_shifted_table(dst, dst_bits, table, table_bits, dst_word_offset * 64 + src_bit_idx,
+                        src_mask);
+    }
+  }
+}
+
+void bf2_poly_reduce(uint8_t* dst, const uint8_t* src, size_t src_bits, const uint64_t* table,
+                     size_t table_bits) {
+  size_t src_bytes = (src_bits + 7) / 8;
+  memcpy(dst, src, src_bytes);
+
+  for (size_t i = src_bits; i >= table_bits; --i) {
+    const uint64_t mask = -((uint64_t)ptr_get_bit(dst, i - 1));
+    const size_t shift  = i - table_bits;
+    xor_shifted_table(dst, src_bits, table, table_bits, shift, mask);
   }
 }

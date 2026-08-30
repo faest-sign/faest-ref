@@ -45,12 +45,14 @@ void aes256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key);
 void rijndael192_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key);
 void rijndael256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key);
 
+#if defined(FAEST_TESTS)
 void aes128_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext);
 void aes192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext);
 void aes256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                           uint8_t* ciphertext);
+#endif
 void rijndael192_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
                                uint8_t* ciphertext);
 void rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plaintext,
@@ -58,11 +60,10 @@ void rijndael256_encrypt_block(const aes_round_keys_t* key, const uint8_t* plain
 
 #if defined(FAEST_TESTS)
 void aes_increment_iv(uint8_t* iv);
-uint8_t invnorm(uint8_t in);
 #endif
 
-void aes_extend_witness(uint8_t* w, const uint8_t* key, const uint8_t* in,
-                        const faest_paramset_t* params);
+void aes_extend_witness_7(uint8_t* w, const uint8_t* key, const uint8_t* in,
+                          const faest_paramset_t* params);
 
 void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
                 unsigned int block_words, unsigned int num_rounds);

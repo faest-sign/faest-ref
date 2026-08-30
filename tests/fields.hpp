@@ -381,6 +381,12 @@ namespace {
       bf128_sum_poly_bits(&r.value, xs);
       return r;
     }
+
+    bf128 square() const {
+      bf128 r;
+      bf128_square(&r.value, &value);
+      return r;
+    }
   };
 
   static inline std::ostream& operator<<(std::ostream& stream, bf128 v) {
@@ -528,6 +534,12 @@ namespace {
     static bf192 sum_poly_bits(const uint8_t* xs) {
       bf192 r;
       bf192_sum_poly_bits(&r.value, xs);
+      return r;
+    }
+
+    bf192 square() const {
+      bf192 r;
+      bf192_square(&r.value, &value);
       return r;
     }
   };
@@ -683,6 +695,12 @@ namespace {
     static bf256 sum_poly_bits(const uint8_t* xs) {
       bf256 r;
       bf256_sum_poly_bits(&r.value, xs);
+      return r;
+    }
+
+    bf256 square() const {
+      bf256 r;
+      bf256_square(&r.value, &value);
       return r;
     }
   };
