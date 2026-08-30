@@ -1,11 +1,11 @@
-presets = ['128s', '128f', '192s', '192f', '256s', '256f', 'em_192s']
+presets = ['128s', '128f', '192s', '192f', '256s', '256f', 'em_192s', 'em_192f']
 tables = []
 
 boost = dependency('boost', required: false)
 if boost.found()
   generator = executable(
     'vole_mult_tables',
-    files('vole_mult_tables.cpp'),
+    files('vole_mult_tables.cpp') + [parameters_header],
     native: true,
     cpp_args: cpp_flags,
     dependencies: boost,

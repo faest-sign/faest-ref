@@ -5,6 +5,12 @@
 // TODO: This is a pretty direct translation from the Python script and should be cleaned up at some
 // point.
 
+#if defined(HAVE_CONFIG_H)
+#include <config.h>
+#endif
+
+#include "../parameters.h"
+
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/multiprecision/integer.hpp>
 
@@ -1488,9 +1494,14 @@ namespace {
   };
 
   const std::map<std::string, Preset> PRESETS = {
-      {"128s", {128, 11, 7}},    {"128f", {128, 16, 8}}, {"192s", {192, 16, 12}},
-      {"192f", {192, 24, 8}},    {"256s", {256, 22, 6}}, {"256f", {256, 32, 8}},
-      {"em_192s", {192, 16, 8}},
+      {"128s", {FAEST_128S_LAMBDA, FAEST_128S_TAU, FAEST_128S_W_GRIND}},
+      {"128f", {FAEST_128F_LAMBDA, FAEST_128F_TAU, FAEST_128F_W_GRIND}},
+      {"192s", {FAEST_192S_LAMBDA, FAEST_192S_TAU, FAEST_192S_W_GRIND}},
+      {"192f", {FAEST_192F_LAMBDA, FAEST_192F_TAU, FAEST_192F_W_GRIND}},
+      {"256s", {FAEST_256S_LAMBDA, FAEST_256S_TAU, FAEST_256S_W_GRIND}},
+      {"256f", {FAEST_256F_LAMBDA, FAEST_256F_TAU, FAEST_256F_W_GRIND}},
+      {"em_192s", {FAEST_EM_192S_LAMBDA, FAEST_EM_192S_TAU, FAEST_EM_192F_W_GRIND}},
+      {"em_192f", {FAEST_EM_192F_LAMBDA, FAEST_EM_192F_TAU, FAEST_EM_192S_W_GRIND}},
   };
 
   std::vector<std::pair<unsigned int, unsigned int>>

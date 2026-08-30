@@ -2045,7 +2045,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_matrix_mul_tbl_256s) {
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_matrix_mul_tbl_em_128f) {
-  namespace tv = crt_tvs_em_128f;
+  namespace tv = crt_tvs_128f;
 
   const auto& params = *faest_get_paramset(FAEST_EM_128F);
 
@@ -2056,7 +2056,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_matrix_mul_tbl_em_128f) {
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_matrix_mul_tbl_em_128s) {
-  namespace tv = crt_tvs_em_128s;
+  namespace tv = crt_tvs_128s;
 
   const auto& params = *faest_get_paramset(FAEST_EM_128S);
 
@@ -2089,7 +2089,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_matrix_mul_tbl_em_192s) {
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_matrix_mul_tbl_em_256f) {
-  namespace tv = crt_tvs_em_256f;
+  namespace tv = crt_tvs_256f;
 
   const auto& params = *faest_get_paramset(FAEST_EM_256F);
 
@@ -2100,7 +2100,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_matrix_mul_tbl_em_256f) {
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_matrix_mul_tbl_em_256s) {
-  namespace tv = crt_tvs_em_256s;
+  namespace tv = crt_tvs_256s;
 
   const auto& params = *faest_get_paramset(FAEST_EM_256S);
 

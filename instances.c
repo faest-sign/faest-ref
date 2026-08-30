@@ -13,6 +13,7 @@
 #include "tables/tables_192s.h"
 #include "tables/tables_192f.h"
 #include "tables/tables_em_192s.h"
+#include "tables/tables_em_192f.h"
 #include "tables/tables_256s.h"
 #include "tables/tables_256f.h"
 
@@ -100,7 +101,7 @@ const char* faest_get_param_name(faest_paramid_t paramid) {
 #define FAEST_EM_128S_PARAMS PARAMS(FAEST_EM_128S, FAEST_128S)
 #define FAEST_EM_128F_PARAMS PARAMS(FAEST_EM_128F, FAEST_128F)
 #define FAEST_EM_192S_PARAMS PARAMS(FAEST_EM_192S, FAEST_EM_192S)
-#define FAEST_EM_192F_PARAMS PARAMS(FAEST_EM_192F, FAEST_192F)
+#define FAEST_EM_192F_PARAMS PARAMS(FAEST_EM_192F, FAEST_EM_192F)
 #define FAEST_EM_256S_PARAMS PARAMS(FAEST_EM_256S, FAEST_256S)
 #define FAEST_EM_256F_PARAMS PARAMS(FAEST_EM_256F, FAEST_256F)
 
