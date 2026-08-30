@@ -37,7 +37,7 @@ if cc.get_id() != 'msvc'
   flags += ['-Wshadow', '-Wno-psabi']
   defines += '-D_GNU_SOURCE'
 
-  if get_option('march-native').enabled()
+  if get_option('march-native').enabled() and get_option('buildtype') != 'debug'
     flags += ['-march=native', '-O3']
   endif
   # we need fat LTO objects for linking with the static libraries
