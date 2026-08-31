@@ -214,7 +214,7 @@ static inline void masked_xor_u8_array_64(uint8_t* out, const uint8_t* a, const 
     memcpy(out, &lhs, sizeof(lhs));
   }
 
-  masked_xor_small_u8_array(out, a, b, mask_bit, len - blocks * sizeof(__m256i));
+  masked_xor_small_u8_array(out, a, b, mask_bit, len - blocks * sizeof(uint64_t));
 }
 
 void xor_u8_array(uint8_t* out, const uint8_t* a, const uint8_t* b, size_t len) {
