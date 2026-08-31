@@ -73,56 +73,66 @@ bool decode_all_chall_3(uint16_t* decoded_chall, const uint8_t* chall,
 }
 
 #if defined(HAVE_AVX2)
-ATTR_TARGET_AVX2 static inline size_t xor_u8_array_256(uint8_t* out, const uint8_t* a,
-                                                       const uint8_t* b, size_t len) {
+ATTR_TARGET_AVX2 static inline void xor_u8_array_256(uint8_t* out, const uint8_t* a,
+                                                     const uint8_t* b, size_t len) {
   const size_t blocks = len / sizeof(__m256i);
-  const __m256i_u* pa = (const __m256i_u*)a;
-  const __m256i_u* pb = (const __m256i_u*)b;
-  __m256i_u* pout     = (__m256i_u*)out;
-  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pb, ++pout) {
+  for (size_t idx = 0; idx != blocks;
+       ++idx, a += sizeof(__m256i), b += sizeof(__m256i), out += sizeof(__m256i)) {
+    const __m256i_u* pa = (const __m256i_u*)a;
+    const __m256i_u* pb = (const __m256i_u*)b;
+    __m256i_u* pout     = (__m256i_u*)out;
+
     _mm256_storeu_si256(pout, _mm256_xor_si256(_mm256_loadu_si256(pa), _mm256_loadu_si256(pb)));
   }
-  return blocks * sizeof(__m256i);
+
+  xor_small_u8_array(out, a, b, len - blocks * sizeof(__m256i));
 }
 
-ATTR_TARGET_AVX2 static inline size_t xor_u8_array_inplace_256(uint8_t* out, const uint8_t* a,
-                                                               size_t len) {
+ATTR_TARGET_AVX2 static inline void xor_u8_array_inplace_256(uint8_t* out, const uint8_t* a,
+                                                             size_t len) {
   const size_t blocks = len / sizeof(__m256i);
-  const __m256i_u* pa = (const __m256i_u*)a;
-  __m256i_u* pout     = (__m256i_u*)out;
-  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pout) {
+  for (size_t idx = 0; idx != blocks; ++idx, a += sizeof(__m256i), out += sizeof(__m256i)) {
+    const __m256i_u* pa = (const __m256i_u*)a;
+    __m256i_u* pout     = (__m256i_u*)out;
+
     _mm256_storeu_si256(pout, _mm256_xor_si256(_mm256_loadu_si256(pout), _mm256_loadu_si256(pa)));
   }
-  return blocks * sizeof(__m256i);
+
+  xor_small_u8_array_inplace(out, a, len - blocks * sizeof(__m256i));
 }
 #endif
 
 #if defined(HAVE_SSE2)
-ATTR_TARGET_SSE2 static inline size_t xor_u8_array_128(uint8_t* out, const uint8_t* a,
-                                                       const uint8_t* b, size_t len) {
+ATTR_TARGET_SSE2 static inline void xor_u8_array_128(uint8_t* out, const uint8_t* a,
+                                                     const uint8_t* b, size_t len) {
   const size_t blocks = len / sizeof(__m128i);
-  const __m128i_u* pa = (const __m128i_u*)a;
-  const __m128i_u* pb = (const __m128i_u*)b;
-  __m128i_u* pout     = (__m128i_u*)out;
-  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pb, ++pout) {
+  for (size_t idx = 0; idx != blocks;
+       ++idx, a += sizeof(__m128i), b += sizeof(__m128i), out += sizeof(__m128i)) {
+    const __m128i_u* pa = (const __m128i_u*)a;
+    const __m128i_u* pb = (const __m128i_u*)b;
+    __m128i_u* pout     = (__m128i_u*)out;
+
     _mm_storeu_si128(pout, _mm_xor_si128(_mm_loadu_si128(pa), _mm_loadu_si128(pb)));
   }
-  return blocks * sizeof(__m128i);
+
+  xor_small_u8_array(out, a, b, len - blocks * sizeof(__m128i));
 }
 
-ATTR_TARGET_SSE2 static inline size_t xor_u8_array_inplace_128(uint8_t* out, const uint8_t* a,
-                                                               size_t len) {
+ATTR_TARGET_SSE2 static inline void xor_u8_array_inplace_128(uint8_t* out, const uint8_t* a,
+                                                             size_t len) {
   const size_t blocks = len / sizeof(__m128i);
-  const __m128i_u* pa = (const __m128i_u*)a;
-  __m128i_u* pout     = (__m128i_u*)out;
-  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pout) {
+  for (size_t idx = 0; idx != blocks; ++idx, a += sizeof(__m128i), out += sizeof(__m128i)) {
+    const __m128i_u* pa = (const __m128i_u*)a;
+    __m128i_u* pout     = (__m128i_u*)out;
+
     _mm_storeu_si128(pout, _mm_xor_si128(_mm_loadu_si128(pout), _mm_loadu_si128(pa)));
   }
-  return blocks * sizeof(__m128i);
+
+  xor_small_u8_array_inplace(out, a, len - blocks * sizeof(__m128i));
 }
 #endif
 
-static inline size_t xor_u8_array_64(uint8_t* out, const uint8_t* a, const uint8_t* b, size_t len) {
+static inline void xor_u8_array_64(uint8_t* out, const uint8_t* a, const uint8_t* b, size_t len) {
   const size_t blocks = len / sizeof(uint64_t);
   for (size_t idx = 0; idx != blocks;
        ++idx, a += sizeof(uint64_t), b += sizeof(uint64_t), out += sizeof(uint64_t)) {
@@ -133,10 +143,11 @@ static inline size_t xor_u8_array_64(uint8_t* out, const uint8_t* a, const uint8
     lhs ^= rhs;
     memcpy(out, &lhs, sizeof(lhs));
   }
-  return blocks * sizeof(uint64_t);
+
+  xor_small_u8_array(out, a, b, len - blocks * sizeof(uint64_t));
 }
 
-static inline size_t xor_u8_array_inplace_64(uint8_t* out, const uint8_t* a, size_t len) {
+static inline void xor_u8_array_inplace_64(uint8_t* out, const uint8_t* a, size_t len) {
   const size_t blocks = len / sizeof(uint64_t);
   for (size_t idx = 0; idx != blocks; ++idx, a += sizeof(uint64_t), out += sizeof(uint64_t)) {
     uint64_t lhs;
@@ -146,45 +157,51 @@ static inline size_t xor_u8_array_inplace_64(uint8_t* out, const uint8_t* a, siz
     lhs ^= rhs;
     memcpy(out, &lhs, sizeof(lhs));
   }
-  return blocks * sizeof(uint64_t);
+
+  xor_small_u8_array_inplace(out, a, len - blocks * sizeof(uint64_t));
 }
 
 #if defined(HAVE_AVX2)
-ATTR_TARGET_AVX2 static inline size_t masked_xor_u8_array_256(uint8_t* out, const uint8_t* a,
-                                                              const uint8_t* b, uint8_t mask_bit,
-                                                              size_t len) {
+ATTR_TARGET_AVX2 static inline void masked_xor_u8_array_256(uint8_t* out, const uint8_t* a,
+                                                            const uint8_t* b, uint8_t mask_bit,
+                                                            size_t len) {
   const size_t blocks = len / sizeof(__m256i);
-  const __m256i_u* pa = (const __m256i_u*)a;
-  const __m256i_u* pb = (const __m256i_u*)b;
-  __m256i_u* pout     = (__m256i_u*)out;
   const __m256i mask  = _mm256_set1_epi64x(-(uint64_t)mask_bit);
-  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pb, ++pout) {
+  for (size_t idx = 0; idx != blocks;
+       ++idx, a += sizeof(__m256i), b += sizeof(__m256i), out += sizeof(__m256i)) {
+    const __m256i_u* pa = (const __m256i_u*)a;
+    const __m256i_u* pb = (const __m256i_u*)b;
+    __m256i_u* pout     = (__m256i_u*)out;
     _mm256_storeu_si256(pout, _mm256_xor_si256(_mm256_loadu_si256(pa),
                                                _mm256_and_si256(_mm256_loadu_si256(pb), mask)));
   }
-  return blocks * sizeof(__m256i);
+
+  masked_xor_small_u8_array(out, a, b, mask_bit, len - blocks * sizeof(__m256i));
 }
 #endif
 
 #if defined(HAVE_SSE2)
-ATTR_TARGET_SSE2 static inline size_t masked_xor_u8_array_128(uint8_t* out, const uint8_t* a,
-                                                              const uint8_t* b, uint8_t mask_bit,
-                                                              size_t len) {
+ATTR_TARGET_SSE2 static inline void masked_xor_u8_array_128(uint8_t* out, const uint8_t* a,
+                                                            const uint8_t* b, uint8_t mask_bit,
+                                                            size_t len) {
   const size_t blocks = len / sizeof(__m128i);
-  const __m128i_u* pa = (const __m128i_u*)a;
-  const __m128i_u* pb = (const __m128i_u*)b;
-  __m128i_u* pout     = (__m128i_u*)out;
   const __m128i mask  = _mm_set1_epi64x(-(uint64_t)mask_bit);
-  for (size_t idx = 0; idx != blocks; ++idx, ++pa, ++pb, ++pout) {
+  for (size_t idx = 0; idx != blocks;
+       ++idx, a += sizeof(__m128i), b += sizeof(__m128i), out += sizeof(__m128i)) {
+    const __m128i_u* pa = (const __m128i_u*)a;
+    const __m128i_u* pb = (const __m128i_u*)b;
+    __m128i_u* pout     = (__m128i_u*)out;
+
     _mm_storeu_si128(pout,
                      _mm_xor_si128(_mm_loadu_si128(pa), _mm_and_si128(_mm_loadu_si128(pb), mask)));
   }
-  return blocks * sizeof(__m128i);
+
+  masked_xor_small_u8_array(out, a, b, mask_bit, len - blocks * sizeof(__m128i));
 }
 #endif
 
-static inline size_t masked_xor_u8_array_64(uint8_t* out, const uint8_t* a, const uint8_t* b,
-                                            uint8_t mask_bit, size_t len) {
+static inline void masked_xor_u8_array_64(uint8_t* out, const uint8_t* a, const uint8_t* b,
+                                          uint8_t mask_bit, size_t len) {
   const size_t blocks = len / sizeof(uint64_t);
   const uint64_t mask = -(uint64_t)mask_bit;
   for (size_t idx = 0; idx != blocks;
@@ -196,36 +213,28 @@ static inline size_t masked_xor_u8_array_64(uint8_t* out, const uint8_t* a, cons
     lhs ^= rhs & mask;
     memcpy(out, &lhs, sizeof(lhs));
   }
-  return blocks * sizeof(uint64_t);
+
+  masked_xor_small_u8_array(out, a, b, mask_bit, len - blocks * sizeof(__m256i));
 }
 
 void xor_u8_array(uint8_t* out, const uint8_t* a, const uint8_t* b, size_t len) {
 #if defined(HAVE_AVX2)
-  if (len >= sizeof(__m256i) && CPU_SUPPORTS_AVX2) {
-    size_t offset = xor_u8_array_256(out, a, b, len);
-    out += offset;
-    a += offset;
-    b += offset;
-    len -= offset;
+  if (CPU_SUPPORTS_AVX2) {
+    xor_u8_array_256(out, a, b, len);
+    return;
   }
 #endif
 
 #if defined(HAVE_SSE2)
-  if (len >= sizeof(__m128i) && CPU_SUPPORTS_SSE2) {
-    size_t offset = xor_u8_array_128(out, a, b, len);
-    out += offset;
-    a += offset;
-    b += offset;
-    len -= offset;
+  if (CPU_SUPPORTS_SSE2) {
+    xor_u8_array_128(out, a, b, len);
+    return;
   }
 #endif
 
   if (len >= sizeof(uint64_t)) {
-    size_t offset = xor_u8_array_64(out, a, b, len);
-    out += offset;
-    a += offset;
-    b += offset;
-    len -= offset;
+    xor_u8_array_64(out, a, b, len);
+    return;
   }
 
   for (size_t i = 0; i < len; i++) {
@@ -235,28 +244,22 @@ void xor_u8_array(uint8_t* out, const uint8_t* a, const uint8_t* b, size_t len) 
 
 void xor_u8_array_inplace(uint8_t* out, const uint8_t* a, size_t len) {
 #if defined(HAVE_AVX2)
-  if (len >= sizeof(__m256i) && CPU_SUPPORTS_AVX2) {
-    size_t offset = xor_u8_array_inplace_256(out, a, len);
-    out += offset;
-    a += offset;
-    len -= offset;
+  if (CPU_SUPPORTS_AVX2) {
+    xor_u8_array_inplace_256(out, a, len);
+    return;
   }
 #endif
 
 #if defined(HAVE_SSE2)
-  if (len >= sizeof(__m128i) && CPU_SUPPORTS_SSE2) {
-    size_t offset = xor_u8_array_inplace_128(out, a, len);
-    out += offset;
-    a += offset;
-    len -= offset;
+  if (CPU_SUPPORTS_SSE2) {
+    xor_u8_array_inplace_128(out, a, len);
+    return;
   }
 #endif
 
   if (len >= sizeof(uint64_t)) {
-    size_t offset = xor_u8_array_inplace_64(out, a, len);
-    out += offset;
-    a += offset;
-    len -= offset;
+    xor_u8_array_inplace_64(out, a, len);
+    return;
   }
 
   for (size_t i = 0; i < len; i++) {
@@ -268,34 +271,25 @@ void masked_xor_u8_array(uint8_t* out, const uint8_t* a, const uint8_t* b, uint8
                          size_t len) {
   mask_bit &= 1u;
 #if defined(HAVE_AVX2)
-  if (len >= sizeof(__m256i) && CPU_SUPPORTS_AVX2) {
-    size_t offset = masked_xor_u8_array_256(out, a, b, mask_bit, len);
-    out += offset;
-    a += offset;
-    b += offset;
-    len -= offset;
+  if (CPU_SUPPORTS_AVX2) {
+    masked_xor_u8_array_256(out, a, b, mask_bit, len);
+    return;
   }
 #endif
 
 #if defined(HAVE_SSE2)
-  if (len >= sizeof(__m128i) && CPU_SUPPORTS_SSE2) {
-    size_t offset = masked_xor_u8_array_128(out, a, b, mask_bit, len);
-    out += offset;
-    a += offset;
-    b += offset;
-    len -= offset;
+  if (CPU_SUPPORTS_SSE2) {
+    masked_xor_u8_array_128(out, a, b, mask_bit, len);
+    return;
   }
 #endif
 
   if (len >= sizeof(uint64_t)) {
-    size_t offset = masked_xor_u8_array_64(out, a, b, mask_bit, len);
-    out += offset;
-    a += offset;
-    b += offset;
-    len -= offset;
+    masked_xor_u8_array_64(out, a, b, mask_bit, len);
+    return;
   }
 
-  uint8_t mask = -mask_bit;
+  const uint8_t mask = -mask_bit;
   for (size_t i = 0; i < len; i++) {
     out[i] = a[i] ^ (b[i] & mask);
   }

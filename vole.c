@@ -250,7 +250,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     H5(h_e_one, iv, e, L_e_one, lambda);
 
     // line 26
-    xor_u8_array(c_mult_diff[e], v_tilde[e], h_e_one, N_MASK_BYTES);
+    xor_small_u8_array(c_mult_diff[e], v_tilde[e], h_e_one, N_MASK_BYTES);
   }
   free_pointer_array(&V);
 
@@ -447,7 +447,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     H5(h_e, iv, e, L_e_prime, lambda);
 
     // line 27
-    masked_xor_u8_array(q_tilde[e], h_e, c_mult_by_e[e], gamma_e, N_MASK_BYTES);
+    masked_xor_small_u8_array(q_tilde[e], h_e, c_mult_by_e[e], gamma_e, N_MASK_BYTES);
   }
   free_pointer_array(&Q);
   free_pointer_array(&c_mult_by_e);

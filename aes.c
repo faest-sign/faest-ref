@@ -66,7 +66,7 @@ static inline void aes_increment_iv(uint8_t* iv)
 static void add_round_key(unsigned int round, aes_block_t state, const aes_round_keys_t* round_key,
                           unsigned int block_words) {
   for (unsigned int c = 0; c < block_words; c++) {
-    xor_u8_array_inplace(&state[c][0], &round_key->round_keys[round][c][0], AES_NR);
+    xor_small_u8_array_inplace(&state[c][0], &round_key->round_keys[round][c][0], AES_NR);
   }
 }
 
@@ -162,8 +162,8 @@ void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int k
     }
 
     const unsigned int m = k - key_words;
-    xor_u8_array(round_keys->round_keys[k / block_words][k % block_words],
-                 round_keys->round_keys[m / block_words][m % block_words], tmp, 4);
+    xor_small_u8_array(round_keys->round_keys[k / block_words][k % block_words],
+                       round_keys->round_keys[m / block_words][m % block_words], tmp, 4);
   }
 }
 
