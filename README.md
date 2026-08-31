@@ -6,7 +6,7 @@ specification version 3.0.
 ## Dependencies
 
 For building:
-* `meson` version 0.64 or newer
+* `meson` version 1 or newer
 * `ninja` (depending on the build system generator selected via `meson`)
 
 For tests (all optional):
