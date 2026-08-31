@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 3.0.0 -- 2026-08-XX
+## Version 3.0.0 -- 2026-08-31
 
 * Update to version 3.0 of FAEST specification (#18).
 
