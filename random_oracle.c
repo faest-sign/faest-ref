@@ -21,18 +21,12 @@ void H0_update(H0_context_t* ctx, const uint8_t* src, size_t len) {
   hash_update(ctx, src, len);
 }
 
-void H0_final_for_squeeze(H0_context_t* ctx) {
+void H0_final(H0_context_t* ctx, uint8_t* dst, size_t len) {
   const uint8_t domain_sep_H0 = 0;
   hash_update(ctx, &domain_sep_H0, sizeof(domain_sep_H0));
   hash_final(ctx);
-}
-
-void H0_squeeze(H0_context_t* H0_ctx, uint8_t* dst, size_t len) {
-  hash_squeeze(H0_ctx, dst, len);
-}
-
-void H0_clear(H0_context_t* H0_ctx) {
-  hash_clear(H0_ctx);
+  hash_squeeze(ctx, dst, len);
+  hash_clear(ctx);
 }
 
 // H_1

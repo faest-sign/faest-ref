@@ -16,10 +16,7 @@ typedef hash_context H0_context_t;
 
 void H0_init(H0_context_t* H0_ctx, unsigned int security_param);
 void H0_update(H0_context_t* H0_ctx, const uint8_t* src, size_t len);
-void H0_final_for_squeeze(H0_context_t* H0_ctx);
-// only for use with H0_final_for_squeeze
-void H0_squeeze(H0_context_t* H0_ctx, uint8_t* dst, size_t len);
-void H0_clear(H0_context_t* H0_ctx);
+void H0_final(H0_context_t* H0_ctx, uint8_t* dst, size_t len);
 
 // implementation of H_1
 
