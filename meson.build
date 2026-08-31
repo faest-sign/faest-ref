@@ -205,7 +205,6 @@ conf_data.set(
 # After changing the parameter sets, be sure to run crypto_sign_generator.py to create the corresponding meson files.
 parameter_sets = []
 
-# TODO: Recheck the parameters again after switching to deg-7
 # parameter set: FAEST-128s
 param_128s = configuration_data()
 param_128s.set('PARAM', '128S')
