@@ -156,9 +156,7 @@ fi
 
 mkdir -p "${BUILD_DIR}"
 
-pushd "${BUILD_DIR}"
-meson setup .. --reconfigure --buildtype release -Dbenchmarks=enabled -Dcatch2=enabled -Dmarch-native=enabled $flags >&2
-popd
+meson setup "${BUILD_DIR}" --reconfigure --buildtype release -Dbenchmarks=enabled -Dcatch2=enabled -Dmarch-native=enabled $flags >&2
 
 echo "[" > "${JSON}"
 bench_spec_variants
