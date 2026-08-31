@@ -45,23 +45,19 @@ def generate(
     build_param = build_root / f"{param_name}"
     for build_source in ("crypto_sign.c", "crypto_sign.h", "api.h"):
         shutil.copy(build_param / build_source, target)
-    for table_source in table_sources.glob("*.[ch]"):
+    for table_source in table_sources.glob("*.h"):
         shutil.copy(table_source, target_tables)
 
     # copy sha3 sources
-    for source in sha3_sources.glob("*.c"):
+    for source in sha3_sources.glob("*.[ch]"):
         shutil.copy(source, target_sha3)
-    for header in sha3_sources.glob("*.h"):
-        shutil.copy(header, target_sha3)
     for source in sha3_sources.glob("*.macros"):
         shutil.copy(source, target_sha3)
     for source in sha3_sources.glob("*.inc"):
         shutil.copy(source, target_sha3)
     sha3_sources = sha3_sources / "opt64"
-    for source in sha3_sources.glob("*.c"):
+    for source in sha3_sources.glob("*.[ch]"):
         shutil.copy(source, target_sha3)
-    for header in sha3_sources.glob("*.h"):
-        shutil.copy(header, target_sha3)
     for source in sha3_sources.glob("*.macros"):
         shutil.copy(source, target_sha3)
     for source in sha3_sources.glob("*.inc"):
