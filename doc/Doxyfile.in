@@ -17,8 +17,8 @@ WARN_IF_UNDOCUMENTED = YES
 
 # Input files
 INPUT         = @DOXYGEN_INPUT@ @DOXYGEN_OUTPUT@/..
-FILE_PATTERNS = faest_*.h
-EXCLUDE       = @DOXYGEN_INPUT@/faest_aes.h
+FILE_PATTERNS = faest_*.h feast.h
+EXCLUDE       = @DOXYGEN_INPUT@/faest_aes.h @DOXYGEN_INPUT@/faest_impl.h
 RECURSIVE     = NO
 
 # Output files
