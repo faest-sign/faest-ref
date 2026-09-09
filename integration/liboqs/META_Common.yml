@@ -1,0 +1,5 @@
+commons:
+  - name: faest_common
+    folder_name: .
+    sources: aes.c bavc.c compat.c faest_impl.c fields.c instances.c owf.c random_oracle.c randomness.c universal_hashing.c utils.c vole.c integration/liboqs/generated/config.h integration/liboqs/generated/parameters.h integration/liboqs/generated/faest_aes_128.c integration/liboqs/generated/faest_aes_192.c integration/liboqs/generated/faest_aes_256.c tables/pregenerated/tables_128s.h tables/pregenerated/tables_128f.h tables/pregenerated/tables_192s.h tables/pregenerated/tables_192f.h tables/pregenerated/tables_em_192s.h tables/pregenerated/tables_em_192f.h tables/pregenerated/tables_256s.h tables/pregenerated/tables_256f.h aes.h aesni.h bavc.h compat.h cpu.h endian_compat.h faest.h faest_aes.h faest_defines.h faest_impl.h fields.h hash_shake.h instances.h macros.h owf.h random_oracle.h randomness.h universal_hashing.h utils.h vole.h
+    include_only: true
