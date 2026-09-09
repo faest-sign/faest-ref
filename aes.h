@@ -13,6 +13,8 @@
 
 #if defined(HAVE_OPENSSL)
 #include <openssl/evp.h>
+#elif defined(OQS)
+#include <oqs/aes.h>
 #elif defined(_WIN32)
 #include <windows.h>
 #endif
@@ -78,6 +80,10 @@ void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
 typedef struct {
 #if defined(HAVE_OPENSSL)
   EVP_CIPHER_CTX* ctx;
+#elif defined(OQS)
+  void* sched;
+  aes_round_keys_t round_keys;
+  unsigned int seclvl;
 #elif defined(_WIN32)
   BCRYPT_ALG_HANDLE aes_handle;
   BCRYPT_KEY_HANDLE key_handle;
