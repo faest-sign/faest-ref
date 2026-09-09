@@ -93,11 +93,11 @@ static inline void hash_init(hash_context* ctx, unsigned int security_param) {
 static inline void hash_copy(hash_context* dst, const hash_context* src) {
   if (!src->shake256) {
     OQS_SHA3_shake128_inc_init(&dst->shake128_ctx);
-    OQS_SHA3_shake128_inc_ctx_clone(&dst->shake128_ctx, src->shake128_ctx);
+    OQS_SHA3_shake128_inc_ctx_clone(&dst->shake128_ctx, &src->shake128_ctx);
     dst->shake256 = 0;
   } else {
     OQS_SHA3_shake256_inc_init(&dst->shake256_ctx);
-    OQS_SHA3_shake256_inc_ctx_clone(&dst->shake256_ctx, src->shake256_ctx);
+    OQS_SHA3_shake256_inc_ctx_clone(&dst->shake256_ctx, &src->shake256_ctx);
     dst->shake256 = 1;
   }
 }
