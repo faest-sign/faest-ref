@@ -27,7 +27,7 @@
 
 #include "compat.h"
 
-#if !defined(HAVE_ALIGNED_ALLOC)
+#if !defined(HAVE_ALIGNED_ALLOC) && !defined(OQS)
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -109,7 +109,7 @@ void faest_aligned_free(void* ptr) {
 }
 #endif /* HAVE_ALIGNED_ALLOC */
 
-#if !defined(HAVE_TIMINGSAFE_BCMP)
+#if !defined(HAVE_TIMINGSAFE_BCMP) && !defined(OQS)
 int faest_timingsafe_bcmp(const void* a, const void* b, size_t len) {
 #if defined(HAVE_CONSTTIME_MEMEQUAL)
   return !consttime_memequal(a, b, len);
@@ -126,7 +126,7 @@ int faest_timingsafe_bcmp(const void* a, const void* b, size_t len) {
 }
 #endif /* HAVE_TIMINGSAFE_BCMP */
 
-#if !defined(HAVE_EXPLICIT_BZERO)
+#if !defined(HAVE_EXPLICIT_BZERO) && !defined(OQS)
 #if defined(_WIN32)
 #include <windows.h>
 #endif
