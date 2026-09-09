@@ -8,6 +8,16 @@
 
 #include "instances.h"
 #include "parameters.h"
+#if defined(FAEST_LIBOQS_BUILD)
+#include "tables_128s.h"
+#include "tables_128f.h"
+#include "tables_192s.h"
+#include "tables_192f.h"
+#include "tables_em_192s.h"
+#include "tables_em_192f.h"
+#include "tables_256s.h"
+#include "tables_256f.h"
+#else
 #include "tables/tables_128s.h"
 #include "tables/tables_128f.h"
 #include "tables/tables_192s.h"
@@ -16,6 +26,7 @@
 #include "tables/tables_em_192f.h"
 #include "tables/tables_256s.h"
 #include "tables/tables_256f.h"
+#endif
 
 #if defined(FAEST_TESTS)
 const char* faest_get_param_name(faest_paramid_t paramid) {
