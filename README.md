@@ -70,3 +70,16 @@ implementation is `openssl` if available.
 The SHA3 implementation does not peform runtime dispatching based on the
 available CPU features. If, however, the target is known to support AVX2, `avx2`
 is the recommended implementation on x86-64.
+
+## liboqs integration
+
+Upstream integration artifacts for
+[liboqs](https://github.com/open-quantum-safe/liboqs) live under
+`integration/liboqs/`. See `integration/liboqs/SUPPORT.md` for details.
+
+Regenerate the liboqs metadata and pre-generated sources after changing
+parameter sets or templates:
+
+```sh
+python3 integration/liboqs/generate.py
+```
