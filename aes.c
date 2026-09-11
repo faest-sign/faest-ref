@@ -1053,12 +1053,14 @@ int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int
   if (seclvl == 256) {
     OQS_AES256_ECB_load_schedule(key, &ctx->sched);
   } else if (seclvl == 192) {
-    aes192_init_round_keys(&ctx->round_keys, key);
+    if (OQS_AES192_ECB_load_schedule(key, &ctx->sched) != OQS_SUCCESS) {
+      aes192_init_round_keys(&ctx->round_keys, key);
+    }
   } else {
     OQS_AES128_ECB_load_schedule(key, &ctx->sched);
   }
 
-  if (seclvl == 192) {
+  if (seclvl == 192 && ctx->sched == NULL) {
     return 0;
   }
   return ctx->sched ? 0 : -1;
@@ -1072,6 +1074,11 @@ int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const u
 
   const size_t nbytes = blocks * IV_SIZE;
   if (ctx->seclvl == 192) {
+    if (ctx->sched != NULL) {
+      return OQS_AES192_ECB_enc_sch(plaintext, nbytes, ctx->sched, ciphertext) == OQS_SUCCESS
+                 ? 0
+                 : -1;
+    }
     for (; blocks; --blocks, plaintext += IV_SIZE, ciphertext += IV_SIZE) {
       aes_block_t state;
       load_state(state, plaintext, AES_BLOCK_WORDS);
@@ -1099,6 +1106,11 @@ void generic_aes_ecb_free(generic_aes_ecb_t* ctx) {
   }
 
   if (ctx->seclvl == 192) {
+    if (ctx->sched != NULL) {
+      OQS_AES192_free_schedule(ctx->sched);
+      ctx->sched = NULL;
+      return;
+    }
     faest_explicit_bzero(&ctx->round_keys, sizeof(ctx->round_keys));
     return;
   }
