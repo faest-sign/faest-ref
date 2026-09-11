@@ -82,7 +82,6 @@ typedef struct {
   EVP_CIPHER_CTX* ctx;
 #elif defined(OQS)
   void* sched;
-  aes_round_keys_t round_keys;
   unsigned int seclvl;
 #elif defined(_WIN32)
   BCRYPT_ALG_HANDLE aes_handle;
