@@ -1047,63 +1047,57 @@ int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int
 
   ctx->seclvl = seclvl;
   ctx->sched  = NULL;
-  if (seclvl == 256) {
+  switch (seclvl) {
+  case 256:
     OQS_AES256_ECB_load_schedule(key, &ctx->sched);
-  } else if (seclvl == 192) {
-    aes192_init_round_keys(&ctx->round_keys, key);
-  } else {
+    break;
+  case 192:
+    OQS_AES192_ECB_load_schedule(key, &ctx->sched);
+    break;
+  default:
     OQS_AES128_ECB_load_schedule(key, &ctx->sched);
+    break;
   }
 
-  if (seclvl == 192) {
-    return 0;
-  }
   return ctx->sched ? 0 : -1;
 }
 
 int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext,
                             size_t blocks) {
-  if (!ctx || !ciphertext || !plaintext) {
+  if (!ctx || !ciphertext || !plaintext || !ctx->sched) {
     return -1;
   }
 
   const size_t nbytes = blocks * IV_SIZE;
-  if (ctx->seclvl == 192) {
-    for (; blocks; --blocks, plaintext += IV_SIZE, ciphertext += IV_SIZE) {
-      aes_block_t state;
-      load_state(state, plaintext, AES_BLOCK_WORDS);
-      aes_encrypt(&ctx->round_keys, state, AES_BLOCK_WORDS, AES_ROUNDS_192);
-      store_state(ciphertext, state, AES_BLOCK_WORDS);
-    }
-    return 0;
-  }
-
-  if (!ctx->sched) {
-    return -1;
-  }
-
-  if (ctx->seclvl == 256) {
+  switch (ctx->seclvl) {
+  case 256:
     OQS_AES256_ECB_enc_sch(plaintext, nbytes, ctx->sched, ciphertext);
-  } else {
+    break;
+  case 192:
+    OQS_AES192_ECB_enc_sch(plaintext, nbytes, ctx->sched, ciphertext);
+    break;
+  default:
     OQS_AES128_ECB_enc_sch(plaintext, nbytes, ctx->sched, ciphertext);
+    break;
   }
   return 0;
 }
 
 void generic_aes_ecb_free(generic_aes_ecb_t* ctx) {
-  if (!ctx) {
+  if (!ctx || !ctx->sched) {
     return;
   }
 
-  if (ctx->seclvl == 192) {
-    faest_explicit_bzero(&ctx->round_keys, sizeof(ctx->round_keys));
-    return;
-  }
-
-  if (ctx->seclvl == 256) {
+  switch (ctx->seclvl) {
+  case 256:
     OQS_AES256_free_schedule(ctx->sched);
-  } else {
+    break;
+  case 192:
+    OQS_AES192_free_schedule(ctx->sched);
+    break;
+  default:
     OQS_AES128_free_schedule(ctx->sched);
+    break;
   }
   ctx->sched = NULL;
 }
