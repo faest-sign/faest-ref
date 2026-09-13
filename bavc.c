@@ -44,7 +44,7 @@ static uint8_t* generate_seeds(const uint8_t* root_seed, const uint8_t* iv,
 // FAEST.LeafCommit
 static inline void faest_leaf_commit_128(uint8_t* sd, uint8_t* com, const uint8_t* key,
                                          const uint8_t* iv, uint32_t tweak, const uint8_t* uhash) {
-  uint8_t buffer[FAEST_128_LAMBDA / 8 * 4];
+  ATTR_ALIGNED(16) uint8_t buffer[FAEST_128_LAMBDA / 8 * 4];
   prg_4_lambda(key, iv, tweak, buffer, FAEST_128_LAMBDA);
   leaf_hash_128(com, uhash, buffer);
   memcpy(sd, buffer, FAEST_128_LAMBDA / 8);
@@ -52,7 +52,7 @@ static inline void faest_leaf_commit_128(uint8_t* sd, uint8_t* com, const uint8_
 
 static inline void faest_leaf_commit_192(uint8_t* sd, uint8_t* com, const uint8_t* key,
                                          const uint8_t* iv, uint32_t tweak, const uint8_t* uhash) {
-  uint8_t buffer[FAEST_192_LAMBDA / 8 * 4];
+  ATTR_ALIGNED(16) uint8_t buffer[FAEST_192_LAMBDA / 8 * 4];
   prg_4_lambda(key, iv, tweak, buffer, FAEST_192_LAMBDA);
   leaf_hash_192(com, uhash, buffer);
   memcpy(sd, buffer, FAEST_192_LAMBDA / 8);
@@ -60,7 +60,7 @@ static inline void faest_leaf_commit_192(uint8_t* sd, uint8_t* com, const uint8_
 
 static inline void faest_leaf_commit_256(uint8_t* sd, uint8_t* com, const uint8_t* key,
                                          const uint8_t* iv, uint32_t tweak, const uint8_t* uhash) {
-  uint8_t buffer[FAEST_256_LAMBDA / 8 * 4];
+  ATTR_ALIGNED(16) uint8_t buffer[FAEST_256_LAMBDA / 8 * 4];
   prg_4_lambda(key, iv, tweak, buffer, FAEST_256_LAMBDA);
   leaf_hash_256(com, uhash, buffer);
   memcpy(sd, buffer, FAEST_256_LAMBDA / 8);

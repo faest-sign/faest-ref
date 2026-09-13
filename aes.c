@@ -125,20 +125,15 @@ static void sub_words(bf8_t* words) {
   words[3] = compute_sbox(words[3]);
 }
 
-static void rot_word(bf8_t* words) {
-#if 0
-  bf8_t tmp = words[0];
-  words[0]  = words[1];
-  words[1]  = words[2];
-  words[2]  = words[3];
-  words[3]  = tmp;
-#else
-  // in the most ideal case, this generates a simple rord instruction
+static inline void rot_word(bf8_t* words) {
   uint32_t w;
   memcpy(&w, words, sizeof(w));
+#if defined(FAEST_IS_LITTLE_ENDIAN)
+  w = rotr32(w, 8);
+#else
   w = htole32(rotr32(le32toh(w), 8));
-  memcpy(words, &w, sizeof(w));
 #endif
+  memcpy(words, &w, sizeof(w));
 }
 
 void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
@@ -340,10 +335,10 @@ ATTR_TARGET_AESNI static void prg_4_aesni_128(const uint8_t* key, const uint8_t*
     temp[2] = _mm_aesenc_si128(temp[2], rk[round]);
     temp[3] = _mm_aesenc_si128(temp[3], rk[round]);
   }
-  _mm_storeu_si128((__m128i_u*)out, _mm_aesenclast_si128(temp[0], rk[AES_ROUNDS_128]));
-  _mm_storeu_si128((__m128i_u*)out + 1, _mm_aesenclast_si128(temp[1], rk[AES_ROUNDS_128]));
-  _mm_storeu_si128((__m128i_u*)out + 2, _mm_aesenclast_si128(temp[2], rk[AES_ROUNDS_128]));
-  _mm_storeu_si128((__m128i_u*)out + 3, _mm_aesenclast_si128(temp[3], rk[AES_ROUNDS_128]));
+  _mm_store_si128((__m128i*)out, _mm_aesenclast_si128(temp[0], rk[AES_ROUNDS_128]));
+  _mm_store_si128((__m128i*)out + 1, _mm_aesenclast_si128(temp[1], rk[AES_ROUNDS_128]));
+  _mm_store_si128((__m128i*)out + 2, _mm_aesenclast_si128(temp[2], rk[AES_ROUNDS_128]));
+  _mm_store_si128((__m128i*)out + 3, _mm_aesenclast_si128(temp[3], rk[AES_ROUNDS_128]));
 }
 
 ATTR_TARGET_AESNI static void prg_aesni_192(const uint8_t* key, uint8_t* iv, uint8_t* out,
@@ -415,7 +410,7 @@ ATTR_TARGET_AESNI static void prg_4_aesni_192(const uint8_t* key, uint8_t* iv, u
     }
   }
   for (unsigned int i = 0; i != 6; ++i) {
-    _mm_storeu_si128((__m128i_u*)out + i, _mm_aesenclast_si128(temp[i], rk[AES_ROUNDS_192]));
+    _mm_store_si128((__m128i*)out + i, _mm_aesenclast_si128(temp[i], rk[AES_ROUNDS_192]));
   }
 }
 
@@ -489,7 +484,7 @@ ATTR_TARGET_AESNI static void prg_4_aesni_256(const uint8_t* key, uint8_t* iv, u
     }
   }
   for (unsigned int i = 0; i != 8; ++i) {
-    _mm_storeu_si128((__m128i_u*)out + i, _mm_aesenclast_si128(temp[i], rk[AES_ROUNDS_256]));
+    _mm_store_si128((__m128i*)out + i, _mm_aesenclast_si128(temp[i], rk[AES_ROUNDS_256]));
   }
 }
 
@@ -564,10 +559,10 @@ ATTR_TARGET_AESNI_AVX2 static void prg_4_aesni_avx_128(const uint8_t* key, const
     temp[2] = _mm_aesenc_si128(temp[2], rk[round]);
     temp[3] = _mm_aesenc_si128(temp[3], rk[round]);
   }
-  _mm_storeu_si128((__m128i_u*)out, _mm_aesenclast_si128(temp[0], rk[AES_ROUNDS_128]));
-  _mm_storeu_si128((__m128i_u*)out + 1, _mm_aesenclast_si128(temp[1], rk[AES_ROUNDS_128]));
-  _mm_storeu_si128((__m128i_u*)out + 2, _mm_aesenclast_si128(temp[2], rk[AES_ROUNDS_128]));
-  _mm_storeu_si128((__m128i_u*)out + 3, _mm_aesenclast_si128(temp[3], rk[AES_ROUNDS_128]));
+  _mm_store_si128((__m128i*)out, _mm_aesenclast_si128(temp[0], rk[AES_ROUNDS_128]));
+  _mm_store_si128((__m128i*)out + 1, _mm_aesenclast_si128(temp[1], rk[AES_ROUNDS_128]));
+  _mm_store_si128((__m128i*)out + 2, _mm_aesenclast_si128(temp[2], rk[AES_ROUNDS_128]));
+  _mm_store_si128((__m128i*)out + 3, _mm_aesenclast_si128(temp[3], rk[AES_ROUNDS_128]));
 }
 
 ATTR_TARGET_AESNI_AVX2 static void prg_aesni_avx_192(const uint8_t* key, uint8_t* iv, uint8_t* out,
@@ -641,7 +636,7 @@ ATTR_TARGET_AESNI_AVX2 static void prg_4_aesni_avx_192(const uint8_t* key, uint8
     }
   }
   for (unsigned int i = 0; i != 6; ++i) {
-    _mm_storeu_si128((__m128i_u*)out + i, _mm_aesenclast_si128(temp[i], rk[AES_ROUNDS_192]));
+    _mm_store_si128((__m128i*)out + i, _mm_aesenclast_si128(temp[i], rk[AES_ROUNDS_192]));
   }
 }
 
@@ -717,7 +712,7 @@ ATTR_TARGET_AESNI_AVX2 static void prg_4_aesni_avx_256(const uint8_t* key, uint8
     }
   }
   for (unsigned int i = 0; i != 8; ++i) {
-    _mm_storeu_si128((__m128i_u*)out + i, _mm_aesenclast_si128(temp[i], rk[AES_ROUNDS_256]));
+    _mm_store_si128((__m128i*)out + i, _mm_aesenclast_si128(temp[i], rk[AES_ROUNDS_256]));
   }
 }
 #endif
@@ -842,6 +837,7 @@ void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
 // use AES-NI if possible
 #if defined(HAVE_AVX2)
   if (CPU_SUPPORTS_AESNI_AVX2) {
+    assert((((uintptr_t)out) & (16 - 1)) == 0);
     switch (seclvl) {
     case 256:
       prg_4_aesni_avx_256(key, internal_iv, out);
@@ -857,6 +853,7 @@ void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
 #endif
 
   if (CPU_SUPPORTS_AESNI) {
+    assert((((uintptr_t)out) & (16 - 1)) == 0);
     switch (seclvl) {
     case 256:
       prg_4_aesni_256(key, internal_iv, out);
