@@ -421,7 +421,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     memcpy(uh_0 + lambda_bytes * ell, u_bar, (D_ZK - 1 + 4) * lambda_bytes);
 
     // line 8, line 11, line 12, line 13
-    vole_hash(signature_u_tilde(sig, params), chall_1, uh, ell, D_ZK, lambda);
+    vole_hash(signature_u_tilde(sig, params), chall_1, uh, ell, lambda);
     free(uh);
 
     // To save memory consumption, the chall_2 is computed in an
@@ -432,7 +432,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
       // line 14
       uint8_t V_tilde[MAX_LAMBDA_BYTES * 4] = {0};
       // V_row[0] contains V transposed, v_bar and u_bar
-      vole_hash(V_tilde, chall_1, V_row[0], ell, D_ZK, lambda);
+      vole_hash(V_tilde, chall_1, V_row[0], ell, lambda);
 
       // line 20
       hash_challenge_2_update_v_tilde(&h2_ctx, V_tilde, lambda);
@@ -549,7 +549,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   {
     // line 13
     uint8_t Q_tilde[MAX_LAMBDA_BYTES * 4] = {0};
-    vole_hash(Q_tilde, chall_1, Q_row[0], ell, D_ZK, lambda);
+    vole_hash(Q_tilde, chall_1, Q_row[0], ell, lambda);
 
     compute_D(Q_tilde, Q_tilde, Delta, dsignature_u_tilde(sig, params), params);
 

@@ -13,9 +13,8 @@
 #include <assert.h>
 #include <string.h>
 
-void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
-                   unsigned int d_zk) {
-  const unsigned int ell_prime = ell + d_zk - 1;
+void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
+  const unsigned int ell_prime = ell + D_ZK - 1;
 
   bf128_t bf_y[5];
   {
@@ -68,9 +67,8 @@ void vole_hash_128(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   }
 }
 
-void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
-                   unsigned int d_zk) {
-  const unsigned int ell_prime = ell + d_zk - 1;
+void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
+  const unsigned int ell_prime = ell + D_ZK - 1;
 
   bf192_t bf_y[5];
   {
@@ -123,9 +121,8 @@ void vole_hash_192(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   }
 }
 
-void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell,
-                   unsigned int d_zk) {
-  const unsigned int ell_prime = ell + d_zk - 1;
+void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell) {
+  const unsigned int ell_prime = ell + D_ZK - 1;
 
   bf256_t bf_y[5];
   {
@@ -178,17 +175,16 @@ void vole_hash_256(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int
   }
 }
 
-void vole_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, unsigned int d_zk,
-               uint32_t lambda) {
+void vole_hash(uint8_t* h, const uint8_t* sd, const uint8_t* x, unsigned int ell, uint32_t lambda) {
   switch (lambda) {
   case 256:
-    vole_hash_256(h, sd, x, ell, d_zk);
+    vole_hash_256(h, sd, x, ell);
     break;
   case 192:
-    vole_hash_192(h, sd, x, ell, d_zk);
+    vole_hash_192(h, sd, x, ell);
     break;
   default:
-    vole_hash_128(h, sd, x, ell, d_zk);
+    vole_hash_128(h, sd, x, ell);
     break;
   }
 }

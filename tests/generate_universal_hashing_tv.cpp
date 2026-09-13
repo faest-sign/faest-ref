@@ -49,35 +49,30 @@ int main() {
     std::cout << "}\n";
 
     constexpr unsigned int ell      = 5;
+    constexpr unsigned int d_zk     = 7;
     const unsigned int lambda_bytes = lambda / 8;
 
     std::vector<uint8_t> uhash_sd;
     uhash_sd.resize(lambda_bytes * 8 + 8);
     std::generate(uhash_sd.begin(), uhash_sd.end(), [&rd, &distrib] { return distrib(rd); });
 
-    for (const auto d_zk : {3, 7}) {
-      std::vector<uint8_t> uhash_x, uhash_output;
+    std::vector<uint8_t> uhash_x, uhash_output;
 
-      uhash_x.resize((ell + d_zk - 1 + 4) * lambda_bytes);
-      uhash_output.resize(lambda_bytes * 4, 0);
+    uhash_x.resize((ell + d_zk - 1 + 4) * lambda_bytes);
+    uhash_output.resize(lambda_bytes * 4, 0);
 
-      std::generate(uhash_x.begin(), uhash_x.end(), [&rd, &distrib] { return distrib(rd); });
-      vole_hash(uhash_output.data(), uhash_sd.data(), uhash_x.data(), ell, d_zk, lambda);
+    std::generate(uhash_x.begin(), uhash_x.end(), [&rd, &distrib] { return distrib(rd); });
+    vole_hash(uhash_output.data(), uhash_sd.data(), uhash_x.data(), ell, lambda);
 
-      std::cout << "namespace vole_hash_" << lambda << "_" << d_zk << "_tv {";
-      std::cout << "constexpr unsigned int ell = " << ell << ";\n";
-      std::cout << "constexpr unsigned int d_zk = " << d_zk << ";\n";
-      std::cout << "constexpr unsigned int ell_prime = ell + d_zk - 1;\n\n";
+    std::cout << "namespace vole_hash_" << lambda << "_" << d_zk << "_tv {";
+    std::cout << "constexpr unsigned int ell = " << ell << ";\n";
+    std::cout << "constexpr unsigned int d_zk = " << d_zk << ";\n";
+    std::cout << "constexpr unsigned int ell_prime = ell + d_zk - 1;\n\n";
 
-      if (d_zk == 7) {
-        std::cout << "using vole_hash_" << lambda << "_3_tv::sd;\n";
-      } else {
-        print_named_array("sd", "uint8_t", uhash_sd);
-      }
-      print_named_array("x", "uint8_t", uhash_x);
-      print_named_array("digest", "uint8_t", uhash_output);
-      std::cout << "}\n";
-    }
+    print_named_array("sd", "uint8_t", uhash_sd);
+    print_named_array("x", "uint8_t", uhash_x);
+    print_named_array("digest", "uint8_t", uhash_output);
+    std::cout << "}\n";
   }
   std::cout << "}\n\n#endif" << std::endl;
 }
