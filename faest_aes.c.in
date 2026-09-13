@@ -59,6 +59,9 @@
 #define zk_hash_SSS_init zk_hash_@SSS@_init
 #define zk_hash_SSS_update zk_hash_@SSS@_update
 
+#define aes_prover aes_@SSS@_prover
+#define aes_verifier aes_@SSS@_verifier
+
 static_assert(FAEST_SSS_LAMBDA == FAEST_@SSS@S_LAMBDA, "Invalid parameters");
 static_assert(FAEST_@SSS@F_ELL == FAEST_@SSS@S_ELL, "Invalid parameters");
 static_assert(FAEST_@SSS@F_LAMBDA == FAEST_@SSS@S_LAMBDA, "Invalid parameters");
@@ -827,7 +830,8 @@ static void aes_SSS_keyexp_forward_prover(uint8_t* y, bfSSS_t* y_tag, const uint
       // ::8
     } else {
       // ::9-10
-      xor_small_u8_array(&y[32 * j / 8], &y[32 * (j - FAEST_SSS_NK) / 8], &y[32 * (j - 1) / 8], 32 / 8);
+      xor_small_u8_array(&y[32 * j / 8], &y[32 * (j - FAEST_SSS_NK) / 8], &y[32 * (j - 1) / 8],
+                         32 / 8);
       for (unsigned int word_idx = 0; word_idx < 32; word_idx++) {
         bfSSS_add(&y_tag[32 * j + word_idx], &y_tag[32 * (j - FAEST_SSS_NK) + word_idx],
                   &y_tag[32 * (j - 1) + word_idx]);
@@ -1325,11 +1329,9 @@ static void aes_SSS_constraints_verifier(zk_hash_SSS_ctx* hasher, const bfSSS_t*
 }
 
 // OWF PROVER
-// clang-format off
-void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w, uint8_t** V, 
-                      const uint8_t* u_bar, const uint8_t* v_bar, const uint8_t* owf_in, 
-                      const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params) {
-  // clang-format on
+void aes_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w, uint8_t** V,
+                const uint8_t* u_bar, const uint8_t* v_bar, const uint8_t* owf_in,
+                const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params) {
   const unsigned int ell          = params->ell;
   const unsigned int lambda_bytes = params->lambda / 8;
 
@@ -1375,12 +1377,10 @@ void aes_@SSS@_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w,
 }
 
 // OWF VERIFIER
-// clang-format off
-void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
-                        const uint8_t* q_bar, const uint8_t* owf_in, const uint8_t* owf_out,
-                        const uint8_t* chall_2, const uint8_t* Delta, const uint8_t* a1toi_tilde,
-                        const faest_paramset_t* params) {
-  // clang-format on
+void aes_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_t* q_bar,
+                  const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
+                  const uint8_t* delta, const uint8_t* a1toi_tilde,
+                  const faest_paramset_t* params) {
   const unsigned int ell          = params->ell;
   const unsigned int lambda_bytes = params->lambda / 8;
 
@@ -1394,7 +1394,7 @@ void aes_@SSS@_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
   // line 3,5 initializing
   bfSSS_t bf_delta[D_ZK + 1];
   bf_delta[0] = bfSSS_one();
-  bfSSS_load(&bf_delta[1], Delta);
+  bfSSS_load(&bf_delta[1], delta);
   for (unsigned int j = 2; j < D_ZK + 1; j++) {
     if ((j & 1) == 0) {
       bfSSS_square(&bf_delta[j], &bf_delta[j / 2]);
