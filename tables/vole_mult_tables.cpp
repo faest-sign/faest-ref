@@ -3,6 +3,7 @@
  */
 
 #include "../parameters.h"
+#include "../macros.h"
 
 #include <algorithm>
 #include <array>
@@ -73,16 +74,23 @@ namespace {
       if (is_zero()) {
         throw invalid_argument("lsb of zero");
       }
+
       size_t i = 0;
       while (!words_[i]) {
         ++i;
       }
+
+#if __has_builtin(__builtin_ctzll)
+      auto b = __builtin_ctzll(words_[i]);
+#else
       auto w         = words_[i];
       unsigned int b = 0;
       while (!(w & 1)) {
         w >>= 1;
         ++b;
       }
+#endif
+
       return 64 * i + b;
     }
 
@@ -90,11 +98,17 @@ namespace {
       if (is_zero()) {
         throw invalid_argument("msb of zero");
       }
+
+#if __has_builtin(__builtin_clzll)
+      auto b = 63 - __builtin_clzll(words_.back());
+#else
       auto w         = words_.back();
       unsigned int b = 0;
       while (w >>= 1) {
         ++b;
       }
+#endif
+
       return 64 * (words_.size() - 1) + b;
     }
 
