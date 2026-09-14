@@ -136,8 +136,12 @@ static inline void hash_clear(hash_context* ctx) {
 #if defined(__cplusplus)
 extern "C" {
 #endif
+#if defined(WITH_SHAKE_XKCP)
+#include <KeccakHash.h>
+#else
 /* use SHAKE implementation in sha3/ */
 #include "sha3/KeccakHash.h"
+#endif
 #if defined(__cplusplus)
 }
 #endif

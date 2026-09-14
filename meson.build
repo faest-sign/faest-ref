@@ -498,6 +498,7 @@ parameter_data.set('FAEST_256_LAMBDA', 256)
 openssl = dependency('openssl', required: get_option('openssl'))
 valgrind = dependency('valgrind', required: get_option('valgrind'))
 valgrind_exec = find_program('valgrind', required: valgrind.found())
+keccak = cc.find_library('XKCP', has_headers: ['KeccakHash.h'], required: false)
 
 build_dependencies = []
 if openssl.found()
@@ -638,6 +639,9 @@ if sha3 == 'auto' and openssl.found() and openssl.version() >= '3.2'
     sha3 = 'openssl'
   endif
 endif
+if sha3 == 'auto' and keccak.found()
+  sha3 = 'XKCP'
+endif
 if sha3 == 'auto'
   if host_machine.cpu_family() == 'aarch64' and cc.get_id() == 'gcc'
     sha3 = 'armv8a-neon'
@@ -655,6 +659,12 @@ if sha3 == 'openssl'
     )
   endif
   defines += '-DWITH_SHAKE_OPENSSL'
+elif sha3 == 'XKCP'
+  if not keccak.found()
+    error('XKCP-based SHA3 implementation requested, but XKCP was not found.')
+  endif
+  build_dependencies += keccak
+  defines += '-DWITH_SHAKE_XKCP'
 else
   include_directories += [include_directories('sha3'), include_directories('sha3/' + sha3)]
   faest_sources += files(

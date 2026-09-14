@@ -61,9 +61,10 @@ For SHA3/SHAKE, the following implementation are available:
 * `avx2` (AVX2 implementation from the XKCP code package)
 * `armv8a-neon` (NEON implementation from the XKCP code package)
 * `openssl` (for version >= 3.2)
+* `XKCP` (build of the library of the XKCP project)
 
 The default on 64 bit architectures is `opt64` and on 32 bit architectures it is
-`openssl` if available (and `plain32` oherwise). On aarch64 (if building under
+`openssl` if available (and `plain32` otherwise). On aarch64 (if building under
 gcc), the default implementation is `armv8a-neon`. On s390x, the default
 implementation is `openssl` if available.
 
