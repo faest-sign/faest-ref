@@ -187,14 +187,10 @@ static inline void hash_squeeze(hash_context* ctx, uint8_t* buffer, size_t bufle
 #endif
 
 static inline void hash_update_uint32_le(hash_context* ctx, uint32_t data) {
+#if defined(FAEST_IS_BIG_ENDIAN)
   data = htole32(data);
+#endif
   hash_update(ctx, (const uint8_t*)&data, sizeof(data));
-}
-
-static inline void hash_init_prefix(hash_context* ctx, unsigned int security_param,
-                                    const uint8_t prefix) {
-  hash_init(ctx, security_param);
-  hash_update(ctx, &prefix, sizeof(prefix));
 }
 
 #endif
