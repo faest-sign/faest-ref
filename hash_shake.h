@@ -11,11 +11,10 @@
 #include "macros.h"
 #include "endian_compat.h"
 
-#if defined(WITH_SHAKE_S390_CPACF)
-/* use the KIMD/KLMD instructions from CPACF for SHAKE support on S390 */
-#include "sha3/s390_cpacf.h"
-#elif defined(WITH_SHAKE_OPENSSL)
+#if defined(WITH_SHAKE_OPENSSL)
 #include <openssl/evp.h>
+
+FAEST_BEGIN_C_DECL
 
 typedef struct hash_context_openssl_s {
   EVP_MD_CTX* ctx;
@@ -62,8 +61,12 @@ static inline void hash_clear(hash_context* ctx) {
   ctx->ctx = NULL;
 }
 
+FAEST_END_C_DECL
+
 #elif defined(OQS)
 #include <oqs/sha3.h>
+
+FAEST_BEGIN_C_DECL
 
 typedef struct hash_context_oqs_s {
   union {
@@ -131,6 +134,8 @@ static inline void hash_clear(hash_context* ctx) {
   }
 }
 
+FAEST_END_C_DECL
+
 #else
 #if !defined(SUPERCOP)
 #if defined(__cplusplus)
@@ -149,6 +154,8 @@ extern "C" {
 /* use SUPERCOP implementation */
 #include <libkeccak.a.headers/KeccakHash.h>
 #endif
+
+FAEST_BEGIN_C_DECL
 
 typedef Keccak_HashInstance hash_context;
 
@@ -192,5 +199,7 @@ static inline void hash_update_uint32_le(hash_context* ctx, uint32_t data) {
 #endif
   hash_update(ctx, (const uint8_t*)&data, sizeof(data));
 }
+
+FAEST_END_C_DECL
 
 #endif

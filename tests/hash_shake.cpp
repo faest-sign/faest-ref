@@ -6,9 +6,7 @@
 #include <config.h>
 #endif
 
-extern "C" {
 #include "hash_shake.h"
-}
 
 #include <array>
 #include <boost/test/unit_test.hpp>
