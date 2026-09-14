@@ -646,7 +646,7 @@ namespace {
       auto row = m[i];
       row.resize(2 * n, 0);
       row[n + i] = 1;
-      a.push_back(move(row));
+      a.push_back(std::move(row));
     }
 
     for (unsigned int c = 0; c < n; ++c) {
@@ -760,8 +760,8 @@ namespace {
       for (unsigned int j = 0; j < 2 * m - 1; ++j) {
         row.push_back(f4_pow(t, j));
       }
-      gates4.push_back(move(gate));
-      ev.push_back(move(row));
+      gates4.push_back(std::move(gate));
+      ev.push_back(std::move(row));
     }
 
     r4.push_back({{gates4.size(), 1}});
@@ -788,7 +788,7 @@ namespace {
       const unsigned int ga = gates4.size();
       gates4.push_back(r0);
       gates4.push_back(r1);
-      gates4.push_back(move(rx));
+      gates4.push_back(std::move(rx));
 
       const auto cols_out = f4_xpow_cols(q2, 2 * m - 1);
       vector<unsigned int> ev0;
@@ -797,8 +797,8 @@ namespace {
         ev0.push_back(col[0]);
         ev1.push_back(col[1]);
       }
-      ev.push_back(move(ev0));
-      ev.push_back(move(ev1));
+      ev.push_back(std::move(ev0));
+      ev.push_back(std::move(ev1));
       r4.push_back({{ga, 1}, {ga + 1, beta}});
       r4.push_back({{ga, 1}, {ga + 1, 1 ^ alpha}, {ga + 2, 1}});
     }
@@ -1021,7 +1021,7 @@ namespace {
         opts.push_back({e, short_cost(e).gates, {pk}});
       }
       if (!opts.empty()) {
-        groups.push_back(move(opts));
+        groups.push_back(std::move(opts));
       }
     }
 
@@ -1037,7 +1037,7 @@ namespace {
           opts.push_back({d * e, place_gate_cost(pk), {pk}});
         }
         if (!opts.empty()) {
-          groups.push_back(move(opts));
+          groups.push_back(std::move(opts));
         }
       } else {
         Place first{Place::Kind::Irr, pool[0], 1};
@@ -1049,10 +1049,10 @@ namespace {
           for (unsigned int i = 0; i < t; ++i) {
             picks.push_back({Place::Kind::Irr, pool[i], 1});
           }
-          opts.push_back({t * d, t * per, move(picks)});
+          opts.push_back({t * d, t * per, std::move(picks)});
         }
         if (!opts.empty()) {
-          groups.push_back(move(opts));
+          groups.push_back(std::move(opts));
         }
       }
     }
@@ -1070,11 +1070,11 @@ namespace {
           if (it == ndp.end() || nc < it->second.first) {
             vector<Place> picks = picks0;
             picks.insert(picks.end(), opt.picks.begin(), opt.picks.end());
-            ndp[nd] = {nc, move(picks)};
+            ndp[nd] = {nc, std::move(picks)};
           }
         }
       }
-      dp = move(ndp);
+      dp = std::move(ndp);
     }
 
     auto it = dp.find(target);
@@ -1199,7 +1199,7 @@ namespace {
         }
         w.push_back(row);
       }
-      return Alg{n, n, move(gates), move(w)};
+      return Alg{n, n, std::move(gates), std::move(w)};
     }
     case Plan::Kind::Crt: {
       vector<pair<big_int, big_int>> gates;
@@ -1219,7 +1219,7 @@ namespace {
       for (unsigned int q = 0; q < 2 * n - 1; ++q) {
         w.push_back(combine(x[q], resmasks));
       }
-      return Alg{n, n, move(gates), move(w)};
+      return Alg{n, n, std::move(gates), std::move(w)};
     }
     default:
       fail("invalid plan");
@@ -1272,7 +1272,7 @@ namespace {
         w.push_back(row);
       }
 
-      return Alg{n, n, move(gates), move(w)};
+      return Alg{n, n, std::move(gates), std::move(w)};
     }
 
     default:
@@ -1330,7 +1330,7 @@ namespace {
     for (unsigned int i = 0; (int)i < d; ++i) {
       w.push_back(combine(rout[i], alg.w));
     }
-    alg.w = move(w);
+    alg.w = std::move(w);
     return {alg, reduction_rows(q, n2)};
   }
 
@@ -1404,7 +1404,7 @@ namespace {
       }
       g.emplace_back(row);
     }
-    return {move(f), move(g), move(wt), move(wg), ntree, move(report)};
+    return {std::move(f), std::move(g), std::move(wt), std::move(wg), ntree, std::move(report)};
   }
 
   vector<big_int> wcrt_rows(const vector<big_int>& tree_moduli, unsigned int lambda) {
@@ -1470,9 +1470,9 @@ namespace {
       wg2.emplace_back(nr);
     }
 
-    f  = move(f2);
-    g  = move(g2);
-    wg = move(wg2);
+    f  = std::move(f2);
+    g  = std::move(g2);
+    wg = std::move(wg2);
   }
 
   uint64_t word_at(const big_int& v, unsigned int word) {
