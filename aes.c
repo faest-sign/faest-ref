@@ -1055,9 +1055,7 @@ int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int
     OQS_AES256_ECB_load_schedule(key, &ctx->sched);
     break;
   case 192:
-    if (OQS_AES192_ECB_load_schedule(key, &ctx->sched) != OQS_SUCCESS) {
-      return -1;
-    }
+    OQS_AES192_ECB_load_schedule(key, &ctx->sched);
     break;
   default:
     OQS_AES128_ECB_load_schedule(key, &ctx->sched);
