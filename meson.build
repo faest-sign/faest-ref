@@ -34,6 +34,7 @@ if cc.get_id() != 'msvc'
     '-Werror=vla',
     '-Werror=incompatible-pointer-types',
   ]
+  cpp_flags += ['-Wno-psabi']
   flags += ['-Wshadow']
   defines += '-D_GNU_SOURCE'
 
@@ -77,7 +78,7 @@ else
   defines += '-D_CRT_SECURE_NO_WARNINGS'
 endif
 c_flags = cc.get_supported_arguments(flags) + cc.get_supported_arguments(c_flags)
-cpp_flags = cpp.get_supported_arguments(flags) + cc.get_supported_arguments(cpp_flags)
+cpp_flags = cpp.get_supported_arguments(flags) + cpp.get_supported_arguments(cpp_flags)
 linker_flags = cc.get_supported_link_arguments(flags)
 
 # check compiler if compiler supports __builtin_cpu_supports
