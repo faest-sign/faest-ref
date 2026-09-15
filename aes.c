@@ -1077,9 +1077,7 @@ int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const u
     OQS_AES256_ECB_enc_sch(plaintext, nbytes, ctx->sched, ciphertext);
     break;
   case 192:
-    if (OQS_AES192_ECB_enc_sch(plaintext, nbytes, ctx->sched, ciphertext) != OQS_SUCCESS) {
-      return -1;
-    }
+    OQS_AES192_ECB_enc_sch(plaintext, nbytes, ctx->sched, ciphertext);
     break;
   default:
     OQS_AES128_ECB_enc_sch(plaintext, nbytes, ctx->sched, ciphertext);
