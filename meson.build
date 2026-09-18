@@ -36,7 +36,7 @@ if cc.get_id() != 'msvc'
   ]
   cpp_flags += ['-Wno-psabi']
   flags += ['-Wshadow']
-  defines += '-D_GNU_SOURCE'
+  defines += ['-D_GNU_SOURCE']
 
   if get_option('march-native').enabled()
     flags += ['-march=native']
@@ -49,33 +49,32 @@ if cc.get_id() != 'msvc'
     flags += ['-ffat-lto-objects']
   endif
 else
-  warnings = []
-  # function inlining
-  warnings += ['4710', '4711']
-  # padding of structs
-  warnings += ['4820', '4324']
-  # .. in include paths
-  warnings += '4464'
-  # undefined macros evaluating to 0 in MSVC headers
-  warnings += '4668'
-  # Spectre mitigation
-  warnings += '5045'
-  # initialization of aggregate types with non-constant values is valid C99
-  warnings += '4204'
-  # nameless structs/unions are part of C11
-  warnings += '4201'
-  # conditional expression is constant
-  warnings += '4127'
-  # unary minus of unsigned types
-  warnings += '4146'
-  # 'inline' used more than once
-  warnings += '4141'
+  # function inlining: 4710, 4711
+  # padding of structs: 4820, 4324
+  # .. in include paths: 4464
+  # undefined macros evaluating to 0 in MSVC headers: 4668
+  # Spectre mitigation: 5045
+  # initialization of aggregate types with non-constant values is valid C99: 4204
+  # nameless structs/unions are part of C11: 4201
+  # conditional expression is constant: 4127
+  # unary minus of unsigned types: 4146
+  # 'inline' used more than once: 4141
+  flags += [
+    '/wd4710',
+    '/wd4711',
+    '/wd4820',
+    '/wd4324',
+    '/wd4464',
+    '/wd4668',
+    '/wd5045',
+    '/wd4204',
+    '/wd4201',
+    '/wd4127',
+    '/wd4146',
+    '/wd4141',
+  ]
 
-  foreach w : warnings
-    flags += '/wd' + w
-  endforeach
-
-  defines += '-D_CRT_SECURE_NO_WARNINGS'
+  defines += ['-D_CRT_SECURE_NO_WARNINGS']
 endif
 c_flags = cc.get_supported_arguments(flags) + cc.get_supported_arguments(c_flags)
 cpp_flags = cpp.get_supported_arguments(flags) + cpp.get_supported_arguments(cpp_flags)
