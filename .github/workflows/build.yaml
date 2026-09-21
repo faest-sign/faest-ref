@@ -106,7 +106,7 @@ jobs:
       with:
         submodules: recursive
     - name: Set up Homebrew
-      uses: Homebrew/actions/setup-homebrew@2026.09.13.1
+      uses: Homebrew/actions/setup-homebrew@2026.09.21.1
     - name: Install dependencies
       run: |
         brew upgrade python@3 || true
