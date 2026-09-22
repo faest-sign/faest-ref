@@ -245,11 +245,16 @@ namespace {
   }
 
   template <typename Fn>
-  void for_each_bit(big_int x, Fn fn) {
-    while (!x.is_zero()) {
-      const auto b = x.lsb();
-      fn(b);
-      x.flip(b);
+  void for_each_bit(const big_int& x, Fn fn) {
+    if (x.is_zero()) {
+      return;
+    }
+
+    const auto msb = x.msb();
+    for (unsigned int i = x.lsb(); i <= msb; ++i) {
+      if (x.test(i)) {
+        fn(i);
+      }
     }
   }
 
