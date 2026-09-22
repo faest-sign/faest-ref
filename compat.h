@@ -35,6 +35,11 @@
 #define HAVE_EXPLICIT_BZERO
 #endif /* HAVE_EXPLICIT_BZERO */
 
+#if !defined(HAVE_MEMSET_EXPLICIT) && GLIBC_CHECK(2, 43)
+/* memset_explicit was introduced in glibc 2.43 */
+#define HAVE_MEMSET_EXPLICIT
+#endif
+
 #if !defined(HAVE_TIMINGSAFE_BCMP) && ((defined(__OpenBSD__) && OpenBSD >= 201105) ||              \
                                        FREEBSD_CHECK(12, 0) || MACOSX_CHECK(10, 12, 1))
 /* timingsafe_bcmp was introduced in OpenBSD 4.9, FreeBSD 12.0, and MacOS X 10.12 */
@@ -106,6 +111,10 @@ FAEST_END_C_DECL
 #include <string.h>
 
 #define faest_explicit_bzero(ptr, len) explicit_bzero((ptr), (len))
+#elif defined(HAVE_MEMSET_EXPLICIT)
+#include <string.h>
+
+#define faest_explicit_bzero(ptr, len) memset_explicit((ptr), 0, (len))
 #else
 FAEST_BEGIN_C_DECL
 

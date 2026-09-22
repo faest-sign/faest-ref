@@ -186,6 +186,10 @@ conf_data.set(
   cc.has_header_symbol('string.h', 'explicit_bzero', args: defines),
 )
 conf_data.set(
+  'HAVE_MEMSET_EXPLICIT',
+  cc.has_header_symbol('string.h', 'memset_explicit', args: defines),
+)
+conf_data.set(
   'HAVE_CONSTTIME_MEMEQUAL',
   cc.has_header_symbol('string.h', 'consttime_memequal', args: defines),
 )
