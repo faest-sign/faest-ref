@@ -94,7 +94,7 @@ namespace {
     const auto hashed_rec_sd = hash_array(rec_s);
     BOOST_TEST(hashed_rec_sd == expected_hashed_rec_sd);
 
-    bavc_clear(&vc);
+    bavc_clear(&vc, &params);
   }
 } // namespace
 
@@ -223,7 +223,7 @@ BOOST_DATA_TEST_CASE(test_keys, all_parameters, param_id) {
     BOOST_TEST(bavc_reconstruct(&vc_rec, decom_i.data(), i_delta.data(), iv.data(), &params));
     BOOST_TEST(memcmp(vc.h, vc_rec.h, 2 * lambda_bytes) == 0);
 
-    bavc_clear(&vc);
+    bavc_clear(&vc, &params);
   }
 }
 

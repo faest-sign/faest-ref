@@ -107,7 +107,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
       BOOST_TEST(hcom == hcom_rec);
     }
     BOOST_TEST(tested);
-    bavc_clear(&bavc_com);
+    bavc_clear(&bavc_com, params);
   }
 }
 
@@ -275,7 +275,7 @@ namespace {
     BOOST_TEST(expected_hashed_q == hash_array(mQ_bytes));
     BOOST_TEST(expected_hashed_barQ == hash_array(q_bar));
 
-    bavc_clear(&bavc_com);
+    bavc_clear(&bavc_com, params);
 
     std::vector<uint8_t> Dp(lambda_minus_w_grind_bytes, 0);
 

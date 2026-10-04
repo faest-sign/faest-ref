@@ -76,7 +76,7 @@ int main() {
 
     print_named_array("i_delta", "uint16_t", i_delta);
     print_named_array("hashed_decom_i", "uint8_t", hashed_decom_i);
-    bavc_clear(&vc);
+    bavc_clear(&vc, &params);
 
     std::vector<uint8_t> rec_h, rec_s;
     rec_h.resize(2 * lambda_bytes);

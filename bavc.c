@@ -651,7 +651,11 @@ bool bavc_reconstruct(bavc_rec_t* bavc_rec, const uint8_t* decom_i, const uint16
                              : bavc_reconstruct_faest(bavc_rec, decom_i, i_delta, iv, params);
 }
 
-void bavc_clear(bavc_t* com) {
+void bavc_clear(bavc_t* com, const faest_paramset_t* params) {
+  unsigned int lambda_bytes = params->lambda / 8;
+  faest_explicit_bzero(com->sd, params->L * lambda_bytes);
+  faest_explicit_bzero(com->k, (2 * params->L - 1) * lambda_bytes);
+
   free(com->sd);
   free(com->com);
   free(com->h);

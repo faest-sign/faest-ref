@@ -136,7 +136,7 @@ int main() {
 
     print_named_array("chall", "uint8_t", chal);
 
-    bavc_clear(&bavc_com);
+    bavc_clear(&bavc_com, &params);
     std::cout << "}\n";
   }
 

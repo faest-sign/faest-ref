@@ -487,7 +487,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
   }
 
   hash_clear(&h2_ctx);
-  bavc_clear(&bavc);
+  bavc_clear(&bavc, params);
 
   // copy counter to signature
   ctr = htole32(ctr);
