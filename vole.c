@@ -428,16 +428,16 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     uint8_t gamma_e     = 0;
     const uint64_t* G_e = TBL(params->G, params->g_words, e);
     for (unsigned int word_idx = 0; word_idx < params->g_words; ++word_idx) {
-      const unsigned int row_offset = word_idx * 64;
-      const unsigned int word_bits  = MIN(lambda_minus_w_grind - row_offset, 64);
+      unsigned int row_offset      = word_idx * 64;
+      const unsigned int word_bits = MIN(lambda_minus_w_grind - row_offset, 64);
 
       uint64_t coefficients = G_e[word_idx] & bit_word_mask(word_bits);
       // TODO: check why we cannot move this parity64 call to the masked xor u8 call
       gamma_e ^= parity64(coefficients & load_bit_word(chall_3 + word_idx * 8, word_bits));
 
-      for (unsigned int bit = 0; coefficients != 0; ++bit, coefficients >>= 1) {
+      for (; coefficients; ++row_offset, coefficients >>= 1) {
         if (coefficients & 1) {
-          xor_u8_array_inplace(L_e_prime, Q[row_offset + bit], lambda_bytes);
+          xor_u8_array_inplace(L_e_prime, Q[row_offset], lambda_bytes);
         }
       }
     }
