@@ -392,6 +392,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   vole_commit(rootkey, iv, ell_hat, params, &bavc, signature_c(sig, 0, params),
               signature_c_mult(sig, params), u, V, u_bar, v_bar);
+  faest_explicit_bzero(rootkey, lambda_bytes);
 
   // it is actually lambda - w_grind but keeping it lambda
   transpose_matrix(V, V_row, lambda, ell);
