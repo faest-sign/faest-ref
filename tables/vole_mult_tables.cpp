@@ -138,18 +138,19 @@ namespace {
       return *this;
     }
 
-    friend big_int operator<<(const big_int& a, unsigned int shift) {
-      if (a.is_zero()) {
-        return 0;
+    big_int operator<<(unsigned int shift) const {
+      if (is_zero()) {
+        return {};
       }
+
       const auto offset = shift / 64;
       const auto bits   = shift % 64;
       big_int result;
-      result.words_.resize(a.words_.size() + offset + (bits != 0), 0);
-      for (size_t i = 0; i < a.words_.size(); ++i) {
-        result.words_[i + offset] |= a.words_[i] << bits;
+      result.words_.resize(words_.size() + offset + (bits != 0), 0);
+      for (size_t i = 0; i < words_.size(); ++i) {
+        result.words_[i + offset] |= words_[i] << bits;
         if (bits) {
-          result.words_[i + offset + 1] |= a.words_[i] >> (64 - bits);
+          result.words_[i + offset + 1] |= words_[i] >> (64 - bits);
         }
       }
       result.normalize();
@@ -178,15 +179,15 @@ namespace {
       return *this;
     }
 
-    friend bool operator==(const big_int& a, const big_int& b) {
-      return a.words_ == b.words_;
+    bool operator==(const big_int& b) const {
+      return words_ == b.words_;
     }
 
-    friend bool operator<(const big_int& a, const big_int& b) {
-      if (a.words_.size() != b.words_.size()) {
-        return a.words_.size() < b.words_.size();
+    bool operator<(const big_int& b) const {
+      if (words_.size() != b.words_.size()) {
+        return words_.size() < b.words_.size();
       }
-      return lexicographical_compare(a.words_.rbegin(), a.words_.rend(), b.words_.rbegin(),
+      return lexicographical_compare(words_.rbegin(), words_.rend(), b.words_.rbegin(),
                                      b.words_.rend());
     }
   };
