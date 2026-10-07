@@ -150,7 +150,7 @@ FAEST_END_C_DECL
 #define faest_aligned_free(ptr) OQS_MEM_aligned_free((ptr))
 #define faest_timingsafe_bcmp(a, b, len) OQS_MEM_secure_bcmp((a), (b), (len))
 #define faest_explicit_bzero(ptr, len) OQS_MEM_cleanse(ptr, len)
-#endif
+#endif /* QQS */
 
 #include <limits.h>
 #include <stdint.h>
@@ -192,9 +192,9 @@ ATTR_CONST static inline uint32_t rotr32(uint32_t n, unsigned int c) {
   c &= mask;
   return (n >> c) | (n << ((-c) & mask));
 }
-#endif
+#endif /* GNUC_CHECK(4, 9) */
 
-/* helper functions for byte parity: 0 if even number of bits are set, 1 if odd number of bts are
+/* helper functions for byte parity: 0 if even number of bits are set, 1 if odd number of bits are
  * set */
 #if __has_builtin(__builtin_parity)
 #define parity8 __builtin_parity
@@ -207,7 +207,7 @@ ATTR_CONST ATTR_ARTIFICIAL static inline uint8_t parity8(uint8_t n) {
   n ^= n >> 1;
   return !((~n) & 1);
 }
-#endif
+#endif /* __has_builtin(__builtin_parity) */
 
 #if __has_builtin(__builtin_parityll)
 #define parity64 __builtin_parityll
@@ -221,7 +221,7 @@ ATTR_CONST ATTR_ARTIFICIAL static inline uint64_t parity64(uint64_t in) {
   in = (in & 0x1111111111111111) * 0x1111111111111111;
   return (in >> 60) & 1;
 }
-#endif
+#endif /* __has_builtin(__builtin_parityll) */
 
 #if !defined(__cplusplus)
 #include <assert.h>

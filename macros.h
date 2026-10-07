@@ -90,7 +90,7 @@
 #endif
 
 /* unused attributed */
-#if defined(__GNUC__) || __has_attribute(unused)
+#if GNUC_CHECK(2, 7) || __has_attribute(unused)
 #define FAEST_UNUSED(x) UNUSED_##x __attribute__((unused))
 #else
 #define FAEST_UNUSED(x) x
@@ -166,7 +166,7 @@
   Functions can be marked as pure if their only effect is their return value. The return value
   itself may only be computed from reading global variables and the arguments.
  */
-#if defined(__GNUC__) || __has_attribute(pure)
+#if GNUC_CHECK(3, 0) || __has_attribute(pure)
 #define ATTR_PURE __attribute__((pure))
 #else
 #define ATTR_PURE
@@ -176,14 +176,14 @@
   Functions can be marked as const if their only effect is their return value. The return value
   itself may only be computed from the arguments.
  */
-#if defined(__GNUC__) || __has_attribute(const)
+#if GNUC_CHECK(2, 5) || __has_attribute(const)
 #define ATTR_CONST __attribute__((const))
 #else
 #define ATTR_CONST
 #endif
 
 /* target attribute */
-#if defined(__GNUC__) || __has_attribute(target)
+#if GNUC_CHECK(4, 4) || __has_attribute(target)
 #define ATTR_TARGET(x) __attribute__((target((x))))
 #define ATTR_TARGET_AVX2 __attribute__((target("avx2,bmi2,sse2")))
 #define ATTR_TARGET_SSE2 __attribute__((target("sse2")))
@@ -239,7 +239,7 @@
 #endif
 
 /* deprecated attribute */
-#if defined(_GCC__) || __has_attribute(deprecated)
+#if GNUC_CHECK(3, 1) || __has_attribute(deprecated)
 #define ATTR_DEPRECATED __attribute__((deprecated))
 #else
 #define ATTR_DEPRECATED
