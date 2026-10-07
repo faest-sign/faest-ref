@@ -81,8 +81,11 @@
 /* assume */
 #if GNUC_CHECK(4, 5) || __has_builtin(__builtin_unreachable)
 #define ASSUME(p)                                                                                  \
-  if (!(p))                                                                                        \
-  __builtin_unreachable()
+  do {                                                                                             \
+    if (!(p)) {                                                                                    \
+      __builtin_unreachable()                                                                      \
+    }                                                                                              \
+  } while (0)
 #elif defined(_MSC_VER)
 #define ASSUME(p) __assume(p)
 #else
