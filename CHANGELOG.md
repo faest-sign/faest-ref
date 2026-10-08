@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 3.0.2 -- 2026-10-08
+
+* Fix shake header.
+
 ## Version 3.0.1 -- 2026-10-08
 
 * Clear secrets from memory (#25).
