@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 3.0.1 -- 2026-10-08
+
+* Clear secrets from memory (#25).
+* Update OQS integration. Thanks to Norman Ashley.
+* Update SHAKE implementation from XKCP (#22).
+* Remove unused code.
+
 ## Version 3.0.0 -- 2026-08-31
 
 * Update to version 3.0 of FAEST specification (#18).
