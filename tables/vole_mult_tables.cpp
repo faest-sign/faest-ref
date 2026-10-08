@@ -183,12 +183,33 @@ namespace {
       return words_ == b.words_;
     }
 
+    bool operator!=(const big_int& b) const {
+      return words_ != b.words_;
+    }
+
     bool operator<(const big_int& b) const {
       if (words_.size() != b.words_.size()) {
         return words_.size() < b.words_.size();
       }
       return lexicographical_compare(words_.rbegin(), words_.rend(), b.words_.rbegin(),
                                      b.words_.rend());
+    }
+
+    std::vector<unsigned int> all_set_bits() const {
+      std::vector<unsigned int> indices;
+      if (is_zero()) {
+        return indices;
+      }
+
+      const auto end   = msb();
+      unsigned int idx = lsb();
+      indices.push_back(idx++);
+      for (; idx <= end; ++idx) {
+        if (test(idx)) {
+          indices.push_back(idx);
+        }
+      }
+      return indices;
     }
   };
 
@@ -202,10 +223,6 @@ namespace {
 
   big_int operator&(big_int a, const big_int& b) {
     return a &= b;
-  }
-
-  bool operator!=(const big_int& a, const big_int& b) {
-    return !(a == b);
   }
 
   [[noreturn]] void fail(const string& msg) {
@@ -243,20 +260,6 @@ namespace {
     big_int ret{0};
     ret.set(i);
     return ret;
-  }
-
-  template <typename Fn>
-  void for_each_bit(const big_int& x, Fn fn) {
-    if (x.is_zero()) {
-      return;
-    }
-
-    const auto msb = x.msb();
-    for (unsigned int i = x.lsb(); i <= msb; ++i) {
-      if (x.test(i)) {
-        fn(i);
-      }
-    }
   }
 
   optional<unsigned int> pdeg(const big_int& a) {
@@ -446,17 +449,15 @@ namespace {
 
   big_int combine(const big_int& mask, const vector<big_int>& rows) {
     big_int out = 0;
-    for_each_bit(mask, [&](unsigned long i) {
+    for (const auto i : mask.all_set_bits()) {
       check(i < rows.size(), "row-combination mask exceeds row count");
       out ^= rows[i];
-    });
+    }
     return out;
   }
 
   unsigned int parity(const big_int& x) {
-    bool p = false;
-    for_each_bit(x, [&](unsigned long) { p = !p; });
-    return p ? 1 : 0;
+    return x.all_set_bits().size() & 1;
   }
 
   vector<big_int> reduction_rows(const big_int& q, unsigned int ncols) {
@@ -464,10 +465,10 @@ namespace {
     vector<big_int> rows(d.value_or(0), 0);
     big_int cur = 1;
     for (unsigned int j = 0; j < ncols; ++j) {
-      for_each_bit(cur, [&rows, j](unsigned long i) {
+      for (const auto i : cur.all_set_bits()) {
         check(i < rows.size(), "reduction row index out of range");
         rows[i].set(j);
-      });
+      }
       cur = pmod(cur << 1, q);
     }
     return rows;
@@ -1189,16 +1190,16 @@ namespace {
         for (unsigned int i = 0; i < m; ++i) {
           big_int& fa = ar[i];
           big_int& fb = br[i];
-          for_each_bit(fo, [&](unsigned long t) {
+          for (const auto t : fo.all_set_bits()) {
             if (t * m + i < n) {
               fa.set(t * m + i);
             }
-          });
-          for_each_bit(go, [&](unsigned long t) {
+          }
+          for (const auto t : go.all_set_bits()) {
             if (t * m + i < n) {
               fb.set(t * m + i);
             }
-          });
+          }
         }
         for (const auto& [fi, gi] : ia.gates) {
           gates.push_back({combine(fi, ar), combine(gi, br)});
@@ -1214,7 +1215,9 @@ namespace {
           }
           const unsigned int i = q - r * m;
           if (i <= 2 * m - 2) {
-            for_each_bit(oa.w[r], [&](unsigned long o) { row ^= ia.w[i] << (o * ngi); });
+            for (const auto o : oa.w[r].all_set_bits()) {
+              row ^= ia.w[i] << (o * ngi);
+            }
           }
         }
         w.push_back(row);
@@ -1400,13 +1403,13 @@ namespace {
     vector<big_int> wg(lambda, 0);
     for (unsigned int r = 0; r < lambda; ++r) {
       const big_int sel = combine(red[r], x);
-      for_each_bit(sel, [&](unsigned long idx) {
+      for (const auto idx : sel.all_set_bits()) {
         if (idx < ntree) {
           wt[r].set(idx);
         } else {
           wg[r] ^= resmasks[idx - ntree];
         }
-      });
+      }
     }
 
     vector<big_int> f;
@@ -1458,45 +1461,42 @@ namespace {
     wg1.reserve(wg.size());
     for (const big_int& row : wg) {
       big_int nr;
-      for_each_bit(row, [&](unsigned long i) {
+      for (const auto i : row.all_set_bits()) {
         if (!f[i].is_zero() && !g[i].is_zero()) {
           nr.flip(canon[make_pair(f[i], g[i])]);
         }
-      });
+      }
       wg1.emplace_back(nr);
     }
 
-    big_int used = 0;
-    for (const big_int& row : wg1) {
-      used |= row;
-    }
+    const big_int used = accumulate(wg1.begin(), wg1.end(), big_int{}, bit_or<big_int>{});
 
     map<unsigned int, unsigned int> newidx;
     vector<big_int> f2;
     vector<big_int> g2;
-    for (unsigned int i = 0; i < f.size(); ++i) {
-      if (used.test(i)) {
-        newidx[i] = f2.size();
-        f2.push_back(f[i]);
-        g2.push_back(g[i]);
+    for (const auto i : used.all_set_bits()) {
+      if (i >= f.size()) {
+        break;
       }
+
+      newidx[i] = f2.size();
+      f2.push_back(f[i]);
+      g2.push_back(g[i]);
     }
 
     vector<big_int> wg2;
     wg2.reserve(wg1.size());
     for (const big_int& row : wg1) {
       big_int nr = 0;
-      for_each_bit(row, [&](unsigned long i) { nr.set(newidx[i]); });
+      for (const auto i : row.all_set_bits()) {
+        nr.set(newidx[i]);
+      }
       wg2.emplace_back(nr);
     }
 
     f  = std::move(f2);
     g  = std::move(g2);
     wg = std::move(wg2);
-  }
-
-  uint64_t word_at(const big_int& v, unsigned int word) {
-    return v.word_at(word);
   }
 
   constexpr unsigned int words_of(unsigned int width) {
@@ -1548,7 +1548,7 @@ namespace {
     ostringstream ss;
     ss << "{ ";
     for (unsigned int w = 0; w < words; ++w) {
-      ss << uint64_printer{word_at(r, w)} << ", ";
+      ss << uint64_printer{r.word_at(w)} << ", ";
     }
     ss << " }";
     return ss.str();
@@ -1622,13 +1622,13 @@ namespace {
 
     out << "static const uint16_t " << pfx << "_TREE_MODULI[" << pfx << "_TAU] = { ";
     for (unsigned int i = 0; i < tau; ++i) {
-      out << uint16_printer{static_cast<uint16_t>(word_at(tree_moduli[i], 0))} << ", ";
+      out << uint16_printer{static_cast<uint16_t>(tree_moduli[i].word_at(0))} << ", ";
     }
     out << " };\n\n";
 
     out << "static const uint64_t " << pfx << "_M_TREE[" << pfx << "_M_TREE_WORDS] = { ";
     for (unsigned int w = 0; w < w_mt; ++w) {
-      out << uint64_printer{word_at(m_tree, w)} << ", ";
+      out << uint64_printer{m_tree.word_at(w)} << ", ";
     }
     out << " };\n\n";
     out << "#endif\n";
@@ -1683,9 +1683,7 @@ namespace {
     for (int i = 1; i < argc; ++i) {
       const string a  = argv[i];
       auto need_value = [&](const string& opt) {
-        if (i + 1 >= argc) {
-          fail(opt + " requires a value");
-        }
+        check(i + 1 < argc, opt + " requires a value");
         return argv[++i];
       };
 
@@ -1779,9 +1777,8 @@ int main(int argc, char** argv) {
     }
 
     auto it = PRESETS.find(args.preset);
-    if (it == PRESETS.end()) {
-      fail("unknown preset: " + args.preset);
-    }
+    check(it != PRESETS.end(), "unknown preset: " + args.preset);
+
     const auto tree_spec = faest_tree_spec(it->second.lambda, it->second.tau, it->second.wgrind);
     run_set(args.preset, it->second.lambda, it->second.wgrind, tree_spec, args.emit_c_path);
     return 0;
