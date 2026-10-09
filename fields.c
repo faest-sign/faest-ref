@@ -121,23 +121,37 @@ static inline void bf_square_expand(uint64_t* dst, uint64_t value) {
 }
 #endif
 
-// Reduce the upper half of a squared field element modulo X^(64*limbs) + X^7 + X^2 + X + 1.
-static void bf_square_reduce_7_2_1(uint64_t* square, unsigned int limbs) {
-  for (unsigned int i = 2 * limbs; i-- > limbs;) {
+// Reduce the upper half of a squared field element modulo X^(64*2) + X^7 + X^2 + X + 1.
+static void bf_square_reduce_7_2_1_2(uint64_t* square) {
+  for (unsigned int i = 2 * 2; i-- > 2;) {
     const uint64_t high    = square[i];
-    const unsigned int low = i - limbs;
-    square[i]              = 0;
+    const unsigned int low = i - 2;
+
+    square[i] = 0;
     square[low] ^= high ^ (high << 1) ^ (high << 2) ^ (high << 7);
     square[low + 1] ^= (high >> 63) ^ (high >> 62) ^ (high >> 57);
   }
 }
 
-// Reduce the upper half of a squared field element modulo X^(64*limbs) + X^10 + X^5 + X^2 + 1.
-static void bf_square_reduce_10_5_2(uint64_t* square, unsigned int limbs) {
-  for (unsigned int i = 2 * limbs; i-- > limbs;) {
+// Reduce the upper half of a squared field element modulo X^(64*3) + X^7 + X^2 + X + 1.
+static void bf_square_reduce_7_2_1_3(uint64_t* square) {
+  for (unsigned int i = 2 * 3; i-- > 3;) {
     const uint64_t high    = square[i];
-    const unsigned int low = i - limbs;
-    square[i]              = 0;
+    const unsigned int low = i - 3;
+
+    square[i] = 0;
+    square[low] ^= high ^ (high << 1) ^ (high << 2) ^ (high << 7);
+    square[low + 1] ^= (high >> 63) ^ (high >> 62) ^ (high >> 57);
+  }
+}
+
+// Reduce the upper half of a squared field element modulo X^(64*4) + X^10 + X^5 + X^2 + 1.
+static void bf_square_reduce_10_5_2(uint64_t* square) {
+  for (unsigned int i = 2 * 4; i-- > 4;) {
+    const uint64_t high    = square[i];
+    const unsigned int low = i - 4;
+
+    square[i] = 0;
     square[low] ^= high ^ (high << 2) ^ (high << 5) ^ (high << 10);
     square[low + 1] ^= (high >> 62) ^ (high >> 59) ^ (high >> 54);
   }
@@ -300,7 +314,7 @@ void bf128_square(bf128_t* dst, const bf128_t* lhs) {
   for (unsigned int i = 0; i != 2; ++i) {
     bf_square_expand(square + 2 * i, BF_VALUE(*lhs, i));
   }
-  bf_square_reduce_7_2_1(square, 2);
+  bf_square_reduce_7_2_1_2(square);
 
   BF_VALUE(*dst, 0) = square[0];
   BF_VALUE(*dst, 1) = square[1];
@@ -529,7 +543,7 @@ void bf192_square(bf192_t* dst, const bf192_t* lhs) {
   for (unsigned int i = 0; i != 3; ++i) {
     bf_square_expand(square + 2 * i, BF_VALUE(*lhs, i));
   }
-  bf_square_reduce_7_2_1(square, 3);
+  bf_square_reduce_7_2_1_3(square);
 
   BF_VALUE(*dst, 0) = square[0];
   BF_VALUE(*dst, 1) = square[1];
@@ -771,7 +785,7 @@ void bf256_square(bf256_t* dst, const bf256_t* lhs) {
   for (unsigned int i = 0; i != 4; ++i) {
     bf_square_expand(square + 2 * i, BF_VALUE(*lhs, i));
   }
-  bf_square_reduce_10_5_2(square, 4);
+  bf_square_reduce_10_5_2(square);
 
   BF_VALUE(*dst, 0) = square[0];
   BF_VALUE(*dst, 1) = square[1];
