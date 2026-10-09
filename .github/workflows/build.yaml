@@ -110,7 +110,7 @@ jobs:
     - name: Install dependencies
       run: |
         brew upgrade python@3 || true
-        brew install ninja meson openssl@3 boost ntl
+        brew install ninja meson openssl@4 boost ntl
     - name: Build and test
       run: |
         mkdir build
