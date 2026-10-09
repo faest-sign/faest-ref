@@ -20,11 +20,11 @@ jobs:
         sudo apt-get -q update
         sudo apt-get -q -y install --no-install-recommends meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev
     - name: Build and test
-      uses: BSFishy/meson-build@v1.0.3
-      with:
-        action: test
-        options: --verbose
-        setup-options: -Dbenchmarks=disabled --buildtype=debugoptimized
+      run: |
+        mkdir build
+        meson setup build -Dbenchmarks=disabled --buildtype=debugoptimized
+        ninja -C build
+        ninja -C build test
 
   build-base-i386:
     name: Test on Ubuntu with gcc (32 bit)
@@ -75,11 +75,11 @@ jobs:
         if [[ ! "${{matrix.cfg.cxxcompiler}}" =~ clang ]]; then sudo apt-get -q -y --no-install-recommends install ${{ matrix.cfg.cxxcompiler }}; fi
         if [[ "${{matrix.cfg.ld}}" != "bfd" ]]; then sudo apt-get -q -y --no-install-recommends install ${{ matrix.cfg.ld }}; fi
     - name: Build and test
-      uses: BSFishy/meson-build@v1.0.3
-      with:
-        action: test
-        options: --verbose
-        setup-options: -Dbenchmarks=disabled -Db_lto=false --buildtype=release
+      run: |
+        mkdir build
+        meson setup build -Dbenchmarks=disabled -Db_lto=false --buildtype=release
+        ninja -C build
+        ninja -C build test
       env:
         CC: ${{ matrix.cfg.compiler }}
         CXX: ${{ matrix.cfg.cxxcompiler }}
@@ -112,11 +112,11 @@ jobs:
         brew upgrade python@3 || true
         brew install ninja meson openssl@3 boost ntl
     - name: Build and test
-      uses: BSFishy/meson-build@v1.0.3
-      with:
-        action: test
-        options: --verbose
-        setup-options: -Dbenchmarks=disabled --buildtype=release
+      run: |
+        mkdir build
+        meson setup build -Dbenchmarks=disabled --buildtype=release
+        ninja -C build
+        ninja -C build test
 
   build-windows:
     name: Test on Windows with MSVC
@@ -137,26 +137,23 @@ jobs:
       run:
         pip install meson ninja
     - name: Build and test (debug)
-      uses: BSFishy/meson-build@v1.0.3
-      with:
-        action: test
-        setup-options: --vsenv -Dbenchmarks=disabled --buildtype=debug
-        options: --verbose
-        directory: build-debug
+      run: |
+        mkdir build-debug
+        meson setup build-debug --vsenv -Dbenchmarks=disabled --buildtype=debug
+        meson compile -C build-debug
+        meson test -C build-debug --verbose
     - name: Build and test
-      uses: BSFishy/meson-build@v1.0.3
-      with:
-        action: test
-        setup-options: --vsenv -Dbenchmarks=disabled --buildtype=release
-        options: --verbose
-        directory: build-release
+      run: |
+        mkdir build-release
+        meson setup build-release --vsenv -Dbenchmarks=disabled --buildtype=release
+        meson compile -C build-release
+        meson test -C build-release --verbose
     - name: Build and test (no openssl, no AES NI)
-      uses: BSFishy/meson-build@v1.0.3
-      with:
-        action: test
-        setup-options: --vsenv -Dbenchmarks=disabled --buildtype=release -Dopenssl=disabled -Daesni=disabled
-        options: --verbose
-        directory: build-release-no-openssl-aesni
+      run: |
+        mkdir buiild-release-no-openssl-aesni
+        meson setup build-release-no-openssl-aesni --vsenv -Dbenchmarks=disabled --buildtype=release -Dopenssl=disabled -Daesni=disabled
+        meson compile -C build-release-no-openssl-aesni
+        meson test -C build-release-no-openssl-aesni --verbose
 
   build-scan-build:
     name: Test on Ubuntu with scan-build
@@ -233,8 +230,8 @@ jobs:
         sudo apt-get -q update
         sudo apt-get -q -y --no-install-recommends install meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev
     - name: Build and test
-      uses: BSFishy/meson-build@v1.0.3
-      with:
-        action: test
-        options: --verbose
-        setup-options: -Dbenchmarks=disabled -Db_lto=false --buildtype=release ${{ matrix.flag }}
+      run: |
+        mkdir build
+        meson setup build -Dbenchmarks=disabled -Db_lto=false --buildtype=release ${{ matrix.flag }}
+        ninja -C build
+        ninja -C build test
