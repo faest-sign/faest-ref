@@ -15,6 +15,8 @@
 # The rest of the code was written by Ronny Van Keer.
 # Adaptations for macOS by Stéphane Léon.
 # Adaptations for mingw-w64 (changes macOS too) by Jorrit Jongma.
+#
+# Changes for FAEST: All entry points are marked with .hidden
 
 .ifndef old_gas_syntax
 .section .note.GNU-stack,"",@progbits
@@ -28,6 +30,8 @@
 .globl  KeccakP1600_AVX2_Initialize
 .globl _KeccakP1600_AVX2_Initialize
 .ifndef old_gas_syntax
+.hidden KeccakP1600_AVX2_Initialize
+.hidden _KeccakP1600_AVX2_Initialize
 .type   KeccakP1600_AVX2_Initialize,@function
 .endif
 KeccakP1600_AVX2_Initialize:
@@ -54,6 +58,8 @@ _KeccakP1600_AVX2_Initialize:
 .globl  KeccakP1600_AVX2_AddByte
 .globl _KeccakP1600_AVX2_AddByte
 .ifndef old_gas_syntax
+.hidden KeccakP1600_AVX2_AddByte
+.hidden _KeccakP1600_AVX2_AddByte
 .type   KeccakP1600_AVX2_AddByte,@function
 .endif
 KeccakP1600_AVX2_AddByte:
@@ -80,6 +86,8 @@ _KeccakP1600_AVX2_AddByte:
 .globl  KeccakP1600_AVX2_AddBytes
 .globl _KeccakP1600_AVX2_AddBytes
 .ifndef old_gas_syntax
+.hidden KeccakP1600_AVX2_AddBytes
+.hidden _KeccakP1600_AVX2_AddBytes
 .type   KeccakP1600_AVX2_AddBytes,@function
 .endif
 KeccakP1600_AVX2_AddBytes:
@@ -145,6 +153,8 @@ KeccakP1600_AddBytes_Exit:
 .globl  KeccakP1600_AVX2_OverwriteBytes
 .globl _KeccakP1600_AVX2_OverwriteBytes
 .ifndef old_gas_syntax
+.hidden KeccakP1600_AVX2_OverwriteBytes
+.hidden _KeccakP1600_AVX2_OverwriteBytes
 .type   KeccakP1600_AVX2_OverwriteBytes,@function
 .endif
 KeccakP1600_AVX2_OverwriteBytes:
@@ -210,6 +220,8 @@ KeccakP1600_OverwriteBytes_Exit:
 .globl  KeccakP1600_AVX2_OverwriteWithZeroes
 .globl _KeccakP1600_AVX2_OverwriteWithZeroes
 .ifndef old_gas_syntax
+.hidden KeccakP1600_AVX2_OverwriteWithZeroes
+.hidden _KeccakP1600_AVX2_OverwriteWithZeroes
 .type   KeccakP1600_AVX2_OverwriteWithZeroes,@function
 .endif
 KeccakP1600_AVX2_OverwriteWithZeroes:
@@ -251,6 +263,8 @@ KeccakP1600_OverwriteWithZeroes_Exit:
 .globl  KeccakP1600_AVX2_ExtractBytes
 .globl _KeccakP1600_AVX2_ExtractBytes
 .ifndef old_gas_syntax
+.hidden KeccakP1600_AVX2_ExtractBytes
+.hidden _KeccakP1600_AVX2_ExtractBytes
 .type   KeccakP1600_AVX2_ExtractBytes,@function
 .endif
 KeccakP1600_AVX2_ExtractBytes:
@@ -319,6 +333,8 @@ KeccakP1600_ExtractBytes_Exit:
 .globl  KeccakP1600_AVX2_ExtractAndAddBytes
 .globl _KeccakP1600_AVX2_ExtractAndAddBytes
 .ifndef old_gas_syntax
+.hidden KeccakP1600_AVX2_ExtractAndAddBytes
+.hidden _KeccakP1600_AVX2_ExtractAndAddBytes
 .type   KeccakP1600_AVX2_ExtractAndAddBytes,@function
 .endif
 KeccakP1600_AVX2_ExtractAndAddBytes:
@@ -545,6 +561,8 @@ __KeccakF1600:
 .globl  KeccakP1600_AVX2_Permute_24rounds
 .globl _KeccakP1600_AVX2_Permute_24rounds
 .ifndef old_gas_syntax
+.hidden KeccakP1600_AVX2_Permute_24rounds
+.hidden _KeccakP1600_AVX2_Permute_24rounds
 .type   KeccakP1600_AVX2_Permute_24rounds,@function
 .endif
 KeccakP1600_AVX2_Permute_24rounds:
@@ -585,6 +603,8 @@ _KeccakP1600_AVX2_Permute_24rounds:
 .globl  KeccakP1600_AVX2_Permute_12rounds
 .globl _KeccakP1600_AVX2_Permute_12rounds
 .ifndef old_gas_syntax
+.hidden KeccakP1600_AVX2_Permute_12rounds
+.hidden _KeccakP1600_AVX2_Permute_12rounds
 .type   KeccakP1600_AVX2_Permute_12rounds,@function
 .endif
 KeccakP1600_AVX2_Permute_12rounds:
@@ -625,6 +645,8 @@ _KeccakP1600_AVX2_Permute_12rounds:
 .globl  KeccakP1600_AVX2_Permute_Nrounds
 .globl _KeccakP1600_AVX2_Permute_Nrounds
 .ifndef old_gas_syntax
+.hidden KeccakP1600_AVX2_Permute_Nrounds
+.hidden _KeccakP1600_AVX2_Permute_Nrounds
 .type   KeccakP1600_AVX2_Permute_Nrounds,@function
 .endif
 KeccakP1600_AVX2_Permute_Nrounds:
@@ -667,6 +689,8 @@ _KeccakP1600_AVX2_Permute_Nrounds:
 .globl  KeccakF1600_AVX2_FastLoop_Absorb
 .globl _KeccakF1600_AVX2_FastLoop_Absorb
 .ifndef old_gas_syntax
+.hidden KeccakF1600_AVX2_FastLoop_Absorb
+.hidden _KeccakF1600_AVX2_FastLoop_Absorb
 .type   KeccakF1600_AVX2_FastLoop_Absorb,@function
 .endif
 KeccakF1600_AVX2_FastLoop_Absorb:
@@ -846,6 +870,8 @@ KeccakF1600_FastLoop_Absorb_LanesAddLoop:
 .globl  KeccakP1600_12rounds_AVX2_FastLoop_Absorb
 .globl _KeccakP1600_12rounds_AVX2_FastLoop_Absorb
 .ifndef old_gas_syntax
+.hidden KeccakP1600_12rounds_AVX2_FastLoop_Absorb
+.hidden _KeccakP1600_12rounds_AVX2_FastLoop_Absorb
 .type   KeccakP1600_12rounds_AVX2_FastLoop_Absorb,@function
 .endif
 KeccakP1600_12rounds_AVX2_FastLoop_Absorb:
