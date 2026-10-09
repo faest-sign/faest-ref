@@ -1156,16 +1156,16 @@ static inline uint64_t load_src_word(const uint8_t* src, size_t word_idx, size_t
 }
 
 static inline void xor_dst_word(uint8_t* dst, size_t word_idx, size_t dst_bits, uint64_t value) {
-  const size_t word_bit_offset = word_idx * 64;
-  if (word_bit_offset >= dst_bits) {
+  if (word_idx >= (dst_bits + 63) / 64) {
     return;
   }
 
-  const size_t remaining_bits = dst_bits - word_bit_offset;
-  const size_t word_bits      = remaining_bits < 64 ? remaining_bits : 64;
-  const size_t word_bytes     = (word_bits + 7) / 8;
-  uint8_t* dst_word           = dst + word_idx * sizeof(uint64_t);
-  uint64_t ret                = 0;
+  const size_t word_bit_offset = word_idx * 64;
+  const size_t remaining_bits  = dst_bits - word_bit_offset;
+  const size_t word_bits       = remaining_bits < 64 ? remaining_bits : 64;
+  const size_t word_bytes      = (word_bits + 7) / 8;
+  uint8_t* dst_word            = dst + word_idx * sizeof(uint64_t);
+  uint64_t ret                 = 0;
 
   memcpy(&ret, dst_word, word_bytes);
 #if defined(FAEST_IS_BIG_ENDIAN)
