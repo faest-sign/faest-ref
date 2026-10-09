@@ -102,6 +102,72 @@ ATTR_TARGET_SSE2 static inline void bf_square_expand(uint64_t* dst, uint64_t val
       _mm_and_si128(_mm_or_si128(expanded, _mm_slli_epi16(expanded, 1)), _mm_set1_epi16(0x5555));
   _mm_store_si128((__m128i*)dst, expanded);
 }
+
+ATTR_TARGET_SSE2 static inline __m128i bf_square_fold_7_2_1(__m128i high) {
+  return _mm_xor_si128(_mm_xor_si128(high, _mm_slli_epi64(high, 1)),
+                       _mm_xor_si128(_mm_slli_epi64(high, 2), _mm_slli_epi64(high, 7)));
+}
+
+ATTR_TARGET_SSE2 static inline __m128i bf_square_carry_7_2_1(__m128i high) {
+  return _mm_xor_si128(_mm_xor_si128(_mm_srli_epi64(high, 63), _mm_srli_epi64(high, 62)),
+                       _mm_srli_epi64(high, 57));
+}
+
+ATTR_TARGET_SSE2 static inline __m128i bf_square_fold_10_5_2(__m128i high) {
+  return _mm_xor_si128(_mm_xor_si128(high, _mm_slli_epi64(high, 2)),
+                       _mm_xor_si128(_mm_slli_epi64(high, 5), _mm_slli_epi64(high, 10)));
+}
+
+ATTR_TARGET_SSE2 static inline __m128i bf_square_carry_10_5_2(__m128i high) {
+  return _mm_xor_si128(_mm_xor_si128(_mm_srli_epi64(high, 62), _mm_srli_epi64(high, 59)),
+                       _mm_srli_epi64(high, 54));
+}
+
+// Fold pairs of upper limbs and their carries into the lower half. The carry from the
+// highest limb crosses the field boundary, so fold it once more into the lowest limb.
+ATTR_TARGET_SSE2 static void bf_square_reduce_7_2_1_2(uint64_t* square) {
+  const __m128i high  = _mm_load_si128((const __m128i*)(square + 2));
+  const __m128i carry = bf_square_carry_7_2_1(high);
+
+  __m128i low = _mm_xor_si128(_mm_load_si128((const __m128i*)square), bf_square_fold_7_2_1(high));
+  low         = _mm_xor_si128(low, _mm_slli_si128(carry, 8));
+  low         = _mm_xor_si128(low, bf_square_fold_7_2_1(_mm_srli_si128(carry, 8)));
+  _mm_store_si128((__m128i*)square, low);
+}
+
+ATTR_TARGET_SSE2 static void bf_square_reduce_7_2_1_3(uint64_t* square) {
+  const __m128i high0  = _mm_loadu_si128((const __m128i*)(square + 3));
+  const __m128i high1  = _mm_loadl_epi64((const __m128i*)(square + 5));
+  const __m128i carry0 = bf_square_carry_7_2_1(high0);
+  const __m128i carry1 = bf_square_carry_7_2_1(high1);
+
+  __m128i low0 = _mm_xor_si128(_mm_load_si128((const __m128i*)square), bf_square_fold_7_2_1(high0));
+  __m128i low1 =
+      _mm_xor_si128(_mm_loadl_epi64((const __m128i*)(square + 2)), bf_square_fold_7_2_1(high1));
+  low0 = _mm_xor_si128(low0, _mm_slli_si128(carry0, 8));
+  low0 = _mm_xor_si128(low0, bf_square_fold_7_2_1(carry1));
+  low1 = _mm_xor_si128(low1, _mm_srli_si128(carry0, 8));
+  _mm_store_si128((__m128i*)square, low0);
+  _mm_storel_epi64((__m128i*)(square + 2), low1);
+}
+
+ATTR_TARGET_SSE2 static void bf_square_reduce_10_5_2(uint64_t* square) {
+  const __m128i high0  = _mm_load_si128((const __m128i*)(square + 4));
+  const __m128i high1  = _mm_load_si128((const __m128i*)(square + 6));
+  const __m128i carry0 = bf_square_carry_10_5_2(high0);
+  const __m128i carry1 = bf_square_carry_10_5_2(high1);
+
+  __m128i low0 =
+      _mm_xor_si128(_mm_load_si128((const __m128i*)square), bf_square_fold_10_5_2(high0));
+  __m128i low1 =
+      _mm_xor_si128(_mm_load_si128((const __m128i*)(square + 2)), bf_square_fold_10_5_2(high1));
+  low0 = _mm_xor_si128(low0, _mm_slli_si128(carry0, 8));
+  low0 = _mm_xor_si128(low0, bf_square_fold_10_5_2(_mm_srli_si128(carry1, 8)));
+  low1 = _mm_xor_si128(low1, _mm_slli_si128(carry1, 8));
+  low1 = _mm_xor_si128(low1, _mm_srli_si128(carry0, 8));
+  _mm_store_si128((__m128i*)square, low0);
+  _mm_store_si128((__m128i*)(square + 2), low1);
+}
 #else
 // Square a 64-bit polynomial over GF(2) by inserting a zero between each pair of input bits.
 static inline void bf_square_expand(uint64_t* dst, uint64_t value) {
@@ -119,7 +185,6 @@ static inline void bf_square_expand(uint64_t* dst, uint64_t value) {
   *dst       = (low | (low << 1)) & UINT64_C(0x5555555555555555);
   *(dst + 1) = (high | (high << 1)) & UINT64_C(0x5555555555555555);
 }
-#endif
 
 // Reduce the upper half of a squared field element modulo X^(64*2) + X^7 + X^2 + X + 1.
 static void bf_square_reduce_7_2_1_2(uint64_t* square) {
@@ -156,6 +221,7 @@ static void bf_square_reduce_10_5_2(uint64_t* square) {
     square[low + 1] ^= (high >> 62) ^ (high >> 59) ^ (high >> 54);
   }
 }
+#endif
 
 // GF(2^128) implementation
 
