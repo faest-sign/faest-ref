@@ -85,14 +85,21 @@ bf64_t bf64_mul(bf64_t lhs, bf64_t rhs) {
 
 // Helpers for bfXXX_square implementations
 
-// Square a 32-bit polynomial over GF(2) by inserting a zero between each pair of input bits.
-static inline uint64_t bf_square_expand(uint32_t value) {
-  uint64_t expanded = value;
-  expanded          = (expanded | (expanded << 16)) & UINT64_C(0x0000ffff0000ffff);
-  expanded          = (expanded | (expanded << 8)) & UINT64_C(0x00ff00ff00ff00ff);
-  expanded          = (expanded | (expanded << 4)) & UINT64_C(0x0f0f0f0f0f0f0f0f);
-  expanded          = (expanded | (expanded << 2)) & UINT64_C(0x3333333333333333);
-  return (expanded | (expanded << 1)) & UINT64_C(0x5555555555555555);
+// Square a 64-bit polynomial over GF(2) by inserting a zero between each pair of input bits.
+static inline void bf_square_expand(uint64_t* dst, uint64_t value) {
+  uint64_t low  = value & UINT64_C(0xffffffff);
+  uint64_t high = value >> 32;
+
+  low        = (low | (low << 16)) & UINT64_C(0x0000ffff0000ffff);
+  high       = (high | (high << 16)) & UINT64_C(0x0000ffff0000ffff);
+  low        = (low | (low << 8)) & UINT64_C(0x00ff00ff00ff00ff);
+  high       = (high | (high << 8)) & UINT64_C(0x00ff00ff00ff00ff);
+  low        = (low | (low << 4)) & UINT64_C(0x0f0f0f0f0f0f0f0f);
+  high       = (high | (high << 4)) & UINT64_C(0x0f0f0f0f0f0f0f0f);
+  low        = (low | (low << 2)) & UINT64_C(0x3333333333333333);
+  high       = (high | (high << 2)) & UINT64_C(0x3333333333333333);
+  *dst       = (low | (low << 1)) & UINT64_C(0x5555555555555555);
+  *(dst + 1) = (high | (high << 1)) & UINT64_C(0x5555555555555555);
 }
 
 // Reduce the upper half of a squared field element modulo X^(64*limbs) + X^7 + X^2 + X + 1.
@@ -272,8 +279,7 @@ void bf128_mul(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs) {
 void bf128_square(bf128_t* dst, const bf128_t* lhs) {
   uint64_t square[4];
   for (unsigned int i = 0; i != 2; ++i) {
-    square[2 * i]     = bf_square_expand(BF_VALUE(*lhs, i));
-    square[2 * i + 1] = bf_square_expand(BF_VALUE(*lhs, i) >> 32);
+    bf_square_expand(square + 2 * i, BF_VALUE(*lhs, i));
   }
   bf_square_reduce_7_2_1(square, 2);
 
@@ -502,8 +508,7 @@ void bf192_mul(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs) {
 void bf192_square(bf192_t* dst, const bf192_t* lhs) {
   uint64_t square[6];
   for (unsigned int i = 0; i != 3; ++i) {
-    square[2 * i]     = bf_square_expand(BF_VALUE(*lhs, i));
-    square[2 * i + 1] = bf_square_expand(BF_VALUE(*lhs, i) >> 32);
+    bf_square_expand(square + 2 * i, BF_VALUE(*lhs, i));
   }
   bf_square_reduce_7_2_1(square, 3);
 
@@ -745,8 +750,7 @@ void bf256_mul(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs) {
 void bf256_square(bf256_t* dst, const bf256_t* lhs) {
   uint64_t square[8];
   for (unsigned int i = 0; i != 4; ++i) {
-    square[2 * i]     = bf_square_expand(BF_VALUE(*lhs, i));
-    square[2 * i + 1] = bf_square_expand(BF_VALUE(*lhs, i) >> 32);
+    bf_square_expand(square + 2 * i, BF_VALUE(*lhs, i));
   }
   bf_square_reduce_10_5_2(square, 4);
 
