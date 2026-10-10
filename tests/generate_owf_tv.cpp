@@ -44,7 +44,10 @@ int main() {
     owf_input.resize(params.owf_input_size);
     owf_output.resize(params.owf_output_size);
 
-    std::generate(owf_key.begin(), owf_key.end(), [&rd, &distrib] { return distrib(rd); });
+    // sample keys as in keygen: bit 0 and bit 1 of the key must not both be set
+    do {
+      std::generate(owf_key.begin(), owf_key.end(), [&rd, &distrib] { return distrib(rd); });
+    } while ((owf_key[0] & 0x3) == 0x3);
     std::generate(owf_input.begin(), owf_input.end(), [&rd, &distrib] { return distrib(rd); });
 
     switch (param_id) {
