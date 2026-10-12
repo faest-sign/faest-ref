@@ -18,11 +18,6 @@
 /* always available on Linux */
 #define HAVE_MEMALIGN
 #endif /* HAVE_MEMALIGN */
-
-#if !defined(HAVE_CONSTTIME_MEMEQUAL) && NETBSD_CHECK(7, 0)
-/* consttime_memequal was introduced in NetBSD 7.0 */
-#define HAVE_CONSTTIME_MEMEQUAL
-#endif /* HAVE_CONSTTIME_MEMEQUAL */
 #endif /* HAVE_CONFIG_H */
 
 #include "compat.h"
@@ -71,6 +66,8 @@ void* faest_aligned_alloc(size_t alignment, size_t size) {
 #elif defined(_MSC_VER)
   return _aligned_malloc(size, alignment);
 #else
+  /* generic fallback implementation: malloc memory and return aligned address; in the byte before
+   * the aligned location, place the offset to the original pointer */
   if (!size) {
     return NULL;
   }
@@ -108,37 +105,3 @@ void faest_aligned_free(void* ptr) {
 #endif
 }
 #endif /* HAVE_ALIGNED_ALLOC */
-
-#if !defined(HAVE_TIMINGSAFE_BCMP) && !defined(OQS)
-int faest_timingsafe_bcmp(const void* a, const void* b, size_t len) {
-#if defined(HAVE_CONSTTIME_MEMEQUAL)
-  return !consttime_memequal(a, b, len);
-#else
-  const unsigned char* p1 = a;
-  const unsigned char* p2 = b;
-
-  unsigned int res = 0;
-  for (; len; --len, ++p1, ++p2) {
-    res |= *p1 ^ *p2;
-  }
-  return res;
-#endif
-}
-#endif /* HAVE_TIMINGSAFE_BCMP */
-
-#if !defined(HAVE_EXPLICIT_BZERO) && !defined(OQS)
-#if defined(_WIN32)
-#include <windows.h>
-#endif
-
-void faest_explicit_bzero(void* a, size_t len) {
-#if defined(_WIN32)
-  SecureZeroMemory(a, len);
-#else
-  volatile char* p = a;
-  for (; len; ++p, --len) {
-    *p = 0;
-  }
-#endif
-}
-#endif /* HAVE_EXPLICIT_BZERO */

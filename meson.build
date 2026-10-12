@@ -603,7 +603,6 @@ endforeach
 faest_sources = files(
   'aes.c',
   'bavc.c',
-  'compat.c',
   'faest_impl.c',
   'fields.c',
   'instances.c',
@@ -621,8 +620,21 @@ faest_sources = files(
   tables,
 ]
 
+if conf_data.get('HAVE_ALIGNED_ALLOC') == false
+  faest_sources += files('compat_aligned_alloc.c')
+endif
+if conf_data.get('HAVE_EXPLICIT_BZERO') == false and conf_data.get('HAVE_MEMSET_EXPLICIT') == false
+  faest_sources += files('compat_explicit_bzero.c')
+endif
+if conf_data.get('HAVE_MEMPCPY') == false
+  faest_sources += files('compat_mempcpy.c')
+endif
+if conf_data.get('HAVE_TIMINGSAFE_BCMP') == false
+  faest_sources += files('compat_timingsafe_bcmp.c')
+endif
+
 if has_usable_builtin == false
-  faest_sources += ['cpu.c']
+  faest_sources += files('cpu.c')
 endif
 
 # header files to install
