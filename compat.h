@@ -13,9 +13,9 @@
 
 #include <stddef.h>
 
+/* In case meson checks were not run, define HAVE_* for known good configurations here. When
+ * building for OQS, skip those where compat functions are provided by OQS. */
 #if !defined(HAVE_CONFIG_H) && !defined(OQS)
-/* In case meson checks were not run, define HAVE_* for known good configurations. We skip those if
- * building for OQS, as the compat functions from there can be used instead. */
 #if defined(__OpenBSD__)
 #include <sys/param.h>
 #endif /* __OpenBSD__ */
@@ -45,7 +45,10 @@
 /* timingsafe_bcmp was introduced in OpenBSD 4.9, FreeBSD 12.0, and MacOS X 10.12 */
 #define HAVE_TIMINGSAFE_BCMP
 #endif /* HAVE_TIMINGSAFE_BCMP */
+#endif /* !HAVE_CONFIG_H && !OQS */
 
+/* HAVE_* for compact functions not provided by OQS. */
+#if !defined(HAVE_CONFIG_H)
 #if !defined(HAVE_MEMPCPY) && GLIBC_CHECK(2, 1)
 /* mempcpy was introduced in glibc 2.1*/
 #define HAVE_MEMPCPY
@@ -66,7 +69,7 @@
 #define HAVE_MM_LOADU_SI64
 #endif
 #endif
-#endif /* !HAVE_CONFIG_H && !OQS */
+#endif /* !HAVE_CONFIG_H */
 
 #if defined(HAVE_ALIGNED_ALLOC)
 #include <stdlib.h>
@@ -241,7 +244,7 @@ ATTR_CONST ATTR_ARTIFICIAL static inline uint64_t parity64(uint64_t in) {
 #elif !GNUC_CHECK(7, 0) && !CLANG_CHECK(9)
 // workaround for gcc and clang
 #define __m128i_u __m128i
-#endif
+#endif /* _MSC_VER */
 
 #if defined(HAVE_AVX2)
 #if defined(_MSC_VER)
@@ -250,8 +253,8 @@ ATTR_CONST ATTR_ARTIFICIAL static inline uint64_t parity64(uint64_t in) {
 #elif !GNUC_CHECK(7, 0) && !CLANG_CHECK(9)
 // workaround for gcc and clang
 #define __m256i_u __m256i
-#endif
-#endif
+#endif /* _MSC_VER */
+#endif /* HAVE_AVX2 */
 
 #if !defined(HAVE_MM_LOADU_SI64)
 #include <string.h>>
@@ -272,6 +275,6 @@ ATTR_TARGET_SSE2 ATTR_ALWAYS_INLINE static inline __m128i _mm_loadu_si64(const v
 #endif
 }
 #endif /* !HAVE_MM_LOADU_SI64 */
-#endif /* HAVE_AESNI */
+#endif /* HAVE_SSE2 */
 
 #endif
