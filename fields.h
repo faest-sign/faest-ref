@@ -114,10 +114,13 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit
 
 #if !defined(FAEST_FIELDS)
 #if defined(HAVE_SSE2) && (defined(__x86_64__) || defined(_M_AMD64))
+// On x86-64, use the SSE2 implementation.
 #define FAEST_FIELDS FAEST_FIELDS_USE_SSE2
 #elif defined(HAVE_ATTR_VECTOR_SIZE)
+// If GCC vector extensions are available, use them.
 #define FAEST_FIELDS FAEST_FIELDS_USE_VECTOR
 #else
+// Fallback to the uint64_t implementation
 #define FAEST_FIELDS FAEST_FIELDS_USE_U64
 #endif
 #endif // !FAEST_FIELDS

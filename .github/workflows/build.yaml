@@ -235,3 +235,29 @@ jobs:
         meson setup build -Dbenchmarks=disabled -Db_lto=false --buildtype=release ${{ matrix.flag }}
         ninja -C build
         ninja -C build test
+
+  build-fields-implementations:
+    name: Test with fields implementation ${{ matrix.impl }}
+    needs: [build-base]
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        impl:
+        - sse2
+        - vector
+        - u64
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: recursive
+    - name: Install Linux dependencies
+      run: |
+        sudo apt-get -q update
+        sudo apt-get -q -y --no-install-recommends install meson ninja-build pkg-config libntl-dev libboost-test-dev libssl-dev
+    - name: Build and test
+      run: |
+        mkdir build
+        meson setup build -Dbenchmarks=disabled -Db_lto=false --buildtype=release -Dfields=${{ matrix.impl }}
+        ninja -C build
+        ninja -C build test

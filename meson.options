@@ -42,6 +42,13 @@ option(
   description: 'Build with -march=native',
 )
 option(
+  'fields',
+  type: 'combo',
+  choices: ['auto', 'u64', 'vector', 'sse2'],
+  value: 'auto',
+  description: 'Select finite fields implementation',
+)
+option(
   'tv-generators',
   type: 'feature',
   value: 'disabled',

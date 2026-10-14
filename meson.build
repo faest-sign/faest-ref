@@ -604,9 +604,6 @@ faest_sources = files(
   'aes.c',
   'bavc.c',
   'faest_impl.c',
-  'fields-sse2.c',
-  'fields-u64.c',
-  'fields-vector.c',
   'fields.c',
   'instances.c',
   'owf.c',
@@ -708,6 +705,27 @@ else
       'sha3/armv8a-neon/KeccakP-1600-armv8a-neon.s',
     )
   endif
+endif
+
+# select fields implementation
+if get_option('fields') == 'sse2'
+  if not supports_sse2
+    error('sse2 selected as fields implementation, but SSE2 is not supported.')
+  endif
+  defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_SSE2']
+  faest_sources += files('fields-sse2.c')
+elif get_option('fields') == 'vector'
+  defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_VECTOR']
+  faest_sources += files('fields-vector.c')
+elif get_option('fields') == 'u64'
+  defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_U64']
+  faest_sources += files('fields-u64.c')
+else
+  faest_sources += files(
+    'fields-sse2.c',
+    'fields-u64.c',
+    'fields-vector.c',
+  )
 endif
 
 # generate files for parameter sets
