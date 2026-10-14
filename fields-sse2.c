@@ -9,18 +9,19 @@
 #include "fields.h"
 
 #if FAEST_FIELDS == FAEST_FIELDS_USE_SSE2
+// Insert a zero bit between each pair of bits in eight unpacked input bytes.
+ATTR_TARGET_SSE2 static inline __m128i bf_square_spread(__m128i value) {
+  value = _mm_and_si128(_mm_or_si128(value, _mm_slli_epi16(value, 4)), _mm_set1_epi16(0x0f0f));
+  value = _mm_and_si128(_mm_or_si128(value, _mm_slli_epi16(value, 2)), _mm_set1_epi16(0x3333));
+  return _mm_and_si128(_mm_or_si128(value, _mm_slli_epi16(value, 1)), _mm_set1_epi16(0x5555));
+}
 
-ATTR_TARGET_SSE2 static inline void bf_square_expand(uint64_t* dst, uint64_t value) {
-  __m128i expanded = _mm_set_epi32(0, 0, (int32_t)(value >> 32), (int32_t)value);
-  // Insert a zero byte after each input byte, then spread the bits within each 16-bit lane.
-  expanded = _mm_unpacklo_epi8(expanded, _mm_setzero_si128());
-  expanded =
-      _mm_and_si128(_mm_or_si128(expanded, _mm_slli_epi16(expanded, 4)), _mm_set1_epi16(0x0f0f));
-  expanded =
-      _mm_and_si128(_mm_or_si128(expanded, _mm_slli_epi16(expanded, 2)), _mm_set1_epi16(0x3333));
-  expanded =
-      _mm_and_si128(_mm_or_si128(expanded, _mm_slli_epi16(expanded, 1)), _mm_set1_epi16(0x5555));
-  _mm_store_si128((__m128i*)dst, expanded);
+// Expand the low and high halves of a 128-bit polynomial into two registers.
+ATTR_TARGET_SSE2 static inline bf256_t bf_square_expand(__m128i value) {
+  bf256_t square;
+  square.values[0] = bf_square_spread(_mm_unpacklo_epi8(value, _mm_setzero_si128()));
+  square.values[1] = bf_square_spread(_mm_unpackhi_epi8(value, _mm_setzero_si128()));
+  return square;
 }
 
 ATTR_TARGET_SSE2 static inline __m128i bf_square_fold_7_2_1(__m128i high) {
@@ -45,48 +46,47 @@ ATTR_TARGET_SSE2 static inline __m128i bf_square_carry_10_5_2(__m128i high) {
 
 // Fold pairs of upper limbs and their carries into the lower half. The carry from the
 // highest limb crosses the field boundary, so fold it once more into the lowest limb.
-ATTR_TARGET_SSE2 static void bf_square_reduce_7_2_1_2(uint64_t* square) {
-  const __m128i high  = _mm_load_si128((const __m128i*)(square + 2));
+ATTR_TARGET_SSE2 static inline void bf128_reduce(bf128_t* dst, __m128i low, __m128i high) {
   const __m128i carry = bf_square_carry_7_2_1(high);
 
-  __m128i low = _mm_xor_si128(_mm_load_si128((const __m128i*)square), bf_square_fold_7_2_1(high));
-  low         = _mm_xor_si128(low, _mm_slli_si128(carry, 8));
-  low         = _mm_xor_si128(low, bf_square_fold_7_2_1(_mm_srli_si128(carry, 8)));
-  _mm_store_si128((__m128i*)square, low);
+  low            = _mm_xor_si128(low, bf_square_fold_7_2_1(high));
+  low            = _mm_xor_si128(low, _mm_slli_si128(carry, 8));
+  dst->values[0] = _mm_xor_si128(low, bf_square_fold_7_2_1(_mm_srli_si128(carry, 8)));
 }
 
-ATTR_TARGET_SSE2 static void bf_square_reduce_7_2_1_3(uint64_t* square) {
-  const __m128i high0  = _mm_loadu_si128((const __m128i*)(square + 3));
-  const __m128i high1  = _mm_loadl_epi64((const __m128i*)(square + 5));
+ATTR_TARGET_SSE2 static inline void bf192_reduce(bf192_t* dst, __m128i square0, __m128i square1,
+                                                 __m128i square2) {
+  const __m128i high0 =
+      _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(square1), _mm_castsi128_pd(square2), 1));
+  const __m128i high1  = _mm_srli_si128(square2, 8);
   const __m128i carry0 = bf_square_carry_7_2_1(high0);
   const __m128i carry1 = bf_square_carry_7_2_1(high1);
 
-  __m128i low0 = _mm_xor_si128(_mm_load_si128((const __m128i*)square), bf_square_fold_7_2_1(high0));
+  __m128i low0 = _mm_xor_si128(square0, bf_square_fold_7_2_1(high0));
   __m128i low1 =
-      _mm_xor_si128(_mm_loadl_epi64((const __m128i*)(square + 2)), bf_square_fold_7_2_1(high1));
+      _mm_xor_si128(_mm_unpacklo_epi64(square1, _mm_setzero_si128()), bf_square_fold_7_2_1(high1));
   low0 = _mm_xor_si128(low0, _mm_slli_si128(carry0, 8));
   low0 = _mm_xor_si128(low0, bf_square_fold_7_2_1(carry1));
   low1 = _mm_xor_si128(low1, _mm_srli_si128(carry0, 8));
-  _mm_store_si128((__m128i*)square, low0);
-  _mm_storel_epi64((__m128i*)(square + 2), low1);
+
+  dst->values[0] = low0;
+  dst->values[1] = _mm_unpacklo_epi64(low1, _mm_setzero_si128());
 }
 
-ATTR_TARGET_SSE2 static void bf_square_reduce_10_5_2(uint64_t* square) {
-  const __m128i high0  = _mm_load_si128((const __m128i*)(square + 4));
-  const __m128i high1  = _mm_load_si128((const __m128i*)(square + 6));
+ATTR_TARGET_SSE2 static inline void bf256_reduce(bf256_t* dst, __m128i low0, __m128i low1,
+                                                 __m128i high0, __m128i high1) {
   const __m128i carry0 = bf_square_carry_10_5_2(high0);
   const __m128i carry1 = bf_square_carry_10_5_2(high1);
 
-  __m128i low0 =
-      _mm_xor_si128(_mm_load_si128((const __m128i*)square), bf_square_fold_10_5_2(high0));
-  __m128i low1 =
-      _mm_xor_si128(_mm_load_si128((const __m128i*)(square + 2)), bf_square_fold_10_5_2(high1));
+  low0 = _mm_xor_si128(low0, bf_square_fold_10_5_2(high0));
+  low1 = _mm_xor_si128(low1, bf_square_fold_10_5_2(high1));
   low0 = _mm_xor_si128(low0, _mm_slli_si128(carry0, 8));
   low0 = _mm_xor_si128(low0, bf_square_fold_10_5_2(_mm_srli_si128(carry1, 8)));
   low1 = _mm_xor_si128(low1, _mm_slli_si128(carry1, 8));
   low1 = _mm_xor_si128(low1, _mm_srli_si128(carry0, 8));
-  _mm_store_si128((__m128i*)square, low0);
-  _mm_store_si128((__m128i*)(square + 2), low1);
+
+  dst->values[0] = low0;
+  dst->values[1] = low1;
 }
 
 ATTR_TARGET_SSE2 static inline __m128i bf_shift_left_1(__m128i value) {
@@ -181,13 +181,8 @@ ATTR_TARGET_SSE2 void bf128_mul_64_inplace(bf128_t* lhs, bf64_t rhs) {
 }
 
 ATTR_TARGET_SSE2 void bf128_square(bf128_t* dst, const bf128_t* lhs) {
-  ATTR_ALIGNED(16) uint64_t square[4];
-  for (unsigned int i = 0; i != 2; ++i) {
-    bf_square_expand(square + 2 * i, BF_VALUE(*lhs, i));
-  }
-  bf_square_reduce_7_2_1_2(square);
-
-  dst->values[0] = _mm_load_si128((const __m128i*)square);
+  const bf256_t square = bf_square_expand(lhs->values[0]);
+  bf128_reduce(dst, square.values[0], square.values[1]);
 }
 
 #if defined(FAEST_TESTS)
@@ -297,14 +292,9 @@ void bf192_mul_64_inplace(bf192_t* lhs, bf64_t rhs) {
 }
 
 ATTR_TARGET_SSE2 void bf192_square(bf192_t* dst, const bf192_t* lhs) {
-  ATTR_ALIGNED(16) uint64_t square[6];
-  for (unsigned int i = 0; i != 3; ++i) {
-    bf_square_expand(square + 2 * i, BF_VALUE(*lhs, i));
-  }
-  bf_square_reduce_7_2_1_3(square);
-
-  dst->values[0] = _mm_load_si128((const __m128i*)square);
-  dst->values[1] = _mm_loadl_epi64((const __m128i*)(square + 2));
+  const bf256_t square0 = bf_square_expand(lhs->values[0]);
+  const bf256_t square1 = bf_square_expand(lhs->values[1]);
+  bf192_reduce(dst, square0.values[0], square0.values[1], square1.values[0]);
 }
 
 #if defined(FAEST_TESTS)
@@ -410,14 +400,9 @@ ATTR_TARGET_SSE2 void bf256_mul_64_inplace(bf256_t* lhs, bf64_t rhs) {
 }
 
 ATTR_TARGET_SSE2 void bf256_square(bf256_t* dst, const bf256_t* lhs) {
-  ATTR_ALIGNED(16) uint64_t square[8];
-  for (unsigned int i = 0; i != 4; ++i) {
-    bf_square_expand(square + 2 * i, BF_VALUE(*lhs, i));
-  }
-  bf_square_reduce_10_5_2(square);
-
-  dst->values[0] = _mm_load_si128((const __m128i*)square);
-  dst->values[1] = _mm_load_si128((const __m128i*)(square + 2));
+  const bf256_t square0 = bf_square_expand(lhs->values[0]);
+  const bf256_t square1 = bf_square_expand(lhs->values[1]);
+  bf256_reduce(dst, square0.values[0], square0.values[1], square1.values[0], square1.values[1]);
 }
 
 #if defined(FAEST_TESTS)
