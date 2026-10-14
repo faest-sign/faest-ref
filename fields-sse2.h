@@ -9,15 +9,15 @@
 #include <emmintrin.h>
 
 // Extract a polynomial limb without aliasing the register storage as uint64_t.
-ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
-bf_sse2_word(__m128i value, unsigned int lane) {
+ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t bf_word(__m128i value,
+                                                                             unsigned int lane) {
   if (lane) {
     value = _mm_srli_si128(value, 8);
   }
   return (uint64_t)_mm_cvtsi128_si64(value);
 }
 
-#define BF_VALUE(v, i) bf_sse2_word((v).values[(i) / 2], (i) % 2)
+#define BF_VALUE(v, i) bf_word((v).values[(i) / 2], (i) % 2)
 
 typedef struct {
   __m128i values[1];
