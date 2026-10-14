@@ -168,6 +168,139 @@ ATTR_TARGET_SSE2 static void bf_square_reduce_10_5_2(uint64_t* square) {
   _mm_store_si128((__m128i*)square, low0);
   _mm_store_si128((__m128i*)(square + 2), low1);
 }
+
+ATTR_TARGET_SSE2 static inline __m128i bf_shift_left_1_sse2(__m128i value) {
+  return _mm_or_si128(_mm_slli_epi64(value, 1), _mm_slli_si128(_mm_srli_epi64(value, 63), 8));
+}
+
+ATTR_TARGET_SSE2 static inline __m128i bf_shift_left_1_high_sse2(__m128i high, __m128i low) {
+  // Combine the preceding limb for each lane before extracting its carry bit.
+  const __m128i preceding =
+      _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(low), _mm_castsi128_pd(high), 1));
+  return _mm_or_si128(_mm_slli_epi64(high, 1), _mm_srli_epi64(preceding, 63));
+}
+
+// Process four multiplier bits at a time using four fixed multiples of the input.
+// Selection uses masks rather than a table indexed by multiplier bits.
+// Both sizes are constant at each call site, allowing the compiler to specialize the loops.
+ATTR_TARGET_SSE2 ATTR_ALWAYS_INLINE static inline void
+bf128_mul_sse2(bf128_t* dst, const bf128_t* lhs, const uint64_t* rhs, unsigned int words) {
+  __m128i input_low[4];
+  input_low[0] = _mm_load_si128((const __m128i*)&BF_VALUE(*lhs, 0));
+
+  const __m128i mod = _mm_set_epi32(0, 0, 0, (int32_t)bf128_modulus);
+  for (unsigned int i = 1; i < 4; ++i) {
+    const __m128i top      = input_low[i - 1];
+    const __m128i overflow = _mm_srai_epi32(_mm_shuffle_epi32(top, _MM_SHUFFLE(3, 3, 3, 3)), 31);
+    input_low[i] =
+        _mm_xor_si128(bf_shift_left_1_sse2(input_low[i - 1]), _mm_and_si128(overflow, mod));
+  }
+
+  __m128i result_low = _mm_setzero_si128();
+  for (unsigned int word = words; word-- > 0;) {
+    uint64_t multiplier = rhs[word];
+    for (unsigned int nibble = 0; nibble < 16; ++nibble, multiplier <<= 4) {
+      __m128i overflow = _mm_srli_si128(_mm_srli_epi64(result_low, 60), 8);
+
+      result_low = _mm_or_si128(_mm_slli_epi64(result_low, 4),
+                                _mm_slli_si128(_mm_srli_epi64(result_low, 60), 8));
+      // Only four bits overflow, so folding them cannot cross another limb boundary.
+      result_low = _mm_xor_si128(result_low, bf_square_fold_7_2_1(overflow));
+      for (unsigned int bit = 0; bit < 4; ++bit) {
+        const __m128i mask = _mm_set1_epi32(-(int)((multiplier >> (60 + bit)) & 1));
+        result_low         = _mm_xor_si128(result_low, _mm_and_si128(input_low[bit], mask));
+      }
+    }
+  }
+  _mm_store_si128((__m128i*)&BF_VALUE(*dst, 0), result_low);
+}
+
+ATTR_TARGET_SSE2 ATTR_ALWAYS_INLINE static inline void
+bf192_mul_sse2(bf192_t* dst, const bf192_t* lhs, const uint64_t* rhs, unsigned int words) {
+  __m128i input_low[4];
+  __m128i input_high[4];
+  input_low[0]  = _mm_load_si128((const __m128i*)&BF_VALUE(*lhs, 0));
+  input_high[0] = _mm_loadl_epi64((const __m128i*)&BF_VALUE(*lhs, 2));
+
+  const __m128i mod = _mm_set_epi32(0, 0, 0, (int32_t)bf192_modulus);
+  for (unsigned int i = 1; i < 4; ++i) {
+    const __m128i top      = input_high[i - 1];
+    const __m128i overflow = _mm_srai_epi32(_mm_shuffle_epi32(top, _MM_SHUFFLE(1, 1, 1, 1)), 31);
+    input_low[i] =
+        _mm_xor_si128(bf_shift_left_1_sse2(input_low[i - 1]), _mm_and_si128(overflow, mod));
+    input_high[i] = _mm_or_si128(_mm_slli_epi64(input_high[i - 1], 1),
+                                 _mm_srli_si128(_mm_srli_epi64(input_low[i - 1], 63), 8));
+  }
+
+  __m128i result_low  = _mm_setzero_si128();
+  __m128i result_high = _mm_setzero_si128();
+  for (unsigned int word = words; word-- > 0;) {
+    uint64_t multiplier = rhs[word];
+    for (unsigned int nibble = 0; nibble < 16; ++nibble, multiplier <<= 4) {
+      __m128i overflow = _mm_srli_epi64(result_high, 60);
+      result_high      = _mm_or_si128(_mm_slli_epi64(result_high, 4),
+                                      _mm_srli_si128(_mm_srli_epi64(result_low, 60), 8));
+
+      result_low = _mm_or_si128(_mm_slli_epi64(result_low, 4),
+                                _mm_slli_si128(_mm_srli_epi64(result_low, 60), 8));
+      // Only four bits overflow, so folding them cannot cross another limb boundary.
+      result_low = _mm_xor_si128(result_low, bf_square_fold_7_2_1(overflow));
+      for (unsigned int bit = 0; bit < 4; ++bit) {
+        const __m128i mask = _mm_set1_epi32(-(int)((multiplier >> (60 + bit)) & 1));
+        result_low         = _mm_xor_si128(result_low, _mm_and_si128(input_low[bit], mask));
+        result_high        = _mm_xor_si128(result_high, _mm_and_si128(input_high[bit], mask));
+      }
+    }
+  }
+  _mm_store_si128((__m128i*)&BF_VALUE(*dst, 0), result_low);
+#if defined(HAVE_ATTR_VECTOR_SIZE)
+  // The vector representation has a fourth limb, which must remain zero.
+  _mm_store_si128((__m128i*)&BF_VALUE(*dst, 2), result_high);
+#else
+  _mm_storel_epi64((__m128i*)&BF_VALUE(*dst, 2), result_high);
+#endif
+}
+
+ATTR_TARGET_SSE2 ATTR_ALWAYS_INLINE static inline void
+bf256_mul_sse2(bf256_t* dst, const bf256_t* lhs, const uint64_t* rhs, unsigned int words) {
+  __m128i input_low[4];
+  __m128i input_high[4];
+  input_low[0]  = _mm_load_si128((const __m128i*)&BF_VALUE(*lhs, 0));
+  input_high[0] = _mm_load_si128((const __m128i*)&BF_VALUE(*lhs, 2));
+
+  const __m128i mod = _mm_set_epi32(0, 0, 0, bf256_modulus);
+  for (unsigned int i = 1; i < 4; ++i) {
+    const __m128i top      = input_high[i - 1];
+    const __m128i overflow = _mm_srai_epi32(_mm_shuffle_epi32(top, _MM_SHUFFLE(3, 3, 3, 3)), 31);
+    input_low[i] =
+        _mm_xor_si128(bf_shift_left_1_sse2(input_low[i - 1]), _mm_and_si128(overflow, mod));
+    input_high[i] = bf_shift_left_1_high_sse2(input_high[i - 1], input_low[i - 1]);
+  }
+
+  __m128i result_low  = _mm_setzero_si128();
+  __m128i result_high = _mm_setzero_si128();
+  for (unsigned int word = words; word-- > 0;) {
+    uint64_t multiplier = rhs[word];
+    for (unsigned int nibble = 0; nibble < 16; ++nibble, multiplier <<= 4) {
+      __m128i overflow        = _mm_srli_si128(_mm_srli_epi64(result_high, 60), 8);
+      const __m128i preceding = _mm_castpd_si128(
+          _mm_shuffle_pd(_mm_castsi128_pd(result_low), _mm_castsi128_pd(result_high), 1));
+      result_high = _mm_or_si128(_mm_slli_epi64(result_high, 4), _mm_srli_epi64(preceding, 60));
+      result_low  = _mm_or_si128(_mm_slli_epi64(result_low, 4),
+                                 _mm_slli_si128(_mm_srli_epi64(result_low, 60), 8));
+      // Only four bits overflow, so folding them cannot cross another limb boundary.
+      result_low = _mm_xor_si128(result_low, bf_square_fold_10_5_2(overflow));
+      for (unsigned int bit = 0; bit < 4; ++bit) {
+        const __m128i mask = _mm_set1_epi32(-(int)((multiplier >> (60 + bit)) & 1));
+        result_low         = _mm_xor_si128(result_low, _mm_and_si128(input_low[bit], mask));
+        result_high        = _mm_xor_si128(result_high, _mm_and_si128(input_high[bit], mask));
+      }
+    }
+  }
+  _mm_store_si128((__m128i*)&BF_VALUE(*dst, 0), result_low);
+  _mm_store_si128((__m128i*)&BF_VALUE(*dst, 2), result_high);
+}
+
 #else
 // Square a 64-bit polynomial over GF(2) by inserting a zero between each pair of input bits.
 static inline void bf_square_expand(uint64_t* dst, uint64_t value) {
@@ -318,10 +451,12 @@ void bf128_byte_combine_bits(bf128_t* dst, uint8_t x) {
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
+#if !defined(HAVE_SSE2) || (!defined(__x86_64__) && !defined(_M_AMD64))
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf128_and_64(bf128_t* dst, const bf128_t* lhs,
                                                                    bf64_t rhs) {
   *dst = *lhs & rhs;
 }
+#endif
 #else
 static inline void bf128_and_64(bf128_t* dst, const bf128_t* lhs, bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
@@ -330,6 +465,7 @@ static inline void bf128_and_64(bf128_t* dst, const bf128_t* lhs, bf64_t rhs) {
 }
 #endif
 
+#if defined(FAEST_TESTS) || !defined(HAVE_SSE2) || (!defined(__x86_64__) && !defined(_M_AMD64))
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #if __has_builtin(__builtin_shufflevector)
 #define bf128_shift_right_64(v1) __builtin_shufflevector((v1), bf128_zero(), 2, 0)
@@ -352,6 +488,7 @@ static inline bf128_t bf128_shift_left_1(bf128_t value) {
   return value;
 }
 #endif
+#endif
 
 ATTR_PURE ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
 bf128_bit_to_uint64_mask(const bf128_t* value, unsigned int bit) {
@@ -362,6 +499,9 @@ bf128_bit_to_uint64_mask(const bf128_t* value, unsigned int bit) {
 }
 
 void bf128_mul(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs) {
+#if defined(HAVE_SSE2) && (defined(__x86_64__) || defined(_M_AMD64))
+  bf128_mul_sse2(dst, lhs, &BF_VALUE(*rhs, 0), 2);
+#else
   bf128_t tmp = *lhs;
   bf128_and_64(dst, lhs, bf128_bit_to_uint64_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 128; ++idx) {
@@ -373,6 +513,7 @@ void bf128_mul(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs) {
     bf128_and_64(&tmp1, &tmp, bf128_bit_to_uint64_mask(rhs, idx));
     bf128_add_inplace(dst, &tmp1);
   }
+#endif
 }
 
 void bf128_square(bf128_t* dst, const bf128_t* lhs) {
@@ -387,6 +528,9 @@ void bf128_square(bf128_t* dst, const bf128_t* lhs) {
 }
 
 void bf128_mul_inplace(bf128_t* lhs, const bf128_t* rhs) {
+#if defined(HAVE_SSE2) && (defined(__x86_64__) || defined(_M_AMD64))
+  bf128_mul(lhs, lhs, rhs);
+#else
   bf128_t tmp = *lhs;
   bf128_and_64(lhs, lhs, bf128_bit_to_uint64_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 128; ++idx) {
@@ -398,9 +542,13 @@ void bf128_mul_inplace(bf128_t* lhs, const bf128_t* rhs) {
     bf128_and_64(&tmp1, &tmp, bf128_bit_to_uint64_mask(rhs, idx));
     bf128_add_inplace(lhs, &tmp1);
   }
+#endif
 }
 
 void bf128_mul_64_inplace(bf128_t* lhs, bf64_t rhs) {
+#if defined(HAVE_SSE2) && (defined(__x86_64__) || defined(_M_AMD64))
+  bf128_mul_sse2(lhs, lhs, &rhs, 1);
+#else
   bf128_t tmp = *lhs;
   bf128_and_64(lhs, lhs, bf64_bit_to_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 64; ++idx) {
@@ -412,6 +560,7 @@ void bf128_mul_64_inplace(bf128_t* lhs, bf64_t rhs) {
     bf128_and_64(&tmp1, &tmp, bf64_bit_to_mask(rhs, idx));
     bf128_add_inplace(lhs, &tmp1);
   }
+#endif
 }
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)
@@ -542,10 +691,12 @@ void bf192_byte_combine_bits(bf192_t* dst, uint8_t x) {
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
+#if !defined(HAVE_SSE2) || (!defined(__x86_64__) && !defined(_M_AMD64))
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf192_and_64(bf192_t* dst, const bf192_t* lhs,
                                                                    bf64_t rhs) {
   *dst = *lhs & rhs;
 }
+#endif
 #else
 static inline void bf192_and_64(bf192_t* dst, const bf192_t* lhs, bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
@@ -554,6 +705,7 @@ static inline void bf192_and_64(bf192_t* dst, const bf192_t* lhs, bf64_t rhs) {
 }
 #endif
 
+#if defined(FAEST_TESTS) || !defined(HAVE_SSE2) || (!defined(__x86_64__) && !defined(_M_AMD64))
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #if __has_builtin(__builtin_shufflevector)
 #define bf192_shift_right_64(v1) __builtin_shufflevector((v1), bf192_zero(), 4, 0, 1, 5)
@@ -582,6 +734,8 @@ static inline bf192_t bf192_shift_left_1(bf192_t value) {
   return value;
 }
 
+#endif
+
 ATTR_PURE ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
 bf192_bit_to_uint64_mask(const bf192_t* value, unsigned int bit) {
   const unsigned int byte_idx = bit / 64;
@@ -591,6 +745,9 @@ bf192_bit_to_uint64_mask(const bf192_t* value, unsigned int bit) {
 }
 
 void bf192_mul(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs) {
+#if defined(HAVE_SSE2) && (defined(__x86_64__) || defined(_M_AMD64))
+  bf192_mul_sse2(dst, lhs, &BF_VALUE(*rhs, 0), 3);
+#else
   bf192_t tmp = *lhs;
   bf192_and_64(dst, lhs, bf192_bit_to_uint64_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 192; ++idx) {
@@ -602,6 +759,7 @@ void bf192_mul(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs) {
     bf192_and_64(&tmp1, &tmp, bf192_bit_to_uint64_mask(rhs, idx));
     bf192_add_inplace(dst, &tmp1);
   }
+#endif
 }
 
 void bf192_square(bf192_t* dst, const bf192_t* lhs) {
@@ -617,6 +775,9 @@ void bf192_square(bf192_t* dst, const bf192_t* lhs) {
 }
 
 void bf192_mul_inplace(bf192_t* lhs, const bf192_t* rhs) {
+#if defined(HAVE_SSE2) && (defined(__x86_64__) || defined(_M_AMD64))
+  bf192_mul(lhs, lhs, rhs);
+#else
   bf192_t tmp = *lhs;
   bf192_and_64(lhs, lhs, bf192_bit_to_uint64_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 192; ++idx) {
@@ -628,9 +789,13 @@ void bf192_mul_inplace(bf192_t* lhs, const bf192_t* rhs) {
     bf192_and_64(&tmp1, &tmp, bf192_bit_to_uint64_mask(rhs, idx));
     bf192_add_inplace(lhs, &tmp1);
   }
+#endif
 }
 
 void bf192_mul_64_inplace(bf192_t* lhs, bf64_t rhs) {
+#if defined(HAVE_SSE2) && (defined(__x86_64__) || defined(_M_AMD64))
+  bf192_mul_sse2(lhs, lhs, &rhs, 1);
+#else
   bf192_t tmp = *lhs;
   bf192_and_64(lhs, lhs, bf64_bit_to_mask(rhs, 0));
   for (unsigned int idx = 1; idx != 64; ++idx) {
@@ -642,6 +807,7 @@ void bf192_mul_64_inplace(bf192_t* lhs, bf64_t rhs) {
     bf192_and_64(&tmp1, &tmp, bf64_bit_to_mask(rhs, idx));
     bf192_add_inplace(lhs, &tmp1);
   }
+#endif
 }
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)
@@ -779,10 +945,12 @@ void bf256_byte_combine_bits(bf256_t* dst, uint8_t x) {
 }
 
 #if defined(HAVE_ATTR_VECTOR_SIZE)
+#if !defined(HAVE_SSE2) || (!defined(__x86_64__) && !defined(_M_AMD64))
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf256_and_64(bf256_t* dst, const bf256_t* lhs,
                                                                    bf64_t rhs) {
   *dst = *lhs & rhs;
 }
+#endif
 #else
 ATTR_ALWAYS_INLINE static inline void bf256_and_64(bf256_t* dst, const bf256_t* lhs, bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs->values); ++i) {
@@ -791,6 +959,7 @@ ATTR_ALWAYS_INLINE static inline void bf256_and_64(bf256_t* dst, const bf256_t* 
 }
 #endif
 
+#if defined(FAEST_TESTS) || !defined(HAVE_SSE2) || (!defined(__x86_64__) && !defined(_M_AMD64))
 #if defined(HAVE_ATTR_VECTOR_SIZE)
 #if __has_builtin(__builtin_shufflevector)
 #define bf256_shift_right_64(v1) __builtin_shufflevector((v1), bf256_zero(), 4, 0, 1, 2)
@@ -816,6 +985,7 @@ static inline bf256_t bf256_shift_left_1(bf256_t value) {
   return value;
 }
 #endif
+#endif
 
 ATTR_PURE ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline uint64_t
 bf256_bit_to_uint64_mask(const bf256_t* value, unsigned int bit) {
@@ -826,6 +996,9 @@ bf256_bit_to_uint64_mask(const bf256_t* value, unsigned int bit) {
 }
 
 void bf256_mul(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs) {
+#if defined(HAVE_SSE2) && (defined(__x86_64__) || defined(_M_AMD64))
+  bf256_mul_sse2(dst, lhs, &BF_VALUE(*rhs, 0), 4);
+#else
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   const bf256_t mod = BF256C(bf256_modulus, 0, 0, 0);
 #endif
@@ -844,6 +1017,7 @@ void bf256_mul(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs) {
     bf256_and_64(&tmp1, &tmp, bf256_bit_to_uint64_mask(rhs, idx));
     bf256_add_inplace(dst, &tmp1);
   }
+#endif
 }
 
 void bf256_square(bf256_t* dst, const bf256_t* lhs) {
@@ -860,6 +1034,9 @@ void bf256_square(bf256_t* dst, const bf256_t* lhs) {
 }
 
 void bf256_mul_inplace(bf256_t* lhs, const bf256_t* rhs) {
+#if defined(HAVE_SSE2) && (defined(__x86_64__) || defined(_M_AMD64))
+  bf256_mul(lhs, lhs, rhs);
+#else
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   const bf256_t mod = BF256C(bf256_modulus, 0, 0, 0);
 #endif
@@ -879,9 +1056,13 @@ void bf256_mul_inplace(bf256_t* lhs, const bf256_t* rhs) {
     bf256_and_64(&tmp1, &tmp, bf256_bit_to_uint64_mask(rhs, idx));
     bf256_add_inplace(lhs, &tmp1);
   }
+#endif
 }
 
 void bf256_mul_64_inplace(bf256_t* lhs, bf64_t rhs) {
+#if defined(HAVE_SSE2) && (defined(__x86_64__) || defined(_M_AMD64))
+  bf256_mul_sse2(lhs, lhs, &rhs, 1);
+#else
 #if defined(HAVE_ATTR_VECTOR_SIZE)
   const bf256_t mod = BF256C(bf256_modulus, 0, 0, 0);
 #endif
@@ -900,6 +1081,7 @@ void bf256_mul_64_inplace(bf256_t* lhs, bf64_t rhs) {
     bf256_and_64(&tmp1, &tmp, bf64_bit_to_mask(rhs, idx));
     bf256_add_inplace(lhs, &tmp1);
   }
+#endif
 }
 
 #if !defined(HAVE_ATTR_VECTOR_SIZE)
