@@ -44,7 +44,7 @@ benchmarking and comparisons we recommend the optimized implementation.
 
 For the reference implementation, all benchmarks can be executed via `bench.sh`.
 
-# Implementations of AES and SHA3
+## Implementations of AES and SHA3
 
 For AES, the following implementations will be used (in order of preference and
 availability):
@@ -71,3 +71,20 @@ implementation is `openssl` if available.
 The SHA3 implementation does not peform runtime dispatching based on the
 available CPU features. If, however, the target is known to support AVX2, `avx2`
 is the recommended implementation on x86-64.
+
+## Implementation of finite fields
+
+Multiple implementation of finite field arithmetic is included in the reference implementations:
+
+* `avx2`: Uses AVX2 and PCLMUL instructions (all hardware supporting AVX2 also
+  supports PCLMUL, but in virtual environments this may not be the case)
+* `sse2`: Uses SSE2 instructions
+* `vector`: Uses GCC vector extensions
+* `u64`: Uses `uint64_t`
+
+These implementations are currently selected at compile time depending on the
+available CPU features. No runtime dispatching is implemented. If the target is
+known to support AVX2 and PCLMUL, `avx2` is the recommended implementation on
+x86-64. If AVX2 and PCLMUL are not available, `sse2` is the default
+implementation on `x86-64`. On other architectures, `vector` is used if
+possible.
