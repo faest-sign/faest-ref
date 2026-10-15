@@ -726,7 +726,8 @@ else
 endif
 
 # select fields implementation
-if get_option('fields') == 'avx2'
+fields_impl = get_option('fields')
+if fields_impl == 'avx2'
   if not supports_avx2 and not supports_pclmul
     error(
       'avx2 selected as fields implementation, but AVX2 or PCLMUL is not supported.',
@@ -734,16 +735,16 @@ if get_option('fields') == 'avx2'
   endif
   defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_AVX2']
   faest_sources += files('fields-avx2.c')
-elif get_option('fields') == 'sse2'
+elif fields_impl == 'sse2'
   if not supports_sse2
     error('sse2 selected as fields implementation, but SSE2 is not supported.')
   endif
   defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_SSE2']
   faest_sources += files('fields-sse2.c')
-elif get_option('fields') == 'vector'
+elif fields_impl == 'vector'
   defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_VECTOR']
   faest_sources += files('fields-vector.c')
-elif get_option('fields') == 'u64'
+elif fields_impl == 'u64'
   defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_U64']
   faest_sources += files('fields-u64.c')
 else

@@ -114,8 +114,11 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit
 #define FAEST_FIELDS_USE_U64 0
 
 #if !defined(FAEST_FIELDS)
-#if defined(HAVE_SSE2) && (defined(__x86_64__) || defined(_M_AMD64))
-// On x86-64, use the SSE2 implementation.
+#if defined(HAVE_AVX2) && defined(HAVE_PCLMUL) && __AVX2__ && __PCLMUL__
+// If AVX2/PCLMUL is supported, and we are building with both enabled, use the AVX2 implementation.
+#define FAEST_FIELDS FAEST_FIELDS_USE_AVX2
+#elif defined(HAVE_SSE2) && __SSE2__
+// If SSE2 is supported and we are building with SSE2 enabled, use the SSE2 implementation.
 #define FAEST_FIELDS FAEST_FIELDS_USE_SSE2
 #elif defined(HAVE_ATTR_VECTOR_SIZE)
 // If GCC vector extensions are available, use them.
