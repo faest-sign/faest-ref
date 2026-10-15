@@ -2,6 +2,10 @@
  *  SPDX-License-Identifier: MIT
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "faest_aes.h"
 #include "fields.h"
 #include "utils.hpp"

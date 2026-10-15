@@ -2,6 +2,10 @@
  *  SPDX-License-Identifier: MIT
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "universal_hashing.h"
 #include "instances.h"
 #include "fields.hpp"

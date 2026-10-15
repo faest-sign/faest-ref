@@ -5,6 +5,10 @@
 // Reference - https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.197.pdf
 // Tested against Appendix C.1
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "../aes.h"
 
 #include <boost/test/unit_test.hpp>

@@ -2,6 +2,10 @@
  *  SPDX-License-Identifier: MIT
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #define BOOST_TEST_MODULE extended tests
 #define BOOST_TEST_NO_MAIN
 #include <boost/test/unit_test.hpp>

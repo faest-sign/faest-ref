@@ -2,6 +2,10 @@
  *  SPDX-License-Identifier: MIT
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "../aes.h"
 #include "prg_tvs.hpp"
 
