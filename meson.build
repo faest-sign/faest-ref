@@ -85,7 +85,7 @@ has_usable_builtin = cc.compiles(
   '''
 #include "cpu.h"
 
-#if !defined(BUILTIN_CPU_SUPPORTED) || defined(BUILTIN_CPU_SUPPORTED_BROKEN_BMI2)
+#if !defined(BUILTIN_CPU_SUPPORTED)
 #error "__builtin_cpu_supports is not supported"
 #endif
 ''',
@@ -128,7 +128,7 @@ int main() {
 conf_data.set('HAVE_SSE2', supports_sse2)
 
 # check compiler if compiler supports AVX2
-avx2_flag = cc.get_supported_arguments(['-mavx2', '-mbmi2'])
+avx2_flag = cc.get_supported_arguments('-mavx2')
 supports_avx2 = cc.links(
   '''
 #include <immintrin.h>

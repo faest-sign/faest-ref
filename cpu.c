@@ -16,7 +16,7 @@
 
 #include "cpu.h"
 
-#if !defined(BUILTIN_CPU_SUPPORTED) || defined(BUILTIN_CPU_SUPPORTED_BROKEN_BMI2)
+#if !defined(BUILTIN_CPU_SUPPORTED)
 #if defined(__arm__) && defined(HAVE_SYS_AUXV_H) && defined(HAVE_ASM_HWCAP_H)
 #include <asm/hwcap.h>
 #include <sys/auxv.h>
@@ -63,9 +63,6 @@ static unsigned init_caps(void) {
     if (regs.ebx & (1 << 5)) {
       caps |= CPU_CAP_AVX2;
     }
-    if (regs.ebx & (1 << 8)) {
-      caps |= CPU_CAP_BMI2;
-    }
   }
 
   return caps;
@@ -89,9 +86,6 @@ static unsigned init_caps(void) {
   if (__get_cpuid(7, &eax, &ebx, &ecx, &edx)) {
     if (ebx & (1 << 5)) {
       caps |= CPU_CAP_AVX2;
-    }
-    if (ebx & (1 << 8)) {
-      caps |= CPU_CAP_BMI2;
     }
   }
 

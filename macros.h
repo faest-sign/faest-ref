@@ -188,10 +188,10 @@
 /* target attribute */
 #if GNUC_CHECK(4, 4) || __has_attribute(target)
 #define ATTR_TARGET(x) __attribute__((target((x))))
-#define ATTR_TARGET_AVX2 __attribute__((target("avx2,bmi2,sse2")))
+#define ATTR_TARGET_AVX2 __attribute__((target("avx2,sse2")))
 #define ATTR_TARGET_SSE2 __attribute__((target("sse2")))
 #define ATTR_TARGET_AESNI __attribute__((target("sse2,aes")))
-#define ATTR_TARGET_AESNI_AVX2 __attribute__((target("avx2,bmi2,aes")))
+#define ATTR_TARGET_AESNI_AVX2 __attribute__((target("avx2,aes")))
 #define ATTR_TARGET_PCLMUL __attribute__((target("pclmul")))
 #else
 #define ATTR_TARGET(x)

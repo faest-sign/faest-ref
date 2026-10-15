@@ -15,20 +15,13 @@
 #define BUILTIN_CPU_SUPPORTED
 #endif
 
-#if defined(BUILTIN_CPU_SUPPORTED) && GNUC_CHECK(4, 9) && !GNUC_CHECK(5, 0)
-/* gcc 4.9's __builtin_cpu_support does not support "bmi2" */
-#define BUILTIN_CPU_SUPPORTED_BROKEN_BMI2
-#endif
-
-#if !defined(BUILTIN_CPU_SUPPORTED) || defined(BUILTIN_CPU_SUPPORTED_BROKEN_BMI2)
+#if !defined(BUILTIN_CPU_SUPPORTED)
 #include <stdbool.h>
 
 /* CPU supports SSE2 */
 #define CPU_CAP_SSE2 0x00000001
 /* CPU supports AVX2 */
 #define CPU_CAP_AVX2 0x00000004
-/* CPU supports BMI2 */
-#define CPU_CAP_BMI2 0x00000010
 /* CPU supports NEON */
 #define CPU_CAP_NEON 0x00000008
 /* CPU supports AES-NI */
@@ -42,13 +35,13 @@ bool cpu_supports(unsigned int caps);
 
 /* Use __builtin_cpu_support or our fallback function to determine supported CPU features */
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
-#if defined(__AVX2__) && defined(__BMI2__)
-// building with -mavx2 -mbmi2
+#if defined(__AVX2__)
+// building with -mavx2
 #define CPU_SUPPORTS_AVX2 1
-#elif defined(BUILTIN_CPU_SUPPORTED) && !defined(BUILTIN_CPU_SUPPORTED_BROKEN_BMI2)
-#define CPU_SUPPORTS_AVX2 (__builtin_cpu_supports("avx2") && __builtin_cpu_supports("bmi2"))
+#elif defined(BUILTIN_CPU_SUPPORTED)
+#define CPU_SUPPORTS_AVX2 __builtin_cpu_supports("avx2")
 #else
-#define CPU_SUPPORTS_AVX2 cpu_supports(CPU_CAP_AVX2 | CPU_CAP_BMI2)
+#define CPU_SUPPORTS_AVX2 cpu_supports(CPU_CAP_AVX2)
 #endif
 #endif
 
@@ -78,7 +71,7 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_AESNI_AVX2 (CPU_SUPPORTS_AVX2 && __builtin_cpu_supports("aes"))
 #else
 #define CPU_SUPPORTS_AESNI cpu_supports(CPU_CAP_SSE2 | CPU_CAP_AESNI)
-#define CPU_SUPPORTS_AESNI_AVX2 cpu_supports(CPU_CAP_AVX2 | CPU_CAP_BMI2 | CPU_CAP_AESNI)
+#define CPU_SUPPORTS_AESNI_AVX2 cpu_supports(CPU_CAP_AVX2 | CPU_CAP_AESNI)
 #endif
 #else
 #define CPU_SUPPORTS_AESNI 0
@@ -97,12 +90,11 @@ bool cpu_supports(unsigned int caps);
 #include <oqs/common.h>
 
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
-#if defined(__AVX2__) && defined(__BMI2__)
-// building with -mavx2 -mbmi2
+#if defined(__AVX2__)
+// building with -mavx2
 #define CPU_SUPPORTS_AVX2 1
 #else
-#define CPU_SUPPORTS_AVX2                                                                          \
-  (OQS_CPU_has_extension(OQS_CPU_EXT_AVX2) && OQS_CPU_has_extension(OQS_CPU_EXT_BMI2))
+#define CPU_SUPPORTS_AVX2 OQS_CPU_has_extension(OQS_CPU_EXT_AVX2)
 #endif
 #else
 #define CPU_SUPPORTS_AVX2 0
