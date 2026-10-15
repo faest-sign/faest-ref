@@ -251,6 +251,15 @@ static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, b
   aes_f256_f2_conjugates(state_conj_tag, state_bits_tag, Nst);
 
   // line 3+5: zeta is precomputed as bf_c
+  // init state_deg7 early
+  for (unsigned int m = 0; m < 7; m++) {
+    for (unsigned int j = 0; j < Nstbytes; j++) {
+      state_deg7[m][j] = bf_zero();
+    }
+  }
+  for (unsigned int j = 0; j < Nstbytes; j++) {
+    bf_load(&state_deg7[7][j], bf_c_bytes[8]);
+  }
 
   for (unsigned int j = 0; j < Nstbytes; j++) {
     bf_t p1_deg[3][4];
@@ -307,10 +316,10 @@ static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, b
         }
       }
 
-      bf_t tmp;
       // first product
       for (unsigned int m = 0; m < 2; m++) {
         for (unsigned int n = 0; n < 3; n++) {
+          bf_t tmp;
           bf_mul(&tmp, &f1_deg[m][2 * i], &p1_deg[n][2 * i + 1]);
           bf_add_inplace(&f2_deg[m + n][i], &tmp);
         }
@@ -319,6 +328,7 @@ static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, b
       // second product
       for (unsigned int m = 0; m < 2; m++) {
         for (unsigned int n = 0; n < 3; n++) {
+          bf_t tmp;
           bf_mul(&tmp, &f1_deg[m][2 * i + 1], &p1_deg[n][2 * i]);
           bf_add_inplace(&f2_deg[m + n][i], &tmp);
         }
@@ -326,12 +336,9 @@ static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, b
     }
 
     // first product
-    for (unsigned int m = 0; m < 8; m++) {
-      state_deg7[m][j] = bf_zero();
-    }
-    bf_t tmp;
     for (unsigned int m = 0; m < 4; m++) {
       for (unsigned int n = 0; n < 5; n++) {
+        bf_t tmp;
         bf_mul(&tmp, &f2_deg[m][0], &p2_deg[n][1]);
         bf_add_inplace(&state_deg7[n + m][j], &tmp);
       }
@@ -340,14 +347,11 @@ static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, b
     // second product
     for (unsigned int m = 0; m < 4; m++) {
       for (unsigned int n = 0; n < 5; n++) {
+        bf_t tmp;
         bf_mul(&tmp, &f2_deg[m][1], &p2_deg[n][0]);
         bf_add_inplace(&state_deg7[n + m][j], &tmp);
       }
     }
-
-    bf_t bf_c_8;
-    bf_load(&bf_c_8, bf_c_bytes[8]);
-    bf_add_inplace(&state_deg7[7][j], &bf_c_8);
   }
 
   faest_aligned_free(state_conj);
