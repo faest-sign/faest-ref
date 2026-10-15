@@ -50,19 +50,17 @@ typedef struct {
 // GF(2^128) implementation
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf128_load(bf128_t* dst, const uint8_t* src) {
-  dst->values[0] = _mm256_zextsi128_si256(_mm_loadu_si128((const __m128i*)(src + 0)));
+  dst->values[0] = _mm256_zextsi128_si256(_mm_loadu_si128((const __m128i*)src));
 }
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf128_store(uint8_t* dst,
                                                                   const bf128_t* src) {
-  _mm_storeu_si128((__m128i*)(dst + 0), _mm256_castsi256_si128(src->values[0]));
+  _mm_storeu_si128((__m128i*)dst, _mm256_castsi256_si128(src->values[0]));
 }
 
 ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf128_t bf128_zero(void) {
   bf128_t ret;
-  for (unsigned int i = 0; i != 1; ++i) {
-    ret.values[i] = _mm256_setzero_si256();
-  }
+  ret.values[0] = _mm256_setzero_si256();
   return ret;
 }
 
@@ -101,21 +99,19 @@ void bf128_mul_64_inplace(bf128_t* lhs, bf64_t rhs);
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf192_load(bf192_t* dst, const uint8_t* src) {
   dst->values[0] =
-      _mm256_inserti128_si256(_mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)(src + 0))),
+      _mm256_inserti128_si256(_mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)src)),
                               _mm_loadl_epi64((const __m128i*)(src + 16)), 1);
 }
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf192_store(uint8_t* dst,
                                                                   const bf192_t* src) {
-  _mm_storeu_si128((__m128i*)(dst + 0), _mm256_castsi256_si128(src->values[0]));
+  _mm_storeu_si128((__m128i*)dst, _mm256_castsi256_si128(src->values[0]));
   _mm_storel_epi64((__m128i*)(dst + 16), _mm256_extracti128_si256(src->values[0], 1));
 }
 
 ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf192_t bf192_zero(void) {
   bf192_t ret;
-  for (unsigned int i = 0; i != 1; ++i) {
-    ret.values[i] = _mm256_setzero_si256();
-  }
+  ret.values[0] = _mm256_setzero_si256();
   return ret;
 }
 
@@ -153,19 +149,17 @@ void bf192_mul_64_inplace(bf192_t* lhs, bf64_t rhs);
 // GF(2^256) implementation
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf256_load(bf256_t* dst, const uint8_t* src) {
-  dst->values[0] = _mm256_loadu_si256((const __m256i*)(src + 0));
+  dst->values[0] = _mm256_loadu_si256((const __m256i*)src);
 }
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf256_store(uint8_t* dst,
                                                                   const bf256_t* src) {
-  _mm256_storeu_si256((__m256i*)(dst + 0), src->values[0]);
+  _mm256_storeu_si256((__m256i*)dst, src->values[0]);
 }
 
 ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf256_t bf256_zero(void) {
   bf256_t ret;
-  for (unsigned int i = 0; i != 1; ++i) {
-    ret.values[i] = _mm256_setzero_si256();
-  }
+  ret.values[0] = _mm256_setzero_si256();
   return ret;
 }
 
@@ -203,13 +197,13 @@ void bf256_mul_64_inplace(bf256_t* lhs, bf64_t rhs);
 // GF(2^384) implementation
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf384_load(bf384_t* dst, const uint8_t* src) {
-  dst->values[0] = _mm256_loadu_si256((const __m256i*)(src + 0));
+  dst->values[0] = _mm256_loadu_si256((const __m256i*)src);
   dst->values[1] = _mm256_zextsi128_si256(_mm_loadu_si128((const __m128i*)(src + 32)));
 }
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf384_store(uint8_t* dst,
                                                                   const bf384_t* src) {
-  _mm256_storeu_si256((__m256i*)(dst + 0), src->values[0]);
+  _mm256_storeu_si256((__m256i*)dst, src->values[0]);
   _mm_storeu_si128((__m128i*)(dst + 32), _mm256_castsi256_si128(src->values[1]));
 }
 
@@ -236,14 +230,14 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf384_add_inplace(bf384_t*
 // GF(2^576) implementation
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf576_load(bf576_t* dst, const uint8_t* src) {
-  dst->values[0] = _mm256_loadu_si256((const __m256i*)(src + 0));
+  dst->values[0] = _mm256_loadu_si256((const __m256i*)src);
   dst->values[1] = _mm256_loadu_si256((const __m256i*)(src + 32));
   dst->values[2] = _mm256_zextsi128_si256(_mm_loadl_epi64((const __m128i*)(src + 64)));
 }
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf576_store(uint8_t* dst,
                                                                   const bf576_t* src) {
-  _mm256_storeu_si256((__m256i*)(dst + 0), src->values[0]);
+  _mm256_storeu_si256((__m256i*)dst, src->values[0]);
   _mm256_storeu_si256((__m256i*)(dst + 32), src->values[1]);
   _mm_storel_epi64((__m128i*)(dst + 64), _mm256_castsi256_si128(src->values[2]));
 }
@@ -271,14 +265,14 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf576_add_inplace(bf576_t*
 // GF(2^768) implementation
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf768_load(bf768_t* dst, const uint8_t* src) {
-  dst->values[0] = _mm256_loadu_si256((const __m256i*)(src + 0));
+  dst->values[0] = _mm256_loadu_si256((const __m256i*)src);
   dst->values[1] = _mm256_loadu_si256((const __m256i*)(src + 32));
   dst->values[2] = _mm256_loadu_si256((const __m256i*)(src + 64));
 }
 
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf768_store(uint8_t* dst,
                                                                   const bf768_t* src) {
-  _mm256_storeu_si256((__m256i*)(dst + 0), src->values[0]);
+  _mm256_storeu_si256((__m256i*)dst, src->values[0]);
   _mm256_storeu_si256((__m256i*)(dst + 32), src->values[1]);
   _mm256_storeu_si256((__m256i*)(dst + 64), src->values[2]);
 }

@@ -75,71 +75,6 @@ TARGET static inline void bf_clmul128_64(__m128i* low, __m128i* high, __m128i lh
   *high                     = _mm_srli_si128(upper, 8);
 }
 
-// Partial blocks are needed only by the generic large-field multiplier.
-TARGET static inline void bf_clmul_partial(__m128i* low, __m128i* high, __m128i lhs, __m128i rhs,
-                                           bool lhs_short, bool rhs_short) {
-  if (lhs_short && rhs_short) {
-    *low  = _mm_clmulepi64_si128(lhs, rhs, 0x00);
-    *high = _mm_setzero_si128();
-  } else if (rhs_short) {
-    bf_clmul128_64(low, high, lhs, rhs);
-  } else if (lhs_short) {
-    bf_clmul128_64(low, high, rhs, lhs);
-  } else {
-    bf_clmul128(low, high, lhs, rhs);
-  }
-}
-
-TARGET static void bf_mul_large(__m256i* dst, const __m256i* lhs, const __m256i* rhs,
-                                unsigned int words, unsigned int rhs_words, uint64_t modulus) {
-  const unsigned int blocks     = (words + 1) / 2;
-  const unsigned int rhs_blocks = (rhs_words + 1) / 2;
-  // The largest product is 768 by 256 bits, or eight 128-bit blocks.
-  __m128i product[8];
-  for (unsigned int i = 0; i != blocks + rhs_blocks; ++i) {
-    product[i] = _mm_setzero_si128();
-  }
-  for (unsigned int i = 0; i != blocks; ++i) {
-    __m128i left = bf_half(lhs, i);
-    if ((words & 1) && i == blocks - 1) {
-      left = _mm_unpacklo_epi64(left, _mm_setzero_si128());
-    }
-    for (unsigned int j = 0; j != rhs_blocks; ++j) {
-      __m128i right = bf_half(rhs, j);
-      if ((rhs_words & 1) && j == rhs_blocks - 1) {
-        right = _mm_unpacklo_epi64(right, _mm_setzero_si128());
-      }
-      __m128i low, high;
-      bf_clmul_partial(&low, &high, left, right, (words & 1) && i == blocks - 1,
-                       (rhs_words & 1) && j == rhs_blocks - 1);
-      product[i + j]     = _mm_xor_si128(product[i + j], low);
-      product[i + j + 1] = _mm_xor_si128(product[i + j + 1], high);
-    }
-  }
-
-  // Fold each upper 64-bit limb with the low polynomial of the field modulus.
-  // Descending order also folds any carry that crosses the field boundary again.
-  const __m128i mod = _mm_set_epi64x(0, (long long)modulus);
-  for (unsigned int i = words + rhs_words; i-- > words;) {
-    const __m128i high     = i & 1 ? _mm_srli_si128(product[i / 2], 8) : product[i / 2];
-    const __m128i folded   = _mm_clmulepi64_si128(high, mod, 0x00);
-    const unsigned int low = i - words;
-    if (low & 1) {
-      product[low / 2]     = _mm_xor_si128(product[low / 2], _mm_slli_si128(folded, 8));
-      product[low / 2 + 1] = _mm_xor_si128(product[low / 2 + 1], _mm_srli_si128(folded, 8));
-    } else {
-      product[low / 2] = _mm_xor_si128(product[low / 2], folded);
-    }
-  }
-  const unsigned int count = (words + 3) / 4;
-  for (unsigned int i = 0; i != count; ++i) {
-    // For a partial last block, do not read beyond the initialized product.
-    const __m128i high = 4 * i + 2 < words ? product[2 * i + 1] : _mm_setzero_si128();
-    dst[i]             = _mm256_inserti128_si256(_mm256_castsi128_si256(product[2 * i]), high, 1);
-  }
-  dst[count - 1] = bf_keep_words(dst[count - 1], words);
-}
-
 // In characteristic two the cross terms cancel: square each 64-bit half independently.
 TARGET static inline __m256i bf_square_expand(__m128i value) {
   const __m128i low  = _mm_clmulepi64_si128(value, value, 0x00);
@@ -398,16 +333,94 @@ TARGET void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag) {
   bf256_add(&out_tag[6], &in_tag[3], &in_tag[5]);
 }
 
+// The upper product is at most as wide as rhs. Folding it by the low modulus
+// polynomial therefore fits below the field boundary without another reduction.
 TARGET void bf384_mul_128_inplace(bf384_t* lhs, const bf128_t* rhs) {
-  bf_mul_large(lhs->values, lhs->values, rhs->values, 6, 2, BF384_MODULUS);
+  const __m128i right = _mm256_castsi256_si128(rhs->values[0]);
+
+  __m128i low0, high0, low1, high1, low2, high2;
+  bf_clmul128(&low0, &high0, bf_half(lhs->values, 0), right);
+  bf_clmul128(&low1, &high1, bf_half(lhs->values, 1), right);
+  bf_clmul128(&low2, &high2, bf_half(lhs->values, 2), right);
+
+  __m128i folded0, folded1;
+  bf_clmul128_64(&folded0, &folded1, high2, _mm_set_epi64x(0, BF384_MODULUS));
+  low0 = _mm_xor_si128(low0, folded0);
+  low1 = _mm_xor_si128(_mm_xor_si128(low1, high0), folded1);
+  low2 = _mm_xor_si128(low2, high1);
+
+  lhs->values[0] = _mm256_inserti128_si256(_mm256_castsi128_si256(low0), low1, 1);
+  lhs->values[1] = _mm256_zextsi128_si256(low2);
 }
 
 TARGET void bf576_mul_192_inplace(bf576_t* lhs, const bf192_t* rhs) {
-  bf_mul_large(lhs->values, lhs->values, rhs->values, 9, 3, BF576_MODULUS);
+  const __m128i right0 = _mm256_castsi256_si128(rhs->values[0]);
+  const __m128i right1 = _mm256_extracti128_si256(rhs->values[0], 1);
+
+  __m128i product[6] = {_mm_setzero_si128(), _mm_setzero_si128(), _mm_setzero_si128(),
+                        _mm_setzero_si128(), _mm_setzero_si128(), _mm_setzero_si128()};
+  for (unsigned int i = 0; i != 4; ++i) {
+    const __m128i left = bf_half(lhs->values, i);
+    __m128i low0, high0, low1, high1;
+    bf_clmul128(&low0, &high0, left, right0);
+    bf_clmul128_64(&low1, &high1, left, right1);
+    product[i]     = _mm_xor_si128(product[i], low0);
+    product[i + 1] = _mm_xor_si128(product[i + 1], _mm_xor_si128(high0, low1));
+    product[i + 2] = _mm_xor_si128(product[i + 2], high1);
+  }
+
+  // The last left block and the last right block contain only one limb.
+  const __m128i left = _mm256_castsi256_si128(lhs->values[2]);
+  __m128i low, high;
+  bf_clmul128_64(&low, &high, right0, left);
+  product[4] = _mm_xor_si128(product[4], low);
+  product[5] =
+      _mm_xor_si128(product[5], _mm_xor_si128(high, _mm_clmulepi64_si128(left, right1, 0x00)));
+
+  // The field boundary splits product[4] at bit 64.
+  const __m128i upper0 = _mm_alignr_epi8(product[5], product[4], 8);
+  const __m128i upper1 = _mm_srli_si128(product[5], 8);
+  const __m128i mod    = _mm_set_epi64x(0, BF576_MODULUS);
+
+  __m128i folded0, folded1;
+  bf_clmul128_64(&folded0, &folded1, upper0, mod);
+  product[0] = _mm_xor_si128(product[0], folded0);
+  product[1] =
+      _mm_xor_si128(product[1], _mm_xor_si128(folded1, _mm_clmulepi64_si128(upper1, mod, 0x00)));
+
+  lhs->values[0] = _mm256_inserti128_si256(_mm256_castsi128_si256(product[0]), product[1], 1);
+  lhs->values[1] = _mm256_inserti128_si256(_mm256_castsi128_si256(product[2]), product[3], 1);
+  lhs->values[2] = _mm256_zextsi128_si256(_mm_unpacklo_epi64(product[4], _mm_setzero_si128()));
 }
 
 TARGET void bf768_mul_256_inplace(bf768_t* lhs, const bf256_t* rhs) {
-  bf_mul_large(lhs->values, lhs->values, rhs->values, 12, 4, BF768_MODULUS);
+  const __m128i right0 = _mm256_castsi256_si128(rhs->values[0]);
+  const __m128i right1 = _mm256_extracti128_si256(rhs->values[0], 1);
+
+  __m128i product[8] = {_mm_setzero_si128(), _mm_setzero_si128(), _mm_setzero_si128(),
+                        _mm_setzero_si128(), _mm_setzero_si128(), _mm_setzero_si128(),
+                        _mm_setzero_si128(), _mm_setzero_si128()};
+  for (unsigned int i = 0; i != 6; ++i) {
+    const __m128i left = bf_half(lhs->values, i);
+    __m128i low0, high0, low1, high1;
+    bf_clmul128(&low0, &high0, left, right0);
+    bf_clmul128(&low1, &high1, left, right1);
+    product[i]     = _mm_xor_si128(product[i], low0);
+    product[i + 1] = _mm_xor_si128(product[i + 1], _mm_xor_si128(high0, low1));
+    product[i + 2] = _mm_xor_si128(product[i + 2], high1);
+  }
+
+  const __m128i mod = _mm_set_epi64x(0, BF768_MODULUS);
+  __m128i folded0, folded1, folded2, folded3;
+  bf_clmul128_64(&folded0, &folded1, product[6], mod);
+  bf_clmul128_64(&folded2, &folded3, product[7], mod);
+  product[0] = _mm_xor_si128(product[0], folded0);
+  product[1] = _mm_xor_si128(product[1], _mm_xor_si128(folded1, folded2));
+  product[2] = _mm_xor_si128(product[2], folded3);
+
+  lhs->values[0] = _mm256_inserti128_si256(_mm256_castsi128_si256(product[0]), product[1], 1);
+  lhs->values[1] = _mm256_inserti128_si256(_mm256_castsi128_si256(product[2]), product[3], 1);
+  lhs->values[2] = _mm256_inserti128_si256(_mm256_castsi128_si256(product[4]), product[5], 1);
 }
 
 #endif
