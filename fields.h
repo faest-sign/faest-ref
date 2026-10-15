@@ -108,6 +108,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit
   return bit & 1;
 }
 
+#define FAEST_FIELDS_USE_AVX2 3
 #define FAEST_FIELDS_USE_SSE2 2
 #define FAEST_FIELDS_USE_VECTOR 1
 #define FAEST_FIELDS_USE_U64 0
@@ -126,7 +127,9 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit
 #endif // !FAEST_FIELDS
 
 // Select one representation and its arithmetic implementation.
-#if FAEST_FIELDS == FAEST_FIELDS_USE_SSE2
+#if FAEST_FIELDS == FAEST_FIELDS_USE_AVX2
+#include "fields-avx2.h"
+#elif FAEST_FIELDS == FAEST_FIELDS_USE_SSE2
 #include "fields-sse2.h"
 #elif FAEST_FIELDS == FAEST_FIELDS_USE_VECTOR
 #include "fields-vector.h"

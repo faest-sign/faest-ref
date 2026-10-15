@@ -57,6 +57,7 @@
 #if defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)
 #if __has_include(<wmmintrin.h>)
 #define HAVE_AESNI
+#define HAVE_PCLMUL
 #endif
 #if __has_include(<emmintrin.h>)
 #define HAVE_SSE2

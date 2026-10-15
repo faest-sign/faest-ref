@@ -101,6 +101,7 @@ supports_aesni = cc.links(
 
 int main() {
   _mm_aesenc_si128(_mm_setzero_si128(), _mm_setzero_si128());
+  return 0;
 }
 ''',
   name: 'compiler supports AES-NI',
@@ -134,12 +135,29 @@ supports_avx2 = cc.links(
 
 int main() {
   _mm256_xor_si256(_mm256_setzero_si256(), _mm256_setzero_si256());
+  return 0;
 }
 ''',
   name: 'compiler supports AVX2',
   args: [avx2_flag],
 )
 conf_data.set('HAVE_AVX2', supports_avx2)
+
+# check compiler if compiler supports AVX2
+pclmul_flag = cc.get_supported_arguments(['-mpclmul', '-msse2'])
+supports_pclmul = cc.links(
+  '''
+#include <wmmintrin.h>
+
+int main() {
+  __m128i value = _mm_setzero_si128();
+  return _mm_cvtsi128_si32(_mm_clmulepi64_si128(value, value, 0x00));
+}
+''',
+  name: 'compiler supports PCLMUL',
+  args: [pclmul_flag],
+)
+conf_data.set('HAVE_PCLMUL', supports_pclmul)
 
 supports_loadu_si64 = cc.links(
   '''
@@ -708,7 +726,15 @@ else
 endif
 
 # select fields implementation
-if get_option('fields') == 'sse2'
+if get_option('fields') == 'avx2'
+  if not supports_avx2 and not supports_pclmul
+    error(
+      'avx2 selected as fields implementation, but AVX2 or PCLMUL is not supported.',
+    )
+  endif
+  defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_AVX2']
+  faest_sources += files('fields-avx2.c')
+elif get_option('fields') == 'sse2'
   if not supports_sse2
     error('sse2 selected as fields implementation, but SSE2 is not supported.')
   endif
@@ -722,6 +748,7 @@ elif get_option('fields') == 'u64'
   faest_sources += files('fields-u64.c')
 else
   faest_sources += files(
+    'fields-avx2.c',
     'fields-sse2.c',
     'fields-u64.c',
     'fields-vector.c',

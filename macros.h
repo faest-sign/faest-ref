@@ -192,12 +192,14 @@
 #define ATTR_TARGET_SSE2 __attribute__((target("sse2")))
 #define ATTR_TARGET_AESNI __attribute__((target("sse2,aes")))
 #define ATTR_TARGET_AESNI_AVX2 __attribute__((target("avx2,bmi2,aes")))
+#define ATTR_TARGET_PCLMUL __attribute__((target("pclmul")))
 #else
 #define ATTR_TARGET(x)
 #define ATTR_TARGET_AVX2
 #define ATTR_TARGET_SSE2
 #define ATTR_TARGET_AESNI
 #define ATTR_TARGET_AESNI_AVX2
+#define ATTR_TARGET_PCLMUL
 #endif
 
 /* artificial attribute */

@@ -44,7 +44,7 @@ option(
 option(
   'fields',
   type: 'combo',
-  choices: ['auto', 'u64', 'vector', 'sse2'],
+  choices: ['auto', 'u64', 'vector', 'sse2', 'avx2'],
   value: 'auto',
   description: 'Select finite fields implementation',
 )

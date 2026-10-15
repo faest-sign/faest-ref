@@ -244,6 +244,7 @@ jobs:
       fail-fast: false
       matrix:
         impl:
+        - avx2
         - sse2
         - vector
         - u64
