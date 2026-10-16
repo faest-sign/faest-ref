@@ -132,13 +132,13 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit
 
 // Select one representation and its arithmetic implementation.
 #if FAEST_FIELDS == FAEST_FIELDS_USE_AVX2
-#include "fields-avx2.h"
+#include "fields_avx2.h"
 #elif FAEST_FIELDS == FAEST_FIELDS_USE_SSE2
-#include "fields-sse2.h"
+#include "fields_sse2.h"
 #elif FAEST_FIELDS == FAEST_FIELDS_USE_VECTOR
-#include "fields-vector.h"
+#include "fields_vector.h"
 #else
-#include "fields-u64.h"
+#include "fields_u64.h"
 #endif
 
 // GF(2^128) implementation

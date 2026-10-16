@@ -734,25 +734,25 @@ if fields_impl == 'avx2'
     )
   endif
   defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_AVX2']
-  faest_sources += files('fields-avx2.c')
+  faest_sources += files('fields_avx2.c')
 elif fields_impl == 'sse2'
   if not supports_sse2
     error('sse2 selected as fields implementation, but SSE2 is not supported.')
   endif
   defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_SSE2']
-  faest_sources += files('fields-sse2.c')
+  faest_sources += files('fields_sse2.c')
 elif fields_impl == 'vector'
   defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_VECTOR']
-  faest_sources += files('fields-vector.c')
+  faest_sources += files('fields_vector.c')
 elif fields_impl == 'u64'
   defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_U64']
-  faest_sources += files('fields-u64.c')
+  faest_sources += files('fields_u64.c')
 else
   faest_sources += files(
-    'fields-avx2.c',
-    'fields-sse2.c',
-    'fields-u64.c',
-    'fields-vector.c',
+    'fields_avx2.c',
+    'fields_sse2.c',
+    'fields_u64.c',
+    'fields_vector.c',
   )
 endif
 
