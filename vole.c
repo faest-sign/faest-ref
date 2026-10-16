@@ -42,6 +42,42 @@ static inline uint64_t load_bit_word(const uint8_t* src, unsigned int bits) {
   return le64toh(value) & bit_word_mask(bits);
 }
 
+/**
+ * Reduce a packed GF(2) polynomial modulo a tree polynomial. Bit i represents
+ * the coefficient of x^i. Tree degrees are at most MAX_DEPTH (currently 12), so
+ * the input fits in a uint32_t and the remainder in a uint16_t.
+ *
+ * This replaces a more generic reduction of a GF(2) polynomial followed by
+ * extraction of the low degree bits in VOLE.
+ */
+#if !defined(FAEST_TESTS)
+static
+#endif
+    uint16_t reduce_tree_product(uint32_t value, uint16_t modulus, unsigned int degree) {
+  static_assert(MAX_DEPTH <= 16);
+  for (unsigned int bit = 2 * degree; bit > degree; --bit) {
+    const uint32_t mask = -((value >> (bit - 1)) & UINT32_C(1));
+    value ^= ((uint32_t)modulus << (bit - degree - 1)) & mask;
+  }
+  return (uint16_t)value;
+}
+
+static void crt_transform_rows(uint8_t** dst, uint8_t** src, unsigned int row_bytes,
+                               unsigned int rows, const faest_paramset_t* params) {
+  for (unsigned int out = 0; out < rows; ++out) {
+    memset(dst[out], 0, row_bytes);
+    const uint64_t* coefficients = TBL(params->W_CRT, params->w_crt_words, out);
+    for (unsigned int word = 0; word < (rows + 63) / 64; ++word) {
+      uint64_t bits = coefficients[word] & bit_word_mask(MIN(rows - word * 64, 64));
+      while (bits) {
+        const unsigned int bit = ctz64(bits);
+        xor_u8_array_inplace(dst[out], src[word * 64 + bit], row_bytes);
+        bits &= bits - 1;
+      }
+    }
+  }
+}
+
 static void transpose_bit_matrix(uint8_t** dst, const uint8_t* src, unsigned int rows,
                                  unsigned int cols) {
   const unsigned int src_row_bytes = (cols + 7) / 8;
@@ -55,12 +91,10 @@ static void transpose_bit_matrix(uint8_t** dst, const uint8_t* src, unsigned int
   free(src_rows);
 }
 
-#if !defined(FAEST_TESTS)
-static
-#endif
-    unsigned int convert_to_vole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,
-                                 unsigned int outlen, uint8_t* u, uint8_t* v,
-                                 const faest_paramset_t* params) {
+static unsigned int convert_to_vole_with_scratch(const uint8_t* iv, const uint8_t* sd, bool sd0_bot,
+                                                 unsigned int i, unsigned int outlen, uint8_t* u,
+                                                 uint8_t* v, const faest_paramset_t* params,
+                                                 uint8_t* r) {
   const unsigned int lambda        = params->lambda;
   const unsigned int tau_1         = params->tau1;
   const unsigned int k             = params->k;
@@ -68,43 +102,54 @@ static
   const unsigned int lambda_bytes  = lambda / 8;
   const unsigned int depth         = bavc_max_node_depth(i, tau_1, k);
 
-  // (depth + 1) x num_instances array of outlen; but we only need two rows at a time
-  uint8_t* r = calloc(2 * num_instances, outlen);
-
-#define R(row, column) (r + (((row) % 2) * num_instances + (column)) * outlen)
+#define R(column) (r + (column) * outlen)
 #define V(idx) (v + (idx) * outlen)
 
   uint32_t tweak = i ^ TWEAK_OFFSET;
 
   // Step: 2
   if (!sd0_bot) {
-    prg(sd, iv, tweak, R(0, 0), lambda, outlen);
+    prg(sd, iv, tweak, R(0), lambda, outlen);
+  } else {
+    memset(R(0), 0, outlen);
   }
 
   // Step: 3..4
   for (unsigned int j = 1; j < num_instances; ++j) {
-    prg(sd + lambda_bytes * j, iv, tweak, R(0, j), lambda, outlen);
+    prg(sd + lambda_bytes * j, iv, tweak, R(j), lambda, outlen);
   }
 
-  // Step: 5..9
+  // Step: 5..9. Ascending pairs allow each level to overwrite its input safely.
   memset(v, 0, depth * outlen);
   for (unsigned int j = 0; j < depth; j++) {
     unsigned int depthloop = num_instances >> (j + 1);
     for (unsigned int idx = 0; idx < depthloop; idx++) {
-      xor_u8_array_inplace(V(j), R(j, 2 * idx + 1), outlen);
-      xor_u8_array(R(j + 1, idx), R(j, 2 * idx), R(j, 2 * idx + 1), outlen);
+      xor_u8_array_inplace(V(j), R(2 * idx + 1), outlen);
+      xor_u8_array(R(idx), R(2 * idx), R(2 * idx + 1), outlen);
     }
   }
   // Step: 10
   if (!sd0_bot && u != NULL) {
-    memcpy(u, R(depth, 0), outlen);
+    memcpy(u, R(0), outlen);
   }
-  free(r);
   return depth;
 }
 
 #undef R
 #undef V
+
+#if defined(FAEST_TESTS)
+unsigned int convert_to_vole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,
+                             unsigned int outlen, uint8_t* u, uint8_t* v,
+                             const faest_paramset_t* params) {
+  uint8_t* scratch = calloc(bavc_max_node_index(i, params->tau1, params->k), outlen);
+  assert(scratch);
+  const unsigned int depth =
+      convert_to_vole_with_scratch(iv, sd, sd0_bot, i, outlen, u, v, params, scratch);
+  free(scratch);
+  return depth;
+}
+#endif
 
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* c_mult,
@@ -132,17 +177,26 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   uint8_t** V = alloc_pointer_array(lambda, ell_hat_bytes);
 
+  uint8_t* scratch = calloc(bavc_max_node_index(0, tau_1, k), ell_hat_bytes);
+  assert(scratch);
+
   // line 3
   unsigned int v_idx = 0;
   uint8_t* sd_i      = bavc->sd;
   for (unsigned int i = 0; i < tau; ++i) {
-    v_idx += convert_to_vole(iv, sd_i, false, i, ell_hat_bytes, ui + i * ell_hat_bytes, V[v_idx],
-                             params);
+    v_idx += convert_to_vole_with_scratch(iv, sd_i, false, i, ell_hat_bytes, ui + i * ell_hat_bytes,
+                                          V[v_idx], params, scratch);
     sd_i += lambda_bytes * bavc_max_node_index(i, tau_1, k);
   }
 
-  uint8_t** V_columns = alloc_pointer_array(ellhat, lambda_minus_w_grind_bytes);
-  transpose_matrix(V, V_columns, lambda_minus_w_grind, ellhat);
+  free(scratch);
+  const unsigned int mask_bits = ellhat - ell;
+  uint8_t** V_columns          = alloc_pointer_array(mask_bits, lambda_minus_w_grind_bytes);
+  uint8_t* mask_rows[MAX_LAMBDA];
+  for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) {
+    mask_rows[row] = V[row] + ell_bytes;
+  }
+  transpose_matrix(mask_rows, V_columns, lambda_minus_w_grind, mask_bits);
 
   // line 6
   memcpy(u, ui, ell_bytes);
@@ -166,14 +220,14 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   uint8_t* u_low   = calloc(N_MASK, lambda_bytes);
   uint8_t* r_tilde = calloc(N_MASK, lambda_minus_w_grind_bytes);
   for (unsigned m = 0; m < N_MASK; ++m) {
-    unsigned int ell_m   = ell + m * bavc_max_node_depth(0, tau_1, k);
+    unsigned int ell_m   = m * bavc_max_node_depth(0, tau_1, k);
     unsigned int bit_idx = 0;
 
     // line 13
     for (unsigned t = 0; t < tau; t++) {
       const unsigned int depth = bavc_max_node_depth(t, tau_1, k);
       insert_bit_slice(u_low + m * lambda_bytes, bit_idx,
-                       extract_bit_slice(ui + t * ell_hat_bytes, ell_m, depth), depth);
+                       extract_bit_slice(ui + t * ell_hat_bytes, ell + ell_m, depth), depth);
       bit_idx += depth;
     }
 
@@ -198,16 +252,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       }
       v_idx += deg;
 
-      uint8_t acc[(MAX_DEPTH * 2 + 7) / 8];
-      for (unsigned int byte = 0; byte < sizeof(acc); ++byte) {
-        acc[byte] = (uint8_t)(acc_value >> (8 * byte));
-      }
-
-      uint8_t reduced_out[(MAX_DEPTH * 2 + 7) / 8] = {0};
-      bf2_poly_reduce(reduced_out, acc, deg * 2, params->TREE_MODULI[tau_idx], deg + 1);
-
-      insert_bit_slice(r_tilde + m * lambda_minus_w_grind_bytes, bit_idx,
-                       extract_bit_slice(reduced_out, 0, deg), deg);
+      const uint16_t reduced = reduce_tree_product(acc_value, params->TREE_MODULI[tau_idx], deg);
+      insert_bit_slice(r_tilde + m * lambda_minus_w_grind_bytes, bit_idx, reduced, deg);
       bit_idx += deg;
     }
   }
@@ -218,8 +264,10 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   // line 21
   for (unsigned m = 0; m < N_MASK; m++) {
     uint8_t* c_mult_m = c_mult + m * n_mult_bytes;
-    // check if this memset is needed
-    memset(c_mult_m, 0, n_mult_bytes);
+    // The matrix multiply writes every valid bit; clear only unused padding bits.
+    if (n_mult % 8) {
+      c_mult_m[n_mult_bytes - 1] = 0;
+    }
     bf2_matrix_mul_tbl(c_mult_m, u_bar + m * lambda_bytes, params->F, lambda, n_mult,
                        params->f_words);
   }
@@ -237,10 +285,10 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       const unsigned int word_bits  = MIN(lambda_minus_w_grind - row_offset, 64);
 
       uint64_t coefficients = G_e[word_idx] & bit_word_mask(word_bits);
-      for (unsigned int bit = 0; coefficients != 0; ++bit, coefficients >>= 1) {
-        if (coefficients & 1) {
-          xor_u8_array_inplace(L_e_zero, V[row_offset + bit], lambda_bytes);
-        }
+      while (coefficients) {
+        const unsigned int bit = ctz64(coefficients);
+        xor_small_u8_array_inplace(L_e_zero, V[row_offset + bit], lambda_bytes);
+        coefficients &= coefficients - 1;
       }
     }
     xor_u8_array(L_e_one, L_e_zero, u, lambda_bytes);
@@ -252,6 +300,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     // line 26
     xor_small_u8_array(c_mult_diff[e], v_tilde[e], h_e_one, N_MASK_BYTES);
   }
+
+  // line 30: apply the CRT map row-wise, including the final transpose implicitly.
+  crt_transform_rows(V_dest, V, ell_bytes, lambda_minus_w_grind, params);
   free_pointer_array(&V);
 
   // bit-packed version of line 26
@@ -277,15 +328,6 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   }
   free_pointer_array(&gate_inputs);
 
-  // line 30
-  for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
-    uint8_t crt_output[MAX_LAMBDA_BYTES] = {0};
-    bf2_matrix_mul_tbl(crt_output, V_columns[ell_idx], params->W_CRT, lambda_minus_w_grind,
-                       lambda_minus_w_grind, params->w_crt_words);
-    memcpy(V_columns[ell_idx], crt_output, lambda_minus_w_grind_bytes);
-  }
-
-  transpose_matrix(V_columns, V_dest, ell, lambda_minus_w_grind);
   free_pointer_array(&V_columns);
 
   free(ui);
@@ -335,10 +377,10 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     return false;
   }
 
-  uint8_t* sd   = malloc((1 << k) * lambda_bytes);
-  uint8_t* qtmp = malloc(MAX_DEPTH * ellhat_bytes);
+  uint8_t* sd      = malloc((1 << k) * lambda_bytes);
+  uint8_t* scratch = calloc(bavc_max_node_index(0, tau_1, k), ellhat_bytes);
   assert(sd);
-  assert(qtmp);
+  assert(scratch);
 
   uint8_t** Q = alloc_pointer_array(lambda, ellhat_bytes);
 
@@ -356,18 +398,15 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     }
 
     // line 8
-    const unsigned int ki = convert_to_vole(iv, sd, true, i, ellhat_bytes, NULL, qtmp, params);
-
-    if (i == 0) {
-      memcpy(Q[q_idx], qtmp, ellhat_bytes * ki);
-      q_idx += ki;
-    } else {
+    const unsigned int ki = convert_to_vole_with_scratch(iv, sd, true, i, ellhat_bytes, NULL,
+                                                         Q[q_idx], params, scratch);
+    if (i != 0) {
       for (unsigned int d = 0; d < ki; ++d, ++q_idx) {
-        memcpy(Q[q_idx], qtmp + d * ellhat_bytes, ellhat_bytes);
-
         masked_xor_u8_array(Q[q_idx], Q[q_idx], c + (i - 1) * ell_bytes, (i_delta[i] >> d) & 1,
                             ell_bytes);
       }
+    } else {
+      q_idx += ki;
     }
     sd_i += lambda_bytes * (Ni - 1);
   }
@@ -375,11 +414,15 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   sd = NULL;
   free(bavc_rec.s);
   bavc_rec.s = sd_i = NULL;
-  free(qtmp);
-  qtmp = NULL;
+  free(scratch);
 
-  uint8_t** Q_columns = alloc_pointer_array(ellhat, lambda_minus_w_grind_bytes);
-  transpose_matrix(Q, Q_columns, lambda_minus_w_grind, ellhat);
+  const unsigned int mask_bits = ellhat - ell;
+  uint8_t** Q_columns          = alloc_pointer_array(mask_bits, lambda_minus_w_grind_bytes);
+  uint8_t* mask_rows[MAX_LAMBDA];
+  for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) {
+    mask_rows[row] = Q[row] + ell_bytes;
+  }
+  transpose_matrix(mask_rows, Q_columns, lambda_minus_w_grind, mask_bits);
 
   // line 13
   // delta_prime can be directly read from chall_3
@@ -389,7 +432,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   // for scan-build
   assert(lambda_minus_w_grind_bytes > 0);
   for (unsigned int m = 0; m < N_MASK; m++) {
-    unsigned int ell_m   = ell + m * bavc_max_node_depth(0, tau_1, k);
+    unsigned int ell_m   = m * bavc_max_node_depth(0, tau_1, k);
     unsigned int bit_idx = 0;
     q_idx                = 0;
     for (unsigned tau_idx = 0; tau_idx < tau; tau_idx++) {
@@ -401,16 +444,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
       }
       q_idx += deg;
 
-      uint8_t acc[(MAX_DEPTH * 2 + 7) / 8];
-      for (unsigned int byte = 0; byte < sizeof(acc); ++byte) {
-        acc[byte] = (uint8_t)(acc_value >> (8 * byte));
-      }
-
-      uint8_t reduced_out[(MAX_DEPTH * 2 + 7) / 8] = {0};
-      bf2_poly_reduce(reduced_out, acc, deg * 2, params->TREE_MODULI[tau_idx], deg + 1);
-
-      insert_bit_slice(r_tilde_prime + m * lambda_minus_w_grind_bytes, bit_idx,
-                       extract_bit_slice(reduced_out, 0, deg), deg);
+      const uint16_t reduced = reduce_tree_product(acc_value, params->TREE_MODULI[tau_idx], deg);
+      insert_bit_slice(r_tilde_prime + m * lambda_minus_w_grind_bytes, bit_idx, reduced, deg);
       bit_idx += deg;
     }
   }
@@ -425,20 +460,19 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     uint8_t L_e_prime[MAX_LAMBDA_BYTES] = {0};
 
     // line 24
-    uint8_t gamma_e     = 0;
+    uint64_t gamma_acc  = 0;
     const uint64_t* G_e = TBL(params->G, params->g_words, e);
     for (unsigned int word_idx = 0; word_idx < params->g_words; ++word_idx) {
-      unsigned int row_offset      = word_idx * 64;
-      const unsigned int word_bits = MIN(lambda_minus_w_grind - row_offset, 64);
+      const unsigned int row_offset = word_idx * 64;
+      const unsigned int word_bits  = MIN(lambda_minus_w_grind - row_offset, 64);
 
       uint64_t coefficients = G_e[word_idx] & bit_word_mask(word_bits);
-      // TODO: check why we cannot move this parity64 call to the masked xor u8 call
-      gamma_e ^= parity64(coefficients & load_bit_word(chall_3 + word_idx * 8, word_bits));
+      gamma_acc ^= coefficients & load_bit_word(chall_3 + word_idx * 8, word_bits);
 
-      for (; coefficients; ++row_offset, coefficients >>= 1) {
-        if (coefficients & 1) {
-          xor_u8_array_inplace(L_e_prime, Q[row_offset], lambda_bytes);
-        }
+      while (coefficients) {
+        const unsigned int bit = ctz64(coefficients);
+        xor_small_u8_array_inplace(L_e_prime, Q[row_offset + bit], lambda_bytes);
+        coefficients &= coefficients - 1;
       }
     }
 
@@ -447,8 +481,11 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     H5(h_e, iv, e, L_e_prime, lambda);
 
     // line 27
-    masked_xor_small_u8_array(q_tilde[e], h_e, c_mult_by_e[e], gamma_e, N_MASK_BYTES);
+    masked_xor_small_u8_array(q_tilde[e], h_e, c_mult_by_e[e], parity64(gamma_acc), N_MASK_BYTES);
   }
+
+  // line 31: apply the CRT map row-wise, including the final transpose implicitly.
+  crt_transform_rows(Q_dest, Q, ell_bytes, lambda_minus_w_grind, params);
   free_pointer_array(&Q);
   free_pointer_array(&c_mult_by_e);
 
@@ -471,15 +508,6 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   free(r_tilde_prime);
   r_tilde_prime = NULL;
 
-  // line 31
-  for (unsigned int ell_idx = 0; ell_idx < ell; ell_idx++) {
-    uint8_t crt_output[MAX_LAMBDA_BYTES] = {0};
-    bf2_matrix_mul_tbl(crt_output, Q_columns[ell_idx], params->W_CRT, lambda_minus_w_grind,
-                       lambda_minus_w_grind, params->w_crt_words);
-    memcpy(Q_columns[ell_idx], crt_output, lambda_minus_w_grind_bytes);
-  }
-
-  transpose_matrix(Q_columns, Q_dest, ell, lambda_minus_w_grind);
   free_pointer_array(&Q_columns);
 
   return true;

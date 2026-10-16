@@ -206,8 +206,6 @@ void bf2_matrix_mul_tbl(uint8_t* dst, const uint8_t* src, const uint64_t* table,
 
 void bf2_poly_mul(uint8_t* dst, const uint8_t* src, size_t src_bits, const uint64_t* table,
                   size_t table_bits);
-void bf2_poly_reduce(uint8_t* dst, const uint8_t* src, size_t src_bits, uint16_t module,
-                     size_t deg);
 
 FAEST_END_C_DECL
 

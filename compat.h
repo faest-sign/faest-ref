@@ -223,6 +223,19 @@ ATTR_CONST ATTR_ARTIFICIAL static inline uint64_t parity64(uint64_t in) {
 }
 #endif /* __has_builtin(__builtin_parityll) */
 
+#if GNUC_CHECK(3, 4) || __has_builtin(__builtin_ctzll)
+#define ctz64 __builtin_ctzll
+#else
+ATTR_CONST ATTR_ARTIFICIAL static inline int ctz64(uint64_t v) {
+  int b = 0;
+  while (!(v & 1)) {
+    v >>= 1;
+    ++b;
+  }
+  return b;
+}
+#endif
+
 #if !defined(__cplusplus)
 #include <assert.h>
 

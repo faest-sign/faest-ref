@@ -404,30 +404,3 @@ void bf2_poly_mul(uint8_t* dst, const uint8_t* src, size_t src_bits, const uint6
     }
   }
 }
-
-static inline void xor_shifted_table_u16(uint8_t* dst, size_t dst_bits, uint64_t module,
-                                         size_t shift, uint64_t mask) {
-  const size_t dst_word_idx   = shift / 64;
-  const size_t dst_bit_offset = shift % 64;
-
-  if (dst_bit_offset == 0) {
-    xor_dst_word(dst, dst_word_idx, dst_bits, module & mask);
-  } else {
-    const uint64_t shifted = module << dst_bit_offset;
-    const uint64_t carry   = module >> (64 - dst_bit_offset);
-    xor_dst_word(dst, dst_word_idx, dst_bits, shifted & mask);
-    xor_dst_word(dst, dst_word_idx + 1, dst_bits, carry & mask);
-  }
-}
-
-void bf2_poly_reduce(uint8_t* dst, const uint8_t* src, size_t src_bits, uint16_t module,
-                     size_t deg) {
-  size_t src_bytes = (src_bits + 7) / 8;
-  memcpy(dst, src, src_bytes);
-
-  for (size_t i = src_bits; i >= deg; --i) {
-    const uint64_t mask = -((uint64_t)ptr_get_bit(dst, i - 1));
-    const size_t shift  = i - deg;
-    xor_shifted_table_u16(dst, src_bits, module, shift, mask);
-  }
-}

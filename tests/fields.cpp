@@ -9,12 +9,27 @@
 #include "fields.hpp"
 #include "randomness.h"
 #include "utils.h"
+#include "vole.h"
 #include "crt_vole_commit_tvs.hpp"
 #include "field_tvs.hpp"
 
 #include <boost/test/unit_test.hpp>
 
 namespace {
+  template <size_t N>
+  void check_tree_reduction(const std::array<uint8_t, N>& input,
+                            const std::array<uint8_t, N>& expected, uint16_t modulus,
+                            unsigned int degree) {
+    static_assert(N <= sizeof(uint32_t));
+    uint32_t value     = 0;
+    uint32_t remainder = 0;
+    for (size_t byte = 0; byte < N; ++byte) {
+      value |= uint32_t{input[byte]} << (8 * byte);
+      remainder |= uint32_t{expected[byte]} << (8 * byte);
+    }
+    BOOST_TEST(reduce_tree_product(value, modulus, degree) == remainder);
+  }
+
   template <class B>
   void check_add(B lhs, B rhs, B expected) {
     const auto result = lhs + rhs;
@@ -2120,10 +2135,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_128f) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_128s) {
@@ -2136,10 +2148,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_128s) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_192f) {
@@ -2152,10 +2161,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_192f) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_192s) {
@@ -2168,10 +2174,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_192s) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_256f) {
@@ -2184,10 +2187,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_256f) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_256s) {
@@ -2200,10 +2200,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_256s) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_128f) {
@@ -2216,10 +2213,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_128f) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_128s) {
@@ -2232,10 +2226,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_128s) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_192f) {
@@ -2248,10 +2239,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_192f) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_192s) {
@@ -2264,10 +2252,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_192s) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_256f) {
@@ -2280,10 +2265,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_256f) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_256s) {
@@ -2296,10 +2278,7 @@ BOOST_AUTO_TEST_CASE(test_bf2_poly_faest_em_256s) {
                params.lambda - params.w_grind + 1);
   BOOST_TEST(res == tv::res);
 
-  auto reduced = decltype(tv::reduced){0};
-  bf2_poly_reduce(reduced.data(), tv::unreduced.data(), tv::deg * 2, params.TREE_MODULI[0],
-                  tv::deg + 1);
-  BOOST_TEST(reduced == tv::reduced);
+  check_tree_reduction(tv::unreduced, tv::reduced, params.TREE_MODULI[0], tv::deg);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
