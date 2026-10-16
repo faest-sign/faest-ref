@@ -6,6 +6,7 @@
 #define FAEST_FIELDS_H
 
 #include "macros.h"
+#include "compat.h"
 #include "endian_compat.h"
 
 #include <stdbool.h>
