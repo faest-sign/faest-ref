@@ -1391,23 +1391,13 @@ void aes_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_
     bf_add_inplace(&Q_key[i], &tmp);
   }
 
-  // line 5
-  bf_t q_star;
-  bf_sum_poly_bits(&q_star, q_bar);
-  for (unsigned int j = 1; j < D_ZK - 1; j++) {
-    bf_t tmp;
-    bf_sum_poly_bits(&tmp, q_bar + j * lambda_bytes);
-    bf_mul_inplace(&tmp, &bf_delta[j-1]);
-    bf_add_inplace(&q_star, &tmp);
-  }
-
   // line 7
   for (unsigned int i = 0; i < ell; i++) {
-    bf_t t, u;
+    bf_t u;
     bf_add(&u, &Q_key[i], &bf_delta[0]); // 1 (delta) - w
-    bf_mul(&t, &Q_key[i], &u);           // w * (1 (delta) - w)
-    bf_mul_inplace(&t, &bf_delta[4]);
-    zk_hash_update(&b_ctx, &t);
+    bf_mul_inplace(&u, &Q_key[i]);       // w * (1 (delta) - w)
+    bf_mul_inplace(&u, &bf_delta[4]);
+    zk_hash_update(&b_ctx, &u);
   }
 
   // line 9
@@ -1417,7 +1407,18 @@ void aes_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_
 
   // line 12
   uint8_t q_tilde[FAEST_LAMBDA / 8];
-  zk_hash_finalize(q_tilde, &b_ctx, &q_star);
+  {
+    // line 5
+    bf_t q_star;
+    bf_sum_poly_bits(&q_star, q_bar);
+    for (unsigned int j = 1; j < D_ZK - 1; j++) {
+      bf_t tmp;
+      bf_sum_poly_bits(&tmp, q_bar + j * lambda_bytes);
+      bf_mul_inplace(&tmp, &bf_delta[j-1]);
+      bf_add_inplace(&q_star, &tmp);
+    }
+    zk_hash_finalize(q_tilde, &b_ctx, &q_star);
+  }
 
   // line 14
   bf_t acc;
