@@ -685,29 +685,19 @@ static void aes_inverse_sbox_eval_prover(bf_t** b_deg, const uint8_t* s_dash_das
   for (unsigned int j = 0; j < Nstbytes; j++) {
     b_deg[0][j] = state_conj_tag[j * 8 + 1];
     b_deg[1][j] = state_conj[j * 8 + 1];
-    for (unsigned int m = 2; m < 8; m++) {
-      b_deg[m][j] = bf_zero();
-    }
-
     for (unsigned int i = 2; i < 8; i++) {
       const bf_t* t = &state_conj_tag[j * 8 + i];
       const bf_t* v = &state_conj[j * 8 + i];
 
-      // Temporary holder
-      bf_t b_deg_tmp_v[8];
-      bf_t b_deg_tmp_tag[8];
-      for (unsigned int m = 0; m < 8; m++) {
-        b_deg_tmp_v[m]   = bf_zero();
-        b_deg_tmp_tag[m] = bf_zero();
+      // Process in reverse so that the previous coefficients remain available.
+      bf_mul(&b_deg[i][j], &b_deg[i - 1][j], v);
+      for (unsigned int m = i - 1; m > 0; m--) {
+        bf_t tmp;
+        bf_mul(&tmp, &b_deg[m - 1][j], v);
+        bf_mul_inplace(&b_deg[m][j], t);
+        bf_add_inplace(&b_deg[m][j], &tmp);
       }
-
-      for (unsigned int m = 0; m < i; m++) {
-        bf_mul(&b_deg_tmp_tag[m], &b_deg[m][j], t);   // deg-n * deg-0  -> deg-n
-        bf_mul(&b_deg_tmp_v[m + 1], &b_deg[m][j], v); // deg-n * deg-1  -> deg-n+1
-      }
-      for (unsigned int m = 0; m < 8; m++) {
-        bf_add(&b_deg[m][j], &b_deg_tmp_tag[m], &b_deg_tmp_v[m]);
-      }
+      bf_mul_inplace(&b_deg[0][j], t);
     }
   }
 
