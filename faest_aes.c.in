@@ -228,18 +228,17 @@ static void aes_state_to_bytes_verifier(bf_t* out_key, const bf_t* k_key, unsign
   }
 }
 
-static void aes_state_to_bytes_prover(bf_t** out_deg, const uint8_t* k, const bf_t* k_tag,
+static void aes_state_to_bytes_prover(bf_t out_deg[][2], const uint8_t* k, const bf_t* k_tag,
                                       unsigned int Nst) {
   const unsigned int Nst_bytes = Nst * 4;
   for (unsigned int i = 0; i < Nst_bytes; i++) {
-    bf_byte_combine_bits(&out_deg[1][i], k[i]);
+    bf_byte_combine_bits(&out_deg[i][1], k[i]);
+    bf_byte_combine(&out_deg[i][0], k_tag + i * 8);
   }
-
-  aes_state_to_bytes_verifier(out_deg[0], k_tag, Nst);
 }
 
 // SBOX AFFINE
-static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, bf_t* state_bits_tag,
+static void aes_sbox_eval_prover(bf_t state_deg7[][8], const uint8_t* state_bits, bf_t* state_bits_tag,
                                  unsigned int Nst) {
   const unsigned int Nstbits  = 32 * Nst;
   const unsigned int Nstbytes = Nstbits / 8;
@@ -252,45 +251,41 @@ static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, b
 
   // line 3+5: zeta is precomputed as bf_c
   // init state_deg7 early
-  for (unsigned int m = 0; m < 7; m++) {
-    for (unsigned int j = 0; j < Nstbytes; j++) {
-      state_deg7[m][j] = bf_zero();
+  for (unsigned int j = 0; j < Nstbytes; j++) {
+    for (unsigned int m = 0; m < 7; m++) {
+      state_deg7[j][m] = bf_zero();
     }
-  }
-  for (unsigned int j = 0; j < Nstbytes; j++) {
-    bf_load(&state_deg7[7][j], bf_c_bytes[8]);
+    bf_load(&state_deg7[j][7], bf_c_bytes[8]);
   }
 
   for (unsigned int j = 0; j < Nstbytes; j++) {
-    bf_t p1_deg[3][4];
-    bf_t f1_deg[2][4];
-    bf_t p2_deg[5][2];
-    bf_t f2_deg[4][2];
+    bf_t p1_deg[4][3];
+    bf_t f1_deg[4][2];
+    bf_t p2_deg[2][5];
+    bf_t f2_deg[2][4];
 
-    for (unsigned int i = 0; i <= 4; i++) {
-      for (unsigned int m = 0; m < 2; m++) {
+    for (unsigned int i = 0; i < 2; i++) {
+      for (unsigned int m = 0; m < 5; m++) {
         p2_deg[i][m] = bf_zero();
       }
-    }
-    for (unsigned int i = 0; i <= 3; i++) {
-      for (unsigned int m = 0; m < 2; m++) {
+      for (unsigned int m = 0; m < 4; m++) {
         f2_deg[i][m] = bf_zero();
       }
     }
 
     // line 8
     for (unsigned int i = 0; i < 4; i++) {
-      bf_mul(&p1_deg[0][i], &state_conj_tag[j * 8 + i * 2],
+      bf_mul(&p1_deg[i][0], &state_conj_tag[j * 8 + i * 2],
              &state_conj_tag[j * 8 + (i * 2 + 1)]); // deg-0 * deg-0
 
       bf_t tmp;
       bf_mul(&tmp, &state_conj[j * 8 + i * 2],
              &state_conj_tag[j * 8 + (i * 2 + 1)]); // deg-1 * deg-0
-      bf_mul(&p1_deg[1][i], &state_conj_tag[j * 8 + i * 2],
+      bf_mul(&p1_deg[i][1], &state_conj_tag[j * 8 + i * 2],
              &state_conj[j * 8 + (i * 2 + 1)]); // deg-0 * deg-1
-      bf_add(&p1_deg[1][i], &p1_deg[1][i], &tmp);
+      bf_add(&p1_deg[i][1], &p1_deg[i][1], &tmp);
 
-      bf_mul(&p1_deg[2][i], &state_conj[j * 8 + i * 2],
+      bf_mul(&p1_deg[i][2], &state_conj[j * 8 + i * 2],
              &state_conj[j * 8 + (i * 2 + 1)]); // deg-1 * deg-1
 
       bf_t prod_1_deg[2], prod_2_deg[2];
@@ -303,16 +298,16 @@ static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, b
       bf_mul_inplace(&prod_2_deg[0], &state_conj_tag[j * 8 + (i * 2)]); // deg-0 * deg-0
       bf_mul_inplace(&prod_2_deg[1], &state_conj[j * 8 + (i * 2)]);     // deg-0 * deg-1
 
-      bf_add(&f1_deg[0][i], &prod_1_deg[0], &prod_2_deg[0]); // deg-0
-      bf_add(&f1_deg[1][i], &prod_1_deg[1], &prod_2_deg[1]); // deg-1
+      bf_add(&f1_deg[i][0], &prod_1_deg[0], &prod_2_deg[0]); // deg-0
+      bf_add(&f1_deg[i][1], &prod_1_deg[1], &prod_2_deg[1]); // deg-1
     }
 
     for (unsigned int i = 0; i < 2; i++) {
       for (unsigned int m = 0; m < 3; m++) {
         for (unsigned int n = 0; n < 3; n++) {
           bf_t tmp;
-          bf_mul(&tmp, &p1_deg[m][2 * i], &p1_deg[n][2 * i + 1]);
-          bf_add_inplace(&p2_deg[m + n][i], &tmp);
+          bf_mul(&tmp, &p1_deg[2 * i][m], &p1_deg[2 * i + 1][n]);
+          bf_add_inplace(&p2_deg[i][m + n], &tmp);
         }
       }
 
@@ -320,8 +315,8 @@ static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, b
       for (unsigned int m = 0; m < 2; m++) {
         for (unsigned int n = 0; n < 3; n++) {
           bf_t tmp;
-          bf_mul(&tmp, &f1_deg[m][2 * i], &p1_deg[n][2 * i + 1]);
-          bf_add_inplace(&f2_deg[m + n][i], &tmp);
+          bf_mul(&tmp, &f1_deg[2 * i][m], &p1_deg[2 * i + 1][n]);
+          bf_add_inplace(&f2_deg[i][m + n], &tmp);
         }
       }
 
@@ -329,8 +324,8 @@ static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, b
       for (unsigned int m = 0; m < 2; m++) {
         for (unsigned int n = 0; n < 3; n++) {
           bf_t tmp;
-          bf_mul(&tmp, &f1_deg[m][2 * i + 1], &p1_deg[n][2 * i]);
-          bf_add_inplace(&f2_deg[m + n][i], &tmp);
+          bf_mul(&tmp, &f1_deg[2 * i + 1][m], &p1_deg[2 * i][n]);
+          bf_add_inplace(&f2_deg[i][m + n], &tmp);
         }
       }
     }
@@ -339,8 +334,8 @@ static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, b
     for (unsigned int m = 0; m < 4; m++) {
       for (unsigned int n = 0; n < 5; n++) {
         bf_t tmp;
-        bf_mul(&tmp, &f2_deg[m][0], &p2_deg[n][1]);
-        bf_add_inplace(&state_deg7[n + m][j], &tmp);
+        bf_mul(&tmp, &f2_deg[0][m], &p2_deg[1][n]);
+        bf_add_inplace(&state_deg7[j][n + m], &tmp);
       }
     }
 
@@ -348,8 +343,8 @@ static void aes_sbox_eval_prover(bf_t** state_deg7, const uint8_t* state_bits, b
     for (unsigned int m = 0; m < 4; m++) {
       for (unsigned int n = 0; n < 5; n++) {
         bf_t tmp;
-        bf_mul(&tmp, &f2_deg[m][1], &p2_deg[n][0]);
-        bf_add_inplace(&state_deg7[n + m][j], &tmp);
+        bf_mul(&tmp, &f2_deg[1][m], &p2_deg[0][n]);
+        bf_add_inplace(&state_deg7[j][n + m], &tmp);
       }
     }
   }
@@ -426,7 +421,7 @@ static void aes_sbox_eval_verifier(bf_t* state_key, const bf_t* state_bits_key, 
 }
 
 // SHIFT ROWS
-static void aes_shiftrows_prover(bf_t** out_deg, const bf_t** in_deg, unsigned int Nst) {
+static void aes_shiftrows_prover(bf_t out_deg[][8], const bf_t in_deg[][8], unsigned int Nst) {
   for (unsigned int r = 0; r < 4; r++) {
     for (unsigned int c = 0; c < Nst; c++) {
       unsigned int i;
@@ -436,7 +431,7 @@ static void aes_shiftrows_prover(bf_t** out_deg, const bf_t** in_deg, unsigned i
         i = 4 * ((c + r + 1) % Nst) + r;
       }
       for (unsigned int m = 0; m < 8; m++) {
-        out_deg[m][4 * c + r] = in_deg[m][i];
+        out_deg[4 * c + r][m] = in_deg[i][m];
       }
     }
   }
@@ -471,48 +466,46 @@ static ATTR_ALIGNED(BF_ALIGN) const uint8_t bf_bc_2_bytes[BF256_NUM_BYTES] = {
 #error "unexpected security parameter"
 #endif
 
-static void aes_mix_column(bf_t* y, const bf_t* in) {
+static void aes_mix_column(bf_t* y, const bf_t* in, unsigned int stride) {
   bf_t sum;
-  bf_add(&sum, &in[0], &in[1]);
-  bf_add_inplace(&sum, &in[2]);
-  bf_add_inplace(&sum, &in[3]);
+  bf_add(&sum, &in[0], &in[stride]);
+  bf_add_inplace(&sum, &in[2 * stride]);
+  bf_add_inplace(&sum, &in[3 * stride]);
 
   for (unsigned int r = 0; r != 4; ++r) {
     bf_t adjacent;
     bf_t product;
     bf_load(&product, bf_bc_2_bytes);
-    bf_add(&adjacent, &in[r], &in[(r + 1) % 4]);
+    bf_add(&adjacent, &in[r * stride], &in[((r + 1) % 4) * stride]);
     bf_mul_inplace(&product, &adjacent);
-    bf_add(&y[r], &in[r], &sum);
-    bf_add_inplace(&y[r], &product);
+    bf_add(&y[r * stride], &in[r * stride], &sum);
+    bf_add_inplace(&y[r * stride], &product);
   }
 }
 
-static void aes_mix_columns_prover(bf_t** y_deg, const bf_t** in_deg, unsigned int Nst) {
+static void aes_mix_columns_prover(bf_t y_deg[][8], const bf_t in_deg[][8], unsigned int Nst) {
   for (unsigned int c = 0; c < Nst; c++) {
     for (unsigned int m = 0; m < 8; ++m) {
-      aes_mix_column(y_deg[m] + 4 * c, in_deg[m] + 4 * c);
+      aes_mix_column(&y_deg[4 * c][m], &in_deg[4 * c][m], 8);
     }
   }
 }
 
 static void aes_mix_columns_verifier(bf_t* y_key, const bf_t* in_key, unsigned int Nst) {
   for (unsigned int c = 0; c < Nst; c++) {
-    aes_mix_column(y_key + 4 * c, in_key + 4 * c);
+    aes_mix_column(y_key + 4 * c, in_key + 4 * c, 1);
   }
 }
 
 // ADD ROUND KEY BYTES
-static void aes_add_round_key_bytes_prover_degree_7(bf_t** out_deg, const bf_t** in_deg,
-                                                    const bf_t** k_deg, unsigned int Nst) {
+static void aes_add_round_key_bytes_prover_degree_7(bf_t out_deg[][8], const bf_t in_deg[][8],
+                                                    const bf_t k_deg[][2], unsigned int Nst) {
   const unsigned int Nstbytes = Nst * 4;
 
-  for (unsigned int m = 0; m < 6; m++) {
-    memcpy(out_deg[m], in_deg[m], sizeof(bf_t) * Nstbytes);
-  }
   for (unsigned int i = 0; i < Nstbytes; i++) {
-    bf_add(&out_deg[7][i], &in_deg[7][i], &k_deg[1][i]);
-    bf_add(&out_deg[6][i], &in_deg[6][i], &k_deg[0][i]);
+    memcpy(out_deg[i], in_deg[i], sizeof(bf_t) * 6);
+    bf_add(&out_deg[i][7], &in_deg[i][7], &k_deg[i][1]);
+    bf_add(&out_deg[i][6], &in_deg[i][6], &k_deg[i][0]);
   }
 }
 
@@ -667,7 +660,7 @@ static void aes_inverse_affine_prover(uint8_t* y, bf_t* y_tag, const uint8_t* x,
   }
 }
 
-static void aes_inverse_sbox_eval_prover(bf_t** b_deg, const uint8_t* s_dash_dash,
+static void aes_inverse_sbox_eval_prover(bf_t b_deg[][8], const uint8_t* s_dash_dash,
                                          const bf_t* s_dash_dash_tag, unsigned int Nst) {
   const unsigned int Nstbytes = Nst * 4;
 
@@ -683,21 +676,21 @@ static void aes_inverse_sbox_eval_prover(bf_t** b_deg, const uint8_t* s_dash_das
   aes_f256_f2_conjugates(state_conj_tag, s_tag, Nst);
 
   for (unsigned int j = 0; j < Nstbytes; j++) {
-    b_deg[0][j] = state_conj_tag[j * 8 + 1];
-    b_deg[1][j] = state_conj[j * 8 + 1];
+    b_deg[j][0] = state_conj_tag[j * 8 + 1];
+    b_deg[j][1] = state_conj[j * 8 + 1];
     for (unsigned int i = 2; i < 8; i++) {
       const bf_t* t = &state_conj_tag[j * 8 + i];
       const bf_t* v = &state_conj[j * 8 + i];
 
       // Process in reverse so that the previous coefficients remain available.
-      bf_mul(&b_deg[i][j], &b_deg[i - 1][j], v);
+      bf_mul(&b_deg[j][i], &b_deg[j][i - 1], v);
       for (unsigned int m = i - 1; m > 0; m--) {
         bf_t tmp;
-        bf_mul(&tmp, &b_deg[m - 1][j], v);
-        bf_mul_inplace(&b_deg[m][j], t);
-        bf_add_inplace(&b_deg[m][j], &tmp);
+        bf_mul(&tmp, &b_deg[j][m - 1], v);
+        bf_mul_inplace(&b_deg[j][m], t);
+        bf_add_inplace(&b_deg[j][m], &tmp);
       }
-      bf_mul_inplace(&b_deg[0][j], t);
+      bf_mul_inplace(&b_deg[j][0], t);
     }
   }
 
@@ -1038,47 +1031,29 @@ static void aes_enc_constraints_prover(zk_hash_7_ctx* hasher, const uint8_t* owf
   uint8_t* s            = &state_bits[3 * Nstbytes];
   bf_t* s_tag           = &state_bits_tag[Nstbits + 5 * 8 * Nstbytes + 2 * Nstbits];
 
-  bf_t* b_deg[8];
-  b_deg[0] = &s_tag[Nstbits];
-  for (unsigned int m = 0; m < 8; m++) {
-    if (m) {
-      b_deg[m] = b_deg[0] + m * Nstbytes;
-    }
-    for (unsigned n = 0; n < Nstbytes; n++) {
-      b_deg[m][n] = bf_zero();
-    }
-  }
+  bf_t (*b_deg)[8] = (bf_t (*)[8])&s_tag[Nstbits];
 
   // line 2
   for (unsigned int r = 0; r < FAEST_R / 2; r++) {
     // line 3
-    bf_t* state_deg7[8];
-    for (unsigned int m = 0; m < 8; m++) {
-      state_deg7[m] = &b_deg[7][Nstbytes] + m * Nstbytes;
-    }
+    bf_t (*state_deg7)[8] = b_deg + Nstbytes;
 
     // line 4
     aes_sbox_eval_prover(state_deg7, state_bits, state_bits_tag, Nst);
 
     // line 5
-    bf_t* state_deg7_tmp[8];
-    for (unsigned int m = 0; m < 8; m++) {
-      state_deg7_tmp[m] = &state_deg7[7][Nstbytes] + m * Nstbytes;
-    }
-    aes_shiftrows_prover(state_deg7_tmp, (const bf_t**)state_deg7, Nst);
+    bf_t (*state_deg7_tmp)[8] = state_deg7 + Nstbytes;
+    aes_shiftrows_prover(state_deg7_tmp, (const bf_t (*)[8])state_deg7, Nst);
 
     // line 6
-    aes_mix_columns_prover(state_deg7, (const bf_t**)state_deg7_tmp, Nst);
+    aes_mix_columns_prover(state_deg7, (const bf_t (*)[8])state_deg7_tmp, Nst);
 
     // line 7
-    bf_t* k_deg[2];
-    for (unsigned int m = 0; m < 2; m++) {
-      k_deg[m] = &state_deg7_tmp[7][Nstbytes] + m * Nstbytes;
-    }
+    bf_t (*k_deg)[2] = (bf_t (*)[2])&s_tag[Nstbits + 24 * Nstbytes];
     aes_state_to_bytes_prover(k_deg, k + (2 * r + 1) * Nstbytes, k_tag + (2 * r + 1) * Nstbits,
                               Nst);
-    aes_add_round_key_bytes_prover_degree_7(state_deg7_tmp, (const bf_t**)state_deg7,
-                                            (const bf_t**)k_deg, Nst);
+    aes_add_round_key_bytes_prover_degree_7(state_deg7_tmp, (const bf_t (*)[8])state_deg7,
+                                            (const bf_t (*)[2])k_deg, Nst);
 
     // line 10
     if (r == FAEST_R / 2 - 1) {
@@ -1099,7 +1074,7 @@ static void aes_enc_constraints_prover(zk_hash_7_ctx* hasher, const uint8_t* owf
     bf_t tmp[8];
     for (unsigned int byte_i = 0; byte_i < Nstbytes; byte_i++) {
       for (unsigned int m = 0; m < 8; m++) {
-        bf_add(&tmp[m], &b_deg[m][byte_i], &state_deg7_tmp[m][byte_i]);
+        bf_add(&tmp[m], &b_deg[byte_i][m], &state_deg7_tmp[byte_i][m]);
       }
       // NOTE: getting the z's
       zk_hash_7_update(hasher, tmp);
