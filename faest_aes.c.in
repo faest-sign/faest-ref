@@ -364,7 +364,7 @@ static void aes_sbox_eval_verifier(bf_t* state_key, const bf_t* state_bits_key, 
   // line 3+5: zeta is precomputed as bf_c
   bf_t zeta_delta_i;
   bf_load(&zeta_delta_i, bf_c_bytes[8]);
-  bf_mul_inplace(&zeta_delta_i, &delta_i[7]);
+  bf_mul_inplace(&zeta_delta_i, &delta_i[6]);
 
   // line 6
   for (unsigned int j = 0; j < Nstbytes; j++) {
@@ -517,7 +517,7 @@ static void aes_add_round_key_bytes_verifier(bf_t* y_key, const bf_t* in_key, co
   for (unsigned int i = 0; i < Nstbytes; i++) {
     // Multiply tag by delta to align degrees
     bf_t tmp;
-    bf_mul(&tmp, &k_key[i], &delta_i[6]);
+    bf_mul(&tmp, &k_key[i], &delta_i[5]);
     bf_add(&y_key[i], &in_key[i], &tmp);
   }
 }
@@ -723,7 +723,7 @@ static void aes_inverse_sbox_eval_verifier(bf_t* b_key, const bf_t* s_dash_dash_
   const unsigned int Nstbytes = Nst * 4;
 
   bf_t* s_tag = BF_ALLOC(Nstbytes * 8 * 2);
-  aes_inverse_affine_verifier(s_tag, s_dash_dash_tag, &delta_i[1], Nst);
+  aes_inverse_affine_verifier(s_tag, s_dash_dash_tag, &delta_i[0], Nst);
 
   bf_t* state_conj_tag = s_tag + Nstbytes * 8;
   aes_f256_f2_conjugates(state_conj_tag, s_tag, Nst);
@@ -957,7 +957,7 @@ static void aes_expkey_constraints_verifier(zk_hash_ctx* hasher, bf_t* k_key, co
   // ::2
   bf_t* w_flat_key = BF_ALLOC(8 * Ske);
   assert(w_flat_key);
-  aes_keyexp_backward_verifier(w_flat_key, w_key + FAEST_LAMBDA, k_key, &delta_i[1], params);
+  aes_keyexp_backward_verifier(w_flat_key, w_key + FAEST_LAMBDA, k_key, &delta_i[0], params);
 
   // ::3-5,::7
   for (unsigned int j = 0, iwd = 32 * (FAEST_NK - 1); j < Ske; j += 4, iwd += IWD_INC) {
@@ -992,15 +992,15 @@ static void aes_expkey_constraints_verifier(zk_hash_ctx* hasher, bf_t* k_key, co
       bf_t v;
       bf_t tmp;
       bf_mul(&v, &k_hat_key_sq, &w_hat_key);
-      bf_mul(&tmp, &delta_i[1], &k_hat_key);
+      bf_mul(&tmp, &delta_i[0], &k_hat_key);
       bf_add_inplace(&v, &tmp);
-      bf_mul_inplace(&v, &delta_i[5]);
+      bf_mul_inplace(&v, &delta_i[4]);
       zk_hash_update(hasher, &v);
 
       bf_mul(&v, &k_hat_key, &w_hat_key_sq);
-      bf_mul(&tmp, &delta_i[1], &w_hat_key);
+      bf_mul(&tmp, &delta_i[0], &w_hat_key);
       bf_add_inplace(&v, &tmp);
-      bf_mul_inplace(&v, &delta_i[5]);
+      bf_mul_inplace(&v, &delta_i[4]);
       zk_hash_update(hasher, &v);
     }
   }
@@ -1257,7 +1257,7 @@ static void aes_constraints_verifier(zk_hash_ctx* hasher, const bf_t* w_key, con
   // line 5
   bf_t v;
   bf_mul(&v, &w_key[0], &w_key[1]);
-  bf_mul_inplace(&v, &delta_i[5]);
+  bf_mul_inplace(&v, &delta_i[4]);
   zk_hash_update(hasher, &v);
 
   // line 7
@@ -1276,7 +1276,7 @@ static void aes_constraints_verifier(zk_hash_ctx* hasher, const bf_t* w_key, con
         for (unsigned int i = 0; i < 4; ++i) {
           uint8_t rk_byte = round_keys.round_keys[r][n][i];
           for (unsigned int j = 0; j < 8; ++j, ++idx) {
-            bf_mul_bit(&rkeys_key[idx], &delta_i[1], get_bit(rk_byte, j));
+            bf_mul_bit(&rkeys_key[idx], &delta_i[0], get_bit(rk_byte, j));
           }
         }
       }
@@ -1284,16 +1284,16 @@ static void aes_constraints_verifier(zk_hash_ctx* hasher, const bf_t* w_key, con
     // ::10-11
     memcpy(in_key, w_key, blocksize * sizeof(bf_t));
     for (unsigned int i = 0; i < blocksize; i++) {
-      bf_mul_bit(&out_key[i], &delta_i[1], ptr_get_bit(owf_out, i));
+      bf_mul_bit(&out_key[i], &delta_i[0], ptr_get_bit(owf_out, i));
       bf_add_inplace(&out_key[i], &w_key[i]);
     }
   } else {
     // line 13
-    constant_to_vole_verifier(in_key, owf_in, &delta_i[1], blocksize);
+    constant_to_vole_verifier(in_key, owf_in, &delta_i[0], blocksize);
 
     // line 14-15
     // if beta=2, load both public key blocks
-    constant_to_vole_verifier(out_key, owf_out, &delta_i[1], beta * blocksize);
+    constant_to_vole_verifier(out_key, owf_out, &delta_i[0], beta * blocksize);
 
     // line 16
     aes_expkey_constraints_verifier(hasher, rkeys_key, w_key, delta_i, params);
@@ -1302,7 +1302,7 @@ static void aes_constraints_verifier(zk_hash_ctx* hasher, const bf_t* w_key, con
   for (unsigned int b = 0; b < beta; b++) {
     // line 20
     if (b == 1) {
-      bf_add_inplace(&in_key[0], &delta_i[1]); // adding one and multiplying with delta
+      bf_add_inplace(&in_key[0], &delta_i[0]); // adding one and multiplying with delta
     }
     aes_enc_constraints_verifier(hasher, in_key, out_key + b * blocksize, w_key + Lke + b * Lenc,
                                  rkeys_key, delta_i, Nst);
@@ -1375,20 +1375,19 @@ void aes_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_
   zk_hash_init(&b_ctx, chall_2);
 
   // line 3,5 initializing
-  bf_t bf_delta[D_ZK + 1];
-  bf_delta[0] = bf_one();
-  bf_load(&bf_delta[1], delta);
-  bf_square(&bf_delta[2], &bf_delta[1]);
-  bf_mul(&bf_delta[3], &bf_delta[2], &bf_delta[1]);
-  bf_square(&bf_delta[4], &bf_delta[2]);
-  bf_mul(&bf_delta[5], &bf_delta[4], &bf_delta[1]);
-  bf_square(&bf_delta[6], &bf_delta[3]);
-  bf_mul(&bf_delta[7], &bf_delta[6], &bf_delta[1]);
+  bf_t bf_delta[D_ZK];
+  bf_load(&bf_delta[0], delta);
+  bf_square(&bf_delta[1], &bf_delta[0]);
+  bf_mul(&bf_delta[2], &bf_delta[1], &bf_delta[0]);
+  bf_square(&bf_delta[3], &bf_delta[1]);
+  bf_mul(&bf_delta[4], &bf_delta[3], &bf_delta[0]);
+  bf_square(&bf_delta[5], &bf_delta[2]);
+  bf_mul(&bf_delta[6], &bf_delta[5], &bf_delta[0]);
 
   // line 3
   for (unsigned int i = 0; i < ell; i++) {
     bf_t tmp;
-    bf_mul_bit(&tmp, &bf_delta[1], ptr_get_bit(d, i));
+    bf_mul_bit(&tmp, &bf_delta[0], ptr_get_bit(d, i));
     bf_add_inplace(&Q_key[i], &tmp);
   }
 
@@ -1398,16 +1397,16 @@ void aes_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_
   for (unsigned int j = 1; j < D_ZK - 1; j++) {
     bf_t tmp;
     bf_sum_poly_bits(&tmp, q_bar + j * lambda_bytes);
-    bf_mul_inplace(&tmp, &bf_delta[j]);
+    bf_mul_inplace(&tmp, &bf_delta[j-1]);
     bf_add_inplace(&q_star, &tmp);
   }
 
   // line 7
   for (unsigned int i = 0; i < ell; i++) {
     bf_t t, u;
-    bf_add(&u, &Q_key[i], &bf_delta[1]); // 1 (delta) - w
+    bf_add(&u, &Q_key[i], &bf_delta[0]); // 1 (delta) - w
     bf_mul(&t, &Q_key[i], &u);           // w * (1 (delta) - w)
-    bf_mul_inplace(&t, &bf_delta[5]);
+    bf_mul_inplace(&t, &bf_delta[4]);
     zk_hash_update(&b_ctx, &t);
   }
 
@@ -1423,14 +1422,14 @@ void aes_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_
   // line 14
   bf_t acc;
   bf_load(&acc, a1toi_tilde);
-  bf_mul_inplace(&acc, &bf_delta[1]);
+  bf_mul_inplace(&acc, &bf_delta[0]);
 
   bf_t tmp;
   bf_load(&tmp, q_tilde);
   bf_add_inplace(&acc, &tmp);
 
-  for (unsigned int j = 2; j < D_ZK; j++) {
-    bf_load(&tmp, a1toi_tilde + (j - 1) * lambda_bytes);
+  for (unsigned int j = 1; j < D_ZK - 1; j++) {
+    bf_load(&tmp, a1toi_tilde + j * lambda_bytes);
     bf_mul_inplace(&tmp, &bf_delta[j]);
     bf_add_inplace(&acc, &tmp);
   }
