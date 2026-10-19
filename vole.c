@@ -7,6 +7,8 @@
 #endif
 
 #include "vole.h"
+
+#include "compat.h"
 #include "aes.h"
 #include "utils.h"
 #include "random_oracle.h"
@@ -14,6 +16,9 @@
 
 #include <stdbool.h>
 #include <string.h>
+
+// for calls to H5 where storage if re-used
+static_assert(N_MASK_BYTES <= MAX_LAMBDA_BYTES);
 
 static const uint32_t TWEAK_OFFSET = UINT32_C(0x80000000); // 2^31
 
@@ -68,11 +73,11 @@ static void crt_transform_rows(uint8_t** dst, uint8_t** src, unsigned int row_by
     memset(dst[out], 0, row_bytes);
     const uint64_t* coefficients = TBL(params->W_CRT, params->w_crt_words, out);
     for (unsigned int word = 0; word < (rows + 63) / 64; ++word) {
-      uint64_t bits = coefficients[word] & bit_word_mask(MIN(rows - word * 64, 64));
-      while (bits) {
+      // bits is a public constant
+      for (uint64_t bits = coefficients[word] & bit_word_mask(MIN(rows - word * 64, 64)); bits;
+           bits &= bits - 1) {
         const unsigned int bit = ctz64(bits);
         xor_u8_array_inplace(dst[out], src[word * 64 + bit], row_bytes);
-        bits &= bits - 1;
       }
     }
   }
@@ -276,29 +281,29 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   uint8_t** c_mult_diff = alloc_pointer_array(n_mult, N_MASK_BYTES);
   for (unsigned e = 0; e < n_mult; e++) {
     uint8_t L_e_zero[MAX_LAMBDA_BYTES] = {0};
-    uint8_t L_e_one[MAX_LAMBDA_BYTES];
-    uint8_t h_e_one[N_MASK_BYTES];
-
-    const uint64_t* G_e = TBL(params->G, params->g_words, e);
+    const uint64_t* G_e                = TBL(params->G, params->g_words, e);
     for (unsigned int word_idx = 0; word_idx < params->g_words; ++word_idx) {
       const unsigned int row_offset = word_idx * 64;
       const unsigned int word_bits  = MIN(lambda_minus_w_grind - row_offset, 64);
 
-      uint64_t coefficients = G_e[word_idx] & bit_word_mask(word_bits);
-      while (coefficients) {
+      // coefficients is a public constant
+      for (uint64_t coefficients = G_e[word_idx] & bit_word_mask(word_bits); coefficients;
+           coefficients &= coefficients - 1) {
         const unsigned int bit = ctz64(coefficients);
         xor_small_u8_array_inplace(L_e_zero, V[row_offset + bit], lambda_bytes);
-        coefficients &= coefficients - 1;
       }
     }
-    xor_u8_array(L_e_one, L_e_zero, u, lambda_bytes);
 
     // line 23
     H5(v_tilde[e], iv, e, L_e_zero, lambda);
-    H5(h_e_one, iv, e, L_e_one, lambda);
+
+    // reuse L_e_zero as L_e_one
+    xor_u8_array_inplace(L_e_zero, u, lambda_bytes);
+    // reuse L_e_zero as h_e_one
+    H5(L_e_zero, iv, e, L_e_zero, lambda);
 
     // line 26
-    xor_small_u8_array(c_mult_diff[e], v_tilde[e], h_e_one, N_MASK_BYTES);
+    xor_small_u8_array(c_mult_diff[e], v_tilde[e], L_e_zero, N_MASK_BYTES);
   }
 
   // line 30: apply the CRT map row-wise, including the final transpose implicitly.
@@ -469,19 +474,20 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
       uint64_t coefficients = G_e[word_idx] & bit_word_mask(word_bits);
       gamma_acc ^= coefficients & load_bit_word(chall_3 + word_idx * 8, word_bits);
 
-      while (coefficients) {
+      // coefficients is a public constant
+      for (; coefficients; coefficients &= coefficients - 1) {
         const unsigned int bit = ctz64(coefficients);
         xor_small_u8_array_inplace(L_e_prime, Q[row_offset + bit], lambda_bytes);
-        coefficients &= coefficients - 1;
       }
     }
 
     // line 25
-    uint8_t h_e[N_MASK_BYTES];
-    H5(h_e, iv, e, L_e_prime, lambda);
+    // reuse L_e_prime as h_e
+    H5(L_e_prime, iv, e, L_e_prime, lambda);
 
     // line 27
-    masked_xor_small_u8_array(q_tilde[e], h_e, c_mult_by_e[e], parity64(gamma_acc), N_MASK_BYTES);
+    masked_xor_small_u8_array(q_tilde[e], L_e_prime, c_mult_by_e[e], parity64(gamma_acc),
+                              N_MASK_BYTES);
   }
 
   // line 31: apply the CRT map row-wise, including the final transpose implicitly.
