@@ -83,7 +83,7 @@
 #define ASSUME(p)                                                                                  \
   do {                                                                                             \
     if (!(p)) {                                                                                    \
-      __builtin_unreachable()                                                                      \
+      __builtin_unreachable();                                                                     \
     }                                                                                              \
   } while (0)
 #elif defined(_MSC_VER)
