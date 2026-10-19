@@ -553,7 +553,7 @@ static bool bavc_reconstruct_faest(bavc_rec_t* bavc_rec, const uint8_t* decom_i,
   // Step 6
   uint8_t* s = calloc((2 * L - 1 + 7) / 8, 1);
   assert(s);
-  uint8_t* keys = calloc(2 * params->L - 1, lambda_bytes);
+  uint8_t* keys = calloc(2 * L - 1, lambda_bytes);
   assert(keys);
 
   if (!reconstruct_keys(s, keys, decom_i, i_delta, iv, params)) {
@@ -602,7 +602,7 @@ static bool bavc_reconstruct_faest_em(bavc_rec_t* bavc_rec, const uint8_t* decom
   // Step 6
   uint8_t* s = calloc((2 * L - 1 + 7) / 8, 1);
   assert(s);
-  uint8_t* keys = calloc(2 * params->L - 1, lambda_bytes);
+  uint8_t* keys = calloc(2 * L - 1, lambda_bytes);
   assert(keys);
 
   // Step 7..10
