@@ -236,6 +236,60 @@ ATTR_CONST ATTR_ARTIFICIAL static inline int ctz64(uint64_t v) {
 }
 #endif
 
+/* helper functions to compute number of leading zeroes with `clz(0) == 32` */
+#if GNUC_CHECK(3, 4) || __has_builtin(__builtin_clz)
+ATTR_CONST ATTR_ARTIFICIAL static inline uint32_t clz(uint32_t x) {
+  return x ? __builtin_clz(x) : 32;
+}
+#elif defined(_MSC_VER)
+#include <intrin.h>
+ATTR_CONST ATTR_ARTIFICIAL static inline uint32_t clz(uint32_t x) {
+  unsigned long index = 0;
+  if (_BitScanReverse(&index, x)) {
+    return 31 - index;
+  }
+  return 32;
+}
+#else
+/* Number of leading zeroes of x.
+ * H.S. Warren, *Hacker's Delight*, Pearson Education, 2003.
+ * http://www.hackersdelight.org/hdcodetxt/nlz.c.txt
+ */
+ATTR_CONST ATTR_ARTIFICIAL static inline uint32_t clz(uint32_t x) {
+  if (!x) {
+    return 32;
+  }
+
+  uint32_t n = 1;
+  if (!(x >> 16)) {
+    n = n + 16;
+    x = x << 16;
+  }
+  if (!(x >> 24)) {
+    n = n + 8;
+    x = x << 8;
+  }
+  if (!(x >> 28)) {
+    n = n + 4;
+    x = x << 4;
+  }
+  if (!(x >> 30)) {
+    n = n + 2;
+    x = x << 2;
+  }
+  n = n - (x >> 31);
+
+  return n;
+}
+#endif
+
+ATTR_CONST ATTR_ARTIFICIAL static inline uint32_t ceil_log2(uint32_t x) {
+  if (!x) {
+    return 0;
+  }
+  return 32 - clz(x - 1);
+}
+
 #if !defined(__cplusplus)
 #include <assert.h>
 
