@@ -29,27 +29,30 @@ bf8_t bf8_mul(bf8_t lhs, bf8_t rhs) {
 }
 
 bf8_t bf8_square(bf8_t lhs) {
-  bf8_t result = -(lhs & 1) & lhs;
-  bf8_t rhs    = lhs;
-  for (unsigned int idx = 1; idx < 8; ++idx) {
-    const uint8_t mask = -((lhs >> 7) & 1);
-    lhs                = (lhs << 1) ^ (mask & bf8_modulus);
-    result ^= -((rhs >> idx) & 1) & lhs;
-  }
-  return result;
+  // In characteristic two, squaring inserts a zero between consecutive polynomial bits.
+  uint16_t square = lhs;
+  square          = (square | (square << 4)) & UINT16_C(0x0f0f);
+  square          = (square | (square << 2)) & UINT16_C(0x3333);
+  square          = (square | (square << 1)) & UINT16_C(0x5555);
+
+  // Reduce using X^8 = X^4 + X^3 + X + 1. The second fold fits in one byte.
+  const uint16_t high  = square >> 8;
+  square               = (square & UINT16_C(0xff)) ^ high ^ (high << 1) ^ (high << 3) ^ (high << 4);
+  const uint16_t carry = square >> 8;
+  return (bf8_t)(square ^ carry ^ (carry << 1) ^ (carry << 3) ^ (carry << 4));
 }
 
 bf8_t bf8_inv(bf8_t in) {
   const bf8_t t2   = bf8_square(in);
   const bf8_t t3   = bf8_mul(in, t2);
-  const bf8_t t5   = bf8_mul(t3, t2);
-  const bf8_t t7   = bf8_mul(t5, t2);
-  const bf8_t t14  = bf8_square(t7);
-  const bf8_t t28  = bf8_square(t14);
-  const bf8_t t56  = bf8_square(t28);
-  const bf8_t t63  = bf8_mul(t56, t7);
-  const bf8_t t126 = bf8_square(t63);
-  const bf8_t t252 = bf8_square(t126);
+  const bf8_t t6   = bf8_square(t3);
+  const bf8_t t12  = bf8_square(t6);
+  const bf8_t t15  = bf8_mul(t12, t3);
+  const bf8_t t30  = bf8_square(t15);
+  const bf8_t t60  = bf8_square(t30);
+  const bf8_t t120 = bf8_square(t60);
+  const bf8_t t240 = bf8_square(t120);
+  const bf8_t t252 = bf8_mul(t240, t12);
   return bf8_mul(t252, t2);
 }
 
