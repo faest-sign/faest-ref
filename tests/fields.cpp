@@ -20,7 +20,7 @@ namespace {
   void check_tree_reduction(const std::array<uint8_t, N>& input,
                             const std::array<uint8_t, N>& expected, uint16_t modulus,
                             unsigned int degree) {
-    static_assert(N <= sizeof(uint32_t));
+    static_assert(N <= sizeof(uint32_t), "Invalid assumptions");
     uint32_t value     = 0;
     uint32_t remainder = 0;
     for (size_t byte = 0; byte < N; ++byte) {

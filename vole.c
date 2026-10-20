@@ -18,7 +18,8 @@
 #include <string.h>
 
 // for calls to H5 where storage if re-used
-static_assert(N_MASK_BYTES <= MAX_LAMBDA_BYTES);
+static_assert(N_MASK_BYTES <= MAX_LAMBDA_BYTES, "Invalid assumptions.");
+static_assert(MAX_DEPTH <= 16, "Invalid assumptions.");
 
 static const uint32_t TWEAK_OFFSET = UINT32_C(0x80000000); // 2^31
 
@@ -59,7 +60,6 @@ static inline uint64_t load_bit_word(const uint8_t* src, unsigned int bits) {
 static
 #endif
     uint16_t reduce_tree_product(uint32_t value, uint16_t modulus, unsigned int degree) {
-  static_assert(MAX_DEPTH <= 16);
   for (unsigned int bit = 2 * degree; bit > degree; --bit) {
     const uint32_t mask = -((value >> (bit - 1)) & UINT32_C(1));
     value ^= ((uint32_t)modulus << (bit - degree - 1)) & mask;
