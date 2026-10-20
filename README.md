@@ -79,6 +79,7 @@ Multiple implementation of finite field arithmetic is included in the reference 
 * `avx2`: Uses AVX2 and PCLMUL instructions (all hardware supporting AVX2 also
   supports PCLMUL, but in virtual environments this may not be the case)
 * `sse2`: Uses SSE2 instructions
+* `neon`: Uses ARM NEON instructions
 * `vector`: Uses GCC vector extensions
 * `u64`: Uses `uint64_t`
 

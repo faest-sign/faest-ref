@@ -8,13 +8,20 @@
 
 #include "utils.h"
 
-#if defined(HAVE_AVX2) || defined(HAVE_SSE2)
+#if defined(HAVE_AVX2) || defined(HAVE_SSE2) || defined(HAVE_NEON)
 #include "cpu.h"
 #endif
 #if defined(HAVE_AVX2)
 #include <immintrin.h>
 #elif defined(HAVE_SSE2)
 #include <emmintrin.h>
+#endif
+#if defined(HAVE_NEON)
+#if defined(_MSC_VER) && !defined(__clang__) && (defined(_M_ARM64) || defined(_M_ARM64EC))
+#include <arm64_neon.h>
+#else
+#include <arm_neon.h>
+#endif
 #endif
 
 #include <assert.h>
@@ -368,6 +375,52 @@ ATTR_TARGET_SSE2 static void transpose_128x128(uint8_t** v, uint8_t** v_row_maj,
 }
 #endif
 
+#if defined(HAVE_NEON)
+// Apply one stage of a 16x16 mask-and-swap transpose in all eight 16-bit lanes.
+#define TRANSPOSE_NEON_16X16_STAGE(value, shift, mask_value)                                       \
+  do {                                                                                             \
+    const uint16x8_t mask = vdupq_n_u16(mask_value);                                               \
+    for (unsigned int idx = 0; idx < 16; idx = (idx + (shift) + 1) & ~(shift)) {                   \
+      const uint16x8_t tmp =                                                                       \
+          vandq_u16(veorq_u16(vshrq_n_u16((value)[idx], shift), (value)[idx + (shift)]), mask);    \
+      (value)[idx]           = veorq_u16((value)[idx], vshlq_n_u16(tmp, shift));                   \
+      (value)[idx + (shift)] = veorq_u16((value)[idx + (shift)], tmp);                             \
+    }                                                                                              \
+  } while (0)
+
+ATTR_TARGET_NEON static void transpose_128x128(uint8_t** v, uint8_t** v_row_maj, unsigned int row,
+                                               unsigned int col) {
+  for (unsigned int row_offset = 0; row_offset < 128; row_offset += 16) {
+    const unsigned int dst_byte = (row + row_offset) / 8;
+    const unsigned int src_byte = col / 8;
+    uint16x8_t block[16];
+
+    for (unsigned int idx = 0; idx < 16; ++idx) {
+      uint16_t input[8];
+      memcpy(input, v[row + row_offset + idx] + src_byte, sizeof(input));
+      for (unsigned int lane = 0; lane < 8; ++lane) {
+        input[lane] = le16toh(input[lane]);
+      }
+      block[idx] = vld1q_u16(input);
+    }
+
+    TRANSPOSE_NEON_16X16_STAGE(block, 8, 0x00ff);
+    TRANSPOSE_NEON_16X16_STAGE(block, 4, 0x0f0f);
+    TRANSPOSE_NEON_16X16_STAGE(block, 2, 0x3333);
+    TRANSPOSE_NEON_16X16_STAGE(block, 1, 0x5555);
+
+    for (unsigned int idx = 0; idx < 16; ++idx) {
+      uint16_t output[8];
+      vst1q_u16(output, block[idx]);
+      for (unsigned int lane = 0; lane < 8; ++lane) {
+        output[lane] = htole16(output[lane]);
+        memcpy(v_row_maj[col + 16 * lane + idx] + dst_byte, &output[lane], sizeof(output[lane]));
+      }
+    }
+  }
+}
+#endif
+
 #if defined(HAVE_AVX2)
 // Apply one stage of a 32x32 mask-and-swap transpose in all eight 32-bit lanes.
 #define TRANSPOSE_AVX2_32X32_STAGE(value, shift, mask_value)                                       \
@@ -415,7 +468,7 @@ void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_
   unsigned int full_rows_128 = 0;
   unsigned int full_cols_128 = 0;
 
-#if defined(HAVE_SSE2)
+#if defined(HAVE_SSE2) || defined(HAVE_NEON)
   unsigned int full_rows_256 = 0;
   unsigned int full_cols_256 = 0;
 #if defined(HAVE_AVX2)
@@ -433,7 +486,7 @@ void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_
 #endif
 
   // transpose 128x128 blocks next
-  if (CPU_SUPPORTS_SSE2) {
+  if (CPU_SUPPORTS_SSE2 || CPU_SUPPORTS_NEON) {
     full_rows_128 = v_row_bits_len & ~127;
     full_cols_128 = v_col_bits_len & ~127;
 

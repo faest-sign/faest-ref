@@ -80,7 +80,7 @@ c_flags = cc.get_supported_arguments(flags) + cc.get_supported_arguments(c_flags
 cpp_flags = cpp.get_supported_arguments(flags) + cpp.get_supported_arguments(cpp_flags)
 linker_flags = cc.get_supported_link_arguments(flags)
 
-# check compiler if compiler supports __builtin_cpu_supports
+# check if compiler supports __builtin_cpu_supports
 has_usable_builtin = cc.compiles(
   '''
 #include "cpu.h"
@@ -93,7 +93,7 @@ has_usable_builtin = cc.compiles(
   include_directories: include_directories('.'),
 )
 
-# check compiler if compiler supports AES-NI
+# check if compiler supports AES-NI
 aesni_flag = cc.get_supported_arguments('-maes')
 supports_aesni = cc.links(
   '''
@@ -127,7 +127,7 @@ int main() {
 )
 conf_data.set('HAVE_SSE2', supports_sse2)
 
-# check compiler if compiler supports AVX2
+# check if compiler supports AVX2
 avx2_flag = cc.get_supported_arguments('-mavx2')
 supports_avx2 = cc.links(
   '''
@@ -143,7 +143,7 @@ int main() {
 )
 conf_data.set('HAVE_AVX2', supports_avx2)
 
-# check compiler if compiler supports AVX2
+# check if compiler supports AVX2
 pclmul_flag = cc.get_supported_arguments(['-mpclmul', '-msse2'])
 supports_pclmul = cc.links(
   '''
@@ -174,6 +174,26 @@ int main() {
   args: [sse2_flag],
 )
 conf_data.set('HAVE_MM_LOADU_SI64', supports_loadu_si64)
+
+# check if compiler supports NEON
+neon_flag = cc.get_supported_arguments('-mfpu=neon')
+supports_neon = cc.links(
+  '''
+#if defined(_MSC_VER) && !defined(__clang__) && (defined(_M_ARM64) || defined(_M_ARM64EC))
+#include <arm64_neon.h>
+#else
+#include <arm_neon.h>
+#endif
+
+int main() {
+  uint16x8_t value = vdupq_n_u16(1);
+  return vgetq_lane_u16(vshrq_n_u16(value, 1), 0);
+}
+''',
+  name: 'compiler supports NEON',
+  args: [neon_flag],
+)
+conf_data.set('HAVE_NEON', supports_neon)
 
 # check availability of some headers
 conf_data.set('HAVE_ASM_HWCAP_H', cc.has_header('asm/hwcap.h'))

@@ -71,6 +71,12 @@
 #define HAVE_MM_LOADU_SI64
 #endif
 #endif
+
+#if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
+#define HAVE_NEON
+#elif (defined(__arm__) || defined(_M_ARM)) && __has_include(<arm_neon.h>)
+#define HAVE_NEON
+#endif
 #endif /* !HAVE_CONFIG_H */
 
 #if defined(HAVE_ALIGNED_ALLOC)
