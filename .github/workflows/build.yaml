@@ -239,7 +239,7 @@ jobs:
   build-fields-implementations:
     name: Test with fields implementation ${{ matrix.cfg.impl }}
     needs: [build-base]
-    runs-on: $ {{ matrix.cfg.os }}
+    runs-on: ${{ matrix.cfg.os }}
     strategy:
       fail-fast: false
       matrix:
