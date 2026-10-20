@@ -193,7 +193,7 @@
 #define ATTR_TARGET_AESNI __attribute__((target("sse2,aes")))
 #define ATTR_TARGET_AESNI_AVX2 __attribute__((target("avx2,aes")))
 #define ATTR_TARGET_PCLMUL __attribute__((target("pclmul")))
-#if !defined(__arch64__) && !defined(_M_ARM64) && !defined(_M_ARM64EC)
+#if !defined(__aarch64__) && !defined(_M_ARM64) && !defined(_M_ARM64EC)
 #define ATTR_TARGET_NEON __attribute__((target("fpu=neon")))
 #else
 #define ATTR_TARGET_NEON
