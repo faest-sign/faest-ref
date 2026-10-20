@@ -57,7 +57,11 @@ static inline void aes_increment_iv(uint8_t* iv)
 {
   uint32_t iv0;
   memcpy(&iv0, iv, sizeof(uint32_t));
+#if defined(FAEST_IS_LITTLE_ENDIAN)
+  iv0 += 1;
+#else
   iv0 = htole32(le32toh(iv0) + 1);
+#endif
   memcpy(iv, &iv0, sizeof(uint32_t));
 }
 
@@ -79,29 +83,21 @@ static void sub_bytes(aes_block_t state, unsigned int block_words) {
 }
 
 static void shift_row(aes_block_t state, unsigned int block_words) {
-  aes_block_t new_state;
-  switch (block_words) {
-  case 4:
-  case 6:
-    for (unsigned int i = 0; i < block_words; ++i) {
-      new_state[i][0] = state[i][0];
-      new_state[i][1] = state[(i + 1) % block_words][1];
-      new_state[i][2] = state[(i + 2) % block_words][2];
-      new_state[i][3] = state[(i + 3) % block_words][3];
-    }
-    break;
-  case 8:
-    for (unsigned int i = 0; i < block_words; i++) {
-      new_state[i][0] = state[i][0];
-      new_state[i][1] = state[(i + 1) % 8][1];
-      new_state[i][2] = state[(i + 3) % 8][2];
-      new_state[i][3] = state[(i + 4) % 8][3];
-    }
-    break;
-  }
+  for (unsigned int row = 1; row < AES_NR; ++row) {
+    // Row offsets are (0, 1, 2, 3), or (0, 1, 3, 4) for Rijndael-256.
+    const unsigned int shift = block_words == RIJNDAEL_BLOCK_WORDS_256 && row > 1 ? row + 1 : row;
 
-  for (unsigned int i = 0; i < block_words; ++i) {
-    memcpy(&state[i][0], &new_state[i][0], AES_NR);
+    bf8_t saved[4];
+    // Save the prefix, move the remaining bytes left, then wrap the prefix around.
+    for (unsigned int col = 0; col < shift; ++col) {
+      saved[col] = state[col][row];
+    }
+    for (unsigned int col = 0; col < block_words - shift; ++col) {
+      state[col][row] = state[col + shift][row];
+    }
+    for (unsigned int col = 0; col < shift; ++col) {
+      state[block_words - shift + col][row] = saved[col];
+    }
   }
 }
 
