@@ -237,17 +237,18 @@ jobs:
         ninja -C build test
 
   build-fields-implementations:
-    name: Test with fields implementation ${{ matrix.impl }}
+    name: Test with fields implementation ${{ matrix.cfg.impl }}
     needs: [build-base]
-    runs-on: ubuntu-26.04
+    runs-on: $ {{ matrix.cfg.os }}
     strategy:
       fail-fast: false
       matrix:
-        impl:
-        - avx2
-        - sse2
-        - vector
-        - u64
+        cfg:
+        - { os: ubuntu-26.04, impl: avx2 }
+        - { os: ubuntu-26.04, impl: sse2 }
+        - { os: ubuntu-26.04, impl: vector }
+        - { os: ubuntu-26.04, impl: u64 }
+        - { os: ubuntu-26.04-arm, impl: neon }
     steps:
     - uses: actions/checkout@v7
       with:
@@ -259,6 +260,6 @@ jobs:
     - name: Build and test
       run: |
         mkdir build
-        meson setup build -Dbenchmarks=disabled -Db_lto=false --buildtype=release -Dfields=${{ matrix.impl }}
+        meson setup build -Dbenchmarks=disabled -Db_lto=false --buildtype=release -Dfields=${{ matrix.cfg.impl }}
         ninja -C build
         ninja -C build test
