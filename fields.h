@@ -122,9 +122,8 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit
 #elif defined(HAVE_SSE2) && __SSE2__
 // If SSE2 is supported and we are building with SSE2 enabled, use the SSE2 implementation.
 #define FAEST_FIELDS FAEST_FIELDS_USE_SSE2
-#elif defined(HAVE_NEON) &&                                                                        \
-    defined(FAEST_IS_LITTLE_ENDIAN) && \ (defined(__ARM_NEON) || defined(__ARM_NEON__) ||          \
-                                          defined(_M_ARM64) || defined(_M_ARM64EC))
+#elif defined(HAVE_NEON) && defined(FAEST_IS_LITTLE_ENDIAN) &&                                     \
+    (defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(_M_ARM64) || defined(_M_ARM64EC))
 // If NEON is supported, and we are building with it enabled, use the NENO implementation.
 #define FAEST_FIELDS FAEST_FIELDS_USE_NEON
 #elif defined(HAVE_ATTR_VECTOR_SIZE)
