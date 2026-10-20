@@ -400,8 +400,8 @@ ATTR_TARGET_AVX2 static void transpose_256x256(uint8_t** v, uint8_t** v_row_maj,
     TRANSPOSE_AVX2_32X32_STAGE(block, 1, 0x55555555);
 
     for (unsigned int idx = 0; idx < 32; ++idx) {
-      uint32_t output[8];
-      _mm256_storeu_si256((__m256i*)output, block[idx]);
+      ATTR_ALIGNED(32) uint32_t output[8];
+      _mm256_store_si256((__m256i*)output, block[idx]);
       for (unsigned int lane = 0; lane < 8; ++lane) {
         memcpy(v_row_maj[col + 32 * lane + idx] + dst_byte, &output[lane], sizeof(output[lane]));
       }
