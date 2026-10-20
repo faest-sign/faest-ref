@@ -106,14 +106,18 @@ static void shift_row(aes_block_t state, unsigned int block_words) {
 }
 
 static void mix_column(aes_block_t state, unsigned int block_words) {
-  for (unsigned int c = 0; c < block_words; c++) {
-    bf8_t tmp[4];
-    tmp[0] = bf8_mul(state[c][0], 0x02) ^ bf8_mul(state[c][1], 0x03) ^ state[c][2] ^ state[c][3];
-    tmp[1] = state[c][0] ^ bf8_mul(state[c][1], 0x02) ^ bf8_mul(state[c][2], 0x03) ^ state[c][3];
-    tmp[2] = state[c][0] ^ state[c][1] ^ bf8_mul(state[c][2], 0x02) ^ bf8_mul(state[c][3], 0x03);
-    tmp[3] = bf8_mul(state[c][0], 0x03) ^ state[c][1] ^ state[c][2] ^ bf8_mul(state[c][3], 0x02);
+  for (unsigned int col = 0; col < block_words; ++col) {
+    const bf8_t a   = state[col][0];
+    const bf8_t b   = state[col][1];
+    const bf8_t c   = state[col][2];
+    const bf8_t d   = state[col][3];
+    const bf8_t sum = a ^ b ^ c ^ d;
 
-    memcpy(state[c], tmp, sizeof(tmp));
+    // instead of computing a * (X + 1) + b * X, compute (a + b) * X + a
+    state[col][0] = a ^ sum ^ bf8_mulX(a ^ b);
+    state[col][1] = b ^ sum ^ bf8_mulX(b ^ c);
+    state[col][2] = c ^ sum ^ bf8_mulX(c ^ d);
+    state[col][3] = d ^ sum ^ bf8_mulX(d ^ a);
   }
 }
 

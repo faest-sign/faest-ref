@@ -28,6 +28,12 @@ bf8_t bf8_mul(bf8_t lhs, bf8_t rhs) {
   return result;
 }
 
+// Multiply by X modulo X^8 + X^4 + X^3 + X + 1.
+bf8_t bf8_mulX(bf8_t value) {
+  const uint8_t mask = -(value >> 7);
+  return (bf8_t)((value << 1) ^ (mask & bf8_modulus));
+}
+
 bf8_t bf8_square(bf8_t lhs) {
   // In characteristic two, squaring inserts a zero between consecutive polynomial bits.
   uint16_t square = lhs;
@@ -43,6 +49,7 @@ bf8_t bf8_square(bf8_t lhs) {
 }
 
 bf8_t bf8_inv(bf8_t in) {
+  // Compute in^254 with four multiplications and seven squarings; zero maps to zero.
   const bf8_t t2   = bf8_square(in);
   const bf8_t t3   = bf8_mul(in, t2);
   const bf8_t t6   = bf8_square(t3);

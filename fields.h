@@ -63,6 +63,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL inline bf8_t bf8_add(bf8_t lhs, bf
 }
 
 ATTR_CONST bf8_t bf8_mul(bf8_t lhs, bf8_t rhs);
+ATTR_CONST bf8_t bf8_mulX(bf8_t v);
 ATTR_CONST bf8_t bf8_square(bf8_t lhs);
 ATTR_CONST bf8_t bf8_inv(bf8_t lhs);
 
