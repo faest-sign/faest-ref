@@ -29,7 +29,8 @@ static unsigned int init_caps(void) {
   return caps;
 }
 
-#elif (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)) &&       \
+#elif (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) ||                             \
+       (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC))) &&                         \
     (defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER))
 
 #ifdef _MSC_VER

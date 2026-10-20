@@ -54,7 +54,8 @@
 #define HAVE_MEMPCPY
 #endif /* HAVE_MEMPCPY */
 
-#if defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_AMD64)
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) ||                                \
+    (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC))
 #if __has_include(<wmmintrin.h>)
 #define HAVE_AESNI
 #define HAVE_PCLMUL

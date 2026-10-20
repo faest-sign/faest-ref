@@ -8,10 +8,10 @@
 #include "macros.h"
 
 #if !defined(OQS)
-/* Check if support for __builtin_cpu_supports is available and known to be working. As tests have
- * showed, support for it on Mac OS X and MinGW is not reliable. */
-#if (defined(__GNUC__) || __has_builtin(__builtin_cpu_supports)) && !defined(__APPLE__) &&         \
-    !defined(__MINGW32__) && !defined(__MINGW64__) && !defined(WITHOUT_BUILTIN_CPU_SUPPORTS)
+/* Check if support for __builtin_cpu_supports is available and known to be working. Support on Mac
+ * OS X and MinGW is not reliable. */
+#if (GNUC_CHECK(4, 8) || __has_builtin(__builtin_cpu_supports)) && !defined(__APPLE__) &&          \
+    !defined(__MINGW32__) && !defined(__MINGW64__)
 #define BUILTIN_CPU_SUPPORTED
 #endif
 
@@ -34,7 +34,8 @@ bool cpu_supports(unsigned int caps);
 #endif
 
 /* Use __builtin_cpu_support or our fallback function to determine supported CPU features */
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC)) ||      \
+    defined(__i386__) || defined(_M_IX86)
 #if defined(__AVX2__)
 // building with -mavx2
 #define CPU_SUPPORTS_AVX2 1
@@ -43,9 +44,11 @@ bool cpu_supports(unsigned int caps);
 #else
 #define CPU_SUPPORTS_AVX2 cpu_supports(CPU_CAP_AVX2)
 #endif
+#else
+#define CPU_SUPPORTS_AVX2 0
 #endif
 
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC))
 // X86-64 CPUs always support SSE2
 #define CPU_SUPPORTS_SSE2 1
 #elif defined(__i386__) || defined(_M_IX86)
@@ -61,7 +64,8 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_SSE2 0
 #endif
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC)) ||      \
+    defined(__i386__) || defined(_M_IX86)
 #if defined(__AES__)
 // building with -maes
 #define CPU_SUPPORTS_AESNI CPU_SUPPORTS_SSE2
@@ -78,9 +82,9 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_AESNI_AVX2 0
 #endif
 
-#if defined(__aarch64__)
+#if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
 #define CPU_SUPPORTS_NEON 1
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(_M_ARM)
 #define CPU_SUPPORTS_NEON cpu_supports(CPU_CAP_NEON)
 #else
 #define CPU_SUPPORTS_NEON 0
@@ -89,7 +93,8 @@ bool cpu_supports(unsigned int caps);
 /* Use OQS function to determine supported CPU features */
 #include <oqs/common.h>
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC)) ||      \
+    defined(__i386__) || defined(_M_IX86)
 #if defined(__AVX2__)
 // building with -mavx2
 #define CPU_SUPPORTS_AVX2 1
@@ -100,7 +105,7 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_AVX2 0
 #endif
 
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC))
 // X86-64 CPUs always support SSE2
 #define CPU_SUPPORTS_SSE2 1
 #elif defined(__i386__) || defined(_M_IX86)
@@ -114,7 +119,8 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_SSE2 0
 #endif
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC)) ||      \
+    defined(__i386__) || defined(_M_IX86)
 #if defined(__AES__)
 // building with -maes
 #define CPU_SUPPORTS_AESNI CPU_SUPPORTS_SSE2
@@ -128,9 +134,9 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_AESNI_AVX2 0
 #endif
 
-#if defined(__aarch64__)
+#if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
 #define CPU_SUPPORTS_NEON 1
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(_M_ARM)
 #define CPU_SUPPORTS_NEON OQS_CPU_has_extension(OQS_CPU_EXT_ARM_NEON)
 #else
 #define CPU_SUPPORTS_NEON 0
