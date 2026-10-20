@@ -87,5 +87,5 @@ These implementations are currently selected at compile time depending on the
 available CPU features. No runtime dispatching is implemented. If the target is
 known to support AVX2 and PCLMUL, `avx2` is the recommended implementation on
 x86-64. If AVX2 and PCLMUL are not available, `sse2` is the default
-implementation on `x86-64`. On other architectures, `vector` is used if
-possible.
+implementation on `x86-64`. On ARM targets with NEON enabled, `neon` is the
+default. On other architectures, `vector` is used if possible.

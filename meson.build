@@ -761,6 +761,12 @@ elif fields_impl == 'sse2'
   endif
   defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_SSE2']
   faest_sources += files('fields_sse2.c')
+elif fields_impl == 'neon'
+  if not supports_neon
+    error('neon selected as fields implementation, but NEON is not supported.')
+  endif
+  defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_NEON']
+  faest_sources += files('fields_neon.c')
 elif fields_impl == 'vector'
   defines += ['-DFAEST_FIELDS=FAEST_FIELDS_USE_VECTOR']
   faest_sources += files('fields_vector.c')
@@ -770,6 +776,7 @@ elif fields_impl == 'u64'
 else
   faest_sources += files(
     'fields_avx2.c',
+    'fields_neon.c',
     'fields_sse2.c',
     'fields_u64.c',
     'fields_vector.c',

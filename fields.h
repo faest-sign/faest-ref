@@ -109,6 +109,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit
   return bit & 1;
 }
 
+#define FAEST_FIELDS_USE_NEON 4
 #define FAEST_FIELDS_USE_AVX2 3
 #define FAEST_FIELDS_USE_SSE2 2
 #define FAEST_FIELDS_USE_VECTOR 1
@@ -121,6 +122,11 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit
 #elif defined(HAVE_SSE2) && __SSE2__
 // If SSE2 is supported and we are building with SSE2 enabled, use the SSE2 implementation.
 #define FAEST_FIELDS FAEST_FIELDS_USE_SSE2
+#elif defined(HAVE_NEON) &&                                                                        \
+    defined(FAEST_IS_LITTLE_ENDIAN) && \ (defined(__ARM_NEON) || defined(__ARM_NEON__) ||          \
+                                          defined(_M_ARM64) || defined(_M_ARM64EC))
+// If NEON is supported, and we are building with it enabled, use the NENO implementation.
+#define FAEST_FIELDS FAEST_FIELDS_USE_NEON
 #elif defined(HAVE_ATTR_VECTOR_SIZE)
 // If GCC vector extensions are available, use them.
 #define FAEST_FIELDS FAEST_FIELDS_USE_VECTOR
@@ -135,6 +141,8 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit
 #include "fields_avx2.h"
 #elif FAEST_FIELDS == FAEST_FIELDS_USE_SSE2
 #include "fields_sse2.h"
+#elif FAEST_FIELDS == FAEST_FIELDS_USE_NEON
+#include "fields_neon.h"
 #elif FAEST_FIELDS == FAEST_FIELDS_USE_VECTOR
 #include "fields_vector.h"
 #else
