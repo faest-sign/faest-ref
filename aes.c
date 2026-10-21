@@ -39,11 +39,6 @@
 #define RIJNDAEL_BLOCK_WORDS_192 6
 #define RIJNDAEL_BLOCK_WORDS_256 8
 
-static const bf8_t round_constants[30] = {
-    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
-    0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
-};
-
 static bf8_t compute_sbox(bf8_t in) {
   const bf8_t t = bf8_inv(in);
   return t ^ rotl8(t, 1) ^ rotl8(t, 2) ^ rotl8(t, 3) ^ rotl8(t, 4) ^ UINT8_C(0x63);
@@ -156,7 +151,7 @@ void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int k
     if (k % key_words == 0) {
       rot_word(tmp);
       sub_words(tmp);
-      tmp[0] ^= round_constants[(k / key_words) - 1];
+      tmp[0] ^= aes_round_constants[(k / key_words) - 1];
     }
 
     if (key_words > 6 && (k % key_words) == 4) {

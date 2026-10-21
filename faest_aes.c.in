@@ -90,11 +90,6 @@ static_assert(FAEST_EM_@SSS@F_LAMBDA * (FAEST_EM_@SSS@F_R + 1) / 8 ==
 
 #define RCON_EVERY (4 * (FAEST_LAMBDA / 128))
 
-static const bf8_t Rcon[30] = {
-    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
-    0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
-};
-
 #if FAEST_LAMBDA == 128
 static ATTR_ALIGNED(BF_ALIGN) const uint8_t bf_c_bytes[9][BF128_NUM_BYTES] = {
     {0xe0, 0xae, 0x88, 0x34, 0xca, 0x59, 0x77, 0xec, 0x84, 0xbb, 0xbf, 0x9c, 0x43, 0xb7, 0xf4,
@@ -706,7 +701,7 @@ static void aes_keyexp_backward_byte_prover(uint8_t* y, bf_t* y_tag, bf_t* x_til
     bf_add(&x_tilde_tag[bit_i], &x_tag[j * 8 + bit_i], &key_tag[key_offset + bit_i]);
   }
   if (j % RCON_EVERY == 0) {
-    x_tilde ^= Rcon[j / RCON_EVERY];
+    x_tilde ^= aes_round_constants[j / RCON_EVERY];
   }
   aes_inverse_affine_byte_prover(y, y_tag, x_tilde, x_tilde_tag);
 }
@@ -719,7 +714,7 @@ static void aes_keyexp_backward_byte_verifier(bf_t* y_key, bf_t* x_tilde_key, co
     bf_add(&x_tilde_key[bit_i], &x_key[j * 8 + bit_i], &key_key[key_offset + bit_i]);
     if (j % RCON_EVERY == 0) {
       bf_t rcon_key;
-      const uint8_t c = get_bit(Rcon[j / RCON_EVERY], bit_i);
+      const uint8_t c = get_bit(aes_round_constants[j / RCON_EVERY], bit_i);
       constant_to_vole_verifier(&rcon_key, &c, delta, 1);
       bf_add_inplace(&x_tilde_key[bit_i], &rcon_key);
     }
