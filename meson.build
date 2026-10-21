@@ -641,6 +641,7 @@ endforeach
 faest_sources = files(
   'aes.c',
   'bavc.c',
+  'cpu.c',
   'faest_impl.c',
   'fields.c',
   'instances.c',
@@ -669,10 +670,6 @@ if conf_data.get('HAVE_MEMPCPY') == false
 endif
 if conf_data.get('HAVE_TIMINGSAFE_BCMP') == false
   faest_sources += files('compat_timingsafe_bcmp.c')
-endif
-
-if has_usable_builtin == false
-  faest_sources += files('cpu.c')
 endif
 
 # header files to install
