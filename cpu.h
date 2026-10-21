@@ -82,7 +82,7 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_AESNI_AVX2 0
 #endif
 
-#if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC) || defined(__ARM_NEON) ||       \
+#if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC) || defined(__ARM_NEON) ||     \
     defined(__ARM_NEON__)
 #define CPU_SUPPORTS_NEON 1
 #elif defined(__arm__) || defined(_M_ARM)
@@ -135,7 +135,7 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_AESNI_AVX2 0
 #endif
 
-#if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC) || defined(__ARM_NEON) ||       \
+#if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC) || defined(__ARM_NEON) ||     \
     defined(__ARM_NEON__)
 #define CPU_SUPPORTS_NEON 1
 #elif defined(__arm__) || defined(_M_ARM)
