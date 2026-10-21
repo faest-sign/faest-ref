@@ -398,6 +398,7 @@ void bf256_sum_poly(bf256_t* dst, const bf256_t* xs) {
   }
 }
 #endif
+
 ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf384_and_64(bf384_t* dst, const bf384_t* lhs,
                                                                    bf64_t rhs) {
   for (unsigned int i = 0; i != ARRAY_SIZE(lhs->inner); ++i) {
@@ -641,5 +642,4 @@ void bf256_sq_bit(bf256_t* out_tag, const bf256_t* in_tag) {
   out_tag[5] = in_tag[5] ^ in_tag[6];
   out_tag[6] = in_tag[3] ^ in_tag[5];
 }
-
 #endif

@@ -471,5 +471,4 @@ TARGET void bf768_mul_256_inplace(bf768_t* lhs, const bf256_t* rhs) {
   lhs->values[1] = _mm256_inserti128_si256(_mm256_castsi128_si256(product[2]), product[3], 1);
   lhs->values[2] = _mm256_inserti128_si256(_mm256_castsi128_si256(product[4]), product[5], 1);
 }
-
 #endif

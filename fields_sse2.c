@@ -518,5 +518,4 @@ ATTR_TARGET_SSE2 void bf576_mul_192_inplace(bf576_t* lhs, const bf192_t* rhs) {
 ATTR_TARGET_SSE2 void bf768_mul_256_inplace(bf768_t* lhs, const bf256_t* rhs) {
   bf_mul_large(lhs->values, rhs->values, 12, 256, BF768_MODULUS);
 }
-
 #endif
