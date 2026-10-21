@@ -593,7 +593,7 @@ static void aes_bitwise_mix_column_verifier(bf_t* out_key, bf_t* s_keys_key, uns
 }
 
 // CONSTANT TO VOLE
-static void constant_to_vole_prover(bf_t* tag, unsigned int n) {
+static inline void constant_to_vole_prover(bf_t* tag, unsigned int n) {
   // the val stay the same as the val is a pub const!
   // for constant values the tag is zero
   memset(tag, 0, sizeof(bf_t) * n);
@@ -1109,7 +1109,7 @@ static void aes_constraints_prover(zk_hash_7_ctx* hasher, const uint8_t* w, cons
         }
       }
     }
-    memset(rkeys_tag, 0, sizeof(bf_t) * (FAEST_R + 1) * Nst * 4 * 8);
+    constant_to_vole_prover(rkeys_tag, (FAEST_R + 1) * Nst * 4 * 8);
 
     // line 10
     memcpy(in, w, blocksize / 8);
