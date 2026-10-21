@@ -9,7 +9,7 @@
 #define HAVE_SYS_AUXV_H
 #endif
 
-#if !defined(HAVE_ASM_HWCAP_H) && defined(__linux__) && defined(__arm__)
+#if !defined(HAVE_ASM_HWCAP_H) && defined(__linux__) && (defined(__arm__) || defined(__aarch64__))
 #define HAVE_ASM_HWCAP_H
 #endif
 #endif
@@ -17,14 +17,44 @@
 #include "cpu.h"
 
 #if defined(REQUIRES_CPU_SUPPORTS)
-#if defined(__arm__) && defined(HAVE_SYS_AUXV_H) && defined(HAVE_ASM_HWCAP_H)
+#if (defined(__arm__) || defined(__aarch64__)) && defined(HAVE_SYS_AUXV_H) &&                      \
+    defined(HAVE_ASM_HWCAP_H)
 #include <asm/hwcap.h>
 #include <sys/auxv.h>
 
 static unsigned int init_caps(void) {
-  unsigned int caps = 0;
-  if (getauxval(AT_HWCAP) & HWCAP_NEON) {
+  unsigned int caps         = 0;
+  const unsigned long hwcap = getauxval(AT_HWCAP);
+#if defined(__aarch64__)
+  if (hwcap & HWCAP_ASIMD) {
     caps |= CPU_CAP_NEON;
+  }
+  if (hwcap & HWCAP_AES) {
+    caps |= CPU_CAP_ARM_AES;
+  }
+#else
+  if (hwcap & HWCAP_NEON) {
+    caps |= CPU_CAP_NEON;
+  }
+#if defined(HWCAP2_AES)
+  if ((hwcap & HWCAP_NEON) && (getauxval(AT_HWCAP2) & HWCAP2_AES)) {
+    caps |= CPU_CAP_ARM_AES;
+  }
+#endif
+#endif
+  return caps;
+}
+
+#elif defined(_M_ARM64) || defined(_M_ARM64EC) || defined(_M_ARM)
+#include <windows.h>
+
+static unsigned int init_caps(void) {
+  unsigned int caps = 0;
+  if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE)) {
+    caps |= CPU_CAP_NEON;
+  }
+  if (IsProcessorFeaturePresent(PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE)) {
+    caps |= CPU_CAP_ARM_AES;
   }
   return caps;
 }

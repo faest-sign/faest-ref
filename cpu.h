@@ -15,10 +15,8 @@
 #define BUILTIN_CPU_SUPPORTED
 #endif
 
-#if !defined(BUILTIN_CPU_SUPPORTED) ||                                                             \
-    (!defined(__x86_64__) && !defined(__i386__) && !defined(__arch64__))
-/* Even if __builtin_cpu_supported is available, cpu_supports is required to check for NEON support.
- */
+#if !defined(BUILTIN_CPU_SUPPORTED) || (!defined(__x86_64__) && !defined(__i386__))
+/* ARM features use platform detection even when __builtin_cpu_supports is available. */
 #define REQUIRES_CPU_SUPPORTS
 #endif
 
@@ -30,9 +28,11 @@
 /* CPU supports AVX2 */
 #define CPU_CAP_AVX2 0x00000004
 /* CPU supports NEON */
-#define CPU_CAP_NEON 0x00000008
+#define CPU_CAP_NEON 0x00000001
 /* CPU supports AES-NI */
-#define CPU_CAP_AESNI 0x00000040
+#define CPU_CAP_AESNI 0x00000008
+/* CPU supports ARM AES extension */
+#define CPU_CAP_ARM_AES 0x00000008
 
 /**
  * Helper function in case __builtin_cpu_supports is not available.
@@ -89,6 +89,18 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_AESNI_AVX2 0
 #endif
 
+#if defined(__aarch64__) || defined(__arm__) || defined(_M_ARM64) || defined(_M_ARM64EC) ||        \
+    defined(_M_ARM)
+#if defined(__ARM_FEATURE_AES) || defined(__ARM_FEATURE_CRYPTO)
+// The compilation target already requires the ARM AES extension.
+#define CPU_SUPPORTS_ARM_AES 1
+#else
+#define CPU_SUPPORTS_ARM_AES cpu_supports(CPU_CAP_ARM_AES)
+#endif
+#else
+#define CPU_SUPPORTS_ARM_AES 0
+#endif
+
 #if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC) || defined(__ARM_NEON) ||     \
     defined(__ARM_NEON__)
 // 64-bit ARM always has NEON, otherwise building with -mfpu=neon
@@ -141,6 +153,18 @@ bool cpu_supports(unsigned int caps);
 #else
 #define CPU_SUPPORTS_AESNI 0
 #define CPU_SUPPORTS_AESNI_AVX2 0
+#endif
+
+#if defined(__aarch64__) || defined(__arm__) || defined(_M_ARM64) || defined(_M_ARM64EC) ||        \
+    defined(_M_ARM)
+#if defined(__ARM_FEATURE_AES) || defined(__ARM_FEATURE_CRYPTO)
+// The compilation target already requires the ARM AES extension.
+#define CPU_SUPPORTS_ARM_AES 1
+#else
+#define CPU_SUPPORTS_ARM_AES OQS_CPU_has_extension(OQS_CPU_EXT_ARM_AES)
+#endif
+#else
+#define CPU_SUPPORTS_ARM_AES 0
 #endif
 
 #if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC) || defined(__ARM_NEON) ||     \

@@ -74,6 +74,10 @@
 
 #if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
 #define HAVE_NEON
+// TODO: fix detection of compiler support
+#if defined(__ARM_FEATURE_AES) || defined(__ARM_FEATURE_CRYPTO)
+#define HAVE_ARM_AES
+#endif
 #elif (defined(__arm__) || defined(_M_ARM)) && __has_include(<arm_neon.h>)
 #define HAVE_NEON
 #endif

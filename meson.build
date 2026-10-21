@@ -195,6 +195,27 @@ int main() {
 )
 conf_data.set('HAVE_NEON', supports_neon)
 
+# Check if compiler supports AES crypto extension on ARM64
+arm_aes_flag = cc.get_supported_arguments('-march=armv8-a+crypto')
+supports_arm_aes = cc.links(
+  '''
+#if defined(_MSC_VER) && !defined(__clang__) && (defined(_M_ARM64) || defined(_M_ARM64EC))
+#include <arm64_neon.h>
+#else
+#include <arm_neon.h>
+#endif
+
+int main() {
+  uint8x16_t value = vaeseq_u8(vdupq_n_u8(0), vdupq_n_u8(0));
+  value = vaesmcq_u8(value);
+  return vgetq_lane_u8(value, 0);
+}
+''',
+  name: 'compiler supports ARM AES',
+  args: [arm_aes_flag],
+)
+conf_data.set('HAVE_ARM_AES', supports_arm_aes)
+
 # check availability of some headers
 conf_data.set('HAVE_ASM_HWCAP_H', cc.has_header('asm/hwcap.h'))
 conf_data.set('HAVE_SYS_RANDOM_H', cc.has_header('sys/random.h'))
