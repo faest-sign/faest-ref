@@ -9,6 +9,26 @@
 #include "fields.h"
 
 #if FAEST_FIELDS == FAEST_FIELDS_USE_SSE2
+
+// Build all eight full-register bit masks in parallel.
+ATTR_TARGET_SSE2 ATTR_ALWAYS_INLINE static inline void bf_sse2_bit_masks(__m128i* masks,
+                                                                         uint8_t rhs) {
+  const __m128i bits       = _mm_setr_epi32(1, 2, 4, 8);
+  const __m128i low        = _mm_and_si128(_mm_set1_epi32(rhs), bits);
+  const __m128i high       = _mm_and_si128(_mm_set1_epi32(rhs >> 4), bits);
+  const __m128i low_masks  = _mm_cmpeq_epi32(low, bits);
+  const __m128i high_masks = _mm_cmpeq_epi32(high, bits);
+
+  masks[0] = _mm_shuffle_epi32(low_masks, _MM_SHUFFLE(0, 0, 0, 0));
+  masks[1] = _mm_shuffle_epi32(low_masks, _MM_SHUFFLE(1, 1, 1, 1));
+  masks[2] = _mm_shuffle_epi32(low_masks, _MM_SHUFFLE(2, 2, 2, 2));
+  masks[3] = _mm_shuffle_epi32(low_masks, _MM_SHUFFLE(3, 3, 3, 3));
+  masks[4] = _mm_shuffle_epi32(high_masks, _MM_SHUFFLE(0, 0, 0, 0));
+  masks[5] = _mm_shuffle_epi32(high_masks, _MM_SHUFFLE(1, 1, 1, 1));
+  masks[6] = _mm_shuffle_epi32(high_masks, _MM_SHUFFLE(2, 2, 2, 2));
+  masks[7] = _mm_shuffle_epi32(high_masks, _MM_SHUFFLE(3, 3, 3, 3));
+}
+
 // Insert a zero bit between each pair of bits in eight unpacked input bytes.
 ATTR_TARGET_SSE2 static inline __m128i bf_square_spread(__m128i value) {
   value = _mm_and_si128(_mm_or_si128(value, _mm_slli_epi16(value, 4)), _mm_set1_epi16(0x0f0f));
@@ -116,6 +136,18 @@ ATTR_TARGET_SSE2 static void bf_dbl(__m128i* value, unsigned int words, uint64_t
 
 // GF(2^128) implementation
 
+ATTR_TARGET_SSE2 void bf128_mul_bit_8(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
+  __m128i masks[8];
+  bf_sse2_bit_masks(masks, rhs);
+
+  const __m128i value = lhs->values[0];
+  for (unsigned int i = 0; i != 8; ++i) {
+    for (unsigned int j = 0; j != 1; ++j) {
+      dst[i].values[j] = _mm_and_si128(value, masks[i]);
+    }
+  }
+}
+
 // Process four multiplier bits at a time using four fixed multiples of the input.
 // Selection uses masks rather than a table indexed by multiplier bits.
 // Both sizes are constant at each call site, allowing the compiler to specialize the loops.
@@ -209,6 +241,18 @@ ATTR_TARGET_SSE2 void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag) {
 }
 
 // GF(2^192) implementation
+
+ATTR_TARGET_SSE2 void bf192_mul_bit_8(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
+  __m128i masks[8];
+  bf_sse2_bit_masks(masks, rhs);
+
+  const __m128i value[2] = {lhs->values[0], lhs->values[1]};
+  for (unsigned int i = 0; i != 8; ++i) {
+    for (unsigned int j = 0; j != 2; ++j) {
+      dst[i].values[j] = _mm_and_si128(value[j], masks[i]);
+    }
+  }
+}
 
 ATTR_TARGET_SSE2 void bf192_mul(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs) {
   __m128i input_low[4];
@@ -321,6 +365,18 @@ ATTR_TARGET_SSE2 void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag) {
 }
 
 // GF(2^256) implementation
+
+ATTR_TARGET_SSE2 void bf256_mul_bit_8(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
+  __m128i masks[8];
+  bf_sse2_bit_masks(masks, rhs);
+
+  const __m128i value[2] = {lhs->values[0], lhs->values[1]};
+  for (unsigned int i = 0; i != 8; ++i) {
+    for (unsigned int j = 0; j != 2; ++j) {
+      dst[i].values[j] = _mm_and_si128(value[j], masks[i]);
+    }
+  }
+}
 
 ATTR_TARGET_SSE2 void bf256_mul(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs) {
   __m128i input_low[4];

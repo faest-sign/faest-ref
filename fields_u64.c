@@ -142,6 +142,13 @@ void bf128_mul_bit(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
   bf128_and_64(dst, lhs, -((uint64_t)rhs & 1));
 }
 
+void bf128_mul_bit_8(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
+  const bf128_t value = *lhs;
+  for (unsigned int i = 0; i != 8; ++i) {
+    bf128_and_64(&dst[i], &value, -((uint64_t)(rhs >> i) & 1));
+  }
+}
+
 #if defined(FAEST_TESTS)
 static inline void bf128_dbl_inplace(bf128_t* lhs) {
   uint64_t mask = bf128_bit_to_uint64_mask(lhs, 128 - 1);
@@ -235,6 +242,13 @@ void bf192_mul_64_inplace(bf192_t* lhs, bf64_t rhs) {
 
 void bf192_mul_bit(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
   bf192_and_64(dst, lhs, -((uint64_t)rhs & 1));
+}
+
+void bf192_mul_bit_8(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
+  const bf192_t value = *lhs;
+  for (unsigned int i = 0; i != 8; ++i) {
+    bf192_and_64(&dst[i], &value, -((uint64_t)(rhs >> i) & 1));
+  }
 }
 
 #if defined(FAEST_TESTS)
@@ -333,6 +347,13 @@ void bf256_mul_64_inplace(bf256_t* lhs, bf64_t rhs) {
 
 void bf256_mul_bit(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
   bf256_and_64(dst, lhs, -((uint64_t)rhs & 1));
+}
+
+void bf256_mul_bit_8(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
+  const bf256_t value = *lhs;
+  for (unsigned int i = 0; i != 8; ++i) {
+    bf256_and_64(&dst[i], &value, -((uint64_t)(rhs >> i) & 1));
+  }
 }
 
 #if defined(FAEST_TESTS)

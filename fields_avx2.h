@@ -90,6 +90,8 @@ bf128_mul_bit(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
   dst->values[0]     = _mm256_and_si256(lhs->values[0], mask);
 }
 
+// Multiply lhs by each bit of rhs, from least to most significant.
+void bf128_mul_bit_8(bf128_t* dst, const bf128_t* lhs, uint8_t rhs);
 void bf128_mul(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs);
 void bf128_square(bf128_t* dst, const bf128_t* lhs);
 void bf128_mul_inplace(bf128_t* lhs, const bf128_t* rhs);
@@ -141,6 +143,8 @@ bf192_mul_bit(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
   dst->values[0]     = _mm256_and_si256(lhs->values[0], mask);
 }
 
+// Multiply lhs by each bit of rhs, from least to most significant.
+void bf192_mul_bit_8(bf192_t* dst, const bf192_t* lhs, uint8_t rhs);
 void bf192_mul(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs);
 void bf192_square(bf192_t* dst, const bf192_t* lhs);
 void bf192_mul_inplace(bf192_t* lhs, const bf192_t* rhs);
@@ -189,6 +193,8 @@ bf256_mul_bit(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
   dst->values[0]     = _mm256_and_si256(lhs->values[0], mask);
 }
 
+// Multiply lhs by each bit of rhs, from least to most significant.
+void bf256_mul_bit_8(bf256_t* dst, const bf256_t* lhs, uint8_t rhs);
 void bf256_mul(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs);
 void bf256_square(bf256_t* dst, const bf256_t* lhs);
 void bf256_mul_inplace(bf256_t* lhs, const bf256_t* rhs);

@@ -11,6 +11,25 @@
 #if FAEST_FIELDS == FAEST_FIELDS_USE_AVX2
 #define TARGET ATTR_TARGET_AVX2 ATTR_TARGET_PCLMUL
 
+// Build all eight full-register bit masks in parallel.
+TARGET ATTR_ALWAYS_INLINE static inline void bf_avx2_bit_masks(__m256i* masks, uint8_t rhs) {
+  const __m256i bits       = _mm256_setr_epi32(1, 2, 4, 8, 1, 2, 4, 8);
+  const __m256i input      = _mm256_set1_epi32(rhs);
+  const __m256i low        = _mm256_and_si256(input, bits);
+  const __m256i high       = _mm256_and_si256(_mm256_srli_epi32(input, 4), bits);
+  const __m256i low_masks  = _mm256_cmpeq_epi32(low, bits);
+  const __m256i high_masks = _mm256_cmpeq_epi32(high, bits);
+
+  masks[0] = _mm256_shuffle_epi32(low_masks, _MM_SHUFFLE(0, 0, 0, 0));
+  masks[1] = _mm256_shuffle_epi32(low_masks, _MM_SHUFFLE(1, 1, 1, 1));
+  masks[2] = _mm256_shuffle_epi32(low_masks, _MM_SHUFFLE(2, 2, 2, 2));
+  masks[3] = _mm256_shuffle_epi32(low_masks, _MM_SHUFFLE(3, 3, 3, 3));
+  masks[4] = _mm256_shuffle_epi32(high_masks, _MM_SHUFFLE(0, 0, 0, 0));
+  masks[5] = _mm256_shuffle_epi32(high_masks, _MM_SHUFFLE(1, 1, 1, 1));
+  masks[6] = _mm256_shuffle_epi32(high_masks, _MM_SHUFFLE(2, 2, 2, 2));
+  masks[7] = _mm256_shuffle_epi32(high_masks, _MM_SHUFFLE(3, 3, 3, 3));
+}
+
 // Move each 64-bit limb to its successor across the 128-bit lane boundary.
 TARGET static inline __m256i bf_shift_word(__m256i value) {
   return _mm256_and_si256(_mm256_permute4x64_epi64(value, _MM_SHUFFLE(2, 1, 0, 0)),
@@ -144,6 +163,16 @@ TARGET static inline void bf256_reduce(bf256_t* dst, __m256i low, __m256i high) 
 
 // GF(2^128) implementation
 
+TARGET void bf128_mul_bit_8(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
+  __m256i masks[8];
+  bf_avx2_bit_masks(masks, rhs);
+
+  const __m256i value = lhs->values[0];
+  for (unsigned int i = 0; i != 8; ++i) {
+    dst[i].values[0] = _mm256_and_si256(value, masks[i]);
+  }
+}
+
 TARGET void bf128_mul(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs) {
   const __m128i left  = _mm256_castsi256_si128(lhs->values[0]);
   const __m128i right = _mm256_castsi256_si128(rhs->values[0]);
@@ -193,6 +222,16 @@ TARGET void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag) {
 }
 
 // GF(2^192) implementation
+
+TARGET void bf192_mul_bit_8(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
+  __m256i masks[8];
+  bf_avx2_bit_masks(masks, rhs);
+
+  const __m256i value = lhs->values[0];
+  for (unsigned int i = 0; i != 8; ++i) {
+    dst[i].values[0] = _mm256_and_si256(value, masks[i]);
+  }
+}
 
 TARGET void bf192_mul(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs) {
   const __m128i a0 = _mm256_castsi256_si128(lhs->values[0]);
@@ -267,6 +306,16 @@ TARGET void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag) {
 }
 
 // GF(2^256) implementation
+
+TARGET void bf256_mul_bit_8(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
+  __m256i masks[8];
+  bf_avx2_bit_masks(masks, rhs);
+
+  const __m256i value = lhs->values[0];
+  for (unsigned int i = 0; i != 8; ++i) {
+    dst[i].values[0] = _mm256_and_si256(value, masks[i]);
+  }
+}
 
 TARGET void bf256_mul(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs) {
   const __m128i left0  = _mm256_castsi256_si128(lhs->values[0]);

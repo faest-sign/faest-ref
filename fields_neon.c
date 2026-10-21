@@ -9,6 +9,22 @@
 #include "fields.h"
 
 #if FAEST_FIELDS == FAEST_FIELDS_USE_NEON
+
+// Build all eight full-register bit masks in parallel.
+ATTR_ALWAYS_INLINE static inline void bf_neon_bit_masks(uint64x2_t* masks, uint8_t rhs) {
+  const uint8_t bit_values[8] = {1, 2, 4, 8, 16, 32, 64, 128};
+  const uint8x8_t bit_masks   = vtst_u8(vdup_n_u8(rhs), vld1_u8(bit_values));
+
+  masks[0] = vreinterpretq_u64_u8(vdupq_lane_u8(bit_masks, 0));
+  masks[1] = vreinterpretq_u64_u8(vdupq_lane_u8(bit_masks, 1));
+  masks[2] = vreinterpretq_u64_u8(vdupq_lane_u8(bit_masks, 2));
+  masks[3] = vreinterpretq_u64_u8(vdupq_lane_u8(bit_masks, 3));
+  masks[4] = vreinterpretq_u64_u8(vdupq_lane_u8(bit_masks, 4));
+  masks[5] = vreinterpretq_u64_u8(vdupq_lane_u8(bit_masks, 5));
+  masks[6] = vreinterpretq_u64_u8(vdupq_lane_u8(bit_masks, 6));
+  masks[7] = vreinterpretq_u64_u8(vdupq_lane_u8(bit_masks, 7));
+}
+
 // Insert a zero bit between the low 32 bits in each 64-bit lane.
 // Numeric shifts keep polynomial bit ordering independent of target endianness.
 static inline uint64x2_t bf_square_spread(uint64x2_t value) {
@@ -121,6 +137,16 @@ static void bf_dbl(uint64x2_t* value, unsigned int words, uint64_t modulus) {
 
 // GF(2^128) implementation
 
+void bf128_mul_bit_8(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
+  uint64x2_t masks[8];
+  bf_neon_bit_masks(masks, rhs);
+
+  const uint64x2_t value = lhs->values[0];
+  for (unsigned int i = 0; i != 8; ++i) {
+    dst[i].values[0] = vandq_u64(value[0], masks[i]);
+  }
+}
+
 // Process four multiplier bits at a time using four fixed multiples of the input.
 // Selection uses masks rather than a table indexed by multiplier bits.
 // Both sizes are constant at each call site, allowing the compiler to specialize the loops.
@@ -214,6 +240,18 @@ void bf128_sq_bit(bf128_t* out_tag, const bf128_t* in_tag) {
 }
 
 // GF(2^192) implementation
+
+void bf192_mul_bit_8(bf192_t* dst, const bf192_t* lhs, uint8_t rhs) {
+  uint64x2_t masks[8];
+  bf_neon_bit_masks(masks, rhs);
+
+  const uint64x2_t value[2] = {lhs->values[0], lhs->values[1]};
+  for (unsigned int i = 0; i != 8; ++i) {
+    for (unsigned int j = 0; j != 2; ++j) {
+      dst[i].values[j] = vandq_u64(value[j], masks[i]);
+    }
+  }
+}
 
 void bf192_mul(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs) {
   uint64x2_t input_low[4];
@@ -324,6 +362,18 @@ void bf192_sq_bit(bf192_t* out_tag, const bf192_t* in_tag) {
 }
 
 // GF(2^256) implementation
+
+void bf256_mul_bit_8(bf256_t* dst, const bf256_t* lhs, uint8_t rhs) {
+  uint64x2_t masks[8];
+  bf_neon_bit_masks(masks, rhs);
+
+  const uint64x2_t value[2] = {lhs->values[0], lhs->values[1]};
+  for (unsigned int i = 0; i != 8; ++i) {
+    for (unsigned int j = 0; j != 2; ++j) {
+      dst[i].values[j] = vandq_u64(value[j], masks[i]);
+    }
+  }
+}
 
 void bf256_mul(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs) {
   uint64x2_t input_low[4];

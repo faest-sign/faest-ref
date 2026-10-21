@@ -98,6 +98,8 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf128_add_inplace(bf128_t*
 }
 
 void bf128_mul_bit(bf128_t* dst, const bf128_t* lhs, uint8_t rhs);
+// perform bf128_mul_bit for each bit in rhs and store in dst[0], .., dst[7] for a single input
+void bf128_mul_bit_8(bf128_t* dst, const bf128_t* lhs, uint8_t rhs);
 void bf128_mul(bf128_t* dst, const bf128_t* lhs, const bf128_t* rhs);
 void bf128_square(bf128_t* dst, const bf128_t* lhs);
 void bf128_mul_inplace(bf128_t* lhs, const bf128_t* rhs);
@@ -164,6 +166,8 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf192_add_inplace(bf192_t*
 }
 
 void bf192_mul_bit(bf192_t* dst, const bf192_t* lhs, uint8_t rhs);
+// perform bf192_mul_bit for each bit in rhs and store in dst[0], .., dst[7] for a single input
+void bf192_mul_bit_8(bf192_t* dst, const bf192_t* lhs, uint8_t rhs);
 void bf192_mul(bf192_t* dst, const bf192_t* lhs, const bf192_t* rhs);
 void bf192_square(bf192_t* dst, const bf192_t* lhs);
 void bf192_mul_inplace(bf192_t* lhs, const bf192_t* rhs);
@@ -230,6 +234,8 @@ ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline void bf256_add_inplace(bf256_t*
 }
 
 void bf256_mul_bit(bf256_t* dst, const bf256_t* lhs, uint8_t rhs);
+// perform bf256_mul_bit for each bit in rhs and store in dst[0], .., dst[7] for a single input
+void bf256_mul_bit_8(bf256_t* dst, const bf256_t* lhs, uint8_t rhs);
 void bf256_mul(bf256_t* dst, const bf256_t* lhs, const bf256_t* rhs);
 void bf256_square(bf256_t* dst, const bf256_t* lhs);
 void bf256_mul_inplace(bf256_t* lhs, const bf256_t* rhs);
