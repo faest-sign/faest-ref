@@ -13,13 +13,13 @@
 #if (GNUC_CHECK(4, 8) || __has_builtin(__builtin_cpu_supports)) && !defined(__APPLE__) &&          \
     !defined(__MINGW32__) && !defined(__MINGW64__)
 #define BUILTIN_CPU_SUPPORTED
+#endif
 
 #if !defined(BUILTIN_CPU_SUPPORTED) ||                                                             \
     (!defined(__x86_64__) && !defined(__i386__) && !defined(__arch64__))
 /* Even if __builtin_cpu_supported is available, cpu_supports is required to check for NEON support.
  */
 #define REQUIRES_CPU_SUPPORTS
-#endif
 #endif
 
 #if defined(REQUIRES_CPU_SUPPORTS)
@@ -91,6 +91,7 @@ bool cpu_supports(unsigned int caps);
 
 #if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC) || defined(__ARM_NEON) ||     \
     defined(__ARM_NEON__)
+// 64-bit ARM always has NEON, otherwise building with -mfpu=neon
 #define CPU_SUPPORTS_NEON 1
 #elif defined(__arm__) || defined(_M_ARM)
 #define CPU_SUPPORTS_NEON cpu_supports(CPU_CAP_NEON)
