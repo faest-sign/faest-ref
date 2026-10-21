@@ -143,7 +143,7 @@ void bf128_mul_bit_8(bf128_t* dst, const bf128_t* lhs, uint8_t rhs) {
 
   const uint64x2_t value = lhs->values[0];
   for (unsigned int i = 0; i != 8; ++i) {
-    dst[i].values[0] = vandq_u64(value[0], masks[i]);
+    dst[i].values[0] = vandq_u64(value, masks[i]);
   }
 }
 
