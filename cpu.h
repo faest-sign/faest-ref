@@ -13,9 +13,16 @@
 #if (GNUC_CHECK(4, 8) || __has_builtin(__builtin_cpu_supports)) && !defined(__APPLE__) &&          \
     !defined(__MINGW32__) && !defined(__MINGW64__)
 #define BUILTIN_CPU_SUPPORTED
+
+#if !defined(BUILTIN_CPU_SUPPORTED) ||                                                             \
+    (!defined(__x86_64__) && !defined(__i386__) && !defined(__arch64__))
+/* Even if __builtin_cpu_supported is available, cpu_supports is required to check for NEON support.
+ */
+#define REQUIRES_CPU_SUPPORTS
+#endif
 #endif
 
-#if !defined(BUILTIN_CPU_SUPPORTED)
+#if defined(REQUIRES_CPU_SUPPORTS)
 #include <stdbool.h>
 
 /* CPU supports SSE2 */

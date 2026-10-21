@@ -16,7 +16,7 @@
 
 #include "cpu.h"
 
-#if !defined(BUILTIN_CPU_SUPPORTED)
+#if defined(REQUIRES_CPU_SUPPORTS)
 #if defined(__arm__) && defined(HAVE_SYS_AUXV_H) && defined(HAVE_ASM_HWCAP_H)
 #include <asm/hwcap.h>
 #include <sys/auxv.h>
