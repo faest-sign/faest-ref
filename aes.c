@@ -24,6 +24,9 @@
 #if defined(HAVE_AESNI)
 #include "aesni.h"
 #endif
+#if defined(HAVE_ARM_AES)
+#include "aes_arm.h"
+#endif
 #if defined(HAVE_OPENSSL)
 #include <openssl/evp.h>
 #elif defined(_WIN32)
@@ -720,6 +723,79 @@ ATTR_TARGET_AESNI_AVX2 static void prg_4_aesni_avx_256(const uint8_t* key, const
 #endif
 #endif
 
+#if defined(HAVE_ARM_AES)
+ATTR_TARGET_ARM_AES ATTR_ALWAYS_INLINE static inline uint8x16_t neon_increment_iv(uint8x16_t iv) {
+  const uint32x4_t increment = vsetq_lane_u32(1, vdupq_n_u32(0), 0);
+  return vreinterpretq_u8_u32(vaddq_u32(vreinterpretq_u32_u8(iv), increment));
+}
+
+ATTR_TARGET_ARM_AES static void prg_arm_aes_128(const uint8_t* key, const uint8_t* iv, uint8_t* out,
+                                                size_t outlen) {
+  uint8x16_t rk[AES_ROUNDS_128 + 1];
+  arm_aes128_expand_key(rk, key);
+
+  uint8x16_t counter = vld1q_u8(iv);
+  for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
+    uint8x16_t state = counter;
+    arm_aes_encrypt_blocks(&state, 1, rk, AES_ROUNDS_128);
+    vst1q_u8(out, state);
+    counter = neon_increment_iv(counter);
+  }
+
+  if (outlen % IV_SIZE) {
+    uint8x16_t state = counter;
+    arm_aes_encrypt_blocks(&state, 1, rk, AES_ROUNDS_128);
+    uint8_t last_block[IV_SIZE];
+    vst1q_u8(last_block, state);
+    memcpy(out, last_block, outlen % IV_SIZE);
+  }
+}
+
+ATTR_TARGET_ARM_AES static void prg_arm_aes_192(const uint8_t* key, const uint8_t* iv, uint8_t* out,
+                                                size_t outlen) {
+  uint8x16_t rk[AES_ROUNDS_192 + 1];
+  arm_aes192_expand_key(rk, key);
+
+  uint8x16_t counter = vld1q_u8(iv);
+  for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
+    uint8x16_t state = counter;
+    arm_aes_encrypt_blocks(&state, 1, rk, AES_ROUNDS_192);
+    vst1q_u8(out, state);
+    counter = neon_increment_iv(counter);
+  }
+
+  if (outlen % IV_SIZE) {
+    uint8x16_t state = counter;
+    arm_aes_encrypt_blocks(&state, 1, rk, AES_ROUNDS_192);
+    uint8_t last_block[IV_SIZE];
+    vst1q_u8(last_block, state);
+    memcpy(out, last_block, outlen % IV_SIZE);
+  }
+}
+
+ATTR_TARGET_ARM_AES static void prg_arm_aes_256(const uint8_t* key, const uint8_t* iv, uint8_t* out,
+                                                size_t outlen) {
+  uint8x16_t rk[AES_ROUNDS_256 + 1];
+  arm_aes256_expand_key(rk, key);
+
+  uint8x16_t counter = vld1q_u8(iv);
+  for (size_t idx = 0; idx < outlen / IV_SIZE; idx += 1, out += IV_SIZE) {
+    uint8x16_t state = counter;
+    arm_aes_encrypt_blocks(&state, 1, rk, AES_ROUNDS_256);
+    vst1q_u8(out, state);
+    counter = neon_increment_iv(counter);
+  }
+
+  if (outlen % IV_SIZE) {
+    uint8x16_t state = counter;
+    arm_aes_encrypt_blocks(&state, 1, rk, AES_ROUNDS_256);
+    uint8_t last_block[IV_SIZE];
+    vst1q_u8(last_block, state);
+    memcpy(out, last_block, outlen % IV_SIZE);
+  }
+}
+#endif
+
 static void generic_prg(const uint8_t* key, uint8_t* internal_iv, uint8_t* out, unsigned int seclvl,
                         size_t outlen) {
   generic_aes_ecb_t ctx;
@@ -784,6 +860,22 @@ void prg(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t* out, un
   }
 #endif
 
+#if defined(HAVE_ARM_AES)
+  if (CPU_SUPPORTS_ARM_AES) {
+    switch (seclvl) {
+    case 256:
+      prg_arm_aes_256(key, internal_iv, out, outlen);
+      return;
+    case 192:
+      prg_arm_aes_192(key, internal_iv, out, outlen);
+      return;
+    default:
+      prg_arm_aes_128(key, internal_iv, out, outlen);
+      return;
+    }
+  }
+#endif
+
   generic_prg(key, internal_iv, out, seclvl, outlen);
 }
 
@@ -821,6 +913,22 @@ void prg_2_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
       return;
     default:
       prg_2_aesni_128(key, internal_iv, out);
+      return;
+    }
+  }
+#endif
+
+#if defined(HAVE_ARM_AES)
+  if (CPU_SUPPORTS_ARM_AES) {
+    switch (seclvl) {
+    case 256:
+      prg_arm_aes_256(key, internal_iv, out, 256 * 2 / 8);
+      return;
+    case 192:
+      prg_arm_aes_192(key, internal_iv, out, 192 * 2 / 8);
+      return;
+    default:
+      prg_arm_aes_128(key, internal_iv, out, 128 * 2 / 8);
       return;
     }
   }
@@ -865,6 +973,22 @@ void prg_4_lambda(const uint8_t* key, const uint8_t* iv, uint32_t tweak, uint8_t
       return;
     default:
       prg_4_aesni_128(key, internal_iv, out);
+      return;
+    }
+  }
+#endif
+
+#if defined(HAVE_ARM_AES)
+  if (CPU_SUPPORTS_ARM_AES) {
+    switch (seclvl) {
+    case 256:
+      prg_arm_aes_256(key, internal_iv, out, 256 * 4 / 8);
+      return;
+    case 192:
+      prg_arm_aes_192(key, internal_iv, out, 192 * 4 / 8);
+      return;
+    default:
+      prg_arm_aes_128(key, internal_iv, out, 128 * 4 / 8);
       return;
     }
   }

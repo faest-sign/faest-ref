@@ -195,8 +195,10 @@
 #define ATTR_TARGET_PCLMUL __attribute__((target("pclmul")))
 #if !defined(__aarch64__) && !defined(_M_ARM64) && !defined(_M_ARM64EC)
 #define ATTR_TARGET_NEON __attribute__((target("fpu=neon")))
+#define ATTR_TARGET_ARM_AES
 #else
 #define ATTR_TARGET_NEON
+#define ATTR_TARGET_ARM_AES __attribute__((target("arch=armv8-a+crypto")))
 #endif
 #else
 #define ATTR_TARGET(x)
@@ -206,6 +208,7 @@
 #define ATTR_TARGET_AESNI_AVX2
 #define ATTR_TARGET_PCLMUL
 #define ATTR_TARGET_NEON
+#define ATTR_TARGET_ARM_AES
 #endif
 
 /* artificial attribute */

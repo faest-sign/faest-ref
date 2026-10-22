@@ -12,9 +12,13 @@
 #include "owf.h"
 #include "aes.h"
 #include "utils.h"
+#include "cpu.h"
+
+#if defined(HAVE_ARM_AES)
+#include "aes_arm.h"
+#endif
 
 #if defined(HAVE_AESNI)
-#include "cpu.h"
 #include "aesni.h"
 
 ATTR_TARGET_AESNI static void owf_128_aesni(const uint8_t* key, const uint8_t* input,
@@ -152,6 +156,37 @@ ATTR_TARGET_AESNI_AVX2 static void owf_em_128_aesni_avx2(const uint8_t* key, con
 #endif
 #endif
 
+#if defined(HAVE_ARM_AES)
+ATTR_TARGET_ARM_AES static void owf_arm_aes(const uint8_t* key, const uint8_t* input,
+                                            uint8_t* output, unsigned int key_words) {
+  const unsigned int rounds = key_words + 6;
+  const unsigned int blocks = key_words == 4 ? 1 : 2;
+  uint8x16_t rk[AES_MAX_ROUNDS + 1];
+  arm_aes_expand_key(rk, key, key_words, rounds);
+
+  uint8x16_t states[2];
+  states[0] = vld1q_u8(input);
+  if (blocks == 2) {
+    const uint8_t flip[IV_SIZE] = {1};
+    states[1]                   = veorq_u8(states[0], vld1q_u8(flip));
+  }
+  arm_aes_encrypt_blocks(states, blocks, rk, rounds);
+  for (unsigned int i = 0; i < blocks; ++i) {
+    vst1q_u8(output + i * IV_SIZE, states[i]);
+  }
+}
+
+ATTR_TARGET_ARM_AES static void owf_em_128_arm_aes(const uint8_t* key, const uint8_t* input,
+                                                   uint8_t* output) {
+  uint8x16_t rk[AES_ROUNDS_128 + 1];
+  arm_aes_expand_key(rk, input, 4, AES_ROUNDS_128);
+  const uint8x16_t mkey = vld1q_u8(key);
+  uint8x16_t state      = mkey;
+  arm_aes_encrypt_blocks(&state, 1, rk, AES_ROUNDS_128);
+  vst1q_u8(output, veorq_u8(state, mkey));
+}
+#endif
+
 void owf_128(const uint8_t* key, const uint8_t* input, uint8_t* output) {
 #if defined(HAVE_AESNI)
 #if defined(HAVE_AVX2)
@@ -162,6 +197,13 @@ void owf_128(const uint8_t* key, const uint8_t* input, uint8_t* output) {
 #endif
   if (CPU_SUPPORTS_AESNI) {
     owf_128_aesni(key, input, output);
+    return;
+  }
+#endif
+
+#if defined(HAVE_ARM_AES)
+  if (CPU_SUPPORTS_ARM_AES) {
+    owf_arm_aes(key, input, output, 4);
     return;
   }
 #endif
@@ -188,6 +230,13 @@ void owf_192(const uint8_t* key, const uint8_t* input, uint8_t* output) {
 #endif
   if (CPU_SUPPORTS_AESNI) {
     owf_192_aesni(key, input, output);
+    return;
+  }
+#endif
+
+#if defined(HAVE_ARM_AES)
+  if (CPU_SUPPORTS_ARM_AES) {
+    owf_arm_aes(key, input, output, 6);
     return;
   }
 #endif
@@ -223,6 +272,13 @@ void owf_256(const uint8_t* key, const uint8_t* input, uint8_t* output) {
   }
 #endif
 
+#if defined(HAVE_ARM_AES)
+  if (CPU_SUPPORTS_ARM_AES) {
+    owf_arm_aes(key, input, output, 8);
+    return;
+  }
+#endif
+
   generic_aes_ecb_t ctx;
   int ret = generic_aes_ecb_new(&ctx, key, 256);
   assert(ret == 0);
@@ -250,6 +306,13 @@ void owf_em_128(const uint8_t* key, const uint8_t* input, uint8_t* output) {
 #endif
   if (CPU_SUPPORTS_AESNI) {
     owf_em_128_aesni(key, input, output);
+    return;
+  }
+#endif
+
+#if defined(HAVE_ARM_AES)
+  if (CPU_SUPPORTS_ARM_AES) {
+    owf_em_128_arm_aes(key, input, output);
     return;
   }
 #endif
