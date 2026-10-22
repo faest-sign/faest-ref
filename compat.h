@@ -16,10 +16,6 @@
 /* In case meson checks were not run, define HAVE_* for known good configurations here. When
  * building for OQS, skip those where compat functions are provided by OQS. */
 #if !defined(HAVE_CONFIG_H) && !defined(OQS)
-#if defined(__OpenBSD__)
-#include <sys/param.h>
-#endif /* __OpenBSD__ */
-
 #if !defined(HAVE_ALIGNED_ALLOC) && !defined(__APPLE__) && !defined(__MINGW32__) &&                \
     !defined(__MINGW64__) && !defined(_MSC_VER) && !defined(__ANDROID__) &&                        \
     (defined(_ISOC11_SOURCE) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L))
@@ -29,19 +25,18 @@
 #endif /* HAVE_ALIGNED_ALLOC */
 
 #if !defined(HAVE_EXPLICIT_BZERO) &&                                                               \
-    (GLIBC_CHECK(2, 25) || (defined(__OpenBSD__) && OpenBSD >= 201405) || FREEBSD_CHECK(11, 0) ||  \
-     NETBSD_CHECK(8, 0))
+    (GLIBC_CHECK(2, 25) || OPENBSD_CHECK(201405) || FREEBSD_CHECK(11, 0) || NETBSD_CHECK(8, 0))
 /* explicit_bzero was introduced in glibc 2.35, OpenBSD 5.5, FreeBSD 11.0 and NetBSD 8.0 */
 #define HAVE_EXPLICIT_BZERO
 #endif /* HAVE_EXPLICIT_BZERO */
 
-#if !defined(HAVE_MEMSET_EXPLICIT) && GLIBC_CHECK(2, 43)
-/* memset_explicit was introduced in glibc 2.43 */
+#if !defined(HAVE_MEMSET_EXPLICIT) && (GLIBC_CHECK(2, 43) || NETBSD_CHECK(11, 0))
+/* memset_explicit was introduced in glibc 2.43, NetBSD 11.0 */
 #define HAVE_MEMSET_EXPLICIT
 #endif
 
-#if !defined(HAVE_TIMINGSAFE_BCMP) && ((defined(__OpenBSD__) && OpenBSD >= 201105) ||              \
-                                       FREEBSD_CHECK(12, 0) || MACOSX_CHECK(10, 12, 1))
+#if !defined(HAVE_TIMINGSAFE_BCMP) &&                                                              \
+    (OPENBSD_CHECK(201105) || FREEBSD_CHECK(12, 0) || MACOSX_CHECK(10, 12, 1))
 /* timingsafe_bcmp was introduced in OpenBSD 4.9, FreeBSD 12.0, and MacOS X 10.12 */
 #define HAVE_TIMINGSAFE_BCMP
 #endif /* HAVE_TIMINGSAFE_BCMP */

@@ -44,14 +44,14 @@
 #define GLIBC_CHECK(maj, min) __GLIBC_PREREQ(maj, min)
 #else
 #define GLIBC_CHECK(maj, min) 0
-#endif
+#endif /* __GLIBC__ */
 
 /* FreeBSD version check macro */
 #if defined(__FreeBSD__)
 #define FREEBSD_CHECK(maj, min) (__FreeBSD__ >= (maj))
 #else
 #define FREEBSD_CHECK(maj, min) 0
-#endif
+#endif /* __FreeBSD__ */
 
 /* NetBSD version check macro */
 #if defined(__NetBSD__)
@@ -59,7 +59,15 @@
 #define NETBSD_CHECK(maj, min) (__NetBSD_Version__ >= ((maj) * 1000000000 + (min) * 10000000))
 #else
 #define NETBSD_CHECK(maj, min) 0
-#endif
+#endif /* __NetBSD__ */
+
+/* OpenBSD version check macro */
+#if defined(__OpenBSD__)
+#include <sys/param.h>
+#define OPENBSD_CHECK(ver) (OpenBSD >= (ver))
+#else
+#define OPENBSD_CHECK(ver) 0
+#endif /* __OpenBSD__ */
 
 /* Apple version check macro */
 #if defined(__APPLE__)
@@ -69,15 +77,15 @@
   (__MAC_OS_X_VERSION_MIN_REQUIRED >= ((maj) * 10000 + (min) * 100 + (rev)))
 #else
 #define MACOSX_CHECK(maj, min, rev) 0
-#endif
+#endif /* __APPLE__ */
 
 #if !defined(MIN)
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
+#endif /* !MIN */
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
+#endif /* !MAX */
 
 /* assume */
 #if GNUC_CHECK(4, 5) || __has_builtin(__builtin_unreachable)
