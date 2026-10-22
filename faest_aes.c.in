@@ -471,8 +471,8 @@ static void aes_add_round_key_bytes_prover_degree_7(bf_t out_deg[][8], const bf_
 
   for (unsigned int i = 0; i < Nstbytes; i++) {
     memcpy(out_deg[i], in_deg[i], sizeof(bf_t) * 6);
-    bf_add(&out_deg[i][7], &in_deg[i][7], &k_deg[i][1]);
     bf_add(&out_deg[i][6], &in_deg[i][6], &k_deg[i][0]);
+    bf_add(&out_deg[i][7], &in_deg[i][7], &k_deg[i][1]);
   }
 }
 
