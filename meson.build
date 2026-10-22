@@ -143,8 +143,8 @@ int main() {
 )
 conf_data.set('HAVE_AVX2', supports_avx2)
 
-# check if compiler supports AVX2
-pclmul_flag = cc.get_supported_arguments(['-mpclmul', '-msse2'])
+# check if compiler supports PCLMUL
+pclmul_flag = cc.get_supported_arguments('-mpclmul')
 supports_pclmul = cc.links(
   '''
 #include <wmmintrin.h>
@@ -155,7 +155,7 @@ int main() {
 }
 ''',
   name: 'compiler supports PCLMUL',
-  args: [pclmul_flag],
+  args: [pclmul_flag, sse2_flag],
 )
 conf_data.set('HAVE_PCLMUL', supports_pclmul)
 
