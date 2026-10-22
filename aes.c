@@ -66,10 +66,9 @@ static inline void aes_increment_iv(uint8_t* iv)
 // ## AES ##
 //
 // Note that his is an unoptimized implementation of AES for reference and the
-// evaluation of the OWF for FAEST-EM-{192, 256}X, and the computation of the
-// witness. All other (especially time critical) uses of AES either use AES-NI
-// or an external AES implementation (e.g., from OpenSSL) and only fallback to
-// this implementation if there is no other option.
+// computation of the witness. All other (especially time critical) uses of AES
+// either use AES-NI or an external AES implementation (e.g., from OpenSSL) and
+// only fallback to this implementation if there is no other option.
 
 // Round Functions
 static void add_round_key(unsigned int round, aes_block_t state, const aes_round_keys_t* round_key,
