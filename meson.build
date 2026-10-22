@@ -196,13 +196,17 @@ int main() {
 conf_data.set('HAVE_NEON', supports_neon)
 
 # Check if compiler supports AES crypto extension on ARM64
-arm_aes_flag = cc.get_supported_arguments('-march=armv8-a+crypto')
+arm_aes_flag = cc.get_supported_arguments('-march=+crypto')
 supports_arm_aes = cc.links(
   '''
 #if defined(_MSC_VER) && !defined(__clang__) && (defined(_M_ARM64) || defined(_M_ARM64EC))
 #include <arm64_neon.h>
 #else
 #include <arm_neon.h>
+#endif
+
+#if !defined(__aarch64__) && !defined(_M_ARM64) && !defined(_M_ARM64EC)
+#error "Code-based currently supports ARM AES extensions only on 64 bit ARM."
 #endif
 
 int main() {
