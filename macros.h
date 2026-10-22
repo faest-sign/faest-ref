@@ -64,6 +64,7 @@
 /* Apple version check macro */
 #if defined(__APPLE__)
 #include <Availability.h>
+
 #define MACOSX_CHECK(maj, min, rev)                                                                \
   (__MAC_OS_X_VERSION_MIN_REQUIRED >= ((maj) * 10000 + (min) * 100 + (rev)))
 #else
@@ -99,62 +100,18 @@
 #define FAEST_UNUSED(x) x
 #endif
 
-/* nonnull attribute */
-#if GNUC_CHECK(3, 3) || __has_attribute(nonnull)
-#define ATTR_NONNULL __attribute__((nonnull))
-#define ATTR_NONNULL_ARG(i, ...) __attribute__((nonnull(i, __VA_ARGS__)))
-#else
-#define ATTR_NONNULL
-#define ATTR_NONNULL_ARG(i, ...)
-#endif
-
-/* destructor attribute */
-#if GNUC_CHECK(2, 7) || __has_attribute(destructor)
-#define ATTR_DTOR __attribute__((destructor))
-#else
-#define ATTR_DTOR
-#endif
-
-/* assumed aligned attribute */
-#if GNUC_CHECK(4, 9) || __has_attribute(assume_aligned)
-#define ATTR_ASSUME_ALIGNED(i) __attribute__((assume_aligned(i)))
-#else
-#define ATTR_ASSUME_ALIGNED(i)
-#endif
-
 /* aligned attribute */
 /* note that C11's alignas will only do the job once DR 444 is implemented */
 #if GNUC_CHECK(3, 2) || __has_attribute(aligned)
 #define ATTR_ALIGNED(i) __attribute__((aligned((i))))
-#define HAVE_USEFUL_ATTR_ALIGNED
 #elif defined(_MSC_VER)
 #define ATTR_ALIGNED(i) __declspec(align(i))
-#define HAVE_USEFUL_ATTR_ALIGNED
 #else
 #define ATTR_ALIGNED(i)
 #endif
 
 /* round size to meet alignment requirements */
 #define ALIGN_TO(s, a) (((s) + a - 1) & ~(a - 1))
-
-/* unreachable builtin */
-#if GNUC_CHECK(4, 5) || __has_builtin(__builtin_unreachable)
-#define UNREACHABLE __builtin_unreachable()
-#define HAVE_USEFUL_UNREACHABLE
-/* #elif defined(_MSC_VER)
-#define UNREACHABLE __assume(0) */
-#else
-#define UNREACHABLE
-#endif
-
-/* assume aligned builtin */
-#if GNUC_CHECK(4, 9) || __has_builtin(__builtin_assume_aligned)
-#define ASSUME_ALIGNED(p, a) __builtin_assume_aligned((p), (a))
-#elif defined(HAVE_USEFUL_UNREACHABLE) && defined(HAVE_USEFUL_ATTR_ALIGNED)
-#define ASSUME_ALIGNED(p, a) (((((uintptr_t)(p)) % (a)) == 0) ? (p) : (UNREACHABLE, (p)))
-#else
-#define ASSUME_ALIGNED(p, a) (p)
-#endif
 
 /* always inline attribute */
 #if GNUC_CHECK(4, 0) || __has_attribute(always_inline)
@@ -166,8 +123,9 @@
 #endif
 
 /* pure attribute
-  Functions can be marked as pure if their only effect is their return value. The return value
-  itself may only be computed from reading global variables and the arguments.
+ * Functions can be marked as pure if their only effect is their return value.
+ * The return value itself may only be computed from reading global variables
+ * and the arguments.
  */
 #if GNUC_CHECK(3, 0) || __has_attribute(pure)
 #define ATTR_PURE __attribute__((pure))
@@ -176,8 +134,8 @@
 #endif
 
 /* const attribute
-  Functions can be marked as const if their only effect is their return value. The return value
-  itself may only be computed from the arguments.
+ * Functions can be marked as const if their only effect is their return value.
+ * The return value itself may only be computed from the arguments.
  */
 #if GNUC_CHECK(2, 5) || __has_attribute(const)
 #define ATTR_CONST __attribute__((const))
@@ -263,10 +221,6 @@
 #if GNUC_CHECK(2, 7) || __has_attribute(constructor)
 #define ATTR_CONSTRUCTOR __attribute__((constructor))
 #endif
-
-/* concatenation */
-#define CONCAT2(a, b) a##_##b
-#define CONCAT(a, b) CONCAT2(a, b)
 
 #if defined(__WIN32__)
 #define SIZET_FMT "%Iu"
