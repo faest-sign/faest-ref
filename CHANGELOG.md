@@ -9,7 +9,7 @@
 * Fix OWF test vectors.
 * Reduce memory consumption.
 
-Benchmarks on a 2026 Intel laptop (Intel Core Ultra 7 265U) show the following improvements from 3.0.0 to 3.0.3:
+Benchmarks on a 2026 Dell laptop (Intel Core Ultra 7 265U) show the following improvements from 3.0.0 to 3.0.3:
 
 | Parameter set | Keygen speedup | Sign: 3.0.0 → 3.0.3 (ms) | Speedup | Verify: 3.0.0 → 3.0.3 (ms) | Speedup |
 |-------------- |---------------:|-------------------------:|--------:|---------------------------:|--------:|
