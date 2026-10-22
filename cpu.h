@@ -7,6 +7,8 @@
 
 #include "macros.h"
 
+#include <stdbool.h>
+
 #if !defined(OQS)
 /* Check if support for __builtin_cpu_supports is available and known to be working. Support on Mac
  * OS X and MinGW is not reliable. */
@@ -14,14 +16,6 @@
     !defined(__MINGW32__) && !defined(__MINGW64__)
 #define BUILTIN_CPU_SUPPORTED
 #endif
-
-#if !defined(BUILTIN_CPU_SUPPORTED) || (!defined(__x86_64__) && !defined(__i386__))
-/* ARM features use platform detection even when __builtin_cpu_supports is available. */
-#define REQUIRES_CPU_SUPPORTS
-#endif
-
-#if defined(REQUIRES_CPU_SUPPORTS)
-#include <stdbool.h>
 
 /* CPU supports SSE2 */
 #define CPU_CAP_SSE2 0x00000001
@@ -38,7 +32,6 @@
  * Helper function in case __builtin_cpu_supports is not available or not usable.
  */
 bool cpu_supports(unsigned int caps);
-#endif
 
 /* Macros for runtime CPU feature detection
  * These macros use __builtin_cpu_supports, cpu_supports or OQS_CPU_has_extension. When decidable

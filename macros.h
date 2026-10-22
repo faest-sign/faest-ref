@@ -259,6 +259,11 @@
 #define ATTR_DEPRECATED
 #endif
 
+/* constructor attribute */
+#if GNUC_CHECK(2, 7) || __has_attribute(constructor)
+#define ATTR_CONSTRUCTOR __attribute__((constructor))
+#endif
+
 /* concatenation */
 #define CONCAT2(a, b) a##_##b
 #define CONCAT(a, b) CONCAT2(a, b)

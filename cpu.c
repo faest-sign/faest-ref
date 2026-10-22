@@ -16,7 +16,6 @@
 
 #include "cpu.h"
 
-#if defined(REQUIRES_CPU_SUPPORTS)
 #if (defined(__arm__) || defined(__aarch64__)) && defined(HAVE_SYS_AUXV_H) &&                      \
     defined(HAVE_ASM_HWCAP_H)
 #include <asm/hwcap.h>
@@ -136,11 +135,18 @@ static unsigned init_caps(void) {
 
 static unsigned int cpu_caps = UINT_MAX;
 
+#if defined(ATTR_CONSTRUCTOR)
+ATTR_CONSTRUCTOR void do_init_caps() {
+  cpu_caps = init_caps();
+}
+#endif
+
 bool cpu_supports(unsigned int caps) {
+#if !defined(ATTR_CONSTRUCTOR)
   if (cpu_caps == UINT_MAX) {
     cpu_caps = init_caps();
   }
+#endif
 
   return (cpu_caps & caps) == caps;
 }
-#endif
