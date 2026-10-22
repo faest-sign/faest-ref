@@ -137,6 +137,28 @@ ATTR_TARGET_SSE2 static inline void xor_u8_array_inplace_128(uint8_t* out, const
 
   xor_small_u8_array_inplace(out, a, len - blocks * sizeof(__m128i));
 }
+#elif defined(HAVE_NEON)
+ATTR_TARGET_NEON static inline void xor_u8_array_128(uint8_t* out, const uint8_t* a,
+                                                   const uint8_t* b, size_t len) {
+  const size_t blocks = len / sizeof(uint8x16_t);
+  for (size_t idx = 0; idx != blocks;
+       ++idx, a += sizeof(uint8x16_t), b += sizeof(uint8x16_t), out += sizeof(uint8x16_t)) {
+    vst1q_u8(out, veorq_u8(vld1q_u8(a), vld1q_u8(b)));
+  }
+
+  xor_small_u8_array(out, a, b, len - blocks * sizeof(uint8x16_t));
+}
+
+ATTR_TARGET_NEON static inline void xor_u8_array_inplace_128(uint8_t* out, const uint8_t* a,
+                                                           size_t len) {
+  const size_t blocks = len / sizeof(uint8x16_t);
+  for (size_t idx = 0; idx != blocks;
+       ++idx, a += sizeof(uint8x16_t), out += sizeof(uint8x16_t)) {
+    vst1q_u8(out, veorq_u8(vld1q_u8(out), vld1q_u8(a)));
+  }
+
+  xor_small_u8_array_inplace(out, a, len - blocks * sizeof(uint8x16_t));
+}
 #endif
 
 static inline void xor_u8_array_64(uint8_t* out, const uint8_t* a, const uint8_t* b, size_t len) {
@@ -205,6 +227,19 @@ ATTR_TARGET_SSE2 static inline void masked_xor_u8_array_128(uint8_t* out, const 
 
   masked_xor_small_u8_array(out, a, b, mask_bit, len - blocks * sizeof(__m128i));
 }
+#elif defined(HAVE_NEON)
+ATTR_TARGET_NEON static inline void masked_xor_u8_array_128(uint8_t* out, const uint8_t* a,
+                                                          const uint8_t* b, uint8_t mask_bit,
+                                                          size_t len) {
+  const size_t blocks   = len / sizeof(uint8x16_t);
+  const uint8x16_t mask = vdupq_n_u8((uint8_t)-mask_bit);
+  for (size_t idx = 0; idx != blocks;
+       ++idx, a += sizeof(uint8x16_t), b += sizeof(uint8x16_t), out += sizeof(uint8x16_t)) {
+    vst1q_u8(out, veorq_u8(vld1q_u8(a), vandq_u8(vld1q_u8(b), mask)));
+  }
+
+  masked_xor_small_u8_array(out, a, b, mask_bit, len - blocks * sizeof(uint8x16_t));
+}
 #endif
 
 static inline void masked_xor_u8_array_64(uint8_t* out, const uint8_t* a, const uint8_t* b,
@@ -237,6 +272,11 @@ void xor_u8_array(uint8_t* out, const uint8_t* a, const uint8_t* b, size_t len) 
     xor_u8_array_128(out, a, b, len);
     return;
   }
+#elif defined(HAVE_NEON)
+  if (CPU_SUPPORTS_NEON) {
+    xor_u8_array_128(out, a, b, len);
+    return;
+  }
 #endif
 
   if (len >= sizeof(uint64_t)) {
@@ -259,6 +299,11 @@ void xor_u8_array_inplace(uint8_t* out, const uint8_t* a, size_t len) {
 
 #if defined(HAVE_SSE2)
   if (CPU_SUPPORTS_SSE2) {
+    xor_u8_array_inplace_128(out, a, len);
+    return;
+  }
+#elif defined(HAVE_NEON)
+  if (CPU_SUPPORTS_NEON) {
     xor_u8_array_inplace_128(out, a, len);
     return;
   }
@@ -286,6 +331,11 @@ void masked_xor_u8_array(uint8_t* out, const uint8_t* a, const uint8_t* b, uint8
 
 #if defined(HAVE_SSE2)
   if (CPU_SUPPORTS_SSE2) {
+    masked_xor_u8_array_128(out, a, b, mask_bit, len);
+    return;
+  }
+#elif defined(HAVE_NEON)
+  if (CPU_SUPPORTS_NEON) {
     masked_xor_u8_array_128(out, a, b, mask_bit, len);
     return;
   }
