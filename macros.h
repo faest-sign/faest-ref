@@ -198,7 +198,7 @@
 #define ATTR_TARGET_ARM_AES
 #else
 #define ATTR_TARGET_NEON
-#define ATTR_TARGET_ARM_AES __attribute__((target("arch=+crypto")))
+#define ATTR_TARGET_ARM_AES __attribute__((target("+crypto")))
 #endif
 #else
 #define ATTR_TARGET(x)
