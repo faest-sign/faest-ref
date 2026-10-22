@@ -230,11 +230,9 @@ static void aes_sbox_eval_prover(bf_t state_deg7[][8], const uint8_t* state_bits
                                  bf_t* state_bits_tag, unsigned int Nst) {
   const unsigned int Nstbytes = Nst * 4;
 
-  // Reuse one byte's conjugates throughout the state.
-  bf_t state_conj[8];
-  bf_t state_conj_tag[8];
-
   for (unsigned int j = 0; j < Nstbytes; j++) {
+    bf_t state_conj[8];
+    bf_t state_conj_tag[8];
     aes_f256_f2_conjugates_byte_1(state_conj, state_bits[j]);
     aes_f256_f2_conjugates_byte(state_conj_tag, state_bits_tag + j * 8);
 
@@ -287,38 +285,24 @@ static void aes_sbox_eval_prover(bf_t state_deg7[][8], const uint8_t* state_bits
         }
       }
 
-      // first product
       for (unsigned int m = 0; m < 2; m++) {
         for (unsigned int n = 0; n < 3; n++) {
           bf_t tmp;
           bf_mul(&tmp, &f1_deg[0][m], &p1_deg[1][n]);
           bf_add_inplace(&f2_deg[i][m + n], &tmp);
-        }
-      }
 
-      // second product
-      for (unsigned int m = 0; m < 2; m++) {
-        for (unsigned int n = 0; n < 3; n++) {
-          bf_t tmp;
           bf_mul(&tmp, &f1_deg[1][m], &p1_deg[0][n]);
           bf_add_inplace(&f2_deg[i][m + n], &tmp);
         }
       }
     }
 
-    // first product
     for (unsigned int m = 0; m < 4; m++) {
       for (unsigned int n = 0; n < 5; n++) {
         bf_t tmp;
         bf_mul(&tmp, &f2_deg[0][m], &p2_deg[1][n]);
         bf_add_inplace(&state_deg7[j][n + m], &tmp);
-      }
-    }
 
-    // second product
-    for (unsigned int m = 0; m < 4; m++) {
-      for (unsigned int n = 0; n < 5; n++) {
-        bf_t tmp;
         bf_mul(&tmp, &f2_deg[1][m], &p2_deg[0][n]);
         bf_add_inplace(&state_deg7[j][n + m], &tmp);
       }
