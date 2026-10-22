@@ -35,12 +35,16 @@
 #define CPU_CAP_ARM_AES 0x00000008
 
 /**
- * Helper function in case __builtin_cpu_supports is not available.
+ * Helper function in case __builtin_cpu_supports is not available or not usable.
  */
 bool cpu_supports(unsigned int caps);
 #endif
 
-/* Use __builtin_cpu_support or our fallback function to determine supported CPU features */
+/* Macros for runtime CPU feature detection
+ * These macros use __builtin_cpu_supports, cpu_supports or OQS_CPU_has_extension. When decidable
+ * during compile time (e.g., SSE2 on x86-64), the macros are compile-time constants.
+ */
+
 #if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC)) ||      \
     defined(__i386__) || defined(_M_IX86)
 #if defined(__AVX2__)
@@ -51,8 +55,6 @@ bool cpu_supports(unsigned int caps);
 #else
 #define CPU_SUPPORTS_AVX2 cpu_supports(CPU_CAP_AVX2)
 #endif
-#else
-#define CPU_SUPPORTS_AVX2 0
 #endif
 
 #if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC))
@@ -67,8 +69,6 @@ bool cpu_supports(unsigned int caps);
 #else
 #define CPU_SUPPORTS_SSE2 cpu_supports(CPU_CAP_SSE2)
 #endif
-#else
-#define CPU_SUPPORTS_SSE2 0
 #endif
 
 #if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC)) ||      \
@@ -84,21 +84,16 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_AESNI cpu_supports(CPU_CAP_SSE2 | CPU_CAP_AESNI)
 #define CPU_SUPPORTS_AESNI_AVX2 cpu_supports(CPU_CAP_AVX2 | CPU_CAP_AESNI)
 #endif
-#else
-#define CPU_SUPPORTS_AESNI 0
-#define CPU_SUPPORTS_AESNI_AVX2 0
 #endif
 
 #if defined(__aarch64__) || defined(__arm__) || defined(_M_ARM64) || defined(_M_ARM64EC) ||        \
     defined(_M_ARM)
 #if defined(__ARM_FEATURE_AES) || defined(__ARM_FEATURE_CRYPTO)
-// The compilation target already requires the ARM AES extension.
+// building with +crypto
 #define CPU_SUPPORTS_ARM_AES 1
 #else
 #define CPU_SUPPORTS_ARM_AES cpu_supports(CPU_CAP_ARM_AES)
 #endif
-#else
-#define CPU_SUPPORTS_ARM_AES 0
 #endif
 
 #if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC) || defined(__ARM_NEON) ||     \
@@ -107,8 +102,6 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_NEON 1
 #elif defined(__arm__) || defined(_M_ARM)
 #define CPU_SUPPORTS_NEON cpu_supports(CPU_CAP_NEON)
-#else
-#define CPU_SUPPORTS_NEON 0
 #endif
 #else
 /* Use OQS function to determine supported CPU features */
@@ -122,8 +115,6 @@ bool cpu_supports(unsigned int caps);
 #else
 #define CPU_SUPPORTS_AVX2 OQS_CPU_has_extension(OQS_CPU_EXT_AVX2)
 #endif
-#else
-#define CPU_SUPPORTS_AVX2 0
 #endif
 
 #if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC))
@@ -136,8 +127,6 @@ bool cpu_supports(unsigned int caps);
 #else
 #define CPU_SUPPORTS_SSE2 OQS_CPU_has_extension(OQS_CPU_EXT_SSE2)
 #endif
-#else
-#define CPU_SUPPORTS_SSE2 0
 #endif
 
 #if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC)) ||      \
@@ -150,21 +139,16 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_AESNI (CPU_SUPPORTS_SSE2 && OQS_CPU_has_extension(OQS_CPU_EXT_AES))
 #define CPU_SUPPORTS_AESNI_AVX2 (CPU_SUPPORTS_AVX2 && OQS_CPU_has_extension(OQS_CPU_EXT_AES))
 #endif
-#else
-#define CPU_SUPPORTS_AESNI 0
-#define CPU_SUPPORTS_AESNI_AVX2 0
 #endif
 
 #if defined(__aarch64__) || defined(__arm__) || defined(_M_ARM64) || defined(_M_ARM64EC) ||        \
     defined(_M_ARM)
 #if defined(__ARM_FEATURE_AES) || defined(__ARM_FEATURE_CRYPTO)
-// The compilation target already requires the ARM AES extension.
+// building with +crypto
 #define CPU_SUPPORTS_ARM_AES 1
 #else
 #define CPU_SUPPORTS_ARM_AES OQS_CPU_has_extension(OQS_CPU_EXT_ARM_AES)
 #endif
-#else
-#define CPU_SUPPORTS_ARM_AES 0
 #endif
 
 #if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC) || defined(__ARM_NEON) ||     \
@@ -172,9 +156,26 @@ bool cpu_supports(unsigned int caps);
 #define CPU_SUPPORTS_NEON 1
 #elif defined(__arm__) || defined(_M_ARM)
 #define CPU_SUPPORTS_NEON OQS_CPU_has_extension(OQS_CPU_EXT_ARM_NEON)
-#else
+#endif
+#endif
+
+#if !defined(CPU_SUPPORTS_SSE2)
+#define CPU_SUPPORTS_SSE2 0
+#endif
+#if !defined(CPU_SUPPORTS_AVX2)
+#define CPU_SUPPORTS_AVX2 0
+#endif
+#if !defined(CPU_SUPPORTS_AESNI)
+#define CPU_SUPPORTS_AESNI 0
+#endif
+#if !defined(CPU_SUPPORTS_AVX2_AESNI)
+#define CPU_SUPPORTS_AVX2_AESNI 0
+#endif
+#if !defined(CPU_SUPPORTS_NEON)
 #define CPU_SUPPORTS_NEON 0
 #endif
+#if !defined(CPU_SUPPORTS_ARM_AES)
+#define CPU_SUPPORTS_ARM_AES 0
 #endif
 
 #endif

@@ -116,6 +116,10 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit
 #define FAEST_FIELDS_USE_VECTOR 1
 #define FAEST_FIELDS_USE_U64 0
 
+// If no field implementation has been selected, select the best candidate. Since the current code
+// base only supports one field implementation, this is a compile decision and there is no runtime
+// dispatch based on CPU features. Hence, we select the best option that is supported by
+// compile-time settings.
 #if !defined(FAEST_FIELDS)
 #if defined(HAVE_AVX2) && defined(HAVE_PCLMUL) && __AVX2__ && __PCLMUL__
 // If AVX2/PCLMUL is supported, and we are building with both enabled, use the AVX2 implementation.
@@ -136,7 +140,7 @@ ATTR_CONST ATTR_ALWAYS_INLINE ATTR_ARTIFICIAL static inline bf64_t bf64_from_bit
 #endif
 #endif // !FAEST_FIELDS
 
-// Select one representation and its arithmetic implementation.
+// Use the selected implementation.
 #if FAEST_FIELDS == FAEST_FIELDS_USE_AVX2
 #include "fields_avx2.h"
 #elif FAEST_FIELDS == FAEST_FIELDS_USE_SSE2

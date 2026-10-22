@@ -54,6 +54,10 @@
 #define HAVE_MEMPCPY
 #endif /* HAVE_MEMPCPY */
 
+/* HAVE_* for compiler support.
+ * These macros define whether thecompiler supports the compilation of these ISA extensions and the
+ * corresponding intrinsics. Runtime detection is provided by the CPU_SUPPORTS_ macros.
+ */
 #if defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) ||                                \
     (defined(_M_X64) && !defined(_M_ARM64) && !defined(_M_ARM64EC))
 #if __has_include(<wmmintrin.h>)
