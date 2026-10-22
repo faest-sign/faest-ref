@@ -109,7 +109,7 @@ int main() {
 )
 conf_data.set(
   'HAVE_AESNI',
-  get_option('aesni').require(supports_aesni, error_message: 'AES ISA support enabled but not available').allowed(),
+  get_option('aesni').require(supports_aesni, error_message: 'AES-NI support enabled but not available').allowed(),
 )
 
 sse2_flag = cc.get_supported_arguments('-msse2')
@@ -218,7 +218,13 @@ int main() {
   name: 'compiler supports ARM AES',
   args: [arm_aes_flag],
 )
-conf_data.set('HAVE_ARM_AES', supports_arm_aes)
+conf_data.set(
+  'HAVE_ARM_AES',
+  get_option('arm-aes').require(
+    supports_arm_aes,
+    error_message: 'AES ARM support enabled but not available',
+  ).allowed(),
+)
 
 # check availability of some headers
 conf_data.set('HAVE_ASM_HWCAP_H', cc.has_header('asm/hwcap.h'))

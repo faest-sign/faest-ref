@@ -8,7 +8,13 @@ option(
   'aesni',
   type: 'feature',
   value: 'auto',
-  description: 'Use ISA extensions for AES',
+  description: 'Use AES-NI extensions for AES',
+)
+option(
+  'arm-aes',
+  type: 'feature',
+  value: 'auto',
+  description: 'Use ARM AES extensions for AES',
 )
 option(
   'SHA3',
