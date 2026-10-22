@@ -17,9 +17,15 @@
 #include "compat.h"
 
 #if !defined(HAVE_TIMINGSAFE_BCMP) && !defined(OQS)
+#if defined(HAVE_OPENSSL)
+#include <openssl/crypto.h>
+#endif
+
 int faest_timingsafe_bcmp(const void* a, const void* b, size_t len) {
 #if defined(HAVE_CONSTTIME_MEMEQUAL)
   return !consttime_memequal(a, b, len);
+#elif defined(HAVE_OPENSSL)
+  return CRYPTO_memcmp(a, b, len);
 #else
   const unsigned char* p1 = a;
   const unsigned char* p2 = b;
@@ -29,6 +35,6 @@ int faest_timingsafe_bcmp(const void* a, const void* b, size_t len) {
     res |= *p1 ^ *p2;
   }
   return res;
-#endif
+#endif /* HAVE_CONSTTIME_MEMEQUAL */
 }
-#endif /* HAVE_TIMINGSAFE_BCMP */
+#endif /* !HAVE_TIMINGSAFE_BCMP && !OQS */
