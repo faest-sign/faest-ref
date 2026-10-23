@@ -14,7 +14,7 @@ option(
   'arm-aes',
   type: 'feature',
   value: 'auto',
-  description: 'Use ARM AES extensions for AES',
+  description: 'Use ARM cryptographic extension for AES',
 )
 option(
   'SHA3',

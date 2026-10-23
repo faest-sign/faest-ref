@@ -49,7 +49,7 @@ For the reference implementation, all benchmarks can be executed via `bench.sh`.
 For AES, the following implementations will be used (in order of preference and
 availability):
 
-* AES-NI (on x86 and x86-64) and AESE (on AArch64)
+* AES-NI (on x86 and x86-64) and ARM cryptographic extension (on AArch64)
 * OpenSSL
 * bcrypt (on Windows)
 * unoptimized fallback implementation
