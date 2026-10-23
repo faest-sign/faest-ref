@@ -108,6 +108,15 @@
 #define FAEST_UNUSED(x) x
 #endif
 
+/* nonnull attribute */
+#if GNUC_CHECK(3, 3) || __has_attribute(nonnull)
+#define ATTR_NONNULL __attribute__((nonnull))
+#define ATTR_NONNULL_ARG(i, ...) __attribute__((nonnull(i, __VA_ARGS__)))
+#else
+#define ATTR_NONNULL
+#define ATTR_NONNULL_ARG(i, ...)
+#endif
+
 /* aligned attribute */
 /* note that C11's alignas will only do the job once DR 444 is implemented */
 #if GNUC_CHECK(3, 2) || __has_attribute(aligned)
