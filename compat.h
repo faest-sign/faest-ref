@@ -82,7 +82,14 @@
 #endif
 #endif /* !HAVE_CONFIG_H */
 
-#if defined(HAVE_ALIGNED_ALLOC)
+#if defined(OQS)
+#include <oqs/common.h>
+#endif
+
+#if defined(OQS)
+#define faest_aligned_alloc(alignment, size) OQS_MEM_aligned_alloc((alignment), (size))
+#define faest_aligned_free(ptr) OQS_MEM_aligned_free((ptr))
+#elif defined(HAVE_ALIGNED_ALLOC)
 #include <stdlib.h>
 
 #define faest_aligned_alloc(alignment, size) aligned_alloc((alignment), (size))
@@ -106,7 +113,9 @@ FAEST_END_C_DECL
 
 #include "endian_compat.h"
 
-#if defined(HAVE_TIMINGSAFE_BCMP)
+#if defined(OQS)
+#define faest_timingsafe_bcmp(a, b, len) OQS_MEM_secure_bcmp((a), (b), (len))
+#elif defined(HAVE_TIMINGSAFE_BCMP)
 #include <string.h>
 
 #define faest_timingsafe_bcmp(a, b, len) timingsafe_bcmp((a), (b), (len))
@@ -121,7 +130,9 @@ int faest_timingsafe_bcmp(const void* a, const void* b, size_t len);
 FAEST_END_C_DECL
 #endif /* HAVE_TIMINGSAFE_BCMP */
 
-#if defined(HAVE_EXPLICIT_BZERO)
+#if defined(OQS)
+#define faest_explicit_bzero(ptr, len) OQS_MEM_cleanse(ptr, len)
+#elif defined(HAVE_EXPLICIT_BZERO)
 #include <string.h>
 
 #define faest_explicit_bzero(ptr, len) explicit_bzero((ptr), (len))
@@ -152,15 +163,6 @@ FAEST_END_C_DECL
  */
 void* faest_mempcpy(void* dst, const void* src, size_t n) ATTR_NONNULL_ARG(1, 2);
 #endif /* HAVE_MEMPCPY */
-
-#if defined(OQS)
-#include <oqs/common.h>
-
-#define faest_aligned_alloc(alignment, size) OQS_MEM_aligned_alloc((alignment), (size))
-#define faest_aligned_free(ptr) OQS_MEM_aligned_free((ptr))
-#define faest_timingsafe_bcmp(a, b, len) OQS_MEM_secure_bcmp((a), (b), (len))
-#define faest_explicit_bzero(ptr, len) OQS_MEM_cleanse(ptr, len)
-#endif /* QQS */
 
 #include <limits.h>
 #include <stdint.h>
