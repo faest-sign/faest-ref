@@ -1096,7 +1096,7 @@ static void aes_constraints_prover(zk_hash_7_ctx* hasher, const uint8_t* w, cons
     for (unsigned int r = 0, idx = 0; r < FAEST_R + 1; r++) {
       for (unsigned int n = 0; n < Nst; n++) {
         for (unsigned int i = 0; i < 4; ++i, ++idx) {
-          rkeys[idx] = round_keys.round_keys[r][n][i];
+          rkeys[idx] = (uint8_t)(round_keys.round_keys[r][n] >> (8 * i));
         }
       }
     }
@@ -1167,7 +1167,7 @@ static void aes_constraints_verifier(zk_hash_ctx* hasher, const bf_t* w_key, con
     for (unsigned int r = 0; r < FAEST_R + 1; ++r) {
       for (unsigned int n = 0; n < Nst; ++n) {
         for (unsigned int i = 0; i < 4; ++i, idx += 8) {
-          uint8_t rk_byte = round_keys.round_keys[r][n][i];
+          uint8_t rk_byte = (uint8_t)(round_keys.round_keys[r][n] >> (8 * i));
           bf_mul_bit_8(&rkeys_key[idx], &delta_i[0], rk_byte);
         }
       }

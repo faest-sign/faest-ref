@@ -70,19 +70,37 @@ static inline void aes_increment_iv(uint8_t* iv)
 // either use AES-NI or an external AES implementation (e.g., from OpenSSL) and
 // only fallback to this implementation if there is no other option.
 
-// Round Functions
+static inline aes_word_t load_word(const uint8_t* src) {
+  aes_word_t word;
+  memcpy(&word, src, sizeof(word));
+  return le32toh(word);
+}
+
+static inline void store_word(uint8_t* dst, aes_word_t word) {
+  word = htole32(word);
+  memcpy(dst, &word, sizeof(word));
+}
+
+// Round functions
+
+static aes_word_t sub_word(aes_word_t word) {
+  aes_word_t result = 0;
+  for (unsigned int r = 0; r < AES_NR; ++r) {
+    result |= (uint32_t)compute_sbox((uint8_t)(word >> (8 * r))) << (8 * r);
+  }
+  return result;
+}
+
 static void add_round_key(unsigned int round, aes_block_t state, const aes_round_keys_t* round_key,
                           unsigned int block_words) {
   for (unsigned int c = 0; c < block_words; c++) {
-    xor_small_u8_array_inplace(&state[c][0], &round_key->round_keys[round][c][0], AES_NR);
+    state[c] ^= round_key->round_keys[round][c];
   }
 }
 
 static void sub_bytes(aes_block_t state, unsigned int block_words) {
   for (unsigned int c = 0; c < block_words; c++) {
-    for (unsigned int r = 0; r < AES_NR; r++) {
-      state[c][r] = compute_sbox(state[c][r]);
-    }
+    state[c] = sub_word(state[c]);
   }
 }
 
@@ -91,78 +109,63 @@ static void shift_row(aes_block_t state, unsigned int block_words) {
     // Row offsets are (0, 1, 2, 3), or (0, 1, 3, 4) for Rijndael-256.
     const unsigned int shift = block_words == RIJNDAEL_BLOCK_WORDS_256 && row > 1 ? row + 1 : row;
 
-    bf8_t saved[4];
+    const aes_word_t mask = UINT32_C(0xff) << (8 * row);
+    aes_word_t saved[4];
     // Save the prefix, move the remaining bytes left, then wrap the prefix around.
     for (unsigned int col = 0; col < shift; ++col) {
-      saved[col] = state[col][row];
+      saved[col] = state[col] & mask;
     }
     for (unsigned int col = 0; col < block_words - shift; ++col) {
-      state[col][row] = state[col + shift][row];
+      state[col] = (state[col] & ~mask) | (state[col + shift] & mask);
     }
     for (unsigned int col = 0; col < shift; ++col) {
-      state[block_words - shift + col][row] = saved[col];
+      state[block_words - shift + col] = (state[block_words - shift + col] & ~mask) | saved[col];
     }
   }
 }
 
 static void mix_column(aes_block_t state, unsigned int block_words) {
   for (unsigned int col = 0; col < block_words; ++col) {
-    const bf8_t a   = state[col][0];
-    const bf8_t b   = state[col][1];
-    const bf8_t c   = state[col][2];
-    const bf8_t d   = state[col][3];
+    const bf8_t a   = (uint8_t)state[col];
+    const bf8_t b   = (uint8_t)(state[col] >> 8);
+    const bf8_t c   = (uint8_t)(state[col] >> 16);
+    const bf8_t d   = (uint8_t)(state[col] >> 24);
     const bf8_t sum = a ^ b ^ c ^ d;
 
     // instead of computing a * (X + 1) + b * X, compute (a + b) * X + a
-    state[col][0] = a ^ sum ^ bf8_mulX(a ^ b);
-    state[col][1] = b ^ sum ^ bf8_mulX(b ^ c);
-    state[col][2] = c ^ sum ^ bf8_mulX(c ^ d);
-    state[col][3] = d ^ sum ^ bf8_mulX(d ^ a);
+    state[col] = (uint32_t)(a ^ sum ^ bf8_mulX(a ^ b)) |
+                 ((uint32_t)(b ^ sum ^ bf8_mulX(b ^ c)) << 8) |
+                 ((uint32_t)(c ^ sum ^ bf8_mulX(c ^ d)) << 16) |
+                 ((uint32_t)(d ^ sum ^ bf8_mulX(d ^ a)) << 24);
   }
 }
 
 // Key Expansion functions
-static void sub_words(bf8_t* words) {
-  words[0] = compute_sbox(words[0]);
-  words[1] = compute_sbox(words[1]);
-  words[2] = compute_sbox(words[2]);
-  words[3] = compute_sbox(words[3]);
-}
-
-static inline void rot_word(bf8_t* words) {
-  uint32_t w;
-  memcpy(&w, words, sizeof(w));
-#if defined(FAEST_IS_LITTLE_ENDIAN)
-  w = rotr32(w, 8);
-#else
-  w = htole32(rotr32(le32toh(w), 8));
-#endif
-  memcpy(words, &w, sizeof(w));
+static inline aes_word_t rot_word(aes_word_t word) {
+  return rotr32(word, 8);
 }
 
 void expand_key(aes_round_keys_t* round_keys, const uint8_t* key, unsigned int key_words,
                 unsigned int block_words, unsigned int num_rounds) {
   for (unsigned int k = 0; k < key_words; k++) {
-    memcpy(round_keys->round_keys[k / block_words][k % block_words], &key[4 * k], 4);
+    round_keys->round_keys[k / block_words][k % block_words] = load_word(&key[4 * k]);
   }
 
   for (unsigned int k = key_words; k < block_words * (num_rounds + 1); ++k) {
-    bf8_t tmp[AES_NR];
-    memcpy(tmp, round_keys->round_keys[(k - 1) / block_words][(k - 1) % block_words], sizeof(tmp));
+    aes_word_t tmp = round_keys->round_keys[(k - 1) / block_words][(k - 1) % block_words];
 
     if (k % key_words == 0) {
-      rot_word(tmp);
-      sub_words(tmp);
-      tmp[0] ^= aes_round_constants[(k / key_words) - 1];
+      tmp = sub_word(rot_word(tmp));
+      tmp ^= aes_round_constants[(k / key_words) - 1];
     }
 
     if (key_words > 6 && (k % key_words) == 4) {
-      sub_words(tmp);
+      tmp = sub_word(tmp);
     }
 
     const unsigned int m = k - key_words;
-    xor_small_u8_array(round_keys->round_keys[k / block_words][k % block_words],
-                       round_keys->round_keys[m / block_words][m % block_words], tmp, 4);
+    round_keys->round_keys[k / block_words][k % block_words] =
+        round_keys->round_keys[m / block_words][m % block_words] ^ tmp;
   }
 }
 
@@ -189,14 +192,18 @@ void rijndael256_init_round_keys(aes_round_keys_t* round_key, const uint8_t* key
 }
 
 static void load_state(aes_block_t state, const uint8_t* src, unsigned int block_words) {
-  for (unsigned int i = 0; i != block_words * 4; ++i) {
-    state[i / 4][i % 4] = bf8_load(&src[i]);
+  unsigned int i = 0;
+  for (; i != block_words; ++i) {
+    state[i] = load_word(&src[4 * i]);
+  }
+  for (; i != MAX_AES_BLOCK_WORDS; ++i) {
+    state[i] = 0;
   }
 }
 
 static uint8_t* store_state(uint8_t* dst, aes_block_t state, unsigned int block_words) {
-  for (unsigned int i = 0; i != block_words * 4; ++i, ++dst) {
-    bf8_store(dst, state[i / 4][i % 4]);
+  for (unsigned int i = 0; i != block_words; ++i, dst += 4) {
+    store_word(dst, state[i]);
   }
   return dst;
 }
@@ -1048,13 +1055,13 @@ void aes_extend_witness_7(uint8_t* w, const uint8_t* key, const uint8_t* in,
 
     // Key schedule constraints only needed for normal AES, not EM variant.
     for (unsigned int i = 0; i != nk; ++i) {
-      memcpy(w, round_keys.round_keys[i / 4][i % 4], sizeof(aes_word_t));
+      store_word(w, round_keys.round_keys[i / 4][i % 4]);
       w += sizeof(aes_word_t);
     }
 
     const unsigned int S_ke = params->Ske;
     for (unsigned int j = 0, ik = nk; j < S_ke / 4; ++j) {
-      memcpy(w, round_keys.round_keys[ik / 4][ik % 4], sizeof(aes_word_t));
+      store_word(w, round_keys.round_keys[ik / 4][ik % 4]);
       w += sizeof(aes_word_t);
       ik += lambda == 192 ? 6 : 4;
     }
@@ -1103,7 +1110,7 @@ void aes_extend_witness_7(uint8_t* w, const uint8_t* key, const uint8_t* in,
 
     // line 16
     aes_block_t state;
-    load_state(state, buf, block_words);
+    load_state(state, buf, AES_BLOCK_WORDS);
 
     // line 17
     add_round_key(0, state, &round_keys, block_words);
