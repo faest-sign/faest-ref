@@ -5,10 +5,12 @@
 #ifndef CRYPTO_SIGN_@PARAM@_H
 #define CRYPTO_SIGN_@PARAM@_H
 
+// clang-format off
 #define CRYPTO_SECRETKEYBYTES @SK_SIZE@
 #define CRYPTO_PUBLICKEYBYTES @PK_SIZE@
 #define CRYPTO_BYTES @SIG_SIZE@
 #define CRYPTO_ALGNAME "faest_@PARAM_L@"
+// clang-format on
 
 int crypto_sign_keypair(unsigned char* pk, unsigned char* sk);
 int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned char* m,

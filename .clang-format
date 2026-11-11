@@ -12,4 +12,5 @@ PointerAlignment: Left
 TabWidth: 2
 ColumnLimit: 100
 SortIncludes: false
+InsertNewlineAtEOF: true
 ...

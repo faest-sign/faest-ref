@@ -16,27 +16,34 @@
 
 #include <string.h>
 
+// clang-format off
+#define keygen faest_@PARAM_L@_keygen
+#define sign faest_@PARAM_L@_sign
+#define verify faest_@PARAM_L@_verify
+#define SIGSIZE FAEST_@PARAM@_SIGNATURE_SIZE
+// clang-format on
+
 int crypto_sign_keypair(unsigned char* pk, unsigned char* sk) {
-  return faest_@PARAM_L@_keygen(pk, sk);
+  return keygen(pk, sk);
 }
 
 int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned char* m,
                 unsigned long long mlen, const unsigned char* sk) {
-  *smlen = mlen + FAEST_@PARAM@_SIGNATURE_SIZE;
+  *smlen = mlen + SIGSIZE;
   memmove(sm, m, mlen);
 
-  size_t signature_len = FAEST_@PARAM@_SIGNATURE_SIZE;
-  return faest_@PARAM_L@_sign(sk, sm, mlen, sm + mlen, &signature_len);
+  size_t signature_len = SIGSIZE;
+  return sign(sk, sm, mlen, sm + mlen, &signature_len);
 }
 
 int crypto_sign_open(unsigned char* m, unsigned long long* mlen, const unsigned char* sm,
                      unsigned long long smlen, const unsigned char* pk) {
-  if (smlen < FAEST_@PARAM@_SIGNATURE_SIZE) {
+  if (smlen < SIGSIZE) {
     // signature too short
     return -1;
   }
-  unsigned long long m_length = smlen - FAEST_@PARAM@_SIGNATURE_SIZE;
-  if (faest_@PARAM_L@_verify(pk, sm, m_length, sm + m_length, FAEST_@PARAM@_SIGNATURE_SIZE)) {
+  unsigned long long m_length = smlen - SIGSIZE;
+  if (verify(pk, sm, m_length, sm + m_length, SIGSIZE)) {
     return -1;
   }
 
