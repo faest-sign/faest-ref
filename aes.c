@@ -6,7 +6,7 @@
 #include <config.h>
 #endif
 
-#if defined(_WIN32) && !defined(HAVE_OPENSSL)
+#if defined(_WIN32) && !defined(HAVE_OPENSSL) && !defined(OQS)
 #if !defined(_WIN32_WINNT)
 #define _WIN32_WINNT 0x0601
 #elif _WIN32_WINNT < 0x0601
@@ -29,7 +29,7 @@
 #endif
 #if defined(HAVE_OPENSSL)
 #include <openssl/evp.h>
-#elif defined(_WIN32)
+#elif defined(_WIN32) && !defined(OQS)
 #include <windows.h>
 #endif
 #include <string.h>
@@ -1133,49 +1133,9 @@ void aes_extend_witness_7(uint8_t* w, const uint8_t* key, const uint8_t* in,
   }
 }
 
-#if defined(HAVE_OPENSSL)
-int generic_aes_ecb_new(generic_aes_ecb_t* context, const uint8_t* key, unsigned int seclvl) {
-  const EVP_CIPHER* cipher = NULL;
-  switch (seclvl) {
-  case 256:
-    cipher = EVP_aes_256_ecb();
-    break;
-  case 192:
-    cipher = EVP_aes_192_ecb();
-    break;
-  default:
-    cipher = EVP_aes_128_ecb();
-    break;
-  }
-
-  EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-  if (!ctx) {
-    return -1;
-  }
-
-  EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
-  context->ctx = ctx;
-  return 0;
-}
-
-int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext,
-                            size_t blocks) {
-  int len = 0;
-  int ret = EVP_EncryptUpdate(ctx->ctx, ciphertext, &len, plaintext, blocks * IV_SIZE);
-  if (ret != 1 || len != (int)blocks * IV_SIZE) {
-    return -1;
-  }
-  return 0;
-}
-
-void generic_aes_ecb_free(generic_aes_ecb_t* ctx) {
-  EVP_CIPHER_CTX_free(ctx->ctx);
-}
-#elif defined(OQS)
+#if defined(OQS)
 int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int seclvl) {
-  if (!ctx || !key) {
-    return -1;
-  }
+  assert(ctx && key);
 
   ctx->seclvl = seclvl;
   ctx->sched  = NULL;
@@ -1196,7 +1156,9 @@ int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int
 
 int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext,
                             size_t blocks) {
-  if (!ctx || !ciphertext || !plaintext || !ctx->sched) {
+  assert(ctx && ciphertext && plaintext);
+
+  if (!ctx->sched) {
     return -1;
   }
 
@@ -1233,8 +1195,59 @@ void generic_aes_ecb_free(generic_aes_ecb_t* ctx) {
   }
   ctx->sched = NULL;
 }
+#elif defined(HAVE_OPENSSL)
+int generic_aes_ecb_new(generic_aes_ecb_t* context, const uint8_t* key, unsigned int seclvl) {
+  assert(context && key);
+
+  context->ctx = NULL;
+
+  const EVP_CIPHER* cipher = NULL;
+  switch (seclvl) {
+  case 256:
+    cipher = EVP_aes_256_ecb();
+    break;
+  case 192:
+    cipher = EVP_aes_192_ecb();
+    break;
+  default:
+    cipher = EVP_aes_128_ecb();
+    break;
+  }
+
+  EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+  if (!ctx) {
+    return -1;
+  }
+
+  EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL);
+  context->ctx = ctx;
+  return 0;
+}
+
+int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext,
+                            size_t blocks) {
+  assert(ctx && ciphertext && plaintext);
+
+  int len = 0;
+  int ret = EVP_EncryptUpdate(ctx->ctx, ciphertext, &len, plaintext, blocks * IV_SIZE);
+  if (ret != 1 || len != (int)blocks * IV_SIZE) {
+    return -1;
+  }
+  return 0;
+}
+
+void generic_aes_ecb_free(generic_aes_ecb_t* ctx) {
+  if (ctx) {
+    EVP_CIPHER_CTX_free(ctx->ctx);
+  }
+}
 #elif defined(_WIN32)
 int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int seclvl) {
+  assert(ctx && key);
+
+  ctx->aes_handle = NULL;
+  ctx->key_handle = NULL;
+
   BCRYPT_ALG_HANDLE aes_handle = NULL;
   BCRYPT_KEY_HANDLE key_handle = NULL;
 
@@ -1262,6 +1275,8 @@ int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int
 
 int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext,
                             size_t blocks) {
+  assert(ctx && ciphertext && plaintext);
+
   ULONG len          = 0;
   const ULONG length = blocks * IV_SIZE;
 
@@ -1275,11 +1290,15 @@ int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const u
 }
 
 void generic_aes_ecb_free(generic_aes_ecb_t* ctx) {
-  BCryptDestroyKey(ctx->key_handle);
-  BCryptCloseAlgorithmProvider(ctx->aes_handle, 0);
+  if (ctx) {
+    BCryptDestroyKey(ctx->key_handle);
+    BCryptCloseAlgorithmProvider(ctx->aes_handle, 0);
+  }
 }
 #else
 int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int seclvl) {
+  assert(ctx && key);
+
   switch (seclvl) {
   case 256:
     aes256_init_round_keys(&ctx->round_keys, key);
@@ -1298,6 +1317,8 @@ int generic_aes_ecb_new(generic_aes_ecb_t* ctx, const uint8_t* key, unsigned int
 
 int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const uint8_t* plaintext,
                             size_t blocks) {
+  assert(ctx && ciphertext && plaintext);
+
   switch (ctx->seclvl) {
   case 256: {
     for (; blocks; --blocks, plaintext += IV_SIZE, ciphertext += IV_SIZE) {
@@ -1329,6 +1350,8 @@ int generic_aes_ecb_encrypt(generic_aes_ecb_t* ctx, uint8_t* ciphertext, const u
 }
 
 void generic_aes_ecb_free(generic_aes_ecb_t* ctx) {
-  faest_explicit_bzero(&ctx->round_keys, sizeof(ctx->round_keys));
+  if (ctx) {
+    faest_explicit_bzero(&ctx->round_keys, sizeof(ctx->round_keys));
+  }
 }
 #endif
