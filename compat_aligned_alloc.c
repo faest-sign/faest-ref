@@ -72,7 +72,7 @@ void* faest_aligned_alloc(size_t alignment, size_t size) {
     return NULL;
   }
   const size_t offset = alignment - 1 + sizeof(uint8_t);
-  uint8_t* buffer     = malloc(size + offset);
+  uint8_t* buffer     = faest_malloc(size + offset);
   if (!buffer) {
     return NULL;
   }
@@ -81,7 +81,7 @@ void* faest_aligned_alloc(size_t alignment, size_t size) {
   ptrdiff_t diff = ptr - buffer;
   if (diff > UINT8_MAX) {
     /* this should never happen in our code, but just to be safe */
-    free(buffer);
+    faest_free(buffer);
     errno = EINVAL;
     return NULL;
   }
@@ -92,7 +92,7 @@ void* faest_aligned_alloc(size_t alignment, size_t size) {
 
 void faest_aligned_free(void* ptr) {
 #if defined(HAVE_POSIX_MEMALIGN) || defined(HAVE_MEMALIGN)
-  free(ptr);
+  faest_free(ptr);
 #elif defined(__MINGW32__) || defined(__MINGW64__)
   __mingw_aligned_free(ptr);
 #elif defined(_MSC_VER)
@@ -100,7 +100,7 @@ void faest_aligned_free(void* ptr) {
 #else
   if (ptr) {
     uint8_t* u8ptr = ptr;
-    free(u8ptr - u8ptr[-1]);
+    faest_free(u8ptr - u8ptr[-1]);
   }
 #endif
 }

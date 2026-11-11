@@ -378,7 +378,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   // line 6
   bavc_t bavc;
-  uint8_t* u = malloc(ell_bytes);
+  uint8_t* u = faest_malloc(ell_bytes);
   assert(u);
 
   // Store u_bar and v_bar in V_row so that they can be hashed togeter. Also saves additional memory
@@ -411,7 +411,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     // for scan-build
     assert(uh_0_bytes + lambda_bytes * 4 > 0);
 
-    uint8_t* uh   = malloc(uh_0_bytes + lambda_bytes * 4);
+    uint8_t* uh   = faest_malloc(uh_0_bytes + lambda_bytes * 4);
     uint8_t* uh_0 = uh;
 
     memset(uh_0, 0, uh_0_bytes);
@@ -423,7 +423,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
     // line 8, line 11, line 12, line 13
     vole_hash(signature_u_tilde(sig, params), chall_1, uh, ell, lambda);
-    free(uh);
+    faest_free(uh);
 
     // To save memory consumption, the chall_2 is computed in an
     // Init-Update-Finalize style as V_tilde is only fed into to the hash and not
@@ -454,7 +454,7 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
               owf_output, chall_2, params);
 
     free_pointer_array(&V_row);
-    free(u);
+    faest_free(u);
     u = NULL;
 
     // line 26

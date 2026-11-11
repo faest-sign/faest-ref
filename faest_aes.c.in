@@ -907,7 +907,7 @@ static void aes_enc_constraints_prover(zk_hash_7_ctx* hasher, const uint8_t* owf
   const unsigned int Nstbytes = Nstbits / 8;
 
   /// line 1
-  uint8_t* state_bits  = malloc(4 * Nstbytes);
+  uint8_t* state_bits  = faest_malloc(4 * Nstbytes);
   bf_t* state_bits_tag = BF_ALLOC(4 * Nstbits + 16 * Nstbytes);
   assert(state_bits);
   assert(state_bits_tag);
@@ -983,7 +983,7 @@ static void aes_enc_constraints_prover(zk_hash_7_ctx* hasher, const uint8_t* owf
   }
 
   faest_aligned_free(state_bits_tag);
-  free(state_bits);
+  faest_free(state_bits);
 }
 
 static void aes_enc_constraints_verifier(zk_hash_ctx* hasher, const bf_t* owf_in_key,
@@ -1080,7 +1080,7 @@ static void aes_constraints_prover(zk_hash_7_ctx* hasher, const uint8_t* w, cons
   zk_hash_7_raise_and_update(hasher, &tmp, &v1);
 
   // line 7
-  uint8_t* in     = malloc((beta + FAEST_R + 2) * blocksize / 8);
+  uint8_t* in     = faest_malloc((beta + FAEST_R + 2) * blocksize / 8);
   uint8_t* out    = &in[blocksize / 8];
   uint8_t* rkeys  = &in[(beta + 1) * blocksize / 8];
   bf_t* in_tag    = BF_ALLOC(blocksize * (beta + FAEST_R + 2));
@@ -1134,7 +1134,7 @@ static void aes_constraints_prover(zk_hash_7_ctx* hasher, const uint8_t* w, cons
   }
 
   faest_aligned_free(in_tag);
-  free(in);
+  faest_free(in);
 }
 
 // OWF CONSTRAINTS VERIFIER

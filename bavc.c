@@ -32,7 +32,7 @@ static void expand_seeds(uint8_t* nodes, const uint8_t* iv, const faest_paramset
 static uint8_t* generate_seeds(const uint8_t* root_seed, const uint8_t* iv,
                                const faest_paramset_t* params) {
   unsigned int lambda_bytes = params->lambda / 8;
-  uint8_t* nodes            = calloc(2 * params->L - 1, lambda_bytes);
+  uint8_t* nodes            = faest_calloc(2 * params->L - 1, lambda_bytes);
   assert(nodes);
 
   memcpy(NODE(nodes, 0, lambda_bytes), root_seed, lambda_bytes);
@@ -227,9 +227,9 @@ static void bavc_commit_faest(bavc_t* bavc, const uint8_t* root_key, const uint8
   uint8_t* nodes = generate_seeds(root_key, iv, params);
 
   // Initialzing stuff
-  bavc->h   = malloc(lambda_bytes * 2);
-  bavc->com = malloc(L * com_size);
-  bavc->sd  = malloc(L * lambda_bytes);
+  bavc->h   = faest_malloc(lambda_bytes * 2);
+  bavc->com = faest_malloc(L * com_size);
+  bavc->sd  = faest_malloc(L * lambda_bytes);
   assert(bavc->h && bavc->com && bavc->sd);
 
   // Step: 1..3
@@ -276,9 +276,9 @@ static void bavc_commit_faest_em(bavc_t* bavc, const uint8_t* rootKey, const uin
   uint8_t* nodes = generate_seeds(rootKey, iv, params);
 
   // Initialzing stuff
-  bavc->h   = malloc(lambda_bytes * 2);
-  bavc->com = malloc(L * com_size);
-  bavc->sd  = malloc(L * lambda_bytes);
+  bavc->h   = faest_malloc(lambda_bytes * 2);
+  bavc->com = faest_malloc(L * com_size);
+  bavc->sd  = faest_malloc(L * lambda_bytes);
   assert(bavc->h && bavc->com && bavc->sd);
 
   // Step: 1..3
@@ -336,7 +336,7 @@ bool bavc_open(uint8_t* decom_i, const bavc_t* vc, const uint16_t* i_delta,
   uint8_t* decom_i_end = decom_i + com_size * tau + params->T_open * lambda_bytes;
 
   // Step 5
-  uint8_t* s = calloc((2 * L - 1 + 7) / 8, 1);
+  uint8_t* s = faest_calloc((2 * L - 1 + 7) / 8, 1);
   assert(s);
   // Step 6
   unsigned int nh = 0;
@@ -356,7 +356,7 @@ bool bavc_open(uint8_t* decom_i, const bavc_t* vc, const uint16_t* i_delta,
 
   // Step 16..17
   if (nh - 2 * tau + 1 > params->T_open) {
-    free(s);
+    faest_free(s);
     return false;
   }
 
@@ -378,7 +378,7 @@ bool bavc_open(uint8_t* decom_i, const bavc_t* vc, const uint16_t* i_delta,
 
   memset(decom_i, 0, decom_i_end - decom_i);
 
-  free(s);
+  faest_free(s);
   return true;
 }
 
@@ -443,7 +443,7 @@ static bool reconstruct_keys(uint8_t* leaves, const uint8_t* decom_i, const uint
   const uint8_t* nodes = decom_i + (faest_is_em(params) ? 2 : 3) * tau * lambda_bytes;
   const uint8_t* end   = nodes + params->T_open * lambda_bytes;
 
-  uint8_t* s = calloc((2 * L - 1 + 7) / 8, 1);
+  uint8_t* s = faest_calloc((2 * L - 1 + 7) / 8, 1);
   assert(s);
 
   // Step 7..10
@@ -457,7 +457,7 @@ static bool reconstruct_keys(uint8_t* leaves, const uint8_t* decom_i, const uint
     ptr_set_bit(s, i, ptr_get_bit(s, 2 * i + 1) | ptr_get_bit(s, 2 * i + 2));
     if ((ptr_get_bit(s, 2 * i + 1) ^ ptr_get_bit(s, 2 * i + 2)) == 1) {
       if (nodes == end) {
-        free(s);
+        faest_free(s);
         return false;
       }
 
@@ -467,7 +467,7 @@ static bool reconstruct_keys(uint8_t* leaves, const uint8_t* decom_i, const uint
 
   for (; nodes != end; ++nodes) {
     if (*nodes) {
-      free(s);
+      faest_free(s);
       return false;
     }
   }
@@ -475,7 +475,7 @@ static bool reconstruct_keys(uint8_t* leaves, const uint8_t* decom_i, const uint
   // A depth-first traversal needs only one pair of child seeds per tree level.
   ASSUME(2 * L > 2);
   const unsigned int depth = ceil_log2(2 * L - 2);
-  uint8_t* scratch         = malloc(2 * depth * lambda_bytes);
+  uint8_t* scratch         = faest_malloc(2 * depth * lambda_bytes);
   assert(scratch);
 
   nodes = decom_i + (faest_is_em(params) ? 2 : 3) * tau * lambda_bytes;
@@ -487,8 +487,8 @@ static bool reconstruct_keys(uint8_t* leaves, const uint8_t* decom_i, const uint
     }
   }
 
-  free(scratch);
-  free(s);
+  faest_free(scratch);
+  faest_free(s);
   return true;
 }
 
@@ -693,8 +693,8 @@ void bavc_clear(bavc_t* com, const faest_paramset_t* params) {
   faest_explicit_bzero(com->sd, params->L * lambda_bytes);
   faest_explicit_bzero(com->k, (2 * params->L - 1) * lambda_bytes);
 
-  free(com->sd);
-  free(com->com);
-  free(com->h);
-  free(com->k);
+  faest_free(com->sd);
+  faest_free(com->com);
+  faest_free(com->h);
+  faest_free(com->k);
 }

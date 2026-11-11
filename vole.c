@@ -87,13 +87,13 @@ static void transpose_bit_matrix(uint8_t** dst, const uint8_t* src, unsigned int
                                  unsigned int cols) {
   const unsigned int src_row_bytes = (cols + 7) / 8;
 
-  uint8_t** src_rows = malloc(rows * sizeof(*src_rows));
+  uint8_t** src_rows = faest_malloc(rows * sizeof(*src_rows));
   for (unsigned int row = 0; row < rows; ++row) {
     src_rows[row] = (uint8_t*)src + row * src_row_bytes;
   }
 
   transpose_matrix(src_rows, dst, rows, cols);
-  free(src_rows);
+  faest_free(src_rows);
 }
 
 static unsigned int convert_to_vole_with_scratch(const uint8_t* iv, const uint8_t* sd, bool sd0_bot,
@@ -147,11 +147,11 @@ static unsigned int convert_to_vole_with_scratch(const uint8_t* iv, const uint8_
 unsigned int convert_to_vole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot, unsigned int i,
                              unsigned int outlen, uint8_t* u, uint8_t* v,
                              const faest_paramset_t* params) {
-  uint8_t* scratch = calloc(bavc_max_node_index(i, params->tau1, params->k), outlen);
+  uint8_t* scratch = faest_calloc(bavc_max_node_index(i, params->tau1, params->k), outlen);
   assert(scratch);
   const unsigned int depth =
       convert_to_vole_with_scratch(iv, sd, sd0_bot, i, outlen, u, v, params, scratch);
-  free(scratch);
+  faest_free(scratch);
   return depth;
 }
 #endif
@@ -177,12 +177,12 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   // line 1
   bavc_commit(bavc, rootKey, iv, params);
 
-  uint8_t* ui = malloc(tau * ell_hat_bytes);
+  uint8_t* ui = faest_malloc(tau * ell_hat_bytes);
   assert(ui);
 
   uint8_t** V = alloc_pointer_array(lambda, ell_hat_bytes);
 
-  uint8_t* scratch = calloc(bavc_max_node_index(0, tau_1, k), ell_hat_bytes);
+  uint8_t* scratch = faest_calloc(bavc_max_node_index(0, tau_1, k), ell_hat_bytes);
   assert(scratch);
 
   // line 3
@@ -194,7 +194,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     sd_i += lambda_bytes * bavc_max_node_index(i, tau_1, k);
   }
 
-  free(scratch);
+  faest_free(scratch);
   const unsigned int mask_bits = ellhat - ell;
   uint8_t** V_columns          = alloc_pointer_array(mask_bits, lambda_minus_w_grind_bytes);
   uint8_t* mask_rows[MAX_LAMBDA];
@@ -212,8 +212,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   }
 
   // line 10
-  uint8_t* u_hi_all = malloc((N_MASK * w_grind + 7) / 8);
-  uint8_t* u_hi     = calloc(N_MASK, w_grind_bytes);
+  uint8_t* u_hi_all = faest_malloc((N_MASK * w_grind + 7) / 8);
+  uint8_t* u_hi     = faest_calloc(N_MASK, w_grind_bytes);
   prg(rootKey, iv, TWEAK_OFFSET - 1, u_hi_all, lambda, (N_MASK * w_grind + 7) / 8);
 
   for (unsigned int n_mask_idx = 0; n_mask_idx < N_MASK; ++n_mask_idx) {
@@ -222,8 +222,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   }
 
   // line 11
-  uint8_t* u_low   = calloc(N_MASK, lambda_bytes);
-  uint8_t* r_tilde = calloc(N_MASK, lambda_minus_w_grind_bytes);
+  uint8_t* u_low   = faest_calloc(N_MASK, lambda_bytes);
+  uint8_t* r_tilde = faest_calloc(N_MASK, lambda_minus_w_grind_bytes);
   for (unsigned m = 0; m < N_MASK; ++m) {
     unsigned int ell_m   = m * bavc_max_node_depth(0, tau_1, k);
     unsigned int bit_idx = 0;
@@ -335,11 +335,11 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
   free_pointer_array(&V_columns);
 
-  free(ui);
-  free(u_hi_all);
-  free(u_hi);
-  free(u_low);
-  free(r_tilde);
+  faest_free(ui);
+  faest_free(u_hi_all);
+  faest_free(u_hi);
+  faest_free(u_low);
+  faest_free(r_tilde);
 }
 
 bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const uint8_t* chall_3,
@@ -374,16 +374,16 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
                      params->w_crt_words);
   bavc_rec_t bavc_rec;
   bavc_rec.h = com;
-  bavc_rec.s = malloc((L - tau) * lambda_bytes);
+  bavc_rec.s = faest_malloc((L - tau) * lambda_bytes);
 
   // line 3
   if (!bavc_rec.s || !bavc_reconstruct(&bavc_rec, decom_i, i_delta, iv, params)) {
-    free(bavc_rec.s);
+    faest_free(bavc_rec.s);
     return false;
   }
 
-  uint8_t* sd      = malloc((1 << k) * lambda_bytes);
-  uint8_t* scratch = calloc(bavc_max_node_index(0, tau_1, k), ellhat_bytes);
+  uint8_t* sd      = faest_malloc((1 << k) * lambda_bytes);
+  uint8_t* scratch = faest_calloc(bavc_max_node_index(0, tau_1, k), ellhat_bytes);
   assert(sd);
   assert(scratch);
 
@@ -415,11 +415,11 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     }
     sd_i += lambda_bytes * (Ni - 1);
   }
-  free(sd);
+  faest_free(sd);
   sd = NULL;
-  free(bavc_rec.s);
+  faest_free(bavc_rec.s);
   bavc_rec.s = sd_i = NULL;
-  free(scratch);
+  faest_free(scratch);
 
   const unsigned int mask_bits = ellhat - ell;
   uint8_t** Q_columns          = alloc_pointer_array(mask_bits, lambda_minus_w_grind_bytes);
@@ -433,7 +433,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   // delta_prime can be directly read from chall_3
 
   // line 19
-  uint8_t* r_tilde_prime = calloc(N_MASK, lambda_minus_w_grind_bytes);
+  uint8_t* r_tilde_prime = faest_calloc(N_MASK, lambda_minus_w_grind_bytes);
   // for scan-build
   assert(lambda_minus_w_grind_bytes > 0);
   for (unsigned int m = 0; m < N_MASK; m++) {
@@ -511,7 +511,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     xor_u8_array(q_bar + m * lambda_bytes, first_prod, second_prod, lambda_bytes);
   }
   free_pointer_array(&gate_inputs);
-  free(r_tilde_prime);
+  faest_free(r_tilde_prime);
   r_tilde_prime = NULL;
 
   free_pointer_array(&Q_columns);

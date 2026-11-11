@@ -609,9 +609,9 @@ void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_
 }
 
 uint8_t** alloc_pointer_array(size_t rows, size_t columns) {
-  uint8_t** array = malloc(rows * sizeof(uint8_t*));
+  uint8_t** array = faest_malloc(rows * sizeof(uint8_t*));
   assert(array);
-  array[0] = calloc(rows, columns);
+  array[0] = faest_calloc(rows, columns);
   assert(array[0]);
   for (unsigned int i = 1; i < rows; ++i) {
     array[i] = array[0] + i * columns;
@@ -621,7 +621,7 @@ uint8_t** alloc_pointer_array(size_t rows, size_t columns) {
 }
 
 void free_pointer_array(uint8_t*** ptr) {
-  free((*ptr)[0]);
-  free(*ptr);
+  faest_free((*ptr)[0]);
+  faest_free(*ptr);
   *ptr = NULL;
 }

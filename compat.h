@@ -87,6 +87,16 @@
 #endif
 
 #if defined(OQS)
+#define faest_malloc(size) OQS_MEM_malloc((size))         // IGNORE memory-check
+#define faest_calloc(n, size) OQS_MEM_calloc((n), (size)) // IGNORE memory-check
+#define faest_free(ptr) OQS_MEM_insecure_free((ptr))      // IGNORE memory-check
+#else
+#define faest_malloc(size) malloc((size))
+#define faest_calloc(n, size) calloc((n), (size))
+#define faest_free(ptr) free((ptr))
+#endif
+
+#if defined(OQS)
 #define faest_aligned_alloc(alignment, size) OQS_MEM_aligned_alloc((alignment), (size))
 #define faest_aligned_free(ptr) OQS_MEM_aligned_free((ptr))
 #elif defined(HAVE_ALIGNED_ALLOC)
