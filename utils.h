@@ -27,9 +27,6 @@ FAEST_BEGIN_C_DECL
   } while (0)
 #define ptr_xor_bit(dst, index, value) (dst)[(index) / 8] ^= ((value) & 1u) << ((index) % 8)
 
-#define ptr_u16_get_bit(value, index) ((uint8_t)(((value)[(index) / 16] >> ((index) % 16)) & 1))
-#define ptr_u64_get_bit(value, index) ((uint8_t)(((value)[(index) / 64] >> ((index) % 64)) & 1))
-
 uint16_t extract_bit_slice(const uint8_t* src, unsigned int offset, unsigned int bits);
 
 ATTR_CONST static inline uint64_t bit_word_mask(size_t bits) {

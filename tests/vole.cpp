@@ -19,6 +19,7 @@
 #include <array>
 #include <vector>
 
+#define ptr_u64_get_bit(value, index) ((uint8_t)(((value)[(index) / 64] >> ((index) % 64)) & 1))
 #define TBL_U8(base, words, i) ((base) + (size_t)(i) * (words))
 
 namespace {
