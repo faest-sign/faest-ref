@@ -76,11 +76,21 @@ void print_u8_array(const char* label, const uint8_t* arr, size_t m);
 void print_u8_array_bits(const char* label, const uint8_t* arr, size_t m);
 #endif
 
-void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
-                      unsigned int v_col_bits_len);
+// A matrix with stored as a linear array with rows seperated by the stored stride.
+typedef struct {
+  uint8_t* data;
+  size_t stride;
+} byte_matrix_t;
 
-uint8_t** alloc_pointer_array(size_t rows, size_t columns);
-void free_pointer_array(uint8_t*** ptr);
+ATTR_PURE static inline uint8_t* matrix_row(const byte_matrix_t* matrix, size_t row) {
+  return matrix->data + row * matrix->stride;
+}
+
+byte_matrix_t alloc_matrix(size_t rows, size_t stride);
+void free_matrix(byte_matrix_t* matrix);
+
+void transpose_matrix(const byte_matrix_t* v, const byte_matrix_t* v_row_maj,
+                      unsigned int v_row_bits_len, unsigned int v_col_bits_len);
 
 FAEST_END_C_DECL
 

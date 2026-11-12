@@ -672,12 +672,12 @@ static void aes_inverse_sbox_eval_verifier(bf_t* b_key, const bf_t* s_dash_dash_
 
 // EncSctrnts internal functions end!!
 
-static bf_t* shrink_V(uint8_t** v, unsigned int ell) {
+static bf_t* shrink_V(const byte_matrix_t* v, unsigned int ell) {
   // v was already transposed in calling code, so just load the values
   bf_t* new_v = BF_ALLOC(ell);
   assert(new_v);
   for (unsigned int row = 0; row != ell; ++row) {
-    bf_load(&new_v[row], v[row]);
+    bf_load(&new_v[row], matrix_row(v, row));
   }
   return new_v;
 }
@@ -1206,7 +1206,7 @@ static void aes_constraints_verifier(zk_hash_ctx* hasher, const bf_t* w_key, con
 }
 
 // OWF PROVER
-void aes_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w, uint8_t** V,
+void aes_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w, const byte_matrix_t* V,
                 const uint8_t* u_bar, const uint8_t* v_bar, const uint8_t* owf_in,
                 const uint8_t* owf_out, const uint8_t* chall_2, const faest_paramset_t* params) {
   const unsigned int ell          = params->ell;
@@ -1254,7 +1254,7 @@ void aes_prover(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w, uint8
 }
 
 // OWF VERIFIER
-void aes_verifier(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q, const uint8_t* q_bar,
+void aes_verifier(uint8_t* a0_tilde, const uint8_t* d, const byte_matrix_t* Q, const uint8_t* q_bar,
                   const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                   const uint8_t* delta, const uint8_t* a1toi_tilde,
                   const faest_paramset_t* params) {

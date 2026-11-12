@@ -273,9 +273,9 @@ static inline bool check_challenge_3(const uint8_t* chall_3, unsigned int start,
 }
 
 // AES(-EM) OWF dispatchers
-static inline void aes_prove(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w, uint8_t** V,
-                             const uint8_t* u_bar, const uint8_t* v_bar, const uint8_t* owf_in,
-                             const uint8_t* owf_out, const uint8_t* chall_2,
+static inline void aes_prove(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint8_t* w,
+                             const byte_matrix_t* V, const uint8_t* u_bar, const uint8_t* v_bar,
+                             const uint8_t* owf_in, const uint8_t* owf_out, const uint8_t* chall_2,
                              const faest_paramset_t* params) {
   switch (params->lambda) {
   case 256:
@@ -289,7 +289,7 @@ static inline void aes_prove(uint8_t* a0_tilde, uint8_t* a1toi_tilde, const uint
   }
 }
 
-static inline void aes_verify(uint8_t* a0_tilde, const uint8_t* d, uint8_t** Q,
+static inline void aes_verify(uint8_t* a0_tilde, const uint8_t* d, const byte_matrix_t* Q,
                               const uint8_t* q_bar, const uint8_t* owf_in, const uint8_t* owf_out,
                               const uint8_t* chall_2, const uint8_t* chall_3,
                               const uint8_t* a1toi_tilde, const faest_paramset_t* params) {
@@ -383,20 +383,20 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
   // Store u_bar and v_bar in V_row so that they can be hashed togeter. Also saves additional memory
   // allocations.
-  uint8_t** V_row = alloc_pointer_array(ell + 2 * N_MASK, lambda_bytes);
-  uint8_t* v_bar  = V_row[ell];
-  uint8_t* u_bar  = V_row[ell + N_MASK];
+  byte_matrix_t V_row = alloc_matrix(ell + 2 * N_MASK, lambda_bytes);
+  uint8_t* v_bar      = matrix_row(&V_row, ell);
+  uint8_t* u_bar      = matrix_row(&V_row, ell + N_MASK);
   // v has \hat \ell rows, \lambda columns, storing in column-major order
   // it is actually lambda - w_grind but keeping it lambda
-  uint8_t** V = alloc_pointer_array(lambda, ell_hat_bytes);
+  byte_matrix_t V = alloc_matrix(lambda, ell_hat_bytes);
 
   vole_commit(rootkey, iv, ell_hat, params, &bavc, signature_c(sig, 0, params),
-              signature_c_mult(sig, params), u, V, u_bar, v_bar);
+              signature_c_mult(sig, params), u, &V, u_bar, v_bar);
   faest_explicit_bzero(rootkey, lambda_bytes);
 
   // it is actually lambda - w_grind but keeping it lambda
-  transpose_matrix(V, V_row, lambda, ell);
-  free_pointer_array(&V);
+  transpose_matrix(&V, &V_row, lambda, ell);
+  free_matrix(&V);
 
   H2_context_t h2_ctx;
   {
@@ -432,8 +432,8 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
     {
       // line 14
       uint8_t V_tilde[MAX_LAMBDA_BYTES * 4] = {0};
-      // V_row[0] contains V transposed, v_bar and u_bar
-      vole_hash(V_tilde, chall_1, V_row[0], ell, lambda);
+      // V_row contains V transposed, v_bar and u_bar
+      vole_hash(V_tilde, chall_1, matrix_row(&V_row, 0), ell, lambda);
 
       // line 20
       hash_challenge_2_update_v_tilde(&h2_ctx, V_tilde, lambda);
@@ -450,10 +450,10 @@ void faest_sign(uint8_t* sig, const uint8_t* msg, size_t msg_len, const uint8_t*
 
     // line 22
     uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-    aes_prove(a0_tilde, signature_a1toi_tilde(sig, params), witness, V_row, u_bar, v_bar, owf_input,
-              owf_output, chall_2, params);
+    aes_prove(a0_tilde, signature_a1toi_tilde(sig, params), witness, &V_row, u_bar, v_bar,
+              owf_input, owf_output, chall_2, params);
 
-    free_pointer_array(&V_row);
+    free_matrix(&V_row);
     faest_free(u);
     u = NULL;
 
@@ -520,24 +520,24 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // line 6
   // q is a \hat \ell \times \lambda matrix
-  uint8_t** Q = alloc_pointer_array(lambda, ell_hat_bytes);
+  byte_matrix_t Q = alloc_matrix(lambda, ell_hat_bytes);
 
   // Keep q_bar directly after the transposed Q so they can be hashed together.
-  uint8_t** Q_row = alloc_pointer_array(ell + N_MASK, lambda_bytes);
-  uint8_t* q_bar  = Q_row[ell];
+  byte_matrix_t Q_row = alloc_matrix(ell + N_MASK, lambda_bytes);
+  uint8_t* q_bar      = matrix_row(&Q_row, ell);
   uint8_t hcom[MAX_LAMBDA_BYTES * 2];
   uint8_t Delta[MAX_LAMBDA_BYTES] = {0};
-  if (!vole_reconstruct(hcom, Q, iv, dsignature_chall_3(sig, params),
+  if (!vole_reconstruct(hcom, &Q, iv, dsignature_chall_3(sig, params),
                         dsignature_decom_i(sig, params), dsignature_c(sig, 0, params),
                         dsignature_c_mult(sig, params), q_bar, Delta, ell_hat, params)) {
-    free_pointer_array(&Q_row);
-    free_pointer_array(&Q);
+    free_matrix(&Q_row);
+    free_matrix(&Q);
     return -1;
   }
 
   // it is actually lambda - w_grind but keeping it lambda
-  transpose_matrix(Q, Q_row, lambda, ell);
-  free_pointer_array(&Q);
+  transpose_matrix(&Q, &Q_row, lambda, ell);
+  free_matrix(&Q);
 
   // line 9
   uint8_t chall_1[(8 * MAX_LAMBDA_BYTES) + 8] = {0};
@@ -550,7 +550,7 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
   {
     // line 13
     uint8_t Q_tilde[MAX_LAMBDA_BYTES * 4] = {0};
-    vole_hash(Q_tilde, chall_1, Q_row[0], ell, lambda);
+    vole_hash(Q_tilde, chall_1, matrix_row(&Q_row, 0), ell, lambda);
 
     compute_D(Q_tilde, Q_tilde, Delta, dsignature_u_tilde(sig, params), params);
 
@@ -564,9 +564,9 @@ int faest_verify(const uint8_t* msg, size_t msglen, const uint8_t* sig, const ui
 
   // line 18
   uint8_t a0_tilde[MAX_LAMBDA_BYTES];
-  aes_verify(a0_tilde, dsignature_d(sig, params), Q_row, q_bar, owf_input, owf_output, chall_1,
+  aes_verify(a0_tilde, dsignature_d(sig, params), &Q_row, q_bar, owf_input, owf_output, chall_1,
              Delta, dsignature_a1toi_tilde(sig, params), params);
-  free_pointer_array(&Q_row);
+  free_matrix(&Q_row);
 
   // line 19
   // chall_1 is no longer needed, re reuse it as chall_3

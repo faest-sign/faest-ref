@@ -64,22 +64,14 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
     q_bar.resize(n_mask * lambda_bytes);
     delta_prime.resize(lambda_bytes);
 
-    std::vector<uint8_t*> q, v;
-    q.resize(lambda);
-    v.resize(lambda);
-
     q_storage.resize(lambda * ell_hat_bytes);
     v_storage.resize(lambda * ell_hat_bytes);
 
-    q[0] = q_storage.data();
-    v[0] = v_storage.data();
-    for (unsigned int i = 1; i < lambda; ++i) {
-      q[i] = q[0] + i * ell_hat_bytes;
-      v[i] = v[0] + i * ell_hat_bytes;
-    }
+    const byte_matrix_t q{q_storage.data(), ell_hat_bytes};
+    const byte_matrix_t v{v_storage.data(), ell_hat_bytes};
 
     vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(),
-                c_mult_packed.data(), u.data(), v.data(), u_bar.data(), v_bar.data());
+                c_mult_packed.data(), u.data(), &v, u_bar.data(), v_bar.data());
 
     std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2};
 
@@ -105,7 +97,7 @@ BOOST_DATA_TEST_CASE(vole_commit_verify, all_parameters, param_id) {
 
       std::vector<uint8_t> hcom_rec;
       hcom_rec.resize(lambda_bytes * 2);
-      BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(),
+      BOOST_TEST(vole_reconstruct(hcom_rec.data(), &q, iv.data(), chal.data(), decom_i.data(),
                                   c.data(), c_mult_packed.data(), q_bar.data(), delta_prime.data(),
                                   ell_hat, params));
       BOOST_TEST(hcom == hcom_rec);
@@ -214,22 +206,14 @@ namespace {
     q_bar.resize(n_mask * lambda_bytes);
     delta_prime.resize(lambda_bytes);
 
-    std::vector<uint8_t*> q, v;
-    q.resize(lambda);
-    v.resize(lambda);
-
     q_storage.resize(lambda * ell_hat_bytes);
     v_storage.resize(lambda * ell_hat_bytes);
 
-    q[0] = q_storage.data();
-    v[0] = v_storage.data();
-    for (unsigned int i = 1; i < lambda; ++i) {
-      q[i] = q[0] + i * ell_hat_bytes;
-      v[i] = v[0] + i * ell_hat_bytes;
-    }
+    const byte_matrix_t q{q_storage.data(), ell_hat_bytes};
+    const byte_matrix_t v{v_storage.data(), ell_hat_bytes};
 
     vole_commit(rootKey.data(), iv.data(), ell_hat, params, &bavc_com, c.data(),
-                c_mult_packed.data(), u.data(), v.data(), u_bar.data(), v_bar.data());
+                c_mult_packed.data(), u.data(), &v, u_bar.data(), v_bar.data());
 
     std::vector<uint8_t> hcom{bavc_com.h, bavc_com.h + lambda_bytes * 2},
         expected_h_vec{expected_h.begin(), expected_h.end()};
@@ -261,9 +245,9 @@ namespace {
 
     std::vector<uint8_t> hcom_rec;
     hcom_rec.resize(lambda_bytes * 2);
-    BOOST_TEST(vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), challenge.data(),
-                                decom_i.data(), c.data(), c_mult_packed.data(), q_bar.data(),
-                                delta_prime.data(), ell_hat, params));
+    BOOST_TEST(vole_reconstruct(hcom_rec.data(), &q, iv.data(), challenge.data(), decom_i.data(),
+                                c.data(), c_mult_packed.data(), q_bar.data(), delta_prime.data(),
+                                ell_hat, params));
     BOOST_TEST(hcom_rec == expected_h_vec);
 
     ncols = ell;

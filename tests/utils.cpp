@@ -12,6 +12,7 @@
 #include <boost/test/data/test_case.hpp>
 
 #include <array>
+#include <vector>
 
 BOOST_AUTO_TEST_SUITE(utils)
 
@@ -33,31 +34,33 @@ BOOST_DATA_TEST_CASE(faest_aligned_alloc, alignments, alignment) {
 }
 
 BOOST_AUTO_TEST_CASE(test_transpose_matrix) {
-  constexpr unsigned int rows     = 461;
-  constexpr unsigned int columns  = 459;
-  constexpr unsigned int row_size = (columns + 7) / 8;
-  constexpr unsigned int col_size = (rows + 7) / 8;
+  constexpr unsigned int shapes[][2] = {{7, 13}, {64, 64}, {128, 128}, {256, 256}, {461, 459}};
+  for (const auto& shape : shapes) {
+    const unsigned int rows    = shape[0];
+    const unsigned int columns = shape[1];
+    BOOST_TEST_CONTEXT("Shape: " << rows << "x" << columns) {
+      const size_t input_stride  = (columns + 7) / 8 + 3;
+      const size_t output_stride = (rows + 7) / 8 + 5;
+      std::vector<uint8_t> input(rows * input_stride + 2);
+      std::vector<uint8_t> output(columns * output_stride + 2, 0xa5);
+      for (size_t i = 0; i < input.size(); ++i) {
+        input[i] = static_cast<uint8_t>(17 * i + 29 * (i / input_stride) + 3);
+      }
+      const auto original_input = input;
+      auto expected             = output;
+      const byte_matrix_t src{input.data() + 1, input_stride};
+      const byte_matrix_t dst{output.data() + 1, output_stride};
+      for (unsigned int row = 0; row < rows; ++row) {
+        for (unsigned int col = 0; col < columns; ++col) {
+          ptr_set_bit(expected.data() + 1 + col * output_stride, row,
+                      ptr_get_bit(matrix_row(&src, row), col));
+        }
+      }
 
-  std::array<std::array<uint8_t, row_size>, rows> input{};
-  std::array<uint8_t*, rows> input_rows{};
-  for (unsigned int row = 0; row < rows; ++row) {
-    input_rows[row] = input[row].data();
-    for (unsigned int byte = 0; byte < row_size; ++byte) {
-      input[row][byte] = static_cast<uint8_t>(17 * row + 29 * byte + 3);
-    }
-  }
+      transpose_matrix(&src, &dst, rows, columns);
 
-  std::array<std::array<uint8_t, col_size>, columns> output{};
-  std::array<uint8_t*, columns> output_rows{};
-  for (unsigned int col = 0; col < columns; ++col) {
-    output_rows[col] = output[col].data();
-  }
-
-  transpose_matrix(input_rows.data(), output_rows.data(), rows, columns);
-
-  for (unsigned int row = 0; row < rows; ++row) {
-    for (unsigned int col = 0; col < columns; ++col) {
-      BOOST_TEST(ptr_get_bit(input[row].data(), col) == ptr_get_bit(output[col].data(), row));
+      BOOST_TEST(output == expected);
+      BOOST_TEST(input == original_input);
     }
   }
 }

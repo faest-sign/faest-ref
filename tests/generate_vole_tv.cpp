@@ -65,24 +65,16 @@ int main() {
     q_bar.resize(n_mask * lambda_bytes);
     delta_prime.resize(lambda_bytes);
 
-    std::vector<uint8_t*> q, v;
-    q.resize(lambda);
-    v.resize(lambda);
-
     q_storage.resize(lambda * ell_hat_bytes);
     v_storage.resize(lambda * ell_hat_bytes);
 
-    q[0] = q_storage.data();
-    v[0] = v_storage.data();
-    for (unsigned int i = 1; i < lambda; ++i) {
-      q[i] = q[0] + i * ell_hat_bytes;
-      v[i] = v[0] + i * ell_hat_bytes;
-    }
+    const byte_matrix_t q{q_storage.data(), ell_hat_bytes};
+    const byte_matrix_t v{v_storage.data(), ell_hat_bytes};
 
     std::cout << "namespace " << faest_get_param_name(param_id) << "{\n";
 
     vole_commit(root_key.data(), iv.data(), ell_hat, &params, &bavc_com, c.data(), c_mult.data(),
-                u.data(), v.data(), u_bar.data(), v_bar.data());
+                u.data(), &v, u_bar.data(), v_bar.data());
 
     print_named_array("h", "uint8_t", bavc_com.h, 2 * lambda_bytes);
     print_named_array("hashed_c", "uint8_t", hash_array(c));
@@ -116,7 +108,7 @@ int main() {
 
       std::vector<uint8_t> hcom_rec;
       hcom_rec.resize(lambda_bytes * 2);
-      vole_reconstruct(hcom_rec.data(), q.data(), iv.data(), chal.data(), decom_i.data(), c.data(),
+      vole_reconstruct(hcom_rec.data(), &q, iv.data(), chal.data(), decom_i.data(), c.data(),
                        c_mult.data(), q_bar.data(), delta_prime.data(), ell_hat, &params);
 
       std::vector<uint8_t> mQ_bytes(ncols * lambda_bytes, 0);

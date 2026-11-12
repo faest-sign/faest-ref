@@ -67,33 +67,29 @@ static
   return (uint16_t)value;
 }
 
-static void crt_transform_rows(uint8_t** dst, uint8_t** src, unsigned int row_bytes,
-                               unsigned int rows, const faest_paramset_t* params) {
+static void crt_transform_rows(const byte_matrix_t* dst, const byte_matrix_t* src,
+                               unsigned int row_bytes, unsigned int rows,
+                               const faest_paramset_t* params) {
   for (unsigned int out = 0; out < rows; ++out) {
-    memset(dst[out], 0, row_bytes);
+    memset(matrix_row(dst, out), 0, row_bytes);
     const uint64_t* coefficients = TBL(params->W_CRT, params->w_crt_words, out);
     for (unsigned int word = 0; word < (rows + 63) / 64; ++word) {
       // bits is a public constant
       for (uint64_t bits = coefficients[word] & bit_word_mask(MIN(rows - word * 64, 64)); bits;
            bits &= bits - 1) {
         const unsigned int bit = ctz64(bits);
-        xor_u8_array_inplace(dst[out], src[word * 64 + bit], row_bytes);
+        xor_u8_array_inplace(matrix_row(dst, out), matrix_row(src, word * 64 + bit), row_bytes);
       }
     }
   }
 }
 
-static void transpose_bit_matrix(uint8_t** dst, const uint8_t* src, unsigned int rows,
+static void transpose_bit_matrix(const byte_matrix_t* dst, const uint8_t* src, unsigned int rows,
                                  unsigned int cols) {
   const unsigned int src_row_bytes = (cols + 7) / 8;
 
-  uint8_t** src_rows = faest_malloc(rows * sizeof(*src_rows));
-  for (unsigned int row = 0; row < rows; ++row) {
-    src_rows[row] = (uint8_t*)src + row * src_row_bytes;
-  }
-
-  transpose_matrix(src_rows, dst, rows, cols);
-  faest_free(src_rows);
+  const byte_matrix_t src_matrix = {(uint8_t*)src, src_row_bytes};
+  transpose_matrix(&src_matrix, dst, rows, cols);
 }
 
 static unsigned int convert_to_vole_with_scratch(const uint8_t* iv, const uint8_t* sd, bool sd0_bot,
@@ -158,7 +154,7 @@ unsigned int convert_to_vole(const uint8_t* iv, const uint8_t* sd, bool sd0_bot,
 
 void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                  const faest_paramset_t* params, bavc_t* bavc, uint8_t* c, uint8_t* c_mult,
-                 uint8_t* u, uint8_t** V_dest, uint8_t* u_bar, uint8_t* v_bar) {
+                 uint8_t* u, const byte_matrix_t* V_dest, uint8_t* u_bar, uint8_t* v_bar) {
   const unsigned int lambda                     = params->lambda;
   const unsigned int lambda_bytes               = lambda / 8;
   const unsigned int ell_hat_bytes              = (ellhat + 7) / 8;
@@ -180,7 +176,7 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   uint8_t* ui = faest_malloc(tau * ell_hat_bytes);
   assert(ui);
 
-  uint8_t** V = alloc_pointer_array(lambda, ell_hat_bytes);
+  byte_matrix_t V = alloc_matrix(lambda, ell_hat_bytes);
 
   uint8_t* scratch = faest_calloc(bavc_max_node_index(0, tau_1, k), ell_hat_bytes);
   assert(scratch);
@@ -190,18 +186,15 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   uint8_t* sd_i      = bavc->sd;
   for (unsigned int i = 0; i < tau; ++i) {
     v_idx += convert_to_vole_with_scratch(iv, sd_i, false, i, ell_hat_bytes, ui + i * ell_hat_bytes,
-                                          V[v_idx], params, scratch);
+                                          matrix_row(&V, v_idx), params, scratch);
     sd_i += lambda_bytes * bavc_max_node_index(i, tau_1, k);
   }
 
   faest_free(scratch);
   const unsigned int mask_bits = ellhat - ell;
-  uint8_t** V_columns          = alloc_pointer_array(mask_bits, lambda_minus_w_grind_bytes);
-  uint8_t* mask_rows[MAX_LAMBDA];
-  for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) {
-    mask_rows[row] = V[row] + ell_bytes;
-  }
-  transpose_matrix(mask_rows, V_columns, lambda_minus_w_grind, mask_bits);
+  byte_matrix_t V_columns       = alloc_matrix(mask_bits, lambda_minus_w_grind_bytes);
+  const byte_matrix_t mask_rows = {V.data + ell_bytes, V.stride};
+  transpose_matrix(&mask_rows, &V_columns, lambda_minus_w_grind, mask_bits);
 
   // line 6
   memcpy(u, ui, ell_bytes);
@@ -253,7 +246,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
 
       uint32_t acc_value = 0;
       for (unsigned int d = 0; d < deg; ++d) {
-        acc_value ^= (uint32_t)extract_bit_slice(V_columns[ell_m + d], v_idx, deg) << d;
+        acc_value ^= (uint32_t)extract_bit_slice(matrix_row(&V_columns, ell_m + d), v_idx, deg)
+                     << d;
       }
       v_idx += deg;
 
@@ -277,8 +271,8 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                        params->f_words);
   }
 
-  uint8_t** v_tilde     = alloc_pointer_array(n_mult, N_MASK_BYTES);
-  uint8_t** c_mult_diff = alloc_pointer_array(n_mult, N_MASK_BYTES);
+  byte_matrix_t v_tilde     = alloc_matrix(n_mult, N_MASK_BYTES);
+  byte_matrix_t c_mult_diff = alloc_matrix(n_mult, N_MASK_BYTES);
   for (unsigned e = 0; e < n_mult; e++) {
     uint8_t L_e_zero[MAX_LAMBDA_BYTES] = {0};
     const uint64_t* G_e                = TBL(params->G, params->g_words, e);
@@ -290,12 +284,12 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
       for (uint64_t coefficients = G_e[word_idx] & bit_word_mask(word_bits); coefficients;
            coefficients &= coefficients - 1) {
         const unsigned int bit = ctz64(coefficients);
-        xor_small_u8_array_inplace(L_e_zero, V[row_offset + bit], lambda_bytes);
+        xor_small_u8_array_inplace(L_e_zero, matrix_row(&V, row_offset + bit), lambda_bytes);
       }
     }
 
     // line 23
-    H5(v_tilde[e], iv, e, L_e_zero, lambda);
+    H5(matrix_row(&v_tilde, e), iv, e, L_e_zero, lambda);
 
     // reuse L_e_zero as L_e_one
     xor_u8_array_inplace(L_e_zero, u, lambda_bytes);
@@ -303,22 +297,23 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
     H5(L_e_zero, iv, e, L_e_zero, lambda);
 
     // line 26
-    xor_small_u8_array(c_mult_diff[e], v_tilde[e], L_e_zero, N_MASK_BYTES);
+    xor_small_u8_array(matrix_row(&c_mult_diff, e), matrix_row(&v_tilde, e), L_e_zero,
+                       N_MASK_BYTES);
   }
 
   // line 30: apply the CRT map row-wise, including the final transpose implicitly.
-  crt_transform_rows(V_dest, V, ell_bytes, lambda_minus_w_grind, params);
-  free_pointer_array(&V);
+  crt_transform_rows(V_dest, &V, ell_bytes, lambda_minus_w_grind, params);
+  free_matrix(&V);
 
   // bit-packed version of line 26
-  uint8_t** gate_inputs = alloc_pointer_array(N_MASK, n_mult_bytes);
-  assert(gate_inputs);
-  transpose_matrix(c_mult_diff, gate_inputs, n_mult, N_MASK);
-  xor_u8_array_inplace(c_mult, gate_inputs[0], N_MASK * n_mult_bytes);
-  free_pointer_array(&c_mult_diff);
+  byte_matrix_t gate_inputs = alloc_matrix(N_MASK, n_mult_bytes);
+  assert(gate_inputs.data);
+  transpose_matrix(&c_mult_diff, &gate_inputs, n_mult, N_MASK);
+  xor_u8_array_inplace(c_mult, matrix_row(&gate_inputs, 0), N_MASK * n_mult_bytes);
+  free_matrix(&c_mult_diff);
 
-  transpose_matrix(v_tilde, gate_inputs, n_mult, N_MASK);
-  free_pointer_array(&v_tilde);
+  transpose_matrix(&v_tilde, &gate_inputs, n_mult, N_MASK);
+  free_matrix(&v_tilde);
 
   // line 29
   for (unsigned int m = 0; m < N_MASK; m++) {
@@ -327,13 +322,13 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
                        lambda_minus_w_grind, lambda, params->w_tree_words);
 
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
-    bf2_matrix_mul_tbl(second_prod, gate_inputs[m], params->W_GATE, n_mult, lambda,
+    bf2_matrix_mul_tbl(second_prod, matrix_row(&gate_inputs, m), params->W_GATE, n_mult, lambda,
                        params->w_gate_words);
     xor_u8_array(v_bar + m * lambda_bytes, first_prod, second_prod, lambda_bytes);
   }
-  free_pointer_array(&gate_inputs);
+  free_matrix(&gate_inputs);
 
-  free_pointer_array(&V_columns);
+  free_matrix(&V_columns);
 
   faest_free(ui);
   faest_free(u_hi_all);
@@ -342,9 +337,9 @@ void vole_commit(const uint8_t* rootKey, const uint8_t* iv, unsigned int ellhat,
   faest_free(r_tilde);
 }
 
-bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const uint8_t* chall_3,
-                      const uint8_t* decom_i, const uint8_t* c, const uint8_t* c_mult,
-                      uint8_t* q_bar, uint8_t* Delta, unsigned int ellhat,
+bool vole_reconstruct(uint8_t* com, const byte_matrix_t* Q_dest, const uint8_t* iv,
+                      const uint8_t* chall_3, const uint8_t* decom_i, const uint8_t* c,
+                      const uint8_t* c_mult, uint8_t* q_bar, uint8_t* Delta, unsigned int ellhat,
                       const faest_paramset_t* params) {
   const unsigned int lambda                     = params->lambda;
   const unsigned int lambda_bytes               = lambda / 8;
@@ -387,7 +382,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   assert(sd);
   assert(scratch);
 
-  uint8_t** Q = alloc_pointer_array(lambda, ellhat_bytes);
+  byte_matrix_t Q = alloc_matrix(lambda, ellhat_bytes);
 
   unsigned int q_idx = 0;
   uint8_t* sd_i      = bavc_rec.s;
@@ -404,11 +399,11 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
 
     // line 8
     const unsigned int ki = convert_to_vole_with_scratch(iv, sd, true, i, ellhat_bytes, NULL,
-                                                         Q[q_idx], params, scratch);
+                                                         matrix_row(&Q, q_idx), params, scratch);
     if (i != 0) {
       for (unsigned int d = 0; d < ki; ++d, ++q_idx) {
-        masked_xor_u8_array(Q[q_idx], Q[q_idx], c + (i - 1) * ell_bytes, (i_delta[i] >> d) & 1,
-                            ell_bytes);
+        masked_xor_u8_array(matrix_row(&Q, q_idx), matrix_row(&Q, q_idx), c + (i - 1) * ell_bytes,
+                            (i_delta[i] >> d) & 1, ell_bytes);
       }
     } else {
       q_idx += ki;
@@ -422,12 +417,9 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   faest_free(scratch);
 
   const unsigned int mask_bits = ellhat - ell;
-  uint8_t** Q_columns          = alloc_pointer_array(mask_bits, lambda_minus_w_grind_bytes);
-  uint8_t* mask_rows[MAX_LAMBDA];
-  for (unsigned int row = 0; row < lambda_minus_w_grind; ++row) {
-    mask_rows[row] = Q[row] + ell_bytes;
-  }
-  transpose_matrix(mask_rows, Q_columns, lambda_minus_w_grind, mask_bits);
+  byte_matrix_t Q_columns       = alloc_matrix(mask_bits, lambda_minus_w_grind_bytes);
+  const byte_matrix_t mask_rows = {Q.data + ell_bytes, Q.stride};
+  transpose_matrix(&mask_rows, &Q_columns, lambda_minus_w_grind, mask_bits);
 
   // line 13
   // delta_prime can be directly read from chall_3
@@ -445,7 +437,8 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
 
       uint32_t acc_value = 0;
       for (unsigned d = 0; d < deg; d++) {
-        acc_value ^= (uint32_t)extract_bit_slice(Q_columns[ell_m + d], q_idx, deg) << d;
+        acc_value ^= (uint32_t)extract_bit_slice(matrix_row(&Q_columns, ell_m + d), q_idx, deg)
+                     << d;
       }
       q_idx += deg;
 
@@ -458,9 +451,9 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
   // line 21
   // a_prime is a direct copy of Q, so use Q instead
 
-  uint8_t** c_mult_by_e = alloc_pointer_array(n_mult, N_MASK_BYTES);
-  uint8_t** q_tilde     = alloc_pointer_array(n_mult, N_MASK_BYTES);
-  transpose_bit_matrix(c_mult_by_e, c_mult, N_MASK, n_mult);
+  byte_matrix_t c_mult_by_e = alloc_matrix(n_mult, N_MASK_BYTES);
+  byte_matrix_t q_tilde     = alloc_matrix(n_mult, N_MASK_BYTES);
+  transpose_bit_matrix(&c_mult_by_e, c_mult, N_MASK, n_mult);
   for (unsigned e = 0; e < n_mult; e++) {
     uint8_t L_e_prime[MAX_LAMBDA_BYTES] = {0};
 
@@ -477,7 +470,7 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
       // coefficients is a public constant
       for (; coefficients; coefficients &= coefficients - 1) {
         const unsigned int bit = ctz64(coefficients);
-        xor_small_u8_array_inplace(L_e_prime, Q[row_offset + bit], lambda_bytes);
+        xor_small_u8_array_inplace(L_e_prime, matrix_row(&Q, row_offset + bit), lambda_bytes);
       }
     }
 
@@ -486,19 +479,19 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
     H5(L_e_prime, iv, e, L_e_prime, lambda);
 
     // line 27
-    masked_xor_small_u8_array(q_tilde[e], L_e_prime, c_mult_by_e[e], parity64(gamma_acc),
-                              N_MASK_BYTES);
+    masked_xor_small_u8_array(matrix_row(&q_tilde, e), L_e_prime, matrix_row(&c_mult_by_e, e),
+                              parity64(gamma_acc), N_MASK_BYTES);
   }
 
   // line 31: apply the CRT map row-wise, including the final transpose implicitly.
-  crt_transform_rows(Q_dest, Q, ell_bytes, lambda_minus_w_grind, params);
-  free_pointer_array(&Q);
-  free_pointer_array(&c_mult_by_e);
+  crt_transform_rows(Q_dest, &Q, ell_bytes, lambda_minus_w_grind, params);
+  free_matrix(&Q);
+  free_matrix(&c_mult_by_e);
 
   // line 30
-  uint8_t** gate_inputs = alloc_pointer_array(N_MASK, n_mult_bytes);
-  transpose_matrix(q_tilde, gate_inputs, n_mult, N_MASK);
-  free_pointer_array(&q_tilde);
+  byte_matrix_t gate_inputs = alloc_matrix(N_MASK, n_mult_bytes);
+  transpose_matrix(&q_tilde, &gate_inputs, n_mult, N_MASK);
+  free_matrix(&q_tilde);
 
   for (unsigned int m = 0; m < N_MASK; m++) {
     uint8_t first_prod[MAX_LAMBDA_BYTES] = {0};
@@ -506,15 +499,15 @@ bool vole_reconstruct(uint8_t* com, uint8_t** Q_dest, const uint8_t* iv, const u
                        lambda_minus_w_grind, lambda, params->w_tree_words);
 
     uint8_t second_prod[MAX_LAMBDA_BYTES] = {0};
-    bf2_matrix_mul_tbl(second_prod, gate_inputs[m], params->W_GATE, n_mult, lambda,
+    bf2_matrix_mul_tbl(second_prod, matrix_row(&gate_inputs, m), params->W_GATE, n_mult, lambda,
                        params->w_gate_words);
     xor_u8_array(q_bar + m * lambda_bytes, first_prod, second_prod, lambda_bytes);
   }
-  free_pointer_array(&gate_inputs);
+  free_matrix(&gate_inputs);
   faest_free(r_tilde_prime);
   r_tilde_prime = NULL;
 
-  free_pointer_array(&Q_columns);
+  free_matrix(&Q_columns);
 
   return true;
 }

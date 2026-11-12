@@ -401,7 +401,8 @@ static void transpose_64x64(uint64_t* value) {
 #if defined(HAVE_SSE2)
 // Compose 16x8 SSE2 transposes into a 128x128 transpose.
 // https://mischasan.wordpress.com/2011/10/03/the-full-sse2-bit-matrix-transpose-routine/
-ATTR_TARGET_SSE2 static void transpose_128x128(uint8_t** v, uint8_t** v_row_maj, unsigned int row,
+ATTR_TARGET_SSE2 static void transpose_128x128(const byte_matrix_t* v,
+                                               const byte_matrix_t* v_row_maj, unsigned int row,
                                                unsigned int col) {
   for (unsigned int row_offset = 0; row_offset < 128; row_offset += 16) {
     const unsigned int dst_byte = (row + row_offset) / 8;
@@ -410,13 +411,14 @@ ATTR_TARGET_SSE2 static void transpose_128x128(uint8_t** v, uint8_t** v_row_maj,
 
       ATTR_ALIGNED(16) uint8_t input[16];
       for (unsigned int idx = 0; idx < 16; ++idx) {
-        input[idx] = v[row + row_offset + idx][src_byte];
+        input[idx] = matrix_row(v, row + row_offset + idx)[src_byte];
       }
 
       __m128i block = _mm_load_si128((const __m128i*)input);
       for (unsigned int bit = 0; bit < 8; ++bit) {
         const uint16_t output = _mm_movemask_epi8(block);
-        memcpy(v_row_maj[col + col_offset + 7 - bit] + dst_byte, &output, sizeof(output));
+        memcpy(matrix_row(v_row_maj, col + col_offset + 7 - bit) + dst_byte, &output,
+               sizeof(output));
         block = _mm_slli_epi64(block, 1);
       }
     }
@@ -437,7 +439,8 @@ ATTR_TARGET_SSE2 static void transpose_128x128(uint8_t** v, uint8_t** v_row_maj,
     }                                                                                              \
   } while (0)
 
-ATTR_TARGET_NEON static void transpose_128x128(uint8_t** v, uint8_t** v_row_maj, unsigned int row,
+ATTR_TARGET_NEON static void transpose_128x128(const byte_matrix_t* v,
+                                               const byte_matrix_t* v_row_maj, unsigned int row,
                                                unsigned int col) {
   for (unsigned int row_offset = 0; row_offset < 128; row_offset += 16) {
     const unsigned int dst_byte = (row + row_offset) / 8;
@@ -446,7 +449,7 @@ ATTR_TARGET_NEON static void transpose_128x128(uint8_t** v, uint8_t** v_row_maj,
 
     for (unsigned int idx = 0; idx < 16; ++idx) {
       uint16_t input[8];
-      memcpy(input, v[row + row_offset + idx] + src_byte, sizeof(input));
+      memcpy(input, matrix_row(v, row + row_offset + idx) + src_byte, sizeof(input));
       for (unsigned int lane = 0; lane < 8; ++lane) {
         input[lane] = le16toh(input[lane]);
       }
@@ -463,7 +466,8 @@ ATTR_TARGET_NEON static void transpose_128x128(uint8_t** v, uint8_t** v_row_maj,
       vst1q_u16(output, block[idx]);
       for (unsigned int lane = 0; lane < 8; ++lane) {
         output[lane] = htole16(output[lane]);
-        memcpy(v_row_maj[col + 16 * lane + idx] + dst_byte, &output[lane], sizeof(output[lane]));
+        memcpy(matrix_row(v_row_maj, col + 16 * lane + idx) + dst_byte, &output[lane],
+               sizeof(output[lane]));
       }
     }
   }
@@ -484,15 +488,17 @@ ATTR_TARGET_NEON static void transpose_128x128(uint8_t** v, uint8_t** v_row_maj,
   } while (0)
 
 // Vectorized generalization of the recursive 32x32 transpose
-ATTR_TARGET_AVX2 static void transpose_256x256(uint8_t** v, uint8_t** v_row_maj, unsigned int row,
+ATTR_TARGET_AVX2 static void transpose_256x256(const byte_matrix_t* v,
+                                               const byte_matrix_t* v_row_maj, unsigned int row,
                                                unsigned int col) {
   for (unsigned int row_offset = 0; row_offset < 256; row_offset += 32) {
     const unsigned int dst_byte = (row + row_offset) / 8;
     const unsigned int src_byte = col / 8;
-    __m256i block[32];
 
+    __m256i block[32];
     for (unsigned int idx = 0; idx < 32; ++idx) {
-      block[idx] = _mm256_loadu_si256((const __m256i*)(v[row + row_offset + idx] + src_byte));
+      block[idx] =
+          _mm256_loadu_si256((const __m256i*)(matrix_row(v, row + row_offset + idx) + src_byte));
     }
 
     TRANSPOSE_AVX2_32X32_STAGE(block, 16, 0x0000ffff);
@@ -505,15 +511,16 @@ ATTR_TARGET_AVX2 static void transpose_256x256(uint8_t** v, uint8_t** v_row_maj,
       ATTR_ALIGNED(32) uint32_t output[8];
       _mm256_store_si256((__m256i*)output, block[idx]);
       for (unsigned int lane = 0; lane < 8; ++lane) {
-        memcpy(v_row_maj[col + 32 * lane + idx] + dst_byte, &output[lane], sizeof(output[lane]));
+        memcpy(matrix_row(v_row_maj, col + 32 * lane + idx) + dst_byte, &output[lane],
+               sizeof(output[lane]));
       }
     }
   }
 }
 #endif
 
-void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_len,
-                      unsigned int v_col_bits_len) {
+void transpose_matrix(const byte_matrix_t* v, const byte_matrix_t* v_row_maj,
+                      unsigned int v_row_bits_len, unsigned int v_col_bits_len) {
   unsigned int full_rows_128 = 0;
   unsigned int full_cols_128 = 0;
 
@@ -560,13 +567,13 @@ void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_
 
       uint64_t block[64];
       for (unsigned int idx = 0; idx < 64; ++idx) {
-        memcpy(&block[idx], v[row + idx] + src_byte, sizeof(block[idx]));
+        memcpy(&block[idx], matrix_row(v, row + idx) + src_byte, sizeof(block[idx]));
         block[idx] = le64toh(block[idx]);
       }
       transpose_64x64(block);
       for (unsigned int idx = 0; idx < 64; ++idx) {
         block[idx] = htole64(block[idx]);
-        memcpy(v_row_maj[col + idx] + dst_byte, &block[idx], sizeof(block[idx]));
+        memcpy(matrix_row(v_row_maj, col + idx) + dst_byte, &block[idx], sizeof(block[idx]));
       }
     }
   }
@@ -579,15 +586,15 @@ void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_
     for (unsigned int col = first_col; col < v_col_bits_len; col += 8) {
       const unsigned int src_byte = col / 8;
       const unsigned int columns  = MIN(v_col_bits_len - col, 8);
-      uint64_t block              = 0;
 
+      uint64_t block = 0;
       for (unsigned int bit = 0; bit < 8; ++bit) {
-        block |= (uint64_t)v[row + bit][src_byte] << (bit * 8);
+        block |= (uint64_t)matrix_row(v, row + bit)[src_byte] << (bit * 8);
       }
       block = transpose_8x8(block);
 
       for (unsigned int bit = 0; bit < columns; ++bit) {
-        v_row_maj[col + bit][dst_byte] = (uint8_t)(block >> (bit * 8));
+        matrix_row(v_row_maj, col + bit)[dst_byte] = (uint8_t)(block >> (bit * 8));
       }
     }
   }
@@ -601,27 +608,24 @@ void transpose_matrix(uint8_t** v, uint8_t** v_row_maj, unsigned int v_row_bits_
     for (unsigned int col = 0; col < v_col_bits_len; ++col) {
       uint8_t value = 0;
       for (unsigned int bit = 0; bit < remaining_rows; ++bit) {
-        value |= ptr_get_bit(v[full_rows_8 + bit], col) << bit;
+        value |= ptr_get_bit(matrix_row(v, full_rows_8 + bit), col) << bit;
       }
-      v_row_maj[col][dst_byte] = (v_row_maj[col][dst_byte] & ~mask) | value;
+      matrix_row(v_row_maj, col)[dst_byte] = (matrix_row(v_row_maj, col)[dst_byte] & ~mask) | value;
     }
   }
 }
 
-uint8_t** alloc_pointer_array(size_t rows, size_t columns) {
-  uint8_t** array = faest_malloc(rows * sizeof(uint8_t*));
-  assert(array);
-  array[0] = faest_calloc(rows, columns);
-  assert(array[0]);
-  for (unsigned int i = 1; i < rows; ++i) {
-    array[i] = array[0] + i * columns;
-  }
+byte_matrix_t alloc_matrix(size_t rows, size_t stride) {
+  byte_matrix_t matrix;
+  matrix.data   = faest_calloc(rows, stride);
+  matrix.stride = stride;
+  assert(matrix.data);
 
-  return array;
+  return matrix;
 }
 
-void free_pointer_array(uint8_t*** ptr) {
-  faest_free((*ptr)[0]);
-  faest_free(*ptr);
-  *ptr = NULL;
+void free_matrix(byte_matrix_t* matrix) {
+  faest_free(matrix->data);
+  matrix->data   = NULL;
+  matrix->stride = 0;
 }

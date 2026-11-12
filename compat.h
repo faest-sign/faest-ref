@@ -91,6 +91,8 @@
 #define faest_calloc(n, size) OQS_MEM_calloc((n), (size)) // IGNORE memory-check
 #define faest_free(ptr) OQS_MEM_insecure_free((ptr))      // IGNORE memory-check
 #else
+#include <stdlib.h>
+
 #define faest_malloc(size) malloc((size))
 #define faest_calloc(n, size) calloc((n), (size))
 #define faest_free(ptr) free((ptr))
